@@ -24,13 +24,13 @@ export const loop = ErrorMapper.wrapLoop(() => {
     if (followFlag(creep)) continue; // Follow Named Flag overrides all other behaviors
 
     if(creep.memory.role == 'harvester') {
-      roleHarvester(creep);
+      roleHarvester(creep) || roleBuilder(creep) || roleUpgrader(creep);
     }
     if(creep.memory.role == 'upgrader') {
       roleUpgrader(creep);
     }
     if(creep.memory.role == 'builder') {
-      roleBuilder(creep);
+      roleBuilder(creep) || roleHarvester(creep) || roleUpgrader(creep);
     }
   }
 });

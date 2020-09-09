@@ -14,8 +14,10 @@ export const run = (creep: Creep) => {
                             (structure as StructureExtension|StructureSpawn|StructureTower).store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                 }
         });
-        if(target && creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        if (!target) return false; // No storage available - default to next priority role
+        if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
         }
     }
+    return true;
 }

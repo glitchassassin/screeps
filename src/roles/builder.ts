@@ -10,7 +10,8 @@ export const run = (creep: Creep) => {
 
     if(creep.memory.building) {
         var target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
-        if(target && creep.build(target) == ERR_NOT_IN_RANGE) {
+        if (!target) return false; // No building targets - fall back to next priority role
+        if(creep.build(target) == ERR_NOT_IN_RANGE) {
             creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
         }
     }
@@ -20,4 +21,5 @@ export const run = (creep: Creep) => {
             creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
         }
     }
+    return true;
 }
