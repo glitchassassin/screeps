@@ -1,5 +1,5 @@
-import { harvest } from "behaviors/harvest";
 import { build } from "behaviors/build";
+import { withdraw } from "behaviors/withdraw";
 
 export const run = (creep: Creep) => {
     if(creep.memory.building && creep.store[RESOURCE_ENERGY] == 0) {
@@ -15,7 +15,7 @@ export const run = (creep: Creep) => {
         build(creep);
     }
     else {
-        harvest(creep);
+        withdraw(creep);
     }
     return true;
 }
