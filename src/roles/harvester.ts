@@ -1,5 +1,6 @@
 export const run = (creep: Creep) => {
     if(creep.store.getFreeCapacity() > 0) {
+        creep.say('🔄 harvesting');
         var source = creep.pos.findClosestByPath(FIND_SOURCES);
         if(source && creep.harvest(source) == ERR_NOT_IN_RANGE) {
             creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
@@ -15,6 +16,7 @@ export const run = (creep: Creep) => {
                 }
         });
         if (!target) return false; // No storage available - default to next priority role
+        creep.say('🔄 depositing');
         if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
         }
