@@ -3,9 +3,11 @@ import { upgrade } from "behaviors/upgrade";
 import { build } from "behaviors/build";
 import { deposit } from "behaviors/deposit";
 import { repair } from "behaviors/repair";
+import { withdraw } from "behaviors/withdraw";
 
 enum MODES {
     HARVESTING,
+    SUPPLYING,
     BUILDING,
     REPAIRING,
     DEPOSITING,
@@ -18,13 +20,16 @@ export const run = (creep: Creep) => {
         case MODES.HARVESTING:
             if (creep.store.getFreeCapacity() > 0) {
                 // if empty, harvest resources until full
-                harvest(creep)
+                withdraw(creep) || harvest(creep)
                 break;
             }
             else {
-                // if full, look for a building to construct
-                creep.memory.mode = MODES.BUILDING;
+                // if full, try to supply a spawn
+                creep.memory.mode = MODES.SUPPLYING;
             }
+        case MODES.SUPPLYING:
+            if (deposit(creep, [STRUCTURE_SPAWN, STRUCTURE_EXTENSION])) break;
+            creep.memory.mode = MODES.BUILDING;
         case MODES.BUILDING:
             // if there is a building, build it
             if (build(creep)) break;
@@ -37,7 +42,7 @@ export const run = (creep: Creep) => {
             creep.memory.mode = MODES.DEPOSITING;
         case MODES.DEPOSITING:
             // If there is somewhere to deposit loot, do so
-            if (deposit(creep)) break;
+            if (deposit(creep, [STRUCTURE_CONTAINER])) break;
             // otherwise, upgrade the room controller
             creep.memory.mode = MODES.UPGRADING;
         case MODES.UPGRADING:
