@@ -1,8 +1,8 @@
-export const withdraw = (creep: Creep) => {
+export const withdraw = (creep: Creep, sources: string[] = [STRUCTURE_CONTAINER]) => {
     if(creep.store.getFreeCapacity() > 0) {
         var source = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (structure) => (
-                structure.structureType === STRUCTURE_CONTAINER &&
+                sources.includes(structure.structureType) &&
                 (structure as StructureContainer).store.getUsedCapacity(RESOURCE_ENERGY) > 0
             )
         });

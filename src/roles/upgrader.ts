@@ -13,6 +13,6 @@ export const run = (creep: Creep) => {
         upgrade(creep);
     }
     else {
-        withdraw(creep);
+        withdraw(creep, [STRUCTURE_SPAWN, STRUCTURE_CONTAINER]);
     }
 }
