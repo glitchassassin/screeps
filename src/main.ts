@@ -1,8 +1,9 @@
 import {followFlag} from 'behaviors/followFlag';
-import {run as roleSpawner} from 'roles/spawn';
+import {run as roleSpawner, ROLES} from 'roles/spawn';
 import {run as roleHarvester} from 'roles/harvester';
 import {run as roleBuilder} from 'roles/builder';
 import {run as roleUpgrader} from 'roles/upgrader';
+import {run as rolePioneer} from 'roles/pioneer';
 import { ErrorMapper } from "utils/ErrorMapper";
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
@@ -25,14 +26,17 @@ export const loop = ErrorMapper.wrapLoop(() => {
     var creep = Game.creeps[name];
     if (followFlag(creep)) continue; // Follow Named Flag overrides all other behaviors
 
-    if(creep.memory.role == 'harvester') {
-      roleHarvester(creep) || roleBuilder(creep) || roleUpgrader(creep);
+    if(creep.memory.role == ROLES.MINER) {
+      roleHarvester(creep);
     }
-    if(creep.memory.role == 'upgrader') {
+    if(creep.memory.role == ROLES.UPGRADER) {
       roleUpgrader(creep);
     }
-    if(creep.memory.role == 'builder') {
-      roleBuilder(creep) || roleHarvester(creep) || roleUpgrader(creep);
+    if(creep.memory.role == ROLES.BUILDER) {
+      roleBuilder(creep);
+    }
+    if(creep.memory.role == ROLES.PIONEER) {
+      rolePioneer(creep);
     }
   }
 });

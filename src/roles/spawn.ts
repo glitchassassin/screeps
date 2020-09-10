@@ -4,7 +4,7 @@ const BUILDS: {[id: string]: any[]} = {
     MOBILEWORKER: [WORK, CARRY, CARRY, MOVE],
     HAULER: [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE],
 }
-enum ROLES {
+export enum ROLES {
     PIONEER = 'PIONEER',
     MINER = 'MINER',
     BUILDER = 'BUILDER',
