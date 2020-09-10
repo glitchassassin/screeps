@@ -1,3 +1,6 @@
+import { harvest } from "behaviors/harvest";
+import { build } from "behaviors/build";
+
 export const run = (creep: Creep) => {
     if(creep.memory.building && creep.store[RESOURCE_ENERGY] == 0) {
         creep.memory.building = false;
@@ -9,17 +12,10 @@ export const run = (creep: Creep) => {
     }
 
     if(creep.memory.building) {
-        var target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
-        if (!target) return false; // No building targets - fall back to next priority role
-        if(creep.build(target) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
-        }
+        build(creep);
     }
     else {
-        var source = creep.pos.findClosestByPath(FIND_SOURCES);
-        if(source && creep.harvest(source) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
-        }
+        harvest(creep);
     }
     return true;
 }
