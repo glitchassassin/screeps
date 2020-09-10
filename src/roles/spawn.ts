@@ -14,7 +14,7 @@ export enum ROLES {
 }
 const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
     pioneer: {
-        count: 2,
+        count: 0,
         build: BUILDS.PIONEER,
         role: ROLES.PIONEER
     },
@@ -29,12 +29,12 @@ const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
         role: ROLES.UPGRADER
     },
     hauler: {
-        count: 1,
+        count: 2,
         build: BUILDS.HAULER,
         role: ROLES.HAULER
     },
     builder: {
-        count: 1,
+        count: 2,
         build: BUILDS.STATIONARYWORKER,
         role: ROLES.BUILDER
     },
