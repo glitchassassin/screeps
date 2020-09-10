@@ -24,9 +24,19 @@ const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
         role: ROLES.MINER
     },
     upgrader: {
-        count: 1,
+        count: 2,
         build: BUILDS.STATIONARYWORKER,
         role: ROLES.UPGRADER
+    },
+    hauler: {
+        count: 1,
+        build: BUILDS.HAULER,
+        role: ROLES.HAULER
+    },
+    builder: {
+        count: 1,
+        build: BUILDS.STATIONARYWORKER,
+        role: ROLES.BUILDER
     },
 }
 

@@ -55,6 +55,5 @@ export const run = (creep: Creep) => {
     }
     if(creep.store[RESOURCE_ENERGY] == 0) {
         creep.memory.mode = MODES.HARVESTING;
-        creep.say('🔄 harvesting');
     }
 }
