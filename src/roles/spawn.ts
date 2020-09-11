@@ -12,6 +12,9 @@ export enum ROLES {
     HAULER = 'HAULER',
     UPGRADER = 'UPGRADER',
 }
+
+// TODO: Prioritize Quotas
+// TODO: Set up Quotas by Phase
 const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
     pioneer: {
         count: 0,
@@ -34,7 +37,7 @@ const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
         role: ROLES.HAULER
     },
     builder: {
-        count: 2,
+        count: 3,
         build: BUILDS.STATIONARYWORKER,
         role: ROLES.BUILDER
     },
@@ -47,12 +50,21 @@ export const run = (spawn: StructureSpawn) => {
     Object.keys(QUOTAS).forEach(unit => {
         if (Object.values(Game.creeps).filter(creep => creep.memory.unit === unit).length < QUOTAS[unit].count) {
             console.log(`Spawning new ${unit}`);
-            spawn.spawnCreep(QUOTAS[unit].build, `${unit} ${Game.time}`, {
-                memory: {
-                    role: QUOTAS[unit].role,
-                    unit
-                }
-            })
+            let memory: any = {
+                role: QUOTAS[unit].role,
+                unit,
+            };
+            if (QUOTAS[unit].role === ROLES.MINER) {
+                // Get all available source flags
+                let sources = Object.keys(Game.flags)
+                    .filter(flag => (
+                        flag.startsWith('source') &&
+                        !Object.values(Game.creeps).find(creep => creep.memory.mine === flag)
+                    ));
+                if (!sources) return;
+                memory.mine = sources[0];
+            }
+            spawn.spawnCreep(QUOTAS[unit].build, `${unit} ${Game.time}`, { memory })
         }
     });
 }

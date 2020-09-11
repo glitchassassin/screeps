@@ -1,7 +1,9 @@
-import { harvest } from "behaviors/harvest";
-import { deposit } from "behaviors/deposit";
 import { depositInPlace } from "behaviors/depositInPlace";
+import { harvestInPlace } from "behaviors/harvestInPlace";
+import { followFlag } from "behaviors/followFlag";
 
 export const run = (creep: Creep) => {
-    return harvest(creep) || depositInPlace(creep);
+    followFlag(creep, creep.memory.mine);
+    harvestInPlace(creep);
+    depositInPlace(creep);
 }
