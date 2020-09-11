@@ -1,5 +1,5 @@
 export const repair = (creep: Creep) => {
-    const target = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+    const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: object => object.hits < object.hitsMax
     });
     if (!target) return false; // No repair targets

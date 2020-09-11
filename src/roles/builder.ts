@@ -1,5 +1,6 @@
 import { build } from "behaviors/build";
 import { withdraw } from "behaviors/withdraw";
+import { repair } from "behaviors/repair";
 
 export const run = (creep: Creep) => {
     if(creep.memory.building && creep.store[RESOURCE_ENERGY] == 0) {
@@ -10,7 +11,7 @@ export const run = (creep: Creep) => {
     }
 
     if(creep.memory.building) {
-        build(creep);
+        build(creep) || repair(creep);
     }
     else {
         withdraw(creep);
