@@ -3,7 +3,7 @@ const BUILDS: {[id: string]: any[]} = {
     STATIONARYWORKER: [WORK, WORK, CARRY, MOVE],
     MOBILEWORKER: [WORK, CARRY, CARRY, MOVE],
     HAULER: [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE],
-    MAXMINER: [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE] // 700
+    MAXMINER: [WORK, WORK, WORK, WORK, WORK, MOVE] // 550
 }
 export enum ROLES {
     PIONEER = 'PIONEER',
@@ -19,17 +19,17 @@ const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
         role: ROLES.PIONEER
     },
     miner: {
-        count: 5,
-        build: BUILDS.STATIONARYWORKER,
+        count: 2,
+        build: BUILDS.MAXMINER,
         role: ROLES.MINER
     },
     upgrader: {
-        count: 2,
+        count: 4,
         build: BUILDS.STATIONARYWORKER,
         role: ROLES.UPGRADER
     },
     hauler: {
-        count: 2,
+        count: 4,
         build: BUILDS.HAULER,
         role: ROLES.HAULER
     },
