@@ -6,6 +6,10 @@ interface CreepMemory {
   [id: string]: any;
 }
 
+interface FlagMemory {
+  source?: string;
+}
+
 interface Memory {
   uuid: number;
   log: any;
