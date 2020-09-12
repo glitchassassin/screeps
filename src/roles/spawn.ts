@@ -17,12 +17,13 @@ export enum ROLES {
 
 export const run = (spawn: StructureSpawn) => {
     let level = spawn.room.controller?.level;
+    let sourceCount, pioneerCount
     switch (level) {
         case 1:
-            // First priority - *n* Pioneers, where *n* = available mining spots
-            let sourceCount = spawn.room.find(FIND_SOURCES).length;
-            let pioneerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'pioneer').length;
-            if (pioneerCount < sourceCount) {
+            // First priority - *n* Pioneers, where *n* = available mining spots adjacent to sources
+            sourceCount = spawn.room.find(FIND_SOURCES).length;
+            pioneerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'pioneer').length;
+            if (pioneerCount < 2 * sourceCount) {
                 spawn.spawnCreep(BUILDS.PIONEER, `pioneer ${Game.time}`, { memory: {
                     role: ROLES.PIONEER,
                     unit: 'pioneer'
@@ -39,9 +40,19 @@ export const run = (spawn: StructureSpawn) => {
             }
             break;
         case 2:
-            // First priority - 1 Miner per unassigned source container
+            // Retrograde priority (until extensions in place)
             let extensionsCount = spawn.room.find(FIND_MY_STRUCTURES)
-                                            .filter(structure => structure.structureType === STRUCTURE_EXTENSION).length;
+                .filter(structure => structure.structureType === STRUCTURE_EXTENSION).length;
+            sourceCount = spawn.room.find(FIND_SOURCES).length;
+            pioneerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'pioneer').length;
+            if (extensionsCount < 5 && pioneerCount < 2 * sourceCount) {
+                spawn.spawnCreep(BUILDS.PIONEER, `pioneer ${Game.time}`, { memory: {
+                    role: ROLES.PIONEER,
+                    unit: 'pioneer'
+                }})
+                return;
+            }
+            // First priority - 1 Miner per unassigned source container
             let unassignedSourceContainer = Object.values(Game.flags).find(flag => (
                 flag.name.startsWith('source') &&
                 !spawn.room.find(FIND_MY_CREEPS).find(creep => creep.memory.mine === flag.name)
