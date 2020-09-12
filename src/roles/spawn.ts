@@ -2,7 +2,8 @@ const BUILDS: {[id: string]: any[]} = {
     PIONEER: [WORK, CARRY, MOVE],
     STATIONARYWORKER: [WORK, WORK, CARRY, MOVE],
     MOBILEWORKER: [WORK, CARRY, CARRY, MOVE],
-    HAULER: [CARRY, CARRY, CARRY, CARRY, MOVE, MOVE],
+    HAULER: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], // 550
+    THUG: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, ATTACK, MOVE, MOVE, MOVE, MOVE, MOVE], // 550
     MAXMINER: [WORK, WORK, WORK, WORK, WORK, MOVE] // 550
 }
 export enum ROLES {
@@ -11,60 +12,83 @@ export enum ROLES {
     BUILDER = 'BUILDER',
     HAULER = 'HAULER',
     UPGRADER = 'UPGRADER',
-}
-
-// TODO: Prioritize Quotas
-// TODO: Set up Quotas by Phase
-const QUOTAS: {[id: string]: {count: number, build: any[], role: ROLES}} = {
-    pioneer: {
-        count: 0,
-        build: BUILDS.PIONEER,
-        role: ROLES.PIONEER
-    },
-    miner: {
-        count: 2,
-        build: BUILDS.MAXMINER,
-        role: ROLES.MINER
-    },
-    upgrader: {
-        count: 4,
-        build: BUILDS.STATIONARYWORKER,
-        role: ROLES.UPGRADER
-    },
-    hauler: {
-        count: 4,
-        build: BUILDS.HAULER,
-        role: ROLES.HAULER
-    },
-    builder: {
-        count: 3,
-        build: BUILDS.STATIONARYWORKER,
-        role: ROLES.BUILDER
-    },
+    THUG = 'THUG'
 }
 
 export const run = (spawn: StructureSpawn) => {
-    // Wait for energy to accumulate
-    if (spawn.store.getUsedCapacity(RESOURCE_ENERGY) < 200) return;
-
-    Object.keys(QUOTAS).forEach(unit => {
-        if (Object.values(Game.creeps).filter(creep => creep.memory.unit === unit).length < QUOTAS[unit].count) {
-            console.log(`Spawning new ${unit}`);
-            let memory: any = {
-                role: QUOTAS[unit].role,
-                unit,
-            };
-            if (QUOTAS[unit].role === ROLES.MINER) {
-                // Get all available source flags
-                let sources = Object.keys(Game.flags)
-                    .filter(flag => (
-                        flag.startsWith('source') &&
-                        !Object.values(Game.creeps).find(creep => creep.memory.mine === flag)
-                    ));
-                if (!sources) return;
-                memory.mine = sources[0];
+    let level = spawn.room.controller?.level;
+    switch (level) {
+        case 1:
+            // First priority - *n* Pioneers, where *n* = available mining spots
+            let sourceCount = spawn.room.find(FIND_SOURCES).length;
+            let pioneerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'pioneer').length;
+            if (pioneerCount < sourceCount) {
+                spawn.spawnCreep(BUILDS.PIONEER, `pioneer ${Game.time}`, { memory: {
+                    role: ROLES.PIONEER,
+                    unit: 'pioneer'
+                }})
+                return;
             }
-            spawn.spawnCreep(QUOTAS[unit].build, `${unit} ${Game.time}`, { memory })
-        }
-    });
+            // Second priority - 1 Upgrader
+            if (!spawn.room.find(FIND_MY_CREEPS).find(creep => creep.memory.unit === 'upgrader')) {
+                spawn.spawnCreep(BUILDS.STATIONARYWORKER, `upgrader ${Game.time}`, { memory: {
+                    role: ROLES.UPGRADER,
+                    unit: 'upgrader'
+                }})
+                return;
+            }
+            break;
+        case 2:
+            // First priority - 1 Miner per unassigned source container
+            let extensionsCount = spawn.room.find(FIND_MY_STRUCTURES)
+                                            .filter(structure => structure.structureType === STRUCTURE_EXTENSION).length;
+            let unassignedSourceContainer = Object.values(Game.flags).find(flag => (
+                flag.name.startsWith('source') &&
+                !spawn.room.find(FIND_MY_CREEPS).find(creep => creep.memory.mine === flag.name)
+            ))
+            if (extensionsCount > 5 && unassignedSourceContainer) {
+                spawn.spawnCreep(BUILDS.MINER, `miner ${Game.time}`, { memory: {
+                    role: ROLES.MINER,
+                    unit: 'miner'
+                }})
+                return;
+            }
+            // Second priority - 2 haulers per active miner
+            let minerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'miner').length;
+            let haulerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'hauler').length;
+            if (haulerCount < 2 * minerCount) {
+                spawn.spawnCreep(BUILDS.HAULER, `hauler ${Game.time}`, { memory: {
+                    role: ROLES.HAULER,
+                    unit: 'hauler'
+                }})
+                return;
+            }
+            // Third priority - 2 builders
+            let builderCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'builder').length;
+            if (builderCount < 2) {
+                spawn.spawnCreep(BUILDS.BUILDER, `builder ${Game.time}`, { memory: {
+                    role: ROLES.BUILDER,
+                    unit: 'builder'
+                }})
+                return;
+            }
+            // Fourth priority - 4 upgraders
+            let upgraderCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'upgrader').length;
+            if (upgraderCount < 4) {
+                spawn.spawnCreep(BUILDS.UPGRADER, `upgrader ${Game.time}`, { memory: {
+                    role: ROLES.UPGRADER,
+                    unit: 'upgrader'
+                }})
+                return;
+            }
+            // Fifth priority - 4 thugs
+            let thugCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'thug').length;
+            if (thugCount < 4) {
+                spawn.spawnCreep(BUILDS.THUG, `thug ${Game.time}`, { memory: {
+                    role: ROLES.THUG,
+                    unit: 'thug'
+                }})
+                return;
+            }
+    }
 }
