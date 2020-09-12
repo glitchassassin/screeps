@@ -2,7 +2,7 @@ export const repair = (creep: Creep) => {
     let target: Structure|null = null;
     creep.room.find(FIND_STRUCTURES).forEach(structure => {
         if (structure.hits < structure.hitsMax) {
-            if (target && target.hits > structure.hits) return;
+            if (target && target.hits < structure.hits) return;
             target = structure;
         }
     })
