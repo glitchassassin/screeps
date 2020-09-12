@@ -1,3 +1,4 @@
+import { harvest } from "behaviors/harvest";
 import { upgrade } from "behaviors/upgrade";
 import { withdraw } from "behaviors/withdraw";
 
@@ -13,6 +14,11 @@ export const run = (creep: Creep) => {
         upgrade(creep);
     }
     else {
-        withdraw(creep, [STRUCTURE_SPAWN, STRUCTURE_CONTAINER]);
+        if (creep.room.controller?.level === 1) {
+            withdraw(creep, [STRUCTURE_SPAWN, STRUCTURE_CONTAINER]);
+        }
+        else {
+            withdraw(creep, [STRUCTURE_CONTAINER]) || harvest(creep);
+        }
     }
 }

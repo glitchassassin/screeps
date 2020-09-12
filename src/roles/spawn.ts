@@ -22,9 +22,9 @@ export const run = (spawn: StructureSpawn) => {
 
     if (level && level < 2 || extensionsCount < 5) {
         // First priority - *n* Pioneers, where *n* = available mining spots adjacent to sources
-        let sourceCount = spawn.room.find(FIND_SOURCES).length;
+        let sourceCount = spawn.room.find(FIND_SOURCES).length * 2 // Approximation - should check if surrounding squares are blocked
         let pioneerCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'pioneer').length;
-        if (pioneerCount < 2 * sourceCount) {
+        if (pioneerCount < sourceCount) {
             spawn.spawnCreep(BUILDS.PIONEER, `pioneer ${Game.time}`, { memory: {
                 role: ROLES.PIONEER,
                 unit: 'pioneer'
