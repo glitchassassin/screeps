@@ -101,7 +101,7 @@ export const run = (spawn: StructureSpawn) => {
         }
         // Fourth priority - 6 upgraders
         let upgraderCount = spawn.room.find(FIND_MY_CREEPS).filter(creep => creep.memory.unit === 'upgrader').length;
-        if (upgraderCount < 6) {
+        if (upgraderCount < 8) {
             console.log(`Spawning Upgrader`)
             spawn.spawnCreep(BUILDS.STATIONARYWORKER, `upgrader ${Game.time}`, { memory: {
                 role: ROLES.UPGRADER,
