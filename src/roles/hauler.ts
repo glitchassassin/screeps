@@ -15,7 +15,7 @@ const findContainerByFlag = (flag: Flag) => {
 
 const findEmptyDestinationContainer = () => {
     let target: StructureContainer|null = null;
-    let targetFlag: Flag|null = null;
+    let targetFlag: string|null = null;
     for (let flag in Game.flags) {
         if (!Game.flags[flag].name.startsWith('dest')) continue;
 
@@ -28,16 +28,16 @@ const findEmptyDestinationContainer = () => {
                 container.store.getUsedCapacity(RESOURCE_ENERGY) < target.store.getUsedCapacity(RESOURCE_ENERGY))
             ) {
             target = container;
-            targetFlag = Game.flags[flag];
+            targetFlag = Game.flags[flag].name;
         }
     }
-    targetFlag && console.log(`[${targetFlag.name}] Emptiest destination`);
-    return target?.id;
+    targetFlag && console.log(`[${targetFlag}] Emptiest destination`);
+    return targetFlag;
 }
 
 const findFullSourceContainer = () => {
     let target: StructureContainer|null = null;
-    let targetFlag: Flag|null = null;
+    let targetFlag: string|null = null;
     for (let flag in Game.flags) {
         if (!Game.flags[flag].name.startsWith('source')) continue;
 
@@ -47,37 +47,41 @@ const findFullSourceContainer = () => {
 
         if (!target || container.store.getUsedCapacity(RESOURCE_ENERGY) > target.store.getUsedCapacity(RESOURCE_ENERGY)) {
             target = container;
-            targetFlag = Game.flags[flag];
+            targetFlag = Game.flags[flag].name;
         }
     }
-    targetFlag && console.log(`[${targetFlag.name}] Fullest source`);
-    return target?.id;
+    targetFlag && console.log(`[${targetFlag}] Fullest source`);
+    return targetFlag
 }
 
 export const run = (creep: Creep) => {
     if(!creep.memory.destination) {
-        // We are not currently moving. Are we near a source flag?
-        if (creep.pos.findInRange(FIND_FLAGS, 1).find(flag => flag.name.startsWith('source'))) {
+        creep.memory.destination = findFullSourceContainer();
+    }
+    let target = Object.values(Game.flags).find(flag => flag.name === creep.memory.destination);
+    if (!target) {
+        console.warn(`[${creep.name}] Cannot find hauling target`)
+        return;
+    }
+
+    // We are not currently moving. Are we near the destination flag?
+    if (!creep.pos.isNearTo(target.pos)) {
+        creep.moveTo(target.pos);
+    } else {
+        if (target.name.startsWith('source')) {
             withdraw(creep);
             // Find the destination flag with the most empty container
             creep.memory.destination = findEmptyDestinationContainer();
-        } else if (creep.pos.findInRange(FIND_FLAGS, 1).find(flag => flag.name.startsWith('dest'))) {
-            // We are on a destination flag
-            deposit(creep, [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION]);
-            // Find the source flag with the most full container
-            creep.memory.destination = findFullSourceContainer();
-        } else {
-            // Find the nearest full source flag and head there
-            creep.memory.destination = findFullSourceContainer();
         }
-    }
-
-    let target = Game.getObjectById(creep.memory.destination);
-    if (!target) creep.memory.destination = null;
-
-    if (!creep.pos.inRangeTo(target as RoomPosition, 1)) {
-        creep.moveTo(target as RoomPosition);
-    } else {
-        creep.memory.destination = null;
+        else if (target.name.startsWith('dest')) {
+            deposit(creep, [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION]);
+            // If hauler still has goods, find next destination container
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+                creep.memory.destination = findEmptyDestinationContainer();
+            } else {
+                // Find the source flag with the most full container
+                creep.memory.destination = findFullSourceContainer();
+            }
+        }
     }
 }
