@@ -5,6 +5,7 @@ import {run as roleBuilder} from 'roles/builder';
 import {run as roleUpgrader} from 'roles/upgrader';
 import {run as rolePioneer} from 'roles/pioneer';
 import {run as roleHauler} from 'roles/hauler';
+import {run as roleThug} from 'roles/thug';
 import { ErrorMapper } from "utils/ErrorMapper";
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
@@ -41,6 +42,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
     if(creep.memory.role == ROLES.HAULER) {
       roleHauler(creep);
+    }
+    if(creep.memory.role == ROLES.THUG) {
+      roleThug(creep);
     }
   }
 });
