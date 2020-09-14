@@ -60,7 +60,7 @@ export const run = (creep: Creep) => {
     }
     let target = Object.values(Game.flags).find(flag => flag.name === creep.memory.destination);
     if (!target) {
-        console.warn(`[${creep.name}] Cannot find hauling target`)
+        console.log(`[${creep.name}] Cannot find hauling target`)
         return;
     }
 

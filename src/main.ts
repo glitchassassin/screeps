@@ -7,6 +7,11 @@ import {run as rolePioneer} from 'roles/pioneer';
 import {run as roleHauler} from 'roles/hauler';
 import {run as roleThug} from 'roles/thug';
 import { ErrorMapper } from "utils/ErrorMapper";
+import { ControllerArchitect } from 'architects/ControllerArchitect';
+import { SourceArchitect } from 'architects/SourceArchitect';
+
+let controllerArchitect = new ControllerArchitect;
+let sourceArchitect = new SourceArchitect;
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -20,31 +25,12 @@ export const loop = ErrorMapper.wrapLoop(() => {
       }
     }
   }
-  for (var name in Game.spawns) {
-    roleSpawner(Game.spawns[name])
-  }
 
-  for(var name in Game.creeps) {
-    var creep = Game.creeps[name];
-    if (followFlag(creep)) continue; // Follow Named Flag overrides all other behaviors
+  // Consult architects
+  Object.values(Game.rooms).forEach(room => {
+    controllerArchitect.init(room);
+    sourceArchitect.init(room);
+  })
 
-    if(creep.memory.role == ROLES.MINER) {
-      roleHarvester(creep);
-    }
-    if(creep.memory.role == ROLES.UPGRADER) {
-      roleUpgrader(creep);
-    }
-    if(creep.memory.role == ROLES.BUILDER) {
-      roleBuilder(creep);
-    }
-    if(creep.memory.role == ROLES.PIONEER) {
-      rolePioneer(creep);
-    }
-    if(creep.memory.role == ROLES.HAULER) {
-      roleHauler(creep);
-    }
-    if(creep.memory.role == ROLES.THUG) {
-      roleThug(creep);
-    }
-  }
+  console.log(Game.cpu.getUsed());
 });

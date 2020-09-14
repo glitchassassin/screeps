@@ -1,20 +1,18 @@
 import { Analyst } from "./Analyst";
 
-const adjacencyMatrix = [
-    {x: -1, y: -1},
-    {x: 0, y: -1},
-    {x: 1, y: -1},
-    {x: -1, y: 0},
-    {x: 1, y: 0},
-    {x: -1, y: 1},
-    {x: 0, y: 1},
-    {x: 1, y: 1},
-]
-
 export class MapAnalyst extends Analyst {
+    calculateAdjacencyMatrix = (proximity=1) => {
+        let adjacencies = [...(new Array(proximity * 2 + 1))].map((v, i) => i - proximity)
+        return adjacencies.flatMap(
+            (x, i) => adjacencies.map( y => ({x, y}))
+        ).filter(a => !(a.x === 0 && a.y === 0));
+    }
     calculateAdjacentPositions = (pos: RoomPosition) => {
+        return this.calculateNearbyPositions(pos, 1);
+    }
+    calculateNearbyPositions = (pos: RoomPosition, proximity: number) => {
         let adjacent: RoomPosition[] = [];
-        adjacent = adjacencyMatrix
+        adjacent = this.calculateAdjacencyMatrix(proximity)
             .map(offset => Game.rooms[pos.roomName].getPositionAt(pos.x + offset.x, pos.y + offset.y))
             .filter(roomPos => roomPos !== null) as RoomPosition[]
         return adjacent;

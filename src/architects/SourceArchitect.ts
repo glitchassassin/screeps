@@ -5,11 +5,15 @@ const sourceAnalyst = new SourceAnalyst();
 
 export class SourceArchitect extends Architect {
     mines: Mine[] = [];
+    setupComplete = false;
     init = (room: Room) => {
+        // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
+        if (this.setupComplete && Game.time % 500 !== 0) return;
+
         this.mines = sourceAnalyst.getDesignatedMiningLocations(room);
         if (this.mines.length == 0)  {
             // Lay out mining locations
-            sourceAnalyst.calculateViableMiningLocations(room).forEach((pos, i) => {
+            sourceAnalyst.calculateBestMiningLocations(room).forEach((pos, i) => {
                 let flag = pos.createFlag(`source${i}`, COLOR_GREEN);
                 Memory.flags[flag] = {
                     source: `${i}`
@@ -22,6 +26,7 @@ export class SourceArchitect extends Architect {
             this.mines.forEach(mine => {
                 if (!mine.container && !mine.constructionSite) {
                     mine.pos.createConstructionSite(STRUCTURE_CONTAINER);
+                    this.setupComplete = true;
                 }
             })
         }

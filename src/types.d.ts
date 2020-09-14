@@ -8,6 +8,7 @@ interface CreepMemory {
 
 interface FlagMemory {
   source?: string;
+  upgradeDepot?: boolean;
 }
 
 interface Memory {

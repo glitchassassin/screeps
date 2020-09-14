@@ -1,3 +1,7 @@
+/*
+* Game.spawns['Spawn1'].spawnCreep([WORK, CARRY, MOVE], `pioneer ${Game.time}`, { memory: { role: 'PIONEER', unit: 'pioneer' }})
+*/
+
 const BUILDS: {[id: string]: any[]} = {
     PIONEER: [WORK, CARRY, MOVE],
     STATIONARYWORKER: [WORK, WORK, CARRY, MOVE],

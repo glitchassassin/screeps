@@ -10,14 +10,25 @@ export type Mine = {
 }
 
 export class SourceAnalyst extends Analyst {
-    calculateViableMiningLocations = (room: Room) => {
+    calculateBestMiningLocations = (room: Room) => {
         let locations: RoomPosition[] = [];
         let sources = room.find(FIND_SOURCES);
+        let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
+        let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
+
         sources.forEach(source => {
-            let candidate = mapAnalyst
+            let candidate: {pos: RoomPosition, range: number}|null = (null as {pos: RoomPosition, range: number}|null);
+            mapAnalyst
                 .calculateAdjacentPositions(source.pos)
-                .find(mapAnalyst.isPositionWalkable)
-            if (candidate) locations.push(candidate);
+                .forEach((pos) => {
+                    if (mapAnalyst.isPositionWalkable(pos)) {
+                        let range = PathFinder.search(pos, target).cost;
+                        if (!candidate || candidate.range > range) {
+                            candidate = {pos, range};
+                        }
+                    }
+                })
+            if (candidate) locations.push(candidate.pos);
         })
         return locations;
     }
