@@ -1,6 +1,7 @@
 import { LogisticsAnalyst } from "analysts/LogisticsAnalyst";
 import { Request } from "requests/Request";
 import { requestTypes } from "requests/RequestTypes";
+import { BuildRequest } from "requests/types/BuildRequest";
 import { EnergyRequest } from "requests/types/EnergyRequest";
 import { MinionRequest } from "requests/types/MinionRequest";
 import { UpgradeRequest } from "requests/types/UpgradeRequest";
@@ -60,7 +61,7 @@ export class RequestManager extends Manager {
             ...Object.values(this.requests.UpgradeRequest),
             ...Object.values(this.requests.BuildRequest),
         ].sort((a, b) => (b.priority - a.priority)).forEach(r => {
-            if (!(r instanceof EnergyRequest || r instanceof UpgradeRequest)) return;
+            if (!(r instanceof EnergyRequest || r instanceof UpgradeRequest || r instanceof BuildRequest)) return;
             // Assign unassigned requests
             if (r.canAssign()) {
                 // Find a creep to carry out the request

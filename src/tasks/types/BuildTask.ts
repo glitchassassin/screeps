@@ -14,7 +14,7 @@ export class BuildTask extends Task {
         let result = this.creep.build(this.destination);
         if (result === ERR_NOT_IN_RANGE) {
             this.creep.moveTo(this.destination);
-        } else {
+        } else if (result !== OK){
             return true;
         }
         return false;

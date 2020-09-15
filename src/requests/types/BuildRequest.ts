@@ -1,5 +1,6 @@
 import { TaskManager } from "managers/TaskManager";
 import { BuildTask } from "tasks/types/BuildTask";
+import { HarvestTask } from "tasks/types/HarvestTask";
 import { TransferTask } from "tasks/types/TransferTask";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
 import { Request } from "../Request";
@@ -14,10 +15,7 @@ export class BuildRequest extends Request {
     fulfill = (room: Room) => {
         this.assignedTo.forEach(creepId => {
             let creep = Game.getObjectById(creepId as Id<Creep>);
-            if (creep?.store.getUsedCapacity() === 0) {
-                // Minion is empty; unassign it
-                this.assignedTo = this.assignedTo.filter(id => id !== creep?.id)
-            } else if (!this.target) {
+            if (!this.target) {
                 // Target is complete; fulfill the request
                 this.completed = true;
                 return;
@@ -27,13 +25,23 @@ export class BuildRequest extends Request {
                     // Minion has a full tank - use it
                     global.managers.task.assign(new BuildTask(creep, this.target))
                 }
-                else if (creep.store.getUsedCapacity() > 0) {
-                    // Minion is running low; is there somewhere to top up? If not, use what we have.
+                else {
+                    // Minion is running low; is there somewhere to top up? If not, use what we have, or unassign the minion.
                     let source = global.analysts.logistics.getMostFullAllSources(room);
                     if (source && source.store[RESOURCE_ENERGY] > 0) {
                         global.managers.task.assign(new WithdrawTask(creep, source))
                     } else {
-                        global.managers.task.assign(new BuildTask(creep, this.target))
+                        let mine = global.analysts.source.getDesignatedMiningLocations(room).find(m => m.source?.energy);
+                        if (mine) {
+                            global.managers.task.assign(new HarvestTask(creep, mine.source))
+                        } else {
+                            // No collection sources, no harvest sources, dump what we have and then abandon request
+                            if (creep.store.getUsedCapacity() > 0) {
+                                global.managers.task.assign(new BuildTask(creep, this.target))
+                            } else {
+                                this.assignedTo = this.assignedTo.filter(id => id !== creep?.id)
+                            }
+                        }
                     }
                 }
             }
