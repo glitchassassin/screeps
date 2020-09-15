@@ -18,24 +18,24 @@ export class MinionRequest extends Request {
 
     fulfill = (room: Room) => {
         if (!this.type || !this.assignedTo) return;
-
-        let spawn = Game.getObjectById(this.assignedTo as Id<StructureSpawn>);
-        if (!spawn) return;
-        if (!spawn.spawning && !this.spawned) {
-            switch (this.type) {
-                case MinionTypes.MINER:
-                    this.spawned = (new MinerMinion())
-                        .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
-                    break;
-                case MinionTypes.UPGRADER:
-                    this.spawned = (new UpgraderMinion())
-                        .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
-                    break;
+        this.assignedTo.forEach(spawnId => {
+            let spawn = Game.getObjectById(spawnId as Id<StructureSpawn>);
+            if (!spawn) return;
+            if (!spawn.spawning && !this.spawned) {
+                switch (this.type) {
+                    case MinionTypes.MINER:
+                        this.spawned = (new MinerMinion())
+                            .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                        break;
+                    case MinionTypes.UPGRADER:
+                        this.spawned = (new UpgraderMinion())
+                            .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                        break;
+                }
+            } else if (!spawn.spawning && this.spawned) {
+                this.completed = true;
             }
-        } else if (!spawn.spawning && this.spawned) {
-            this.completed = true;
-        }
-
+        })
     }
 
     serialize = () => {

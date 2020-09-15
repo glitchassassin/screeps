@@ -16,27 +16,32 @@ export class EnergyRequest extends Request {
     ) { super(); }
 
     fulfill = (room: Room) => {
-        let creep = Game.getObjectById(this.assignedTo as Id<Creep>);
-        if (creep?.store.getUsedCapacity() === 0 || (this.target as StructureContainer).store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-            // Minion is empty or target is full; fulfill the request
-            this.completed = true;
-            return;
-        }
-        if (creep && global.managers.task.isIdle(creep)) {
-            if (creep.store.getFreeCapacity() === 0) {
-                // Minion has a full tank - deposit it
-                global.managers.task.assign(new TransferTask(creep, this.target))
+        this.assignedTo.forEach(creepId => {
+            let creep = Game.getObjectById(creepId as Id<Creep>);
+            if (creep?.store.getUsedCapacity() === 0) {
+                // Minion is empty; unassign it
+                this.assignedTo = this.assignedTo.filter(id => id !== creep?.id)
+            } else if ((this.target as StructureContainer).store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+                // Target is full; fulfill the request
+                this.completed = true;
+                return;
             }
-            else if (creep.store.getUsedCapacity() > 0) {
-                // Minion is running low; is there somewhere to top up? If not, deposit what we have.
-                let source = global.analysts.logistics.getMostFullAllSources(room);
-                if (source && source.id !== this.target?.id && source.store[RESOURCE_ENERGY] > 0) {
-                    global.managers.task.assign(new WithdrawTask(creep, source))
-                } else {
+            if (creep && global.managers.task.isIdle(creep)) {
+                if (creep.store.getFreeCapacity() === 0) {
+                    // Minion has a full tank - deposit it
                     global.managers.task.assign(new TransferTask(creep, this.target))
                 }
+                else if (creep.store.getUsedCapacity() > 0) {
+                    // Minion is running low; is there somewhere to top up? If not, deposit what we have.
+                    let source = global.analysts.logistics.getMostFullAllSources(room);
+                    if (source && source.id !== this.target?.id && source.store[RESOURCE_ENERGY] > 0) {
+                        global.managers.task.assign(new WithdrawTask(creep, source))
+                    } else {
+                        global.managers.task.assign(new TransferTask(creep, this.target))
+                    }
+                }
             }
-        }
+        })
     }
 
     serialize = () => {
@@ -50,5 +55,15 @@ export class EnergyRequest extends Request {
         this.target = Game.getObjectById(task.target as Id<Structure>)
         this.amount = task.amount;
         return this;
+    }
+
+    canAssign = () => {
+        if (!this.amount) return (this.assignedTo.length === 0);
+        if (this.assignedTo.length === 0) return true;
+        let capacity = this.assignedTo
+            .map(id => Game.getObjectById(id as Id<Creep>)?.store[RESOURCE_ENERGY])
+            .filter((e): e is number => !!(e && e > 0)).reduce((a, b) => a + b, 0);
+        // We need more than these minions can carry, so we can assign another
+        return capacity < this.amount;
     }
 }

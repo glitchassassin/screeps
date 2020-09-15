@@ -6,7 +6,7 @@
 
 export class Request {
     completed = false;
-    assignedTo: string|null = null;
+    assignedTo: string[] = [];
     constructor(
         public sourceId: string|null = null,
         public priority = 5,
@@ -29,5 +29,10 @@ export class Request {
             priority: this.priority,
             ...subProps
         })
+    }
+
+    public canAssign() {
+        // By default, can only assign one fulfiller
+        return this.assignedTo.length === 0;
     }
 }

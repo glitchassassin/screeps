@@ -4,9 +4,6 @@ import { requestTypes } from "requests/RequestTypes";
 import { EnergyRequest } from "requests/types/EnergyRequest";
 import { MinionRequest } from "requests/types/MinionRequest";
 import { UpgradeRequest } from "requests/types/UpgradeRequest";
-import { TransferTask } from "tasks/types/TransferTask";
-import { TravelTask } from "tasks/types/TravelTask";
-import { WithdrawTask } from "tasks/types/WithdrawTask";
 import { Manager } from "./Manager";
 import { SpawnManager } from "./SpawnManager";
 import { TaskManager } from "./TaskManager";
@@ -68,13 +65,13 @@ export class RequestManager extends Manager {
         ].sort((a, b) => (b.priority - a.priority)).forEach(r => {
             if (!(r instanceof EnergyRequest || r instanceof UpgradeRequest)) return;
             // Assign unassigned requests
-            if (!r.assignedTo || !Game.getObjectById(r.assignedTo as Id<Creep>)) {
+            if (r.canAssign()) {
                 // Find a creep to carry out the request
                 let creep = this.idleCreeps
                     .find(c => c.store.getCapacity() > 0)
                 if (creep) {
                     console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${creep.name}`)
-                    r.assignedTo = creep.id;
+                    r.assignedTo.push(creep.id);
                     this.idleCreeps = this.idleCreeps.filter(c => c.id !== (creep as Creep).id)
                 }
             }
@@ -87,19 +84,17 @@ export class RequestManager extends Manager {
         Object.values(this.requests.MinionRequest)
             .sort((a, b) => (b.priority - a.priority)).forEach(r => {
             if (!(r instanceof MinionRequest)) return
-            if (!r.assignedTo) {
+            if (r.canAssign()) {
                 // Find a spawn to carry out the request
                 let available = this.spawnManager.getSpawns(room).find(s => this.isIdle(s.spawn.id));
                 if (available) {
                     console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
-                    r.assignedTo = available.spawn.id;
+                    r.assignedTo.push(available.spawn.id);
                 }
             }
 
             // Process assigned requests
-            if (r.assignedTo) {
-                r.fulfill(room)
-            }
+            r.fulfill(room)
         })
     }
     cleanup = (room: Room) => {
@@ -122,7 +117,7 @@ export class RequestManager extends Manager {
     isIdle = (id: string) => {
         for (let reqType in this.requests) {
             for (let reqSource in this.requests[reqType]) {
-                if (this.requests[reqType][reqSource].assignedTo === id) {
+                if (this.requests[reqType][reqSource].assignedTo.includes(id)) {
                     return false;
                 }
             }
