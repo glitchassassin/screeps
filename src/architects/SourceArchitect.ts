@@ -6,7 +6,7 @@ export class SourceArchitect extends Architect {
     setupComplete = false;
     init = (room: Room) => {
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
-        if (this.setupComplete && Game.time % 500 !== 0) return;
+        if (this.setupComplete && Game.time % 50 !== 0) return;
 
         this.mines = global.analysts.source.getDesignatedMiningLocations(room);
         if (this.mines.length == 0)  {

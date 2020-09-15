@@ -8,7 +8,7 @@ export class ControllerArchitect extends Architect {
         // Only bother with rooms that have a controller
         if (!room.controller) return;
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
-        if (this.setupComplete && Game.time % 500 !== 0) return;
+        if (this.setupComplete && Game.time % 50 !== 0) return;
 
         global.analysts.controller.calculateBestContainerLocation(room);
         if (!this.depot)  {

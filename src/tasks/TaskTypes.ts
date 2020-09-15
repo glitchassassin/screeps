@@ -1,4 +1,5 @@
 import { Task } from "./Task";
+import { BuildTask } from "./types/BuildTask";
 import { HarvestTask } from "./types/HarvestTask";
 import { TransferTask } from "./types/TransferTask";
 import { TravelTask } from "./types/TravelTask";
@@ -11,6 +12,7 @@ export const taskTypes = [
     TransferTask,
     WithdrawTask,
     UpgradeTask,
+    BuildTask,
 ].reduce((a: {[id: string]: typeof Task}, b) => {
     a[b.name] = b;
     return a;

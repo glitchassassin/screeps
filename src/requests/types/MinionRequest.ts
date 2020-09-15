@@ -1,10 +1,12 @@
 import { Request } from "../Request";
+import { BuilderMinion } from "./minions/BuilderMinion";
 import { MinerMinion } from './minions/MinerMinion';
 import { UpgraderMinion } from "./minions/UpgraderMinion";
 
 export enum MinionTypes {
     MINER = 'MINER',
-    UPGRADER = 'UPGRADER'
+    UPGRADER = 'UPGRADER',
+    BUILDER = 'BUILDER',
 }
 
 export class MinionRequest extends Request {
@@ -29,6 +31,10 @@ export class MinionRequest extends Request {
                         break;
                     case MinionTypes.UPGRADER:
                         this.spawned = (new UpgraderMinion())
+                            .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                        break;
+                    case MinionTypes.BUILDER:
+                        this.spawned = (new BuilderMinion())
                             .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
                         break;
                 }

@@ -32,6 +32,7 @@ declare namespace NodeJS {
       map: import('./analysts/MapAnalyst').MapAnalyst,
       source: import('./analysts/SourceAnalyst').SourceAnalyst,
       spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
+      builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
     };
     managers: {
       controller: import('./managers/ControllerManager').ControllerManager,
@@ -39,6 +40,7 @@ declare namespace NodeJS {
       source: import('./managers/SourceManager').SourceManager,
       spawn: import('./managers/SpawnManager').SpawnManager,
       task: import('./managers/TaskManager').TaskManager,
+      builder: import('./managers/BuilderManager').BuilderManager,
     };
   }
 }

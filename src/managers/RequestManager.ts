@@ -17,14 +17,10 @@ type RequestsMap<T> = {
 }
 
 export class RequestManager extends Manager {
-    constructor(
-        private taskManager: TaskManager,
-        private spawnManager: SpawnManager
-    ) { super(); }
-
     requests: RequestsMap<Request> = {
         EnergyRequest: {},
-        MinionRequest: {}
+        MinionRequest: {},
+        BuildRequest: {}
     };
     idleCreeps: Creep[] = [];
 
@@ -54,14 +50,15 @@ export class RequestManager extends Manager {
 
     init = (room: Room) => {
         this.idleCreeps = room.find(FIND_MY_CREEPS).filter(creep =>
-            this.taskManager.isIdle(creep) && this.isIdle(creep.id)
+            global.managers.task.isIdle(creep) && this.isIdle(creep.id)
         );
     }
     run = (room: Room) => {
         // Creep requests
         [
             ...Object.values(this.requests.EnergyRequest),
-            ...Object.values(this.requests.UpgradeRequest)
+            ...Object.values(this.requests.UpgradeRequest),
+            ...Object.values(this.requests.BuildRequest),
         ].sort((a, b) => (b.priority - a.priority)).forEach(r => {
             if (!(r instanceof EnergyRequest || r instanceof UpgradeRequest)) return;
             // Assign unassigned requests
@@ -86,7 +83,7 @@ export class RequestManager extends Manager {
             if (!(r instanceof MinionRequest)) return
             if (r.canAssign()) {
                 // Find a spawn to carry out the request
-                let available = this.spawnManager.getSpawns(room).find(s => this.isIdle(s.spawn.id));
+                let available = global.managers.spawn.getSpawns(room).find(s => this.isIdle(s.spawn.id));
                 if (available) {
                     console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
                     r.assignedTo.push(available.spawn.id);

@@ -21,31 +21,29 @@ import { SpawnAnalyst } from 'analysts/Spawnanalyst';
 import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
 import { MapAnalyst } from 'analysts/MapAnalyst';
 import { SourceAnalyst } from 'analysts/SourceAnalyst';
+import { BuilderManager } from 'managers/BuilderManager';
+import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
 
 // Initialize memory
 if (!Memory.flags) Memory.flags = {};
 if (!Memory.rooms) Memory.rooms = {};
 if (!Memory.creeps) Memory.creeps = {};
 
-let task = new TaskManager();
-let spawn = new SpawnManager();
-let request = new RequestManager(task, spawn);
-let source = new SourceManager(task, request)
-let controller = new ControllerManager();
-
 global.managers = {
-  task,
-  spawn,
-  request,
-  source,
-  controller,
+  task: new TaskManager(),
+  spawn: new SpawnManager(),
+  request: new RequestManager(),
+  source: new SourceManager(),
+  controller: new ControllerManager(),
+  builder: new BuilderManager(),
 }
 global.analysts = {
   logistics: new LogisticsAnalyst(),
   spawn: new SpawnAnalyst(),
   controller: new ControllerAnalyst(),
   map: new MapAnalyst(),
-  source: new SourceAnalyst()
+  source: new SourceAnalyst(),
+  builder: new BuilderAnalyst()
 }
 
 

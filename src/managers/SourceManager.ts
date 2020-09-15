@@ -11,10 +11,6 @@ import { RequestManager } from "./RequestManager";
 const sourceAnalyst = new SourceAnalyst();
 
 export class SourceManager extends Manager {
-    constructor(
-        private taskManager: TaskManager,
-        private requestManager: RequestManager
-    ) { super(); }
     mines: Mine[] = [];
     init = (room: Room) => {
         this.mines = sourceAnalyst.getDesignatedMiningLocations(room);
@@ -22,7 +18,7 @@ export class SourceManager extends Manager {
         // Request minions, if needed
         this.mines.forEach((mine) => {
             if (!mine.miner) {
-                this.requestManager.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
+                global.managers.request.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
                     source: mine.id
                 }))
             }
@@ -31,7 +27,7 @@ export class SourceManager extends Manager {
     run = (room: Room) => {
         this.mines.forEach(mine => {
             if (!mine.source) return;
-            if (mine.miner && this.taskManager.isIdle(mine.miner)) {
+            if (mine.miner && global.managers.task.isIdle(mine.miner)) {
                 if (mine.minerOnSite) {
                     // If miner is full, and mine container exists, deposit there;
                     // otherwise, remain idle
@@ -44,10 +40,10 @@ export class SourceManager extends Manager {
                         }
                     }
                     // If miner is not full, continue harvesting
-                    this.taskManager.assign(new HarvestTask(mine.miner, mine.source));
+                    global.managers.task.assign(new HarvestTask(mine.miner, mine.source));
                 } else {
                     // If miner is not on site, go there
-                    this.taskManager.assign(new TravelTask(mine.miner, mine.pos));
+                    global.managers.task.assign(new TravelTask(mine.miner, mine.pos));
                 }
             }
         })
