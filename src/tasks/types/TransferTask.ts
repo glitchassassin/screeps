@@ -1,6 +1,7 @@
 import { Task } from "../Task";
 
 export class TransferTask extends Task {
+    message = "⏩";
     constructor(
         public creep: Creep|null = null,
         public destination: Structure|null = null,

@@ -6,7 +6,7 @@ import { Manager } from "./Manager";
 export class TaskManager extends Manager {
     tasks: Task[] = [];
     assign = (task: Task) => {
-        console.log(`[TaskManager] Assigning creep ${task.creep?.name} to action ${task.constructor.name}`)
+        task.creep?.say(task.message);
         this.tasks.push(task);
     }
     load = (room: Room) => {

@@ -1,5 +1,6 @@
 export class Task {
     completed = false;
+    message = "☑";
     constructor(
         public creep: Creep|null = null
     ) { }

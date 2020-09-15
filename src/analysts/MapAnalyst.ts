@@ -1,11 +1,14 @@
 import { Analyst } from "./Analyst";
 
+let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
+    return [].concat(...arr.map(f))
+}
+
 export class MapAnalyst extends Analyst {
-    calculateAdjacencyMatrix = (proximity=1) => {
+    calculateAdjacencyMatrix = (proximity=1): {x: number, y: number}[] => {
         let adjacencies = [...(new Array(proximity * 2 + 1))].map((v, i) => i - proximity)
-        return adjacencies.map(
-            (x, i) => adjacencies.map( y => ({x, y}))
-        ).flat(1).filter(a => !(a.x === 0 && a.y === 0));
+        return flatMap(adjacencies, (x, i) => adjacencies.map( y => ({x, y})))
+            .filter((a: {x: number, y: number}) => !(a.x === 0 && a.y === 0));
     }
     calculateAdjacentPositions = (pos: RoomPosition) => {
         return this.calculateNearbyPositions(pos, 1);

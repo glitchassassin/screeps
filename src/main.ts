@@ -22,6 +22,11 @@ import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
 import { MapAnalyst } from 'analysts/MapAnalyst';
 import { SourceAnalyst } from 'analysts/SourceAnalyst';
 
+// Initialize memory
+if (!Memory.flags) Memory.flags = {};
+if (!Memory.rooms) Memory.rooms = {};
+if (!Memory.creeps) Memory.creeps = {};
+
 let task = new TaskManager();
 let spawn = new SpawnManager();
 let request = new RequestManager(task, spawn);

@@ -1,6 +1,7 @@
 import { Task } from "../Task";
 
 export class UpgradeTask extends Task {
+    message = "⏫";
     constructor(
         public creep: Creep|null = null,
         public destination: StructureController|null = null,

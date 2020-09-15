@@ -1,6 +1,7 @@
 import { Task } from "../Task";
 
 export class HarvestTask extends Task {
+    message = "⚡";
     constructor(
         public creep: Creep|null = null,
         public source: Source|null = null,

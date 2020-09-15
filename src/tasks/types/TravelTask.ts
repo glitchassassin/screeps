@@ -1,6 +1,7 @@
 import { Task } from "../Task";
 
 export class TravelTask extends Task {
+    message = "🚗";
     constructor(
         public creep: Creep|null = null,
         public destination: RoomPosition|null = null,
