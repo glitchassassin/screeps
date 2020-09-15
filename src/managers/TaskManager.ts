@@ -9,7 +9,7 @@ export class TaskManager extends Manager {
         console.log(`[TaskManager] Assigning creep ${task.creep?.name} to action ${task.constructor.name}`)
         this.tasks.push(task);
     }
-    init = (room: Room) => {
+    load = (room: Room) => {
         // Load tasks from Memory
         if (Memory.rooms[room.name]?.tasks) {
             this.tasks = Memory.rooms[room.name]?.tasks?.split('|').map(task => {

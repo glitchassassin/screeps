@@ -66,13 +66,16 @@ export const loop = ErrorMapper.wrapLoop(() => {
     // Consult architects
     architects.forEach(architect => architect.init(room));
 
-    // Consult managers
+    // Load memory
+    Object.values(global.managers).forEach(manager => manager.load(room));
+
+    // Initialize managers
     Object.values(global.managers).forEach(manager => manager.init(room));
 
-    // Execute managers
+    // Run managers
     Object.values(global.managers).forEach(manager => manager.run(room));
 
-    // Execute cleanup
+    // Clean up managers
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
   })
 });

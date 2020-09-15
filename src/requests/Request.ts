@@ -8,13 +8,15 @@ export class Request {
     completed = false;
     assignedTo: string|null = null;
     constructor(
-        public sourceId: string|null = null
+        public sourceId: string|null = null,
+        public priority = 5,
     ) { }
 
     public deserialize(task: any) {
         this.sourceId = task.sourceId;
         this.completed = task.completed;
         this.assignedTo = task.assignedTo;
+        this.priority = task.priority;
         return this;
     }
 
@@ -24,6 +26,7 @@ export class Request {
             sourceId: this.sourceId,
             assignedTo: this.assignedTo,
             completed: this.completed,
+            priority: this.priority,
             ...subProps
         })
     }

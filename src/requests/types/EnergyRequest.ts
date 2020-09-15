@@ -10,6 +10,7 @@ export enum MinionTypes {
 export class EnergyRequest extends Request {
     constructor(
         public sourceId: string|null = null,
+        public priority = 5,
         public target: Structure|null = null,
         public amount: number|null = null,
     ) { super(); }

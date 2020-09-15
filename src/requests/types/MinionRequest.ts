@@ -11,6 +11,7 @@ export class MinionRequest extends Request {
     private spawned = false;
     constructor(
         public sourceId: string|null = null,
+        public priority = 5,
         public type: MinionTypes|null = null,
         public memory: CreepMemory = {}
     ) { super(sourceId); }
@@ -25,9 +26,11 @@ export class MinionRequest extends Request {
                 case MinionTypes.MINER:
                     this.spawned = (new MinerMinion())
                         .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                    break;
                 case MinionTypes.UPGRADER:
                     this.spawned = (new UpgraderMinion())
                         .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                    break;
             }
         } else if (!spawn.spawning && this.spawned) {
             this.completed = true;

@@ -17,7 +17,7 @@ export class SpawnManager extends Manager {
         this.spawns.forEach((spawn) => {
             let capacity = spawn.spawn.store.getFreeCapacity(RESOURCE_ENERGY)
             if (capacity > 0) {
-                global.managers.request.submit(new EnergyRequest(spawn.spawn.id, spawn.spawn, capacity))
+                global.managers.request.submit(new EnergyRequest(spawn.spawn.id, 5, spawn.spawn, capacity))
             }
         })
     }

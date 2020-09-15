@@ -6,6 +6,7 @@ import { Request } from "../Request";
 export class UpgradeRequest extends Request {
     constructor(
         public sourceId: string|null = null,
+        public priority = 4,
         public target: StructureController|null = null,
     ) { super(); }
 

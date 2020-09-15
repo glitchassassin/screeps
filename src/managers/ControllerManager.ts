@@ -18,9 +18,9 @@ export class ControllerManager extends Manager {
 
         // Request minions, if needed
         if (!this.upgrader) {
-            global.managers.request.submit(new MinionRequest(room.controller.id, MinionTypes.UPGRADER))
+            global.managers.request.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
             // Request energy, if no dedicated upgraders
-            global.managers.request.submit(new UpgradeRequest(room.controller.id, room.controller))
+            global.managers.request.submit(new UpgradeRequest(room.controller.id, 1, room.controller))
         }
     }
     run = (room: Room) => {

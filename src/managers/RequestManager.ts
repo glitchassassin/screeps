@@ -33,16 +33,16 @@ export class RequestManager extends Manager {
 
     submit = (request: Request) => {
         if (!request.sourceId) return;
-        if (!this.requests[request.constructor.name]) {
+        if (this.requests[request.constructor.name] === undefined) {
             this.requests[request.constructor.name] = {};
         }
         if (!this.requests[request.constructor.name][request.sourceId]) {
             this.requests[request.constructor.name][request.sourceId] = request;
-            console.log(`[RequestManager] Received ${request.constructor.name} request from ${request.sourceId}`)
+            console.log(`[RequestManager] Received priority ${request.priority} ${request.constructor.name} request from ${request.sourceId}`)
         }
     }
 
-    init = (room: Room) => {
+    load = (room: Room) => {
         // Load tasks from Memory
         if (Memory.rooms[room.name]?.requests) {
             let deserialized = JSON.parse(Memory.rooms[room.name]?.requests as string)
@@ -53,38 +53,27 @@ export class RequestManager extends Manager {
                 }
             }
         }
+    }
 
+    init = (room: Room) => {
         this.idleCreeps = room.find(FIND_MY_CREEPS).filter(creep =>
             this.taskManager.isIdle(creep) && this.isIdle(creep.id)
         );
     }
     run = (room: Room) => {
-        Object.values(this.requests.EnergyRequest).forEach(r => {
-            if (!(r instanceof EnergyRequest)) return;
+        // Creep requests
+        [
+            ...Object.values(this.requests.EnergyRequest),
+            ...Object.values(this.requests.UpgradeRequest)
+        ].sort((a, b) => (b.priority - a.priority)).forEach(r => {
+            if (!(r instanceof EnergyRequest || r instanceof UpgradeRequest)) return;
             // Assign unassigned requests
             if (!r.assignedTo || !Game.getObjectById(r.assignedTo as Id<Creep>)) {
                 // Find a creep to carry out the request
                 let creep = this.idleCreeps
                     .find(c => c.store.getCapacity() > 0)
                 if (creep) {
-                    console.log(`[RequestManager] Delegating ${r.constructor.name} request to ${creep.name}`)
-                    r.assignedTo = creep.id;
-                    this.idleCreeps = this.idleCreeps.filter(c => c.id !== (creep as Creep).id)
-                }
-            }
-
-            // Process assigned requests
-            r.fulfill(room)
-        })
-        Object.values(this.requests.UpgradeRequest).forEach(r => {
-            if (!(r instanceof UpgradeRequest)) return;
-            // Assign unassigned requests
-            if (!r.assignedTo || !Game.getObjectById(r.assignedTo as Id<Creep>)) {
-                // Find a creep to carry out the request
-                let creep = this.idleCreeps
-                    .find(c => c.store.getCapacity() > 0)
-                if (creep) {
-                    console.log(`[RequestManager] Delegating ${r.constructor.name} request to ${creep.name}`)
+                    console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${creep.name}`)
                     r.assignedTo = creep.id;
                     this.idleCreeps = this.idleCreeps.filter(c => c.id !== (creep as Creep).id)
                 }
@@ -94,12 +83,15 @@ export class RequestManager extends Manager {
             r.fulfill(room)
         })
 
-        Object.values(this.requests.MinionRequest).forEach(r => {
+        // Spawn Requests
+        Object.values(this.requests.MinionRequest)
+            .sort((a, b) => (b.priority - a.priority)).forEach(r => {
             if (!(r instanceof MinionRequest)) return
             if (!r.assignedTo) {
                 // Find a spawn to carry out the request
                 let available = this.spawnManager.getSpawns(room).find(s => this.isIdle(s.spawn.id));
                 if (available) {
+                    console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
                     r.assignedTo = available.spawn.id;
                 }
             }
