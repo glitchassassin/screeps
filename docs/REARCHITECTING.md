@@ -42,3 +42,4 @@ SourceManager - Requests Miners when they are aging out. Assigns Miners to Sourc
 ControllerManager - Auto-balances Upgraders. Arranges Upgrader formations around container (to allow room for Haulers). Manages Upgrader work.
 LogisticsManager - Auto-balances Haulers. Calculates route lengths between Sources and Destinations. Assigns Haulers to routes. Reports average Hauler latency.
 
+TaskManager - Manages Tasks assigned to Creeps.

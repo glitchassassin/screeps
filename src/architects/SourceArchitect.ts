@@ -1,7 +1,5 @@
 import { Architect } from './Architect';
-import { SourceAnalyst, Mine } from 'analysts/SourceAnalyst';
-
-const sourceAnalyst = new SourceAnalyst();
+import { Mine } from 'analysts/SourceAnalyst';
 
 export class SourceArchitect extends Architect {
     mines: Mine[] = [];
@@ -10,13 +8,13 @@ export class SourceArchitect extends Architect {
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
         if (this.setupComplete && Game.time % 500 !== 0) return;
 
-        this.mines = sourceAnalyst.getDesignatedMiningLocations(room);
+        this.mines = global.analysts.source.getDesignatedMiningLocations(room);
         if (this.mines.length == 0)  {
             // Lay out mining locations
-            sourceAnalyst.calculateBestMiningLocations(room).forEach((pos, i) => {
-                let flag = pos.createFlag(`source${i}`, COLOR_GREEN);
+            global.analysts.source.calculateBestMiningLocations(room).forEach((mine, i) => {
+                let flag = mine.pos.createFlag(`source${i}`, COLOR_GREEN);
                 Memory.flags[flag] = {
-                    source: `${i}`
+                    source: mine.sourceId
                 };
             })
         }
@@ -26,9 +24,9 @@ export class SourceArchitect extends Architect {
             this.mines.forEach(mine => {
                 if (!mine.container && !mine.constructionSite) {
                     mine.pos.createConstructionSite(STRUCTURE_CONTAINER);
-                    this.setupComplete = true;
                 }
             })
+            this.setupComplete = true;
         }
     }
 }

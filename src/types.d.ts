@@ -2,13 +2,19 @@
 
 // memory extension samples
 interface CreepMemory {
-  role: string;
-  [id: string]: any;
+  type?: string
+  source?: string
+  task?: string
 }
 
 interface FlagMemory {
   source?: string;
   upgradeDepot?: boolean;
+}
+
+interface RoomMemory {
+  tasks?: string;
+  requests?: string;
 }
 
 interface Memory {
@@ -20,5 +26,19 @@ interface Memory {
 declare namespace NodeJS {
   interface Global {
     log: any;
+    analysts: {
+      controller: import('./analysts/ControllerAnalyst').ControllerAnalyst,
+      logistics: import('./analysts/LogisticsAnalyst').LogisticsAnalyst,
+      map: import('./analysts/MapAnalyst').MapAnalyst,
+      source: import('./analysts/SourceAnalyst').SourceAnalyst,
+      spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
+    };
+    managers: {
+      controller: import('./managers/ControllerManager').ControllerManager,
+      request: import('./managers/RequestManager').RequestManager,
+      source: import('./managers/SourceManager').SourceManager,
+      spawn: import('./managers/SpawnManager').SpawnManager,
+      task: import('./managers/TaskManager').TaskManager,
+    };
   }
 }

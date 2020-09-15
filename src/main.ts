@@ -9,9 +9,45 @@ import {run as roleThug} from 'roles/thug';
 import { ErrorMapper } from "utils/ErrorMapper";
 import { ControllerArchitect } from 'architects/ControllerArchitect';
 import { SourceArchitect } from 'architects/SourceArchitect';
+import { Request } from 'requests/Request';
+import { SourceManager } from 'managers/SourceManager';
+import { SpawnManager } from 'managers/SpawnManager';
+import { TaskManager } from 'managers/TaskManager';
+import { RequestManager } from 'managers/RequestManager';
+import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
+import { spread } from 'lodash';
+import { ControllerManager } from 'managers/ControllerManager';
+import { SpawnAnalyst } from 'analysts/Spawnanalyst';
+import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
+import { MapAnalyst } from 'analysts/MapAnalyst';
+import { SourceAnalyst } from 'analysts/SourceAnalyst';
 
-let controllerArchitect = new ControllerArchitect;
-let sourceArchitect = new SourceArchitect;
+let task = new TaskManager();
+let spawn = new SpawnManager();
+let request = new RequestManager(task, spawn);
+let source = new SourceManager(task, request)
+let controller = new ControllerManager();
+
+global.managers = {
+  task,
+  spawn,
+  request,
+  source,
+  controller,
+}
+global.analysts = {
+  logistics: new LogisticsAnalyst(),
+  spawn: new SpawnAnalyst(),
+  controller: new ControllerAnalyst(),
+  map: new MapAnalyst(),
+  source: new SourceAnalyst()
+}
+
+
+let architects = [
+  new ControllerArchitect(),
+  new SourceArchitect(),
+]
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -26,11 +62,17 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
   }
 
-  // Consult architects
   Object.values(Game.rooms).forEach(room => {
-    controllerArchitect.init(room);
-    sourceArchitect.init(room);
-  })
+    // Consult architects
+    architects.forEach(architect => architect.init(room));
 
-  console.log(Game.cpu.getUsed());
+    // Consult managers
+    Object.values(global.managers).forEach(manager => manager.init(room));
+
+    // Execute managers
+    Object.values(global.managers).forEach(manager => manager.run(room));
+
+    // Execute cleanup
+    Object.values(global.managers).forEach(manager => manager.cleanup(room));
+  })
 });
