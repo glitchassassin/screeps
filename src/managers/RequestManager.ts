@@ -17,6 +17,12 @@ type RequestsMap<T> = {
     }
 }
 
+type CreepAssignment = {
+    creep: Creep,
+    request: Request,
+    priority: number
+}
+
 export class RequestManager extends Manager {
     requests: RequestsMap<Request> = {
         EnergyRequest: {},
@@ -24,6 +30,7 @@ export class RequestManager extends Manager {
         BuildRequest: {}
     };
     idleCreeps: Creep[] = [];
+    assignedCreeps: CreepAssignment[] = [];
 
     submit = (request: Request) => {
         if (!request.sourceId) return;
@@ -53,6 +60,24 @@ export class RequestManager extends Manager {
         this.idleCreeps = room.find(FIND_MY_CREEPS).filter(creep =>
             global.managers.task.isIdle(creep) && this.isIdle(creep.id)
         );
+        this.assignedCreeps = [];
+        [
+            ...Object.values(this.requests.EnergyRequest),
+            ...Object.values(this.requests.UpgradeRequest),
+            ...Object.values(this.requests.BuildRequest),
+        ].forEach(request => {
+            request.assignedTo.forEach(creepId => {
+                let creep = Game.getObjectById(creepId as Id<Creep>);
+                if (!creep) return;
+                this.assignedCreeps.push({
+                    creep,
+                    request,
+                    priority: request.priority
+                })
+            })
+        })
+        // Sort from least important to most important
+        this.assignedCreeps.sort((a, b) => (a.priority - b.priority));
     }
     run = (room: Room) => {
         // Creep requests
@@ -71,6 +96,10 @@ export class RequestManager extends Manager {
                     console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${creep.name}`)
                     r.assignedTo.push(creep.id);
                     this.idleCreeps = this.idleCreeps.filter(c => c.id !== (creep as Creep).id)
+                } else if (this.assignedCreeps.length > 0 && r.priority > this.assignedCreeps[0].priority) {
+                    // No idle creeps, so reallocate from lower-priority requests
+                    this.assignedCreeps[0].request.assignedTo = this.assignedCreeps[0].request.assignedTo.filter(id => id !== this.assignedCreeps[0].creep.id)
+                    r.assignedTo.push(this.assignedCreeps[0].creep.id);
                 }
             }
 
