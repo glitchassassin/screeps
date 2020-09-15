@@ -48,7 +48,7 @@ export class RequestManager extends Manager {
         if (Memory.rooms[room.name]?.requests) {
             let deserialized = JSON.parse(Memory.rooms[room.name]?.requests as string)
             for (let reqType in deserialized) {
-                if (!this.requests[reqType]) this.requests[reqType] = {};
+                this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
                     this.requests[reqType][reqSource] = new requestTypes[reqType]().deserialize(JSON.parse(deserialized[reqType][reqSource]))
                 }
