@@ -6,10 +6,6 @@ import { EnergyRequest } from "requests/types/EnergyRequest";
 import { MinionRequest } from "requests/types/MinionRequest";
 import { UpgradeRequest } from "requests/types/UpgradeRequest";
 import { Manager } from "./Manager";
-import { SpawnManager } from "./SpawnManager";
-import { TaskManager } from "./TaskManager";
-
-let logisticsAnalyst = new LogisticsAnalyst();
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -132,10 +128,11 @@ export class RequestManager extends Manager {
         for (let reqType in this.requests) {
             serialized[reqType] = {};
             for (let reqSource in this.requests[reqType]) {
-                if (!this.requests[reqType][reqSource].completed) {
-                    serialized[reqType][reqSource] = this.requests[reqType][reqSource].serialize()
-                } else {
+                if (this.requests[reqType][reqSource].completed || Game.time < this.requests[reqType][reqSource].created + 500) {
+                    // Completed or timed out
                     delete this.requests[reqType][reqSource]
+                } else {
+                    serialized[reqType][reqSource] = this.requests[reqType][reqSource].serialize()
                 }
             }
         }

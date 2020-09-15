@@ -27,15 +27,15 @@ export class MinionRequest extends Request {
                 switch (this.type) {
                     case MinionTypes.MINER:
                         this.spawned = (new MinerMinion())
-                            .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                            .spawn(spawn, this.memory, room.energyAvailable);
                         break;
                     case MinionTypes.UPGRADER:
                         this.spawned = (new UpgraderMinion())
-                            .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                            .spawn(spawn, this.memory, room.energyAvailable);
                         break;
                     case MinionTypes.BUILDER:
                         this.spawned = (new BuilderMinion())
-                            .spawn(spawn, this.memory, spawn?.store[RESOURCE_ENERGY]);
+                            .spawn(spawn, this.memory, room.energyAvailable);
                         break;
                 }
             } else if (!spawn.spawning && this.spawned) {
