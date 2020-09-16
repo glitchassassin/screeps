@@ -14,7 +14,7 @@ export class SourceManager extends Manager {
         // Request minions, if needed
         this.mines.forEach((mine) => {
             if (!mine.miner) {
-                global.managers.request.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
+                global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
                     source: mine.id
                 }))
             }

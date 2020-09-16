@@ -1,18 +1,15 @@
 import {assert} from "chai";
-import {loop} from "../../src/main";
-import {Game, Memory} from "./mock"
+import {loop} from "./main";
+import {Game, Memory} from "../test/unit/mock"
+import { mockGlobal } from "screeps-jest";
 
 describe("main", () => {
-  before(() => {
-    // runs before all test in this block
-  });
-
   beforeEach(() => {
     // runs before each test in this block
     // @ts-ignore : allow adding Game to global
-    global.Game = _.clone(Game);
+    mockGlobal<Game>('Game', Game);
     // @ts-ignore : allow adding Memory to global
-    global.Memory = _.clone(Memory);
+    mockGlobal<Memory>('Memory', Memory);
   });
 
   it("should export a loop function", () => {

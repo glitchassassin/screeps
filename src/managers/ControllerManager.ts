@@ -1,13 +1,11 @@
-import { Mine, SourceAnalyst } from "analysts/SourceAnalyst";
-import { SpawnAnalyst, SpawnData } from "analysts/Spawnanalyst";
-import { EnergyRequest } from "requests/types/EnergyRequest";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { Request } from "requests/Request";
 import { Manager } from "./Manager";
-import { RequestManager } from "./RequestManager";
 import { UpgradeRequest } from "requests/types/UpgradeRequest";
 import { UpgradeTask } from "tasks/types/UpgradeTask";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
+import { TransferTask } from "tasks/types/TransferTask";
+import { TaskRequest } from "tasks/TaskRequest";
 
 export class ControllerManager extends Manager {
     upgrader: Creep|null = null;
@@ -18,9 +16,13 @@ export class ControllerManager extends Manager {
 
         // Request minions, if needed
         if (!this.upgrader) {
-            global.managers.request.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
+            global.managers.spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
             // Request energy, if no dedicated upgraders
-            global.managers.request.submit(new UpgradeRequest(room.controller.id, 1, room.controller))
+            global.managers.task.submit(new TaskRequest(
+                room.controller.id,
+                new UpgradeTask(null, room.controller),
+                1
+            ));
         }
     }
     run = (room: Room) => {

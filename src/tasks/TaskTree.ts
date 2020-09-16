@@ -6,37 +6,15 @@ type TaskPlan = {
     tasks: Task[]
 }
 
-// Transfer to Destination
-//    -> Needs Energy
-//       * Harvest from Source
-//        -> Needs to be adjacent
-//           * Move to Source
-//       * Withdraw from Container
-//        -> Needs to be adjacent
-//           * Move to Container
-//    -> Needs to be adjacent
-//       * Move to Destination
-
-// Move to Source -> Harvest Source
-
-// Move to Source -> Harvest Source
-// Move to Container -> Harvest Container
-
-// Move to Source -> Harvest Source -> Move to Destination
-// Move to Container -> Harvest Container -> Move to Destination
-
-// Move to Source -> Harvest Source -> Move to Destination -> Transfer to Destination
-// Move to Container -> Withdraw from Container -> Move to Destination -> Transfer to Destination
-
 export const resolveTaskTrees = (minion: SpeculativeMinion, task: Task): TaskPlan[]|null => {
-    let plan = {
+    let taskPlan = {
         cost: task.cost(minion),
         minion,
         tasks: [task]
     }
     if (task.prereqs.length === 0 || task.prereqs.every(p => p.met(minion))) {
         // No prereqs - return a plan for just this task
-        return [plan]
+        return [taskPlan]
     }
     let plans: TaskPlan[] = [];
     for (let i = 0; i < task.prereqs.length; i++) {
@@ -46,7 +24,6 @@ export const resolveTaskTrees = (minion: SpeculativeMinion, task: Task): TaskPla
             let altTasks = prereq.toMeet(minion)
 
             if (!altTasks || altTasks.length === 0) { return null; } // Prereq cannot be met
-
             let altTaskPlans = (altTasks.map(t => resolveTaskTrees(minion, t))
                 .filter(t => t) as TaskPlan[][])
                 .reduce((a, b) => a?.concat(b), []);
@@ -69,6 +46,11 @@ export const resolveTaskTrees = (minion: SpeculativeMinion, task: Task): TaskPla
             }).reduce((a, b) => a?.concat(b), []);
         }
     }
-    return plans;
+    // Add this task to prerequisite plans
+    return plans.map(plan => ({
+        cost: plan.cost + taskPlan.cost,
+        minion: plan.minion,
+        tasks: plan.tasks.concat(taskPlan.tasks)
+    }));
 }
 

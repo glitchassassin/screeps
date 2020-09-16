@@ -1,5 +1,7 @@
 import { BuildRequest } from "requests/types/BuildRequest";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
+import { TaskRequest } from "tasks/TaskRequest";
+import { BuildTask } from "tasks/types/BuildTask";
 import { Manager } from "./Manager";
 
 export class BuilderManager extends Manager {
@@ -13,12 +15,12 @@ export class BuilderManager extends Manager {
 
         // Request minions, if needed
         if (this.shouldSpawnBuilders(room)) {
-            global.managers.request.submit(new MinionRequest(room.controller.id, 4, MinionTypes.BUILDER))
+            global.managers.spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.BUILDER))
         }
 
         // Request build for construction sites
         this.sites.forEach(site => {
-            global.managers.request.submit(new BuildRequest(site.id, 5, site))
+            global.managers.task.submit(new TaskRequest(site.id, new BuildTask(null, site), 5))
         })
     }
     shouldSpawnBuilders = (room: Room) => {

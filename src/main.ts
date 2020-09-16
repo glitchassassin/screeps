@@ -13,7 +13,6 @@ import { Request } from 'requests/Request';
 import { SourceManager } from 'managers/SourceManager';
 import { SpawnManager } from 'managers/SpawnManager';
 import { TaskManager } from 'managers/TaskManager';
-import { RequestManager } from 'managers/RequestManager';
 import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
 import { spread } from 'lodash';
 import { ControllerManager } from 'managers/ControllerManager';
@@ -27,7 +26,6 @@ import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
 global.managers = {
   task: new TaskManager(),
   spawn: new SpawnManager(),
-  request: new RequestManager(),
   source: new SourceManager(),
   controller: new ControllerManager(),
   builder: new BuilderManager(),

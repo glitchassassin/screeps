@@ -36,7 +36,6 @@ declare namespace NodeJS {
     };
     managers: {
       controller: import('./managers/ControllerManager').ControllerManager,
-      request: import('./managers/RequestManager').RequestManager,
       source: import('./managers/SourceManager').SourceManager,
       spawn: import('./managers/SpawnManager').SpawnManager,
       task: import('./managers/TaskManager').TaskManager,
