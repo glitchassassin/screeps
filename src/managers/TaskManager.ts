@@ -26,7 +26,7 @@ export class TaskManager extends Manager {
     cleanup = (room: Room) => {
         if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
         Memory.rooms[room.name].tasks = this.tasks
-            .filter(task => !task.completed)
+            .filter(task => !task.completed || Game.time > task.created + 500)
             .map(t => t.serialize()).join('|');
     }
 

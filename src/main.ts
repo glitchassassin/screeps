@@ -24,11 +24,6 @@ import { SourceAnalyst } from 'analysts/SourceAnalyst';
 import { BuilderManager } from 'managers/BuilderManager';
 import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
 
-// Initialize memory
-if (!Memory.flags) Memory.flags = {};
-if (!Memory.rooms) Memory.rooms = {};
-if (!Memory.creeps) Memory.creeps = {};
-
 global.managers = {
   task: new TaskManager(),
   spawn: new SpawnManager(),
@@ -55,6 +50,10 @@ let architects = [
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
+  // Initialize memory
+  if (!Memory.flags) Memory.flags = {};
+  if (!Memory.rooms) Memory.rooms = {};
+  if (!Memory.creeps) Memory.creeps = {};
 
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {

@@ -31,7 +31,7 @@ export class EnergyRequest extends Request {
                 }
                 else if (creep.store.getUsedCapacity() > 0) {
                     // Minion is running low; is there somewhere to top up? If not, find a source to harvest
-                    let source = global.analysts.logistics.getMostFullAllSources(room);
+                    let source = global.analysts.logistics.getMostFullContainer(room);
                     if (source && source.id !== this.target?.id && source.store[RESOURCE_ENERGY] > 0) {
                         global.managers.task.assign(new WithdrawTask(creep, source))
                     } else {

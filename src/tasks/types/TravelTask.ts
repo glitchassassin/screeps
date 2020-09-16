@@ -1,6 +1,12 @@
-import { Task } from "../Task";
+import { MustHavePath } from "tasks/prereqs/MustHavePath";
+import { SpeculativeMinion, Task, TaskPrerequisite } from "../Task";
 
 export class TravelTask extends Task {
+    // Prereq: Minion must have a path to destination
+    //         Otherwise, fail this branch
+    prereqs = [
+        MustHavePath(() => this.destination || undefined)
+    ]
     message = "🚗";
     constructor(
         public creep: Creep|null = null,
@@ -13,6 +19,10 @@ export class TravelTask extends Task {
 
         this.creep.moveTo(this.destination);
         return this.creep.pos.isEqualTo(this.destination);
+    }
+    cost = (minion: SpeculativeMinion) => {
+        if (!this.destination) return Infinity
+        return PathFinder.search(minion.pos, this.destination).cost;
     }
 
     serialize = () => {

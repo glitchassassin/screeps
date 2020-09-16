@@ -1,6 +1,22 @@
-import { Task } from "../Task";
+import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
+import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
+import { Task, TaskPrerequisite } from "../Task";
 
 export class TransferTask extends Task {
+    // Prereq: Minion must be adjacent
+    //         Otherwise, move to an open space
+    //         near the destination
+    // Prereq: Minion must have enough energy
+    //         to fill target
+    //         Otherwise, get some by harvesting
+    //         or withdrawing
+    prereqs = [
+        MustBeAdjacent(() => this.destination?.pos),
+        MustHaveEnergy(() => {
+            if (!this.destination) return;
+            return (this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY)
+        })
+    ]
     message = "⏩";
     constructor(
         public creep: Creep|null = null,
@@ -19,6 +35,7 @@ export class TransferTask extends Task {
         }
         return false;
     }
+    cost = () => 1; // Takes one tick to transfer
 
     serialize = () => {
         return JSON.stringify({

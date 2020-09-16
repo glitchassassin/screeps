@@ -8,7 +8,7 @@ export class LogisticsAnalyst extends Analyst {
         return room.find(FIND_STRUCTURES)
             .filter(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer[];
     }
-    getMostEmptyContainer = (room: Room) => {
+    getMostEmptyContainer = (room: Room): StructureContainer|null => {
         let container: StructureContainer|null = null;
         this.getContainers(room).forEach(c => {
             if (!container || c.store[RESOURCE_ENERGY] < container.store[RESOURCE_ENERGY]) {
@@ -17,7 +17,7 @@ export class LogisticsAnalyst extends Analyst {
         })
         return container;
     }
-    getMostFullContainer = (room: Room) => {
+    getMostFullContainer = (room: Room): StructureContainer|null => {
         let container: StructureContainer|null = null;
         this.getContainers(room).forEach(c => {
             if (!container || c.store[RESOURCE_ENERGY] > container.store[RESOURCE_ENERGY]) {
@@ -26,7 +26,7 @@ export class LogisticsAnalyst extends Analyst {
         })
         return container;
     }
-    getAllSources = (room: Room): StructureSpawn[]|StructureContainer[] => {
+    getAllSources = (room: Room): (StructureSpawn|StructureContainer)[] => {
         let c = this.getContainers(room);
         if (c.length !== 0) return c;
         return room.find(FIND_MY_SPAWNS) as StructureSpawn[];

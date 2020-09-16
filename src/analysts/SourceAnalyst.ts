@@ -1,8 +1,6 @@
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
 
-const mapAnalyst = new MapAnalyst();
-
 export type Mine = {
     pos: RoomPosition,
     id: string,
@@ -22,10 +20,10 @@ export class SourceAnalyst extends Analyst {
 
         sources.forEach(source => {
             let candidate: {pos: RoomPosition, range: number}|null = (null as {pos: RoomPosition, range: number}|null);
-            mapAnalyst
+            global.analysts.map
                 .calculateAdjacentPositions(source.pos)
                 .forEach((pos) => {
-                    if (mapAnalyst.isPositionWalkable(pos)) {
+                    if (global.analysts.map.isPositionWalkable(pos)) {
                         let range = PathFinder.search(pos, target).cost;
                         if (!candidate || candidate.range > range) {
                             candidate = {pos, range};
@@ -61,7 +59,48 @@ export class SourceAnalyst extends Analyst {
                 return mine;
             });
     }
+    /**
+     * Returns a list of locations adjacent to sources
+     * where a) the source is not already maxed by
+     * active miners and b) the location is not occupied
+     * @param room
+     */
+    getAuxiliaryMiningLocations = (room: Room): RoomPosition[] => {
+        return this.getSources(room).map(source => (
+            this.getAuxiliaryMiningLocationsForSource(room, source)
+        )).reduce((a, b) => a.concat(b), [])
+    }
+    /**
+     * Returns a list of locations adjacent to sources
+     * where a) the source is not already maxed by
+     * active miners and b) the location is not occupied
+     * @param room
+     */
+    getAuxiliaryMiningLocationsForSource = (room: Room, source: Source): RoomPosition[] => {
+        let output = 0;
+        let spaces = global.analysts.map.calculateAdjacentPositions(source.pos).filter(pos => {
+            if (!global.analysts.map.isPositionWalkable(pos)) return false;
+            let creeps = pos.lookFor(LOOK_CREEPS)
+            creeps.forEach(creep => {
+                // Assumes all creeps adjacent to a source are actively working
+                // TODO: Check
+                output += creep.getActiveBodyparts(WORK) * 2;
+            })
+            if (creeps) return false;
+            return true;
+        })
+        if (spaces.length > 0 && output < (source.energyCapacity / source.ticksToRegeneration)) {
+            // There is an adjacent square, and source is not maxed out
+            return spaces;
+        }
+        return [];
+    }
     getSources = (room: Room) => {
         return room.find(FIND_SOURCES);
+    }
+    getUntappedSources = (room: Room) => {
+        return this.getSources(room).filter(source =>
+            this.getAuxiliaryMiningLocationsForSource(room, source).length > 0
+        )
     }
 }

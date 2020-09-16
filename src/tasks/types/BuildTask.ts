@@ -1,6 +1,19 @@
-import { Task } from "../Task";
+import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
+import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
+import { SpeculativeMinion, Task } from "../Task";
 
 export class BuildTask extends Task {
+    // Prereq: Minion must be adjacent
+    //         Otherwise, move to an open space
+    //         near the destination
+    // Prereq: Minion must have enough energy
+    //         to fill target
+    //         Otherwise, get some by harvesting
+    //         or withdrawing
+    prereqs = [
+        MustBeAdjacent(() => this.destination?.pos),
+        MustHaveEnergy(() => this.destination ? this.destination.progressTotal - this.destination.progress : undefined)
+    ]
     message = "🔨";
     constructor(
         public creep: Creep|null = null,
@@ -18,6 +31,13 @@ export class BuildTask extends Task {
             return true;
         }
         return false;
+    }
+    /**
+     * Calculates cost based on the effectiveness of the minion
+     * @param minion
+     */
+    cost = (minion: SpeculativeMinion) => {
+        return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
     }
 
     serialize = () => {

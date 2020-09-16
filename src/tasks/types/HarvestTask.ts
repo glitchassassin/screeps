@@ -1,6 +1,14 @@
-import { Task } from "../Task";
+import { MustBeAtMine } from "tasks/prereqs/MustBeAtMine";
+import { SpeculativeMinion, Task, TaskPrerequisite } from "../Task";
+import { TravelTask } from "./TravelTask";
 
 export class HarvestTask extends Task {
+    // Prereq: Minion must be adjacent
+    //         Otherwise, move to an open space
+    //         near the source
+    prereqs = [
+        MustBeAtMine(() => this.source || undefined)
+    ]
     message = "⚡";
     constructor(
         public creep: Creep|null = null,
@@ -26,6 +34,12 @@ export class HarvestTask extends Task {
             if (!container || (container as StructureContainer).store.getFreeCapacity()) return true;
         }
         return false;
+    }
+    cost = (minion: SpeculativeMinion) => {
+        // Approximate effectiveness of minion based on number of WORK parts
+        // TODO: Adjust this to compare against the creep's capacity, or the
+        //       local container, if applicable
+        return 1/(minion.creep.getActiveBodyparts(WORK) * 2)
     }
 
     serialize = () => {

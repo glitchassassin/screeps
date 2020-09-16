@@ -1,12 +1,8 @@
 import { Mine, SourceAnalyst } from "analysts/SourceAnalyst";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
-import { Request } from "requests/Request";
-import { FulfillEnergyRequestTask } from "tasks/types/FulfillEnergyRequestTask";
 import { HarvestTask } from "tasks/types/HarvestTask";
 import { TravelTask } from "tasks/types/TravelTask";
 import { Manager } from "./Manager";
-import { TaskManager } from "./TaskManager";
-import { RequestManager } from "./RequestManager";
 
 const sourceAnalyst = new SourceAnalyst();
 

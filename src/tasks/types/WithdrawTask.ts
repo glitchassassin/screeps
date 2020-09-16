@@ -1,6 +1,17 @@
+import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
+import { MustHaveCarryCapacity } from "tasks/prereqs/MustHaveCarryCapacity";
 import { Task } from "../Task";
 
 export class WithdrawTask extends Task {
+    // Prereq: Minion must be adjacent
+    //         Otherwise, move to an open space
+    //         near the destination
+    // Prereq: Minion must have room to store energy
+    //         Otherwise, fail
+    prereqs = [
+        MustBeAdjacent(() => this.destination?.pos),
+        MustHaveCarryCapacity()
+    ]
     message = "⏪";
     constructor(
         public creep: Creep|null = null,
@@ -18,6 +29,18 @@ export class WithdrawTask extends Task {
             return true;
         }
         return false;
+    }
+    cost = () => {
+        // Takes one tick to withdraw, but here we
+        // are weighting sources by preference
+        switch (this.destination?.structureType) {
+            case STRUCTURE_CONTAINER:
+                return 1;
+            case STRUCTURE_SPAWN:
+                return 1000;
+            default:
+                return 10;
+        }
     }
 
     serialize = () => {
