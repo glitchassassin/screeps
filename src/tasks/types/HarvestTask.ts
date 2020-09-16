@@ -11,7 +11,9 @@ export class HarvestTask extends Task {
         // If unable to get the creep or source, task is completed
         if (!this.creep || !this.source) return true;
 
-        this.creep.harvest(this.source);
+        if (this.creep.harvest(this.source) === ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(this.source);
+        }
         if (this.creep.store.getCapacity()) {
             // If can carry, is the creep full?
             return this.creep.store.getFreeCapacity() == 0;

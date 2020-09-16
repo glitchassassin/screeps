@@ -46,4 +46,21 @@ export class UpgradeRequest extends Request {
         this.target = Game.getObjectById(task.target as Id<StructureController>);
         return this;
     }
+
+    canAssign = () => {
+        if (this.target && this.target.level < 8) {
+            // Only limited by space
+            let spaces = global.analysts.map.calculateNearbyPositions(this.target.pos, 3)
+                .filter(global.analysts.map.isPositionWalkable).length
+            return (this.assignedTo.length < spaces);
+        } else {
+            // At RCL 8, cap is 15 energy per tick
+            let capacity = this.assignedTo.map(id => {
+                let creep = Game.getObjectById(id as Id<Creep>);
+                if (creep) return creep.body.filter(p => p.type === WORK).length;
+                return 0;
+            }).reduce((a, b) => a + b)
+            return capacity < 15;
+        }
+    }
 }

@@ -23,7 +23,8 @@ export class RequestManager extends Manager {
     requests: RequestsMap<Request> = {
         EnergyRequest: {},
         MinionRequest: {},
-        BuildRequest: {}
+        BuildRequest: {},
+        UpgradeRequest: {},
     };
     idleCreeps: Creep[] = [];
     assignedCreeps: CreepAssignment[] = [];
@@ -53,9 +54,6 @@ export class RequestManager extends Manager {
     }
 
     init = (room: Room) => {
-        this.idleCreeps = room.find(FIND_MY_CREEPS).filter(creep =>
-            global.managers.task.isIdle(creep) && this.isIdle(creep.id)
-        );
         this.assignedCreeps = [];
         [
             ...Object.values(this.requests.EnergyRequest),
@@ -76,6 +74,11 @@ export class RequestManager extends Manager {
         this.assignedCreeps.sort((a, b) => (a.priority - b.priority));
     }
     run = (room: Room) => {
+        // Get creeps that have not yet been assigned
+        this.idleCreeps = room.find(FIND_MY_CREEPS).filter(creep =>
+            global.managers.task.isIdle(creep) && this.isIdle(creep.id)
+        );
+        console.log('Idle creeps:', this.idleCreeps.map(c => c.name));
         // Creep requests
         [
             ...Object.values(this.requests.EnergyRequest),
@@ -128,7 +131,7 @@ export class RequestManager extends Manager {
         for (let reqType in this.requests) {
             serialized[reqType] = {};
             for (let reqSource in this.requests[reqType]) {
-                if (this.requests[reqType][reqSource].completed || Game.time < this.requests[reqType][reqSource].created + 500) {
+                if (this.requests[reqType][reqSource].completed || Game.time > this.requests[reqType][reqSource].created + 500) {
                     // Completed or timed out
                     delete this.requests[reqType][reqSource]
                 } else {
