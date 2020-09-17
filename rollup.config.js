@@ -25,7 +25,14 @@ export default {
   plugins: [
     clear({ targets: ["dist"] }),
     resolve(),
-    commonjs(),
+    commonjs({
+      namedExports: {
+        'node_modules/class-transformer/index.js': [
+          'Transform',
+          'Type',
+        ]
+      }
+    }),
     typescript({tsconfig: "./tsconfig.json"}),
     screeps({config: cfg, dryRun: cfg == null})
   ]

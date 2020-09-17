@@ -1,4 +1,4 @@
-import { Transform, TransformationType, Type } from "class-transformer";
+import * as ct from "class-transformer";
 import { MustBeAtMine } from "tasks/prereqs/MustBeAtMine";
 import { SpeculativeMinion, Task, TaskPrerequisite } from "../Task";
 import { TravelTask } from "./TravelTask";
@@ -12,14 +12,14 @@ export class HarvestTask extends Task {
     ]
     message = "⚡";
 
-    @Type(() => Source)
-    @Transform((value, obj, type) => {
+    @ct.Type(() => Source)
+    @ct.Transform((value, obj, type) => {
         switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
+            case ct.TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<Source>);
-            case TransformationType.CLASS_TO_PLAIN:
+            case ct.TransformationType.CLASS_TO_PLAIN:
                 return obj.id;
-            case TransformationType.CLASS_TO_CLASS:
+            case ct.TransformationType.CLASS_TO_CLASS:
                 return obj;
         }
     })

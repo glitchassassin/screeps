@@ -1,13 +1,10 @@
-import { deserialize } from 'v8';
-import {
-    Task,
-    BuildTask,
-    HarvestTask,
-    TransferTask,
-    TravelTask,
-    UpgradeTask,
-    WithdrawTask,
-} from '../internal';
+import { Task } from "./Task";
+import { BuildTask } from "./types/BuildTask";
+import { HarvestTask } from "./types/HarvestTask";
+import { TransferTask } from "./types/TransferTask";
+import { TravelTask } from "./types/TravelTask";
+import { UpgradeTask } from "./types/UpgradeTask";
+import { WithdrawTask } from "./types/WithdrawTask";
 
 export const taskTypes = [
     HarvestTask,
@@ -20,15 +17,3 @@ export const taskTypes = [
     a[b.name] = b;
     return a;
 }, {})
-
-export const deserializeTask = (task: string) => {
-    let taskData = JSON.parse(task);
-    let t = new taskTypes[taskData.taskType]();
-    t.creep = Game.getObjectById(taskData.creepId as Id<Creep>);
-    t.next = deserializeTask(taskData.task);
-    return t;
-}
-
-export const serializeTask = (task: Task) => {
-
-}

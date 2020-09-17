@@ -1,4 +1,4 @@
-import { Transform, TransformationType, Type } from "class-transformer";
+import * as ct from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
 import { Task, TaskPrerequisite } from "../Task";
@@ -20,14 +20,14 @@ export class TransferTask extends Task {
     ]
     message = "⏩";
 
-    @Type(() => Structure)
-    @Transform((value, obj, type) => {
+    @ct.Type(() => Structure)
+    @ct.Transform((value, obj, type) => {
         switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
+            case ct.TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<Structure>);
-            case TransformationType.CLASS_TO_PLAIN:
+            case ct.TransformationType.CLASS_TO_PLAIN:
                 return obj.id;
-            case TransformationType.CLASS_TO_CLASS:
+            case ct.TransformationType.CLASS_TO_CLASS:
                 return obj;
         }
     })

@@ -1,4 +1,3 @@
-import { BuildRequest } from "requests/types/BuildRequest";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { BuildTask } from "tasks/types/BuildTask";

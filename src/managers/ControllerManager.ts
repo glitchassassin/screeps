@@ -1,10 +1,7 @@
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
-import { Request } from "requests/Request";
 import { Manager } from "./Manager";
-import { UpgradeRequest } from "requests/types/UpgradeRequest";
 import { UpgradeTask } from "tasks/types/UpgradeTask";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
-import { TransferTask } from "tasks/types/TransferTask";
 import { TaskRequest } from "tasks/TaskRequest";
 
 export class ControllerManager extends Manager {

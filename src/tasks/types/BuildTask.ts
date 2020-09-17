@@ -1,5 +1,4 @@
-import { Transform, Type } from "class-transformer";
-import { TransformationType } from "class-transformer/enums";
+import * as ct from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
 import { SpeculativeMinion, Task } from "../Task";
@@ -12,20 +11,23 @@ export class BuildTask extends Task {
     //         to fill target
     //         Otherwise, get some by harvesting
     //         or withdrawing
-    prereqs = [
-        MustHaveEnergy(() => this.destination ? this.destination.progressTotal - this.destination.progress : undefined),
-        MustBeAdjacent(() => this.destination?.pos),
-    ]
+    getPrereqs = () => {
+        if (!this.destination) return [];
+        return [
+            MustHaveEnergy(this.destination.progressTotal - this.destination.progress),
+            new MustBeAdjacent(this.destination.pos),
+        ]
+    }
     message = "🔨";
 
-    @Type(() => ConstructionSite)
-    @Transform((value, obj, type) => {
+    @ct.Type(() => ConstructionSite)
+    @ct.Transform((value: any, obj: any, type: any) => {
         switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
+            case ct.TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<ConstructionSite>);
-            case TransformationType.CLASS_TO_PLAIN:
+            case ct.TransformationType.CLASS_TO_PLAIN:
                 return obj.id;
-            case TransformationType.CLASS_TO_CLASS:
+            case ct.TransformationType.CLASS_TO_CLASS:
                 return obj;
         }
     })

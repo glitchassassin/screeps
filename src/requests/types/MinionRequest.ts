@@ -1,4 +1,4 @@
-import { Transform, Type } from "class-transformer";
+import * as ct from "class-transformer";
 import { Request } from "../Request";
 import { BuilderMinion } from "./minions/BuilderMinion";
 import { MinerMinion } from './minions/MinerMinion';
@@ -15,7 +15,7 @@ export class MinionRequest extends Request {
     public sourceId: string|null = null;
     public priority = 5;
 
-    @Transform((type: string) => MinionTypes[type as MinionTypes])
+    @ct.Transform((type: string) => MinionTypes[type as MinionTypes])
     public type: MinionTypes|null = null;
     public memory: CreepMemory = {};
     constructor(

@@ -1,4 +1,4 @@
-import { Type } from "class-transformer";
+import * as ct from "class-transformer";
 import { Task } from "./Task";
 import { taskTypes } from "./TaskTypes";
 
@@ -8,7 +8,7 @@ export class TaskRequest {
     sourceId: string|null = null;
     priority = 5;
 
-    @Type(() => Task)
+    @ct.Type(() => Task)
     task: Task|null = null;
 
     constructor(

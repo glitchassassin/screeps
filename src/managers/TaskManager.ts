@@ -1,4 +1,4 @@
-import { deserialize, deserializeArray, serialize } from "class-transformer";
+import * as ct from "class-transformer";
 import { Request } from "requests/Request";
 import { Task } from "tasks/Task";
 import { TaskRequest } from "tasks/TaskRequest";
@@ -33,7 +33,7 @@ export class TaskManager extends Manager {
     load = (room: Room) => {
         // Load tasks from Memory
         if (Memory.rooms[room.name]?.tasks) {
-            this.tasks = deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
+            this.tasks = ct.deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
         } else {
             this.tasks = [];
         }
@@ -44,7 +44,7 @@ export class TaskManager extends Manager {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
                     try {
-                        this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
+                        this.requests[reqType][reqSource] = ct.deserialize(TaskRequest, deserialized[reqType][reqSource])
                     } catch {
                         console.log(`[TaskManager] Failed to parse: ${deserialized[reqType][reqSource]}`);
                     }
@@ -98,7 +98,7 @@ export class TaskManager extends Manager {
     }
     cleanup = (room: Room) => {
         if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
-        Memory.rooms[room.name].tasks = serialize(this.tasks
+        Memory.rooms[room.name].tasks = ct.serialize(this.tasks
             .filter(task => !task.completed || Game.time > task.created + 500))
 
         let serialized: RequestsMap<string> = {};
@@ -110,7 +110,7 @@ export class TaskManager extends Manager {
                     // Completed or timed out
                     delete this.requests[reqType][reqSource]
                 } else {
-                    serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])
+                    serialized[reqType][reqSource] = ct.serialize(this.requests[reqType][reqSource])
                 }
             }
         }

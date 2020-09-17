@@ -1,7 +1,10 @@
-import { Transform, Type } from 'class-transformer';
-import { TransformationType } from 'class-transformer/enums';
-import { taskTypes } from '../internal';
-import { BuildTask, HarvestTask, TransferTask, TravelTask, UpgradeTask, WithdrawTask } from './types';
+import * as ct from 'class-transformer';
+// import { BuildTask } from './types/BuildTask';
+// import { HarvestTask } from './types/HarvestTask';
+// import { TransferTask } from './types/TransferTask';
+// import { TravelTask } from './types/TravelTask';
+// import { UpgradeTask } from './types/UpgradeTask';
+// import { WithdrawTask } from './types/WithdrawTask';
 
 export type SpeculativeMinion = {
     capacity: number,
@@ -11,37 +14,35 @@ export type SpeculativeMinion = {
 }
 
 export class TaskPrerequisite {
-    constructor(
-        public met: (minion: SpeculativeMinion) => boolean,
-        public toMeet: (minion: SpeculativeMinion) => Task[]|null
-    ) {}
+    met = (minion: SpeculativeMinion) => false
+    toMeet = (minion: SpeculativeMinion): Task[]|null => null
 }
 
 export class Task {
-    @Type(() => TaskPrerequisite)
+    @ct.Type(() => TaskPrerequisite)
     prereqs: TaskPrerequisite[] = [];
-    @Type(() => Task, {
-        discriminator: {
-            property: '__type',
-            subTypes: [
-                { value: BuildTask, name: 'BuildTask' },
-                { value: HarvestTask, name: 'HarvestTask' },
-                { value: TransferTask, name: 'TransferTask' },
-                { value: TravelTask, name: 'TravelTask' },
-                { value: UpgradeTask, name: 'UpgradeTask' },
-                { value: WithdrawTask, name: 'WithdrawTask' },
-            ],
-        },
-    })
+    // @ct.Type(() => Task, {
+    //     discriminator: {
+    //         property: '__type',
+    //         subTypes: [
+    //             { value: BuildTask, name: 'BuildTask' },
+    //             { value: HarvestTask, name: 'HarvestTask' },
+    //             { value: TransferTask, name: 'TransferTask' },
+    //             { value: TravelTask, name: 'TravelTask' },
+    //             { value: UpgradeTask, name: 'UpgradeTask' },
+    //             { value: WithdrawTask, name: 'WithdrawTask' },
+    //         ],
+    //     },
+    // })
     next: Task|null = null;
-    @Type(() => Creep)
-    @Transform((value, obj, type) => {
+    @ct.Type(() => Creep)
+    @ct.Transform((value, obj, type) => {
         switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
+            case ct.TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<Creep>);
-            case TransformationType.CLASS_TO_PLAIN:
+            case ct.TransformationType.CLASS_TO_PLAIN:
                 return obj.id;
-            case TransformationType.CLASS_TO_CLASS:
+            case ct.TransformationType.CLASS_TO_CLASS:
                 return obj;
         }
     })
