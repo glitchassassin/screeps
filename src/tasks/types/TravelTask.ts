@@ -1,5 +1,6 @@
+import { Transform, TransformationType, Type } from "class-transformer";
 import { MustHavePath } from "tasks/prereqs/MustHavePath";
-import { SpeculativeMinion, Task, TaskPrerequisite } from "../Task";
+import { SpeculativeMinion, Task } from "../Task";
 
 export class TravelTask extends Task {
     // Prereq: Minion must have a path to destination
@@ -8,10 +9,27 @@ export class TravelTask extends Task {
         MustHavePath(() => this.destination || undefined)
     ]
     message = "🚗";
+
+    @Type(() => RoomPosition)
+    @Transform((value, obj, type) => {
+        switch(type) {
+            case TransformationType.PLAIN_TO_CLASS:
+                return Game.getObjectById(value as Id<RoomPosition>);
+            case TransformationType.CLASS_TO_PLAIN:
+                return obj.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return obj;
+        }
+    })
+    destination: RoomPosition|null = null;
+
     constructor(
-        public creep: Creep|null = null,
-        public destination: RoomPosition|null = null,
-    ) { super(); }
+        creep: Creep|null = null,
+        destination: RoomPosition|null = null,
+    ) {
+        super(creep);
+        this.destination = destination;
+    }
 
     action = () => {
         // If unable to get the creep or destination, task is completed
@@ -23,20 +41,5 @@ export class TravelTask extends Task {
     cost = (minion: SpeculativeMinion) => {
         if (!this.destination) return Infinity
         return PathFinder.search(minion.pos, this.destination).cost;
-    }
-
-    serialize = () => {
-        return JSON.stringify({
-            taskType: this.constructor.name,
-            creepId: this.creep?.id,
-            x: this.destination?.x,
-            y: this.destination?.y,
-            roomName: this.destination?.roomName
-        })
-    }
-    deserialize = (task: any) => {
-        this.creep = Game.getObjectById(task.creepId as Id<Creep>)
-        this.destination = Game.rooms[task.roomName].getPositionAt(task.x, task.y);
-        return this;
     }
 }

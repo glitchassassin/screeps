@@ -1,3 +1,5 @@
+import { Transform, Type } from "class-transformer";
+import { TransformationType } from "class-transformer/enums";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
 import { SpeculativeMinion, Task } from "../Task";
@@ -11,14 +13,31 @@ export class BuildTask extends Task {
     //         Otherwise, get some by harvesting
     //         or withdrawing
     prereqs = [
+        MustHaveEnergy(() => this.destination ? this.destination.progressTotal - this.destination.progress : undefined),
         MustBeAdjacent(() => this.destination?.pos),
-        MustHaveEnergy(() => this.destination ? this.destination.progressTotal - this.destination.progress : undefined)
     ]
     message = "🔨";
+
+    @Type(() => ConstructionSite)
+    @Transform((value, obj, type) => {
+        switch(type) {
+            case TransformationType.PLAIN_TO_CLASS:
+                return Game.getObjectById(value as Id<ConstructionSite>);
+            case TransformationType.CLASS_TO_PLAIN:
+                return obj.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return obj;
+        }
+    })
+    destination: ConstructionSite|null = null
+
     constructor(
-        public creep: Creep|null = null,
-        public destination: ConstructionSite|null = null,
-    ) { super() }
+        creep: Creep|null = null,
+        destination: ConstructionSite|null = null,
+    ) {
+        super(creep);
+        this.destination = destination;
+    }
 
     action = () => {
         // If unable to get the creep or source, task is completed
@@ -28,6 +47,7 @@ export class BuildTask extends Task {
         if (result === ERR_NOT_IN_RANGE) {
             this.creep.moveTo(this.destination);
         } else if (result !== OK){
+            console.log(`[BuildTask] Error: ${result}`);
             return true;
         }
         return false;
@@ -38,18 +58,5 @@ export class BuildTask extends Task {
      */
     cost = (minion: SpeculativeMinion) => {
         return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
-    }
-
-    serialize = () => {
-        return JSON.stringify({
-            taskType: this.constructor.name,
-            creepId: this.creep?.id,
-            destinationId: this.destination?.id
-        })
-    }
-    deserialize = (task: any) => {
-        this.creep = Game.getObjectById(task.creepId as Id<Creep>)
-        this.destination = Game.getObjectById(task.destinationId as Id<ConstructionSite>)
-        return this;
     }
 }

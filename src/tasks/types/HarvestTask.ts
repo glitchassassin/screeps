@@ -1,3 +1,4 @@
+import { Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAtMine } from "tasks/prereqs/MustBeAtMine";
 import { SpeculativeMinion, Task, TaskPrerequisite } from "../Task";
 import { TravelTask } from "./TravelTask";
@@ -10,10 +11,26 @@ export class HarvestTask extends Task {
         MustBeAtMine(() => this.source || undefined)
     ]
     message = "⚡";
+
+    @Type(() => Source)
+    @Transform((value, obj, type) => {
+        switch(type) {
+            case TransformationType.PLAIN_TO_CLASS:
+                return Game.getObjectById(value as Id<Source>);
+            case TransformationType.CLASS_TO_PLAIN:
+                return obj.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return obj;
+        }
+    })
+    source: Source|null = null
     constructor(
-        public creep: Creep|null = null,
-        public source: Source|null = null,
-    ) { super(); }
+        creep: Creep|null = null,
+        source: Source|null = null,
+    ) {
+        super(creep);
+        this.source = source;
+    }
 
     action = () => {
         // If unable to get the creep or source, task is completed
@@ -40,18 +57,5 @@ export class HarvestTask extends Task {
         // TODO: Adjust this to compare against the creep's capacity, or the
         //       local container, if applicable
         return 1/(minion.creep.getActiveBodyparts(WORK) * 2)
-    }
-
-    serialize = () => {
-        return JSON.stringify({
-            taskType: this.constructor.name,
-            creepId: this.creep?.id,
-            sourceId: this.source?.id
-        })
-    }
-    deserialize = (task: any) => {
-        this.creep = Game.getObjectById(task.creepId as Id<Creep>)
-        this.source = Game.getObjectById(task.sourceId as Id<Source>)
-        return this;
     }
 }

@@ -1,3 +1,4 @@
+import { Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
 import { SpeculativeMinion, Task } from "../Task";
@@ -15,10 +16,27 @@ export class UpgradeTask extends Task {
         MustHaveEnergy(() => 1000) // No cap on upgrade energy
     ]
     message = "⏫";
+
+    @Type(() => StructureController)
+    @Transform((value, obj, type) => {
+        switch(type) {
+            case TransformationType.PLAIN_TO_CLASS:
+                return Game.getObjectById(value as Id<StructureController>);
+            case TransformationType.CLASS_TO_PLAIN:
+                return obj.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return obj;
+        }
+    })
+    destination: StructureController|null = null;
+
     constructor(
-        public creep: Creep|null = null,
-        public destination: StructureController|null = null,
-    ) { super() }
+        creep: Creep|null = null,
+        destination: StructureController|null = null,
+    ) {
+        super(creep);
+        this.destination = destination;
+    }
 
     action = () => {
         // If unable to get the creep or source, task is completed
@@ -35,18 +53,5 @@ export class UpgradeTask extends Task {
     cost = (minion: SpeculativeMinion) => {
         // Approximate effectiveness of minion based on number of WORK parts
         return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
-    }
-
-    serialize = () => {
-        return JSON.stringify({
-            taskType: this.constructor.name,
-            creepId: this.creep?.id,
-            destinationId: this.destination?.id
-        })
-    }
-    deserialize = (task: any) => {
-        this.creep = Game.getObjectById(task.creepId as Id<Creep>)
-        this.destination = Game.getObjectById(task.destinationId as Id<StructureController>)
-        return this;
     }
 }

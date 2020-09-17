@@ -1,3 +1,4 @@
+import { deserialize, deserializeArray, serialize } from "class-transformer";
 import { Request } from "requests/Request";
 import { Task } from "tasks/Task";
 import { TaskRequest } from "tasks/TaskRequest";
@@ -22,7 +23,7 @@ export class TaskManager extends Manager {
         }
         if (!this.requests[request.task.constructor.name][request.sourceId]) {
             this.requests[request.task.constructor.name][request.sourceId] = request;
-            console.log(`[RequestManager] Received priority ${request.priority} ${request.task.constructor.name} request from ${request.sourceId}`)
+            console.log(`[TaskManager] Received priority ${request.priority} ${request.task.constructor.name} request from ${request.sourceId}`)
         }
     }
     assign = (task: Task) => {
@@ -32,10 +33,7 @@ export class TaskManager extends Manager {
     load = (room: Room) => {
         // Load tasks from Memory
         if (Memory.rooms[room.name]?.tasks) {
-            this.tasks = Memory.rooms[room.name]?.tasks?.split('|').map(task => {
-                let deserialized = JSON.parse(task);
-                return new taskTypes[deserialized.taskType]().deserialize(deserialized);
-            }) || [];
+            this.tasks = deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
         } else {
             this.tasks = [];
         }
@@ -45,9 +43,15 @@ export class TaskManager extends Manager {
             for (let reqType in deserialized) {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
-                    this.requests[reqType][reqSource] = new TaskRequest().deserialize(JSON.parse(deserialized[reqType][reqSource]))
+                    try {
+                        this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
+                    } catch {
+                        console.log(`[TaskManager] Failed to parse: ${deserialized[reqType][reqSource]}`);
+                    }
                 }
             }
+        } else {
+            this.requests = {};
         }
     }
     run = (room: Room) => {
@@ -61,29 +65,41 @@ export class TaskManager extends Manager {
                     request.completed = true;
                     return;
                 }
+                console.log(`[TaskManager] Pending ${request.task.constructor.name} request`);
                 // Find the best candidate from the idle minions
                 let candidate = this.idleCreeps(room).map(creep => {
-                    return resolveTaskTrees({
+                    let paths = resolveTaskTrees({
                         creep,
                         capacity: creep.store.getCapacity(),
                         capacityUsed: creep.store.getUsedCapacity(),
                         pos: creep.pos
-                    }, request.task as Task)?.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                }).reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b)
+                    }, request.task as Task)
+                    if (!paths || paths.length === 0) return;
+                    return paths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
+                }).reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b, undefined)
 
                 if (candidate) {
                     request.task.creep = candidate.minion.creep;
+                    console.log(candidate.tasks)
                     this.assign(request.task);
                 }
         })
         // Run assigned tasks
-        this.tasks = this.tasks.filter(task => !task.action())
+        this.tasks = this.tasks.filter(task => {
+            if (task.action()) {
+                if (task.next) {
+                    task.next.creep = task.creep;
+                    this.assign(task.next);
+                }
+                return true;
+            }
+            return false;
+        })
     }
     cleanup = (room: Room) => {
         if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
-        Memory.rooms[room.name].tasks = this.tasks
-            .filter(task => !task.completed || Game.time > task.created + 500)
-            .map(t => t.serialize()).join('|');
+        Memory.rooms[room.name].tasks = serialize(this.tasks
+            .filter(task => !task.completed || Game.time > task.created + 500))
 
         let serialized: RequestsMap<string> = {};
 
@@ -94,7 +110,7 @@ export class TaskManager extends Manager {
                     // Completed or timed out
                     delete this.requests[reqType][reqSource]
                 } else {
-                    serialized[reqType][reqSource] = this.requests[reqType][reqSource].serialize()
+                    serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])
                 }
             }
         }

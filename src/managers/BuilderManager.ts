@@ -8,14 +8,12 @@ export class BuilderManager extends Manager {
     builders: Creep[] = [];
     sites: ConstructionSite[] = [];
     init = (room: Room) => {
-        if (!room.controller) return; // Nothing to manage in this room
-
         this.builders = room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'BUILDER') || null;
         this.sites = room.find(FIND_MY_CONSTRUCTION_SITES);
 
         // Request minions, if needed
         if (this.shouldSpawnBuilders(room)) {
-            global.managers.spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.BUILDER))
+            global.managers.spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
         }
 
         // Request build for construction sites

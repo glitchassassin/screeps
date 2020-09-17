@@ -1,3 +1,4 @@
+import { Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveCarryCapacity } from "tasks/prereqs/MustHaveCarryCapacity";
 import { Task } from "../Task";
@@ -13,10 +14,26 @@ export class WithdrawTask extends Task {
         MustHaveCarryCapacity()
     ]
     message = "⏪";
+
+    @Type(() => Structure)
+    @Transform((value, obj, type) => {
+        switch(type) {
+            case TransformationType.PLAIN_TO_CLASS:
+                return Game.getObjectById(value as Id<Structure>);
+            case TransformationType.CLASS_TO_PLAIN:
+                return obj.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return obj;
+        }
+    })
+    destination: Structure|null = null;
     constructor(
-        public creep: Creep|null = null,
-        public destination: Structure|null = null,
-    ) { super() }
+        creep: Creep|null = null,
+        destination: Structure|null = null,
+    ) {
+        super(creep);
+        this.destination = destination;
+    }
 
     action = () => {
         // If unable to get the creep or source, task is completed
@@ -41,18 +58,5 @@ export class WithdrawTask extends Task {
             default:
                 return 10;
         }
-    }
-
-    serialize = () => {
-        return JSON.stringify({
-            taskType: this.constructor.name,
-            creepId: this.creep?.id,
-            destinationId: this.destination?.id
-        })
-    }
-    deserialize = (task: any) => {
-        this.creep = Game.getObjectById(task.creepId as Id<Creep>)
-        this.destination = Game.getObjectById(task.destinationId as Id<Structure>)
-        return this;
     }
 }
