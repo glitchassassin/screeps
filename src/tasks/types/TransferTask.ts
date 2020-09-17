@@ -11,13 +11,13 @@ export class TransferTask extends Task {
     //         to fill target
     //         Otherwise, get some by harvesting
     //         or withdrawing
-    prereqs = [
-        MustBeAdjacent(() => this.destination?.pos),
-        MustHaveEnergy(() => {
-            if (!this.destination) return;
-            return (this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY)
-        })
-    ]
+    getPrereqs = () => {
+        if (!this.destination) return [];
+        return [
+            new MustBeAdjacent(this.destination.pos),
+            new MustHaveEnergy((this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY))
+        ]
+    }
     message = "⏩";
 
     @ct.Type(() => Structure)

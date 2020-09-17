@@ -1,6 +1,6 @@
 import { Transform } from "class-transformer";
 import { TransformationType } from "class-transformer/enums";
-import { SpeculativeMinion, TaskPrerequisite } from "tasks/Task";
+import { SpeculativeMinion, TaskPrerequisite } from "../Task";
 import { TravelTask } from "tasks/types/TravelTask";
 
 /**

@@ -11,10 +11,13 @@ export class UpgradeTask extends Task {
     //         to fill target
     //         Otherwise, get some by harvesting
     //         or withdrawing
-    prereqs = [
-        MustBeAdjacent(() => this.destination?.pos),
-        MustHaveEnergy(() => 1000) // No cap on upgrade energy
-    ]
+    getPrereqs = () => {
+        if (!this.destination) return [];
+        return [
+            new MustBeAdjacent(this.destination.pos),
+            new MustHaveEnergy(1000) // No cap on upgrade energy
+        ]
+    }
     message = "⏫";
 
     @ct.Type(() => StructureController)

@@ -7,9 +7,10 @@ export class HarvestTask extends Task {
     // Prereq: Minion must be adjacent
     //         Otherwise, move to an open space
     //         near the source
-    prereqs = [
-        MustBeAtMine(() => this.source || undefined)
-    ]
+    getPrereqs = () => {
+        if (!this.source) return [];
+        return [new MustBeAtMine(this.source)]
+    }
     message = "⚡";
 
     @ct.Type(() => Source)

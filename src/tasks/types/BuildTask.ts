@@ -14,7 +14,7 @@ export class BuildTask extends Task {
     getPrereqs = () => {
         if (!this.destination) return [];
         return [
-            MustHaveEnergy(this.destination.progressTotal - this.destination.progress),
+            new MustHaveEnergy(this.destination.progressTotal - this.destination.progress),
             new MustBeAdjacent(this.destination.pos),
         ]
     }

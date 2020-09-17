@@ -1,4 +1,5 @@
-import { TaskPrerequisite } from "tasks/Task";
+import { Transform, TransformationType } from "class-transformer";
+import { SpeculativeMinion, TaskPrerequisite } from "tasks/Task";
 import { TravelTask } from "tasks/types/TravelTask";
 
 /**
@@ -6,18 +7,33 @@ import { TravelTask } from "tasks/types/TravelTask";
  * If not, creates TravelTask(s) to each possible adjacent position
  * @param pos Get reference when prerequisite is checked
  */
-export const MustBeAtMine = (getSource: () => Source|undefined) => new TaskPrerequisite(
-    minion => {
-        let source = getSource()
-        return !!source && minion.pos.inRangeTo(source.pos, 1)
-    },
-    minion => {
-        let source = getSource()
-        if (!source) return null;
+export class MustBeAtMine extends TaskPrerequisite {
+    @Transform((value, obj, type) => {
+        switch(type) {
+            case TransformationType.PLAIN_TO_CLASS:
+                return Game.getObjectById(value as Id<Source>)
+            case TransformationType.CLASS_TO_PLAIN:
+                return obj.id
+            case TransformationType.CLASS_TO_CLASS:
+                return obj
+        }
+    })
+    source: Source
+    constructor(
+        source: Source
+    ) {
+        super();
+        this.source = source;
+    }
+
+    met = (minion: SpeculativeMinion) => {
+        return minion.pos.inRangeTo(this.source.pos, 1)
+    }
+    toMeet = (minion: SpeculativeMinion) => {
         let spaces = global.analysts.source
-            .getAuxiliaryMiningLocationsForSource(minion.creep.room, source)
+            .getAuxiliaryMiningLocationsForSource(minion.creep.room, this.source)
             .map(pos => new TravelTask(minion.creep, pos))
         if (spaces.length === 0) return null; // No adjacent mining spaces
         return spaces;
     }
-)
+}

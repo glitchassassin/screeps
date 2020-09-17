@@ -1,4 +1,4 @@
-import { TaskPrerequisite } from "tasks/Task";
+import { SpeculativeMinion, TaskPrerequisite } from "tasks/Task";
 import { HarvestTask } from "tasks/types/HarvestTask";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
 
@@ -7,7 +7,7 @@ import { WithdrawTask } from "tasks/types/WithdrawTask";
  * If not, fails
  * @param quantity Get reference when prerequisite is checked
  */
-export const MustHaveCarryCapacity = () => new TaskPrerequisite(
-    minion => minion.capacity - minion.capacityUsed > 0,
-    minion => (null)
-)
+export class MustHaveCarryCapacity extends TaskPrerequisite {
+    met = (minion: SpeculativeMinion) => minion.capacity - minion.capacityUsed > 0;
+    toMeet = () => null;
+}

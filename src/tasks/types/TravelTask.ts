@@ -5,9 +5,10 @@ import { SpeculativeMinion, Task } from "../Task";
 export class TravelTask extends Task {
     // Prereq: Minion must have a path to destination
     //         Otherwise, fail this branch
-    prereqs = [
-        MustHavePath(() => this.destination || undefined)
-    ]
+    getPrereqs = () => {
+        if (!this.destination) return [];
+        return [new MustHavePath(this.destination)]
+    }
     message = "🚗";
 
     @ct.Type(() => RoomPosition)

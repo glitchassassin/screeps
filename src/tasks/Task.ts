@@ -20,7 +20,7 @@ export class TaskPrerequisite {
 
 export class Task {
     @ct.Type(() => TaskPrerequisite)
-    prereqs: TaskPrerequisite[] = [];
+    getPrereqs = (): TaskPrerequisite[] => ([]);
     // @ct.Type(() => Task, {
     //     discriminator: {
     //         property: '__type',

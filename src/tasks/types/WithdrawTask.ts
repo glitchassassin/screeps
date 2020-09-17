@@ -9,10 +9,13 @@ export class WithdrawTask extends Task {
     //         near the destination
     // Prereq: Minion must have room to store energy
     //         Otherwise, fail
-    prereqs = [
-        MustBeAdjacent(() => this.destination?.pos),
-        MustHaveCarryCapacity()
-    ]
+    getPrereqs = () => {
+        if (!this.destination) return [];
+        return [
+            new MustBeAdjacent(this.destination.pos),
+            new MustHaveCarryCapacity()
+        ]
+    }
     message = "⏪";
 
     @ct.Type(() => Structure)

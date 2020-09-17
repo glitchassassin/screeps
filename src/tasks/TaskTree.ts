@@ -12,13 +12,14 @@ export const resolveTaskTrees = (minion: SpeculativeMinion, task: Task): TaskPla
         minion,
         tasks: [task]
     }
-    if (task.prereqs.length === 0 || task.prereqs.every(p => p.met(minion))) {
+    let prereqs = task.getPrereqs();
+    if (prereqs.length === 0 || prereqs.every(p => p.met(minion))) {
         // No prereqs - return a plan for just this task
         return [taskPlan]
     }
     let plans: TaskPlan[] = [];
-    for (let i = 0; i < task.prereqs.length; i++) {
-        let prereq = task.prereqs[i]
+    for (let i = 0; i < prereqs.length; i++) {
+        let prereq = prereqs[i]
         if (!prereq.met(minion)) {
             // Get task plans for all prereq alternatives
             let altTasks = prereq.toMeet(minion)
