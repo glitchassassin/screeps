@@ -2,8 +2,7 @@ import { deserialize, deserializeArray, serialize } from "class-transformer";
 import { Task } from "tasks/Task";
 import { TaskAction } from "tasks/TaskAction";
 import { TaskRequest } from "tasks/TaskRequest";
-import { resolveTaskTrees } from "tasks/TaskTree";
-import { taskTypes } from "tasks/TaskTypes";
+import { resolveTaskTrees } from "tasks/resolveTaskTrees";
 import { Manager } from "./Manager";
 
 type RequestsMap<T> = {
@@ -15,6 +14,15 @@ type RequestsMap<T> = {
 export class TaskManager extends Manager {
     tasks: Task[] = [];
     requests: RequestsMap<TaskRequest> = {};
+
+    purge = (room: string) => {
+        this.requests = {};
+        this.tasks = [];
+        if (Memory.rooms[room]) {
+            Memory.rooms[room].tasks = "";
+            Memory.rooms[room].requests = "";
+        }
+    }
 
     submit = (request: TaskRequest) => {
         if (!request.sourceId || !request.task) return;
@@ -43,11 +51,7 @@ export class TaskManager extends Manager {
             for (let reqType in deserialized) {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
-                    try {
-                        this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
-                    } catch {
-                        console.log(`[TaskManager] Failed to parse: ${deserialized[reqType][reqSource]}`);
-                    }
+                    this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
                 }
             }
         } else {
@@ -66,7 +70,7 @@ export class TaskManager extends Manager {
                     return;
                 }
                 // Find the best candidate from the idle minions
-                let candidate = this.idleCreeps(room).map(creep => {
+                let candidates = this.idleCreeps(room).map(creep => {
                     let paths = resolveTaskTrees({
                         creep,
                         capacity: creep.store.getCapacity(),
@@ -75,9 +79,15 @@ export class TaskManager extends Manager {
                     }, request.task as TaskAction)
                     if (!paths || paths.length === 0) return;
                     return paths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                }).reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b, undefined)
+                })
+                candidates.forEach(c => {
+                    if (c)
+                        console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n${c.tasks.map(t => t.constructor.name)}`)
+                })
+                let candidate = candidates.reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b, undefined)
 
                 if (candidate) {
+                    console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
                     let task = new Task(request.task, candidate.minion.creep);
                     // Create task chain
                     let currentTask = task;
@@ -90,7 +100,11 @@ export class TaskManager extends Manager {
         })
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
-            if (task.action.action(task.creep)) {
+            if (!task.creep) return true; // Creep disappeared, cancel task
+            let result = task.action.action(task.creep)
+            if (result) {
+                console.log(`[${task.action.constructor.name}] Complete`)
+                task.completed = true;
                 if (task.next) {
                     task.next.creep = task.creep;
                     this.assign(task.next);

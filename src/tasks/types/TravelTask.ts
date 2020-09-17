@@ -2,6 +2,7 @@ import { MustHavePath } from "tasks/prereqs/MustHavePath";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
+import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 
 export class TravelTask extends TaskAction {
     // Prereq: Minion must have a path to destination
@@ -12,32 +13,28 @@ export class TravelTask extends TaskAction {
     }
     message = "🚗";
 
-    @Type(() => RoomPosition)
-    @Transform((value, obj, type) => {
-        switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
-                return Game.getObjectById(value as Id<RoomPosition>);
-            case TransformationType.CLASS_TO_PLAIN:
-                return value.id;
-            case TransformationType.CLASS_TO_CLASS:
-                return value;
-        }
-    })
+    // @Type(() => RoomPosition)
+    @Transform(transformRoomPosition)
     destination: RoomPosition|null = null;
+
+    distance: number;
 
     constructor(
         destination: RoomPosition|null = null,
+        distance: number = 0
     ) {
         super();
         this.destination = destination;
+        this.distance = distance;
     }
 
     action(creep: Creep) {
+        console.log(`[TravelTask] ${creep.name} to (${this.destination?.x}, ${this.destination?.y})`)
         // If unable to get the creep or destination, task is completed
         if (!this.destination) return true;
 
         creep.moveTo(this.destination);
-        return creep.pos.isEqualTo(this.destination);
+        return creep.pos.inRangeTo(this.destination, this.distance);
     }
     cost(minion: SpeculativeMinion) {
         if (!this.destination) return Infinity

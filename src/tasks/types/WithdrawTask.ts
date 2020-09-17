@@ -2,6 +2,7 @@ import { Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveCarryCapacity } from "tasks/prereqs/MustHaveCarryCapacity";
 import { TaskAction } from "tasks/TaskAction";
+import { transformGameObject } from "utils/transformGameObject";
 
 export class WithdrawTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -19,16 +20,7 @@ export class WithdrawTask extends TaskAction {
     message = "⏪";
 
     @Type(() => Structure)
-    @Transform((value, obj, type) => {
-        switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
-                return Game.getObjectById(value as Id<Structure>);
-            case TransformationType.CLASS_TO_PLAIN:
-                return value.id;
-            case TransformationType.CLASS_TO_CLASS:
-                return value;
-        }
-    })
+    @Transform(transformGameObject(Structure))
     destination: Structure|null = null;
     constructor(
         destination: Structure|null = null,

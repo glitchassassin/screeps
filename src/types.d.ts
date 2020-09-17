@@ -15,6 +15,7 @@ interface FlagMemory {
 interface RoomMemory {
   tasks?: string;
   requests?: string;
+  spawnRequests?: string;
 }
 
 interface Memory {

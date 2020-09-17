@@ -3,8 +3,8 @@ import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
 
 /**
- * Checks if minion is adjacent to a given position
- * If not, creates TravelTask(s) to each possible adjacent position
+ * Checks if minion has a path to a given position
+ * If not, fails
  * @param pos Get reference when prerequisite is checked
  */
 export class MustHavePath extends TaskPrerequisite {

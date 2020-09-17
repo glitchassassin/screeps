@@ -1,10 +1,8 @@
 import { MustBeAtMine } from "tasks/prereqs/MustBeAtMine";
-import { Task } from "../Task";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskPrerequisite } from "../TaskPrerequisite";
-import { TravelTask } from "./TravelTask";
 import { TaskAction } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
+import { transformGameObject } from "utils/transformGameObject";
 
 export class HarvestTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -17,16 +15,7 @@ export class HarvestTask extends TaskAction {
     message = "⚡";
 
     @Type(() => Source)
-    @Transform((value, obj, type) => {
-        switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
-                return Game.getObjectById(value as Id<Source>);
-            case TransformationType.CLASS_TO_PLAIN:
-                return value.id;
-            case TransformationType.CLASS_TO_CLASS:
-                return value;
-        }
-    })
+    @Transform(transformGameObject(Source))
     source: Source|null = null
     constructor(
         source: Source|null = null,

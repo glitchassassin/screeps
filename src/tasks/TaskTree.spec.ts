@@ -3,7 +3,7 @@ import { mockGlobal, mockInstanceOf } from 'screeps-jest';
 import {assert} from "chai";
 import { Task } from "tasks/Task";
 import { TaskPrerequisite } from "tasks/TaskPrerequisite";
-import { resolveTaskTrees } from "tasks/TaskTree";
+import { resolveTaskTrees } from "tasks/resolveTaskTrees";
 import { TaskAction } from './TaskAction';
 
 class MockTaskPrerequisite extends TaskPrerequisite {

@@ -4,6 +4,7 @@ import { Task } from "../Task";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
+import { transformGameObject } from "utils/transformGameObject";
 
 export class UpgradeTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -23,16 +24,7 @@ export class UpgradeTask extends TaskAction {
     message = "⏫";
 
     @Type(() => StructureController)
-    @Transform((value, obj, type) => {
-        switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
-                return Game.getObjectById(value as Id<StructureController>);
-            case TransformationType.CLASS_TO_PLAIN:
-                return value.id;
-            case TransformationType.CLASS_TO_CLASS:
-                return value;
-        }
-    })
+    @Transform(transformGameObject(StructureController))
     destination: StructureController|null = null;
 
     constructor(

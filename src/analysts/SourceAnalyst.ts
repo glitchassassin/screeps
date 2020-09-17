@@ -86,10 +86,11 @@ export class SourceAnalyst extends Analyst {
                 // TODO: Check
                 output += creep.getActiveBodyparts(WORK) * 2;
             })
-            if (creeps) return false;
+            if (creeps.length > 0) return false;
             return true;
         })
-        if (spaces.length > 0 && output < (source.energyCapacity / source.ticksToRegeneration)) {
+        //console.log(`[${source.id}] ${spaces.length} mining spots, current output ${output}/${source.energyCapacity / 300}`)
+        if (spaces.length > 0 && output < (source.energyCapacity / 300)) {
             // There is an adjacent square, and source is not maxed out
             return spaces;
         }

@@ -19,18 +19,21 @@ export class SpawnManager extends Manager {
     }
 
     load = (room: Room) => {
+        this.spawns = spawnAnalyst.getSpawns(room);
         // Load requests from Memory
-        if (Memory.rooms[room.name]?.requests) {
-            let deserialized = JSON.parse(Memory.rooms[room.name]?.requests as string)
+        if (Memory.rooms[room.name]?.spawnRequests) {
+            let deserialized = JSON.parse(Memory.rooms[room.name]?.spawnRequests as string)
             this.requests = {};
             for (let reqSource in deserialized) {
                 this.requests[reqSource] = deserialize(MinionRequest, deserialized[reqSource])
+                if (this.requests[reqSource].assignedTo) {
+                    this.spawns.find(s => s.spawn.id === this.requests[reqSource].assignedTo?.id)
+                }
             }
         }
     }
 
     init = (room: Room) => {
-        this.spawns = spawnAnalyst.getSpawns(room);
 
         // Request energy, if needed
         this.spawns.forEach((spawn) => {
@@ -44,12 +47,13 @@ export class SpawnManager extends Manager {
         // Spawn Requests
         Object.values(this.requests)
             .sort((a, b) => (b.priority - a.priority)).forEach(r => {
-            if (r.canAssign()) {
+            if (!r.assignedTo) {
                 // Find a spawn to carry out the request
                 let available = this.getIdleSpawn(room);
                 if (available) {
-                    console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
-                    r.assignedTo.push(available.spawn.id);
+                    // console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
+                    r.assignedTo = available.spawn;
+                    available.currentRequest = r;
                 }
             }
             // Process assigned requests
@@ -70,7 +74,7 @@ export class SpawnManager extends Manager {
                 serialized[reqSource] = serialize(this.requests[reqSource])
             }
         }
-        Memory.rooms[room.name].requests = JSON.stringify(serialized);
+        Memory.rooms[room.name].spawnRequests = JSON.stringify(serialized);
     }
 
     getSpawns = (room: Room) => {

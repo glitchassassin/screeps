@@ -31,6 +31,7 @@ export class MustHaveEnergy extends TaskPrerequisite {
         // Can get energy from withdrawing
         let containers = global.analysts.logistics.getAllSources(minion.creep.room)
                                                   .map(source => new WithdrawTask(source));
+        console.log([...sources, ...containers]);
         return [...sources, ...containers];
     }
 }

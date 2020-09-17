@@ -1,4 +1,5 @@
 import { classToClass, classToPlain, plainToClass, Transform, TransformationType, Type } from 'class-transformer';
+import { transformGameObject } from 'utils/transformGameObject';
 import { SpeculativeMinion } from './SpeculativeMinion';
 import { TaskAction } from './TaskAction';
 import { TaskPrerequisite } from './TaskPrerequisite';
@@ -14,17 +15,8 @@ export class Task {
     next: Task|null = null
 
     @Type(() => Creep)
-    @Transform((value, obj, type) => {
-        switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
-                return Game.getObjectById(value as Id<Creep>);
-            case TransformationType.CLASS_TO_PLAIN:
-                return value.id;
-            case TransformationType.CLASS_TO_CLASS:
-                return value;
-        }
-    })
-    creep: Creep;
+    @Transform(transformGameObject(Creep))
+    creep: Creep|null;
 
     @Type(() => TaskAction, {
         discriminator: {

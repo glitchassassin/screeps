@@ -1,4 +1,5 @@
 import { Transform, TransformationType, Type } from "class-transformer";
+import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "../SpeculativeMinion";
@@ -22,16 +23,7 @@ export class BuildTask extends TaskAction {
     message = "🔨";
 
     @Type(() => ConstructionSite)
-    @Transform((value: any, obj: any, type: any) => {
-        switch(type) {
-            case TransformationType.PLAIN_TO_CLASS:
-                return Game.getObjectById(value as Id<ConstructionSite>);
-            case TransformationType.CLASS_TO_PLAIN:
-                return value.id;
-            case TransformationType.CLASS_TO_CLASS:
-                return value;
-        }
-    })
+    @Transform(transformGameObject(ConstructionSite))
     destination: ConstructionSite|null = null
 
     constructor(
