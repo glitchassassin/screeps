@@ -1,3 +1,4 @@
+import { Transform, Type } from "class-transformer";
 import { Request } from "../Request";
 import { BuilderMinion } from "./minions/BuilderMinion";
 import { MinerMinion } from './minions/MinerMinion';
@@ -11,12 +12,23 @@ export enum MinionTypes {
 
 export class MinionRequest extends Request {
     private spawned = false;
+    public sourceId: string|null = null;
+    public priority = 5;
+
+    @Transform((type: string) => MinionTypes[type as MinionTypes])
+    public type: MinionTypes|null = null;
+    public memory: CreepMemory = {};
     constructor(
-        public sourceId: string|null = null,
-        public priority = 5,
-        public type: MinionTypes|null = null,
-        public memory: CreepMemory = {}
-    ) { super(sourceId); }
+        sourceId: string|null = null,
+        priority = 5,
+        type: MinionTypes|null = null,
+        memory: CreepMemory = {}
+    ) {
+        super(sourceId);
+        this.priority = priority;
+        this.type = type;
+        this.memory = memory;
+    }
 
     fulfill = (room: Room) => {
         if (!this.type || !this.assignedTo) return;
@@ -42,21 +54,5 @@ export class MinionRequest extends Request {
                 this.completed = true;
             }
         })
-    }
-
-    serialize = () => {
-        return Request.prototype.serialize.call(this, {
-            requestType: this.constructor.name,
-            type: this.type,
-            memory: this.memory,
-            spawned: this.spawned,
-        });
-    }
-    deserialize = (task: any) => {
-        Request.prototype.deserialize.call(this, task);
-        this.type = task.type;
-        this.memory = task.memory;
-        this.spawned = task.spawned;
-        return this;
     }
 }
