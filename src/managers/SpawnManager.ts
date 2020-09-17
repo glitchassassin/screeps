@@ -1,5 +1,5 @@
 import { SpawnAnalyst, SpawnData } from "analysts/Spawnanalyst";
-import * as ct from "class-transformer";
+import { deserialize, serialize } from "class-transformer";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { TransferTask } from "tasks/types/TransferTask";
@@ -24,7 +24,7 @@ export class SpawnManager extends Manager {
             let deserialized = JSON.parse(Memory.rooms[room.name]?.requests as string)
             this.requests = {};
             for (let reqSource in deserialized) {
-                this.requests[reqSource] = ct.deserialize(MinionRequest, deserialized[reqSource])
+                this.requests[reqSource] = deserialize(MinionRequest, deserialized[reqSource])
             }
         }
     }
@@ -36,7 +36,7 @@ export class SpawnManager extends Manager {
         this.spawns.forEach((spawn) => {
             let capacity = room.energyAvailable
             if (capacity > 0) {
-                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(null, spawn.spawn), 10));
+                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10));
             }
         })
     }
@@ -67,7 +67,7 @@ export class SpawnManager extends Manager {
                 // Completed or timed out
                 delete this.requests[reqSource]
             } else {
-                serialized[reqSource] = ct.serialize(this.requests[reqSource])
+                serialized[reqSource] = serialize(this.requests[reqSource])
             }
         }
         Memory.rooms[room.name].requests = JSON.stringify(serialized);

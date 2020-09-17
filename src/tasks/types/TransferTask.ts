@@ -1,9 +1,9 @@
-import * as ct from "class-transformer";
+import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
-import { Task, TaskPrerequisite } from "../Task";
+import { TaskAction } from "tasks/TaskAction";
 
-export class TransferTask extends Task {
+export class TransferTask extends TaskAction {
     // Prereq: Minion must be adjacent
     //         Otherwise, move to an open space
     //         near the destination
@@ -11,7 +11,7 @@ export class TransferTask extends Task {
     //         to fill target
     //         Otherwise, get some by harvesting
     //         or withdrawing
-    getPrereqs = () => {
+    getPrereqs() {
         if (!this.destination) return [];
         return [
             new MustBeAdjacent(this.destination.pos),
@@ -20,38 +20,37 @@ export class TransferTask extends Task {
     }
     message = "⏩";
 
-    @ct.Type(() => Structure)
-    @ct.Transform((value, obj, type) => {
+    @Type(() => Structure)
+    @Transform((value, obj, type) => {
         switch(type) {
-            case ct.TransformationType.PLAIN_TO_CLASS:
+            case TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<Structure>);
-            case ct.TransformationType.CLASS_TO_PLAIN:
-                return obj.id;
-            case ct.TransformationType.CLASS_TO_CLASS:
-                return obj;
+            case TransformationType.CLASS_TO_PLAIN:
+                return value.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return value;
         }
     })
     destination: Structure|null = null;
 
     constructor(
-        creep: Creep|null = null,
         destination: Structure|null = null,
     ) {
-        super(creep);
+        super();
         this.destination = destination;
     }
 
-    action = () => {
+    action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.creep || !this.destination) return true;
+        if (!this.destination) return true;
 
-        let result = this.creep.transfer(this.destination, RESOURCE_ENERGY);
+        let result = creep.transfer(this.destination, RESOURCE_ENERGY);
         if (result === ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(this.destination);
+            creep.moveTo(this.destination);
         } else {
             return true;
         }
         return false;
     }
-    cost = () => 1; // Takes one tick to transfer
+    cost() {return 1;}; // Takes one tick to transfer
 }

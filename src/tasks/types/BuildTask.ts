@@ -1,9 +1,10 @@
-import * as ct from "class-transformer";
-import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
-import { SpeculativeMinion, Task } from "../Task";
+import { Transform, TransformationType, Type } from "class-transformer";
+import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
+import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
+import { SpeculativeMinion } from "../SpeculativeMinion";
+import { TaskAction } from "../TaskAction";
 
-export class BuildTask extends Task {
+export class BuildTask extends TaskAction {
     // Prereq: Minion must be adjacent
     //         Otherwise, move to an open space
     //         near the destination
@@ -11,7 +12,7 @@ export class BuildTask extends Task {
     //         to fill target
     //         Otherwise, get some by harvesting
     //         or withdrawing
-    getPrereqs = () => {
+    getPrereqs() {
         if (!this.destination) return [];
         return [
             new MustHaveEnergy(this.destination.progressTotal - this.destination.progress),
@@ -20,34 +21,33 @@ export class BuildTask extends Task {
     }
     message = "🔨";
 
-    @ct.Type(() => ConstructionSite)
-    @ct.Transform((value: any, obj: any, type: any) => {
+    @Type(() => ConstructionSite)
+    @Transform((value: any, obj: any, type: any) => {
         switch(type) {
-            case ct.TransformationType.PLAIN_TO_CLASS:
+            case TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<ConstructionSite>);
-            case ct.TransformationType.CLASS_TO_PLAIN:
-                return obj.id;
-            case ct.TransformationType.CLASS_TO_CLASS:
-                return obj;
+            case TransformationType.CLASS_TO_PLAIN:
+                return value.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return value;
         }
     })
     destination: ConstructionSite|null = null
 
     constructor(
-        creep: Creep|null = null,
         destination: ConstructionSite|null = null,
     ) {
-        super(creep);
+        super();
         this.destination = destination;
     }
 
-    action = () => {
+    action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.creep || !this.destination) return true;
+        if (!this.destination) return true;
 
-        let result = this.creep.build(this.destination);
+        let result = creep.build(this.destination);
         if (result === ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(this.destination);
+            creep.moveTo(this.destination);
         } else if (result !== OK){
             console.log(`[BuildTask] Error: ${result}`);
             return true;
@@ -58,7 +58,7 @@ export class BuildTask extends Task {
      * Calculates cost based on the effectiveness of the minion
      * @param minion
      */
-    cost = (minion: SpeculativeMinion) => {
+    cost(minion: SpeculativeMinion) {
         return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
     }
 }

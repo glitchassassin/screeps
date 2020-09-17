@@ -1,5 +1,6 @@
 import { Mine, SourceAnalyst } from "analysts/SourceAnalyst";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
+import { Task } from "tasks/Task";
 import { HarvestTask } from "tasks/types/HarvestTask";
 import { TravelTask } from "tasks/types/TravelTask";
 import { Manager } from "./Manager";
@@ -36,10 +37,10 @@ export class SourceManager extends Manager {
                         }
                     }
                     // If miner is not full, continue harvesting
-                    global.managers.task.assign(new HarvestTask(mine.miner, mine.source));
+                    global.managers.task.assign(new Task(new HarvestTask(mine.source), mine.miner));
                 } else {
                     // If miner is not on site, go there
-                    global.managers.task.assign(new TravelTask(mine.miner, mine.pos));
+                    global.managers.task.assign(new Task(new TravelTask(mine.pos), mine.miner));
                 }
             }
         })

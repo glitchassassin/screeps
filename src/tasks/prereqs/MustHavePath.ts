@@ -1,5 +1,6 @@
-import { Transform, TransformationType } from "class-transformer";
-import { SpeculativeMinion, TaskPrerequisite } from "../Task";
+import { Exclude, Transform, TransformationType } from "class-transformer";
+import { SpeculativeMinion } from "../SpeculativeMinion";
+import { TaskPrerequisite } from "../TaskPrerequisite";
 
 /**
  * Checks if minion is adjacent to a given position
@@ -21,8 +22,10 @@ export class MustHavePath extends TaskPrerequisite {
         this.pos = pos;
     }
 
-    met = (minion: SpeculativeMinion) => {
+    met(minion: SpeculativeMinion) {
         return !PathFinder.search(minion.pos, this.pos).incomplete
     }
-    toMeet = () => null;
+    toMeet() {
+        return null;
+    }
 }

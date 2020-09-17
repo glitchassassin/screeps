@@ -1,45 +1,45 @@
-import * as ct from "class-transformer";
 import { MustHavePath } from "tasks/prereqs/MustHavePath";
-import { SpeculativeMinion, Task } from "../Task";
+import { SpeculativeMinion } from "../SpeculativeMinion";
+import { TaskAction } from "tasks/TaskAction";
+import { Transform, TransformationType, Type } from "class-transformer";
 
-export class TravelTask extends Task {
+export class TravelTask extends TaskAction {
     // Prereq: Minion must have a path to destination
     //         Otherwise, fail this branch
-    getPrereqs = () => {
+    getPrereqs() {
         if (!this.destination) return [];
         return [new MustHavePath(this.destination)]
     }
     message = "🚗";
 
-    @ct.Type(() => RoomPosition)
-    @ct.Transform((value, obj, type) => {
+    @Type(() => RoomPosition)
+    @Transform((value, obj, type) => {
         switch(type) {
-            case ct.TransformationType.PLAIN_TO_CLASS:
+            case TransformationType.PLAIN_TO_CLASS:
                 return Game.getObjectById(value as Id<RoomPosition>);
-            case ct.TransformationType.CLASS_TO_PLAIN:
-                return obj.id;
-            case ct.TransformationType.CLASS_TO_CLASS:
-                return obj;
+            case TransformationType.CLASS_TO_PLAIN:
+                return value.id;
+            case TransformationType.CLASS_TO_CLASS:
+                return value;
         }
     })
     destination: RoomPosition|null = null;
 
     constructor(
-        creep: Creep|null = null,
         destination: RoomPosition|null = null,
     ) {
-        super(creep);
+        super();
         this.destination = destination;
     }
 
-    action = () => {
+    action(creep: Creep) {
         // If unable to get the creep or destination, task is completed
-        if (!this.creep || !this.destination) return true;
+        if (!this.destination) return true;
 
-        this.creep.moveTo(this.destination);
-        return this.creep.pos.isEqualTo(this.destination);
+        creep.moveTo(this.destination);
+        return creep.pos.isEqualTo(this.destination);
     }
-    cost = (minion: SpeculativeMinion) => {
+    cost(minion: SpeculativeMinion) {
         if (!this.destination) return Infinity
         return PathFinder.search(minion.pos, this.destination).cost;
     }

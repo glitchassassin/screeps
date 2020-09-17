@@ -1,6 +1,6 @@
-import * as ct from "class-transformer";
-import { Request } from "requests/Request";
+import { deserialize, deserializeArray, serialize } from "class-transformer";
 import { Task } from "tasks/Task";
+import { TaskAction } from "tasks/TaskAction";
 import { TaskRequest } from "tasks/TaskRequest";
 import { resolveTaskTrees } from "tasks/TaskTree";
 import { taskTypes } from "tasks/TaskTypes";
@@ -27,13 +27,13 @@ export class TaskManager extends Manager {
         }
     }
     assign = (task: Task) => {
-        task.creep?.say(task.message);
+        task.creep?.say(task.action.message);
         this.tasks.push(task);
     }
     load = (room: Room) => {
         // Load tasks from Memory
         if (Memory.rooms[room.name]?.tasks) {
-            this.tasks = ct.deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
+            this.tasks = deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
         } else {
             this.tasks = [];
         }
@@ -44,7 +44,7 @@ export class TaskManager extends Manager {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
                     try {
-                        this.requests[reqType][reqSource] = ct.deserialize(TaskRequest, deserialized[reqType][reqSource])
+                        this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
                     } catch {
                         console.log(`[TaskManager] Failed to parse: ${deserialized[reqType][reqSource]}`);
                     }
@@ -65,7 +65,6 @@ export class TaskManager extends Manager {
                     request.completed = true;
                     return;
                 }
-                console.log(`[TaskManager] Pending ${request.task.constructor.name} request`);
                 // Find the best candidate from the idle minions
                 let candidate = this.idleCreeps(room).map(creep => {
                     let paths = resolveTaskTrees({
@@ -73,20 +72,25 @@ export class TaskManager extends Manager {
                         capacity: creep.store.getCapacity(),
                         capacityUsed: creep.store.getUsedCapacity(),
                         pos: creep.pos
-                    }, request.task as Task)
+                    }, request.task as TaskAction)
                     if (!paths || paths.length === 0) return;
                     return paths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 }).reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b, undefined)
 
                 if (candidate) {
-                    request.task.creep = candidate.minion.creep;
-                    console.log(candidate.tasks)
-                    this.assign(request.task);
+                    let task = new Task(request.task, candidate.minion.creep);
+                    // Create task chain
+                    let currentTask = task;
+                    for (let i = 0; i < candidate.tasks.length; i++) {
+                        currentTask.next = new Task(candidate.tasks[i], candidate.minion.creep)
+                        currentTask = currentTask.next;
+                    }
+                    this.assign(task);
                 }
         })
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
-            if (task.action()) {
+            if (task.action.action(task.creep)) {
                 if (task.next) {
                     task.next.creep = task.creep;
                     this.assign(task.next);
@@ -98,7 +102,7 @@ export class TaskManager extends Manager {
     }
     cleanup = (room: Room) => {
         if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
-        Memory.rooms[room.name].tasks = ct.serialize(this.tasks
+        Memory.rooms[room.name].tasks = serialize(this.tasks
             .filter(task => !task.completed || Game.time > task.created + 500))
 
         let serialized: RequestsMap<string> = {};
@@ -110,10 +114,11 @@ export class TaskManager extends Manager {
                     // Completed or timed out
                     delete this.requests[reqType][reqSource]
                 } else {
-                    serialized[reqType][reqSource] = ct.serialize(this.requests[reqType][reqSource])
+                    serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])
                 }
             }
         }
+
         Memory.rooms[room.name].requests = JSON.stringify(serialized);
     }
 

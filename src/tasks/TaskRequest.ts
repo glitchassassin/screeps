@@ -1,6 +1,11 @@
-import * as ct from "class-transformer";
-import { Task } from "./Task";
-import { taskTypes } from "./TaskTypes";
+import { Exclude, Type } from "class-transformer";
+import { TaskAction } from "./TaskAction";
+import { BuildTask } from "./types/BuildTask";
+import { HarvestTask } from "./types/HarvestTask";
+import { TransferTask } from "./types/TransferTask";
+import { TravelTask } from "./types/TravelTask";
+import { UpgradeTask } from "./types/UpgradeTask";
+import { WithdrawTask } from "./types/WithdrawTask";
 
 export class TaskRequest {
     completed = false;
@@ -8,12 +13,24 @@ export class TaskRequest {
     sourceId: string|null = null;
     priority = 5;
 
-    @ct.Type(() => Task)
-    task: Task|null = null;
+    @Type(() => TaskAction, {
+        discriminator: {
+            property: '__type',
+            subTypes: [
+                { value: BuildTask, name: 'BuildTask' },
+                { value: HarvestTask, name: 'HarvestTask' },
+                { value: TransferTask, name: 'TransferTask' },
+                { value: TravelTask, name: 'TravelTask' },
+                { value: UpgradeTask, name: 'UpgradeTask' },
+                { value: WithdrawTask, name: 'WithdrawTask' },
+            ]
+        }
+    })
+    task: TaskAction|null = null;
 
     constructor(
         sourceId: string|null = null,
-        task: Task|null = null,
+        task: TaskAction|null = null,
         priority = 5,
     ) {
         this.sourceId = sourceId;

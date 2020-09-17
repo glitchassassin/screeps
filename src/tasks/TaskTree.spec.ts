@@ -1,13 +1,15 @@
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from 'screeps-jest';
 import {assert} from "chai";
-import { Task, TaskPrerequisite } from "tasks/Task";
+import { Task } from "tasks/Task";
+import { TaskPrerequisite } from "tasks/TaskPrerequisite";
 import { resolveTaskTrees } from "tasks/TaskTree";
+import { TaskAction } from './TaskAction';
 
 class MockTaskPrerequisite extends TaskPrerequisite {
   constructor(
     public metReturn: boolean,
-    public toMeetTasks: Task[]|null = null
+    public toMeetTasks: TaskAction[]|null = null
   ) { super(); }
   met = () => this.metReturn;
   toMeet = () => this.toMeetTasks;
@@ -34,7 +36,7 @@ describe("TaskTree", () => {
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
       creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
     }
-    let result = resolveTaskTrees(minion, new Task(minion.creep))
+    let result = resolveTaskTrees(minion, new TaskAction())
     assert.isOk(result);
   });
 
@@ -45,9 +47,9 @@ describe("TaskTree", () => {
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
       creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
     }
-    let task = new Task(minion.creep);
+    let task = new TaskAction();
     task.getPrereqs = () => ([new MockTaskPrerequisite(true)])
-    let result = resolveTaskTrees(minion, new Task(minion.creep))
+    let result = resolveTaskTrees(minion, new TaskAction())
     expect(result).not.toBeNull();
     if (result === null) throw new Error();
     expect(result.length).toEqual(1);
@@ -61,7 +63,7 @@ describe("TaskTree", () => {
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}, true),
       creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}, true),
     }
-    let task = new Task(minion.creep);
+    let task = new TaskAction();
     task.getPrereqs = () => ([new MockTaskPrerequisite(false)])
     let result = resolveTaskTrees(minion, task)
     expect(result).toBeNull();
@@ -74,8 +76,8 @@ describe("TaskTree", () => {
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
       creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
     }
-    let task = new Task(minion.creep);
-    let prereqTask = new Task(minion.creep);
+    let task = new TaskAction();
+    let prereqTask = new TaskAction();
     task.getPrereqs = () => ([new MockTaskPrerequisite(false, [prereqTask])])
     let result = resolveTaskTrees(minion, task)
     expect(result).not.toBeNull();
@@ -91,13 +93,12 @@ describe("TaskTree", () => {
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
       creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
     }
-    let task = new Task(minion.creep);
-    let prereqTask = new Task(minion.creep);
-    let tertiaryTask = new Task(minion.creep);
+    let task = new TaskAction();
+    let prereqTask = new TaskAction();
+    let tertiaryTask = new TaskAction();
     task.getPrereqs = () => ([new MockTaskPrerequisite(false, [prereqTask])])
     prereqTask.getPrereqs = () => ([new MockTaskPrerequisite(false, [tertiaryTask])])
     let result = resolveTaskTrees(minion, task)
-    console.log(result);
     expect(result).not.toBeNull();
     if (result === null) throw new Error();
     expect(result.length).toEqual(1);
@@ -111,11 +112,11 @@ describe("TaskTree", () => {
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
       creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
     }
-    let task = new Task(minion.creep);
+    let task = new TaskAction();
     task.cost = () => 1;
-    let prereqTask = new Task(minion.creep);
+    let prereqTask = new TaskAction();
     prereqTask.cost = () => 2;
-    let tertiaryTask = new Task(minion.creep);
+    let tertiaryTask = new TaskAction();
     tertiaryTask.cost = () => 3;
     task.getPrereqs = () => ([new MockTaskPrerequisite(false, [prereqTask, tertiaryTask])])
     let result = resolveTaskTrees(minion, task)

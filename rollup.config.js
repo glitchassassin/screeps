@@ -30,6 +30,7 @@ export default {
         'node_modules/class-transformer/index.js': [
           'Transform',
           'Type',
+          'Exclude',
         ]
       }
     }),

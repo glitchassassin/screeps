@@ -1,12 +1,14 @@
-import { Task, SpeculativeMinion } from "./Task"
+import { Task } from "./Task"
+import { SpeculativeMinion } from "./SpeculativeMinion";
+import { TaskAction } from "./TaskAction";
 
 type TaskPlan = {
     cost: number,
     minion: SpeculativeMinion,
-    tasks: Task[]
+    tasks: TaskAction[]
 }
 
-export const resolveTaskTrees = (minion: SpeculativeMinion, task: Task): TaskPlan[]|null => {
+export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): TaskPlan[]|null => {
     let taskPlan = {
         cost: task.cost(minion),
         minion,

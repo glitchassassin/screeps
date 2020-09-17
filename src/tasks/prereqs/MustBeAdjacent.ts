@@ -1,7 +1,8 @@
-import { Transform } from "class-transformer";
-import { TransformationType } from "class-transformer/enums";
-import { SpeculativeMinion, TaskPrerequisite } from "../Task";
+import { Exclude, Transform, TransformationType } from "class-transformer";
+import { SpeculativeMinion } from "../SpeculativeMinion";
+import { TaskPrerequisite } from "../TaskPrerequisite";
 import { TravelTask } from "tasks/types/TravelTask";
+import { Task } from "tasks/Task";
 
 /**
  * Checks if minion is adjacent to a given position
@@ -23,16 +24,13 @@ export class MustBeAdjacent extends TaskPrerequisite {
         this.pos = pos;
     }
 
-    met = (minion: SpeculativeMinion) => {
-        let p = this.pos;
-        return !!p && minion.pos.inRangeTo(p, 1)
+    met(minion: SpeculativeMinion) {
+        return minion.pos.inRangeTo(this.pos, 1)
     };
-    toMeet = (minion: SpeculativeMinion) => {
-        let p = this.pos;
-        if (!p) return null;
-        let spaces = global.analysts.map.calculateAdjacentPositions(p)
+    toMeet(minion: SpeculativeMinion) {
+        let spaces = global.analysts.map.calculateAdjacentPositions(this.pos)
             .filter(global.analysts.map.isPositionWalkable)
         if (spaces.length === 0) return null; // No adjacent spaces
-        return spaces.map(space => new TravelTask(minion.creep, space));
+        return spaces.map(space => new TravelTask(space));
     }
 }

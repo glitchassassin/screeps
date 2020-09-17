@@ -17,7 +17,7 @@ export class BuilderManager extends Manager {
 
         // Request build for construction sites
         this.sites.forEach(site => {
-            global.managers.task.submit(new TaskRequest(site.id, new BuildTask(null, site), 5))
+            global.managers.task.submit(new TaskRequest(site.id, new BuildTask(site), 5))
         })
     }
     shouldSpawnBuilders = (room: Room) => {

@@ -1,5 +1,7 @@
-import { Transform, TransformationType } from "class-transformer";
-import { SpeculativeMinion, TaskPrerequisite } from "tasks/Task";
+import { Exclude, Transform, TransformationType } from "class-transformer";
+import { SpeculativeMinion } from "tasks/SpeculativeMinion";
+import { Task } from "tasks/Task";
+import { TaskPrerequisite } from "tasks/TaskPrerequisite";
 import { TravelTask } from "tasks/types/TravelTask";
 
 /**
@@ -26,13 +28,13 @@ export class MustBeAtMine extends TaskPrerequisite {
         this.source = source;
     }
 
-    met = (minion: SpeculativeMinion) => {
+    met(minion: SpeculativeMinion) {
         return minion.pos.inRangeTo(this.source.pos, 1)
     }
-    toMeet = (minion: SpeculativeMinion) => {
+    toMeet(minion: SpeculativeMinion) {
         let spaces = global.analysts.source
             .getAuxiliaryMiningLocationsForSource(minion.creep.room, this.source)
-            .map(pos => new TravelTask(minion.creep, pos))
+            .map(pos => new TravelTask(pos))
         if (spaces.length === 0) return null; // No adjacent mining spaces
         return spaces;
     }
