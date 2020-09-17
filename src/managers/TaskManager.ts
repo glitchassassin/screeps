@@ -29,7 +29,8 @@ export class TaskManager extends Manager {
         if (this.requests[request.task.constructor.name] === undefined) {
             this.requests[request.task.constructor.name] = {};
         }
-        if (!this.requests[request.task.constructor.name][request.sourceId]) {
+        if (!this.requests[request.task.constructor.name][request.sourceId] ||
+            this.requests[request.task.constructor.name][request.sourceId].priority < request.priority) {
             this.requests[request.task.constructor.name][request.sourceId] = request;
             console.log(`[TaskManager] Received priority ${request.priority} ${request.task.constructor.name} request from ${request.sourceId}`)
         }
@@ -80,14 +81,14 @@ export class TaskManager extends Manager {
                     if (!paths || paths.length === 0) return;
                     return paths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 })
-                candidates.forEach(c => {
-                    if (c)
-                        console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n${c.tasks.map(t => t.constructor.name)}`)
-                })
+                // candidates.forEach(c => {
+                //     if (c)
+                //         console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n${c.tasks.map(t => t.constructor.name)}`)
+                // })
                 let candidate = candidates.reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b, undefined)
 
                 if (candidate) {
-                    console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
+                    // console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
                     let task = new Task(request.task, candidate.minion.creep);
                     // Create task chain
                     let currentTask = task;
@@ -103,7 +104,6 @@ export class TaskManager extends Manager {
             if (!task.creep) return true; // Creep disappeared, cancel task
             let result = task.action.action(task.creep)
             if (result) {
-                console.log(`[${task.action.constructor.name}] Complete`)
                 task.completed = true;
                 if (task.next) {
                     task.next.creep = task.creep;

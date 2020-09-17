@@ -29,7 +29,6 @@ export class TravelTask extends TaskAction {
     }
 
     action(creep: Creep) {
-        console.log(`[TravelTask] ${creep.name} to (${this.destination?.x}, ${this.destination?.y})`)
         // If unable to get the creep or destination, task is completed
         if (!this.destination) return true;
 

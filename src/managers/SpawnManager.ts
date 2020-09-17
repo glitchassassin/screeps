@@ -38,8 +38,10 @@ export class SpawnManager extends Manager {
         // Request energy, if needed
         this.spawns.forEach((spawn) => {
             let capacity = room.energyAvailable
-            if (capacity > 0) {
+            if (capacity < 200) {
                 global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10));
+            } else if (capacity < room.energyCapacityAvailable) {
+                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 5));
             }
         })
     }

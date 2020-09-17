@@ -41,7 +41,7 @@ export class BuildTask extends TaskAction {
         if (result === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.destination);
         } else if (result !== OK){
-            console.log(`[BuildTask] Error: ${result}`);
+            // console.log(`[BuildTask] Error: ${result}`);
             return true;
         }
         return false;

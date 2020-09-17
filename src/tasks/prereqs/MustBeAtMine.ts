@@ -28,7 +28,6 @@ export class MustBeAtMine extends TaskPrerequisite {
             .getAuxiliaryMiningLocationsForSource(minion.creep.room, this.source)
             .map(pos => new TravelTask(pos))
         if (spaces.length === 0) return null; // No adjacent mining spaces
-        console.log('Target spaces', JSON.stringify(spaces))
         return spaces;
     }
 }
