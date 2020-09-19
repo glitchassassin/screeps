@@ -6,4 +6,5 @@ export class TaskAction {
     getPrereqs(): TaskPrerequisite[] { return []; }
     action(creep: Creep) { return true; }
     cost(minion: SpeculativeMinion) { return 0; }
+    predict(minion: SpeculativeMinion) { return minion; }
 }

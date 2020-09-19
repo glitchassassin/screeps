@@ -53,7 +53,7 @@ export class SpawnManager extends Manager {
                 // Find a spawn to carry out the request
                 let available = this.getIdleSpawn(room);
                 if (available) {
-                    // console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
+                    console.log(`[RequestManager] Delegating priority ${r.priority} ${r.constructor.name} request to ${available.spawn.name}`)
                     r.assignedTo = available.spawn;
                     available.currentRequest = r;
                 }

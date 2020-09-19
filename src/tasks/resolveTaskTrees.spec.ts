@@ -15,7 +15,7 @@ class MockTaskPrerequisite extends TaskPrerequisite {
   toMeet = () => this.toMeetTasks;
 }
 
-describe("TaskTree", () => {
+describe("resolveTaskTrees", () => {
   beforeEach(() => {
     // runs before each test in this block
     mockGlobal<Game>('Game', {
@@ -31,6 +31,7 @@ describe("TaskTree", () => {
 
   it("should run", () => {
     let minion = {
+      output: 0,
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
@@ -42,6 +43,7 @@ describe("TaskTree", () => {
 
   it("should return the task if the task has a met prerequisite", () => {
     let minion = {
+      output: 0,
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
@@ -58,6 +60,7 @@ describe("TaskTree", () => {
 
   it("should return null if the task has an un-meetable prerequisite", () => {
     let minion = {
+      output: 0,
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}, true),
@@ -71,6 +74,7 @@ describe("TaskTree", () => {
 
   it("should return the task plus prerequisite if the task has a meetable prerequisite", () => {
     let minion = {
+      output: 0,
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
@@ -88,6 +92,7 @@ describe("TaskTree", () => {
 
   it("should calculate nested prerequisites", () => {
     let minion = {
+      output: 0,
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
@@ -107,6 +112,7 @@ describe("TaskTree", () => {
 
   it("should calculate alternative prerequisites", () => {
     let minion = {
+      output: 0,
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),

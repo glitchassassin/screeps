@@ -23,6 +23,7 @@ export class TaskRequest {
                 { value: TravelTask, name: 'TravelTask' },
                 { value: UpgradeTask, name: 'UpgradeTask' },
                 { value: WithdrawTask, name: 'WithdrawTask' },
+                { value: TaskAction, name: 'TaskAction' },
             ]
         }
     })

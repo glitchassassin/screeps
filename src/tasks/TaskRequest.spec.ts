@@ -23,11 +23,14 @@ describe("TaskTree", () => {
   });
 
   it("should serialize", () => {
-      console.log(serialize( new TaskRequest("test", new TaskAction())));
+      expect(serialize( new TaskRequest("test", new TaskAction())))
+        .toEqual('{"completed":false,"created":12345,"sourceId":"test","priority":5,"task":{"message":"☑","__type":"TaskAction"}}');
   });
 
   it("should deserialize", () => {
       let json = serialize( new TaskRequest("test", new TaskAction()));
-      console.log(deserialize(TaskRequest, json));
+      let deserialized = deserialize(TaskRequest, json);
+      expect(deserialized).toBeInstanceOf(TaskRequest);
+      expect(deserialized.task).toBeInstanceOf(TaskAction);
   });
 });

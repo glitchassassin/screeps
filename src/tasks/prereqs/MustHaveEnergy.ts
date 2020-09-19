@@ -20,7 +20,7 @@ export class MustHaveEnergy extends TaskPrerequisite {
                // Minion can carry energy, and
         return minion.capacity > 0 &&
                // Minion has a full tank or enough to meet `quantity`
-               minion.capacityUsed >= Math.max(this.quantity, minion.capacity)
+               minion.capacityUsed >= Math.min(this.quantity, minion.capacity)
     };
     toMeet(minion: SpeculativeMinion) {
         if (minion.capacity === 0) return null; // Cannot carry energy

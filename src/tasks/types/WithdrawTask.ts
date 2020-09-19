@@ -1,6 +1,7 @@
 import { Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveCarryCapacity } from "tasks/prereqs/MustHaveCarryCapacity";
+import { SpeculativeMinion } from "tasks/SpeculativeMinion";
 import { TaskAction } from "tasks/TaskAction";
 import { transformGameObject } from "utils/transformGameObject";
 
@@ -51,6 +52,13 @@ export class WithdrawTask extends TaskAction {
                 return 1000;
             default:
                 return 10;
+        }
+    }
+    predict(minion: SpeculativeMinion) {
+        let targetCapacity = (this.destination as StructureContainer)?.store.getUsedCapacity(RESOURCE_ENERGY);
+        return {
+            ...minion,
+            capacityUsed: Math.min(minion.capacity, minion.capacityUsed + targetCapacity)
         }
     }
 }

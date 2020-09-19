@@ -1,6 +1,7 @@
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
+import { SpeculativeMinion } from "tasks/SpeculativeMinion";
 import { TaskAction } from "tasks/TaskAction";
 import { transformGameObject } from "utils/transformGameObject";
 
@@ -45,4 +46,12 @@ export class TransferTask extends TaskAction {
         return false;
     }
     cost() {return 1;}; // Takes one tick to transfer
+    predict(minion: SpeculativeMinion) {
+        let targetCapacity = (this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY);
+        return {
+            ...minion,
+            output: Math.min(minion.capacityUsed, targetCapacity),
+            capacityUsed: Math.min(0, minion.capacityUsed - targetCapacity)
+        }
+    }
 }

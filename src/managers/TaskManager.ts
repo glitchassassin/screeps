@@ -2,14 +2,18 @@ import { deserialize, deserializeArray, serialize } from "class-transformer";
 import { Task } from "tasks/Task";
 import { TaskAction } from "tasks/TaskAction";
 import { TaskRequest } from "tasks/TaskRequest";
-import { resolveTaskTrees } from "tasks/resolveTaskTrees";
+import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
 import { Manager } from "./Manager";
+import { WithdrawTask } from "tasks/types/WithdrawTask";
+import { TransferTask } from "tasks/types/TransferTask";
 
 type RequestsMap<T> = {
     [id: string]: {
         [id: string]: T
     }
 }
+
+const DEBUG_MINION = null;
 
 export class TaskManager extends Manager {
     tasks: Task[] = [];
@@ -36,7 +40,7 @@ export class TaskManager extends Manager {
         }
     }
     assign = (task: Task) => {
-        task.creep?.say(task.action.message);
+        task.creep?.say(task.actions[0].message);
         this.tasks.push(task);
     }
     load = (room: Room) => {
@@ -71,8 +75,9 @@ export class TaskManager extends Manager {
                     return;
                 }
                 // Find the best candidate from the idle minions
-                let candidates = this.idleCreeps(room).map(creep => {
+                let candidates = (this.idleCreeps(room).map(creep => {
                     let paths = resolveTaskTrees({
+                        output: 0,
                         creep,
                         capacity: creep.store.getCapacity(),
                         capacityUsed: creep.store.getUsedCapacity(),
@@ -80,38 +85,59 @@ export class TaskManager extends Manager {
                     }, request.task as TaskAction)
                     if (!paths || paths.length === 0) return;
                     return paths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                })
+                }).filter(c => {
+                    // If task plan is null, filter it
+                    if (!c) return false;
+                    // If task plan has withdraw and transfer loop, filter it
+                    let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
+                        .map(t => t.destination?.id)
+                    if (tasks.length !== new Set(tasks).size) return false;
+                    // Otherwise, accept it
+                    return true;
+                }) as TaskPlan[])
+                .sort((a, b) => (a.cost - b.cost))
                 // candidates.forEach(c => {
                 //     if (c)
-                //         console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n${c.tasks.map(t => t.constructor.name)}`)
+                //         console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n` +
+                //                     `Outcome: [${c.minion.capacityUsed}/${c.minion.capacity}] => ${c.minion.output} at (${JSON.stringify(c.minion.pos)}) \n` +
+                //                     `${c.tasks.map(t => t.constructor.name)}`)
                 // })
-                let candidate = candidates.reduce((a, b) => (!b || a && a.cost < b.cost) ? a : b, undefined)
+
+                let candidate = candidates[0];
 
                 if (candidate) {
                     // console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
-                    let task = new Task(request.task, candidate.minion.creep);
-                    // Create task chain
-                    let currentTask = task;
-                    for (let i = 0; i < candidate.tasks.length; i++) {
-                        currentTask.next = new Task(candidate.tasks[i], candidate.minion.creep)
-                        currentTask = currentTask.next;
+                    if (candidate.minion.creep.name === DEBUG_MINION) {
+                        console.log(`[${DEBUG_MINION}] is idle? ${this.isIdle(candidate.minion.creep)}`)
+                        console.log(`[${DEBUG_MINION}] delegated new request ${request.task.constructor.name}`)
+                        console.log(`[TaskManager] Task plan accepted for ${DEBUG_MINION} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
                     }
+                    let task = new Task(candidate.tasks, candidate.minion.creep);
                     this.assign(task);
                 }
         })
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
-            if (!task.creep) return true; // Creep disappeared, cancel task
-            let result = task.action.action(task.creep)
-            if (result) {
-                task.completed = true;
-                if (task.next) {
-                    task.next.creep = task.creep;
-                    this.assign(task.next);
-                }
-                return true;
+            if (!task.creep) return false; // Creep disappeared, cancel task
+            let result = task.actions[0].action(task.creep)
+            if (task.creep.name === DEBUG_MINION) {
+                console.log(`[${DEBUG_MINION}] ${task.actions[0].constructor.name} - ${result}`)
             }
-            return false;
+            if (result) {
+                // console.log(`[${task.action.constructor.name}] completed`)
+                task.actions.shift();
+                if (task.actions.length > 0) {
+                    task.creep?.say(task.actions[0].message);
+                    if (task.creep.name === DEBUG_MINION) {
+                        console.log(`[${DEBUG_MINION}] Task completed, starting on ${task.actions[0].constructor.name}`)
+                    }
+                } else {
+                    task.completed = true;
+                    return true;
+                }
+                return false;
+            }
+            return true;
         })
     }
     cleanup = (room: Room) => {

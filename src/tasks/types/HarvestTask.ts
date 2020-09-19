@@ -31,16 +31,22 @@ export class HarvestTask extends TaskAction {
         if (creep.harvest(this.source) === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.source);
         }
-        if (creep.store.getCapacity()) {
+        if (creep.store.getCapacity() > 0) {
             // If can carry, is the creep full?
-            return creep.store.getFreeCapacity() == 0;
+            if (creep.store.getFreeCapacity() == 0) {
+                console.log(`[HarvestTask] complete, ${creep.name} full`)
+                return true;
+            }
         } else {
             // If cannot carry, is the local container full?
             let container = creep.pos.lookFor(LOOK_STRUCTURES)
                 .find(s => s.structureType === STRUCTURE_CONTAINER)
             // If the container is full or missing, we cannot store,
             // so there is no point in harvesting
-            if (!container || (container as StructureContainer).store.getFreeCapacity()) return true;
+            if (!container || (container as StructureContainer).store.getFreeCapacity()) {
+                console.log(`[HarvestTask] complete, ${creep.name} filled container`)
+                return true;
+            }
         }
         return false;
     }
@@ -49,5 +55,11 @@ export class HarvestTask extends TaskAction {
         // TODO: Adjust this to compare against the creep's capacity, or the
         //       local container, if applicable
         return 1/(minion.creep.getActiveBodyparts(WORK) * 2)
+    }
+    predict(minion: SpeculativeMinion) {
+        return {
+            ...minion,
+            capacityUsed: minion.capacity,
+        }
     }
 }

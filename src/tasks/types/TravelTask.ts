@@ -32,11 +32,21 @@ export class TravelTask extends TaskAction {
         // If unable to get the creep or destination, task is completed
         if (!this.destination) return true;
 
-        creep.moveTo(this.destination);
+        let result = creep.moveTo(this.destination);
+        if (result === ERR_NO_PATH ||
+            result === ERR_NOT_OWNER ||
+            result === ERR_NO_BODYPART ||
+            result === ERR_INVALID_TARGET) return true; // Unrecoverable error
         return creep.pos.inRangeTo(this.destination, this.distance);
     }
     cost(minion: SpeculativeMinion) {
         if (!this.destination) return Infinity
         return PathFinder.search(minion.pos, this.destination).cost;
+    }
+    predict(minion: SpeculativeMinion) {
+        return {
+            ...minion,
+            pos: this.destination || minion.pos
+        }
     }
 }

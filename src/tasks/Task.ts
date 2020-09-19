@@ -11,9 +11,6 @@ import { UpgradeTask } from './types/UpgradeTask';
 import { WithdrawTask } from './types/WithdrawTask';
 
 export class Task {
-    @Type(() => Task)
-    next: Task|null = null
-
     @Type(() => Creep)
     @Transform(transformGameObject(Creep))
     creep: Creep|null;
@@ -31,13 +28,13 @@ export class Task {
             ]
         }
     })
-    action: TaskAction = new TaskAction();
+    actions: TaskAction[] = [];
 
     completed = false;
     created = Game.time;
 
-    constructor(action: TaskAction, creep: Creep) {
-        this.action = action;
+    constructor(actions: TaskAction[], creep: Creep) {
+        this.actions = actions;
         this.creep = creep;
     }
 

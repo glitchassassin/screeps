@@ -39,7 +39,6 @@ export class UpgradeTask extends TaskAction {
         if (!this.destination) return true;
 
         let result = creep.upgradeController(this.destination);
-        console.log(`[UpgradeTask] result ${result}`);
         if (result === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.destination);
         } else if (result === ERR_NOT_ENOUGH_ENERGY) {
@@ -50,5 +49,12 @@ export class UpgradeTask extends TaskAction {
     cost(minion: SpeculativeMinion) {
         // Approximate effectiveness of minion based on number of WORK parts
         return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
+    }
+    predict(minion: SpeculativeMinion) {
+        return {
+            ...minion,
+            capacityUsed: 0,
+            output: minion.capacity
+        }
     }
 }
