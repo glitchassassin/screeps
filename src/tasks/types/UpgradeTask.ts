@@ -57,4 +57,7 @@ export class UpgradeTask extends TaskAction {
             output: minion.capacity
         }
     }
+    valid() {
+        return !!this.destination;
+    }
 }

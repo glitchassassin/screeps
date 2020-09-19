@@ -54,4 +54,7 @@ export class TransferTask extends TaskAction {
             capacityUsed: Math.min(0, minion.capacityUsed - targetCapacity)
         }
     }
+    valid() {
+        return !!this.destination;
+    }
 }

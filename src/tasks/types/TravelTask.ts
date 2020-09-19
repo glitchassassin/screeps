@@ -49,4 +49,7 @@ export class TravelTask extends TaskAction {
             pos: this.destination || minion.pos
         }
     }
+    valid() {
+        return !!this.destination;
+    }
 }

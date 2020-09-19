@@ -1,4 +1,5 @@
 import { Exclude, Type } from "class-transformer";
+import { Task } from "./Task";
 import { TaskAction } from "./TaskAction";
 import { BuildTask } from "./types/BuildTask";
 import { HarvestTask } from "./types/HarvestTask";
@@ -12,6 +13,8 @@ export class TaskRequest {
     created = Game.time;
     sourceId: string|null = null;
     priority = 5;
+
+    assignedTask: Task|null = null;
 
     @Type(() => TaskAction, {
         discriminator: {

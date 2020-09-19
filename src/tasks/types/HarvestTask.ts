@@ -34,7 +34,6 @@ export class HarvestTask extends TaskAction {
         if (creep.store.getCapacity() > 0) {
             // If can carry, is the creep full?
             if (creep.store.getFreeCapacity() == 0) {
-                console.log(`[HarvestTask] complete, ${creep.name} full`)
                 return true;
             }
         } else {
@@ -44,7 +43,6 @@ export class HarvestTask extends TaskAction {
             // If the container is full or missing, we cannot store,
             // so there is no point in harvesting
             if (!container || (container as StructureContainer).store.getFreeCapacity()) {
-                console.log(`[HarvestTask] complete, ${creep.name} filled container`)
                 return true;
             }
         }
@@ -61,5 +59,8 @@ export class HarvestTask extends TaskAction {
             ...minion,
             capacityUsed: minion.capacity,
         }
+    }
+    valid() {
+        return !!this.source;
     }
 }

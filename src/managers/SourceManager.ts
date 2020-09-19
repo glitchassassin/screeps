@@ -14,7 +14,7 @@ export class SourceManager extends Manager {
         // Request minions, if needed
         this.mines.forEach((mine) => {
             if (!mine.miner) {
-                console.log(`[SourceManager] Requesting miner for ${mine.id}`)
+                // console.log(`[SourceManager] Requesting miner for ${mine.id}`)
                 global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
                     source: mine.id
                 }))
@@ -31,12 +31,12 @@ export class SourceManager extends Manager {
                     // Miner is full
                     if (!mine.container?.store.getFreeCapacity() || mine.miner.transfer(mine.container, RESOURCE_ENERGY) !== OK) {
                         // Failed to transfer to container; remain idle.
-                        console.log(`[${mine.miner.name}] Idling`)
+                        // console.log(`[${mine.miner.name}] Idling`)
                         return
                     }
                 }
                 // If miner is not full, continue harvesting
-                global.managers.task.assign(new Task(new HarvestTask(mine.source), mine.miner));
+                global.managers.task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
             }
         })
     }

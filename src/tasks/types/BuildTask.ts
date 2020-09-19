@@ -41,7 +41,6 @@ export class BuildTask extends TaskAction {
         if (result === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.destination);
         } else if (result !== OK){
-            console.log(`[BuildTask] Error: ${result}`);
             return true;
         }
         return false;
@@ -60,5 +59,8 @@ export class BuildTask extends TaskAction {
             output: Math.min(minion.capacityUsed, targetCapacity),
             capacityUsed: Math.max(0, minion.capacityUsed - targetCapacity)
         }
+    }
+    valid() {
+        return !!this.destination;
     }
 }

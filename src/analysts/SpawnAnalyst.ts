@@ -1,4 +1,5 @@
 import { Request } from "requests/Request";
+import { TaskRequest } from "tasks/TaskRequest";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
 

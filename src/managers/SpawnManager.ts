@@ -10,6 +10,7 @@ const spawnAnalyst = new SpawnAnalyst();
 export class SpawnManager extends Manager {
     spawns: SpawnData[] = [];
     requests: {[id: string]: MinionRequest} = {};
+    resupply: TaskRequest|null = null;
     submit = (request: MinionRequest) => {
         if (!request.sourceId) return;
         if (!this.requests[request.sourceId]) {
@@ -34,14 +35,16 @@ export class SpawnManager extends Manager {
     }
 
     init = (room: Room) => {
-
         // Request energy, if needed
         this.spawns.forEach((spawn) => {
             let capacity = room.energyAvailable
-            if (capacity < 200) {
+            if (capacity < 200 && !(
+                    global.managers.task.hasTaskFor(spawn.spawn.id) ||
+                    global.managers.task.hasRequestFor(spawn.spawn.id)
+                )) {
                 global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10));
             } else if (capacity < room.energyCapacityAvailable) {
-                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 5));
+                //global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 4));
             }
         })
     }

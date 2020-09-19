@@ -32,10 +32,12 @@ export class Task {
 
     completed = false;
     created = Game.time;
+    sourceId: string|null;
 
-    constructor(actions: TaskAction[], creep: Creep) {
+    constructor(actions: TaskAction[], creep: Creep, sourceId: string|null = null) {
         this.actions = actions;
         this.creep = creep;
+        this.sourceId = sourceId
     }
 
 }

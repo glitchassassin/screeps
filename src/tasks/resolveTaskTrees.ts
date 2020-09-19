@@ -9,6 +9,8 @@ export type TaskPlan = {
 }
 
 export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): TaskPlan[]|null => {
+    if (!task.valid()) return null;
+
     let taskPlan = {
         cost: task.cost(minion),
         minion: task.predict(minion),

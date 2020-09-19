@@ -13,7 +13,7 @@ type RequestsMap<T> = {
     }
 }
 
-const DEBUG_MINION = null;
+const DEBUG_MINION = 'builder269667';
 
 export class TaskManager extends Manager {
     tasks: Task[] = [];
@@ -36,7 +36,6 @@ export class TaskManager extends Manager {
         if (!this.requests[request.task.constructor.name][request.sourceId] ||
             this.requests[request.task.constructor.name][request.sourceId].priority < request.priority) {
             this.requests[request.task.constructor.name][request.sourceId] = request;
-            console.log(`[TaskManager] Received priority ${request.priority} ${request.task.constructor.name} request from ${request.sourceId}`)
         }
     }
     assign = (task: Task) => {
@@ -92,10 +91,11 @@ export class TaskManager extends Manager {
                     let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
                         .map(t => t.destination?.id)
                     if (tasks.length !== new Set(tasks).size) return false;
+                    if (c.minion.output == 0) return false;
                     // Otherwise, accept it
                     return true;
                 }) as TaskPlan[])
-                .sort((a, b) => (a.cost - b.cost))
+                .sort((a, b) => ((a.cost/a.minion.output) - (b.cost/b.minion.output)))
                 // candidates.forEach(c => {
                 //     if (c)
                 //         console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n` +
@@ -106,13 +106,10 @@ export class TaskManager extends Manager {
                 let candidate = candidates[0];
 
                 if (candidate) {
-                    // console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
-                    if (candidate.minion.creep.name === DEBUG_MINION) {
-                        console.log(`[${DEBUG_MINION}] is idle? ${this.isIdle(candidate.minion.creep)}`)
-                        console.log(`[${DEBUG_MINION}] delegated new request ${request.task.constructor.name}`)
-                        console.log(`[TaskManager] Task plan accepted for ${DEBUG_MINION} with cost ${candidate.cost}:\n${candidate.tasks.map(t => t.constructor.name)}`)
-                    }
-                    let task = new Task(candidate.tasks, candidate.minion.creep);
+                    console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n` +
+                                `Outcome: [${candidate.minion.capacityUsed}/${candidate.minion.capacity}] => ${candidate.minion.output} at (${JSON.stringify(candidate.minion.pos)}) \n` +
+                                `${candidate.tasks.map(t => t.constructor.name)}`)
+                    let task = new Task(candidate.tasks, candidate.minion.creep, request.sourceId);
                     this.assign(task);
                 }
         })
@@ -120,22 +117,15 @@ export class TaskManager extends Manager {
         this.tasks = this.tasks.filter(task => {
             if (!task.creep) return false; // Creep disappeared, cancel task
             let result = task.actions[0].action(task.creep)
-            if (task.creep.name === DEBUG_MINION) {
-                console.log(`[${DEBUG_MINION}] ${task.actions[0].constructor.name} - ${result}`)
-            }
             if (result) {
                 // console.log(`[${task.action.constructor.name}] completed`)
                 task.actions.shift();
                 if (task.actions.length > 0) {
                     task.creep?.say(task.actions[0].message);
-                    if (task.creep.name === DEBUG_MINION) {
-                        console.log(`[${DEBUG_MINION}] Task completed, starting on ${task.actions[0].constructor.name}`)
-                    }
                 } else {
                     task.completed = true;
-                    return true;
+                    return false;
                 }
-                return false;
             }
             return true;
         })
@@ -167,5 +157,18 @@ export class TaskManager extends Manager {
     }
     idleCreeps = (room: Room) => {
         return Object.values(room.find(FIND_MY_CREEPS)).filter(c => this.isIdle(c))
+    }
+    hasTaskFor = (id: string) => {
+        return this.tasks.some(t => t.sourceId === id);
+    }
+    hasRequestFor = (id: string) => {
+        for (let reqType in this.requests) {
+            for (let reqSource in this.requests[reqType]) {
+                if (this.requests[reqType][reqSource].sourceId === id) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

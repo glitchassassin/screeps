@@ -61,4 +61,7 @@ export class WithdrawTask extends TaskAction {
             capacityUsed: Math.min(minion.capacity, minion.capacityUsed + targetCapacity)
         }
     }
+    valid() {
+        return !!this.destination;
+    }
 }
