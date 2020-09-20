@@ -1,11 +1,12 @@
-import { Exclude, Transform, TransformationType, Type } from "class-transformer";
-import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
-import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { TaskAction } from "tasks/TaskAction";
+import { Transform, TransformationType, Type } from "class-transformer";
+import { assert } from "console";
 import { transformGameObject } from "utils/transformGameObject";
+import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
+import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
+import { SpeculativeMinion } from "../SpeculativeMinion";
+import { TaskAction } from "../TaskAction";
 
-export class TransferTask extends TaskAction {
+export class RepairTask extends TaskAction {
     // Prereq: Minion must be adjacent
     //         Otherwise, move to an open space
     //         near the destination
@@ -16,15 +17,15 @@ export class TransferTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveEnergy((this.destination.hitsMax - this.destination.hits)/100),
             new MustBeAdjacent(this.destination.pos),
-            new MustHaveEnergy((this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY))
         ]
     }
-    message = "⏩";
+    message = "🔨";
 
     @Type(() => Structure)
     @Transform(transformGameObject(Structure))
-    destination: Structure|null = null;
+    destination: Structure|null = null
 
     constructor(
         destination: Structure|null = null,
@@ -37,24 +38,30 @@ export class TransferTask extends TaskAction {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return true;
 
-        let result = creep.transfer(this.destination, RESOURCE_ENERGY);
+        let result = creep.repair(this.destination);
         if (result === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.destination);
-        } else {
+        } else if (result !== OK){
             return true;
         }
         return false;
     }
-    cost() {return 1;}; // Takes one tick to transfer
+    /**
+     * Calculates cost based on the effectiveness of the minion
+     * @param minion
+     */
+    cost(minion: SpeculativeMinion) {
+        return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
+    }
     predict(minion: SpeculativeMinion) {
-        let targetCapacity = (this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY);
+        let targetCapacity = ((this.destination as Structure).hitsMax - (this.destination as Structure).hits)/100;
         return {
             ...minion,
             output: Math.min(minion.capacityUsed, targetCapacity),
-            capacityUsed: Math.min(0, minion.capacityUsed - targetCapacity)
+            capacityUsed: Math.max(0, minion.capacityUsed - targetCapacity)
         }
     }
     valid() {
-        return !!this.destination && (this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+        return !!this.destination && this.destination.hits < this.destination.hitsMax;
     }
 }

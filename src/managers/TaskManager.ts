@@ -6,6 +6,8 @@ import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
 import { Manager } from "./Manager";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
 import { TransferTask } from "tasks/types/TransferTask";
+import { stablematch } from "algorithms/stablematch";
+import { TaskPrerequisite } from "tasks/TaskPrerequisite";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -64,27 +66,23 @@ export class TaskManager extends Manager {
     }
     run = (room: Room) => {
         // Assign requests
-        Object.values(this.requests)
+        let proposers = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
-            .sort((a, b) => b.priority - a.priority) // Higher priority sorts to the top
-            .forEach(request => {
-                if (!request.task) {
-                    request.completed = true;
-                    return;
-                }
-                // Find the best candidate from the idle minions
-                let candidates = (this.idleCreeps(room).map(creep => {
-                    let paths = resolveTaskTrees({
-                        output: 0,
-                        creep,
-                        capacity: creep.store.getCapacity(),
-                        capacityUsed: creep.store.getUsedCapacity(),
-                        pos: creep.pos
-                    }, request.task as TaskAction)
-                    if (!paths || paths.length === 0) return;
-                    return paths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                }).filter(c => {
+            .filter(t => t.task?.valid())
+            .sort((a, b) => b.priority - a.priority); // Higher priority sorts to the top
+        let priorities = stablematch<TaskRequest, Creep, TaskPlan|null>(
+            proposers,
+            this.idleCreeps(room),
+            (taskRequest, creep) => {
+                let paths = resolveTaskTrees({
+                    output: 0,
+                    creep,
+                    capacity: creep.store.getCapacity(),
+                    capacityUsed: creep.store.getUsedCapacity(),
+                    pos: creep.pos
+                }, taskRequest.task as TaskAction)
+                let filteredPaths = paths?.filter(c => {
                     // If task plan is null, filter it
                     if (!c) return false;
                     // If task plan has withdraw and transfer loop, filter it
@@ -94,25 +92,26 @@ export class TaskManager extends Manager {
                     if (c.minion.output == 0) return false;
                     // Otherwise, accept it
                     return true;
-                }) as TaskPlan[])
-                .sort((a, b) => ((a.cost/a.minion.output) - (b.cost/b.minion.output)))
-                // candidates.forEach(c => {
-                //     if (c)
-                //         console.log(`[TaskManager] Potential task plan for ${c.minion.creep} with cost ${c.cost}:\n` +
-                //                     `Outcome: [${c.minion.capacityUsed}/${c.minion.capacity}] => ${c.minion.output} at (${JSON.stringify(c.minion.pos)}) \n` +
-                //                     `${c.tasks.map(t => t.constructor.name)}`)
-                // })
-
-                let candidate = candidates[0];
-
-                if (candidate) {
-                    console.log(`[TaskManager] Task plan accepted for ${candidate.minion.creep} with cost ${candidate.cost}:\n` +
-                                `Outcome: [${candidate.minion.capacityUsed}/${candidate.minion.capacity}] => ${candidate.minion.output} at (${JSON.stringify(candidate.minion.pos)}) \n` +
-                                `${candidate.tasks.map(t => t.constructor.name)}`)
-                    let task = new Task(candidate.tasks, candidate.minion.creep, request.sourceId);
-                    this.assign(task);
+                })
+                if (!filteredPaths || filteredPaths.length === 0) {
+                    return {pRating: Infinity, aRating: Infinity, output: null};
                 }
+                let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
+                return {
+                    pRating: bestPlan.minion.output, // taskRequest cares about the output
+                    aRating: bestPlan.cost,          // creep cares about the cost
+                    output: bestPlan
+                }
+            });
+        priorities.forEach(([creep, taskRequest, taskPlan]) => {
+            if (!taskPlan) return;
+            // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
+            //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
+            //             `${taskPlan.tasks.map(t => t.constructor.name)}`)
+            let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId);
+            this.assign(task);
         })
+
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
             if (!task.creep) return false; // Creep disappeared, cancel task
@@ -140,8 +139,10 @@ export class TaskManager extends Manager {
         for (let reqType in this.requests) {
             serialized[reqType] = {};
             for (let reqSource in this.requests[reqType]) {
-                if (this.requests[reqType][reqSource].completed || Game.time > this.requests[reqType][reqSource].created + 500) {
-                    // Completed or timed out
+                if (this.requests[reqType][reqSource].completed ||
+                    !this.requests[reqType][reqSource].task?.valid() ||
+                    Game.time > this.requests[reqType][reqSource].created + 500) {
+                    // Completed, no longer valid, or timed out
                     delete this.requests[reqType][reqSource]
                 } else {
                     serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])

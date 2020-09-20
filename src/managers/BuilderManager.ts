@@ -1,14 +1,17 @@
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { BuildTask } from "tasks/types/BuildTask";
+import { RepairTask } from "tasks/types/RepairTask";
 import { Manager } from "./Manager";
 
 export class BuilderManager extends Manager {
     builders: Creep[] = [];
+    structures: Structure[] = [];
     sites: ConstructionSite[] = [];
     init = (room: Room) => {
         this.builders = room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'BUILDER') || null;
         this.sites = room.find(FIND_MY_CONSTRUCTION_SITES);
+        this.structures = room.find(FIND_STRUCTURES);
 
         // Request minions, if needed
         if (this.shouldSpawnBuilders(room)) {
@@ -18,6 +21,12 @@ export class BuilderManager extends Manager {
         // Request build for construction sites
         this.sites.forEach(site => {
             global.managers.task.submit(new TaskRequest(site.id, new BuildTask(site), 5))
+        })
+
+        // Request repair for structures in need
+        this.structures.forEach(structure => {
+            if (structure.structureType !== STRUCTURE_WALL && structure.hits < structure.hitsMax)
+                global.managers.task.submit(new TaskRequest(structure.id, new RepairTask(structure), 5))
         })
     }
     shouldSpawnBuilders = (room: Room) => {

@@ -9,7 +9,10 @@ export type TaskPlan = {
 }
 
 export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): TaskPlan[]|null => {
-    if (!task.valid()) return null;
+    if (!task.valid()) {
+        // console.log(`Task ${task.constructor.name} is not valid`);
+        return null;
+    }
 
     let taskPlan = {
         cost: task.cost(minion),
@@ -41,7 +44,10 @@ export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): T
             // - Etc.
             let altTasks: TaskAction[]|null = prereq.toMeet(minion)
 
-            if (!altTasks || altTasks.length === 0) {  return null; } // Prereq (and therefore this TaskAction) cannot be met
+            if (!altTasks || altTasks.length === 0) {
+                // console.log(`Prereq ${prereq.constructor.name} cannot be met`);
+                return null;
+            } // Prereq (and therefore this TaskAction) cannot be met
 
             // For each existing plan (at least our initial task,
             // and potentially other prerequisite paths)
