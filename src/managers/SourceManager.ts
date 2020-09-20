@@ -14,10 +14,17 @@ export class SourceManager extends Manager {
         // Request minions, if needed
         this.mines.forEach((mine) => {
             if (!mine.miner) {
-                // console.log(`[SourceManager] Requesting miner for ${mine.id}`)
-                global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
-                    source: mine.id
-                }))
+                if (!mine.container) {
+                    // Spawn miner/hauler
+                    global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.PIONEER, {
+                        source: mine.id
+                    }))
+                } else {
+                    // Spawn dedicated miner
+                    global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
+                        source: mine.id
+                    }))
+                }
             }
         })
     }

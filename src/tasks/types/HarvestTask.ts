@@ -3,6 +3,7 @@ import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
+import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 
 export class HarvestTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -10,7 +11,8 @@ export class HarvestTask extends TaskAction {
     //         near the source
     getPrereqs() {
         if (!this.source) return [];
-        return [new MustBeAtMine(this.source)]
+        // return [new MustBeAtMine(this.source)]
+        return [new MustBeAdjacent(this.source.pos)]
     }
     message = "⚡";
 

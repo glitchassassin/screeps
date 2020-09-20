@@ -31,6 +31,6 @@ export class MustBeAdjacent extends TaskPrerequisite {
         let spaces = global.analysts.map.calculateAdjacentPositions(this.pos)
             .filter(pos => global.analysts.map.isPositionWalkable(pos))
         if (spaces.length === 0) return null; // No adjacent spaces
-        return spaces.map(space => new TravelTask(space, 1));
+        return spaces.map(space => new TravelTask(space));
     }
 }

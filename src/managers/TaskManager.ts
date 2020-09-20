@@ -20,6 +20,7 @@ const DEBUG_MINION = 'builder269667';
 export class TaskManager extends Manager {
     tasks: Task[] = [];
     requests: RequestsMap<TaskRequest> = {};
+    disabled = false; // Used for debugging task CPU overload
 
     purge = (room: string) => {
         this.requests = {};
@@ -45,6 +46,7 @@ export class TaskManager extends Manager {
         this.tasks.push(task);
     }
     load = (room: Room) => {
+        if (this.disabled) return;
         // Load tasks from Memory
         if (Memory.rooms[room.name]?.tasks) {
             this.tasks = deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
@@ -65,6 +67,7 @@ export class TaskManager extends Manager {
         }
     }
     run = (room: Room) => {
+        if (this.disabled) return;
         // Assign requests
         let proposers = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
@@ -130,6 +133,7 @@ export class TaskManager extends Manager {
         })
     }
     cleanup = (room: Room) => {
+        if (this.disabled) return;
         if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
         Memory.rooms[room.name].tasks = serialize(this.tasks
             .filter(task => !task.completed || Game.time > task.created + 500))

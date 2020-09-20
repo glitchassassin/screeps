@@ -2,13 +2,17 @@ import { Transform } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
 import { Request } from "../Request";
 import { BuilderMinion } from "./minions/BuilderMinion";
+import { HaulerMinion } from "./minions/HaulerMinion";
 import { MinerMinion } from './minions/MinerMinion';
+import { PioneerMinion } from "./minions/PioneerMinion";
 import { UpgraderMinion } from "./minions/UpgraderMinion";
 
 export enum MinionTypes {
+    PIONEER = 'PIONEER',
     MINER = 'MINER',
     UPGRADER = 'UPGRADER',
     BUILDER = 'BUILDER',
+    HAULER = 'HAULER'
 }
 
 export class MinionRequest extends Request {
@@ -39,6 +43,14 @@ export class MinionRequest extends Request {
         if (!this.type || !this.assignedTo) return;
         if (!this.assignedTo.spawning && !this.spawned) {
             switch (this.type) {
+                case MinionTypes.HAULER:
+                    this.spawned = (new HaulerMinion())
+                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    break;
+                case MinionTypes.PIONEER:
+                    this.spawned = (new PioneerMinion())
+                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    break;
                 case MinionTypes.MINER:
                     this.spawned = (new MinerMinion())
                         .spawn(this.assignedTo, this.memory, room.energyAvailable);

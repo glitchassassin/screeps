@@ -31,6 +31,9 @@ export default {
           'Transform',
           'Type',
           'Exclude',
+        ],
+        'node_modules/typescript-memoize/dist/memoize-decorator.js': [
+          'Memoize',
         ]
       }
     }),
