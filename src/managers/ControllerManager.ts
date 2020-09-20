@@ -24,10 +24,10 @@ export class ControllerManager extends Manager {
             ));
         }
         // Request energy to controller depot, if needed
-        let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
-        if (depot?.container?.store && depot.container.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
-            global.managers.task.submit(new TaskRequest(room.name, new TransferTask(depot.container), 5));
-        }
+        // let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
+        // if (depot?.container?.store && depot.container.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+        //     global.managers.task.submit(new TaskRequest(room.name, new TransferTask(depot.container), 5));
+        // }
     }
     run = (room: Room) => {
         if (!room.controller || !this.upgrader) return;

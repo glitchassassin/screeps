@@ -33,6 +33,7 @@ export class TravelTask extends TaskAction {
         if (!this.destination) return true;
 
         let result = creep.moveTo(this.destination);
+        console.log(`[TravelTask] destination: ${JSON.stringify(this.destination)} result: ${result}`);
         if (result === ERR_NO_PATH ||
             result === ERR_NOT_OWNER ||
             result === ERR_NO_BODYPART ||

@@ -17,20 +17,23 @@ export class MustBeAdjacent extends TaskPrerequisite {
         return obj;
     })
     pos: RoomPosition
+    distance: number
     constructor(
-        pos: RoomPosition
+        pos: RoomPosition,
+        distance: number = 1
     ) {
         super();
         this.pos = pos;
+        this.distance = distance;
     }
 
     met(minion: SpeculativeMinion) {
         return minion.pos.inRangeTo(this.pos, 1)
     };
     toMeet(minion: SpeculativeMinion) {
-        let spaces = global.analysts.map.calculateAdjacentPositions(this.pos)
+        let spaces = global.analysts.map.calculateNearbyPositions(this.pos, this.distance)
             .filter(pos => global.analysts.map.isPositionWalkable(pos))
         if (spaces.length === 0) return null; // No adjacent spaces
-        return spaces.map(space => new TravelTask(space));
+        return [new TravelTask(this.pos, this.distance)];
     }
 }

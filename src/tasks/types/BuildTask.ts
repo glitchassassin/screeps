@@ -17,7 +17,7 @@ export class BuildTask extends TaskAction {
         if (!this.destination) return [];
         return [
             new MustHaveEnergy(this.destination.progressTotal - this.destination.progress),
-            new MustBeAdjacent(this.destination.pos),
+            new MustBeAdjacent(this.destination.pos, 3),
         ]
     }
     message = "🔨";
