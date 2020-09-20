@@ -14,6 +14,10 @@ export type Mine = {
 }
 
 export class SourceAnalyst extends Analyst {
+    @Memoize((container: StructureContainer) => ('' + container.id + Game.time))
+    isMineContainer(container: StructureContainer) {
+        return this.getDesignatedMiningLocations(container.room).some(mine => mine.container === container)
+    }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     calculateBestMiningLocations(room: Room) {
         let locations: {pos: RoomPosition, sourceId: string}[] = [];
