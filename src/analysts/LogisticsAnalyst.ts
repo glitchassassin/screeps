@@ -37,6 +37,10 @@ export class LogisticsAnalyst extends Analyst {
         return room.find(FIND_MY_SPAWNS) as StructureSpawn[];
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
+    getHaulers(room: Room): (Creep)[] {
+        return room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'HAULER');
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
     getMostEmptyAllSources(room: Room) {
         let container: StructureContainer|StructureSpawn|null = null;
         this.getAllSources(room).forEach((c: StructureSpawn|StructureContainer) => {

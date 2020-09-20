@@ -5,8 +5,6 @@ import { TaskRequest } from "tasks/TaskRequest";
 import { TransferTask } from "tasks/types/TransferTask";
 import { Manager } from "./Manager";
 
-const spawnAnalyst = new SpawnAnalyst();
-
 export class SpawnManager extends Manager {
     spawns: SpawnData[] = [];
     requests: {[id: string]: MinionRequest} = {};
@@ -20,7 +18,7 @@ export class SpawnManager extends Manager {
     }
 
     load = (room: Room) => {
-        this.spawns = spawnAnalyst.getSpawns(room);
+        this.spawns = global.analysts.spawn.getSpawns(room);
         // Load requests from Memory
         if (Memory.rooms[room.name]?.spawnRequests) {
             let deserialized = JSON.parse(Memory.rooms[room.name]?.spawnRequests as string)

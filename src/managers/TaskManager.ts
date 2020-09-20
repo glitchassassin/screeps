@@ -15,8 +15,6 @@ type RequestsMap<T> = {
     }
 }
 
-const DEBUG_MINION = 'builder269667';
-
 export class TaskManager extends Manager {
     tasks: Task[] = [];
     requests: RequestsMap<TaskRequest> = {};

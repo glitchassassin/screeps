@@ -4,12 +4,10 @@ import { Task } from "tasks/Task";
 import { HarvestTask } from "tasks/types/HarvestTask";
 import { Manager } from "./Manager";
 
-const sourceAnalyst = new SourceAnalyst();
-
 export class SourceManager extends Manager {
     mines: Mine[] = [];
     init = (room: Room) => {
-        this.mines = sourceAnalyst.getDesignatedMiningLocations(room);
+        this.mines = global.analysts.source.getDesignatedMiningLocations(room);
 
         // Request minions, if needed
         this.mines.forEach((mine) => {
