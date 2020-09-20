@@ -70,6 +70,7 @@
     "class-transformer": "^0.3.1",
     "jest": "^26.4.2",
     "reflect-metadata": "^0.1.13",
-    "source-map": "~0.6.1"
+    "source-map": "~0.6.1",
+    "typescript-memoize": "^1.0.0-alpha.3"
   }
 }

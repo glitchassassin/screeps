@@ -29,7 +29,7 @@ export class MustBeAdjacent extends TaskPrerequisite {
     };
     toMeet(minion: SpeculativeMinion) {
         let spaces = global.analysts.map.calculateAdjacentPositions(this.pos)
-            .filter(global.analysts.map.isPositionWalkable)
+            .filter(pos => global.analysts.map.isPositionWalkable(pos))
         if (spaces.length === 0) return null; // No adjacent spaces
         return spaces.map(space => new TravelTask(space, 1));
     }

@@ -1,3 +1,5 @@
+
+import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
 
@@ -12,7 +14,8 @@ export type Mine = {
 }
 
 export class SourceAnalyst extends Analyst {
-    calculateBestMiningLocations = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    calculateBestMiningLocations(room: Room) {
         let locations: {pos: RoomPosition, sourceId: string}[] = [];
         let sources = room.find(FIND_SOURCES);
         let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
@@ -21,62 +24,65 @@ export class SourceAnalyst extends Analyst {
         sources.forEach(source => {
             let candidate: {pos: RoomPosition, range: number}|null = (null as {pos: RoomPosition, range: number}|null);
             global.analysts.map
-                .calculateAdjacentPositions(source.pos)
-                .forEach((pos) => {
-                    if (global.analysts.map.isPositionWalkable(pos)) {
-                        let range = PathFinder.search(pos, target).cost;
-                        if (!candidate || candidate.range > range) {
-                            candidate = {pos, range};
-                        }
+            .calculateAdjacentPositions(source.pos)
+            .forEach((pos) => {
+                if (global.analysts.map.isPositionWalkable(pos)) {
+                    let range = PathFinder.search(pos, target).cost;
+                    if (!candidate || candidate.range > range) {
+                        candidate = {pos, range};
                     }
-                })
+                }
+            })
             if (candidate) locations.push({pos: candidate.pos, sourceId: source.id});
         })
         return locations;
     }
-    getDesignatedMiningLocations = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getDesignatedMiningLocations(room: Room) {
         let miners = room.find(FIND_MY_CREEPS)
-            .filter(creep => creep.memory.source)
+        .filter(creep => creep.memory.source)
         return Object.values(Game.flags)
-            .filter(flag => flag.memory.source)
-            .map(flag => {
-                let mine: Mine = {
-                    pos: flag.pos,
-                    id: (flag.memory.source as string),
-                    source: Game.getObjectById(flag.memory.source as Id<Source>) || undefined,
-                    miner: miners.find(m => m.memory.source === flag.memory.source)
+        .filter(flag => flag.memory.source)
+        .map(flag => {
+            let mine: Mine = {
+                pos: flag.pos,
+                id: (flag.memory.source as string),
+                source: Game.getObjectById(flag.memory.source as Id<Source>) || undefined,
+                miner: miners.find(m => m.memory.source === flag.memory.source)
+            }
+            mine.minerOnSite = false;
+            flag.pos.look().forEach(obj => {
+                if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
+                    mine.container = obj.structure as StructureContainer
+                } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
+                    mine.constructionSite = obj.constructionSite as ConstructionSite
+                } else if (mine.miner && obj.type === LOOK_CREEPS && obj.creep?.id === mine.miner.id) {
+                    mine.minerOnSite = true;
                 }
-                mine.minerOnSite = false;
-                flag.pos.look().forEach(obj => {
-                    if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
-                        mine.container = obj.structure as StructureContainer
-                    } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
-                        mine.constructionSite = obj.constructionSite as ConstructionSite
-                    } else if (mine.miner && obj.type === LOOK_CREEPS && obj.creep?.id === mine.miner.id) {
-                        mine.minerOnSite = true;
-                    }
-                });
-                return mine;
             });
+            return mine;
+        });
     }
     /**
-     * Returns a list of locations adjacent to sources
-     * where a) the source is not already maxed by
-     * active miners and b) the location is not occupied
-     * @param room
-     */
-    getAuxiliaryMiningLocations = (room: Room): RoomPosition[] => {
+    * Returns a list of locations adjacent to sources
+    * where a) the source is not already maxed by
+    * active miners and b) the location is not occupied
+    * @param room
+    */
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getAuxiliaryMiningLocations(room: Room): RoomPosition[] {
         return this.getSources(room).map(source => (
             this.getAuxiliaryMiningLocationsForSource(room, source)
         )).reduce((a, b) => a.concat(b), [])
     }
     /**
-     * Returns a list of locations adjacent to sources
-     * where a) the source is not already maxed by
-     * active miners and b) the location is not occupied
-     * @param room
-     */
-    getAuxiliaryMiningLocationsForSource = (room: Room, source: Source): RoomPosition[] => {
+    * Returns a list of locations adjacent to sources
+    * where a) the source is not already maxed by
+    * active miners and b) the location is not occupied
+    * @param room
+    */
+    @Memoize((room: Room, source: Source) => ('' + room.name + source.id + Game.time))
+    getAuxiliaryMiningLocationsForSource(room: Room, source: Source): RoomPosition[] {
         let output = 0;
         let spaces = global.analysts.map.calculateAdjacentPositions(source.pos).filter(pos => {
             if (!global.analysts.map.isPositionWalkable(pos)) return false;
@@ -96,10 +102,12 @@ export class SourceAnalyst extends Analyst {
         }
         return [];
     }
-    getSources = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getSources (room: Room) {
         return room.find(FIND_SOURCES);
     }
-    getUntappedSources = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getUntappedSources(room: Room) {
         return this.getSources(room).filter(source =>
             this.getAuxiliaryMiningLocationsForSource(room, source).length > 0
         )

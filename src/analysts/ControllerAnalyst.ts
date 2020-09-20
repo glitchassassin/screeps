@@ -1,4 +1,5 @@
 import { upgrade } from "behaviors/upgrade";
+import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
 
@@ -11,7 +12,8 @@ export type Depot = {
 }
 
 export class ControllerAnalyst extends Analyst {
-    calculateBestContainerLocation = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    calculateBestContainerLocation(room: Room) {
         if (!room.controller) return null;
         let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
@@ -29,7 +31,8 @@ export class ControllerAnalyst extends Analyst {
             });
         return candidate?.pos;
     }
-    getDesignatedUpgradingLocations = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getDesignatedUpgradingLocations(room: Room) {
         let upgradeDepotFlag = Object.values(Game.flags)
             .find(flag => flag.memory.upgradeDepot);
         if (!upgradeDepotFlag) return null;

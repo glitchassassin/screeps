@@ -7,6 +7,7 @@ import { resolveTaskTrees } from "tasks/resolveTaskTrees";
 import { TaskAction } from "tasks/TaskAction";
 import { TaskRequest } from "tasks/TaskRequest";
 import { BuildTask } from "tasks/types/BuildTask";
+import { RepairTask } from 'tasks/types/RepairTask';
 import { TransferTask } from "tasks/types/TransferTask";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
 import { inspect } from "util";
@@ -169,6 +170,8 @@ describe("stablematch integration", () => {
                 getUsedCapacity: () => 50,
                 getCapacity: () => 100,
             }),
+            hits: 100,
+            hitsMax: 150,
             pos: mockInstanceOf<RoomPosition>({x: 2, y: 2, roomName: 'world'}, true),
         });
         let creep1 = mockInstanceOf<Creep>({
@@ -193,11 +196,23 @@ describe("stablematch integration", () => {
             getActiveBodyparts: () => 1,
             room: Game.rooms.world,
         });
+        let creep3 = mockInstanceOf<Creep>({
+            id: 'creep3' as Id<Creep>,
+            store: mockInstanceOf<Store<RESOURCE_ENERGY, false>>({
+                getFreeCapacity: () => 50,
+                getUsedCapacity: () => 50,
+                getCapacity: () => 100,
+            }),
+            pos: mockInstanceOf<RoomPosition>({x: 3, y: 3, roomName: 'world', inRangeTo: () => false,}, true),
+            getActiveBodyparts: () => 1,
+            room: Game.rooms.world,
+        });
         let proposers = [
             new TaskRequest('a', new BuildTask(site)),
-            new TaskRequest('b', new TransferTask(container))
+            new TaskRequest('b', new TransferTask(container)),
+            new TaskRequest('c', new RepairTask(container)),
         ];
-        let accepters = [creep1, creep2];
+        let accepters = [creep1, creep2, creep3];
 
         let result = stablematch(
             proposers,
@@ -233,10 +248,10 @@ describe("stablematch integration", () => {
             }
         );
         // console.log(inspect(result, {depth: 2}));
-        expect(result.length).toEqual(2);
+        expect(result.length).toEqual(3);
         expect(result[0][0].id).toEqual('creep2');
         expect(result[0][1].sourceId).toEqual('a');
-        expect(result[1][0].id).toEqual('creep1');
+        expect(result[1][0].id).toEqual('creep3');
         expect(result[1][1].sourceId).toEqual('b');
     })
 })
