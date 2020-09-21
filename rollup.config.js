@@ -11,7 +11,7 @@ const dest = process.env.DEST;
 const config = process.env.SCREEPS_CONFIG;
 if (config) {
   console.log("Loading config from environment variable");
-  cfg = config;
+  cfg = JSON.parse(config);
 } else if (!dest) {
   console.log("No destination specified - code will be compiled but not uploaded");
 } else if ((cfg = require("./screeps.json")[dest]) == null) {
