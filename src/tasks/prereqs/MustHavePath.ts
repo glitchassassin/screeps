@@ -23,7 +23,7 @@ export class MustHavePath extends TaskPrerequisite {
     }
 
     met(minion: SpeculativeMinion) {
-        return !PathFinder.search(minion.pos, this.pos).incomplete
+        return true;// !PathFinder.search(minion.pos, this.pos).incomplete
     }
     toMeet() {
         return null;

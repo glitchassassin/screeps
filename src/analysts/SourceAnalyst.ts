@@ -18,7 +18,7 @@ export class SourceAnalyst extends Analyst {
     isMineContainer(container: StructureContainer) {
         return this.getDesignatedMiningLocations(container.room).some(mine => mine.container === container)
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
+    @Memoize((room: Room) => ('' + room.name))
     calculateBestMiningLocations(room: Room) {
         let locations: {pos: RoomPosition, sourceId: string}[] = [];
         let sources = room.find(FIND_SOURCES);
@@ -26,18 +26,8 @@ export class SourceAnalyst extends Analyst {
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
 
         sources.forEach(source => {
-            let candidate: {pos: RoomPosition, range: number}|null = (null as {pos: RoomPosition, range: number}|null);
-            global.analysts.map
-            .calculateAdjacentPositions(source.pos)
-            .forEach((pos) => {
-                if (global.analysts.map.isPositionWalkable(pos)) {
-                    let range = PathFinder.search(pos, target).cost;
-                    if (!candidate || candidate.range > range) {
-                        candidate = {pos, range};
-                    }
-                }
-            })
-            if (candidate) locations.push({pos: candidate.pos, sourceId: source.id});
+            let route = PathFinder.search(source.pos, target);
+            if (route) locations.push({pos: route.path[0], sourceId: source.id});
         })
         return locations;
     }

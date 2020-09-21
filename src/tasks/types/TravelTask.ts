@@ -9,7 +9,7 @@ export class TravelTask extends TaskAction {
     //         Otherwise, fail this branch
     getPrereqs() {
         if (!this.destination) return [];
-        return [new MustHavePath(this.destination)]
+        return []; // [new MustHavePath(this.destination)]
     }
     message = "🚗";
 
@@ -33,7 +33,6 @@ export class TravelTask extends TaskAction {
         if (!this.destination) return true;
 
         let result = creep.moveTo(this.destination);
-        console.log(`[TravelTask] destination: ${JSON.stringify(this.destination)} result: ${result}`);
         if (result === ERR_NO_PATH ||
             result === ERR_NOT_OWNER ||
             result === ERR_NO_BODYPART ||
@@ -42,7 +41,8 @@ export class TravelTask extends TaskAction {
     }
     cost(minion: SpeculativeMinion) {
         if (!this.destination) return Infinity
-        return PathFinder.search(minion.pos, this.destination).cost;
+        // Gets approximate cost by range instead of calculating the exact cost. This is faster
+        return minion.pos.getRangeTo(this.destination); //PathFinder.search(minion.pos, this.destination).cost;
     }
     predict(minion: SpeculativeMinion) {
         return {

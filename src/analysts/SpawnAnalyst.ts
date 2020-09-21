@@ -1,5 +1,6 @@
 import { Request } from "requests/Request";
 import { TaskRequest } from "tasks/TaskRequest";
+import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
 
@@ -12,7 +13,13 @@ export type SpawnData = {
 }
 
 export class SpawnAnalyst extends Analyst {
-    getSpawns = (room: Room) => {
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getExtensions(room: Room) {
+        return room.find(FIND_STRUCTURES)
+            .filter(s => s.structureType === STRUCTURE_EXTENSION) as StructureExtension[];
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getSpawns(room: Room) {
         return room.find(FIND_MY_SPAWNS).map(spawn => {
             let energy = spawn.store.getUsedCapacity(RESOURCE_ENERGY);
             return {

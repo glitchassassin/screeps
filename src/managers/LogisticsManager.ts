@@ -5,9 +5,11 @@ import { Manager } from "./Manager";
 
 export class LogisticsManager extends Manager {
     containers: StructureContainer[] = [];
+    extensions: StructureExtension[] = [];
     haulers: Creep[] = [];
     init = (room: Room) => {
         this.containers = global.analysts.logistics.getContainers(room)
+        this.extensions = global.analysts.spawn.getExtensions(room)
         this.haulers = global.analysts.logistics.getHaulers(room)
 
         // Request minions, if needed
@@ -19,6 +21,11 @@ export class LogisticsManager extends Manager {
         this.containers.forEach(c => {
             if (!global.analysts.source.isMineContainer(c) && c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
                 global.managers.task.submit(new TaskRequest(c.id, new TransferTask(c)));
+            }
+        })
+        this.extensions.forEach(e => {
+            if (e.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                global.managers.task.submit(new TaskRequest(e.id, new TransferTask(e)));
             }
         })
     }
