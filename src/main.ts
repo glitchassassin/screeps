@@ -13,8 +13,10 @@ import { MapAnalyst } from 'analysts/MapAnalyst';
 import { SourceAnalyst } from 'analysts/SourceAnalyst';
 import { BuilderManager } from 'managers/BuilderManager';
 import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
+import { LogisticsManager } from 'managers/LogisticsManager';
 
 global.managers = {
+  logistics: new LogisticsManager(),
   task: new TaskManager(),
   spawn: new SpawnManager(),
   source: new SourceManager(),

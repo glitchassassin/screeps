@@ -1,5 +1,6 @@
 import { Transform, TransformationType, Type } from "class-transformer";
 import { assert } from "console";
+import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
@@ -17,11 +18,12 @@ export class RepairTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveWorkParts(),
             new MustHaveEnergy((this.destination.hitsMax - this.destination.hits)/100),
-            new MustBeAdjacent(this.destination.pos),
+            new MustBeAdjacent(this.destination.pos, 3),
         ]
     }
-    message = "🔨";
+    message = "🛠";
 
     @Type(() => Structure)
     @Transform(transformGameObject(Structure))
@@ -39,6 +41,7 @@ export class RepairTask extends TaskAction {
         if (!this.destination) return true;
 
         let result = creep.repair(this.destination);
+        console.log(`[RepairTask] result ${result}`)
         if (result === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.destination);
         } else if (result !== OK){
@@ -62,6 +65,7 @@ export class RepairTask extends TaskAction {
         }
     }
     valid() {
+        console.log(`[RepairTask] valid: ${!!this.destination && this.destination.hits < this.destination.hitsMax}`)
         return !!this.destination && this.destination.hits < this.destination.hitsMax;
     }
 }

@@ -5,6 +5,7 @@ import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
+import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
 
 export class UpgradeTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -17,6 +18,7 @@ export class UpgradeTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveWorkParts(),
             new MustBeAdjacent(this.destination.pos),
             new MustHaveEnergy(1000) // No cap on upgrade energy
         ]

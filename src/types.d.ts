@@ -36,6 +36,7 @@ declare namespace NodeJS {
       builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
     };
     managers: {
+      logistics: import('./managers/LogisticsManager').LogisticsManager,
       controller: import('./managers/ControllerManager').ControllerManager,
       source: import('./managers/SourceManager').SourceManager,
       spawn: import('./managers/SpawnManager').SpawnManager,

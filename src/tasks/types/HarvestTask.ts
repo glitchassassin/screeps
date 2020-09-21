@@ -4,6 +4,7 @@ import { TaskAction } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
+import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
 
 export class HarvestTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -12,7 +13,10 @@ export class HarvestTask extends TaskAction {
     getPrereqs() {
         if (!this.source) return [];
         // return [new MustBeAtMine(this.source)]
-        return [new MustBeAdjacent(this.source.pos)]
+        return [
+            new MustHaveWorkParts(),
+            new MustBeAdjacent(this.source.pos)
+        ]
     }
     message = "⚡";
 
