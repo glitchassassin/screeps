@@ -33,14 +33,17 @@ export class TaskRequest {
         }
     })
     task: TaskAction|null = null;
+    capacity: number;
 
     constructor(
         sourceId: string|null = null,
         task: TaskAction|null = null,
         priority = 5,
+        capacity = 0
     ) {
         this.sourceId = sourceId;
         this.task = task;
         this.priority = priority;
+        this.capacity = capacity;
     }
 }

@@ -20,7 +20,8 @@ export class ControllerManager extends Manager {
             global.managers.task.submit(new TaskRequest(
                 room.controller.id,
                 new UpgradeTask(room.controller),
-                1
+                1,
+                (room.controller.level === 8 ? 15 : 1000) // TODO: Cap of 15 energy per tick at RCL 8, this is capacity per task
             ));
         }
         // Request energy to controller depot, if needed

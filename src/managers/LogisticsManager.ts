@@ -1,6 +1,7 @@
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { TransferTask } from "tasks/types/TransferTask";
+import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "./Manager";
 
 export class LogisticsManager extends Manager {
@@ -19,13 +20,15 @@ export class LogisticsManager extends Manager {
 
         // Request energy, if needed
         this.containers.forEach(c => {
-            if (!global.analysts.source.isMineContainer(c) && c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                global.managers.task.submit(new TaskRequest(c.id, new TransferTask(c)));
+            let e = getTransferEnergyRemaining(c);
+            if (!global.analysts.source.isMineContainer(c) && e > 0) {
+                global.managers.task.submit(new TaskRequest(c.id, new TransferTask(c), e));
             }
         })
         this.extensions.forEach(e => {
-            if (e.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                global.managers.task.submit(new TaskRequest(e.id, new TransferTask(e)));
+            let energy = getTransferEnergyRemaining(e);
+            if (energy > 0) {
+                global.managers.task.submit(new TaskRequest(e.id, new TransferTask(e), energy));
             }
         })
     }

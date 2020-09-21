@@ -1,3 +1,4 @@
+import { TaskPlan } from "tasks/resolveTaskTrees";
 import { TaskRequest } from "tasks/TaskRequest";
 
 type Rated<T, Output> = {
@@ -5,24 +6,30 @@ type Rated<T, Output> = {
     rating: number,
     output: Output
 }
+type WithCapacity<T> = {
+    value: T,
+    capacity: number
+}
 
-export function calculatePreferences<Proposer, Accepter, Result>(
-    proposers: Proposer[],
-    accepters: Accepter[],
-    comparison: (p: Proposer, a: Accepter) => {pRating: number, aRating: number, output: Result}) {
+export function calculatePreferences<TaskRequest, Creep, TaskPlan>(
+    proposers: TaskRequest[],
+    accepters: Creep[],
+    comparison: (p: TaskRequest, a: Creep) => {pRating: number, aRating: number, output: TaskPlan|null}) {
         let results = {
-            accepters: new Map<Accepter, Map<Proposer, Rated<Proposer, Result>>>(),
-            proposers: new Map<Proposer, {priorities: Rated<Accepter, Result>[], map: Map<Accepter, Rated<Accepter, Result>>}>()
+            accepters: new Map<Creep, Map<TaskRequest, Rated<TaskRequest, TaskPlan>>>(),
+            proposers: new Map<TaskRequest, {priorities: Rated<Creep, TaskPlan>[], map: Map<Creep, Rated<Creep, TaskPlan>>}>()
         }
-        accepters.forEach(a => results.accepters.set(a, new Map<Proposer, Rated<Proposer, Result>>()))
+        accepters.forEach(a => results.accepters.set(a, new Map<TaskRequest, Rated<TaskRequest, TaskPlan>>()))
 
         proposers.forEach(p => {
 
-            let map = new Map<Accepter, Rated<Accepter, Result>>();
+            let map = new Map<Creep, Rated<Creep, TaskPlan>>();
             accepters.forEach(a => {
                 const {pRating, aRating, output} = comparison(p, a)
-                results.accepters.get(a)?.set(p, {value: p, rating: pRating, output});
-                map.set(a, {value: a, rating: aRating, output});
+                if (output !== null) {
+                    results.accepters.get(a)?.set(p, {value: p, rating: pRating, output});
+                    map.set(a, {value: a, rating: aRating, output});
+                }
             })
             results.proposers.set(p, {
                 priorities: [...map.values()].sort((a, b) => a.rating - b.rating),
@@ -32,18 +39,17 @@ export function calculatePreferences<Proposer, Accepter, Result>(
 
         return results;
 }
-export function stablematch<Proposer, Accepter, Result>(
-    proposers: Proposer[],
-    accepters: Accepter[],
-    comparison: (p: Proposer, a: Accepter) => {pRating: number, aRating: number, output: Result}): [Accepter, Proposer, Result][] {
+export function stablematch(
+    proposers: TaskRequest[],
+    accepters: Creep[],
+    comparison: (p: TaskRequest, a: Creep) => {pRating: number, aRating: number, output: TaskPlan|null}): [Creep, TaskRequest, TaskPlan][] {
         let preferences = calculatePreferences(proposers, accepters, comparison);
-        // preferences.proposers.forEach((p, n) => {
-        //     if (n instanceof TaskRequest && n.task?.constructor.name === 'TransferTask') {
-        //         console.log('proposer\'s preferences', JSON.stringify(p.priorities.map(a => a.output)));
-        //     }
-        // })
+
+        let capacities = new Map<TaskRequest, number>();
         let pool = [...proposers];
-        let matches = new Map<Accepter, Rated<Proposer, Result>>();
+        pool.forEach(proposer => (capacities.set(proposer, proposer.capacity)));
+
+        let matches = new Map<Creep, Rated<TaskRequest, TaskPlan>>();
         while (pool.length > 0) {
             let p = pool.shift();
             if (!p) continue;
@@ -56,11 +62,15 @@ export function stablematch<Proposer, Accepter, Result>(
             if (!existingMatch) {
                 // Accepter has no proposals yet: provisionally accept
                 matches.set(idealMatch, ratedProposer);
+                // Reduce proposer's capacity
+                capacities.set(p, (capacities.get(p) as number) - ratedProposer.output.minion.output)
             } else if (existingMatch.rating < ratedProposer.rating) {
                 // Accepter trades up
                 matches.set(idealMatch, ratedProposer);
                 // Jilted proposer moves back to the pool
                 pool.push(existingMatch.value);
+                // Add capacity back to jilted proposer
+                capacities.set(existingMatch.value, (capacities.get(existingMatch.value) as number) + existingMatch.output.minion.output)
             } else {
                 pool.push(p);
                 // Accepter rejects proposer: keep going down the priority list

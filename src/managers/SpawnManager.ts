@@ -3,6 +3,7 @@ import { deserialize, serialize } from "class-transformer";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { TransferTask } from "tasks/types/TransferTask";
+import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "./Manager";
 
 export class SpawnManager extends Manager {
@@ -34,14 +35,15 @@ export class SpawnManager extends Manager {
     init = (room: Room) => {
         // Request energy, if needed
         this.spawns.forEach((spawn) => {
-            let capacity = room.energyAvailable
-            if (capacity < 200 && !(
+            let roomCapacity = room.energyAvailable
+            let spawnCapacity = getTransferEnergyRemaining(spawn.spawn);
+            if (roomCapacity < 200 && !(
                     global.managers.task.hasTaskFor(spawn.spawn.id) ||
                     global.managers.task.hasRequestFor(spawn.spawn.id)
                 )) {
-                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10));
-            } else if (capacity < room.energyCapacityAvailable) {
-                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 5));
+                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10, spawnCapacity));
+            } else if (spawnCapacity > 0) {
+                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 5, spawnCapacity));
             }
         })
     }

@@ -72,7 +72,7 @@ export class TaskManager extends Manager {
             .reduce((a, b) => a.concat(b), [])
             .filter(t => t.task?.valid())
             .sort((a, b) => b.priority - a.priority); // Higher priority sorts to the top
-        let priorities = stablematch<TaskRequest, Creep, TaskPlan|null>(
+        let priorities = stablematch(
             proposers,
             this.idleCreeps(room),
             (taskRequest, creep) => {
@@ -105,6 +105,7 @@ export class TaskManager extends Manager {
                     output: bestPlan
                 }
             });
+        console.log(priorities.map(p => `${p[1].sourceId}:${p[1].task?.constructor.name}`).join('\n'))
         priorities.forEach(([creep, taskRequest, taskPlan]) => {
             if (!taskPlan) return;
             // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +

@@ -2,6 +2,7 @@ import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { BuildTask } from "tasks/types/BuildTask";
 import { RepairTask } from "tasks/types/RepairTask";
+import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "./Manager";
 
 export class BuilderManager extends Manager {
@@ -20,13 +21,13 @@ export class BuilderManager extends Manager {
 
         // Request build for construction sites
         this.sites.forEach(site => {
-            global.managers.task.submit(new TaskRequest(site.id, new BuildTask(site), 5))
+            global.managers.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
         })
 
         // Request repair for structures in need
         this.structures.forEach(structure => {
             if (structure.structureType !== STRUCTURE_WALL && structure.hits < structure.hitsMax)
-                global.managers.task.submit(new TaskRequest(structure.id, new RepairTask(structure), 5))
+                global.managers.task.submit(new TaskRequest(structure.id, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
         })
     }
     shouldSpawnBuilders = (room: Room) => {

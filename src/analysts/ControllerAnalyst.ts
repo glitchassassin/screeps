@@ -1,4 +1,3 @@
-import { upgrade } from "behaviors/upgrade";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
