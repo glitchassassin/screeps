@@ -42,7 +42,7 @@ export class SpawnManager extends Manager {
                 )) {
                 global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10));
             } else if (capacity < room.energyCapacityAvailable) {
-                //global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 4));
+                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 5));
             }
         })
     }

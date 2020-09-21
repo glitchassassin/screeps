@@ -1,3 +1,5 @@
+import { TaskRequest } from "tasks/TaskRequest";
+
 type Rated<T, Output> = {
     value: T,
     rating: number,
@@ -23,7 +25,7 @@ export function calculatePreferences<Proposer, Accepter, Result>(
                 map.set(a, {value: a, rating: aRating, output});
             })
             results.proposers.set(p, {
-                priorities: [...map.values()].sort((a, b) => b.rating - a.rating),
+                priorities: [...map.values()].sort((a, b) => a.rating - b.rating),
                 map
             });
         });
@@ -35,6 +37,11 @@ export function stablematch<Proposer, Accepter, Result>(
     accepters: Accepter[],
     comparison: (p: Proposer, a: Accepter) => {pRating: number, aRating: number, output: Result}): [Accepter, Proposer, Result][] {
         let preferences = calculatePreferences(proposers, accepters, comparison);
+        // preferences.proposers.forEach((p, n) => {
+        //     if (n instanceof TaskRequest && n.task?.constructor.name === 'TransferTask') {
+        //         console.log('proposer\'s preferences', JSON.stringify(p.priorities.map(a => a.output)));
+        //     }
+        // })
         let pool = [...proposers];
         let matches = new Map<Accepter, Rated<Proposer, Result>>();
         while (pool.length > 0) {
@@ -44,7 +51,7 @@ export function stablematch<Proposer, Accepter, Result>(
             let idealMatch = preferences.proposers.get(p)?.priorities.shift()?.value;
             if (!idealMatch) continue;
             let ratedProposer = preferences.accepters.get(idealMatch)?.get(p);
-            if (!ratedProposer) continue;
+            if (!ratedProposer || !ratedProposer.output) continue; // Minion cannot fulfill task request
             let existingMatch = matches.get(idealMatch);
             if (!existingMatch) {
                 // Accepter has no proposals yet: provisionally accept

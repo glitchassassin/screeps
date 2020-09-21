@@ -26,7 +26,7 @@ export class Task {
                 { value: TravelTask, name: 'TravelTask' },
                 { value: UpgradeTask, name: 'UpgradeTask' },
                 { value: WithdrawTask, name: 'WithdrawTask' },
-                { value: RepairTask, name: 'WithdrawTask' },
+                { value: RepairTask, name: 'RepairTask' },
                 { value: TaskAction, name: 'TaskAction' },
             ]
         }

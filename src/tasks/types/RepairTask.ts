@@ -41,13 +41,12 @@ export class RepairTask extends TaskAction {
         if (!this.destination) return true;
 
         let result = creep.repair(this.destination);
-        console.log(`[RepairTask] result ${result}`)
         if (result === ERR_NOT_IN_RANGE) {
             creep.moveTo(this.destination);
         } else if (result !== OK){
             return true;
         }
-        return false;
+        return this.destination.hits === this.destination.hitsMax;
     }
     /**
      * Calculates cost based on the effectiveness of the minion
@@ -65,7 +64,6 @@ export class RepairTask extends TaskAction {
         }
     }
     valid() {
-        console.log(`[RepairTask] valid: ${!!this.destination && this.destination.hits < this.destination.hitsMax}`)
         return !!this.destination && this.destination.hits < this.destination.hitsMax;
     }
 }
