@@ -11,6 +11,14 @@ export class LogisticsAnalyst extends Analyst {
             .filter(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer[];
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
+    getTombstones(room: Room) {
+        return room.find(FIND_TOMBSTONES);
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getFreeEnergy(room: Room) {
+        return room.find(FIND_DROPPED_RESOURCES).filter(r => r.resourceType === RESOURCE_ENERGY) as Resource<RESOURCE_ENERGY>[];
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
     getMostEmptyContainer(room: Room): StructureContainer|null {
         let container: StructureContainer|null = null;
         this.getContainers(room).forEach(c => {
@@ -31,8 +39,8 @@ export class LogisticsAnalyst extends Analyst {
         return container;
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
-    getAllSources(room: Room): (StructureSpawn|StructureContainer)[] {
-        let c = this.getContainers(room);
+    getAllSources(room: Room): (StructureContainer|StructureSpawn|Tombstone)[] {
+        let c = [...this.getContainers(room), ...this.getTombstones(room)];
         if (c.length !== 0) return c;
         return room.find(FIND_MY_SPAWNS) as StructureSpawn[];
     }
@@ -42,8 +50,8 @@ export class LogisticsAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getMostEmptyAllSources(room: Room) {
-        let container: StructureContainer|StructureSpawn|null = null;
-        this.getAllSources(room).forEach((c: StructureSpawn|StructureContainer) => {
+        let container: StructureContainer|StructureSpawn|Tombstone|null = null;
+        this.getAllSources(room).forEach((c) => {
             if (!container || c.store[RESOURCE_ENERGY] < container.store[RESOURCE_ENERGY]) {
                 container = c;
             }
@@ -52,8 +60,8 @@ export class LogisticsAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getMostFullAllSources(room: Room): StructureContainer|StructureSpawn|null {
-        let container: StructureContainer|StructureSpawn|null = null;
-        this.getAllSources(room).forEach((c: StructureSpawn|StructureContainer) => {
+        let container: StructureContainer|StructureSpawn|Tombstone|null = null;
+        this.getAllSources(room).forEach((c) => {
             if (!container || c.store[RESOURCE_ENERGY] > container.store[RESOURCE_ENERGY]) {
                 container = c;
             }

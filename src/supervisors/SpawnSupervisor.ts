@@ -4,9 +4,9 @@ import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { TransferTask } from "tasks/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
-import { Manager } from "./Manager";
+import { Manager } from "../managers/Manager";
 
-export class SpawnManager extends Manager {
+export class SpawnSupervisor extends Manager {
     spawns: SpawnData[] = [];
     requests: {[id: string]: MinionRequest} = {};
     resupply: TaskRequest|null = null;
@@ -30,22 +30,6 @@ export class SpawnManager extends Manager {
                 }
             }
         }
-    }
-
-    init = (room: Room) => {
-        // Request energy, if needed
-        this.spawns.forEach((spawn) => {
-            let roomCapacity = room.energyAvailable
-            let spawnCapacity = getTransferEnergyRemaining(spawn.spawn);
-            if (roomCapacity < 200 && !(
-                    global.managers.task.hasTaskFor(spawn.spawn.id) ||
-                    global.managers.task.hasRequestFor(spawn.spawn.id)
-                )) {
-                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 10, spawnCapacity));
-            } else if (spawnCapacity > 0) {
-                global.managers.task.submit(new TaskRequest(spawn.spawn.id, new TransferTask(spawn.spawn), 5, spawnCapacity));
-            }
-        })
     }
     run = (room: Room) => {
         // Spawn Requests
@@ -80,9 +64,6 @@ export class SpawnManager extends Manager {
         Memory.rooms[room.name].spawnRequests = JSON.stringify(serialized);
     }
 
-    getSpawns = (room: Room) => {
-        return this.spawns;
-    }
     getIdleSpawn = (room: Room) => {
         return this.spawns.find(s => !s.currentRequest);
     }

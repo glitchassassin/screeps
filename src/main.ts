@@ -4,8 +4,8 @@ import { ErrorMapper } from "utils/ErrorMapper";
 import { ControllerArchitect } from 'architects/ControllerArchitect';
 import { SourceArchitect } from 'architects/SourceArchitect';
 import { SourceManager } from 'managers/SourceManager';
-import { SpawnManager } from 'managers/SpawnManager';
-import { TaskManager } from 'managers/TaskManager';
+import { SpawnSupervisor } from 'supervisors/SpawnSupervisor';
+import { TaskSupervisor } from 'supervisors/TaskSupervisor';
 import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
 import { ControllerManager } from 'managers/ControllerManager';
 import { SpawnAnalyst } from 'analysts/SpawnAnalyst';
@@ -18,8 +18,6 @@ import { LogisticsManager } from 'managers/LogisticsManager';
 
 global.managers = {
   logistics: new LogisticsManager(),
-  task: new TaskManager(),
-  spawn: new SpawnManager(),
   source: new SourceManager(),
   controller: new ControllerManager(),
   builder: new BuilderManager(),
@@ -31,6 +29,10 @@ global.analysts = {
   map: new MapAnalyst(),
   source: new SourceAnalyst(),
   builder: new BuilderAnalyst()
+}
+global.supervisors = {
+  task: new TaskSupervisor(),
+  spawn: new SpawnSupervisor(),
 }
 
 
@@ -62,15 +64,18 @@ function mainLoop() {
 
     // Load memory
     Object.values(global.managers).forEach(manager => manager.load(room));
+    Object.values(global.supervisors).forEach(supervisor => supervisor.load(room));
 
     // Initialize managers
     Object.values(global.managers).forEach(manager => manager.init(room));
 
     // Run managers
     Object.values(global.managers).forEach(manager => manager.run(room));
+    Object.values(global.supervisors).forEach(supervisor => supervisor.run(room));
 
     // Clean up managers
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
+    Object.values(global.supervisors).forEach(supervisor => supervisor.cleanup(room));
   })
 }
 

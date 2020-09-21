@@ -3,7 +3,7 @@ import { Task } from "tasks/Task";
 import { TaskAction } from "tasks/TaskAction";
 import { TaskRequest } from "tasks/TaskRequest";
 import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
-import { Manager } from "./Manager";
+import { Manager } from "../managers/Manager";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
 import { TransferTask } from "tasks/types/TransferTask";
 import { stablematch } from "algorithms/stablematch";
@@ -19,7 +19,7 @@ function outputOfTasks(tasks: Task[]) {
     return tasks.reduce((a, b) => a + b.output, 0);
 }
 
-export class TaskManager extends Manager {
+export class TaskSupervisor extends Manager {
     tasks: Task[] = [];
     requests: RequestsMap<TaskRequest> = {};
     disabled = false; // Used for debugging task CPU overload

@@ -14,12 +14,12 @@ export class SourceManager extends Manager {
             if (!mine.miner) {
                 if (!mine.container) {
                     // Spawn miner/hauler
-                    global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.PIONEER, {
+                    global.supervisors.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.PIONEER, {
                         source: mine.id
                     }))
                 } else {
                     // Spawn dedicated miner
-                    global.managers.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
+                    global.supervisors.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
                         source: mine.id
                     }))
                 }
@@ -29,7 +29,7 @@ export class SourceManager extends Manager {
     run = (room: Room) => {
         this.mines.forEach(mine => {
             if (!mine.source) return;
-            if (mine.miner && global.managers.task.isIdle(mine.miner)) {
+            if (mine.miner && global.supervisors.task.isIdle(mine.miner)) {
                 // If miner is full, and mine container exists, deposit there;
                 // otherwise, remain idle
                 if (mine.miner.store[RESOURCE_ENERGY] > 0 && mine.miner.store.getFreeCapacity() === 0) {
@@ -41,7 +41,7 @@ export class SourceManager extends Manager {
                     }
                 }
                 // If miner is not full, continue harvesting
-                global.managers.task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
+                global.supervisors.task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
             }
         })
     }

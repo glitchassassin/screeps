@@ -39,9 +39,11 @@ declare namespace NodeJS {
       logistics: import('./managers/LogisticsManager').LogisticsManager,
       controller: import('./managers/ControllerManager').ControllerManager,
       source: import('./managers/SourceManager').SourceManager,
-      spawn: import('./managers/SpawnManager').SpawnManager,
-      task: import('./managers/TaskManager').TaskManager,
       builder: import('./managers/BuilderManager').BuilderManager,
     };
+    supervisors: {
+      task: import('./supervisors/TaskSupervisor').TaskSupervisor,
+      spawn: import('./supervisors/SpawnSupervisor').SpawnSupervisor,
+    }
   }
 }

@@ -16,12 +16,12 @@ export class BuilderManager extends Manager {
 
         // Request minions, if needed
         if (this.shouldSpawnBuilders(room)) {
-            global.managers.spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
+            global.supervisors.spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
         }
 
         // Request build for construction sites
         this.sites.forEach(site => {
-            global.managers.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
+            global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
         })
 
         // Request repair for structures in need
@@ -30,7 +30,7 @@ export class BuilderManager extends Manager {
             .sort((a, b) => (a.hits - b.hits))
             .slice(0,5) // Get top 5
             .forEach((structure, i) => {
-                global.managers.task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
+                global.supervisors.task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
             })
     }
     shouldSpawnBuilders = (room: Room) => {
