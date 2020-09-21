@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import profiler from 'screeps-profiler';
 import { ErrorMapper } from "utils/ErrorMapper";
 import { ControllerArchitect } from 'architects/ControllerArchitect';
 import { SourceArchitect } from 'architects/SourceArchitect';
@@ -40,7 +41,7 @@ let architects = [
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
-export const loop = ErrorMapper.wrapLoop(() => {
+function mainLoop() {
   // Initialize memory
   if (!Memory.flags) Memory.flags = {};
   if (!Memory.rooms) Memory.rooms = {};
@@ -71,4 +72,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
     // Clean up managers
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
   })
+}
+
+profiler.enable();
+export const loop = ErrorMapper.wrapLoop(() => {
+  profiler.wrap(mainLoop)
 });
