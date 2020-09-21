@@ -8,7 +8,7 @@ import { SpawnManager } from 'managers/SpawnManager';
 import { TaskManager } from 'managers/TaskManager';
 import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
 import { ControllerManager } from 'managers/ControllerManager';
-import { SpawnAnalyst } from 'analysts/Spawnanalyst';
+import { SpawnAnalyst } from 'analysts/SpawnAnalyst';
 import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
 import { MapAnalyst } from 'analysts/MapAnalyst';
 import { SourceAnalyst } from 'analysts/SourceAnalyst';
