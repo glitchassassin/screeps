@@ -31,9 +31,6 @@ export class MustBeAdjacent extends TaskPrerequisite {
         return minion.pos.inRangeTo(this.pos, 1)
     };
     toMeet(minion: SpeculativeMinion) {
-        let spaces = global.analysts.map.calculateNearbyPositions(this.pos, this.distance)
-            .filter(pos => global.analysts.map.isPositionWalkable(pos))
-        if (spaces.length === 0) return null; // No adjacent spaces
         return [new TravelTask(this.pos, this.distance)];
     }
 }
