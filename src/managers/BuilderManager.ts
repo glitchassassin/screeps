@@ -25,10 +25,13 @@ export class BuilderManager extends Manager {
         })
 
         // Request repair for structures in need
-        this.structures.forEach(structure => {
-            if (structure.structureType !== STRUCTURE_WALL && structure.hits < structure.hitsMax)
-                global.managers.task.submit(new TaskRequest(structure.id, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
-        })
+        this.structures
+            .filter(structure => structure.structureType !== STRUCTURE_WALL)
+            .sort((a, b) => (a.hits - b.hits))
+            .slice(0,5) // Get top 5
+            .forEach((structure, i) => {
+                global.managers.task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
+            })
     }
     shouldSpawnBuilders = (room: Room) => {
         let builderCount = Math.max(
