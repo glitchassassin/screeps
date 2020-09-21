@@ -15,6 +15,10 @@ type RequestsMap<T> = {
     }
 }
 
+function outputOfTasks(tasks: Task[]) {
+    return tasks.reduce((a, b) => a + b.output, 0);
+}
+
 export class TaskManager extends Manager {
     tasks: Task[] = [];
     requests: RequestsMap<TaskRequest> = {};
@@ -70,7 +74,7 @@ export class TaskManager extends Manager {
         let proposers = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
-            .filter(t => t.task?.valid())
+            .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity)
             .sort((a, b) => b.priority - a.priority); // Higher priority sorts to the top
         let priorities = stablematch(
             proposers,
@@ -96,22 +100,20 @@ export class TaskManager extends Manager {
                 })
 
                 if (!filteredPaths || filteredPaths.length === 0) {
-                    return {pRating: Infinity, aRating: Infinity, output: null};
+                    return {rating: Infinity, output: null};
                 }
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 return {
-                    pRating: bestPlan.minion.output, // taskRequest cares about the output: best = largest
-                    aRating: bestPlan.cost,          // creep cares about the cost: best = largest
+                    rating: bestPlan.minion.output/bestPlan.cost, // rating = output/tick
                     output: bestPlan
                 }
             });
-        console.log(priorities.map(p => `${p[1].sourceId}:${p[1].task?.constructor.name}`).join('\n'))
         priorities.forEach(([creep, taskRequest, taskPlan]) => {
             if (!taskPlan) return;
             // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
             //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
             //             `${taskPlan.tasks.map(t => t.constructor.name)}`)
-            let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId);
+            let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
             this.assign(task);
         })
 
@@ -148,6 +150,8 @@ export class TaskManager extends Manager {
                     // Completed, no longer valid, or timed out
                     delete this.requests[reqType][reqSource]
                 } else {
+                    // Clean up linked tasks
+                    this.requests[reqType][reqSource].assignedTasks = this.requests[reqType][reqSource].assignedTasks.filter(t => !t.completed);
                     serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])
                 }
             }
@@ -174,5 +178,11 @@ export class TaskManager extends Manager {
             }
         }
         return false;
+    }
+    getAssociatedTasks(request: TaskRequest) {
+        return this.tasks.filter(task => (
+            task.actions[task.actions.length -1].constructor.name === request.task?.constructor.name &&
+            task.sourceId === request.sourceId
+        ))
     }
 }

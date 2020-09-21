@@ -13,9 +13,10 @@ export class TaskRequest {
     completed = false;
     created = Game.time;
     sourceId: string|null = null;
-    priority = 5;
+    priority: number;
+    capacity: number;
 
-    assignedTask: Task|null = null;
+    assignedTasks: Task[] = [];
 
     @Type(() => TaskAction, {
         discriminator: {
@@ -33,7 +34,6 @@ export class TaskRequest {
         }
     })
     task: TaskAction|null = null;
-    capacity: number;
 
     constructor(
         sourceId: string|null = null,

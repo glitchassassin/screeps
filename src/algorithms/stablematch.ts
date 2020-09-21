@@ -6,15 +6,11 @@ type Rated<T, Output> = {
     rating: number,
     output: Output
 }
-type WithCapacity<T> = {
-    value: T,
-    capacity: number
-}
 
 export function calculatePreferences<TaskRequest, Creep, TaskPlan>(
     proposers: TaskRequest[],
     accepters: Creep[],
-    comparison: (p: TaskRequest, a: Creep) => {pRating: number, aRating: number, output: TaskPlan|null}) {
+    comparison: (p: TaskRequest, a: Creep) => {rating: number, output: TaskPlan|null}) {
         let results = {
             accepters: new Map<Creep, Map<TaskRequest, Rated<TaskRequest, TaskPlan>>>(),
             proposers: new Map<TaskRequest, {priorities: Rated<Creep, TaskPlan>[], map: Map<Creep, Rated<Creep, TaskPlan>>}>()
@@ -25,10 +21,10 @@ export function calculatePreferences<TaskRequest, Creep, TaskPlan>(
 
             let map = new Map<Creep, Rated<Creep, TaskPlan>>();
             accepters.forEach(a => {
-                const {pRating, aRating, output} = comparison(p, a)
+                const {rating, output} = comparison(p, a)
                 if (output !== null) {
-                    results.accepters.get(a)?.set(p, {value: p, rating: pRating, output});
-                    map.set(a, {value: a, rating: aRating, output});
+                    results.accepters.get(a)?.set(p, {value: p, rating, output});
+                    map.set(a, {value: a, rating, output});
                 }
             })
             results.proposers.set(p, {
@@ -42,7 +38,7 @@ export function calculatePreferences<TaskRequest, Creep, TaskPlan>(
 export function stablematch(
     proposers: TaskRequest[],
     accepters: Creep[],
-    comparison: (p: TaskRequest, a: Creep) => {pRating: number, aRating: number, output: TaskPlan|null}): [Creep, TaskRequest, TaskPlan][] {
+    comparison: (p: TaskRequest, a: Creep) => {rating: number, output: TaskPlan|null}): [Creep, TaskRequest, TaskPlan][] {
         let preferences = calculatePreferences(proposers, accepters, comparison);
 
         let capacities = new Map<TaskRequest, number>();
