@@ -1,4 +1,4 @@
-import { SpawnAnalyst, SpawnData } from "analysts/Spawnanalyst";
+import { SpawnAnalyst, SpawnData } from "analysts/SpawnAnalyst";
 import { deserialize, serialize } from "class-transformer";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
