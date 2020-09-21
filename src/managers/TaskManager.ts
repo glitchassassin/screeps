@@ -40,9 +40,6 @@ export class TaskManager extends Manager {
         }
     }
     assign = (task: Task) => {
-        if (task.actions[task.actions.length-1].constructor.name === 'RepairTask') {
-            console.log('Assigned RepairTask', task);
-        }
         task.creep?.say(task.actions[0].message);
         this.tasks.push(task);
     }
@@ -104,11 +101,10 @@ export class TaskManager extends Manager {
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 return {
                     pRating: bestPlan.minion.output, // taskRequest cares about the output: best = largest
-                    aRating: -bestPlan.cost,          // creep cares about the cost: best = largest
+                    aRating: bestPlan.cost,          // creep cares about the cost: best = largest
                     output: bestPlan
                 }
             });
-        console.log(priorities.map(p => [p[0].name, p[1].constructor.name, p[2]]).join('\n'))
         priorities.forEach(([creep, taskRequest, taskPlan]) => {
             if (!taskPlan) return;
             // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
@@ -117,8 +113,6 @@ export class TaskManager extends Manager {
             let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId);
             this.assign(task);
         })
-
-        console.log('Idle creeps: ', this.idleCreeps(room).map(c => c.name))
 
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
