@@ -28,4 +28,6 @@ jobs:
 
       # Runs a set of commands using the runners shell
       - name: Deploy to Main
+        env:
+          SCREEPS_CONFIG: ${{secrets.SCREEPS_CONFIG}}
         run: npm run push-main
