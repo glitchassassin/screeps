@@ -7,7 +7,7 @@ import { Manager } from "../managers/Manager";
 import { WithdrawTask } from "tasks/types/WithdrawTask";
 import { TransferTask } from "tasks/types/TransferTask";
 import { stablematch } from "algorithms/stablematch";
-import { TaskPrerequisite } from "tasks/TaskPrerequisite";
+import { table } from "table";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -201,5 +201,21 @@ export class TaskSupervisor extends Manager {
             task.actions[task.actions.length -1].constructor.name === request.task?.constructor.name &&
             task.sourceId === request.sourceId
         ))
+    }
+    report() {
+        console.log(`[TaskManager] Status Report:`)
+        const taskTable = [['Source', 'Goal', 'Current Step', 'Minion']];
+
+        taskTable.push(
+            ...this.tasks.map(t => ([
+                Game.getObjectById(t.sourceId as Id<any>)?.toString() || '',
+                t.actions[t.actions.length - 1].constructor.name || '',
+                t.actions[0].constructor.name || '',
+                t.creep?.name || ''
+            ]))
+        )
+        console.log(table(taskTable, {
+            singleLine: true
+        }));
     }
 }

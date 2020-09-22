@@ -17,10 +17,10 @@ export class DefenseAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getPrioritizedHealTargets(room: Room) {
-        return room.find(FIND_MY_CREEPS).sort((a, b) => b.hits - a.hits);
+        return room.find(FIND_MY_CREEPS).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getPrioritizedRepairTargets(room: Room) {
-        return room.find(FIND_STRUCTURES).filter(s => s.structureType !== STRUCTURE_WALL).sort((a, b) => b.hits - a.hits);
+        return room.find(FIND_STRUCTURES).filter(s => s.structureType !== STRUCTURE_WALL).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
     }
 }

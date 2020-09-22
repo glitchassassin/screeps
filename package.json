@@ -67,12 +67,15 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@types/cli-table": "^0.3.0",
     "@types/screeps-profiler": "^1.2.2",
+    "@types/table": "^6.0.0",
     "class-transformer": "^0.3.1",
     "jest": "^26.4.2",
     "reflect-metadata": "^0.1.13",
     "screeps-profiler": "^2.0.1",
     "source-map": "~0.6.1",
+    "table": "^6.0.3",
     "typescript-memoize": "^1.0.0-alpha.3"
   }
 }
