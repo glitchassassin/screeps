@@ -2,6 +2,34 @@ import { stringify } from "querystring";
 import { Analyst } from "./Analyst";
 
 export class StatisticsAnalyst extends Analyst {
+    deltas: {
+        [id: string]: {
+            building: number,
+            repairing: number,
+            healing: number,
+            attacking: number,
+        }
+    } = {};
+    resetDeltas(room: Room) {
+        this.deltas[room.name] = {
+            building: 0,
+            repairing: 0,
+            healing: 0,
+            attacking: 0,
+        }
+    }
+    reportBuild(room: Room, delta: number) {
+        this.deltas[room.name].building += delta;
+    }
+    reportRepair(room: Room, delta: number) {
+        this.deltas[room.name].repairing += delta;
+    }
+    reportHeal(room: Room, delta: number) {
+        this.deltas[room.name].healing += delta;
+    }
+    reportAttack(room: Room, delta: number) {
+        this.deltas[room.name].attacking += delta;
+    }
     pipelineMetrics(room: string) {
         return {
             sourcesLevel: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
@@ -10,6 +38,12 @@ export class StatisticsAnalyst extends Analyst {
                                                        .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
             mineContainersMax: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
                                                        .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
+            roomEnergyLevel: Game.rooms[room].energyAvailable,
+            roomEnergyMax: Game.rooms[room].energyCapacityAvailable,
+            buildDelta: this.deltas[room].building,
+            repairDelta: this.deltas[room].repairing,
+            healDelta: this.deltas[room].healing,
+            attackDelta: this.deltas[room].attacking,
         }
     }
     taskManagementMetrics(room: string) {

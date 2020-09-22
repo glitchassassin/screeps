@@ -25,11 +25,17 @@ export class DefenseManager extends Manager {
             // Simple priorities
 
             if (targets.length > 0) {
-                t.attack(targets[0]);
+                if (t.attack(targets[0]) === OK) {
+                    global.analysts.statistics.reportAttack(room, 10);
+                }
             } else if (healTargets.length > 0) {
-                t.heal(healTargets[0]);
+                if (t.heal(healTargets[0]) === OK) {
+                    global.analysts.statistics.reportHeal(room, 10);
+                }
             } else if (repairTargets.length > 0) {
-                t.repair(repairTargets[0]);
+                if (t.repair(repairTargets[0]) === OK) {
+                    global.analysts.statistics.reportRepair(room, 10);
+                }
             }
         })
     }

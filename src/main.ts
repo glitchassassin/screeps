@@ -78,6 +78,9 @@ function mainLoop() {
   }
 
   Object.values(Game.rooms).forEach(room => {
+    // Reset statistics
+    global.analysts.statistics.resetDeltas(room);
+
     // Consult architects
     architects.forEach(architect => architect.init(room));
 

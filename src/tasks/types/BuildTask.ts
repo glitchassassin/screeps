@@ -1,4 +1,5 @@
 import { Transform, TransformationType, Type } from "class-transformer";
+import { report } from "process";
 import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
@@ -45,6 +46,7 @@ export class BuildTask extends TaskAction {
         } else if (result !== OK){
             return true;
         }
+        global.analysts.statistics.reportBuild(creep.room, Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
         return false;
     }
     /**
