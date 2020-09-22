@@ -7,14 +7,14 @@ import { Task } from "tasks/Task";
 import { TransferTask } from "tasks/types/TransferTask";
 
 export class ControllerManager extends Manager {
-    upgrader: Creep|null = null;
+    upgraders: Creep[] = [];
     init = (room: Room) => {
         if (!room.controller) return; // Nothing to manage in this room
 
-        this.upgrader = room.find(FIND_MY_CREEPS).find(c => c.memory.type === 'UPGRADER') || null;
+        this.upgraders = room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'UPGRADER');
 
         // Request minions, if needed
-        if (!this.upgrader) {
+        if (this.upgraders.length < (room.controller.level/2)) {
             global.supervisors.spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
             // Request energy, if no dedicated upgraders
             global.supervisors.task.submit(new TaskRequest(
@@ -31,24 +31,26 @@ export class ControllerManager extends Manager {
         // }
     }
     run = (room: Room) => {
-        if (!room.controller || !this.upgrader) return;
-        if (global.supervisors.task.isIdle(this.upgrader)) {
-            if(this.upgrader.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
-                // Upgrader has energy - dump it into controller
-                global.supervisors.task.assign(new Task([new UpgradeTask(room.controller)], this.upgrader, room.name));
-            } else {
-                // Upgrader needs energy - get from controller container, preferably
-                let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
-                if (depot && depot.container) {
-                    global.supervisors.task.assign(new Task([new WithdrawTask(depot.container)], this.upgrader, room.name));
+        if (!room.controller || this.upgraders.length === 0) return;
+        this.upgraders.forEach(upgrader => {
+            if (global.supervisors.task.isIdle(upgrader)) {
+                if(upgrader.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+                    // Upgrader has energy - dump it into controller
+                    global.supervisors.task.assign(new Task([new UpgradeTask(room.controller)], upgrader, room.name));
                 } else {
-                    // No upgrader depot exists yet; see if there's a spawn we can withdraw from instead
-                    let spawn = global.analysts.spawn.getSpawns(room).find(s => s.energy > 0);
-                    if (spawn) {
-                        global.supervisors.task.assign(new Task([new WithdrawTask(spawn.spawn)], this.upgrader, room.name));
+                    // Upgrader needs energy - get from controller container, preferably
+                    let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
+                    if (depot && depot.container) {
+                        global.supervisors.task.assign(new Task([new WithdrawTask(depot.container)], upgrader, room.name));
+                    } else {
+                        // No upgrader depot exists yet; see if there's a spawn we can withdraw from instead
+                        let spawn = global.analysts.spawn.getSpawns(room).find(s => s.energy > 0);
+                        if (spawn) {
+                            global.supervisors.task.assign(new Task([new WithdrawTask(spawn.spawn)], upgrader, room.name));
+                        }
                     }
                 }
             }
-        }
+        })
     }
 }
