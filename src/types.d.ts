@@ -5,6 +5,7 @@ interface CreepMemory {
   type?: string
   source?: string
   task?: string
+  ignoresRequests?: boolean
 }
 
 interface FlagMemory {

@@ -20,7 +20,8 @@ export class SourceManager extends Manager {
                 } else {
                     // Spawn dedicated miner
                     global.supervisors.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
-                        source: mine.id
+                        source: mine.id,
+                        ignoresRequests: true
                     }))
                 }
             }
@@ -36,7 +37,7 @@ export class SourceManager extends Manager {
                     // Miner is full
                     if (!mine.container?.store.getFreeCapacity() || mine.miner.transfer(mine.container, RESOURCE_ENERGY) !== OK) {
                         // Failed to transfer to container; remain idle.
-                        // console.log(`[${mine.miner.name}] Idling`)
+                        console.log(`[${mine.miner.name}] Container full, idling`);
                         return
                     }
                 }

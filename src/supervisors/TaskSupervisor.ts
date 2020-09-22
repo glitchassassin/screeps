@@ -78,7 +78,7 @@ export class TaskSupervisor extends Manager {
             .sort((a, b) => b.priority - a.priority); // Higher priority sorts to the top
         let priorities = stablematch(
             proposers,
-            this.idleCreeps(room),
+            this.availableCreeps(room),
             (taskRequest, creep) => {
                 let paths = resolveTaskTrees({
                     output: 0,
@@ -163,8 +163,8 @@ export class TaskSupervisor extends Manager {
     isIdle = (creep: Creep) => {
         return !this.tasks.some(t => t.creep?.id === creep.id);
     }
-    idleCreeps = (room: Room) => {
-        return Object.values(room.find(FIND_MY_CREEPS)).filter(c => this.isIdle(c))
+    availableCreeps = (room: Room) => {
+        return Object.values(room.find(FIND_MY_CREEPS)).filter(c => !c.memory.ignoresRequests && this.isIdle(c))
     }
     hasTaskFor = (id: string) => {
         return this.tasks.some(t => t.sourceId === id);
