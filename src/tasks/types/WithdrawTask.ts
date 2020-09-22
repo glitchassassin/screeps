@@ -22,9 +22,9 @@ export class WithdrawTask extends TaskAction {
 
     @Type(() => Structure)
     @Transform(transformGameObject(Structure))
-    destination: Structure|null = null;
+    destination: Structure|Tombstone|null = null;
     constructor(
-        destination: Structure|null = null,
+        destination: Structure|Tombstone|null = null,
     ) {
         super();
         this.destination = destination;
@@ -45,6 +45,9 @@ export class WithdrawTask extends TaskAction {
     cost() {
         // Takes one tick to withdraw, but here we
         // are weighting sources by preference
+        if (this.destination instanceof Tombstone) {
+            return 1;
+        }
         switch (this.destination?.structureType) {
             case STRUCTURE_CONTAINER:
                 return 1;
