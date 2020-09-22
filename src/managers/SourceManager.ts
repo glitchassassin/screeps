@@ -2,6 +2,7 @@ import { Mine, SourceAnalyst } from "analysts/SourceAnalyst";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { Task } from "tasks/Task";
 import { HarvestTask } from "tasks/types/HarvestTask";
+import { TravelTask } from "tasks/types/TravelTask";
 import { Manager } from "./Manager";
 
 export class SourceManager extends Manager {
@@ -31,6 +32,10 @@ export class SourceManager extends Manager {
         this.mines.forEach(mine => {
             if (!mine.source) return;
             if (mine.miner && global.supervisors.task.isIdle(mine.miner)) {
+                // If miner is not at mine site, go there
+                if (!mine.miner.pos.isEqualTo(mine.pos)) {
+                    global.supervisors.task.assign(new Task([new TravelTask(mine.pos, 0)], mine.miner, mine.id));
+                }
                 // If miner is full, and mine container exists, deposit there;
                 // otherwise, remain idle
                 if (mine.miner.store[RESOURCE_ENERGY] > 0 && mine.miner.store.getFreeCapacity() === 0) {

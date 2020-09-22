@@ -71,10 +71,11 @@ export class TaskSupervisor extends Manager {
     run = (room: Room) => {
         if (this.disabled) return;
         // Assign requests
-        let requests = Object.values(this.requests)
+        let requests = _.shuffle(Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
-            .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity)
+            .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity))
+
         let priorities = new Map<Number, TaskRequest[]>();
         // Sort requests by priority
         requests.forEach(r =>
@@ -163,8 +164,9 @@ export class TaskSupervisor extends Manager {
                     return {rating: Infinity, output: null};
                 }
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
+                let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 0.8 : 1;
                 return {
-                    rating: bestPlan.minion.output/bestPlan.cost, // rating = output/tick
+                    rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
                     output: bestPlan
                 }
             });
@@ -203,9 +205,7 @@ export class TaskSupervisor extends Manager {
         ))
     }
     report() {
-        console.log(`[TaskManager] Status Report:`)
         const taskTable = [['Source', 'Goal', 'Current Step', 'Minion']];
-
         taskTable.push(
             ...this.tasks.map(t => ([
                 Game.getObjectById(t.sourceId as Id<any>)?.toString() || '',
@@ -214,8 +214,37 @@ export class TaskSupervisor extends Manager {
                 t.creep?.name || ''
             ]))
         )
-        console.log(table(taskTable, {
+        const taskTableRendered = table(taskTable, {
             singleLine: true
-        }));
+        });
+
+        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Assigned Capacity']];
+        let requests = Object.values(this.requests)
+            .map(taskType => Object.values(taskType))
+            .reduce((a, b) => a.concat(b), [])
+        requestTable.push(
+            ...requests.map(r => {
+                let assignedTasks = this.getAssociatedTasks(r);
+                return [
+                    Game.getObjectById(r.sourceId as Id<any>)?.toString() || '',
+                    r.task?.constructor.name || '',
+                    r.priority,
+                    r.capacity,
+                    assignedTasks.length,
+                    outputOfTasks(assignedTasks)
+                ];
+            })
+        )
+        const requestTableRendered = table(requestTable, {
+            singleLine: true
+        });
+
+
+        console.log(`[TaskManager] Status Report:
+    <strong>Tasks</strong>
+${taskTableRendered}
+    <strong>Requests</strong>
+${requestTableRendered}`
+        )
     }
 }

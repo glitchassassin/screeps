@@ -30,10 +30,10 @@ export class BuilderManager extends Manager {
             global.supervisors.spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
         }
 
-        // Request build for top 5 construction sites
+        // Request build for top 1 construction site(s)
         this.sites
             .sort((a, b) => buildPriority(a) - buildPriority(b))
-            .slice(0, 5)
+            .slice(0, 1)
             .forEach(site => {
                 global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
             })

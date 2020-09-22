@@ -16,6 +16,7 @@ export class UpgraderMinion {
     }
     buildMinion = (memory: CreepMemory) => {
         return {
+            favoredTasks: ['UpgradeTask'],
             ...memory,
             type: 'UPGRADER'
         };

@@ -16,6 +16,7 @@ export class BuilderMinion {
     }
     buildMinion = (memory: CreepMemory) => {
         return {
+            favoredTasks: ['BuildTask', 'RepairTask'],
             ...memory,
             type: 'BUILDER'
         };
