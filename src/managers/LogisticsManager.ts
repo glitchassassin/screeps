@@ -1,6 +1,7 @@
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { table } from "table";
 import { TaskRequest } from "tasks/TaskRequest";
+import { ResupplyTask } from "tasks/types/ResupplyTask";
 import { TransferTask } from "tasks/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "./Manager";
@@ -25,7 +26,9 @@ export class LogisticsManager extends Manager {
         this.containers.forEach(c => {
             let e = getTransferEnergyRemaining(c);
             if (e && !global.analysts.source.isMineContainer(c) && e > 0) {
-                global.supervisors.task.submit(new TaskRequest(c.id, new TransferTask(c), 5, e));
+                // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
+                // Avoids shuffling back and forth between destination containers
+                global.supervisors.task.submit(new TaskRequest(c.id, new ResupplyTask(c), 5, e));
             }
         })
         this.extensions.forEach(e => {

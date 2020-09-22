@@ -4,6 +4,7 @@ import { TaskAction } from "./TaskAction";
 import { BuildTask } from "./types/BuildTask";
 import { HarvestTask } from "./types/HarvestTask";
 import { RepairTask } from "./types/RepairTask";
+import { ResupplyTask } from "./types/ResupplyTask";
 import { TransferTask } from "./types/TransferTask";
 import { TravelTask } from "./types/TravelTask";
 import { UpgradeTask } from "./types/UpgradeTask";
@@ -29,6 +30,7 @@ export class TaskRequest {
                 { value: UpgradeTask, name: 'UpgradeTask' },
                 { value: WithdrawTask, name: 'WithdrawTask' },
                 { value: RepairTask, name: 'RepairTask' },
+                { value: ResupplyTask, name: 'ResupplyTask' },
                 { value: TaskAction, name: 'TaskAction' },
             ]
         }
