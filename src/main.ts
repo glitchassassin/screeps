@@ -90,6 +90,11 @@ function mainLoop() {
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
     Object.values(global.supervisors).forEach(supervisor => supervisor.cleanup(room));
   })
+
+  if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
+    console.log("Pixel unlocked");
+    Game.cpu.generatePixel();
+  }
 }
 
 profiler.enable();
