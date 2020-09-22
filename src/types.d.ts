@@ -23,6 +23,28 @@ interface RoomMemory {
 interface Memory {
   uuid: number;
   log: any;
+  stats: {
+    gcl: {
+      progress: number,
+      progressTotal: number,
+      level: number
+    },
+    cpu: {
+      bucket: number,
+      limit: number,
+      used: number
+    },
+    rooms: {
+      storageEnergy: number,
+      terminalEnergy: number,
+      energyAvailable: number,
+      energyCapacityAvailable: number,
+      controllerProgress: number,
+      controllerProgressTotal: number,
+      controllerLevel: number,
+    }[],
+    time: number,
+  }
 }
 
 // `global` extension samples
