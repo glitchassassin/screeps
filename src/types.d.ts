@@ -34,12 +34,14 @@ declare namespace NodeJS {
       source: import('./analysts/SourceAnalyst').SourceAnalyst,
       spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
       builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
+      defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
     };
     managers: {
       logistics: import('./managers/LogisticsManager').LogisticsManager,
       controller: import('./managers/ControllerManager').ControllerManager,
       source: import('./managers/SourceManager').SourceManager,
       builder: import('./managers/BuilderManager').BuilderManager,
+      defense: import('./managers/DefenseManager').DefenseManager,
     };
     supervisors: {
       task: import('./supervisors/TaskSupervisor').TaskSupervisor,

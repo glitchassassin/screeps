@@ -15,12 +15,15 @@ import { SourceAnalyst } from 'analysts/SourceAnalyst';
 import { BuilderManager } from 'managers/BuilderManager';
 import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
 import { LogisticsManager } from 'managers/LogisticsManager';
+import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
+import { DefenseManager } from 'managers/DefenseManager';
 
 global.managers = {
   logistics: new LogisticsManager(),
   source: new SourceManager(),
   controller: new ControllerManager(),
   builder: new BuilderManager(),
+  defense: new DefenseManager(),
 }
 global.analysts = {
   logistics: new LogisticsAnalyst(),
@@ -28,7 +31,8 @@ global.analysts = {
   controller: new ControllerAnalyst(),
   map: new MapAnalyst(),
   source: new SourceAnalyst(),
-  builder: new BuilderAnalyst()
+  builder: new BuilderAnalyst(),
+  defense: new DefenseAnalyst(),
 }
 global.supervisors = {
   task: new TaskSupervisor(),

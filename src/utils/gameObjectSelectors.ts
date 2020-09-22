@@ -4,6 +4,6 @@ export function getBuildEnergyRemaining(target: ConstructionSite) {
 export function getRepairEnergyRemaining(target: Structure) {
     return (target.hitsMax - target.hits)/100;
 }
-export function getTransferEnergyRemaining(target: StructureContainer|StructureSpawn|StructureExtension) {
-    return (target as StructureContainer).store.getFreeCapacity(RESOURCE_ENERGY);
+export function getTransferEnergyRemaining(target: AnyStoreStructure) {
+    return (target.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY);
 }
