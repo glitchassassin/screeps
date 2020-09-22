@@ -164,7 +164,7 @@ export class TaskSupervisor extends Manager {
                     return {rating: Infinity, output: null};
                 }
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 0.8 : 1;
+                let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 2 : 1;
                 return {
                     rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
                     output: bestPlan
@@ -205,13 +205,14 @@ export class TaskSupervisor extends Manager {
         ))
     }
     report() {
-        const taskTable = [['Source', 'Goal', 'Current Step', 'Minion']];
+        const taskTable = [['Source', 'Goal', 'Current Step', 'Minion', 'Predicted Cost']];
         taskTable.push(
             ...this.tasks.map(t => ([
                 Game.getObjectById(t.sourceId as Id<any>)?.toString() || '',
                 t.actions[t.actions.length - 1].constructor.name || '',
                 t.actions[0].constructor.name || '',
-                t.creep?.name || ''
+                t.creep?.name || '',
+                t.cost
             ]))
         )
         const taskTableRendered = table(taskTable, {
