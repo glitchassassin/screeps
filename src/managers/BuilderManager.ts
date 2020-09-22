@@ -32,7 +32,7 @@ export class BuilderManager extends Manager {
 
         // Request build for top 1 construction site(s)
         this.sites
-            .sort((a, b) => buildPriority(a) - buildPriority(b))
+            .sort((a, b) => buildPriority(b) - buildPriority(a))
             .slice(0, 1)
             .forEach(site => {
                 global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))

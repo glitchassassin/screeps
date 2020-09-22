@@ -205,7 +205,7 @@ export class TaskSupervisor extends Manager {
             task.sourceId === request.sourceId
         ))
     }
-    report() {
+    report(room: Room) {
         const taskTable = [['Source', 'Goal', 'Current Step', 'Minion', 'Predicted Cost']];
         taskTable.push(
             ...this.tasks.map(t => ([
@@ -241,12 +241,23 @@ export class TaskSupervisor extends Manager {
             singleLine: true
         });
 
+        const idleMinions = [['Minion']];
+        let minions = this.getAvailableCreeps(room)
+        idleMinions.push(
+            ...minions.map(creep => [creep.name])
+        )
+        const idleMinionsRendered = table(idleMinions, {
+            singleLine: true
+        });
+
 
         console.log(`[TaskManager] Status Report:
     <strong>Tasks</strong>
 ${taskTableRendered}
     <strong>Requests</strong>
-${requestTableRendered}`
+${requestTableRendered}
+    <strong>Idle Minions</strong>
+${idleMinionsRendered}`
         )
     }
 }
