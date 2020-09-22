@@ -2,7 +2,14 @@ import { stringify } from "querystring";
 import { Analyst } from "./Analyst";
 
 export class StatisticsAnalyst extends Analyst {
-    taskManagementStats(room: string) {
+    pipelineMetrics(room: string) {
+        return {
+            sourcesLevel: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
+            mineContainersLevel: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
+                                                       .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
+        }
+    }
+    taskManagementMetrics(room: string) {
         let taskCount: {[id: string]: number} = {};
         global.supervisors[room].task.tasks.forEach(t => {
             let name = t.actions[0].constructor.name;
@@ -26,6 +33,10 @@ export class StatisticsAnalyst extends Analyst {
                 tasks: {[id: string]: number},
                 requests: {[id: string]: number},
             },
+            pipelineMetrics: {
+                sourcesLevel: number,
+                mineContainersLevel: number
+            },
             controllerProgress: number;
             controllerProgressTotal: number;
             controllerLevel: number; }
@@ -34,7 +45,8 @@ export class StatisticsAnalyst extends Analyst {
             let room = Game.rooms[roomName];
             if (room.controller?.my) {
                 rooms[roomName] = {
-                    taskManagement: this.taskManagementStats(roomName),
+                    taskManagement: this.taskManagementMetrics(roomName),
+                    pipelineMetrics: this.pipelineMetrics(roomName),
                     controllerProgress: room.controller.progress,
                     controllerProgressTotal: room.controller.progressTotal,
                     controllerLevel: room.controller.level,

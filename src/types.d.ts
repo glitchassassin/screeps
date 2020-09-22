@@ -39,6 +39,10 @@ interface Memory {
         tasks: {[id: string]: number},
         requests: {[id: string]: number},
       },
+      pipelineMetrics: {
+        sourcesLevel: number,
+        mineContainersLevel: number
+      },
       controllerProgress: number,
       controllerProgressTotal: number,
       controllerLevel: number,
