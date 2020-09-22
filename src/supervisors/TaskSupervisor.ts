@@ -71,51 +71,26 @@ export class TaskSupervisor extends Manager {
     run = (room: Room) => {
         if (this.disabled) return;
         // Assign requests
-        let proposers = Object.values(this.requests)
+        let requests = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
             .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity)
-            .sort((a, b) => b.priority - a.priority); // Higher priority sorts to the top
-        let priorities = stablematch(
-            proposers,
-            this.availableCreeps(room),
-            (taskRequest, creep) => {
-                let paths = resolveTaskTrees({
-                    output: 0,
-                    creep,
-                    capacity: creep.store.getCapacity(),
-                    capacityUsed: creep.store.getUsedCapacity(),
-                    pos: creep.pos
-                }, taskRequest.task as TaskAction)
-                let filteredPaths = paths?.filter(c => {
-                    // If task plan is null, filter it
-                    if (!c) return false;
-                    // If task plan has withdraw and transfer loop, filter it
-                    let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
-                        .map(t => t.destination?.id)
-                    if (tasks.length !== new Set(tasks).size) return false;
-                    if (c.minion.output == 0) return false;
-                    // Otherwise, accept it
-                    return true;
-                })
+        let priorities = new Map<Number, TaskRequest[]>();
+        // Sort requests by priority
+        requests.forEach(r =>
+            priorities.set(
+                r.priority,
+                (priorities.get(r.priority) || []).concat(r)
+            )
+        );
 
-                if (!filteredPaths || filteredPaths.length === 0) {
-                    return {rating: Infinity, output: null};
-                }
-                let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                return {
-                    rating: bestPlan.minion.output/bestPlan.cost, // rating = output/tick
-                    output: bestPlan
-                }
-            });
-        priorities.forEach(([creep, taskRequest, taskPlan]) => {
-            if (!taskPlan) return;
-            // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
-            //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
-            //             `${taskPlan.tasks.map(t => t.constructor.name)}`)
-            let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
-            this.assign(task);
-        })
+        priorities.forEach(requests => {
+            let creeps = this.getAvailableCreeps(room);
+            if (creeps.length > 0 && requests.length > 0) {
+                this.assignRequestsToCreeps(requests, creeps);
+            }
+        });
+
 
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
@@ -160,10 +135,52 @@ export class TaskSupervisor extends Manager {
         Memory.rooms[room.name].requests = JSON.stringify(serialized);
     }
 
+    assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
+        let priorities = stablematch(
+            requests,
+            creeps,
+            (taskRequest, creep) => {
+                let paths = resolveTaskTrees({
+                    output: 0,
+                    creep,
+                    capacity: creep.store.getCapacity(),
+                    capacityUsed: creep.store.getUsedCapacity(),
+                    pos: creep.pos
+                }, taskRequest.task as TaskAction)
+                let filteredPaths = paths?.filter(c => {
+                    // If task plan is null, filter it
+                    if (!c) return false;
+                    // If task plan has withdraw and transfer loop, filter it
+                    let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
+                        .map(t => t.destination?.id)
+                    if (tasks.length !== new Set(tasks).size) return false;
+                    if (c.minion.output == 0) return false;
+                    // Otherwise, accept it
+                    return true;
+                })
+
+                if (!filteredPaths || filteredPaths.length === 0) {
+                    return {rating: Infinity, output: null};
+                }
+                let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
+                return {
+                    rating: bestPlan.minion.output/bestPlan.cost, // rating = output/tick
+                    output: bestPlan
+                }
+            });
+        priorities.forEach(([creep, taskRequest, taskPlan]) => {
+            if (!taskPlan) return;
+            // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
+            //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
+            //             `${taskPlan.tasks.map(t => t.constructor.name)}`)
+            let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
+            this.assign(task);
+        })
+    }
     isIdle = (creep: Creep) => {
         return !this.tasks.some(t => t.creep?.id === creep.id);
     }
-    availableCreeps = (room: Room) => {
+    getAvailableCreeps = (room: Room) => {
         return Object.values(room.find(FIND_MY_CREEPS)).filter(c => !c.memory.ignoresRequests && this.isIdle(c))
     }
     hasTaskFor = (id: string) => {
