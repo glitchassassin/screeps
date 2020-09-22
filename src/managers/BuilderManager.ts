@@ -5,6 +5,17 @@ import { RepairTask } from "tasks/types/RepairTask";
 import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "./Manager";
 
+const buildPriority = (site: ConstructionSite) => {
+    switch(site.structureType) {
+        case STRUCTURE_ROAD:
+            return 1;
+        case STRUCTURE_CONTAINER:
+            return 10;
+        default:
+            return 5;
+    }
+}
+
 export class BuilderManager extends Manager {
     builders: Creep[] = [];
     structures: Structure[] = [];
@@ -19,10 +30,13 @@ export class BuilderManager extends Manager {
             global.supervisors.spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
         }
 
-        // Request build for construction sites
-        this.sites.forEach(site => {
-            global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
-        })
+        // Request build for top 5 construction sites
+        this.sites
+            .sort((a, b) => buildPriority(a) - buildPriority(b))
+            .slice(0, 5)
+            .forEach(site => {
+                global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
+            })
 
         // Request repair for structures in need
         this.structures
