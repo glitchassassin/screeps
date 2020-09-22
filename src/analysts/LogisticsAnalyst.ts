@@ -69,37 +69,4 @@ export class LogisticsAnalyst extends Analyst {
         })
         return container;
     }
-    exportStats() {
-        const rooms = Object.values(Game.rooms)
-            .map(room => {
-                if (room.controller?.my) {
-                    return {
-                        storageEnergy: (room.storage ? room.storage.store.energy : 0),
-                        terminalEnergy: (room.terminal ? room.terminal.store.energy : 0),
-                        energyAvailable: room.energyAvailable,
-                        energyCapacityAvailable: room.energyCapacityAvailable,
-                        controllerProgress: room.controller.progress,
-                        controllerProgressTotal: room.controller.progressTotal,
-                        controllerLevel: room.controller.level,
-                    }
-                }
-                return undefined;
-            })
-            .filter(room => room) as { storageEnergy: number; terminalEnergy: number; energyAvailable: number; energyCapacityAvailable: number; controllerProgress: number; controllerProgressTotal: number; controllerLevel: number; }[]
-        // Reset stats object
-        Memory.stats = {
-          gcl: {
-            progress: Game.gcl.progress,
-            progressTotal: Game.gcl.progressTotal,
-            level: Game.gcl.level,
-          },
-          rooms,
-          cpu: {
-            bucket: Game.cpu.bucket,
-            limit: Game.cpu.limit,
-            used: Game.cpu.getUsed(),
-          },
-          time: Game.time,
-        };
-      }
 }

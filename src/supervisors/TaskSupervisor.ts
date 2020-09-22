@@ -24,12 +24,16 @@ export class TaskSupervisor extends Manager {
     requests: RequestsMap<TaskRequest> = {};
     disabled = false; // Used for debugging task CPU overload
 
-    purge = (room: string) => {
+    constructor(
+        public room: Room
+    ) { super(); }
+
+    purge = () => {
         this.requests = {};
         this.tasks = [];
-        if (Memory.rooms[room]) {
-            Memory.rooms[room].tasks = "";
-            Memory.rooms[room].requests = "";
+        if (Memory.rooms[this.room.name]) {
+            Memory.rooms[this.room.name].tasks = "";
+            Memory.rooms[this.room.name].requests = "";
         }
     }
 
@@ -47,17 +51,17 @@ export class TaskSupervisor extends Manager {
         task.creep?.say(task.actions[0].message);
         this.tasks.push(task);
     }
-    load = (room: Room) => {
+    load = () => {
         if (this.disabled) return;
         // Load tasks from Memory
-        if (Memory.rooms[room.name]?.tasks) {
-            this.tasks = deserializeArray(Task, Memory.rooms[room.name]?.tasks as string);
+        if (Memory.rooms[this.room.name]?.tasks) {
+            this.tasks = deserializeArray(Task, Memory.rooms[this.room.name]?.tasks as string);
         } else {
             this.tasks = [];
         }
         // Load requests from Memory
-        if (Memory.rooms[room.name]?.requests) {
-            let deserialized = JSON.parse(Memory.rooms[room.name]?.requests as string)
+        if (Memory.rooms[this.room.name]?.requests) {
+            let deserialized = JSON.parse(Memory.rooms[this.room.name]?.requests as string)
             for (let reqType in deserialized) {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
@@ -68,12 +72,10 @@ export class TaskSupervisor extends Manager {
             this.requests = {};
         }
     }
-    run = (room: Room) => {
+    run = () => {
         if (this.disabled) return;
         // Assign requests
-        let requests = _.shuffle(Object.values(this.requests)
-            .map(taskType => Object.values(taskType))
-            .reduce((a, b) => a.concat(b), [])
+        let requests = _.shuffle(this.getRequestsFlattened()
             .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity))
 
         let priorities = new Map<number, TaskRequest[]>();
@@ -87,7 +89,7 @@ export class TaskSupervisor extends Manager {
         // Sort requests by priority descending
         [...priorities.keys()].sort((a, b) => (b - a)).forEach(priority => {
             requests = priorities.get(priority) as TaskRequest[];
-            let creeps = this.getAvailableCreeps(room);
+            let creeps = this.getAvailableCreeps();
             if (creeps.length > 0 && requests.length > 0) {
                 this.assignRequestsToCreeps(requests, creeps);
             }
@@ -110,10 +112,10 @@ export class TaskSupervisor extends Manager {
             return true;
         })
     }
-    cleanup = (room: Room) => {
+    cleanup = () => {
         if (this.disabled) return;
-        if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
-        Memory.rooms[room.name].tasks = serialize(this.tasks
+        if (!Memory.rooms[this.room.name]) Memory.rooms[this.room.name] = { }
+        Memory.rooms[this.room.name].tasks = serialize(this.tasks
             .filter(task => !task.completed || Game.time > task.created + 500))
 
         let serialized: RequestsMap<string> = {};
@@ -134,7 +136,7 @@ export class TaskSupervisor extends Manager {
             }
         }
 
-        Memory.rooms[room.name].requests = JSON.stringify(serialized);
+        Memory.rooms[this.room.name].requests = JSON.stringify(serialized);
     }
 
     assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
@@ -183,8 +185,8 @@ export class TaskSupervisor extends Manager {
     isIdle = (creep: Creep) => {
         return !this.tasks.some(t => t.creep?.id === creep.id);
     }
-    getAvailableCreeps = (room: Room) => {
-        return Object.values(room.find(FIND_MY_CREEPS)).filter(c => !c.memory.ignoresRequests && this.isIdle(c))
+    getAvailableCreeps = () => {
+        return Object.values(this.room.find(FIND_MY_CREEPS)).filter(c => !c.memory.ignoresRequests && this.isIdle(c))
     }
     hasTaskFor = (id: string) => {
         return this.tasks.some(t => t.sourceId === id);
@@ -198,6 +200,11 @@ export class TaskSupervisor extends Manager {
             }
         }
         return false;
+    }
+    getRequestsFlattened() {
+        return Object.values(this.requests)
+            .map(taskType => Object.values(taskType))
+            .reduce((a, b) => a.concat(b), [])
     }
     getAssociatedTasks(request: TaskRequest) {
         return this.tasks.filter(task => (
@@ -241,13 +248,10 @@ export class TaskSupervisor extends Manager {
             singleLine: true
         });
 
-        const idleMinions = [['Minion']];
-        let minions = Object.values(Game.rooms)
-            .map(room => this.getAvailableCreeps(room))
-            .reduce((a, b) => a.concat(b), []);
-        idleMinions.push(
-            ...minions.map(creep => [creep.name])
-        )
+        const idleMinions = [
+            ['Minion'],
+            ...this.getAvailableCreeps().map(creep => [creep.name])
+        ];
         const idleMinionsRendered = table(idleMinions, {
             singleLine: true
         });

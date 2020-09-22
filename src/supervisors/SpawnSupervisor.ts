@@ -10,6 +10,11 @@ export class SpawnSupervisor extends Manager {
     spawns: SpawnData[] = [];
     requests: {[id: string]: MinionRequest} = {};
     resupply: TaskRequest|null = null;
+
+    constructor(
+        public room: Room
+    ) { super(); }
+
     submit = (request: MinionRequest) => {
         if (!request.sourceId) return;
         if (!this.requests[request.sourceId]) {
@@ -17,11 +22,11 @@ export class SpawnSupervisor extends Manager {
         }
     }
 
-    load = (room: Room) => {
-        this.spawns = global.analysts.spawn.getSpawns(room);
+    load = () => {
+        this.spawns = global.analysts.spawn.getSpawns(this.room);
         // Load requests from Memory
-        if (Memory.rooms[room.name]?.spawnRequests) {
-            let deserialized = JSON.parse(Memory.rooms[room.name]?.spawnRequests as string)
+        if (Memory.rooms[this.room.name]?.spawnRequests) {
+            let deserialized = JSON.parse(Memory.rooms[this.room.name]?.spawnRequests as string)
             this.requests = {};
             for (let reqSource in deserialized) {
                 this.requests[reqSource] = deserialize(MinionRequest, deserialized[reqSource])
@@ -31,24 +36,24 @@ export class SpawnSupervisor extends Manager {
             }
         }
     }
-    run = (room: Room) => {
+    run = () => {
         // Spawn Requests
         Object.values(this.requests)
             .sort((a, b) => (b.priority - a.priority)).forEach(r => {
             if (!r.assignedTo) {
                 // Find a spawn to carry out the request
-                let available = this.getIdleSpawn(room);
+                let available = this.getIdleSpawn();
                 if (available) {
                     r.assignedTo = available.spawn;
                     available.currentRequest = r;
                 }
             }
             // Process assigned requests
-            r.fulfill(room)
+            r.fulfill(this.room)
         })
     }
-    cleanup = (room: Room) => {
-        if (!Memory.rooms[room.name]) Memory.rooms[room.name] = { }
+    cleanup = () => {
+        if (!Memory.rooms[this.room.name]) Memory.rooms[this.room.name] = { }
 
         let serialized: {[id: string]: string} = {};
 
@@ -61,10 +66,10 @@ export class SpawnSupervisor extends Manager {
                 serialized[reqSource] = serialize(this.requests[reqSource])
             }
         }
-        Memory.rooms[room.name].spawnRequests = JSON.stringify(serialized);
+        Memory.rooms[this.room.name].spawnRequests = JSON.stringify(serialized);
     }
 
-    getIdleSpawn = (room: Room) => {
+    getIdleSpawn = () => {
         return this.spawns.find(s => !s.currentRequest);
     }
 }

@@ -15,12 +15,12 @@ export class SourceManager extends Manager {
             if (!mine.miner) {
                 if (!mine.container) {
                     // Spawn miner/hauler
-                    global.supervisors.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.PIONEER, {
+                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.PIONEER, {
                         source: mine.id
                     }))
                 } else {
                     // Spawn dedicated miner
-                    global.supervisors.spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
+                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
                         source: mine.id,
                         ignoresRequests: true
                     }))
@@ -31,10 +31,10 @@ export class SourceManager extends Manager {
     run = (room: Room) => {
         this.mines.forEach(mine => {
             if (!mine.source) return;
-            if (mine.miner && global.supervisors.task.isIdle(mine.miner)) {
+            if (mine.miner && global.supervisors[room.name].task.isIdle(mine.miner)) {
                 // If miner is not at mine site, go there
                 if (!mine.miner.pos.isEqualTo(mine.pos)) {
-                    global.supervisors.task.assign(new Task([new TravelTask(mine.pos, 0)], mine.miner, mine.id));
+                    global.supervisors[room.name].task.assign(new Task([new TravelTask(mine.pos, 0)], mine.miner, mine.id));
                 }
                 // If miner is full, and mine container exists, deposit there;
                 // otherwise, remain idle
@@ -47,7 +47,7 @@ export class SourceManager extends Manager {
                     }
                 }
                 // If miner is not full, continue harvesting
-                global.supervisors.task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
+                global.supervisors[room.name].task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
             }
         })
     }

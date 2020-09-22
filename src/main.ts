@@ -17,6 +17,7 @@ import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
 import { LogisticsManager } from 'managers/LogisticsManager';
 import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
 import { DefenseManager } from 'managers/DefenseManager';
+import { StatisticsAnalyst } from 'analysts/StatisticsAnalyst';
 
 global.managers = {
   logistics: new LogisticsManager(),
@@ -33,11 +34,16 @@ global.analysts = {
   source: new SourceAnalyst(),
   builder: new BuilderAnalyst(),
   defense: new DefenseAnalyst(),
+  statistics: new StatisticsAnalyst(),
 }
-global.supervisors = {
-  task: new TaskSupervisor(),
-  spawn: new SpawnSupervisor(),
-}
+
+global.supervisors = {};
+Object.values(Game.rooms).forEach(room => {
+  global.supervisors[room.name] = {
+    task: new TaskSupervisor(room),
+    spawn: new SpawnSupervisor(room),
+  }
+})
 
 
 let architects = [
@@ -77,21 +83,21 @@ function mainLoop() {
 
     // Load memory
     Object.values(global.managers).forEach(manager => manager.load(room));
-    Object.values(global.supervisors).forEach(supervisor => supervisor.load(room));
+    Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.load());
 
     // Initialize managers
     Object.values(global.managers).forEach(manager => manager.init(room));
 
     // Run managers
     Object.values(global.managers).forEach(manager => manager.run(room));
-    Object.values(global.supervisors).forEach(supervisor => supervisor.run(room));
+    Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.run());
 
     // Clean up managers
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
-    Object.values(global.supervisors).forEach(supervisor => supervisor.cleanup(room));
+    Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.cleanup());
   })
 
-  global.analysts.logistics.exportStats();
+  global.analysts.statistics.exportStats();
 
   if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
     console.log("Pixel unlocked");

@@ -27,7 +27,7 @@ export class BuilderManager extends Manager {
 
         // Request minions, if needed
         if (this.shouldSpawnBuilders(room)) {
-            global.supervisors.spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
+            global.supervisors[room.name].spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
         }
 
         // Request build for top 1 construction site(s)
@@ -35,7 +35,7 @@ export class BuilderManager extends Manager {
             .sort((a, b) => buildPriority(b) - buildPriority(a))
             .slice(0, 1)
             .forEach(site => {
-                global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
+                global.supervisors[room.name].task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
             })
 
         // If no towers, request repair for structures in need
@@ -45,7 +45,7 @@ export class BuilderManager extends Manager {
                 .sort((a, b) => (a.hits - b.hits))
                 .slice(0,5) // Get top 5
                 .forEach((structure, i) => {
-                    global.supervisors.task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
+                    global.supervisors[room.name].task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
                 })
         }
     }

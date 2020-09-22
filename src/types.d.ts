@@ -34,15 +34,15 @@ interface Memory {
       limit: number,
       used: number
     },
-    rooms: {
-      storageEnergy: number,
-      terminalEnergy: number,
-      energyAvailable: number,
-      energyCapacityAvailable: number,
+    rooms: {[id: string]: {
+      taskManagement: {
+        tasks: {[id: string]: number},
+        requests: {[id: string]: number},
+      },
       controllerProgress: number,
       controllerProgressTotal: number,
       controllerLevel: number,
-    }[],
+    }},
     time: number,
   }
 }
@@ -59,6 +59,7 @@ declare namespace NodeJS {
       spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
       builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
       defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
+      statistics: import('./analysts/StatisticsAnalyst').StatisticsAnalyst,
     };
     managers: {
       logistics: import('./managers/LogisticsManager').LogisticsManager,
@@ -68,8 +69,10 @@ declare namespace NodeJS {
       defense: import('./managers/DefenseManager').DefenseManager,
     };
     supervisors: {
-      task: import('./supervisors/TaskSupervisor').TaskSupervisor,
-      spawn: import('./supervisors/SpawnSupervisor').SpawnSupervisor,
+      [id: string]: {
+        task: import('./supervisors/TaskSupervisor').TaskSupervisor,
+        spawn: import('./supervisors/SpawnSupervisor').SpawnSupervisor,
+      }
     }
   }
 }
