@@ -3,6 +3,7 @@
 import clear from 'rollup-plugin-clear';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import replace from '@rollup/plugin-replace';
 import typescript from 'rollup-plugin-typescript2';
 import screeps from 'rollup-plugin-screeps';
 
@@ -42,6 +43,9 @@ export default {
       }
     }),
     typescript({tsconfig: "./tsconfig.json"}),
-    screeps({config: cfg, dryRun: cfg == null})
+    screeps({config: cfg, dryRun: cfg == null}),
+    replace({
+      __buildDate__: () => JSON.stringify(Date.now()),
+    })
   ]
 }

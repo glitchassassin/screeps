@@ -45,14 +45,23 @@ let architects = [
   new SourceArchitect(),
 ]
 
+// Initialize memory
+if (!Memory.flags) Memory.flags = {};
+if (!Memory.rooms) Memory.rooms = {};
+if (!Memory.creeps) Memory.creeps = {};
+
+console.log(Date.now(), '__buildDate__');
+
+if (Date.now() - JSON.parse('__buildDate__') < 15000) {
+  // Built less than 15 seconds ago - fresh code push
+  console.log('New code successfully deployed, build time', new Date(JSON.parse('__buildDate__')));
+} else {
+  console.log('Global reset detected');
+}
+
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
-  // Initialize memory
-  if (!Memory.flags) Memory.flags = {};
-  if (!Memory.rooms) Memory.rooms = {};
-  if (!Memory.creeps) Memory.creeps = {};
-
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {
     for (const name in Memory.creeps) {
