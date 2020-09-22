@@ -5,8 +5,11 @@ export class StatisticsAnalyst extends Analyst {
     pipelineMetrics(room: string) {
         return {
             sourcesLevel: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
+            sourcesMax: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energyCapacity), 0),
             mineContainersLevel: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
                                                        .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
+            mineContainersMax: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
+                                                       .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
         }
     }
     taskManagementMetrics(room: string) {
