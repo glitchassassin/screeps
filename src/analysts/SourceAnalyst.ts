@@ -57,53 +57,16 @@ export class SourceAnalyst extends Analyst {
             return mine;
         });
     }
-    /**
-    * Returns a list of locations adjacent to sources
-    * where a) the source is not already maxed by
-    * active miners and b) the location is not occupied
-    * @param room
-    */
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getAuxiliaryMiningLocations(room: Room): RoomPosition[] {
-        return this.getSources(room).map(source => (
-            this.getAuxiliaryMiningLocationsForSource(room, source)
-        )).reduce((a, b) => a.concat(b), [])
-    }
-    /**
-    * Returns a list of locations adjacent to sources
-    * where a) the source is not already maxed by
-    * active miners and b) the location is not occupied
-    * @param room
-    */
-    @Memoize((room: Room, source: Source) => ('' + room.name + source.id + Game.time))
-    getAuxiliaryMiningLocationsForSource(room: Room, source: Source): RoomPosition[] {
-        let output = 0;
-        let spaces = global.analysts.map.calculateAdjacentPositions(source.pos).filter(pos => {
-            if (!global.analysts.map.isPositionWalkable(pos)) return false;
-            let creeps = pos.lookFor(LOOK_CREEPS)
-            creeps.forEach(creep => {
-                // Assumes all creeps adjacent to a source are actively working
-                // TODO: Check
-                output += creep.getActiveBodyparts(WORK) * 2;
-            })
-            if (creeps.length > 0) return false;
-            return true;
-        })
-        //console.log(`[${source.id}] ${spaces.length} mining spots, current output ${output}/${source.energyCapacity / 300}`)
-        if (spaces.length > 0 && output < (source.energyCapacity / 300)) {
-            // There is an adjacent square, and source is not maxed out
-            return spaces;
-        }
-        return [];
-    }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getSources (room: Room) {
         return room.find(FIND_SOURCES);
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getUntappedSources(room: Room) {
-        return this.getSources(room).filter(source =>
-            this.getAuxiliaryMiningLocationsForSource(room, source).length > 0
-        )
+        return this.getSources(room).filter(source => {
+            // Assume all creeps adjacent to a source are actively working it
+            source.pos.findInRange(FIND_CREEPS, 1)
+                .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0)
+        })
     }
 }

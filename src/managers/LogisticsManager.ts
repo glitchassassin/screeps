@@ -1,4 +1,5 @@
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
+import { table } from "table";
 import { TaskRequest } from "tasks/TaskRequest";
 import { TransferTask } from "tasks/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
@@ -43,5 +44,26 @@ export class LogisticsManager extends Manager {
                 global.supervisors.task.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 5, spawnCapacity));
             }
         })
+    }
+    report() {
+        const containerTable = [['Container', 'Quantity', 'Health']];
+        containerTable.push(
+            ...this.containers.map(container => {
+                return [
+                    container.toString() || '',
+                    `${container.store.getUsedCapacity()}/${container.store.getCapacity()}`,
+                    `${container.hits}/${container.hitsMax}`
+                ];
+            })
+        )
+        const containerTableRendered = table(containerTable, {
+            singleLine: true
+        });
+
+
+        console.log(`[LogisticsManager] Status Report:
+    <strong>Containers</strong>
+${containerTableRendered}`
+        )
     }
 }

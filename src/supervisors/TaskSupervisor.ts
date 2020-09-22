@@ -76,16 +76,17 @@ export class TaskSupervisor extends Manager {
             .reduce((a, b) => a.concat(b), [])
             .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity))
 
-        let priorities = new Map<Number, TaskRequest[]>();
-        // Sort requests by priority
+        let priorities = new Map<number, TaskRequest[]>();
+
         requests.forEach(r =>
             priorities.set(
                 r.priority,
                 (priorities.get(r.priority) || []).concat(r)
             )
         );
-
-        priorities.forEach(requests => {
+        // Sort requests by priority descending
+        [...priorities.keys()].sort((a, b) => (b - a)).forEach(priority => {
+            requests = priorities.get(priority) as TaskRequest[];
             let creeps = this.getAvailableCreeps(room);
             if (creeps.length > 0 && requests.length > 0) {
                 this.assignRequestsToCreeps(requests, creeps);

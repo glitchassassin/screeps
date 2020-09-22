@@ -11,23 +11,15 @@ import { transformGameObject } from "utils/transformGameObject";
  * @param pos Get reference when prerequisite is checked
  */
 export class MustBeAtMine extends TaskPrerequisite {
-    @Transform(transformGameObject(Source))
-    source: Source
-    constructor(
-        source: Source
-    ) {
-        super();
-        this.source = source;
-    }
-
     met(minion: SpeculativeMinion) {
-        return minion.pos.inRangeTo(this.source.pos, 1)
+        return global.analysts.source
+            .getUntappedSources(minion.creep.room)
+            .some(source => minion.pos.inRangeTo(source.pos, 1))
     }
     toMeet(minion: SpeculativeMinion) {
         let spaces = global.analysts.source
-            .getAuxiliaryMiningLocationsForSource(minion.creep.room, this.source)
-            .map(pos => new TravelTask(pos))
-        if (spaces.length === 0) return null; // No adjacent mining spaces
+            .getUntappedSources(minion.creep.room)
+            .map(source => new TravelTask(source.pos, 1))
         return spaces;
     }
 }

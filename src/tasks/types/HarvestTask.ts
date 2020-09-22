@@ -15,7 +15,7 @@ export class HarvestTask extends TaskAction {
         // return [new MustBeAtMine(this.source)]
         return [
             new MustHaveWorkParts(),
-            new MustBeAdjacent(this.source.pos)
+            new MustBeAtMine()
         ]
     }
     message = "⚡";
