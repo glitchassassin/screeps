@@ -38,14 +38,16 @@ export class BuilderManager extends Manager {
                 global.supervisors.task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
             })
 
-        // Request repair for structures in need
-        this.structures
-            .filter(structure => structure.structureType !== STRUCTURE_WALL)
-            .sort((a, b) => (a.hits - b.hits))
-            .slice(0,5) // Get top 5
-            .forEach((structure, i) => {
-                global.supervisors.task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
-            })
+        // If no towers, request repair for structures in need
+        if (global.analysts.defense.getTowers(room).length === 0) {
+            this.structures
+                .filter(structure => structure.structureType !== STRUCTURE_WALL)
+                .sort((a, b) => (a.hits - b.hits))
+                .slice(0,5) // Get top 5
+                .forEach((structure, i) => {
+                    global.supervisors.task.submit(new TaskRequest(`${room.name}_repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
+                })
+        }
     }
     shouldSpawnBuilders = (room: Room) => {
         let builderCount = Math.max(
