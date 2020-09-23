@@ -1,14 +1,12 @@
 export class MinerMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
-        console.log(`[MinerMinion] scale: ${scale}`);
         if (!scale) return false;
         return spawn.spawnCreep(scale, `miner${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
     scaleMinion = (energy: number) => {
-        console.log(`[MinerMinion] energy: ${energy}`);
         if (energy > 200 && energy < 550) {
             return [WORK, CARRY, MOVE]
         } else if (energy >= 550) {

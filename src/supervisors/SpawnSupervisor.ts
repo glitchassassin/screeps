@@ -40,7 +40,6 @@ export class SpawnSupervisor extends Manager {
         // Spawn Requests
         Object.values(this.requests)
             .sort((a, b) => (b.priority - a.priority)).forEach(r => {
-                console.log(JSON.stringify(r))
             if (!r.assignedTo) {
                 // Find a spawn to carry out the request
                 let available = this.getIdleSpawn();
@@ -50,8 +49,6 @@ export class SpawnSupervisor extends Manager {
                 }
             }
             // Process assigned requests
-            console.log(`[SpawnSupervisor] ${Game.rooms[this.roomId].energyAvailable}`)
-            console.log(`[SpawnSupervisor] game ${Game.rooms[this.roomId].energyAvailable}`)
             r.fulfill(Game.rooms[this.roomId])
         })
     }
