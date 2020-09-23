@@ -15,15 +15,13 @@ export type Mine = {
 }
 
 export type SourceMetrics = {
-    level: number[],
+    delta: number[],
+    lastLevel: number,
     length: number
 }
 
 export class SourceAnalyst extends Analyst {
-    metrics: SourceMetrics = {
-        level: [],
-        length: 0
-    };
+    metrics: {[roomName: string]: SourceMetrics} = {};
 
     cleanup = (room: Room) => {
         this.updateSourceMetrics(room);
@@ -142,28 +140,33 @@ export class SourceAnalyst extends Analyst {
         // Get metrics
         let sources = this.getSources(room);
         let spawn = global.analysts.spawn.getSpawns(room)[0];
+        let roomLevel = sources.reduce((sum, source) => (sum + source.energy), 0);
 
-        this.metrics = Memory.metrics[room.name]?.source || {
-            level: [],
+        this.metrics[room.name] = Memory.metrics[room.name]?.source || {
+            delta: [],
+            lastLevel: roomLevel,
             length: sources.reduce((distance, source) => (
                 Math.max(distance, PathFinder.search(spawn.pos, source.pos).cost)
-            ), 0)
+            ), 0) * 2
         }
 
-        this.metrics.level.push(
-            sources.reduce((sum, source) => (sum + source.energy), 0)
+        let roomDelta = Math.max(0, this.metrics[room.name].lastLevel - roomLevel);
+
+        this.metrics[room.name].delta.push(
+            roomDelta
         );
-        if (this.metrics.level.length > this.metrics.length) {
-            this.metrics.level.shift();
+        if (this.metrics[room.name].delta.length > this.metrics[room.name].length) {
+            this.metrics[room.name].delta.shift();
         }
+        this.metrics[room.name].lastLevel = roomLevel;
 
         Memory.metrics[room.name] = {
             ...Memory.metrics[room.name],
-            source: this.metrics
+            source: this.metrics[room.name]
         }
     }
-    getSourceAverage(room: Room) {
-        if (this.metrics.level.length === 0) return 0;
-        return this.metrics.level.reduce((a, b) => (a + b), 0) / this.metrics.level.length;
+    getMineRateAverage(room: Room) {
+        if (this.metrics[room.name].delta.length === 0) return 0;
+        return this.metrics[room.name].delta.reduce((a, b) => (a + b), 0) / this.metrics[room.name].delta.length;
     }
 }

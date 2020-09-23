@@ -29,7 +29,7 @@ export class SourceManager extends Manager {
             if (currentMinions < global.analysts.source.getMinimumMiners(room)) {
                 // Have not met the minimum quota yet: keep spawning
                 global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_SourceManager`, 10, MinionTypes.PIONEER, {}))
-            } else if (0.8 * global.analysts.source.getMaxEffectiveInput(room) < global.analysts.source.getSourceAverage(room)) {
+            } else if (0.8 * global.analysts.source.getMaxEffectiveInput(room) < global.analysts.source.getMineRateAverage(room)) {
                 // Minimum quota met, but we are not at 80% of max effective input: request more pioneers
                 global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_SourceManager`, 5, MinionTypes.PIONEER, {}))
             }
