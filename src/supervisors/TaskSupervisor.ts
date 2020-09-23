@@ -172,9 +172,9 @@ export class TaskSupervisor extends Manager {
             });
         priorities.forEach(([creep, taskRequest, taskPlan]) => {
             if (!taskPlan) return;
-            console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
-                        `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
-                        `${taskPlan.tasks.map(t => t.toString())}`)
+            // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
+            //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
+            //             `${taskPlan.tasks.map(t => t.toString())}`)
             let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
             this.assign(task);
         })
