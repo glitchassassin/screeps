@@ -13,7 +13,7 @@ export class SourceManager extends Manager {
         // Request minions, if needed
 
         // Do we have dedicated mine containers set up yet?
-        if (this.mines.every(mine => mine.container)) {
+        if (this.mines.length > 0 && this.mines.every(mine => mine.container)) {
             // If so, make sure we have dedicated miners spawned
             this.mines.forEach(mine => {
                 if (!mine.miner) {

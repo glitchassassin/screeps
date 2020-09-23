@@ -15,7 +15,7 @@ export class HarvestTask extends TaskAction {
         // return [new MustBeAtMine(this.source)]
         return [
             new MustHaveWorkParts(),
-            new MustBeAtMine()
+            new MustBeAdjacent(this.source.pos),
         ]
     }
     message = "⚡";
@@ -28,6 +28,9 @@ export class HarvestTask extends TaskAction {
     ) {
         super();
         this.source = source;
+    }
+    toString() {
+        return `[HarvestTask: ${this.source?.id} {${this.source?.pos.x},${this.source?.pos.y}}]`
     }
 
     action(creep: Creep) {
@@ -48,7 +51,7 @@ export class HarvestTask extends TaskAction {
                 .find(s => s.structureType === STRUCTURE_CONTAINER)
             // If the container is full or missing, we cannot store,
             // so there is no point in harvesting
-            if (!container || (container as StructureContainer).store.getFreeCapacity()) {
+            if (!container || (container as StructureContainer).store.getFreeCapacity() === 0) {
                 return true;
             }
         }

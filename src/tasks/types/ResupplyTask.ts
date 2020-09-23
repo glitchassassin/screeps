@@ -18,8 +18,11 @@ export class ResupplyTask extends TransferTask {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveEnergyFromSource((this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY)),
             new MustBeAdjacent(this.destination.pos),
-            new MustHaveEnergyFromSource((this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY))
         ]
+    }
+    toString() {
+        return `[ResupplyTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 }

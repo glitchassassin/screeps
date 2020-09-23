@@ -19,8 +19,8 @@ export class UpgradeTask extends TaskAction {
         if (!this.destination) return [];
         return [
             new MustHaveWorkParts(),
+            new MustHaveEnergy(1000), // No cap on upgrade energy
             new MustBeAdjacent(this.destination.pos),
-            new MustHaveEnergy(1000) // No cap on upgrade energy
         ]
     }
     message = "⏫";
@@ -34,6 +34,9 @@ export class UpgradeTask extends TaskAction {
     ) {
         super();
         this.destination = destination;
+    }
+    toString() {
+        return `[UpgradeTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {

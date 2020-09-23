@@ -88,8 +88,15 @@ export class SourceAnalyst extends Analyst {
     getUntappedSources(room: Room) {
         return this.getSources(room).filter(source => {
             // Assume all creeps adjacent to a source are actively working it
-            source.pos.findInRange(FIND_CREEPS, 1)
-                .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0)
+            if (source.pos.findInRange(FIND_CREEPS, 1)
+                .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0) >= 10) {
+                // Adjacent creeps have enough WORK parts to tap the source
+                return false;
+            } else if (global.analysts.map.calculateAdjacentPositions(source.pos)
+                             .filter(pos => global.analysts.map.isPositionWalkable(pos)).length === 0) {
+                return false;
+            }
+            return true;
         })
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))

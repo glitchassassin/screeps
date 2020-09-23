@@ -16,8 +16,8 @@ export class TransferTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveEnergy((this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY)),
             new MustBeAdjacent(this.destination.pos),
-            new MustHaveEnergy((this.destination as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY))
         ]
     }
     message = "⏩";
@@ -31,6 +31,9 @@ export class TransferTask extends TaskAction {
     ) {
         super();
         this.destination = destination;
+    }
+    toString() {
+        return `[TransferTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {

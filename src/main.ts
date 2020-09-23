@@ -55,6 +55,7 @@ let architects = [
 if (!Memory.flags) Memory.flags = {};
 if (!Memory.rooms) Memory.rooms = {};
 if (!Memory.creeps) Memory.creeps = {};
+if (!Memory.metrics) Memory.metrics = {};
 
 console.log(Date.now(), '__buildDate__');
 

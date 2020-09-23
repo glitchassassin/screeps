@@ -35,6 +35,9 @@ export class RepairTask extends TaskAction {
         super();
         this.destination = destination;
     }
+    toString() {
+        return `[RepairTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
+    }
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed

@@ -14,8 +14,8 @@ export class WithdrawTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveCarryCapacity(),
             new MustBeAdjacent(this.destination.pos),
-            new MustHaveCarryCapacity()
         ]
     }
     message = "⏪";
@@ -28,6 +28,9 @@ export class WithdrawTask extends TaskAction {
     ) {
         super();
         this.destination = destination;
+    }
+    toString() {
+        return `[WithdrawTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {

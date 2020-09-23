@@ -1,6 +1,7 @@
 import { Task } from "./Task"
 import { SpeculativeMinion } from "./SpeculativeMinion";
 import { TaskAction } from "./TaskAction";
+import { TaskPrerequisite } from "./TaskPrerequisite";
 
 export type TaskPlan = {
     cost: number,
@@ -10,7 +11,6 @@ export type TaskPlan = {
 
 export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): TaskPlan[]|null => {
     if (!task.valid()) {
-        // console.log(`Task ${task.constructor.name} is not valid`);
         return null;
     }
 
@@ -21,57 +21,44 @@ export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): T
     }
 
     let prereqs = task.getPrereqs();
-    if (prereqs.length === 0 || prereqs.every(p => p.met(minion))) {
-        // No prereqs - end of the line. Return a plan for just this task
-        // Since we're heading back up the tree, predict the speculative
-        // minion for this task plan
-        return [{
-            ...taskPlan,
-            minion: task.predict(minion)
-        }]
-    }
-    let plans: TaskPlan[] = [taskPlan];
+    let plans: TaskPlan[] = [{cost: 0, minion, tasks: []}];
     // Prereqs:
     //  - Have 50 energy
     //  - Be adjacent to target
     //  - Etc.
-    for (let i = prereqs.length - 1; i >= 0; i--) {
-        let prereq = prereqs[i]
-        if (!prereq.met(minion)) {
-            // Get task plans for all prereq alternatives
-            // - Harvest 50 energy
-            // - Withdraw 50 energy
-            // - Etc.
-            let altTasks: TaskAction[]|null = prereq.toMeet(minion)
+    for (let i = 0; i < prereqs.length; i++) {
+        let prereq = prereqs[i];
+        plans = plans.map(plan => {
+            if (prereq.met(plan.minion)) {
+                return [plan]; // Prereq met, no action needed
+            }
 
+            let altTasks: TaskAction[]|null = prereq.toMeet(plan.minion)
             if (!altTasks || altTasks.length === 0) {
-                // console.log(`Prereq ${prereq.constructor.name} cannot be met`);
-                return null;
+                return [];
             } // Prereq (and therefore this TaskAction) cannot be met
 
-            // For each existing plan (at least our initial task,
-            // and potentially other prerequisite paths)
-            plans = plans.map(plan => {
-                return ((altTasks as TaskAction[])
-                    .map(t => { // For each prereq alternative
-                        let altTaskPlans = resolveTaskTrees(plan.minion, t)
-                        if (!altTaskPlans || altTaskPlans.length === 0) return;
-                        //console.log(t.constructor.name, {...t.predict(plan.minion), pos: {x: plan.minion.pos.x, y: plan.minion.pos.y }, creep: undefined})
-                        return altTaskPlans.map(altTaskPlan => ({
+            return ((altTasks as TaskAction[])
+                .map(t => { // For each prereq alternative
+                    let altTaskPlans = resolveTaskTrees(plan.minion, t)
+                    if (!altTaskPlans || altTaskPlans.length === 0) return;
+                    return altTaskPlans.map(altTaskPlan => {
+                        return {
                             cost: plan.cost + altTaskPlan.cost,
-                            minion: t.predict(plan.minion),
-                            tasks: altTaskPlan.tasks.concat(plan.tasks)
-                        }))
-                    }) // Get task plans for each prereq alternative
-                    .filter(t => t) as TaskPlan[][]) // Eliminate the impossible ones
-                    .reduce((a, b) => a?.concat(b), []); // Flatten the array
-            }).reduce((a, b) => a?.concat(b), []); // Flatten the combinatorial array
-        }
+                            minion: t.predict(altTaskPlan.minion),
+                            tasks: plan.tasks.concat(altTaskPlan.tasks)
+                        }
+                    })
+                }) // Get task plans for each prereq alternative
+                .filter(t => t) as TaskPlan[][]) // Eliminate the impossible ones
+                .reduce((a, b) => a?.concat(b), []); // Flatten the array
+        }).reduce((a, b) => a?.concat(b), []); // Flatten the combinatorial array
     }
     // Recalculate minion
     return plans.map(p => ({
-        ...p,
-        minion: p.tasks.reduce((a, b) => b.predict(a), minion)
+        cost: p.cost + taskPlan.cost,
+        minion: task.predict(p.minion),
+        tasks: p.tasks.concat(task)
     }));
 }
 

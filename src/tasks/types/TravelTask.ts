@@ -27,6 +27,9 @@ export class TravelTask extends TaskAction {
         this.destination = destination;
         this.distance = distance;
     }
+    toString() {
+        return `[TravelTask: ${this.distance} of {${this.destination?.x},${this.destination?.y}}]`
+    }
 
     action(creep: Creep) {
         // If unable to get the creep or destination, task is completed
