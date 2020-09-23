@@ -15,7 +15,7 @@ export class DefenseManager extends Manager {
             // Request energy, if needed
             let e = getTransferEnergyRemaining(t);
             if (e) {
-                if (e < 500) {
+                if (e < 200) {
                     global.supervisors[room.name].task.submit(new TaskRequest(t.id, new TransferTask(t), 5, e));
                 } else {
                     global.supervisors[room.name].task.submit(new TaskRequest(t.id, new TransferTask(t), 9, e));

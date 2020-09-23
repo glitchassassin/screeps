@@ -19,7 +19,7 @@ export class LogisticsManager extends Manager {
 
         // Request minions, if needed
         if (this.haulers.length < this.containers.length) {
-            global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_Logistics`, 5, MinionTypes.HAULER));
+            global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_Logistics`, 7, MinionTypes.HAULER));
         }
 
         // Request energy, if needed

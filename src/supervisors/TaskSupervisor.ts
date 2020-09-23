@@ -25,15 +25,15 @@ export class TaskSupervisor extends Manager {
     disabled = false; // Used for debugging task CPU overload
 
     constructor(
-        public room: Room
+        public roomId: string
     ) { super(); }
 
     purge = () => {
         this.requests = {};
         this.tasks = [];
-        if (Memory.rooms[this.room.name]) {
-            Memory.rooms[this.room.name].tasks = "";
-            Memory.rooms[this.room.name].requests = "";
+        if (Memory.rooms[this.roomId]) {
+            Memory.rooms[this.roomId].tasks = "";
+            Memory.rooms[this.roomId].requests = "";
         }
     }
 
@@ -54,14 +54,14 @@ export class TaskSupervisor extends Manager {
     load = () => {
         if (this.disabled) return;
         // Load tasks from Memory
-        if (Memory.rooms[this.room.name]?.tasks) {
-            this.tasks = deserializeArray(Task, Memory.rooms[this.room.name]?.tasks as string);
+        if (Memory.rooms[this.roomId]?.tasks) {
+            this.tasks = deserializeArray(Task, Memory.rooms[this.roomId]?.tasks as string);
         } else {
             this.tasks = [];
         }
         // Load requests from Memory
-        if (Memory.rooms[this.room.name]?.requests) {
-            let deserialized = JSON.parse(Memory.rooms[this.room.name]?.requests as string)
+        if (Memory.rooms[this.roomId]?.requests) {
+            let deserialized = JSON.parse(Memory.rooms[this.roomId]?.requests as string)
             for (let reqType in deserialized) {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
@@ -114,8 +114,8 @@ export class TaskSupervisor extends Manager {
     }
     cleanup = () => {
         if (this.disabled) return;
-        if (!Memory.rooms[this.room.name]) Memory.rooms[this.room.name] = { }
-        Memory.rooms[this.room.name].tasks = serialize(this.tasks
+        if (!Memory.rooms[this.roomId]) Memory.rooms[this.roomId] = { }
+        Memory.rooms[this.roomId].tasks = serialize(this.tasks
             .filter(task => !task.completed || Game.time > task.created + 500))
 
         let serialized: RequestsMap<string> = {};
@@ -136,7 +136,7 @@ export class TaskSupervisor extends Manager {
             }
         }
 
-        Memory.rooms[this.room.name].requests = JSON.stringify(serialized);
+        Memory.rooms[this.roomId].requests = JSON.stringify(serialized);
     }
 
     assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
@@ -186,7 +186,7 @@ export class TaskSupervisor extends Manager {
         return !this.tasks.some(t => t.creep?.id === creep.id);
     }
     getAvailableCreeps = () => {
-        return Object.values(this.room.find(FIND_MY_CREEPS)).filter(c => !c.memory.ignoresRequests && this.isIdle(c))
+        return Object.values(Game.rooms[this.roomId].find(FIND_MY_CREEPS)).filter(c => !c.memory.ignoresRequests && this.isIdle(c))
     }
     hasTaskFor = (id: string) => {
         return this.tasks.some(t => t.sourceId === id);

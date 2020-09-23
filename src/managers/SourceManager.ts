@@ -15,12 +15,12 @@ export class SourceManager extends Manager {
             if (!mine.miner) {
                 if (!mine.container) {
                     // Spawn miner/hauler
-                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.PIONEER, {
+                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.PIONEER, {
                         source: mine.id
                     }))
                 } else {
                     // Spawn dedicated miner
-                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 5, MinionTypes.MINER, {
+                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.MINER, {
                         source: mine.id,
                         ignoresRequests: true
                     }))

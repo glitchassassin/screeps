@@ -20,16 +20,24 @@ export class SourceAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name))
     calculateBestMiningLocations(room: Room) {
-        let locations: {pos: RoomPosition, sourceId: string}[] = [];
+        let locations: {source: Source, route: PathFinderPath}[] = [];
         let sources = room.find(FIND_SOURCES);
         let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
 
-        sources.forEach(source => {
+        sources.map(source => {
             let route = PathFinder.search(source.pos, target);
-            if (route) locations.push({pos: route.path[0], sourceId: source.id});
+            if (route) locations.push({source, route});
+            return {
+                source,
+                route
+            }
         })
-        return locations;
+        // Sorted by distance from spawn
+        return locations.sort((a, b) => (a.route.cost - b.route.cost)).map(s => ({
+            pos: s.route.path[0],
+            sourceId: s.source.id
+        }));
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getDesignatedMiningLocations(room: Room) {

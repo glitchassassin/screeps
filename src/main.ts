@@ -40,8 +40,8 @@ global.analysts = {
 global.supervisors = {};
 Object.values(Game.rooms).forEach(room => {
   global.supervisors[room.name] = {
-    task: new TaskSupervisor(room),
-    spawn: new SpawnSupervisor(room),
+    task: new TaskSupervisor(room.name),
+    spawn: new SpawnSupervisor(room.name),
   }
 })
 
