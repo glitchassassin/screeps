@@ -13,7 +13,7 @@ export class MinerMinion {
         if (energy < 200) {
             return [];
         } else{
-            let workParts = Math.max(5, Math.floor((energy - 50) / 100))
+            let workParts = Math.min(5, Math.floor((energy - 50) / 100))
             return [
                 ...Array(workParts).fill(WORK),
                 MOVE
