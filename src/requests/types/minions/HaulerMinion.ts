@@ -11,7 +11,7 @@ export class HaulerMinion {
         let moveParts = Math.floor(energy/3/50)
         let carryParts = 2 * moveParts;
 
-        return [...Array(carryParts).fill(CARRY), Array(moveParts).fill(MOVE)];
+        return [...Array(carryParts).fill(CARRY), ...Array(moveParts).fill(MOVE)];
     }
     buildMinion = (memory: CreepMemory) => {
         return {
