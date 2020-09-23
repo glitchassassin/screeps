@@ -42,10 +42,7 @@ export class TaskSupervisor extends Manager {
         if (this.requests[request.task.constructor.name] === undefined) {
             this.requests[request.task.constructor.name] = {};
         }
-        if (!this.requests[request.task.constructor.name][request.sourceId] ||
-            this.requests[request.task.constructor.name][request.sourceId].priority < request.priority) {
-            this.requests[request.task.constructor.name][request.sourceId] = request;
-        }
+        this.requests[request.task.constructor.name][request.sourceId] = request;
     }
     assign = (task: Task) => {
         task.creep?.say(task.actions[0].message);

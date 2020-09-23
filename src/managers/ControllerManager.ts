@@ -14,7 +14,9 @@ export class ControllerManager extends Manager {
         this.upgraders = room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'UPGRADER');
 
         // Request minions, if needed
-        if (this.upgraders.length < (room.controller.level/2)) {
+        let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
+        let upgraderCount = depot?.container ? (room.controller.level/2) : 1
+        if (this.upgraders.length < upgraderCount) {
             global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
             // Request energy, if no dedicated upgraders
             global.supervisors[room.name].task.submit(new TaskRequest(
