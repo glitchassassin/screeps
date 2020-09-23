@@ -1,19 +1,30 @@
 export class MinerMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
-        if (!scale) return false;
+        if (scale.length === 0) return false;
         return spawn.spawnCreep(scale, `miner${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
     scaleMinion = (energy: number) => {
-        if (energy > 200 && energy < 550) {
-            return [WORK, CARRY, MOVE]
-        } else if (energy >= 550) {
+        if (energy < 200) {
+            return [];
+        } else if (energy < 550) {
+            let workParts = Math.floor((1/2) * energy / 100)
+            let carryParts = Math.floor((1/4) * energy / 50)
+            let moveParts = Math.floor((1/4) * energy / 50)
+            return [
+                ...Array(workParts).fill(WORK),
+                ...Array(carryParts).fill(CARRY),
+                ...Array(moveParts).fill(MOVE)
+            ]
+        } else {
             // Largest effective size for a Miner with stationary container
-            return [WORK, WORK, WORK, WORK, WORK, MOVE]
+            return [
+                ...Array(5).fill(WORK),
+                MOVE
+            ]
         }
-        return null;
     }
     buildMinion = (memory: CreepMemory) => {
         return {
