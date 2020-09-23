@@ -1,4 +1,5 @@
 
+import { MinerMinion } from "requests/types/minions/MinerMinion";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
@@ -76,5 +77,34 @@ export class SourceAnalyst extends Analyst {
             source.pos.findInRange(FIND_CREEPS, 1)
                 .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0)
         })
+    }
+    getMaxEffectiveInput(room: Room) {
+        let minionWorkParts = new MinerMinion().scaleMinion(room.energyCapacityAvailable)
+                                               .filter(p => p === WORK).length;
+
+        // Max energy output per tick
+        return 2 * this.getSources(room).reduce((sum, source) => (
+            sum + Math.max(
+                5,
+                minionWorkParts * global.analysts.map.calculateAdjacentPositions(source.pos)
+                                        .filter(pos => global.analysts.map.isPositionWalkable(pos)).length
+            )),
+        0)
+    }
+    getMinimumMiners(room: Room) {
+        let minionWorkParts = new MinerMinion().scaleMinion(room.energyCapacityAvailable)
+                                               .filter(p => p === WORK).length;
+
+        // Theoretical minimum number of miners to max out all sources, working simultaneously
+        return this.getSources(room).reduce((sum, source) => (
+            sum + Math.max(
+                5,
+                Math.max(
+                    global.analysts.map.calculateAdjacentPositions(source.pos)
+                          .filter(pos => global.analysts.map.isPositionWalkable(pos)).length,
+                    Math.ceil(5 / minionWorkParts)
+                )
+            )),
+        0)
     }
 }
