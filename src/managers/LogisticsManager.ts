@@ -15,7 +15,7 @@ export class LogisticsManager extends Manager {
         this.containers = global.analysts.logistics.getContainers(room)
         this.extensions = global.analysts.spawn.getExtensions(room)
         this.haulers = global.analysts.logistics.getHaulers(room)
-        this.spawns = global.analysts.spawn.getSpawns(room).map(s => s.spawn)
+        this.spawns = global.analysts.spawn.getSpawns(room)
 
         // Request minions, if needed
         if (this.haulers.length < this.containers.length) {

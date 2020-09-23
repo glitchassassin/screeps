@@ -10,7 +10,7 @@ export class StatisticsAnalyst extends Analyst {
             attacking: number,
         }
     } = {};
-    resetDeltas(room: Room) {
+    load = (room: Room) => {
         this.deltas[room.name] = {
             building: 0,
             repairing: 0,
@@ -36,9 +36,9 @@ export class StatisticsAnalyst extends Analyst {
             sourcesLevel: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
             sourcesMax: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energyCapacity), 0),
             mineContainersLevel: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
-                                                       .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
+            .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
             mineContainersMax: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
-                                                       .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
+            .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
             destinationContainersLevel: destinationContainers.reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
             destinationContainersMax: destinationContainers.reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),
             roomEnergyLevel: Game.rooms[room].energyAvailable,
@@ -95,18 +95,18 @@ export class StatisticsAnalyst extends Analyst {
         }
         // Reset stats object
         Memory.stats = {
-          gcl: {
-            progress: Game.gcl.progress,
-            progressTotal: Game.gcl.progressTotal,
-            level: Game.gcl.level,
-          },
-          rooms,
-          cpu: {
-            bucket: Game.cpu.bucket,
-            limit: Game.cpu.limit,
-            used: Game.cpu.getUsed(),
-          },
-          time: Game.time,
+            gcl: {
+                progress: Game.gcl.progress,
+                progressTotal: Game.gcl.progressTotal,
+                level: Game.gcl.level,
+            },
+            rooms,
+            cpu: {
+                bucket: Game.cpu.bucket,
+                limit: Game.cpu.limit,
+                used: Game.cpu.getUsed(),
+            },
+            time: Game.time,
         };
-      }
+    }
 }

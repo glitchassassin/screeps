@@ -46,9 +46,9 @@ export class ControllerManager extends Manager {
                         global.supervisors[room.name].task.assign(new Task([new WithdrawTask(depot.container)], upgrader, room.name));
                     } else {
                         // No upgrader depot exists yet; see if there's a spawn we can withdraw from instead
-                        let spawn = global.analysts.spawn.getSpawns(room).find(s => s.energy > 0);
+                        let spawn = global.analysts.spawn.getSpawns(room).find(s => s.store.getUsedCapacity(RESOURCE_ENERGY) > 0);
                         if (spawn) {
-                            global.supervisors[room.name].task.assign(new Task([new WithdrawTask(spawn.spawn)], upgrader, room.name));
+                            global.supervisors[room.name].task.assign(new Task([new WithdrawTask(spawn)], upgrader, room.name));
                         }
                     }
                 }

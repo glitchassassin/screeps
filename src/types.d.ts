@@ -23,6 +23,11 @@ interface RoomMemory {
 interface Memory {
   uuid: number;
   log: any;
+  metrics: {
+    [roomName: string]: {
+      source: import('./analysts/SourceAnalyst').SourceMetrics
+    }
+  }
   stats: {
     gcl: {
       progress: number,

@@ -20,12 +20,6 @@ export class SpawnAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getSpawns(room: Room) {
-        return room.find(FIND_MY_SPAWNS).map(spawn => {
-            let energy = spawn.store.getUsedCapacity(RESOURCE_ENERGY);
-            return {
-                spawn,
-                energy
-            }
-        });
+        return room.find(FIND_MY_SPAWNS);
     }
 }

@@ -11,22 +11,29 @@ export class SourceManager extends Manager {
         this.mines = global.analysts.source.getDesignatedMiningLocations(room);
 
         // Request minions, if needed
-        this.mines.forEach((mine) => {
-            if (!mine.miner) {
-                if (!mine.container) {
-                    // Spawn miner/hauler
-                    global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.PIONEER, {
-                        source: mine.id
-                    }))
-                } else {
-                    // Spawn dedicated miner
+
+        // Do we have dedicated mine containers set up yet?
+        if (this.mines.every(mine => mine.container)) {
+            // If so, make sure we have dedicated miners spawned
+            this.mines.forEach(mine => {
+                if (!mine.miner) {
                     global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.MINER, {
                         source: mine.id,
                         ignoresRequests: true
                     }))
                 }
+            })
+        } else {
+            // Otherwise, maintain a quota of pioneer minions, capitalizing on the source capacity
+            let currentMinions = global.analysts.source.getPioneers(room).length;
+            if (currentMinions < global.analysts.source.getMinimumMiners(room)) {
+                // Have not met the minimum quota yet: keep spawning
+                global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_SourceManager`, 10, MinionTypes.PIONEER, {}))
+            } else if (0.8 * global.analysts.source.getMaxEffectiveInput(room) < global.analysts.source.getSourceAverage(room)) {
+                // Minimum quota met, but we are not at 80% of max effective input: request more pioneers
+                global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_SourceManager`, 5, MinionTypes.PIONEER, {}))
             }
-        })
+        }
     }
     run = (room: Room) => {
         this.mines.forEach(mine => {

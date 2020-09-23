@@ -1,3 +1,6 @@
+/**
+ * Dedicated Miner: moves to mine and dumps resources into container, does not haul
+ */
 export class MinerMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
@@ -9,19 +12,10 @@ export class MinerMinion {
     scaleMinion = (energy: number) => {
         if (energy < 200) {
             return [];
-        } else if (energy < 550) {
-            let workParts = Math.floor((1/2) * energy / 100)
-            let carryParts = Math.floor((1/4) * energy / 50)
-            let moveParts = Math.floor((1/4) * energy / 50)
+        } else{
+            let workParts = Math.max(5, Math.floor((energy - 50) / 100))
             return [
                 ...Array(workParts).fill(WORK),
-                ...Array(carryParts).fill(CARRY),
-                ...Array(moveParts).fill(MOVE)
-            ]
-        } else {
-            // Largest effective size for a Miner with stationary container
-            return [
-                ...Array(5).fill(WORK),
                 MOVE
             ]
         }

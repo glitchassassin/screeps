@@ -7,7 +7,7 @@ import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "../managers/Manager";
 
 export class SpawnSupervisor extends Manager {
-    spawns: SpawnData[] = [];
+    spawns: StructureSpawn[] = [];
     requests: {[id: string]: MinionRequest} = {};
     resupply: TaskRequest|null = null;
 
@@ -30,9 +30,6 @@ export class SpawnSupervisor extends Manager {
             this.requests = {};
             for (let reqSource in deserialized) {
                 this.requests[reqSource] = deserialize(MinionRequest, deserialized[reqSource])
-                if (this.requests[reqSource].assignedTo) {
-                    this.spawns.find(s => s.spawn.id === this.requests[reqSource].assignedTo?.id)
-                }
             }
         }
     }
@@ -44,8 +41,7 @@ export class SpawnSupervisor extends Manager {
                 // Find a spawn to carry out the request
                 let available = this.getIdleSpawn();
                 if (available) {
-                    r.assignedTo = available.spawn;
-                    available.currentRequest = r;
+                    r.assignedTo = available;
                 }
             }
             // Process assigned requests
@@ -70,6 +66,6 @@ export class SpawnSupervisor extends Manager {
     }
 
     getIdleSpawn = () => {
-        return this.spawns.find(s => !s.currentRequest);
+        return this.spawns.find(s => !Object.values(this.requests).some(r => r.assignedTo === s));
     }
 }

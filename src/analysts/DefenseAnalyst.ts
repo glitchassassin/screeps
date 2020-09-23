@@ -12,7 +12,7 @@ export class DefenseAnalyst extends Analyst {
 
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getPrioritizedAttackTargets(room: Room) {
-        let spawn = global.analysts.spawn.getSpawns(room)[0].spawn
+        let spawn = global.analysts.spawn.getSpawns(room)[0]
         return room.find(FIND_HOSTILE_CREEPS).sort((a, b) => b.pos.getRangeTo(spawn) - a.pos.getRangeTo(spawn));
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))

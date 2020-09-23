@@ -78,24 +78,25 @@ function mainLoop() {
   }
 
   Object.values(Game.rooms).forEach(room => {
-    // Reset statistics
-    global.analysts.statistics.resetDeltas(room);
-
     // Consult architects
     architects.forEach(architect => architect.init(room));
 
     // Load memory
+    Object.values(global.analysts).forEach(analyst => analyst.load(room));
     Object.values(global.managers).forEach(manager => manager.load(room));
     Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.load());
 
     // Initialize managers
+    Object.values(global.analysts).forEach(analyst => analyst.init(room));
     Object.values(global.managers).forEach(manager => manager.init(room));
 
     // Run managers
+    Object.values(global.analysts).forEach(analyst => analyst.run(room));
     Object.values(global.managers).forEach(manager => manager.run(room));
     Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.run());
 
     // Clean up managers
+    Object.values(global.analysts).forEach(analyst => analyst.cleanup(room));
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
     Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.cleanup());
   })

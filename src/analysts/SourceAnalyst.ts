@@ -14,7 +14,21 @@ export type Mine = {
     minerOnSite?: boolean
 }
 
+export type SourceMetrics = {
+    level: number[],
+    length: number
+}
+
 export class SourceAnalyst extends Analyst {
+    metrics: SourceMetrics = {
+        level: [],
+        length: 0
+    };
+
+    cleanup = (room: Room) => {
+        this.updateSourceMetrics(room);
+    }
+
     @Memoize((container: StructureContainer) => ('' + container.id + Game.time))
     isMineContainer(container: StructureContainer) {
         return this.getDesignatedMiningLocations(container.room).some(mine => mine.container === container)
@@ -78,6 +92,7 @@ export class SourceAnalyst extends Analyst {
                 .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0)
         })
     }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
     getMaxEffectiveInput(room: Room) {
         let minionWorkParts = new MinerMinion().scaleMinion(room.energyCapacityAvailable)
                                                .filter(p => p === WORK).length;
@@ -91,6 +106,7 @@ export class SourceAnalyst extends Analyst {
             )),
         0)
     }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
     getMinimumMiners(room: Room) {
         let minionWorkParts = new MinerMinion().scaleMinion(room.energyCapacityAvailable)
                                                .filter(p => p === WORK).length;
@@ -106,5 +122,41 @@ export class SourceAnalyst extends Analyst {
                 )
             )),
         0)
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getPioneers(room: Room) {
+        return room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'PIONEER')
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getMiners(room: Room) {
+        return room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'MINER')
+    }
+    updateSourceMetrics(room: Room) {
+        // Get metrics
+        let sources = this.getSources(room);
+        let spawn = global.analysts.spawn.getSpawns(room)[0];
+
+        this.metrics = Memory.metrics[room.name]?.source || {
+            level: [],
+            length: sources.reduce((distance, source) => (
+                Math.max(distance, PathFinder.search(spawn.pos, source.pos).cost)
+            ), 0)
+        }
+
+        this.metrics.level.push(
+            sources.reduce((sum, source) => (sum + source.energy), 0)
+        );
+        if (this.metrics.level.length > this.metrics.length) {
+            this.metrics.level.shift();
+        }
+
+        Memory.metrics[room.name] = {
+            ...Memory.metrics[room.name],
+            source: this.metrics
+        }
+    }
+    getSourceAverage(room: Room) {
+        if (this.metrics.level.length === 0) return 0;
+        return this.metrics.level.reduce((a, b) => (a + b), 0) / this.metrics.level.length;
     }
 }
