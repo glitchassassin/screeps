@@ -7,12 +7,14 @@ export class UpgraderMinion {
         }) === OK;
     }
     scaleMinion = (energy: number) => {
-        if (energy > 200 && energy < 550) {
-            return [WORK, CARRY, MOVE]
-        } else if (energy >= 550) {
-            return [WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE] // 550
+        if (energy < 200) {
+            return [];
         }
-        return null;
+        else {
+            // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
+            let workParts = Math.min(15, Math.floor((energy - 100) / 100))
+            return [...Array(workParts).fill(WORK), CARRY, MOVE]
+        }
     }
     buildMinion = (memory: CreepMemory) => {
         return {
