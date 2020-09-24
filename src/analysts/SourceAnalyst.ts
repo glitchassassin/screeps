@@ -14,19 +14,7 @@ export type Mine = {
     minerOnSite?: boolean
 }
 
-export type SourceMetrics = {
-    delta: number[],
-    lastLevel: number,
-    length: number
-}
-
 export class SourceAnalyst extends Analyst {
-    metrics: {[roomName: string]: SourceMetrics} = {};
-
-    cleanup = (room: Room) => {
-        this.updateSourceMetrics(room);
-    }
-
     @Memoize((container: StructureContainer) => ('' + container.id + Game.time))
     isMineContainer(container: StructureContainer) {
         return this.getDesignatedMiningLocations(container.room).some(mine => mine.container === container)
@@ -135,38 +123,5 @@ export class SourceAnalyst extends Analyst {
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getMiners(room: Room) {
         return room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'MINER')
-    }
-    updateSourceMetrics(room: Room) {
-        // Get metrics
-        let sources = this.getSources(room);
-        let spawn = global.analysts.spawn.getSpawns(room)[0];
-        let roomLevel = sources.reduce((sum, source) => (sum + source.energy), 0);
-
-        this.metrics[room.name] = Memory.metrics[room.name]?.source || {
-            delta: [],
-            lastLevel: roomLevel,
-            length: sources.reduce((distance, source) => (
-                Math.max(distance, PathFinder.search(spawn.pos, source.pos).cost)
-            ), 0) * 2
-        }
-
-        let roomDelta = Math.max(0, this.metrics[room.name].lastLevel - roomLevel);
-
-        this.metrics[room.name].delta.push(
-            roomDelta
-        );
-        if (this.metrics[room.name].delta.length > this.metrics[room.name].length) {
-            this.metrics[room.name].delta.shift();
-        }
-        this.metrics[room.name].lastLevel = roomLevel;
-
-        Memory.metrics[room.name] = {
-            ...Memory.metrics[room.name],
-            source: this.metrics[room.name]
-        }
-    }
-    getMineRateAverage(room: Room) {
-        if (this.metrics[room.name].delta.length === 0) return 0;
-        return this.metrics[room.name].delta.reduce((a, b) => (a + b), 0) / this.metrics[room.name].delta.length;
     }
 }

@@ -49,7 +49,7 @@ export class RepairTask extends TaskAction {
         } else if (result !== OK){
             return true;
         }
-        global.analysts.statistics.reportRepair(creep.room, Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
+        global.analysts.grafana.reportRepair(creep.room, Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
         return this.destination.hits === this.destination.hitsMax;
     }
     /**

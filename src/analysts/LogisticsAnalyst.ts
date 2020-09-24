@@ -1,15 +1,15 @@
-import { object } from "lodash";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
-import { MapAnalyst } from "./MapAnalyst";
-
-const mapAnalyst = new MapAnalyst();
 
 export class LogisticsAnalyst extends Analyst {
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getContainers(room: Room) {
         return room.find(FIND_STRUCTURES)
             .filter(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer[];
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
+    getOutputContainers(room: Room) {
+        return this.getContainers(room).filter(s => !global.analysts.source.isMineContainer(s));
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getTombstones(room: Room) {

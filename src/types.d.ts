@@ -24,9 +24,7 @@ interface Memory {
   uuid: number;
   log: any;
   metrics: {
-    [roomName: string]: {
-      source: import('./analysts/SourceAnalyst').SourceMetrics
-    }
+    [roomName: string]: import('./analysts/StatisticsAnalyst').PipelineMetrics
   }
   stats: {
     gcl: {
@@ -68,6 +66,7 @@ declare namespace NodeJS {
       spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
       builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
       defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
+      grafana: import('./analysts/GrafanaAnalyst').GrafanaAnalyst,
       statistics: import('./analysts/StatisticsAnalyst').StatisticsAnalyst,
     };
     managers: {

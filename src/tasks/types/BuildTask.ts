@@ -49,7 +49,7 @@ export class BuildTask extends TaskAction {
         } else if (result !== OK){
             return true;
         }
-        global.analysts.statistics.reportBuild(creep.room, Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
+        global.analysts.grafana.reportBuild(creep.room, Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
         return false;
     }
     /**

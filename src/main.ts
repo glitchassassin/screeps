@@ -17,6 +17,7 @@ import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
 import { LogisticsManager } from 'managers/LogisticsManager';
 import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
 import { DefenseManager } from 'managers/DefenseManager';
+import { GrafanaAnalyst } from 'analysts/GrafanaAnalyst';
 import { StatisticsAnalyst } from 'analysts/StatisticsAnalyst';
 
 global.managers = {
@@ -34,6 +35,7 @@ global.analysts = {
   source: new SourceAnalyst(),
   builder: new BuilderAnalyst(),
   defense: new DefenseAnalyst(),
+  grafana: new GrafanaAnalyst(),
   statistics: new StatisticsAnalyst(),
 }
 
@@ -102,7 +104,7 @@ function mainLoop() {
     Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.cleanup());
   })
 
-  global.analysts.statistics.exportStats();
+  global.analysts.grafana.exportStats();
 
   if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
     console.log("Pixel unlocked");

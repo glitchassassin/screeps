@@ -26,15 +26,15 @@ export class DefenseManager extends Manager {
 
             if (targets.length > 0) {
                 if (t.attack(targets[0]) === OK) {
-                    global.analysts.statistics.reportAttack(room, 10);
+                    global.analysts.grafana.reportAttack(room, 10);
                 }
             } else if (healTargets.length > 0) {
                 if (t.heal(healTargets[0]) === OK) {
-                    global.analysts.statistics.reportHeal(room, 10);
+                    global.analysts.grafana.reportHeal(room, 10);
                 }
             } else if (repairTargets.length > 0) {
                 if (t.repair(repairTargets[0]) === OK) {
-                    global.analysts.statistics.reportRepair(room, 10);
+                    global.analysts.grafana.reportRepair(room, 10);
                 }
             }
         })
