@@ -18,7 +18,9 @@ export class ControllerManager extends Manager {
         let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
         let minimumUpgraderCount = 1;
         if (this.upgraders.length < minimumUpgraderCount) {
-            global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
+            global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER, {
+                ignoresRequests: true
+            }))
             // Request energy, if no dedicated upgraders
             global.supervisors[room.name].task.submit(new TaskRequest(
                 room.controller.id,
@@ -29,7 +31,9 @@ export class ControllerManager extends Manager {
         } else {
             if (Game.time % 100 === 0 && global.analysts.statistics.metrics[room.name].outputContainerLevels.asPercent.mean() > 0.5) {
                 // More input than output: spawn more upgraders
-                global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
+                global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER, {
+                    ignoresRequests: true
+                }))
             }
         }
     }
