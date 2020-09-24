@@ -19,6 +19,7 @@ import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
 import { DefenseManager } from 'managers/DefenseManager';
 import { GrafanaAnalyst } from 'analysts/GrafanaAnalyst';
 import { StatisticsAnalyst } from 'analysts/StatisticsAnalyst';
+import { RoadArchitect } from 'architects/RoadArchitect';
 
 global.managers = {
   logistics: new LogisticsManager(),
@@ -48,10 +49,11 @@ Object.values(Game.rooms).forEach(room => {
 })
 
 
-let architects = [
-  new ControllerArchitect(),
-  new SourceArchitect(),
-]
+global.architects = {
+  controller: new ControllerArchitect(),
+  source: new SourceArchitect(),
+  road: new RoadArchitect()
+}
 
 // Initialize memory
 if (!Memory.flags) Memory.flags = {};
@@ -81,9 +83,6 @@ function mainLoop() {
   }
 
   Object.values(Game.rooms).forEach(room => {
-    // Consult architects
-    architects.forEach(architect => architect.init(room));
-
     // Load memory
     Object.values(global.analysts).forEach(analyst => analyst.load(room));
     Object.values(global.managers).forEach(manager => manager.load(room));
@@ -92,16 +91,19 @@ function mainLoop() {
     // Initialize managers
     Object.values(global.analysts).forEach(analyst => analyst.init(room));
     Object.values(global.managers).forEach(manager => manager.init(room));
+    Object.values(global.architects).forEach(architect => architect.init(room));
 
     // Run managers
     Object.values(global.analysts).forEach(analyst => analyst.run(room));
     Object.values(global.managers).forEach(manager => manager.run(room));
     Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.run());
+    Object.values(global.architects).forEach(architect => architect.run(room));
 
     // Clean up managers
     Object.values(global.analysts).forEach(analyst => analyst.cleanup(room));
     Object.values(global.managers).forEach(manager => manager.cleanup(room));
     Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.cleanup());
+    Object.values(global.architects).forEach(architect => architect.cleanup(room));
   })
 
   global.analysts.grafana.exportStats();

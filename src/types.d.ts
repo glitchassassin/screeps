@@ -81,6 +81,11 @@ declare namespace NodeJS {
         task: import('./supervisors/TaskSupervisor').TaskSupervisor,
         spawn: import('./supervisors/SpawnSupervisor').SpawnSupervisor,
       }
+    };
+    architects: {
+      controller: import('./architects/ControllerArchitect').ControllerArchitect,
+      source: import('./architects/SourceArchitect').SourceArchitect,
+      road: import('./architects/RoadArchitect').RoadArchitect,
     }
   }
 }

@@ -30,13 +30,16 @@ export class BuilderManager extends Manager {
             global.supervisors[room.name].spawn.submit(new MinionRequest(room.name, 4, MinionTypes.BUILDER))
         }
 
-        // Request build for top 1 construction site(s)
-        this.sites
-            .sort((a, b) => buildPriority(b) - buildPriority(a))
-            .slice(0, 1)
-            .forEach(site => {
-                global.supervisors[room.name].task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
-            })
+        // No building until RCL 2, then request build for top 2 construction site(s)
+        if (room.controller?.level !== 1) {
+            this.sites
+                .sort((a, b) => buildPriority(b) - buildPriority(a))
+                .slice(0, 1)
+                .forEach(site => {
+                    global.supervisors[room.name].task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
+                })
+        }
+
 
         // If no towers, request repair for structures in need
         if (global.analysts.defense.getTowers(room).length === 0) {
