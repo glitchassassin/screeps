@@ -38,13 +38,13 @@ export class LogisticsManager extends Manager {
             if (e && !global.analysts.source.isMineContainer(c) && e > 0) {
                 // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
                 // Avoids shuffling back and forth between destination containers
-                global.supervisors[room.name].task.submit(new TaskRequest(c.id, new ResupplyTask(c), 4, e));
+                global.supervisors[room.name].task.submit(new TaskRequest(c.id, new ResupplyTask(c), 5, e));
             }
         })
         this.extensions.forEach(e => {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {
-                global.supervisors[room.name].task.submit(new TaskRequest(e.id, new TransferTask(e), 5, energy));
+                global.supervisors[room.name].task.submit(new TaskRequest(e.id, new ResupplyTask(e), 5, energy));
             }
         })
         this.spawns.forEach((spawn) => {
@@ -54,7 +54,7 @@ export class LogisticsManager extends Manager {
             if (roomCapacity < 200) {
                 global.supervisors[room.name].task.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 10, spawnCapacity));
             } else if (spawnCapacity > 0) {
-                global.supervisors[room.name].task.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 5, spawnCapacity));
+                global.supervisors[room.name].task.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), 5, spawnCapacity));
             }
         })
     }

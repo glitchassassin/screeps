@@ -39,6 +39,7 @@ export class TravelTask extends TaskAction {
     action(creep: Creep) {
         // If unable to get the creep or destination, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
+        if (creep.pos.inRangeTo(this.destination, this.distance)) return TaskActionResult.SUCCESS ;
 
         if (this.pathCache === '') {
             let route = creep.pos.findPathTo(this.destination, {
@@ -73,7 +74,7 @@ export class TravelTask extends TaskAction {
             this.tries = 0; // Successful move, not tired, not in the same position, so reset tries to 0
         }
         this.lastPosition = creep.pos;
-        return creep.pos.inRangeTo(this.destination, this.distance) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
+        return TaskActionResult.INPROGRESS;
     }
     cost(minion: SpeculativeMinion) {
         if (!this.destination) return Infinity
