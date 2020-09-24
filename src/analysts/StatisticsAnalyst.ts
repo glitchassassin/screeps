@@ -118,4 +118,15 @@ export class StatisticsAnalyst extends Analyst {
             global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0
         );
     }
+    report = () => {
+        Object.values(Game.rooms).forEach(room => {
+            console.log(`Statistics for ${room.name}:
+    Mine Rate: ${this.metrics[room.name].mineRate.mean().toFixed(2)} units/tick
+    Mine Container Levels: ${this.metrics[room.name].mineContainerLevels.mean().toFixed(2)} (${(this.metrics[room.name].mineContainerLevels.asPercent.mean()*100).toFixed(2)}%)
+    Room Energy Levels: ${this.metrics[room.name].roomEnergyLevels.mean().toFixed(2)} (${(this.metrics[room.name].roomEnergyLevels.asPercent.mean()*100).toFixed(2)}%)
+    Output Container Levels: ${this.metrics[room.name].outputContainerLevels.mean().toFixed(2)} (${(this.metrics[room.name].outputContainerLevels.asPercent.mean()*100).toFixed(2)}%)
+    Controller Depot Fill Rate: ${this.metrics[room.name].controllerDepotFillRate.mean().toFixed(2)} units/tick
+            `)
+        })
+    }
 }
