@@ -36,18 +36,10 @@ export class SourceManager extends Manager {
                 if (!mine.miner.pos.isEqualTo(mine.pos)) {
                     global.supervisors[room.name].task.assign(new Task([new TravelTask(mine.pos, 0)], mine.miner, mine.id));
                 }
-                // If miner is full, and mine container exists, deposit there;
-                // otherwise, remain idle
-                if (mine.miner.store[RESOURCE_ENERGY] > 0 && mine.miner.store.getFreeCapacity() === 0) {
-                    // Miner is full
-                    if (!mine.container?.store.getFreeCapacity() || mine.miner.transfer(mine.container, RESOURCE_ENERGY) !== OK) {
-                        // Failed to transfer to container; remain idle.
-                        console.log(`[${mine.miner.name}] Container full, idling`);
-                        return
-                    }
+                // If mine container is not full, keep mining
+                if (mine.container?.store.getFreeCapacity() !== 0) {
+                    global.supervisors[room.name].task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
                 }
-                // If miner is not full, continue harvesting
-                global.supervisors[room.name].task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
             }
         })
     }
