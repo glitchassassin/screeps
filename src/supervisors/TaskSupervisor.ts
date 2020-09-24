@@ -1,6 +1,6 @@
 import { deserialize, deserializeArray, serialize } from "class-transformer";
 import { Task } from "tasks/Task";
-import { TaskAction } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "tasks/TaskAction";
 import { TaskRequest } from "tasks/TaskRequest";
 import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
 import { Manager } from "../managers/Manager";
@@ -97,7 +97,7 @@ export class TaskSupervisor extends Manager {
         this.tasks = this.tasks.filter(task => {
             if (!task.creep) return false; // Creep disappeared, cancel task
             let result = task.actions[0].action(task.creep)
-            if (result) {
+            if (result === TaskActionResult.SUCCESS) {
                 task.actions.shift();
                 if (task.actions.length > 0) {
                     task.creep?.say(task.actions[0].message);
@@ -105,6 +105,10 @@ export class TaskSupervisor extends Manager {
                     task.completed = true;
                     return false;
                 }
+            } else if (result === TaskActionResult.FAILED) {
+                // Cancel task
+                task.completed = true;
+                return false;
             }
             return true;
         })
@@ -172,9 +176,9 @@ export class TaskSupervisor extends Manager {
             });
         priorities.forEach(([creep, taskRequest, taskPlan]) => {
             if (!taskPlan) return;
-            console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
-                        `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
-                        `${taskPlan.tasks.map(t => t.toString())}`)
+            // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
+            //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
+            //             `${taskPlan.tasks.map(t => t.toString())}`)
             let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
             this.assign(task);
         })

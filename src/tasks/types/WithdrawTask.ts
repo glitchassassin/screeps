@@ -2,7 +2,7 @@ import { Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveCarryCapacity } from "tasks/prereqs/MustHaveCarryCapacity";
 import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { TaskAction } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "tasks/TaskAction";
 import { transformGameObject } from "utils/transformGameObject";
 
 export class WithdrawTask extends TaskAction {
@@ -35,16 +35,10 @@ export class WithdrawTask extends TaskAction {
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.destination) return true;
+        if (!this.destination) return TaskActionResult.FAILED;
 
         let result = creep.withdraw(this.destination, RESOURCE_ENERGY);
-        if (result === ERR_NOT_IN_RANGE) {
-            // creep.moveTo(this.destination);
-            console.log('Could not reach destination: WithdrawTask', creep.pos, this.destination.pos);
-        } else {
-            return true;
-        }
-        return false;
+        return (result === OK) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
     }
     cost() {
         // Takes one tick to withdraw, but here we

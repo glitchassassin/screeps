@@ -5,7 +5,7 @@ import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction } from "../TaskAction";
+import { TaskAction, TaskActionResult } from "../TaskAction";
 
 export class RepairTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -41,17 +41,16 @@ export class RepairTask extends TaskAction {
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.destination) return true;
+        if (!this.destination) return TaskActionResult.FAILED;
 
         let result = creep.repair(this.destination);
-        if (result === ERR_NOT_IN_RANGE) {
-            // creep.moveTo(this.destination);
-            console.log('Could not reach destination: RepairTask');
+        if (result === ERR_NOT_ENOUGH_ENERGY) {
+            TaskActionResult.SUCCESS;
         } else if (result !== OK){
-            return true;
+            return TaskActionResult.FAILED;
         }
         global.analysts.grafana.reportRepair(creep.room, Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
-        return this.destination.hits === this.destination.hitsMax;
+        return (this.destination.hits === this.destination.hitsMax) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
     }
     /**
      * Calculates cost based on the effectiveness of the minion

@@ -2,7 +2,7 @@ import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
 import { Task } from "../Task";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
@@ -20,7 +20,7 @@ export class UpgradeTask extends TaskAction {
         return [
             new MustHaveWorkParts(),
             new MustHaveEnergy(1000), // No cap on upgrade energy
-            new MustBeAdjacent(this.destination.pos),
+            new MustBeAdjacent(this.destination.pos, 3),
         ]
     }
     message = "⏫";
@@ -41,16 +41,15 @@ export class UpgradeTask extends TaskAction {
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.destination) return true;
+        if (!this.destination) return TaskActionResult.FAILED;
 
         let result = creep.upgradeController(this.destination);
-        if (result === ERR_NOT_IN_RANGE) {
-            // creep.moveTo(this.destination);
-            console.log('Could not reach destination: UpgradeTask');
-        } else if (result === ERR_NOT_ENOUGH_ENERGY) {
-            return true;
+        if (result === ERR_NOT_ENOUGH_ENERGY) {
+            return TaskActionResult.SUCCESS;
+        } else if (result !== OK) {
+            return TaskActionResult.FAILED;
         }
-        return false;
+        return TaskActionResult.INPROGRESS;
     }
     cost(minion: SpeculativeMinion) {
         // Approximate effectiveness of minion based on number of WORK parts

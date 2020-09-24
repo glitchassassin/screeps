@@ -1,6 +1,6 @@
 import { MustBeAtMine } from "tasks/prereqs/MustBeAtMine";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "tasks/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
@@ -35,17 +35,15 @@ export class HarvestTask extends TaskAction {
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.source) return true;
+        if (!this.source) return TaskActionResult.FAILED;
 
         if (creep.harvest(this.source) === ERR_NOT_IN_RANGE) {
-            // creep.moveTo(this.source);
-            console.log('Could not reach destination: HarvestTask');
-            return true;
+            return TaskActionResult.FAILED;
         }
         if (creep.store.getCapacity() > 0) {
             // If can carry, is the creep full?
             if (creep.store.getFreeCapacity() == 0) {
-                return true;
+                return TaskActionResult.SUCCESS;
             }
         } else {
             // If cannot carry, is the local container full?
@@ -54,10 +52,10 @@ export class HarvestTask extends TaskAction {
             // If the container is full or missing, we cannot store,
             // so there is no point in harvesting
             if (!container || (container as StructureContainer).store.getFreeCapacity() === 0) {
-                return true;
+                return TaskActionResult.FAILED;
             }
         }
-        return false;
+        return TaskActionResult.INPROGRESS;
     }
     cost(minion: SpeculativeMinion) {
         // Approximate effectiveness of minion based on number of WORK parts
