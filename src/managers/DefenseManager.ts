@@ -17,9 +17,9 @@ export class DefenseManager extends Manager {
             if (e) {
                 if (e > 700) {
                     global.supervisors[room.name].task.submit(new TaskRequest(t.id, new TransferTask(t), 9, e));
-                } else if (e > 850) {
+                } else if (e > 150) {
                     global.supervisors[room.name].task.submit(new TaskRequest(t.id, new TransferTask(t), 5, e));
-                } else {
+                } else if (e > 0) {
                     global.supervisors[room.name].task.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
                 }
             }

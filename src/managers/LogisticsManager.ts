@@ -44,7 +44,7 @@ export class LogisticsManager extends Manager {
         this.extensions.forEach(e => {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {
-                global.supervisors[room.name].task.submit(new TaskRequest(e.id, new ResupplyTask(e), 5, energy));
+                global.supervisors[room.name].task.submit(new TaskRequest(e.id, new ResupplyTask(e), 6, energy));
             }
         })
         this.spawns.forEach((spawn) => {
@@ -54,7 +54,7 @@ export class LogisticsManager extends Manager {
             if (roomCapacity < 200) {
                 global.supervisors[room.name].task.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 10, spawnCapacity));
             } else if (spawnCapacity > 0) {
-                global.supervisors[room.name].task.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), 5, spawnCapacity));
+                global.supervisors[room.name].task.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), 6, spawnCapacity));
             }
         })
     }
