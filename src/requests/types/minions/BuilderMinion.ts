@@ -1,7 +1,7 @@
 export class BuilderMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
-        if (!scale) return false;
+        if (scale.length === 0) return false;
         return spawn.spawnCreep(scale, `builder${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;

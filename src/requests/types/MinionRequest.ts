@@ -1,4 +1,5 @@
 import { Transform } from "class-transformer";
+import { UpgradeTask } from "tasks/types/UpgradeTask";
 import { transformGameObject } from "utils/transformGameObject";
 import { Request } from "../Request";
 import { BuilderMinion } from "./minions/BuilderMinion";
@@ -41,28 +42,34 @@ export class MinionRequest extends Request {
 
     fulfill(room: Room) {
         if (!this.type || !this.assignedTo) return;
+
+        let energyToUse = Math.max(
+            room.energyAvailable,
+            global.analysts.statistics.metrics[room.name].roomEnergyLevels.max()
+        );
+
         if (!this.assignedTo.spawning && !this.spawned) {
+            let minion;
             switch (this.type) {
                 case MinionTypes.HAULER:
-                    this.spawned = (new HaulerMinion())
-                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    minion = new HaulerMinion();
                     break;
                 case MinionTypes.PIONEER:
-                    this.spawned = (new PioneerMinion())
-                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    minion = new PioneerMinion();
                     break;
                 case MinionTypes.MINER:
-                    this.spawned = (new MinerMinion())
-                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    minion = new MinerMinion();
                     break;
                 case MinionTypes.UPGRADER:
-                    this.spawned = (new UpgraderMinion())
-                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    minion = new UpgraderMinion();
                     break;
                 case MinionTypes.BUILDER:
-                    this.spawned = (new BuilderMinion())
-                        .spawn(this.assignedTo, this.memory, room.energyAvailable);
+                    minion = new BuilderMinion();
                     break;
+            }
+            if (minion.scaleMinion(room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {
+                // Close enough, spawn the minion
+                this.spawned = minion.spawn(this.assignedTo, this.memory, energyToUse);
             }
         } else if (!this.assignedTo.spawning && this.spawned) {
             this.completed = true;

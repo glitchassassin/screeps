@@ -21,10 +21,10 @@ export class Metric {
         return this.values.reduce((a, b) => (a + b), 0) / this.values.length;
     }
     max() {
-        return this.values.reduce((a, b) => Math.max(a, b));
+        return this.values.reduce((a, b) => Math.max(a, b), -Infinity);
     }
     min() {
-        return this.values.reduce((a, b) => Math.min(a, b));
+        return this.values.reduce((a, b) => Math.min(a, b), Infinity);
     }
     asPercent = {
         mean: () => (this.mean() / this.maxValue),
