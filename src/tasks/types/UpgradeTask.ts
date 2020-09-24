@@ -45,7 +45,8 @@ export class UpgradeTask extends TaskAction {
 
         let result = creep.upgradeController(this.destination);
         if (result === ERR_NOT_IN_RANGE) {
-            creep.moveTo(this.destination);
+            // creep.moveTo(this.destination);
+            console.log('Could not reach destination: UpgradeTask');
         } else if (result === ERR_NOT_ENOUGH_ENERGY) {
             return true;
         }

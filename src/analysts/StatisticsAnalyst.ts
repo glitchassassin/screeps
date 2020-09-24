@@ -65,6 +65,7 @@ export type PipelineMetrics = {
     mineContainerLevels: Metric,
     roomEnergyLevels: Metric,
     outputContainerLevels: Metric,
+    controllerDepotFillRate: DeltaMetric,
 }
 
 export class StatisticsAnalyst extends Analyst {
@@ -91,6 +92,10 @@ export class StatisticsAnalyst extends Analyst {
                     global.analysts.logistics.getOutputContainers(room)
                         .reduce((sum, container) => (sum + container.store.getCapacity()), 0),
                     50
+                ),
+                controllerDepotFillRate: new DeltaMetric(
+                    global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0,
+                    50
                 )
             }
         }
@@ -108,6 +113,9 @@ export class StatisticsAnalyst extends Analyst {
         this.metrics[room.name].outputContainerLevels.update(
             global.analysts.logistics.getOutputContainers(room)
                 .reduce((sum, container) => (sum + container.store.getUsedCapacity()), 0)
+        );
+        this.metrics[room.name].controllerDepotFillRate.update(
+            global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0
         );
     }
 }

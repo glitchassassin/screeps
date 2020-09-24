@@ -20,6 +20,16 @@ export class LogisticsManager extends Manager {
         // Request minions, if needed
         if (this.haulers.length < this.containers.length) {
             global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_Logistics`, 7, MinionTypes.HAULER));
+        } else {
+            let outputAverageLevel = global.analysts.statistics.metrics[room.name].outputContainerLevels.mean();
+            let inputAverageLevel = global.analysts.statistics.metrics[room.name].mineContainerLevels.mean();
+            let inputAverageMean = global.analysts.statistics.metrics[room.name].mineContainerLevels.asPercent.mean();
+            // Check periodically if we have surplus in the mine containers that isn't being shifted to the output containers
+            if (Game.time % 50 === 0 && inputAverageMean > 0.1 && outputAverageLevel < inputAverageLevel) {
+                // If so, spawn more haulers to move the surplus
+                console.log('Mine surplus detected, spawning hauler');
+                global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_Logistics`, 7, MinionTypes.HAULER));
+            }
         }
 
         // Request energy, if needed

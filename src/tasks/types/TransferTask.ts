@@ -42,7 +42,8 @@ export class TransferTask extends TaskAction {
 
         let result = creep.transfer(this.destination, RESOURCE_ENERGY);
         if (result === ERR_NOT_IN_RANGE) {
-            creep.moveTo(this.destination);
+            // creep.moveTo(this.destination);
+            console.log('Could not reach destination: TransferTask');
         } else {
             return true;
         }

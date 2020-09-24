@@ -15,8 +15,8 @@ export class ControllerManager extends Manager {
 
         // Request minions, if needed
         let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
-        let upgraderCount = depot?.container ? (room.controller.level/2) : 1
-        if (this.upgraders.length < upgraderCount) {
+        let minimumUpgraderCount = 1;
+        if (this.upgraders.length < minimumUpgraderCount) {
             global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
             // Request energy, if no dedicated upgraders
             global.supervisors[room.name].task.submit(new TaskRequest(
@@ -25,12 +25,12 @@ export class ControllerManager extends Manager {
                 1,
                 (room.controller.level === 8 ? 15 : 1000) // TODO: Cap of 15 energy per tick at RCL 8, this is capacity per task
             ));
+        } else {
+            if (global.analysts.statistics.metrics[room.name].controllerDepotFillRate.mean() >= 0) {
+                // More input than output: spawn more upgraders
+                global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
+            }
         }
-        // Request energy to controller depot, if needed
-        // let depot = global.analysts.controller.getDesignatedUpgradingLocations(room);
-        // if (depot?.container?.store && depot.container.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
-        //     global.supervisors[room.name].task.submit(new TaskRequest(room.name, new TransferTask(depot.container), 5));
-        // }
     }
     run = (room: Room) => {
         if (!room.controller || this.upgraders.length === 0) return;

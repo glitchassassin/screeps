@@ -45,7 +45,8 @@ export class RepairTask extends TaskAction {
 
         let result = creep.repair(this.destination);
         if (result === ERR_NOT_IN_RANGE) {
-            creep.moveTo(this.destination);
+            // creep.moveTo(this.destination);
+            console.log('Could not reach destination: RepairTask');
         } else if (result !== OK){
             return true;
         }

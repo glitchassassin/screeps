@@ -38,7 +38,9 @@ export class HarvestTask extends TaskAction {
         if (!this.source) return true;
 
         if (creep.harvest(this.source) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(this.source);
+            // creep.moveTo(this.source);
+            console.log('Could not reach destination: HarvestTask');
+            return true;
         }
         if (creep.store.getCapacity() > 0) {
             // If can carry, is the creep full?

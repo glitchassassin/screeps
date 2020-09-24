@@ -15,11 +15,11 @@ export const transformRoomPosition = (value: any, obj: any, type: any) => {
         case TransformationType.PLAIN_TO_CLASS:
             return value ? Game.rooms[value.roomName].getPositionAt(value.x, value.y) : null;
         case TransformationType.CLASS_TO_PLAIN:
-            return {
+            return value ? {
                 x: value.x,
                 y: value.y,
                 roomName: value.roomName
-            };
+            } : null;
         case TransformationType.CLASS_TO_CLASS:
             return value;
     }
