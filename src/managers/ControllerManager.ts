@@ -27,7 +27,7 @@ export class ControllerManager extends Manager {
                 (room.controller.level === 8 ? 15 : 1000) // TODO: Cap of 15 energy per tick at RCL 8, this is capacity per task
             ));
         } else {
-            if (Game.time % 50 === 0 && global.analysts.statistics.metrics[room.name].controllerDepotFillRate.mean() >= 0) {
+            if (Game.time % 50 === 0 && global.analysts.statistics.metrics[room.name].controllerDepotFillRate.mean() > 0) {
                 // More input than output: spawn more upgraders
                 global.supervisors[room.name].spawn.submit(new MinionRequest(room.controller.id, 4, MinionTypes.UPGRADER))
             }
