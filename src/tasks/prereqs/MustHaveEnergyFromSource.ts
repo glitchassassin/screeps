@@ -21,10 +21,13 @@ export class MustHaveEnergyFromSource extends MustHaveEnergy {
         //     .filter(c => c) as StructureContainer[]
 
         // Get most full mine container only
-        let source = (global.analysts.source.getDesignatedMiningLocations(minion.creep.room)
+        let sourceContainers = (global.analysts.source.getDesignatedMiningLocations(minion.creep.room)
             .map(mine => mine.container)
             .filter(c => c) as StructureContainer[])
-            .reduce((a, b) => (a.store.getUsedCapacity(RESOURCE_ENERGY) > b.store.getUsedCapacity(RESOURCE_ENERGY) ? a : b))
+
+        if (sourceContainers.length === 0) return [];
+
+        let source = sourceContainers.reduce((a, b) => (a && a.store.getUsedCapacity(RESOURCE_ENERGY) > b.store.getUsedCapacity(RESOURCE_ENERGY) ? a : b))
 
         return [new WithdrawTask(source)];
     }
