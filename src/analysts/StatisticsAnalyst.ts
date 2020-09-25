@@ -65,6 +65,7 @@ export type PipelineMetrics = {
     mineContainerLevels: Metric,
     roomEnergyLevels: Metric,
     outputContainerLevels: Metric,
+    controllerDepotLevels: Metric,
     controllerDepotFillRate: DeltaMetric,
 }
 
@@ -93,6 +94,10 @@ export class StatisticsAnalyst extends Analyst {
                         .reduce((sum, container) => (sum + container.store.getCapacity()), 0),
                     50
                 ),
+                controllerDepotLevels: new Metric(
+                    global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0,
+                    50
+                ),
                 controllerDepotFillRate: new DeltaMetric(
                     global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0,
                     50
@@ -114,6 +119,9 @@ export class StatisticsAnalyst extends Analyst {
             global.analysts.logistics.getOutputContainers(room)
                 .reduce((sum, container) => (sum + container.store.getUsedCapacity()), 0)
         );
+        this.metrics[room.name].controllerDepotLevels.update(
+            global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0
+        );
         this.metrics[room.name].controllerDepotFillRate.update(
             global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0
         );
@@ -125,6 +133,7 @@ export class StatisticsAnalyst extends Analyst {
     Mine Container Levels: ${this.metrics[room.name].mineContainerLevels.mean().toFixed(2)} (${(this.metrics[room.name].mineContainerLevels.asPercent.mean()*100).toFixed(2)}%)
     Room Energy Levels: ${this.metrics[room.name].roomEnergyLevels.mean().toFixed(2)} (${(this.metrics[room.name].roomEnergyLevels.asPercent.mean()*100).toFixed(2)}%)
     Output Container Levels: ${this.metrics[room.name].outputContainerLevels.mean().toFixed(2)} (${(this.metrics[room.name].outputContainerLevels.asPercent.mean()*100).toFixed(2)}%)
+    Controller Depot Levels: ${this.metrics[room.name].controllerDepotLevels.mean().toFixed(2)} (${(this.metrics[room.name].controllerDepotLevels.asPercent.mean()*100).toFixed(2)}%)
     Controller Depot Fill Rate: ${this.metrics[room.name].controllerDepotFillRate.mean().toFixed(2)} units/tick
             `)
         })
