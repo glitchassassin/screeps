@@ -95,7 +95,7 @@ export class StatisticsAnalyst extends Analyst {
                     50
                 ),
                 controllerDepotLevels: new Metric(
-                    global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0,
+                    global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getCapacity() || 0,
                     50
                 ),
                 controllerDepotFillRate: new DeltaMetric(
