@@ -7,11 +7,13 @@ import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Manager } from "./Manager";
 
 export class LogisticsManager extends Manager {
+    storage: StructureStorage[] = [];
     containers: StructureContainer[] = [];
     extensions: StructureExtension[] = [];
     spawns: StructureSpawn[] = [];
     haulers: Creep[] = [];
     init = (room: Room) => {
+        this.storage = global.analysts.logistics.getStorage(room)
         this.containers = global.analysts.logistics.getContainers(room)
         this.extensions = global.analysts.spawn.getExtensions(room)
         this.haulers = global.analysts.logistics.getHaulers(room)
@@ -34,6 +36,14 @@ export class LogisticsManager extends Manager {
 
         // Request energy, if needed
         let controllerDepot = global.analysts.controller.getDesignatedUpgradingLocations(room)
+        this.storage.forEach(c => {
+            let e = getTransferEnergyRemaining(c);
+            if (e && e > 0) {
+                // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
+                // Avoids shuffling back and forth between destination containers
+                global.supervisors[room.name].task.submit(new TaskRequest(c.id, new ResupplyTask(c), 4, e));
+            }
+        })
         this.containers.forEach(c => {
             let e = getTransferEnergyRemaining(c);
             if (e && !global.analysts.source.isMineContainer(c) && e > 0) {

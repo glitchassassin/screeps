@@ -8,6 +8,11 @@ export class LogisticsAnalyst extends Analyst {
             .filter(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer[];
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
+    getStorage(room: Room) {
+        return room.find(FIND_STRUCTURES)
+            .filter(s => s.structureType === STRUCTURE_STORAGE) as StructureStorage[];
+    }
+    @Memoize((room: Room) => ('' + room.name + Game.time))
     getOutputContainers(room: Room) {
         return this.getContainers(room).filter(s => !global.analysts.source.isMineContainer(s));
     }
@@ -40,8 +45,8 @@ export class LogisticsAnalyst extends Analyst {
         return container;
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
-    getAllSources(room: Room): (StructureContainer|StructureSpawn|Tombstone)[] {
-        let c = [...this.getContainers(room), ...this.getTombstones(room)];
+    getAllSources(room: Room): (AnyStoreStructure|Tombstone)[] {
+        let c = [...this.getStorage(room), ...this.getContainers(room), ...this.getTombstones(room)];
         if (c.length !== 0) return c;
         return room.find(FIND_MY_SPAWNS) as StructureSpawn[];
     }
@@ -51,7 +56,7 @@ export class LogisticsAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getMostEmptyAllSources(room: Room) {
-        let container: StructureContainer|StructureSpawn|Tombstone|null = null;
+        let container: AnyStoreStructure|Tombstone|null = null;
         this.getAllSources(room).forEach((c) => {
             if (!container || c.store[RESOURCE_ENERGY] < container.store[RESOURCE_ENERGY]) {
                 container = c;
@@ -60,8 +65,8 @@ export class LogisticsAnalyst extends Analyst {
         return container;
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
-    getMostFullAllSources(room: Room): StructureContainer|StructureSpawn|null {
-        let container: StructureContainer|StructureSpawn|Tombstone|null = null;
+    getMostFullAllSources(room: Room): AnyStoreStructure|Tombstone|null {
+        let container: AnyStoreStructure|Tombstone|null = null;
         this.getAllSources(room).forEach((c) => {
             if (!container || c.store[RESOURCE_ENERGY] > container.store[RESOURCE_ENERGY]) {
                 container = c;
