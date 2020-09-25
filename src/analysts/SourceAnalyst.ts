@@ -10,8 +10,7 @@ export type Mine = {
     source?: Source,
     container?: StructureContainer,
     constructionSite?: ConstructionSite,
-    miner?: Creep
-    minerOnSite?: boolean
+    miners: Creep[]
 }
 
 export class SourceAnalyst extends Analyst {
@@ -51,16 +50,13 @@ export class SourceAnalyst extends Analyst {
                 pos: flag.pos,
                 id: (flag.memory.source as string),
                 source: Game.getObjectById(flag.memory.source as Id<Source>) || undefined,
-                miner: miners.find(m => m.memory.source === flag.memory.source)
+                miners: miners.filter(m => m.memory.source === flag.memory.source)
             }
-            mine.minerOnSite = false;
             flag.pos.look().forEach(obj => {
                 if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
                     mine.container = obj.structure as StructureContainer
                 } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
                     mine.constructionSite = obj.constructionSite as ConstructionSite
-                } else if (mine.miner && obj.type === LOOK_CREEPS && obj.creep?.id === mine.miner.id) {
-                    mine.minerOnSite = true;
                 }
             });
             return mine;

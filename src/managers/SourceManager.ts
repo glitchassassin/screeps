@@ -16,12 +16,23 @@ export class SourceManager extends Manager {
         if (this.mines.length > 0 && this.mines.every(mine => mine.container)) {
             // If so, make sure we have dedicated miners spawned
             this.mines.forEach(mine => {
-                if (!mine.miner) {
+                if (mine.miners.length === 0) {
                     global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.MINER, {
                         source: mine.id,
                         ignoresRequests: true
                     }))
                 }
+                mine.miners.forEach(miner => {
+                    if (miner.ticksToLive &&
+                        miner.memory.arrived &&
+                        miner.ticksToLive <= miner.memory.arrived
+                    ) {
+                        global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.MINER, {
+                            source: mine.id,
+                            ignoresRequests: true
+                        }))
+                    }
+                })
             })
         } else {
             // Otherwise, just keep spawning pioneer minions
@@ -31,16 +42,22 @@ export class SourceManager extends Manager {
     run = (room: Room) => {
         this.mines.forEach(mine => {
             if (!mine.source) return;
-            if (mine.miner && global.supervisors[room.name].task.isIdle(mine.miner)) {
-                // If miner is not at mine site, go there
-                if (!mine.miner.pos.isEqualTo(mine.pos)) {
-                    global.supervisors[room.name].task.assign(new Task([new TravelTask(mine.pos, 0)], mine.miner, mine.id));
+            mine.miners.forEach(miner => {
+                if (global.supervisors[room.name].task.isIdle(miner)) {
+                    // If miner is not at mine site, go there
+                    if (!miner.pos.isEqualTo(mine.pos)) {
+                        global.supervisors[room.name].task.assign(new Task([new TravelTask(mine.pos, 0)], miner, mine.id));
+                    } else {
+                        if (miner.memory.spawned && !miner.memory.arrived) {
+                            miner.memory.arrived = Game.time - miner.memory.spawned;
+                        }
+                    }
+                    // If mine container is not full, keep mining
+                    if (mine.container?.store.getFreeCapacity() !== 0) {
+                        global.supervisors[room.name].task.assign(new Task([new HarvestTask(mine.source)], miner, mine.id));
+                    }
                 }
-                // If mine container is not full, keep mining
-                if (mine.container?.store.getFreeCapacity() !== 0) {
-                    global.supervisors[room.name].task.assign(new Task([new HarvestTask(mine.source)], mine.miner, mine.id));
-                }
-            }
+            })
         })
     }
 }

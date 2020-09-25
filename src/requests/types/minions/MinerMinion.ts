@@ -24,7 +24,8 @@ export class MinerMinion {
         return {
             favoredTasks: ['HarvestTask'],
             ...memory,
-            type: 'MINER'
+            type: 'MINER',
+            spawned: Game.time,
         };
     }
 }
