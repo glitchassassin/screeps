@@ -39,7 +39,7 @@ export class LogisticsManager extends Manager {
             if (e && !global.analysts.source.isMineContainer(c) && e > 0) {
                 // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
                 // Avoids shuffling back and forth between destination containers
-                if (c.id === controllerDepot?.container?.id) {
+                if (c === controllerDepot?.container) {
                     // Controller depot gets refilled after everything else is topped up
                     global.supervisors[room.name].task.submit(new TaskRequest(c.id, new ResupplyTask(c), 2, e));
                 } else {

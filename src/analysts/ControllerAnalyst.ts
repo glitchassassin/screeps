@@ -33,7 +33,7 @@ export class ControllerAnalyst extends Analyst {
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getDesignatedUpgradingLocations(room: Room) {
         let upgradeDepotFlag = Object.values(Game.flags)
-            .find(flag => flag.memory.upgradeDepot);
+            .find(flag => flag.name === 'upgradeDepot');
         if (!upgradeDepotFlag) return null;
         let depot: Depot = {
             pos: upgradeDepotFlag.pos
