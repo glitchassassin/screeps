@@ -41,12 +41,6 @@ global.analysts = {
 }
 
 global.supervisors = {};
-Object.values(Game.rooms).forEach(room => {
-  global.supervisors[room.name] = {
-    task: new TaskSupervisor(room.name),
-    spawn: new SpawnSupervisor(room.name),
-  }
-})
 
 
 global.architects = {
@@ -83,6 +77,16 @@ function mainLoop() {
   }
 
   Object.values(Game.rooms).forEach(room => {
+    // Build supervisors, if needed
+    Object.values(Game.rooms).forEach(room => {
+      if (!global.supervisors[room.name]) {
+        global.supervisors[room.name] = {
+          task: new TaskSupervisor(room.name),
+          spawn: new SpawnSupervisor(room.name),
+        }
+      }
+    })
+
     // Load memory
     Object.values(global.analysts).forEach(analyst => analyst.load(room));
     Object.values(global.managers).forEach(manager => manager.load(room));
