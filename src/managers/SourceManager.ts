@@ -25,7 +25,7 @@ export class SourceManager extends Manager {
                     let newestMiner = mine.miners.reduce((a, b) => ((a.ticksToLive || 1500) > (b.ticksToLive || 1500) ? a : b));
                     if (newestMiner.ticksToLive &&
                         newestMiner.memory.arrived &&
-                        newestMiner.ticksToLive <= newestMiner.memory.arrived
+                        newestMiner.ticksToLive <= Math.min(50, newestMiner.memory.arrived)
                     ) {
                         global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.MINER, {
                             source: mine.id,
