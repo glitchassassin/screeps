@@ -53,10 +53,19 @@ export class BuilderManager extends Manager {
         }
     }
     shouldSpawnBuilders = (room: Room) => {
-        let builderCount = Math.max(
-            room.find(FIND_MY_CONSTRUCTION_SITES).length / 2,
-            room.find(FIND_MY_STRUCTURES).length / 8
-        );
+        let builderCount: number;
+        if (room.controller?.level === 1) {
+            return false;
+        } else if (global.analysts.defense.getTowers(room).length === 0) {
+            builderCount = Math.max(
+                room.find(FIND_MY_CONSTRUCTION_SITES).length / 2,
+                room.find(FIND_MY_STRUCTURES).length / 8
+            );
+        } else {
+            // Towers can handle repairs, so we only need builders for construction
+            builderCount = room.find(FIND_MY_CONSTRUCTION_SITES).length / 2;
+        }
+
         let targetBuilders = room.controller ? Math.min(room.controller.level, builderCount) : builderCount;
         return this.builders.length < targetBuilders;
     }

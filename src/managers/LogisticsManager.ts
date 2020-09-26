@@ -41,7 +41,7 @@ export class LogisticsManager extends Manager {
             if (e && e > 0) {
                 // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
                 // Avoids shuffling back and forth between destination containers
-                global.supervisors[room.name].task.submit(new TaskRequest(c.id, new ResupplyTask(c), 4, e));
+                global.supervisors[room.name].task.submit(new TaskRequest(c.id, new ResupplyTask(c), 2, e));
             }
         })
         this.containers.forEach(c => {
