@@ -19,8 +19,11 @@ export class LogisticsManager extends Manager {
         this.haulers = global.analysts.logistics.getHaulers(room)
         this.spawns = global.analysts.spawn.getSpawns(room)
 
+        let miners = global.analysts.source.getMiners(room);
+        let sources = global.analysts.source.getSources(room);
+
         // Request minions, if needed
-        if (this.haulers.length < this.containers.length) {
+        if (this.haulers.length < Math.min(miners.length, sources.length)) {
             global.supervisors[room.name].spawn.submit(new MinionRequest(`${room.name}_Logistics`, 7, MinionTypes.HAULER));
         } else {
             let outputAverageLevel = global.analysts.statistics.metrics[room.name].outputContainerLevels.mean();
