@@ -24,9 +24,9 @@ export class DefenseAnalyst extends Analyst {
         return room.find(FIND_STRUCTURES).filter(c => {
             switch(c.structureType) {
                 case STRUCTURE_RAMPART:
-                    return c.hits < Math.min(c.hitsMax, 500000)
+                    return c.hits < Math.min(c.hitsMax, 100000)
                 case STRUCTURE_WALL:
-                    return c.hits < Math.min(c.hitsMax, 500000)
+                    return c.hits < Math.min(c.hitsMax, 100000)
                 default:
                     return c.hits < c.hitsMax
             }
