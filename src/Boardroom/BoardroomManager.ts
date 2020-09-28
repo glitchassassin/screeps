@@ -1,14 +1,17 @@
-abstract class BoardroomManager {
+import { Boardroom } from "./Boardroom";
+
+export abstract class BoardroomManager {
     constructor(
         public boardroom: Boardroom
     ) {
         boardroom.register(this);
+        this.init();
     }
 
     /**
      * Load any persistent data from Memory
      *
-     * Invoked after every global reset
+     * Invoked by constructor after every global reset
      */
     init() { }
 

@@ -14,7 +14,7 @@ export class LogisticsAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getOutputContainers(room: Room) {
-        return this.getContainers(room).filter(s => !global.analysts.source.isMineContainer(s));
+        return this.getContainers(room).filter(s => !global.analysts.sales.isMineContainer(s));
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getTombstones(room: Room) {

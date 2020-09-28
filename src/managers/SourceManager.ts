@@ -1,4 +1,4 @@
-import { Mine, SourceAnalyst } from "analysts/SourceAnalyst";
+import { Franchise, SalesAnalyst } from "analysts/SalesAnalyst";
 import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
 import { Task } from "tasks/Task";
 import { HarvestTask } from "tasks/types/HarvestTask";
@@ -6,9 +6,9 @@ import { TravelTask } from "tasks/types/TravelTask";
 import { Manager } from "./Manager";
 
 export class SourceManager extends Manager {
-    mines: Mine[] = [];
+    mines: Franchise[] = [];
     init = (room: Room) => {
-        this.mines = global.analysts.source.getDesignatedMiningLocations(room);
+        this.mines = global.analysts.sales.getFranchiseLocations(room);
 
         // Request minions, if needed
 
@@ -16,13 +16,13 @@ export class SourceManager extends Manager {
         if (this.mines.length > 0 && this.mines.every(mine => mine.container)) {
             // If so, make sure we have dedicated miners spawned
             this.mines.forEach(mine => {
-                if (mine.miners.length === 0) {
+                if (mine.salesmen.length === 0) {
                     global.supervisors[room.name].spawn.submit(new MinionRequest(mine.id, 10, MinionTypes.MINER, {
                         source: mine.id,
                         ignoresRequests: true
                     }))
                 } else {
-                    let newestMiner = mine.miners.reduce((a, b) => ((a.ticksToLive || 1500) > (b.ticksToLive || 1500) ? a : b));
+                    let newestMiner = mine.salesmen.reduce((a, b) => ((a.ticksToLive || 1500) > (b.ticksToLive || 1500) ? a : b));
                     if (newestMiner.ticksToLive &&
                         newestMiner.memory.arrived &&
                         newestMiner.ticksToLive <= Math.min(50, newestMiner.memory.arrived)
@@ -43,7 +43,7 @@ export class SourceManager extends Manager {
     run = (room: Room) => {
         this.mines.forEach(mine => {
             if (!mine.source) return;
-            mine.miners.forEach(miner => {
+            mine.salesmen.forEach(miner => {
                 if (global.supervisors[room.name].task.isIdle(miner)) {
                     // If miner is not at mine site, go there
                     if (!miner.pos.isEqualTo(mine.pos)) {

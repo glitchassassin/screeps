@@ -76,12 +76,12 @@ export class StatisticsAnalyst extends Analyst {
         if (!this.metrics[room.name]) {
             this.metrics[room.name] = {
                 mineRate: new NonNegativeDeltaMetric(
-                    global.analysts.source.getSources(room)
+                    global.analysts.sales.getSources(room)
                         .reduce((sum, source) => (sum + source.energyCapacity), 0),
                     50
                 ),
                 mineContainerLevels: new Metric(
-                    global.analysts.source.getDesignatedMiningLocations(room)
+                    global.analysts.sales.getFranchiseLocations(room)
                         .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
                     50
                 ),
@@ -107,11 +107,11 @@ export class StatisticsAnalyst extends Analyst {
     }
     cleanup = (room: Room) => {
         this.metrics[room.name].mineRate.update(
-            global.analysts.source.getSources(room)
+            global.analysts.sales.getSources(room)
                 .reduce((sum, source) => (sum + source.energy), 0)
         );
         this.metrics[room.name].mineContainerLevels.update(
-            global.analysts.source.getDesignatedMiningLocations(room)
+            global.analysts.sales.getFranchiseLocations(room)
                 .reduce((sum, mine) => (sum + (mine.container?.store.getUsedCapacity() || 0)), 0)
         );
         this.metrics[room.name].roomEnergyLevels.update(room.energyAvailable);

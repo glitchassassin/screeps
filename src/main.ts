@@ -11,15 +11,16 @@ import { ControllerManager } from 'managers/ControllerManager';
 import { SpawnAnalyst } from 'analysts/SpawnAnalyst';
 import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
 import { MapAnalyst } from 'analysts/MapAnalyst';
-import { SourceAnalyst } from 'analysts/SourceAnalyst';
+import { SalesAnalyst } from 'analysts/SalesAnalyst';
 import { BuilderManager } from 'managers/BuilderManager';
-import { BuilderAnalyst } from 'analysts/BuilderAnalyst';
+import { FacilitiesAnalyst } from 'analysts/FacilitiesAnalyst';
 import { LogisticsManager } from 'managers/LogisticsManager';
 import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
 import { DefenseManager } from 'managers/DefenseManager';
 import { GrafanaAnalyst } from 'analysts/GrafanaAnalyst';
 import { StatisticsAnalyst } from 'analysts/StatisticsAnalyst';
 import { RoadArchitect } from 'architects/RoadArchitect';
+import { Boardroom } from 'Boardroom/Boardroom';
 
 global.managers = {
   logistics: new LogisticsManager(),
@@ -33,8 +34,8 @@ global.analysts = {
   spawn: new SpawnAnalyst(),
   controller: new ControllerAnalyst(),
   map: new MapAnalyst(),
-  source: new SourceAnalyst(),
-  builder: new BuilderAnalyst(),
+  sales: new SalesAnalyst(),
+  facilities: new FacilitiesAnalyst(),
   defense: new DefenseAnalyst(),
   grafana: new GrafanaAnalyst(),
   statistics: new StatisticsAnalyst(),
@@ -50,10 +51,6 @@ global.architects = {
 }
 
 // Initialize memory
-if (!Memory.flags) Memory.flags = {};
-if (!Memory.rooms) Memory.rooms = {};
-if (!Memory.creeps) Memory.creeps = {};
-if (!Memory.metrics) Memory.metrics = {};
 
 console.log(Date.now(), '__buildDate__');
 
@@ -63,6 +60,10 @@ if (Date.now() - JSON.parse('__buildDate__') < 15000) {
 } else {
   console.log('Global reset detected');
 }
+
+// Initialize Boardroom
+
+global.boardroom = new Boardroom();
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -76,38 +77,20 @@ function mainLoop() {
     }
   }
 
-  Object.values(Game.rooms).forEach(room => {
-    // Build supervisors, if needed
-    Object.values(Game.rooms).forEach(room => {
-      if (!global.supervisors[room.name]) {
-        global.supervisors[room.name] = {
-          task: new TaskSupervisor(room.name),
-          spawn: new SpawnSupervisor(room.name),
-        }
-      }
-    })
+  if (Game.time % 50 === 0) {
+    // Execute Boardroom plan phase
+    global.boardroom.plan()
+    // Execute Boardroom cleanup phase
+    global.boardroom.cleanup()
+  }
 
-    // Load memory
-    Object.values(global.analysts).forEach(analyst => analyst.load(room));
-    Object.values(global.managers).forEach(manager => manager.load(room));
-    Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.load());
-
-    // Initialize managers
-    Object.values(global.analysts).forEach(analyst => analyst.init(room));
-    Object.values(global.managers).forEach(manager => manager.init(room));
-    Object.values(global.architects).forEach(architect => architect.init(room));
-
-    // Run managers
-    Object.values(global.analysts).forEach(analyst => analyst.run(room));
-    Object.values(global.managers).forEach(manager => manager.run(room));
-    Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.run());
-    Object.values(global.architects).forEach(architect => architect.run(room));
-
-    // Clean up managers
-    Object.values(global.analysts).forEach(analyst => analyst.cleanup(room));
-    Object.values(global.managers).forEach(manager => manager.cleanup(room));
-    Object.values(global.supervisors[room.name]).forEach(supervisor => supervisor.cleanup());
-    Object.values(global.architects).forEach(architect => architect.cleanup(room));
+  global.boardroom.offices.forEach(office => {
+    // Execute Office plan phase
+    office.plan();
+    // Execute Office run phase
+    office.run();
+    // Execute Office cleanup phase
+    office.cleanup();
   })
 
   global.analysts.grafana.exportStats();

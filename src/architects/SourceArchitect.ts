@@ -1,17 +1,17 @@
 import { Architect } from './Architect';
-import { Mine } from 'analysts/SourceAnalyst';
+import { Franchise } from 'analysts/SalesAnalyst';
 
 export class SourceArchitect extends Architect {
-    mines: Mine[] = [];
+    mines: Franchise[] = [];
     setupComplete = false;
     init = (room: Room) => {
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
         if (this.setupComplete && Game.time % 50 !== 0) return;
 
-        this.mines = global.analysts.source.getDesignatedMiningLocations(room);
+        this.mines = global.analysts.sales.getFranchiseLocations(room);
         if (this.mines.length == 0)  {
             // Lay out mining locations
-            global.analysts.source.calculateBestMiningLocations(room).forEach((mine, i) => {
+            global.analysts.sales.calculateBestMiningLocations(room).forEach((mine, i) => {
                 let flag = mine.pos.createFlag(`source${i}`, COLOR_GREEN);
                 Memory.flags[flag] = {
                     source: mine.sourceId

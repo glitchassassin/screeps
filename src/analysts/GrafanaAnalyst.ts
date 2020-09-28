@@ -31,14 +31,14 @@ export class GrafanaAnalyst extends Analyst {
         this.deltas[room.name].attacking += delta;
     }
     pipelineMetrics(room: string) {
-        let destinationContainers = global.analysts.logistics.getContainers(Game.rooms[room]).filter(c => !global.analysts.source.isMineContainer(c))
+        let destinationContainers = global.analysts.logistics.getContainers(Game.rooms[room]).filter(c => !global.analysts.sales.isMineContainer(c))
         let storage = global.analysts.logistics.getStorage(Game.rooms[room]);
         return {
-            sourcesLevel: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
-            sourcesMax: global.analysts.source.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energyCapacity), 0),
-            mineContainersLevel: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
+            sourcesLevel: global.analysts.sales.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
+            sourcesMax: global.analysts.sales.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energyCapacity), 0),
+            mineContainersLevel: global.analysts.sales.getFranchiseLocations(Game.rooms[room])
             .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
-            mineContainersMax: global.analysts.source.getDesignatedMiningLocations(Game.rooms[room])
+            mineContainersMax: global.analysts.sales.getFranchiseLocations(Game.rooms[room])
             .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
             destinationContainersLevel: [...storage, ...destinationContainers].reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
             destinationContainersMax: [...storage, ...destinationContainers].reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),

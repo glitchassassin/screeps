@@ -19,12 +19,20 @@ interface FlagMemory {
 interface RoomMemory {
   tasks?: string;
   requests?: string;
-  spawnRequests?: string;
 }
 
 interface Memory {
   uuid: number;
   log: any;
+  hr: {
+    [officeName: string]: string
+  };
+  tasks: {
+    [officeName: string]: {
+      tasks: string,
+      requests: string
+    }
+  };
   metrics: {
     [roomName: string]: import('./analysts/StatisticsAnalyst').PipelineMetrics
   }
@@ -60,13 +68,14 @@ interface Memory {
 declare namespace NodeJS {
   interface Global {
     log: any;
+    boardroom: import('./Boardroom/Boardroom').Boardroom;
     analysts: {
       controller: import('./analysts/ControllerAnalyst').ControllerAnalyst,
       logistics: import('./analysts/LogisticsAnalyst').LogisticsAnalyst,
       map: import('./analysts/MapAnalyst').MapAnalyst,
-      source: import('./analysts/SourceAnalyst').SourceAnalyst,
+      sales: import('./analysts/SalesAnalyst').SalesAnalyst,
       spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
-      builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
+      facilities: import('./analysts/FacilitiesAnalyst').FacilitiesAnalyst,
       defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
       grafana: import('./analysts/GrafanaAnalyst').GrafanaAnalyst,
       statistics: import('./analysts/StatisticsAnalyst').StatisticsAnalyst,

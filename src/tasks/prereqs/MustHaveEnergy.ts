@@ -26,7 +26,7 @@ export class MustHaveEnergy extends TaskPrerequisite {
         if (minion.capacity === 0) return null; // Cannot carry energy
         // TODO: Check if source/container has enough energy to fill minion
         // Can get energy from harvesting
-        let sources = global.analysts.source.getUntappedSources(minion.creep.room)
+        let sources = global.analysts.sales.getUntappedSources(minion.creep.room)
                                             .map(source => new HarvestTask(source));
         // Can get energy from withdrawing
         let containers = global.analysts.logistics.getAllSources(minion.creep.room)

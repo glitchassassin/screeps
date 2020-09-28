@@ -19,8 +19,8 @@ export class LogisticsManager extends Manager {
         this.haulers = global.analysts.logistics.getHaulers(room)
         this.spawns = global.analysts.spawn.getSpawns(room)
 
-        let miners = global.analysts.source.getMiners(room);
-        let sources = global.analysts.source.getSources(room);
+        let miners = global.analysts.sales.getMiners(room);
+        let sources = global.analysts.sales.getSources(room);
 
         // Request minions, if needed
         if (this.haulers.length < Math.min(miners.length, sources.length)) {
@@ -49,7 +49,7 @@ export class LogisticsManager extends Manager {
         })
         this.containers.forEach(c => {
             let e = getTransferEnergyRemaining(c);
-            if (e && !global.analysts.source.isMineContainer(c) && e > 0) {
+            if (e && !global.analysts.sales.isMineContainer(c) && e > 0) {
                 // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
                 // Avoids shuffling back and forth between destination containers
                 if (c === controllerDepot?.container) {

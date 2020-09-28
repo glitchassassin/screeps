@@ -1,22 +1,23 @@
 
+import { Office } from "Office/Office";
 import { MinerMinion } from "requests/types/minions/MinerMinion";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
 
-export type Mine = {
+export type Franchise = {
     pos: RoomPosition,
     id: string,
     source?: Source,
     container?: StructureContainer,
     constructionSite?: ConstructionSite,
-    miners: Creep[]
+    salesmen: Creep[]
 }
 
-export class SourceAnalyst extends Analyst {
+export class SalesAnalyst extends Analyst {
     @Memoize((container: StructureContainer) => ('' + container.id + Game.time))
     isMineContainer(container: StructureContainer) {
-        return this.getDesignatedMiningLocations(container.room).some(mine => mine.container === container)
+        return this.getFranchiseLocations(container.room).some(mine => mine.container === container)
     }
     @Memoize((room: Room) => ('' + room.name))
     calculateBestMiningLocations(room: Room) {
@@ -39,28 +40,27 @@ export class SourceAnalyst extends Analyst {
             sourceId: s.source.id
         }));
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getDesignatedMiningLocations(room: Room) {
-        let miners = room.find(FIND_MY_CREEPS)
-        .filter(creep => creep.memory.source)
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getFranchiseLocations(office: Office) {
+        let salesmen = office.employees.filter(creep => creep.memory.type === 'SALESMAN')
         return Object.values(Game.flags)
-        .filter(flag => flag.memory.source)
-        .map(flag => {
-            let mine: Mine = {
-                pos: flag.pos,
-                id: (flag.memory.source as string),
-                source: Game.getObjectById(flag.memory.source as Id<Source>) || undefined,
-                miners: miners.filter(m => m.memory.source === flag.memory.source)
-            }
-            flag.pos.look().forEach(obj => {
-                if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
-                    mine.container = obj.structure as StructureContainer
-                } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
-                    mine.constructionSite = obj.constructionSite as ConstructionSite
+            .filter(flag => flag.memory.source)
+            .map(flag => {
+                let mine: Franchise = {
+                    pos: flag.pos,
+                    id: (flag.memory.source as string),
+                    source: Game.getObjectById(flag.memory.source as Id<Source>) || undefined,
+                    salesmen: salesmen.filter(m => m.memory.source === flag.memory.source)
                 }
+                flag.pos.look().forEach(obj => {
+                    if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
+                        mine.container = obj.structure as StructureContainer
+                    } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
+                        mine.constructionSite = obj.constructionSite as ConstructionSite
+                    }
+                });
+                return mine;
             });
-            return mine;
-        });
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getSources (room: Room) {

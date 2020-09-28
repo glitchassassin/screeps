@@ -1,14 +1,30 @@
-abstract class OfficeManager {
+import { Office } from "./Office";
+
+export enum OfficeManagerStatus {
+    OFFLINE = 'OFFLINE',
+    MINIMAL = 'MINIMAL',
+    NORMAL = 'NORMAL',
+    PRIORITY = 'PRIORITY',
+}
+
+export abstract class OfficeManager {
+    status = OfficeManagerStatus.NORMAL;
+
     constructor(
         public office: Office
     ) {
         office.register(this);
+        this.init()
+    }
+
+    setStatus(status: OfficeManagerStatus) {
+        this.status = status;
     }
 
     /**
      * Load any persistent data from Memory
      *
-     * Invoked after every global reset
+     * Invoked by constructor after every global reset
      */
     init() { }
 

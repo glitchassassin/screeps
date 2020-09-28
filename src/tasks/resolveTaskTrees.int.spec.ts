@@ -1,6 +1,6 @@
 import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
 import { MapAnalyst } from 'analysts/MapAnalyst';
-import { SourceAnalyst } from 'analysts/SourceAnalyst';
+import { SalesAnalyst } from 'analysts/SalesAnalyst';
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from 'screeps-jest';
 import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
@@ -59,9 +59,9 @@ describe("resolveTaskTrees-integration", () => {
         mockGlobal<PathFinder>('PathFinder', {
             search: () => ({cost: 1})
         }, true)
-        mockGlobal<{map: MapAnalyst, source: SourceAnalyst, logistics: LogisticsAnalyst}>('analysts', {
+        mockGlobal<{map: MapAnalyst, source: SalesAnalyst, logistics: LogisticsAnalyst}>('analysts', {
             map: new MapAnalyst(),
-            source: new SourceAnalyst(),
+            source: new SalesAnalyst(),
             logistics: new LogisticsAnalyst()
         })
     });

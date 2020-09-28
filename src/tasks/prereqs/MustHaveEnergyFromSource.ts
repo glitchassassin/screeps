@@ -21,7 +21,7 @@ export class MustHaveEnergyFromSource extends MustHaveEnergy {
         //     .filter(c => c) as StructureContainer[]
 
         // Get most full mine container only
-        let sourceContainers = (global.analysts.source.getDesignatedMiningLocations(minion.creep.room)
+        let sourceContainers = (global.analysts.sales.getFranchiseLocations(minion.creep.room)
             .map(mine => mine.container)
             .filter(c => c) as StructureContainer[])
 

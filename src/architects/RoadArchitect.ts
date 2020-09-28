@@ -50,7 +50,7 @@ export class RoadArchitect extends Architect {
         if (this.roads.length === 0) {
             // Draw roads between spawn and sources
             let spawn = global.analysts.spawn.getSpawns(room)[0];
-            global.analysts.source.getDesignatedMiningLocations(room).forEach(mine => {
+            global.analysts.sales.getFranchiseLocations(room).forEach(mine => {
                 this.roads.push(new Road(PathFinder.search(spawn.pos, mine.pos, {
                     swampCost: 1,
                     maxOps: 3000,

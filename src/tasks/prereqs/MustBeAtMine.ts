@@ -12,12 +12,12 @@ import { transformGameObject } from "utils/transformGameObject";
  */
 export class MustBeAtMine extends TaskPrerequisite {
     met(minion: SpeculativeMinion) {
-        return global.analysts.source
+        return global.analysts.sales
             .getUntappedSources(minion.creep.room)
             .some(source => minion.pos.inRangeTo(source.pos, 1))
     }
     toMeet(minion: SpeculativeMinion) {
-        let spaces = global.analysts.source
+        let spaces = global.analysts.sales
             .getUntappedSources(minion.creep.room)
             .map(source => new TravelTask(source.pos, 1))
         return spaces;
