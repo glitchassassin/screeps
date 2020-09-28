@@ -21,6 +21,15 @@ export class DefenseAnalyst extends Analyst {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getPrioritizedRepairTargets(room: Room) {
-        return room.find(FIND_STRUCTURES).filter(s => s.structureType !== STRUCTURE_WALL).filter(c => c.hits < c.hitsMax).sort((a, b) => a.hits - b.hits);
+        return room.find(FIND_STRUCTURES).filter(c => {
+            switch(c.structureType) {
+                case STRUCTURE_RAMPART:
+                    return c.hits < Math.min(c.hitsMax, 500000)
+                case STRUCTURE_WALL:
+                    return c.hits < Math.min(c.hitsMax, 500000)
+                default:
+                    return c.hits < c.hitsMax
+            }
+        }).sort((a, b) => a.hits - b.hits);
     }
 }
