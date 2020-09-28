@@ -1,18 +1,18 @@
-import { Architect } from './Architect';
-import { ControllerAnalyst, Depot } from '../analysts/ControllerAnalyst';
+import { ControllerAnalyst, Depot } from '../../Analysts/ControllerAnalyst';
 import { Office } from 'Office/Office';
+import { OfficeManager } from 'Office/OfficeManager';
 
-export class ControllerArchitect extends Architect {
+export class ControllerArchitect extends OfficeManager {
     depot: Depot|null = null;
     setupComplete = false;
-    plan(office: Office) {
+    plan() {
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
         if (this.setupComplete && Game.time % 50 !== 0) return;
 
-        global.analysts.controller.calculateBestContainerLocation(office);
+        global.analysts.controller.calculateBestContainerLocation(this.office);
         if (!this.depot)  {
             // Scout an upgrade depot
-            let pos = global.analysts.controller.calculateBestContainerLocation(office)
+            let pos = global.analysts.controller.calculateBestContainerLocation(this.office)
             if (!pos) return; // no viable container location
             let flag = pos?.createFlag(`upgradeDepot`, COLOR_BLUE);
             Memory.flags[flag] = {
@@ -20,9 +20,9 @@ export class ControllerArchitect extends Architect {
             };
         }
 
-        this.depot = global.analysts.controller.getDesignatedUpgradingLocations(office);
+        this.depot = global.analysts.controller.getDesignatedUpgradingLocations(this.office);
 
-        if (office.center.room.controller?.level && office.center.room.controller.level > 1) {
+        if (this.office.center.room.controller?.level && this.office.center.room.controller.level > 1) {
             if (!this.depot?.container && !this.depot?.constructionSite) {
                 this.depot?.pos.createConstructionSite(STRUCTURE_CONTAINER);
                 this.setupComplete = true;

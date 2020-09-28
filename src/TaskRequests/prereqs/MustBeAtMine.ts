@@ -1,8 +1,8 @@
 import { Exclude, Transform, TransformationType } from "class-transformer";
-import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { Task } from "tasks/Task";
-import { TaskPrerequisite } from "tasks/TaskPrerequisite";
-import { TravelTask } from "tasks/types/TravelTask";
+import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
+import { Task } from "TaskRequests/Task";
+import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
+import { TravelTask } from "TaskRequests/types/TravelTask";
 import { transformGameObject } from "utils/transformGameObject";
 
 /**

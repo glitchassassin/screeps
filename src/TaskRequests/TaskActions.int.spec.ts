@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from 'screeps-jest';
 import {assert} from "chai";
-import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
+import { resolveTaskTrees, TaskPlan } from "TaskRequests/resolveTaskTrees";
 import { TaskAction } from './TaskAction';
 import { BuildTask } from './types/BuildTask';
 import { HarvestTask } from './types/HarvestTask';

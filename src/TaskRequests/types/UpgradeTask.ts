@@ -1,11 +1,11 @@
-import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
+import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
+import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { Task } from "../Task";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction, TaskActionResult } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
-import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
+import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 
 export class UpgradeTask extends TaskAction {
     // Prereq: Minion must be adjacent

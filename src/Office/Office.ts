@@ -1,8 +1,15 @@
+import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
+import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
+import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
 import { MinionRequest } from "MinionRequests/MinionRequest";
-import { TaskRequest } from "tasks/TaskRequest";
+import { TaskRequest } from "TaskRequests/TaskRequest";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
 import { HRManager } from "./OfficeManagers/HRManager";
+import { LegalManager } from "./OfficeManagers/LegalManager";
+import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
+import { SalesManager } from "./OfficeManagers/SalesManager";
+import { SecurityManager } from "./OfficeManagers/SecurityManager";
 import { TaskManager } from "./OfficeManagers/TaskManager";
 import { RoomIntelligence } from "./RoomIntelligence";
 
@@ -20,8 +27,20 @@ export class Office {
                                  .filter(room => room)
                                  .map(room => new RoomIntelligence(room as string))
 
+        // Create Architects
+        new ControllerArchitect(this);
+        new RoadArchitect(this);
+        new SourceArchitect(this);
+
         // Create Managers
         new FacilitiesManager(this);
+        new HRManager(this);
+        new LegalManager(this);
+        new LogisticsManager(this);
+        new SalesManager(this);
+        new SecurityManager(this);
+        new TaskManager(this);
+
     }
 
     public get employees() : Creep[] {

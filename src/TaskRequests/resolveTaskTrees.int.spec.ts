@@ -1,9 +1,9 @@
-import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
-import { MapAnalyst } from 'analysts/MapAnalyst';
-import { SalesAnalyst } from 'analysts/SalesAnalyst';
+import { LogisticsAnalyst } from 'Analysts/LogisticsAnalyst';
+import { MapAnalyst } from 'Analysts/MapAnalyst';
+import { SalesAnalyst } from 'Analysts/SalesAnalyst';
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from 'screeps-jest';
-import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
+import { resolveTaskTrees, TaskPlan } from "TaskRequests/resolveTaskTrees";
 import { BuildTask } from './types/BuildTask';
 
 describe("resolveTaskTrees-integration", () => {

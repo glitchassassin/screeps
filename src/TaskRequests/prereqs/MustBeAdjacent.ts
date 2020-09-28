@@ -1,8 +1,8 @@
 import { Exclude, Transform, TransformationType } from "class-transformer";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
-import { TravelTask } from "tasks/types/TravelTask";
-import { Task } from "tasks/Task";
+import { TravelTask } from "TaskRequests/types/TravelTask";
+import { Task } from "TaskRequests/Task";
 
 /**
  * Checks if minion is adjacent to a given position

@@ -1,8 +1,8 @@
 import { Exclude } from "class-transformer";
-import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { TaskPrerequisite } from "tasks/TaskPrerequisite";
-import { HarvestTask } from "tasks/types/HarvestTask";
-import { WithdrawTask } from "tasks/types/WithdrawTask";
+import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
+import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
+import { HarvestTask } from "TaskRequests/types/HarvestTask";
+import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
 
 /**
  * Checks if minion has capacity to carry resources

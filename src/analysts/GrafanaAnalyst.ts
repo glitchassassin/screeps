@@ -22,17 +22,17 @@ export class GrafanaAnalyst extends Analyst {
             attacking: 0,
         }
     }
-    reportBuild(office: Office, delta: number) {
-        this.deltas[office.name].building += delta;
+    reportBuild(officeName: string, delta: number) {
+        this.deltas[officeName].building += delta;
     }
-    reportRepair(office: Office, delta: number) {
-        this.deltas[office.name].repairing += delta;
+    reportRepair(officeName: string, delta: number) {
+        this.deltas[officeName].repairing += delta;
     }
-    reportHeal(office: Office, delta: number) {
-        this.deltas[office.name].healing += delta;
+    reportHeal(officeName: string, delta: number) {
+        this.deltas[officeName].healing += delta;
     }
-    reportAttack(office: Office, delta: number) {
-        this.deltas[office.name].attacking += delta;
+    reportAttack(officeName: string, delta: number) {
+        this.deltas[officeName].attacking += delta;
     }
     pipelineMetrics(office: Office) {
         let upgradeDepot = global.analysts.controller.getDesignatedUpgradingLocations(office)?.container

@@ -1,5 +1,5 @@
-import { TaskPlan } from "tasks/resolveTaskTrees";
-import { TaskRequest } from "tasks/TaskRequest";
+import { TaskPlan } from "TaskRequests/resolveTaskTrees";
+import { TaskRequest } from "TaskRequests/TaskRequest";
 
 type Rated<T, Output> = {
     value: T,

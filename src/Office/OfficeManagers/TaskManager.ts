@@ -1,11 +1,11 @@
 import { deserialize, deserializeArray, serialize } from "class-transformer";
-import { Task } from "tasks/Task";
-import { TaskAction, TaskActionResult } from "tasks/TaskAction";
-import { TaskRequest } from "tasks/TaskRequest";
-import { resolveTaskTrees, TaskPlan } from "tasks/resolveTaskTrees";
-import { WithdrawTask } from "tasks/types/WithdrawTask";
-import { TransferTask } from "tasks/types/TransferTask";
-import { stablematch } from "algorithms/stablematch";
+import { Task } from "TaskRequests/Task";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
+import { TaskRequest } from "TaskRequests/TaskRequest";
+import { resolveTaskTrees, TaskPlan } from "TaskRequests/resolveTaskTrees";
+import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
+import { stablematch } from "TaskRequests/algorithms/stablematch";
 import { table } from "table";
 import { OfficeManager } from "Office/OfficeManager";
 

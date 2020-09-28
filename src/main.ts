@@ -1,17 +1,17 @@
 import 'reflect-metadata';
 import profiler from 'screeps-profiler';
 import { ErrorMapper } from "utils/ErrorMapper";
-import { ControllerArchitect } from 'architects/ControllerArchitect';
+import { ControllerArchitect } from 'Office/OfficeManagers/ControllerArchitect';
 import { SourceArchitect } from 'architects/SourceArchitect';
-import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
-import { HRAnalyst } from 'analysts/HRAnalyst';
-import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
-import { MapAnalyst } from 'analysts/MapAnalyst';
-import { SalesAnalyst } from 'analysts/SalesAnalyst';
-import { FacilitiesAnalyst } from 'analysts/FacilitiesAnalyst';
-import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
-import { GrafanaAnalyst } from 'analysts/GrafanaAnalyst';
-import { StatisticsAnalyst } from 'analysts/StatisticsAnalyst';
+import { LogisticsAnalyst } from 'Analysts/LogisticsAnalyst';
+import { HRAnalyst } from 'Analysts/HRAnalyst';
+import { ControllerAnalyst } from 'Analysts/ControllerAnalyst';
+import { MapAnalyst } from 'Analysts/MapAnalyst';
+import { SalesAnalyst } from 'Analysts/SalesAnalyst';
+import { FacilitiesAnalyst } from 'Analysts/FacilitiesAnalyst';
+import { DefenseAnalyst } from 'Analysts/DefenseAnalyst';
+import { GrafanaAnalyst } from 'Analysts/GrafanaAnalyst';
+import { StatisticsAnalyst } from 'Analysts/StatisticsAnalyst';
 import { RoadArchitect } from 'architects/RoadArchitect';
 import { Boardroom } from 'Boardroom/Boardroom';
 
@@ -25,15 +25,6 @@ global.analysts = {
   defense: new DefenseAnalyst(),
   grafana: new GrafanaAnalyst(),
   statistics: new StatisticsAnalyst(),
-}
-
-global.supervisors = {};
-
-
-global.architects = {
-  controller: new ControllerArchitect(),
-  source: new SourceArchitect(),
-  road: new RoadArchitect()
 }
 
 // Initialize memory
@@ -79,7 +70,7 @@ function mainLoop() {
     office.cleanup();
   })
 
-  global.analysts.grafana.exportStats();
+  global.analysts.grafana.exportStats(global.boardroom);
 
   if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
     console.log("Pixel unlocked");

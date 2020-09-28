@@ -1,11 +1,12 @@
 import { Transform } from "class-transformer";
-import { UpgradeTask } from "tasks/types/UpgradeTask";
+import { UpgradeTask } from "TaskRequests/types/UpgradeTask";
 import { transformGameObject } from "utils/transformGameObject";
 import { HandymanMinion } from "./minions/HandymanMinion";
 import { HaulerMinion } from "./minions/HaulerMinion";
 import { SalesmanMinion } from './minions/SalesmanMinion';
 import { InternMinion } from "./minions/InternMinion";
 import { LawyerMinion } from "./minions/LawyerMinion";
+import { Office } from "Office/Office";
 
 export enum MinionTypes {
     INTERN = 'INTERN',
@@ -40,12 +41,12 @@ export class MinionRequest {
         this.memory = memory;
     }
 
-    fulfill(room: Room) {
+    fulfill(office: Office) {
         if (!this.type || !this.assignedTo) return;
 
         let energyToUse = Math.max(
-            room.energyAvailable,
-            global.analysts.statistics.metrics[room.name].roomEnergyLevels.max()
+            office.center.room.energyAvailable,
+            global.analysts.statistics.metrics[office.name].roomEnergyLevels.max()
         );
 
         if (!this.assignedTo.spawning && !this.spawned) {
@@ -67,9 +68,12 @@ export class MinionRequest {
                     minion = new HandymanMinion();
                     break;
             }
-            if (minion.scaleMinion(room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {
+            if (minion.scaleMinion(office.center.room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {
                 // Close enough, spawn the minion
-                this.spawned = minion.spawn(this.assignedTo, this.memory, energyToUse);
+                this.spawned = minion.spawn(
+                    this.assignedTo,
+                    {...this.memory, office: office.name},
+                    energyToUse);
             }
         } else if (!this.assignedTo.spawning && this.spawned) {
             this.completed = true;

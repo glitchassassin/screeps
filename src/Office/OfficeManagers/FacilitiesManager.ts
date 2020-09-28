@@ -1,8 +1,8 @@
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { TaskRequest } from "tasks/TaskRequest";
-import { BuildTask } from "tasks/types/BuildTask";
-import { RepairTask } from "tasks/types/RepairTask";
+import { TaskRequest } from "TaskRequests/TaskRequest";
+import { BuildTask } from "TaskRequests/types/BuildTask";
+import { RepairTask } from "TaskRequests/types/RepairTask";
 import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
 
 const buildPriority = (site: ConstructionSite) => {

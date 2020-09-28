@@ -1,3 +1,4 @@
+import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 
@@ -64,7 +65,7 @@ export type PipelineMetrics = {
     mineRate: NonNegativeDeltaMetric,
     mineContainerLevels: Metric,
     roomEnergyLevels: Metric,
-    outputContainerLevels: Metric,
+    storageLevels: Metric,
     controllerDepotLevels: Metric,
     controllerDepotFillRate: DeltaMetric,
 }
@@ -72,58 +73,57 @@ export type PipelineMetrics = {
 export class StatisticsAnalyst extends Analyst {
     metrics: {[roomName: string]: PipelineMetrics} = {};
 
-    init = (room: Room) => {
-        if (!this.metrics[room.name]) {
-            this.metrics[room.name] = {
+    init = (office: Office) => {
+        if (!this.metrics[office.name]) {
+            this.metrics[office.name] = {
                 mineRate: new NonNegativeDeltaMetric(
-                    global.analysts.sales.getSources(room)
+                    global.analysts.sales.getSources(office)
                         .reduce((sum, source) => (sum + source.energyCapacity), 0),
                     50
                 ),
                 mineContainerLevels: new Metric(
-                    global.analysts.sales.getFranchiseLocations(room)
+                    global.analysts.sales.getFranchiseLocations(office)
                         .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
                     50
                 ),
                 roomEnergyLevels: new Metric(
-                    room.energyCapacityAvailable,
+                    office.center.room.energyCapacityAvailable,
                     50
                 ),
-                outputContainerLevels: new Metric(
-                    global.analysts.logistics.getOutputContainers(room)
-                        .reduce((sum, container) => (sum + container.store.getCapacity()), 0),
+                storageLevels: new Metric(
+                    global.analysts.logistics.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0),
                     50
                 ),
                 controllerDepotLevels: new Metric(
-                    global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getCapacity() || 0,
+                    global.analysts.controller.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
                     50
                 ),
                 controllerDepotFillRate: new DeltaMetric(
-                    global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0,
+                    global.analysts.controller.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0,
                     50
                 )
             }
         }
     }
-    cleanup = (room: Room) => {
-        this.metrics[room.name].mineRate.update(
-            global.analysts.sales.getSources(room)
+    cleanup = (office: Office) => {
+        this.metrics[office.name].mineRate.update(
+            global.analysts.sales.getSources(office)
                 .reduce((sum, source) => (sum + source.energy), 0)
         );
-        this.metrics[room.name].mineContainerLevels.update(
-            global.analysts.sales.getFranchiseLocations(room)
+        this.metrics[office.name].mineContainerLevels.update(
+            global.analysts.sales.getFranchiseLocations(office)
                 .reduce((sum, mine) => (sum + (mine.container?.store.getUsedCapacity() || 0)), 0)
         );
-        this.metrics[room.name].roomEnergyLevels.update(room.energyAvailable);
-        this.metrics[room.name].outputContainerLevels.update(
-            global.analysts.logistics.getOutputContainers(room)
+        this.metrics[office.name].roomEnergyLevels.update(office.center.room.energyAvailable);
+        this.metrics[office.name].storageLevels.update(
+            global.analysts.logistics.getStorage(office)
                 .reduce((sum, container) => (sum + container.store.getUsedCapacity()), 0)
         );
-        this.metrics[room.name].controllerDepotLevels.update(
-            global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0
+        this.metrics[office.name].controllerDepotLevels.update(
+            global.analysts.controller.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0
         );
-        this.metrics[room.name].controllerDepotFillRate.update(
-            global.analysts.controller.getDesignatedUpgradingLocations(room)?.container?.store.getUsedCapacity() || 0
+        this.metrics[office.name].controllerDepotFillRate.update(
+            global.analysts.controller.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0
         );
     }
     report = () => {
@@ -132,7 +132,7 @@ export class StatisticsAnalyst extends Analyst {
     Mine Rate: ${this.metrics[room.name].mineRate.mean().toFixed(2)} units/tick
     Mine Container Levels: ${this.metrics[room.name].mineContainerLevels.mean().toFixed(2)} (${(this.metrics[room.name].mineContainerLevels.asPercent.mean()*100).toFixed(2)}%)
     Room Energy Levels: ${this.metrics[room.name].roomEnergyLevels.mean().toFixed(2)} (${(this.metrics[room.name].roomEnergyLevels.asPercent.mean()*100).toFixed(2)}%)
-    Output Container Levels: ${this.metrics[room.name].outputContainerLevels.mean().toFixed(2)} (${(this.metrics[room.name].outputContainerLevels.asPercent.mean()*100).toFixed(2)}%)
+    Storage Levels: ${this.metrics[room.name].storageLevels.mean().toFixed(2)} (${(this.metrics[room.name].storageLevels.asPercent.mean()*100).toFixed(2)}%)
     Controller Depot Levels: ${this.metrics[room.name].controllerDepotLevels.mean().toFixed(2)} (${(this.metrics[room.name].controllerDepotLevels.asPercent.mean()*100).toFixed(2)}%)
     Controller Depot Fill Rate: ${this.metrics[room.name].controllerDepotFillRate.mean().toFixed(2)} units/tick
             `)

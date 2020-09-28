@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from 'screeps-jest';
 import {assert} from "chai";
-import { Task } from "tasks/Task";
-import { TaskPrerequisite } from "tasks/TaskPrerequisite";
-import { resolveTaskTrees } from "tasks/resolveTaskTrees";
+import { Task } from "TaskRequests/Task";
+import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
+import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
 import { TaskAction } from './TaskAction';
 import { TaskRequest } from './TaskRequest';
 import { deserialize, serialize } from 'class-transformer';

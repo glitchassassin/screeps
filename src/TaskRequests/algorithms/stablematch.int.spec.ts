@@ -1,15 +1,15 @@
-import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
-import { MapAnalyst } from 'analysts/MapAnalyst';
-import { SalesAnalyst } from 'analysts/SalesAnalyst';
+import { LogisticsAnalyst } from 'Analysts/LogisticsAnalyst';
+import { MapAnalyst } from 'Analysts/MapAnalyst';
+import { SalesAnalyst } from 'Analysts/SalesAnalyst';
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from "screeps-jest";
-import { resolveTaskTrees } from "tasks/resolveTaskTrees";
-import { TaskAction } from "tasks/TaskAction";
-import { TaskRequest } from "tasks/TaskRequest";
-import { BuildTask } from "tasks/types/BuildTask";
-import { RepairTask } from 'tasks/types/RepairTask';
-import { TransferTask } from "tasks/types/TransferTask";
-import { WithdrawTask } from "tasks/types/WithdrawTask";
+import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
+import { TaskAction } from "TaskRequests/TaskAction";
+import { TaskRequest } from "TaskRequests/TaskRequest";
+import { BuildTask } from "TaskRequests/types/BuildTask";
+import { RepairTask } from 'TaskRequests/types/RepairTask';
+import { TransferTask } from "TaskRequests/types/TransferTask";
+import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
 import { inspect } from "util";
 import { calculatePreferences, stablematch } from "./stablematch";
 

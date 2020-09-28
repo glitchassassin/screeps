@@ -1,9 +1,9 @@
-import { Franchise, SalesAnalyst } from "analysts/SalesAnalyst";
+import { Franchise, SalesAnalyst } from "Analysts/SalesAnalyst";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { Task } from "tasks/Task";
-import { HarvestTask } from "tasks/types/HarvestTask";
-import { TravelTask } from "tasks/types/TravelTask";
+import { Task } from "TaskRequests/Task";
+import { HarvestTask } from "TaskRequests/types/HarvestTask";
+import { TravelTask } from "TaskRequests/types/TravelTask";
 import { TaskManager } from "./TaskManager";
 
 export class SalesManager extends OfficeManager {

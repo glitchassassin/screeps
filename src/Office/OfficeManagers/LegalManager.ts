@@ -1,14 +1,14 @@
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { UpgradeTask } from "tasks/types/UpgradeTask";
-import { WithdrawTask } from "tasks/types/WithdrawTask";
-import { TaskRequest } from "tasks/TaskRequest";
-import { Task } from "tasks/Task";
-import { TransferTask } from "tasks/types/TransferTask";
-import { TravelTask } from "tasks/types/TravelTask";
+import { UpgradeTask } from "TaskRequests/types/UpgradeTask";
+import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
+import { TaskRequest } from "TaskRequests/TaskRequest";
+import { Task } from "TaskRequests/Task";
+import { TransferTask } from "TaskRequests/types/TransferTask";
+import { TravelTask } from "TaskRequests/types/TravelTask";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { TaskManager } from "./TaskManager";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
-import { ResupplyTask } from "tasks/types/ResupplyTask";
+import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 
 export class LegalManager extends OfficeManager {
     lawyers: Creep[] = [];

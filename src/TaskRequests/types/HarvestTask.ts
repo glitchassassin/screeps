@@ -1,10 +1,10 @@
-import { MustBeAtMine } from "tasks/prereqs/MustBeAtMine";
+import { MustBeAtMine } from "TaskRequests/prereqs/MustBeAtMine";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction, TaskActionResult } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
-import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
-import { MustHaveWorkParts } from "tasks/prereqs/MustHaveWorkParts";
+import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
+import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 
 export class HarvestTask extends TaskAction {
     // Prereq: Minion must be adjacent

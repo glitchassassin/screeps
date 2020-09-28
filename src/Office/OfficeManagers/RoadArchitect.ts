@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { Office } from 'Office/Office';
+import { OfficeManager } from 'Office/OfficeManager';
 import { transformRoomPosition } from 'utils/transformGameObject';
-import { Architect } from './Architect';
 
 export class Road {
     @Transform(transformRoomPosition)
@@ -41,17 +41,17 @@ const roadPlannerCallback = (roomName: string) => {
     return costs;
 }
 
-export class RoadArchitect extends Architect {
+export class RoadArchitect extends OfficeManager {
     roads: Road[] = []
 
-    plan(office: Office) {
+    plan() {
         // Only re-check infrastructure every `n` ticks (saves CPU)
         if (this.roads.length !== 0 && Game.time % 50 !== 0) return;
 
         if (this.roads.length === 0) {
             // Draw roads between spawn and sources
-            let spawn = global.analysts.spawn.getSpawns(office)[0];
-            global.analysts.sales.getFranchiseLocations(office).forEach(franchise => {
+            let spawn = global.analysts.spawn.getSpawns(this.office)[0];
+            global.analysts.sales.getFranchiseLocations(this.office).forEach(franchise => {
                 this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
                     swampCost: 1,
                     maxOps: 3000,

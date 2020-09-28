@@ -1,7 +1,7 @@
 import { deserialize, serialize } from "class-transformer";
 import { OfficeManager } from "Office/OfficeManager";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { TaskRequest } from "tasks/TaskRequest";
+import { TaskRequest } from "TaskRequests/TaskRequest";
 
 export class HRManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
@@ -41,7 +41,7 @@ export class HRManager extends OfficeManager {
                 }
             }
             // Process assigned requests
-            r.fulfill(this.office.center.room);
+            r.fulfill(this.office);
         })
     }
     cleanup() {

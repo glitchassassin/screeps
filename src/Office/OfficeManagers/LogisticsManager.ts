@@ -1,9 +1,9 @@
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { table } from "table";
-import { TaskRequest } from "tasks/TaskRequest";
-import { ResupplyTask } from "tasks/types/ResupplyTask";
-import { TransferTask } from "tasks/types/TransferTask";
+import { TaskRequest } from "TaskRequests/TaskRequest";
+import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 
 export class LogisticsManager extends OfficeManager {
@@ -32,12 +32,12 @@ export class LogisticsManager extends OfficeManager {
             default: {
                 // Maintain enough haulers to keep
                 // franchises drained
-                let outputAverageLevel = global.analysts.statistics.metrics[this.office.name].outputContainerLevels.mean();
-                let inputAverageLevel = global.analysts.statistics.metrics[this.office.name].mineContainerLevels.mean();
+                let outputAverageLevel = global.analysts.statistics.metrics[this.office.name].storageLevels.mean();
+                let outputMaxLevel = global.analysts.statistics.metrics[this.office.name].storageLevels.maxValue;
                 let inputAverageMean = global.analysts.statistics.metrics[this.office.name].mineContainerLevels.asPercent.mean();
                 if (this.haulers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.HAULER));
-                } else if (Game.time % 50 === 0 && inputAverageMean > 0.1 && outputAverageLevel < inputAverageLevel) {
+                } else if (Game.time % 50 === 0 && inputAverageMean > 0.1 && outputAverageLevel < outputMaxLevel) {
                     console.log('Franchise surplus detected, spawning hauler');
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.HAULER));
                 }

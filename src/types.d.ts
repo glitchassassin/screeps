@@ -9,6 +9,7 @@ interface CreepMemory {
   favoredTasks?: string[]
   spawned?: number
   arrived?: number
+  office?: string
 }
 
 interface FlagMemory {
@@ -34,7 +35,7 @@ interface Memory {
     }
   };
   metrics: {
-    [roomName: string]: import('./analysts/StatisticsAnalyst').PipelineMetrics
+    [roomName: string]: import('./Analysts/StatisticsAnalyst').PipelineMetrics
   }
   stats: {
     gcl: {
@@ -70,26 +71,15 @@ declare namespace NodeJS {
     log: any;
     boardroom: import('./Boardroom/Boardroom').Boardroom;
     analysts: {
-      controller: import('./analysts/ControllerAnalyst').ControllerAnalyst,
-      logistics: import('./analysts/LogisticsAnalyst').LogisticsAnalyst,
-      map: import('./analysts/MapAnalyst').MapAnalyst,
-      sales: import('./analysts/SalesAnalyst').SalesAnalyst,
-      spawn: import('./analysts/HRAnalyst').HRAnalyst,
-      facilities: import('./analysts/FacilitiesAnalyst').FacilitiesAnalyst,
-      defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
-      grafana: import('./analysts/GrafanaAnalyst').GrafanaAnalyst,
-      statistics: import('./analysts/StatisticsAnalyst').StatisticsAnalyst,
+      controller: import('./Analysts/ControllerAnalyst').ControllerAnalyst,
+      logistics: import('./Analysts/LogisticsAnalyst').LogisticsAnalyst,
+      map: import('./Analysts/MapAnalyst').MapAnalyst,
+      sales: import('./Analysts/SalesAnalyst').SalesAnalyst,
+      spawn: import('./Analysts/HRAnalyst').HRAnalyst,
+      facilities: import('./Analysts/FacilitiesAnalyst').FacilitiesAnalyst,
+      defense: import('./Analysts/DefenseAnalyst').DefenseAnalyst,
+      grafana: import('./Analysts/GrafanaAnalyst').GrafanaAnalyst,
+      statistics: import('./Analysts/StatisticsAnalyst').StatisticsAnalyst,
     };
-    supervisors: {
-      [id: string]: {
-        task: import('./supervisors/TaskSupervisor').TaskSupervisor,
-        spawn: import('./supervisors/SpawnSupervisor').SpawnSupervisor,
-      }
-    };
-    architects: {
-      controller: import('./architects/ControllerArchitect').ControllerArchitect,
-      source: import('./architects/SourceArchitect').SourceArchitect,
-      road: import('./architects/RoadArchitect').RoadArchitect,
-    }
   }
 }

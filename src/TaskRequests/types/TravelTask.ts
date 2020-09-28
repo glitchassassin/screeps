@@ -1,6 +1,6 @@
-import { MustHavePath } from "tasks/prereqs/MustHavePath";
+import { MustHavePath } from "TaskRequests/prereqs/MustHavePath";
 import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction, TaskActionResult } from "tasks/TaskAction";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 

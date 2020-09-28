@@ -1,9 +1,9 @@
 import { Exclude } from "class-transformer";
-import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { Task } from "tasks/Task";
-import { TaskPrerequisite } from "tasks/TaskPrerequisite";
-import { HarvestTask } from "tasks/types/HarvestTask";
-import { WithdrawTask } from "tasks/types/WithdrawTask";
+import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
+import { Task } from "TaskRequests/Task";
+import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
+import { HarvestTask } from "TaskRequests/types/HarvestTask";
+import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
 
 /**
  * Checks if minion is full or has enough energy to meet quantity

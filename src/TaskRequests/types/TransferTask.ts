@@ -1,8 +1,8 @@
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
-import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "tasks/prereqs/MustHaveEnergy";
-import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { TaskAction, TaskActionResult } from "tasks/TaskAction";
+import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
+import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
+import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { transformGameObject } from "utils/transformGameObject";
 
 export class TransferTask extends TaskAction {

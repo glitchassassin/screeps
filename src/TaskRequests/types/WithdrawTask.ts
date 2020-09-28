@@ -1,8 +1,8 @@
 import { Transform, TransformationType, Type } from "class-transformer";
-import { MustBeAdjacent } from "tasks/prereqs/MustBeAdjacent";
-import { MustHaveCarryCapacity } from "tasks/prereqs/MustHaveCarryCapacity";
-import { SpeculativeMinion } from "tasks/SpeculativeMinion";
-import { TaskAction, TaskActionResult } from "tasks/TaskAction";
+import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
+import { MustHaveCarryCapacity } from "TaskRequests/prereqs/MustHaveCarryCapacity";
+import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { transformGameObject } from "utils/transformGameObject";
 
 export class WithdrawTask extends TaskAction {
