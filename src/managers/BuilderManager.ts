@@ -34,7 +34,7 @@ export class BuilderManager extends Manager {
         if (room.controller?.level !== 1) {
             this.sites
                 .sort((a, b) => buildPriority(b) - buildPriority(a))
-                .slice(0, 1)
+                .slice(0, 2)
                 .forEach(site => {
                     global.supervisors[room.name].task.submit(new TaskRequest(site.id, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
                 })

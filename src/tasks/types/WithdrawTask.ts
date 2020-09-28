@@ -48,9 +48,11 @@ export class WithdrawTask extends TaskAction {
         }
         switch (this.destination?.structureType) {
             case STRUCTURE_CONTAINER:
-                return 1;
+                return 5;
             case STRUCTURE_SPAWN:
                 return 1000;
+            case STRUCTURE_STORAGE:
+                return 0;
             default:
                 return 10;
         }
