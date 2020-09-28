@@ -1,22 +1,23 @@
 import { Transform } from "class-transformer";
 import { UpgradeTask } from "tasks/types/UpgradeTask";
 import { transformGameObject } from "utils/transformGameObject";
-import { Request } from "../Request";
-import { BuilderMinion } from "./minions/BuilderMinion";
+import { HandymanMinion } from "./minions/HandymanMinion";
 import { HaulerMinion } from "./minions/HaulerMinion";
-import { MinerMinion } from './minions/MinerMinion';
-import { PioneerMinion } from "./minions/PioneerMinion";
-import { UpgraderMinion } from "./minions/UpgraderMinion";
+import { SalesmanMinion } from './minions/SalesmanMinion';
+import { InternMinion } from "./minions/InternMinion";
+import { LawyerMinion } from "./minions/LawyerMinion";
 
 export enum MinionTypes {
-    PIONEER = 'PIONEER',
-    MINER = 'MINER',
-    UPGRADER = 'UPGRADER',
-    BUILDER = 'BUILDER',
+    INTERN = 'INTERN',
+    SALESMAN = 'SALESMAN',
+    LAWYER = 'LAWYER',
+    HANDYMAN = 'HANDYMAN',
     HAULER = 'HAULER'
 }
 
-export class MinionRequest extends Request {
+export class MinionRequest {
+    completed = false;
+    created = Game.time;
     private spawned = false;
     public sourceId: string|null = null;
     public priority = 5;
@@ -33,7 +34,6 @@ export class MinionRequest extends Request {
         type: MinionTypes|null = null,
         memory: CreepMemory = {}
     ) {
-        super();
         this.sourceId = sourceId;
         this.priority = priority;
         this.type = type;
@@ -54,17 +54,17 @@ export class MinionRequest extends Request {
                 case MinionTypes.HAULER:
                     minion = new HaulerMinion();
                     break;
-                case MinionTypes.PIONEER:
-                    minion = new PioneerMinion();
+                case MinionTypes.INTERN:
+                    minion = new InternMinion();
                     break;
-                case MinionTypes.MINER:
-                    minion = new MinerMinion();
+                case MinionTypes.SALESMAN:
+                    minion = new SalesmanMinion();
                     break;
-                case MinionTypes.UPGRADER:
-                    minion = new UpgraderMinion();
+                case MinionTypes.LAWYER:
+                    minion = new LawyerMinion();
                     break;
-                case MinionTypes.BUILDER:
-                    minion = new BuilderMinion();
+                case MinionTypes.HANDYMAN:
+                    minion = new HandymanMinion();
                     break;
             }
             if (minion.scaleMinion(room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {

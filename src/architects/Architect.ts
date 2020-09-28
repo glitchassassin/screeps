@@ -1,9 +1,11 @@
+import { Office } from "Office/Office"
+
 /**
  * Encapsulates shared Architect behavior
  */
 export class Architect {
-    load = (room: Room) => {}
-    init = (room: Room) => {}
-    run = (room: Room) => {}
-    cleanup = (room: Room) => {}
+    init(office: Office) {}
+    plan(office: Office) {}
+    run(office: Office) {}
+    cleanup(office: Office) {}
 }

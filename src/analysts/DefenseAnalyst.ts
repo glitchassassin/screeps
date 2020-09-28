@@ -1,26 +1,20 @@
+import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
-import { MapAnalyst } from "./MapAnalyst";
-
-const mapAnalyst = new MapAnalyst();
 
 export class DefenseAnalyst extends Analyst {
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getTowers(room: Room) {
-        return (room.find(FIND_MY_STRUCTURES).filter(s => s.structureType === STRUCTURE_TOWER) as StructureTower[]);
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getTowers(office: Office) {
+        return (office.center.room.find(FIND_MY_STRUCTURES).filter(s => s.structureType === STRUCTURE_TOWER) as StructureTower[]);
     }
 
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getPrioritizedAttackTargets(room: Room) {
-        let spawn = global.analysts.spawn.getSpawns(room)[0]
-        return room.find(FIND_HOSTILE_CREEPS).sort((a, b) => b.pos.getRangeTo(spawn) - a.pos.getRangeTo(spawn));
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getPrioritizedAttackTargets(office: Office) {
+        let spawn = global.analysts.spawn.getSpawns(office)[0]
+        return office.center.room.find(FIND_HOSTILE_CREEPS).sort((a, b) => b.pos.getRangeTo(spawn) - a.pos.getRangeTo(spawn));
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getPrioritizedHealTargets(room: Room) {
-        return room.find(FIND_MY_CREEPS).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
-    }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getPrioritizedRepairTargets(room: Room) {
-        return room.find(FIND_STRUCTURES).filter(s => s.structureType !== STRUCTURE_WALL).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getPrioritizedHealTargets(office: Office) {
+        return office.center.room.find(FIND_MY_CREEPS).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
     }
 }

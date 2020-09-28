@@ -1,3 +1,4 @@
+import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
@@ -11,8 +12,9 @@ export type Depot = {
 }
 
 export class ControllerAnalyst extends Analyst {
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    calculateBestContainerLocation(room: Room) {
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    calculateBestContainerLocation(office: Office) {
+        let room = office.center.room;
         if (!room.controller) return null;
         let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
@@ -30,9 +32,9 @@ export class ControllerAnalyst extends Analyst {
             });
         return candidate?.pos;
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getDesignatedUpgradingLocations(room: Room) {
-        let upgradeDepotFlag = Object.values(Game.flags)
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getDesignatedUpgradingLocations(office: Office) {
+        let upgradeDepotFlag = office.center.room.find(FIND_FLAGS)
             .find(flag => flag.name === 'upgradeDepot');
         if (!upgradeDepotFlag) return null;
         let depot: Depot = {
@@ -46,5 +48,11 @@ export class ControllerAnalyst extends Analyst {
             }
         });
         return depot;
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getReservingControllers(office: Office) {
+        return office.territories
+            .filter(t => t.room.controller)
+            .map(t => t.room.controller) as StructureController[]
     }
 }

@@ -1,9 +1,10 @@
 
 import { Office } from "Office/Office";
-import { MinerMinion } from "requests/types/minions/MinerMinion";
+import { SalesmanMinion } from "MinionRequests/minions/SalesmanMinion";
 import { Memoize } from "typescript-memoize";
 import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
+import { off } from "process";
 
 export type Franchise = {
     pos: RoomPosition,
@@ -15,25 +16,24 @@ export type Franchise = {
 }
 
 export class SalesAnalyst extends Analyst {
-    @Memoize((container: StructureContainer) => ('' + container.id + Game.time))
-    isMineContainer(container: StructureContainer) {
-        return this.getFranchiseLocations(container.room).some(mine => mine.container === container)
-    }
-    @Memoize((room: Room) => ('' + room.name))
-    calculateBestMiningLocations(room: Room) {
+    @Memoize((office: Office) => ('' + office.name))
+    calculateBestMiningLocations(office: Office) {
         let locations: {source: Source, route: PathFinderPath}[] = [];
-        let sources = room.find(FIND_SOURCES);
-        let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
-        let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
+        let spawn = global.analysts.spawn.getSpawns(office)[0];
+        let territories = [office.center, ...office.territories]
 
-        sources.map(source => {
-            let route = PathFinder.search(source.pos, target);
-            if (route) locations.push({source, route});
-            return {
-                source,
-                route
-            }
+        territories.forEach(t => {
+            let sources = t.room.find(FIND_SOURCES);
+            locations.push(...sources.map(source => {
+                let route = PathFinder.search(source.pos, spawn.pos);
+                if (route) locations.push({source, route});
+                return {
+                    source,
+                    route
+                }
+            }))
         })
+
         // Sorted by distance from spawn
         return locations.sort((a, b) => (a.route.cost - b.route.cost)).map(s => ({
             pos: s.route.path[0],
@@ -62,13 +62,14 @@ export class SalesAnalyst extends Analyst {
                 return mine;
             });
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getSources (room: Room) {
-        return room.find(FIND_SOURCES);
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getSources (office: Office) {
+        let territories = [office.center, ...office.territories]
+        return territories.map(t => t.room.find(FIND_SOURCES)).reduce((a, b) => (a.concat(b)), []);
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getUntappedSources(room: Room) {
-        return this.getSources(room).filter(source => {
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getUntappedSources(office: Office) {
+        return this.getSources(office).filter(source => {
             // Assume all creeps adjacent to a source are actively working it
             if (source.pos.findInRange(FIND_CREEPS, 1)
                 .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0) >= 10) {
@@ -81,13 +82,13 @@ export class SalesAnalyst extends Analyst {
             return true;
         })
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getMaxEffectiveInput(room: Room) {
-        let minionWorkParts = new MinerMinion().scaleMinion(room.energyCapacityAvailable)
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getMaxEffectiveInput(office: Office) {
+        let minionWorkParts = new SalesmanMinion().scaleMinion(office.center.room.energyCapacityAvailable)
                                                .filter(p => p === WORK).length;
 
         // Max energy output per tick
-        return 2 * this.getSources(room).reduce((sum, source) => (
+        return 2 * this.getSources(office).reduce((sum, source) => (
             sum + Math.max(
                 5,
                 minionWorkParts * global.analysts.map.calculateAdjacentPositions(source.pos)
@@ -95,13 +96,13 @@ export class SalesAnalyst extends Analyst {
             )),
         0)
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getMinimumMiners(room: Room) {
-        let minionWorkParts = new MinerMinion().scaleMinion(room.energyCapacityAvailable)
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getMinimumMiners(office: Office) {
+        let minionWorkParts = new SalesmanMinion().scaleMinion(office.center.room.energyCapacityAvailable)
                                                .filter(p => p === WORK).length;
 
         // Theoretical minimum number of miners to max out all sources, working simultaneously
-        return this.getSources(room).reduce((sum, source) => (
+        return this.getSources(office).reduce((sum, source) => (
             sum + Math.max(
                 5,
                 Math.max(
@@ -111,13 +112,5 @@ export class SalesAnalyst extends Analyst {
                 )
             )),
         0)
-    }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getPioneers(room: Room) {
-        return room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'PIONEER')
-    }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getMiners(room: Room) {
-        return room.find(FIND_MY_CREEPS).filter(c => c.memory.type === 'MINER')
     }
 }

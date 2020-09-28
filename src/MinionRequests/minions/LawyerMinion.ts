@@ -1,8 +1,8 @@
-export class UpgraderMinion {
+export class LawyerMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
         if (scale.length === 0) return false;
-        return spawn.spawnCreep(scale, `upgrader${Game.time}`, {
+        return spawn.spawnCreep(scale, `lawyer${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
@@ -20,7 +20,7 @@ export class UpgraderMinion {
         return {
             favoredTasks: ['UpgradeTask'],
             ...memory,
-            type: 'UPGRADER'
+            type: 'LAWYER'
         };
     }
 }

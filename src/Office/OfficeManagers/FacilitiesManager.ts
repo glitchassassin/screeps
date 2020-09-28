@@ -1,5 +1,5 @@
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
+import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { BuildTask } from "tasks/types/BuildTask";
 import { RepairTask } from "tasks/types/RepairTask";
@@ -45,7 +45,7 @@ export class FacilitiesManager extends OfficeManager {
                     jobs += this.submitBuildOrders(2 - jobs);
                 }
                 if (jobs > 0 && this.handymen.length < 1) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.BUILDER))
+                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN))
                 }
                 return;
             }
@@ -58,7 +58,7 @@ export class FacilitiesManager extends OfficeManager {
                     jobs += this.submitBuildOrders(5 - jobs);
                 }
                 if (jobs > 0 && this.handymen.length < (jobs / 2)) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.BUILDER))
+                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
                 }
                 return;
             }
@@ -71,7 +71,7 @@ export class FacilitiesManager extends OfficeManager {
                     jobs += this.submitBuildOrders(5 - jobs);
                 }
                 if (jobs > 0 && this.handymen.length < jobs) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.BUILDER))
+                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN))
                 }
                 return;
             }

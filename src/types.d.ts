@@ -47,7 +47,7 @@ interface Memory {
       limit: number,
       used: number
     },
-    rooms: {[id: string]: {
+    offices: {[id: string]: {
       taskManagement: {
         tasks: {[id: string]: number},
         requests: {[id: string]: number},
@@ -74,18 +74,11 @@ declare namespace NodeJS {
       logistics: import('./analysts/LogisticsAnalyst').LogisticsAnalyst,
       map: import('./analysts/MapAnalyst').MapAnalyst,
       sales: import('./analysts/SalesAnalyst').SalesAnalyst,
-      spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
+      spawn: import('./analysts/HRAnalyst').HRAnalyst,
       facilities: import('./analysts/FacilitiesAnalyst').FacilitiesAnalyst,
       defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
       grafana: import('./analysts/GrafanaAnalyst').GrafanaAnalyst,
       statistics: import('./analysts/StatisticsAnalyst').StatisticsAnalyst,
-    };
-    managers: {
-      logistics: import('./managers/LogisticsManager').LogisticsManager,
-      controller: import('./managers/ControllerManager').ControllerManager,
-      source: import('./managers/SourceManager').SourceManager,
-      builder: import('./managers/BuilderManager').BuilderManager,
-      defense: import('./managers/DefenseManager').DefenseManager,
     };
     supervisors: {
       [id: string]: {

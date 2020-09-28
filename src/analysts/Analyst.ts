@@ -1,6 +1,8 @@
+import { Office } from "Office/Office"
+
 export class Analyst {
-    load = (room: Room) => {}
-    init = (room: Room) => {}
-    run = (room: Room) => {}
-    cleanup = (room: Room) => {}
+    load = (office: Office) => {}
+    init = (office: Office) => {}
+    run = (office: Office) => {}
+    cleanup = (office: Office) => {}
 }

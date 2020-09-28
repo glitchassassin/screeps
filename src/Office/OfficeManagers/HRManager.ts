@@ -1,7 +1,6 @@
-import { SpawnAnalyst, SpawnData } from "analysts/SpawnAnalyst";
 import { deserialize, serialize } from "class-transformer";
 import { OfficeManager } from "Office/OfficeManager";
-import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
+import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 
 export class HRManager extends OfficeManager {

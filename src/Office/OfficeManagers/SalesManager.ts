@@ -1,6 +1,6 @@
 import { Franchise, SalesAnalyst } from "analysts/SalesAnalyst";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { MinionRequest, MinionTypes } from "requests/types/MinionRequest";
+import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { Task } from "tasks/Task";
 import { HarvestTask } from "tasks/types/HarvestTask";
 import { TravelTask } from "tasks/types/TravelTask";
@@ -18,64 +18,38 @@ export class SalesManager extends OfficeManager {
                 return;
             }
             case OfficeManagerStatus.MINIMAL: {
-                // There is no "minimal" level for income,
-                // so this
-                // falls through
-            }
-            case OfficeManagerStatus.NORMAL: {
-                // Maintains one miner per source, if
-                // containers are implemented, or spawns
-                // interns indefinitely otherwise
-                let jobs = this.submitRepairOrders(5);
-                if (jobs < 5) {
-                    jobs += this.submitBuildOrders(5 - jobs);
-                }
-                if (jobs > 0 && this.handymen.length < (jobs / 2)) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.BUILDER))
-                }
+                // Spawn Interns indefinitely
+                this.office.submit(new MinionRequest(`${this.office.name}_SourceManager`, 10, MinionTypes.INTERN, {}));
                 return;
             }
-            case OfficeManagerStatus.PRIORITY: {
-                // Dedicate extra resources to
-                // new construction, performing
-                // repairs if needed.
-                let jobs = this.submitRepairOrders(5);
-                if (jobs < 5) {
-                    jobs += this.submitBuildOrders(5 - jobs);
-                }
-                if (jobs > 0 && this.handymen.length < jobs) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.BUILDER))
-                }
-                return;
-            }
-        }
-
-        // Do we have containers set up yet?
-        if (this.franchises.length > 0 && this.franchises.every(franchise => franchise.container)) {
-            // If so, make sure we have dedicated salesmen spawned
-            this.franchises.forEach(franchise => {
-                if (franchise.salesmen.length === 0) {
-                    this.office.submit(new MinionRequest(franchise.id, 10, MinionTypes.MINER, {
-                        source: franchise.id,
-                        ignoresRequests: true
-                    }))
-                } else {
-                    let newestMiner = franchise.salesmen.reduce((a, b) => ((a.ticksToLive || 1500) > (b.ticksToLive || 1500) ? a : b));
-                    if (newestMiner.ticksToLive &&
-                        newestMiner.memory.arrived &&
-                        newestMiner.ticksToLive <= Math.min(50, newestMiner.memory.arrived)
-                    ) {
-                        this.office.submit(new MinionRequest(franchise.id, 10, MinionTypes.MINER, {
+            default: {
+                // Maintains one Salesman per source,
+                // respawning with a little lead time
+                // to minimize downtime
+                this.franchises.forEach(franchise => {
+                    if (franchise.salesmen.length === 0) {
+                        // No salesmen at the franchise: spawn one
+                        this.office.submit(new MinionRequest(franchise.id, 10, MinionTypes.SALESMAN, {
                             source: franchise.id,
                             ignoresRequests: true
                         }))
+                    } else {
+                        // At least one salesman is assigned here; if the
+                        // newest one is dying soon, spawn a new one.
+                        let newestSalesman = franchise.salesmen.reduce((a, b) => ((a.ticksToLive || 1500) > (b.ticksToLive || 1500) ? a : b));
+                        if (newestSalesman.ticksToLive &&
+                            newestSalesman.memory.arrived &&
+                            newestSalesman.ticksToLive <= Math.min(50, newestSalesman.memory.arrived)
+                        ) {
+                            this.office.submit(new MinionRequest(franchise.id, 10, MinionTypes.SALESMAN, {
+                                source: franchise.id,
+                                ignoresRequests: true
+                            }))
+                        }
                     }
-                }
 
-            })
-        } else {
-            // Otherwise, just keep spawning pioneer minions
-            this.office.submit(new MinionRequest(`${this.office.name}_SourceManager`, 10, MinionTypes.PIONEER, {}))
+                })
+            }
         }
     }
     run() {

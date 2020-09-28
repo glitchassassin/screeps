@@ -1,4 +1,4 @@
-import { Request } from "requests/Request";
+import { Request } from "MinionRequests/Request";
 
 export class Manager {
     load = (room: Room) => {}

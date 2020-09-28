@@ -3,35 +3,21 @@ import profiler from 'screeps-profiler';
 import { ErrorMapper } from "utils/ErrorMapper";
 import { ControllerArchitect } from 'architects/ControllerArchitect';
 import { SourceArchitect } from 'architects/SourceArchitect';
-import { SourceManager } from 'managers/SourceManager';
-import { SpawnSupervisor } from 'supervisors/SpawnSupervisor';
-import { TaskSupervisor } from 'supervisors/TaskSupervisor';
 import { LogisticsAnalyst } from 'analysts/LogisticsAnalyst';
-import { ControllerManager } from 'managers/ControllerManager';
-import { SpawnAnalyst } from 'analysts/SpawnAnalyst';
+import { HRAnalyst } from 'analysts/HRAnalyst';
 import { ControllerAnalyst } from 'analysts/ControllerAnalyst';
 import { MapAnalyst } from 'analysts/MapAnalyst';
 import { SalesAnalyst } from 'analysts/SalesAnalyst';
-import { BuilderManager } from 'managers/BuilderManager';
 import { FacilitiesAnalyst } from 'analysts/FacilitiesAnalyst';
-import { LogisticsManager } from 'managers/LogisticsManager';
 import { DefenseAnalyst } from 'analysts/DefenseAnalyst';
-import { DefenseManager } from 'managers/DefenseManager';
 import { GrafanaAnalyst } from 'analysts/GrafanaAnalyst';
 import { StatisticsAnalyst } from 'analysts/StatisticsAnalyst';
 import { RoadArchitect } from 'architects/RoadArchitect';
 import { Boardroom } from 'Boardroom/Boardroom';
 
-global.managers = {
-  logistics: new LogisticsManager(),
-  source: new SourceManager(),
-  controller: new ControllerManager(),
-  builder: new BuilderManager(),
-  defense: new DefenseManager(),
-}
 global.analysts = {
   logistics: new LogisticsAnalyst(),
-  spawn: new SpawnAnalyst(),
+  spawn: new HRAnalyst(),
   controller: new ControllerAnalyst(),
   map: new MapAnalyst(),
   sales: new SalesAnalyst(),

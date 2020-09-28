@@ -1,4 +1,4 @@
-import { MinionRequest } from "requests/types/MinionRequest";
+import { MinionRequest } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "tasks/TaskRequest";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
@@ -70,7 +70,7 @@ export class Office {
         if (this.center.room.controller?.level === 1) {
             // If RCL 1, focus on sources and controllers
             facilities?.setStatus(OfficeManagerStatus.OFFLINE);
-            sales?.setStatus(OfficeManagerStatus.PRIORITY);
+            sales?.setStatus(OfficeManagerStatus.MINIMAL);
             legal?.setStatus(OfficeManagerStatus.NORMAL);
         } else if (
             this.center.room.controller?.level === 2 &&
@@ -78,7 +78,7 @@ export class Office {
         ) {
             // If RCL2 and infrastructure is incomplete, focus on construction
             facilities?.setStatus(OfficeManagerStatus.NORMAL);
-            sales?.setStatus(OfficeManagerStatus.NORMAL);
+            sales?.setStatus(OfficeManagerStatus.MINIMAL);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
         } else if (
             this.center.room.controller?.level === 2

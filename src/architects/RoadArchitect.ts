@@ -1,4 +1,5 @@
 import { Transform } from 'class-transformer';
+import { Office } from 'Office/Office';
 import { transformRoomPosition } from 'utils/transformGameObject';
 import { Architect } from './Architect';
 
@@ -43,15 +44,15 @@ const roadPlannerCallback = (roomName: string) => {
 export class RoadArchitect extends Architect {
     roads: Road[] = []
 
-    init = (room: Room) => {
+    plan(office: Office) {
         // Only re-check infrastructure every `n` ticks (saves CPU)
         if (this.roads.length !== 0 && Game.time % 50 !== 0) return;
 
         if (this.roads.length === 0) {
             // Draw roads between spawn and sources
-            let spawn = global.analysts.spawn.getSpawns(room)[0];
-            global.analysts.sales.getFranchiseLocations(room).forEach(mine => {
-                this.roads.push(new Road(PathFinder.search(spawn.pos, mine.pos, {
+            let spawn = global.analysts.spawn.getSpawns(office)[0];
+            global.analysts.sales.getFranchiseLocations(office).forEach(franchise => {
+                this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
                     swampCost: 1,
                     maxOps: 3000,
                     roomCallback: roadPlannerCallback
@@ -63,12 +64,5 @@ export class RoadArchitect extends Architect {
         if (road?.status === "PENDING") {
             road.build();
         }
-    }
-    run = (room: Room) => {
-        this.roads.forEach(road => {
-            if (!road.isBuilt()) {
-                new RoomVisual(room.name).poly(road.path, {stroke: '#fff', lineStyle: 'dashed'})
-            }
-        })
     }
 }

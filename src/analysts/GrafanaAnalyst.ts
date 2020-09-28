@@ -1,3 +1,7 @@
+import { Boardroom } from "Boardroom/Boardroom";
+import { Office } from "Office/Office";
+import { HRManager } from "Office/OfficeManagers/HRManager";
+import { TaskManager } from "Office/OfficeManagers/TaskManager";
 import { stringify } from "querystring";
 import { Analyst } from "./Analyst";
 
@@ -10,55 +14,60 @@ export class GrafanaAnalyst extends Analyst {
             attacking: number,
         }
     } = {};
-    load = (room: Room) => {
-        this.deltas[room.name] = {
+    load = (office: Office) => {
+        this.deltas[office.name] = {
             building: 0,
             repairing: 0,
             healing: 0,
             attacking: 0,
         }
     }
-    reportBuild(room: Room, delta: number) {
-        this.deltas[room.name].building += delta;
+    reportBuild(office: Office, delta: number) {
+        this.deltas[office.name].building += delta;
     }
-    reportRepair(room: Room, delta: number) {
-        this.deltas[room.name].repairing += delta;
+    reportRepair(office: Office, delta: number) {
+        this.deltas[office.name].repairing += delta;
     }
-    reportHeal(room: Room, delta: number) {
-        this.deltas[room.name].healing += delta;
+    reportHeal(office: Office, delta: number) {
+        this.deltas[office.name].healing += delta;
     }
-    reportAttack(room: Room, delta: number) {
-        this.deltas[room.name].attacking += delta;
+    reportAttack(office: Office, delta: number) {
+        this.deltas[office.name].attacking += delta;
     }
-    pipelineMetrics(room: string) {
-        let destinationContainers = global.analysts.logistics.getContainers(Game.rooms[room]).filter(c => !global.analysts.sales.isMineContainer(c))
-        let storage = global.analysts.logistics.getStorage(Game.rooms[room]);
+    pipelineMetrics(office: Office) {
+        let upgradeDepot = global.analysts.controller.getDesignatedUpgradingLocations(office)?.container
+        let storage = global.analysts.logistics.getStorage(office);
         return {
-            sourcesLevel: global.analysts.sales.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energy), 0),
-            sourcesMax: global.analysts.sales.getSources(Game.rooms[room]).reduce((sum, source) => (sum + source.energyCapacity), 0),
-            mineContainersLevel: global.analysts.sales.getFranchiseLocations(Game.rooms[room])
-            .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
-            mineContainersMax: global.analysts.sales.getFranchiseLocations(Game.rooms[room])
-            .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
-            destinationContainersLevel: [...storage, ...destinationContainers].reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
-            destinationContainersMax: [...storage, ...destinationContainers].reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),
-            roomEnergyLevel: Game.rooms[room].energyAvailable,
-            roomEnergyMax: Game.rooms[room].energyCapacityAvailable,
-            buildDelta: this.deltas[room].building,
-            repairDelta: this.deltas[room].repairing,
-            healDelta: this.deltas[room].healing,
-            attackDelta: this.deltas[room].attacking,
+            sourcesLevel: global.analysts.sales.getSources(office).reduce((sum, source) => (sum + source.energy), 0),
+            sourcesMax: global.analysts.sales.getSources(office).reduce((sum, source) => (sum + source.energyCapacity), 0),
+            mineContainersLevel: global.analysts.sales.getFranchiseLocations(office)
+                .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
+            mineContainersMax: global.analysts.sales.getFranchiseLocations(office)
+                .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
+            storageLevel: storage.reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
+            storageMax: storage.reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),
+            upgradeDepotLevel: upgradeDepot?.store.energy || 0,
+            upgradeDepotMax: upgradeDepot?.store.getCapacity() || 0,
+            roomEnergyLevel: office.center.room.energyAvailable,
+            roomEnergyMax: office.center.room.energyCapacityAvailable,
+            buildDelta: this.deltas[office.name].building,
+            repairDelta: this.deltas[office.name].repairing,
+            healDelta: this.deltas[office.name].healing,
+            attackDelta: this.deltas[office.name].attacking,
         }
     }
-    taskManagementMetrics(room: string) {
+    taskManagementMetrics(office: Office) {
+        let taskManager = office.managers.get('TaskManager') as TaskManager;
+        if (!taskManager) return {tasks: {}, requests: {}};
+
         let taskCount: {[id: string]: number} = {};
-        global.supervisors[room].task.tasks.forEach(t => {
+        taskManager.tasks.forEach(t => {
             let name = t.actions[0].constructor.name;
             taskCount[name] = 1 + (taskCount[name] || 0);
         });
 
         let requestCount: {[id: string]: number} = {};
-        global.supervisors[room].task.getRequestsFlattened().forEach(r => {
+        taskManager.getRequestsFlattened().forEach(r => {
             if (!r.task) return;
             let name = r.task.constructor.name;
             requestCount[name] = 1 + (requestCount[name] || 0);
@@ -68,8 +77,8 @@ export class GrafanaAnalyst extends Analyst {
             requests: requestCount
         }
     }
-    exportStats() {
-        const rooms: {[id: string]: {
+    exportStats(boardroom: Boardroom) {
+        const stats: {[id: string]: {
             taskManagement: {
                 tasks: {[id: string]: number},
                 requests: {[id: string]: number},
@@ -82,18 +91,17 @@ export class GrafanaAnalyst extends Analyst {
             controllerProgressTotal: number;
             controllerLevel: number; }
         } = {};
-        for (let roomName in Game.rooms) {
-            let room = Game.rooms[roomName];
-            if (room.controller?.my) {
-                rooms[roomName] = {
-                    taskManagement: this.taskManagementMetrics(roomName),
-                    pipelineMetrics: this.pipelineMetrics(roomName),
-                    controllerProgress: room.controller.progress,
-                    controllerProgressTotal: room.controller.progressTotal,
-                    controllerLevel: room.controller.level,
+        boardroom.offices.forEach(office => {
+            if (office.center.room.controller?.my) {
+                stats[office.name] = {
+                    taskManagement: this.taskManagementMetrics(office),
+                    pipelineMetrics: this.pipelineMetrics(office),
+                    controllerProgress: office.center.room.controller.progress,
+                    controllerProgressTotal: office.center.room.controller.progressTotal,
+                    controllerLevel: office.center.room.controller.level,
                 }
             }
-        }
+        })
         // Reset stats object
         Memory.stats = {
             gcl: {
@@ -101,7 +109,7 @@ export class GrafanaAnalyst extends Analyst {
                 progressTotal: Game.gcl.progressTotal,
                 level: Game.gcl.level,
             },
-            rooms,
+            offices: stats,
             cpu: {
                 bucket: Game.cpu.bucket,
                 limit: Game.cpu.limit,

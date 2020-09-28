@@ -1,8 +1,8 @@
-export class PioneerMinion {
+export class InternMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
         if (scale.length === 0) return false;
-        return spawn.spawnCreep(scale, `pioneer${Game.time}`, {
+        return spawn.spawnCreep(scale, `intern${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
@@ -17,7 +17,7 @@ export class PioneerMinion {
     buildMinion = (memory: CreepMemory) => {
         return {
             ...memory,
-            type: 'PIONEER'
+            type: 'INTERN'
         };
     }
 }
