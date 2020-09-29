@@ -16,7 +16,7 @@ export class Road {
     }
 
     isBuilt() {
-        if (this.path.every(pos => pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_ROAD).length > 0)) {
+        if (this.path.every(pos => Game.rooms[pos.roomName] && pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_ROAD).length > 0)) {
             this.status = "DONE";
         }
         return (this.status === "DONE")

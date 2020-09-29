@@ -15,7 +15,7 @@ export class SourceArchitect extends OfficeManager {
         if (this.office.center.room.controller?.level && this.office.center.room.controller.level > 1) {
             // When available, lay out containers on mining locations
             this.mines.forEach(mine => {
-                if (!mine.container && !mine.constructionSite) {
+                if (Game.rooms[mine.pos.roomName] && !mine.container && !mine.constructionSite) {
                     mine.pos.createConstructionSite(STRUCTURE_CONTAINER);
                 }
             })

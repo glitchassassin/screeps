@@ -34,8 +34,8 @@ function mainLoop() {
     }
   }
 
-
-  // Execute Boardroom plan phase
+  try {
+    // Execute Boardroom plan phase
   global.boardroom.plan()
   // Execute Boardroom cleanup phase
   global.boardroom.cleanup()
@@ -50,6 +50,10 @@ function mainLoop() {
   });
 
   (global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst).exportStats();
+  } catch(e) {
+    console.log(e, e.stack)
+  }
+
 
   if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
     console.log("Pixel unlocked");

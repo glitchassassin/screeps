@@ -1,5 +1,5 @@
 import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
-import { Transform, TransformationType, Type } from "class-transformer";
+import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { assert } from "console";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { transformGameObject } from "utils/transformGameObject";
@@ -25,16 +25,18 @@ export class RepairTask extends TaskAction {
         ]
     }
     message = "🛠";
+    destinationId: Id<Structure>|null = null
 
-    @Type(() => Structure)
-    @Transform(transformGameObject(Structure))
-    destination: Structure|null = null
+    @Exclude()
+    public get destination() : Structure|null {
+        return this.destinationId && Game.getObjectById(this.destinationId)
+    }
 
     constructor(
         destination: Structure|null = null,
     ) {
         super();
-        this.destination = destination;
+        this.destinationId = destination?.id || null;
     }
     toString() {
         return `[RepairTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
@@ -47,9 +49,8 @@ export class RepairTask extends TaskAction {
 
         let result = creep.repair(this.destination);
         if (result === ERR_NOT_ENOUGH_ENERGY) {
-            TaskActionResult.SUCCESS;
+            return TaskActionResult.SUCCESS;
         } else if (result !== OK){
-            console.log('repair', result);
             return TaskActionResult.FAILED;
         }
         grafanaAnalyst.reportRepair(creep.memory.office||'', Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))

@@ -30,7 +30,7 @@ export class MapAnalyst extends BoardroomManager {
         if (terrain.get(pos.x, pos.y) === TERRAIN_MASK_WALL) {
             return false;
         }
-        if (pos.look().some(obj => (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.type))) {
+        if (Game.rooms[pos.roomName] && pos.look().some(obj => (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.type))) {
             return false;
         }
         return true;

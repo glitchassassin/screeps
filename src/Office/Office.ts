@@ -28,7 +28,7 @@ export class Office {
         this.center = new RoomIntelligence(roomName);
         this.territories = Object.values(Game.map.describeExits(roomName))
                                  .filter(room => room)
-                                 .map(room => new RoomIntelligence(room as string))
+                                 .map(room => new TerritoryIntelligence(room as string))
 
         // Initialize Memory
         if (!Memory.offices[roomName]) {
