@@ -20,7 +20,7 @@ export class MapAnalyst extends BoardroomManager {
     calculateNearbyPositions(pos: RoomPosition, proximity: number) {
         let adjacent: RoomPosition[] = [];
         adjacent = this.calculateAdjacencyMatrix(proximity)
-            .map(offset => Game.rooms[pos.roomName].getPositionAt(pos.x + offset.x, pos.y + offset.y))
+            .map(offset => new RoomPosition(pos.x + offset.x, pos.y + offset.y, pos.roomName))
             .filter(roomPos => roomPos !== null) as RoomPosition[]
         return adjacent;
     }

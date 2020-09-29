@@ -64,7 +64,7 @@ export class TaskManager extends OfficeManager {
     run() {
         // Assign requests
         let requests = _.shuffle(this.getRequestsFlattened()
-            .filter(t => t.task?.valid() && outputOfTasks(this.getAssociatedTasks(t)) < t.capacity))
+            .filter(t => t.task?.valid() && (outputOfTasks(this.getAssociatedTasks(t)) < t.capacity || t.capacity === 0)))
 
         let priorities = new Map<number, TaskRequest[]>();
 
@@ -141,6 +141,7 @@ export class TaskManager extends OfficeManager {
             requests,
             creeps,
             (taskRequest, creep) => {
+                if (taskRequest.task?.action.constructor.name === 'ExploreTask') console.log('resolving ExploreTask');
                 let paths = resolveTaskTrees({
                     output: 0,
                     creep,
@@ -165,6 +166,7 @@ export class TaskManager extends OfficeManager {
                 }
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 2 : 1;
+                if (taskRequest.task?.action.constructor.name === 'ExploreTask') console.log('ExploreTask', JSON.stringify(bestPlan));
                 return {
                     rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
                     output: bestPlan
@@ -213,9 +215,9 @@ export class TaskManager extends OfficeManager {
         const taskTable = [['Source', 'Goal', 'Current Step', 'Minion', 'Predicted Cost']];
         taskTable.push(
             ...this.tasks.map(t => ([
-                Game.getObjectById(t.sourceId as Id<any>)?.toString() || '',
-                t.actions[t.actions.length - 1].constructor.name || '',
-                t.actions[0].constructor.name || '',
+                Game.getObjectById(t.sourceId as Id<any>)?.toString() || t.sourceId,
+                t.actions[t.actions.length - 1].toString(),
+                t.actions[0].toString(),
                 t.creep?.name || '',
                 t.cost
             ]))
@@ -232,8 +234,8 @@ export class TaskManager extends OfficeManager {
             ...requests.map(r => {
                 let assignedTasks = this.getAssociatedTasks(r);
                 return [
-                    Game.getObjectById(r.sourceId as Id<any>)?.toString() || '',
-                    r.task?.constructor.name || '',
+                    Game.getObjectById(r.sourceId as Id<any>)?.toString() || r.sourceId,
+                    r.task?.toString(),
                     r.priority,
                     r.capacity,
                     assignedTasks.length,

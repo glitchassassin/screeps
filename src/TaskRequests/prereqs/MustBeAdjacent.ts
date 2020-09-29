@@ -3,6 +3,7 @@ import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
 import { TravelTask } from "TaskRequests/types/TravelTask";
 import { Task } from "TaskRequests/Task";
+import { transformRoomPosition } from "utils/transformGameObject";
 
 /**
  * Checks if minion is adjacent to a given position
@@ -10,12 +11,7 @@ import { Task } from "TaskRequests/Task";
  * @param pos Get reference when prerequisite is checked
  */
 export class MustBeAdjacent extends TaskPrerequisite {
-    @Transform((value, obj, type) => {
-        if (type === TransformationType.PLAIN_TO_CLASS) {
-            return Game.rooms[value.roomName].getPositionAt(value.x, value.y);
-        }
-        return obj;
-    })
+    @Transform(transformRoomPosition)
     pos: RoomPosition
     distance: number
     constructor(

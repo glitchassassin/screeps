@@ -49,6 +49,7 @@ export class RepairTask extends TaskAction {
         if (result === ERR_NOT_ENOUGH_ENERGY) {
             TaskActionResult.SUCCESS;
         } else if (result !== OK){
+            console.log('repair', result);
             return TaskActionResult.FAILED;
         }
         grafanaAnalyst.reportRepair(creep.memory.office||'', Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))

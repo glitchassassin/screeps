@@ -28,6 +28,13 @@ interface Memory {
   hr: {
     [officeName: string]: string
   };
+  offices: {
+    [name: string]: {
+      franchiseLocations: {
+        [sourceId: string]: RoomPosition
+      }
+    }
+  }
   tasks: {
     [officeName: string]: {
       tasks: string,

@@ -23,6 +23,7 @@ export class Boardroom {
         if (!Memory.rooms) Memory.rooms = {};
         if (!Memory.creeps) Memory.creeps = {};
         if (!Memory.metrics) Memory.metrics = {};
+        if (!Memory.offices) Memory.offices = {};
         if (!Memory.hr) Memory.hr = {};
         if (!Memory.tasks) Memory.tasks = {};
 

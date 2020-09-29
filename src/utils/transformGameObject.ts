@@ -13,7 +13,7 @@ export const transformGameObject = (ObjectType: Function) => (value: any, obj: a
 export const transformRoomPosition = (value: any, obj: any, type: any) => {
     switch(type) {
         case TransformationType.PLAIN_TO_CLASS:
-            return value ? Game.rooms[value.roomName].getPositionAt(value.x, value.y) : null;
+            return value ? new RoomPosition(value.x, value.y, value.roomName) : null;
         case TransformationType.CLASS_TO_PLAIN:
             return value ? {
                 x: value.x,

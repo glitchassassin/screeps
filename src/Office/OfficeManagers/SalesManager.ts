@@ -5,6 +5,8 @@ import { HarvestTask } from "TaskRequests/types/HarvestTask";
 import { TravelTask } from "TaskRequests/types/TravelTask";
 import { TaskManager } from "./TaskManager";
 import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { TaskRequest } from "TaskRequests/TaskRequest";
+import { ExploreTask } from "TaskRequests/types/ExploreTask";
 
 export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];
@@ -21,6 +23,13 @@ export class SalesManager extends OfficeManager {
             case OfficeManagerStatus.MINIMAL: {
                 // Spawn Interns indefinitely
                 this.office.submit(new MinionRequest(`${this.office.name}_SourceManager`, 10, MinionTypes.INTERN, {}));
+                // Scout surrounding Territories, if needed
+                let unexplored = this.office.territories.filter(t => !t.room);
+                if (unexplored.length > 0) {
+                    unexplored.forEach(territory => {
+                        this.office.submit(new TaskRequest(territory.name, new ExploreTask(new RoomPosition(25, 25, territory.name)), 5))
+                    })
+                }
                 return;
             }
             default: {

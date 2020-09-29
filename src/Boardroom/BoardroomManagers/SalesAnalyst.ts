@@ -16,57 +16,47 @@ export type Franchise = {
 }
 
 export class SalesAnalyst extends BoardroomManager {
-    @Memoize((office: Office) => ('' + office.name))
-    calculateBestMiningLocations(office: Office) {
+    franchises: Franchise[] = [];
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    calculateBestMiningLocation(office: Office, sourcePos: RoomPosition) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let locations: {source: Source, route: PathFinderPath}[] = [];
         let spawn = hrAnalyst.getSpawns(office)[0];
-        let territories = [office.center, ...office.territories]
-
-        console.log('territories', JSON.stringify(territories))
-
-        territories.forEach(t => {
-            let sources = t.room?.find(FIND_SOURCES) || [];
-            console.log(t.name, sources.length)
-            sources.forEach(source => {
-                let route = PathFinder.search(source.pos, spawn.pos);
-                if (route) locations.push({source, route});
-                return {
-                    source,
-                    route
-                }
-            });
-        })
-
-        // Sorted by distance from spawn
-        return locations.sort((a, b) => (a.route.cost - b.route.cost)).map(s => ({
-            pos: s.route.path[0],
-            sourceId: s.source.id
-        }));
+        let route = PathFinder.search(sourcePos, spawn.pos);
+        if (route.incomplete) throw new Error('Unable to calculate mining location');
+        return route.path[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFranchiseLocations(office: Office) {
         let salesmen = office.employees.filter(creep => creep.memory.type === 'SALESMAN')
         let territories = [office.center, ...office.territories]
-        return territories.map(t => t.room?.find(FIND_FLAGS) || [])
-            .reduce((a, b) => a.concat(b), [])
-            .filter(flag => flag.memory.source)
-            .map(flag => {
-                let mine: Franchise = {
-                    pos: flag.pos,
-                    id: (flag.memory.source as string),
-                    source: Game.getObjectById(flag.memory.source as Id<Source>) || undefined,
-                    salesmen: salesmen.filter(m => m.memory.source === flag.memory.source)
+        // If necessary, add franchise locations for territory
+        territories.forEach(t => {
+            t.sources.forEach((s, id) => {
+                if (!office.franchiseLocations[id]) {
+                    office.franchiseLocations[id] = this.calculateBestMiningLocation(office, s)
                 }
-                flag.pos.look().forEach(obj => {
+            })
+        })
+        // Get memorized franchise locations
+        return Object.entries(office.franchiseLocations).map(([sourceId, pos]) => {
+            let mine: Franchise = {
+                pos,
+                id: sourceId,
+                source: Game.getObjectById(sourceId as Id<Source>) || undefined,
+                salesmen: salesmen.filter(m => m.memory.source === sourceId)
+            }
+            if (Game.rooms[pos.roomName]) {
+                // Requires visibility
+                pos.look().forEach(obj => {
                     if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
                         mine.container = obj.structure as StructureContainer
                     } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
                         mine.constructionSite = obj.constructionSite as ConstructionSite
                     }
                 });
-                return mine;
-            });
+            }
+            return mine;
+        })
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSources (office: Office) {

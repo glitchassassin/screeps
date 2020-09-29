@@ -1,4 +1,5 @@
 import { Exclude, Transform, TransformationType } from "class-transformer";
+import { transformRoomPosition } from "utils/transformGameObject";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
 
@@ -8,12 +9,7 @@ import { TaskPrerequisite } from "../TaskPrerequisite";
  * @param pos Get reference when prerequisite is checked
  */
 export class MustHavePath extends TaskPrerequisite {
-    @Transform((value, obj, type) => {
-        if (type === TransformationType.PLAIN_TO_CLASS) {
-            return Game.rooms[value.roomName].getPositionAt(value.x, value.y);
-        }
-        return obj;
-    })
+    @Transform(transformRoomPosition)
     pos: RoomPosition
     constructor(
         pos: RoomPosition

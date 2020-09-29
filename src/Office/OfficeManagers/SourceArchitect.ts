@@ -11,17 +11,6 @@ export class SourceArchitect extends OfficeManager {
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
         this.mines = salesAnalyst.getFranchiseLocations(this.office);
-        if (this.mines.length == 0)  {
-            // Lay out mining locations
-            console.log('Franchise Locations')
-            salesAnalyst.calculateBestMiningLocations(this.office).forEach((mine, i) => {
-                console.log(JSON.stringify(mine));
-                let flag = mine.pos.createFlag(`source${i}`, COLOR_GREEN);
-                Memory.flags[flag] = {
-                    source: mine.sourceId
-                };
-            })
-        }
 
         if (this.office.center.room.controller?.level && this.office.center.room.controller.level > 1) {
             // When available, lay out containers on mining locations

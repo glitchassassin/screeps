@@ -19,6 +19,7 @@ export class Office {
     name: string;
     center: RoomIntelligence;
     territories: TerritoryIntelligence[] = [];
+    franchiseLocations: {[sourceId: string]: RoomPosition} = {};
     private employeeIds: Set<Id<Creep>> = new Set();
     managers: Map<string, OfficeManager> = new Map();
 
@@ -28,6 +29,19 @@ export class Office {
         this.territories = Object.values(Game.map.describeExits(roomName))
                                  .filter(room => room)
                                  .map(room => new RoomIntelligence(room as string))
+
+        // Initialize Memory
+        if (!Memory.offices[roomName]) {
+            Memory.offices[roomName] = {
+                franchiseLocations: {}
+            }
+        }
+
+        // Load saved franchise locations
+        this.franchiseLocations = Object.entries(Memory.offices[roomName].franchiseLocations).reduce((obj, [sourceId, pos]) => {
+            obj[sourceId] = new RoomPosition(pos.x, pos.y, pos.roomName);
+            return obj;
+        }, {} as {[sourceId: string]: RoomPosition});
 
         // Create Architects
         new ControllerArchitect(this);
@@ -92,6 +106,11 @@ export class Office {
         let facilities = this.managers.get('FacilitiesManager');
         let logistics = this.managers.get('LogisticsManager');
         let security = this.managers.get('SecurityManager');
+
+        // Review territories
+        this.center.scan();
+        this.territories.forEach(t => t.scan());
+
         if (this.center.room.controller?.level === 1) {
             // If RCL 1, focus on sources and controllers
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
@@ -134,6 +153,7 @@ export class Office {
      * Execute run phase for all OfficeManagers
      */
     cleanup() {
+        Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
         this.managers.forEach(m => m.cleanup());
     }
 
@@ -148,9 +168,21 @@ export class Office {
             singleLine: true
         });
 
+        const territoryTable = [
+            ['Territory', 'Status']
+        ];
+        this.territories.forEach(territory => {
+            territoryTable.push([territory.name, territory.scanned ? 'SCANNED' : 'UNKNOWN']);
+        })
+        const territoryTableRendered = table(territoryTable, {
+            singleLine: true
+        });
+
         console.log(`[Office ${this.name}] Status Report:
     <strong>Managers</strong>
-${statusTableRendered}`
+${statusTableRendered}
+    <strong>Managers</strong>
+${territoryTableRendered}`
         )
     }
 }
