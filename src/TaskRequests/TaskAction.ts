@@ -13,5 +13,5 @@ export class TaskAction {
     action(creep: Creep) { return TaskActionResult.SUCCESS; }
     cost(minion: SpeculativeMinion) { return 0; }
     predict(minion: SpeculativeMinion) { return minion; }
-    valid() { return false; }
+    valid() { return true; }
 }

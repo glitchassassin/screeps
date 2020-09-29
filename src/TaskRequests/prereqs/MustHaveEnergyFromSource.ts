@@ -4,6 +4,7 @@ import { Task } from "TaskRequests/Task";
 import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { HarvestTask } from "TaskRequests/types/HarvestTask";
 import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
+import { getCreepHomeOffice } from "utils/gameObjectSelectors";
 import { MustHaveEnergy } from "./MustHaveEnergy";
 
 /**
@@ -21,7 +22,9 @@ export class MustHaveEnergyFromSource extends MustHaveEnergy {
         //     .filter(c => c) as StructureContainer[]
 
         // Get most full mine container only
-        let sourceContainers = (global.analysts.sales.getFranchiseLocations(minion.creep.room)
+        let office = getCreepHomeOffice(minion.creep);
+        if (!office) return [];
+        let sourceContainers = (global.analysts.sales.getFranchiseLocations(office)
             .map(mine => mine.container)
             .filter(c => c) as StructureContainer[])
 

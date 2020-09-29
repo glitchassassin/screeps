@@ -24,7 +24,7 @@ describe("TaskTree", () => {
 
   it("should serialize", () => {
       expect(serialize( new TaskRequest("test", new TaskAction())))
-        .toEqual('{"completed":false,"created":12345,"sourceId":"test","priority":5,"task":{"message":"☑","__type":"TaskAction"}}');
+        .toEqual('{"completed":false,"created":12345,"sourceId":"test","assignedTasks":[],"task":{"message":"☑","__type":"TaskAction"},\"priority\":5,\"capacity\":0}');
   });
 
   it("should deserialize", () => {

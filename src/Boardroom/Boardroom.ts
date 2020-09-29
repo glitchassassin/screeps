@@ -2,7 +2,7 @@ import { Office } from "Office/Office";
 import { BoardroomManager } from "./BoardroomManager";
 
 export class Boardroom {
-    offices: Office[] = [];
+    offices: Map<string, Office> = new Map();
     managers: BoardroomManager[] = [];
 
     /**
@@ -15,12 +15,12 @@ export class Boardroom {
         if (!Memory.creeps) Memory.creeps = {};
         if (!Memory.metrics) Memory.metrics = {};
         if (!Memory.hr) Memory.hr = {};
+        if (!Memory.tasks) Memory.tasks = {};
 
         // Initialize Offices
         Object.values(Game.spawns).forEach(spawn => {
-            if (!this.offices.some(o => o.center.name === spawn.room.name)) {
-                let office = new Office(spawn.room.name);
-                this.offices.push(office);
+            if (!this.offices.get(spawn.room.name)) {
+                this.offices.set(spawn.room.name, new Office(spawn.room.name));
             }
         })
 

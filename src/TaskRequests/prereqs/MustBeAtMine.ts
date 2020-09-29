@@ -3,6 +3,7 @@ import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { Task } from "TaskRequests/Task";
 import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { TravelTask } from "TaskRequests/types/TravelTask";
+import { getCreepHomeOffice } from "utils/gameObjectSelectors";
 import { transformGameObject } from "utils/transformGameObject";
 
 /**
@@ -12,13 +13,17 @@ import { transformGameObject } from "utils/transformGameObject";
  */
 export class MustBeAtMine extends TaskPrerequisite {
     met(minion: SpeculativeMinion) {
-        return global.analysts.sales
-            .getUntappedSources(minion.creep.room)
+        let office = getCreepHomeOffice(minion.creep);
+
+        return !!office && global.analysts.sales
+            .getUntappedSources(office)
             .some(source => minion.pos.inRangeTo(source.pos, 1))
     }
     toMeet(minion: SpeculativeMinion) {
+        let office = getCreepHomeOffice(minion.creep);
+        if (!office) return [];
         let spaces = global.analysts.sales
-            .getUntappedSources(minion.creep.room)
+            .getUntappedSources(office)
             .map(source => new TravelTask(source.pos, 1))
         return spaces;
     }

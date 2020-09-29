@@ -5,6 +5,8 @@ import { Task } from "TaskRequests/Task";
 import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
 import { TaskAction } from './TaskAction';
+import { Boardroom } from 'Boardroom/Boardroom';
+import { Office } from 'Office/Office';
 
 class MockTaskPrerequisite extends TaskPrerequisite {
   constructor(
@@ -27,6 +29,11 @@ describe("resolveTaskTrees", () => {
     mockGlobal<Memory>('Memory', {
       creeps: {},
     }, true)
+    mockGlobal<Boardroom>('boardroom', {
+      offices: {
+        get: (name: string) => new Office(name)
+      }
+    })
   });
 
   it("should run", () => {
@@ -35,7 +42,7 @@ describe("resolveTaskTrees", () => {
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
-      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
+      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>, memory: {office: 'world'}}),
     }
     let result = resolveTaskTrees(minion, new TaskAction())
     assert.isOk(result);
@@ -47,7 +54,7 @@ describe("resolveTaskTrees", () => {
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
-      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
+      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>, memory: {office: 'world'}}),
     }
     let task = new TaskAction();
     task.getPrereqs = () => ([new MockTaskPrerequisite(true)])
@@ -58,7 +65,7 @@ describe("resolveTaskTrees", () => {
     expect(result[0].tasks.length).toEqual(1);
   })
 
-  it("should return null if the task has an un-meetable prerequisite", () => {
+  it("should return an empty array if the task has an un-meetable prerequisite", () => {
     let minion = {
       output: 0,
       capacity: 0,
@@ -69,7 +76,7 @@ describe("resolveTaskTrees", () => {
     let task = new TaskAction();
     task.getPrereqs = () => ([new MockTaskPrerequisite(false)])
     let result = resolveTaskTrees(minion, task)
-    expect(result).toBeNull();
+    expect(result).toEqual([]);
   })
 
   it("should return the task plus prerequisite if the task has a meetable prerequisite", () => {
@@ -78,7 +85,7 @@ describe("resolveTaskTrees", () => {
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
-      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
+      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>, memory: {office: 'world'}}),
     }
     let task = new TaskAction();
     let prereqTask = new TaskAction();
@@ -96,7 +103,7 @@ describe("resolveTaskTrees", () => {
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
-      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
+      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>, memory: {office: 'world'}}),
     }
     let task = new TaskAction();
     let prereqTask = new TaskAction();
@@ -116,7 +123,7 @@ describe("resolveTaskTrees", () => {
       capacity: 0,
       capacityUsed: 0,
       pos: mockInstanceOf<RoomPosition>({x: 0, y: 0, roomName: 'world'}),
-      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>}),
+      creep: mockInstanceOf<Creep>({id: 'creep' as Id<Creep>, memory: {office: 'world'}}),
     }
     let task = new TaskAction();
     task.cost = () => 1;

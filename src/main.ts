@@ -1,8 +1,5 @@
 import 'reflect-metadata';
-import profiler from 'screeps-profiler';
 import { ErrorMapper } from "utils/ErrorMapper";
-import { ControllerArchitect } from 'Office/OfficeManagers/ControllerArchitect';
-import { SourceArchitect } from 'architects/SourceArchitect';
 import { LogisticsAnalyst } from 'Analysts/LogisticsAnalyst';
 import { HRAnalyst } from 'Analysts/HRAnalyst';
 import { ControllerAnalyst } from 'Analysts/ControllerAnalyst';
@@ -12,8 +9,9 @@ import { FacilitiesAnalyst } from 'Analysts/FacilitiesAnalyst';
 import { DefenseAnalyst } from 'Analysts/DefenseAnalyst';
 import { GrafanaAnalyst } from 'Analysts/GrafanaAnalyst';
 import { StatisticsAnalyst } from 'Analysts/StatisticsAnalyst';
-import { RoadArchitect } from 'architects/RoadArchitect';
 import { Boardroom } from 'Boardroom/Boardroom';
+
+const profiler = require('screeps-profiler');
 
 global.analysts = {
   logistics: new LogisticsAnalyst(),
@@ -28,15 +26,17 @@ global.analysts = {
 }
 
 // Initialize memory
+if (!global.IS_JEST_TEST) {
+  console.log(Date.now(), '__buildDate__');
 
-console.log(Date.now(), '__buildDate__');
-
-if (Date.now() - JSON.parse('__buildDate__') < 15000) {
-  // Built less than 15 seconds ago - fresh code push
-  console.log('New code successfully deployed, build time', new Date(JSON.parse('__buildDate__')));
-} else {
-  console.log('Global reset detected');
+  if (Date.now() - JSON.parse('__buildDate__') < 15000) {
+    // Built less than 15 seconds ago - fresh code push
+    console.log('New code successfully deployed, build time', new Date(JSON.parse('__buildDate__')));
+  } else {
+    console.log('Global reset detected');
+  }
 }
+
 
 // Initialize Boardroom
 

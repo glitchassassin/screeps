@@ -68,6 +68,7 @@ interface Memory {
 // `global` extension samples
 declare namespace NodeJS {
   interface Global {
+    IS_JEST_TEST: boolean;
     log: any;
     boardroom: import('./Boardroom/Boardroom').Boardroom;
     analysts: {

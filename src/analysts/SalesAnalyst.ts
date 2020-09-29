@@ -43,7 +43,9 @@ export class SalesAnalyst extends Analyst {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFranchiseLocations(office: Office) {
         let salesmen = office.employees.filter(creep => creep.memory.type === 'SALESMAN')
-        return Object.values(Game.flags)
+        let territories = [office.center, ...office.territories]
+        return territories.map(t => t.room.find(FIND_FLAGS))
+            .reduce((a, b) => a.concat(b), [])
             .filter(flag => flag.memory.source)
             .map(flag => {
                 let mine: Franchise = {

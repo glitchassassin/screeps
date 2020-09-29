@@ -22,9 +22,9 @@ export class WithdrawTask extends TaskAction {
 
     @Type(() => Structure)
     @Transform(transformGameObject(Structure))
-    destination: Structure|Tombstone|null = null;
+    destination: Structure|Tombstone|Resource<RESOURCE_ENERGY>|null = null;
     constructor(
-        destination: Structure|Tombstone|null = null,
+        destination: Structure|Tombstone|Resource<RESOURCE_ENERGY>|null = null,
     ) {
         super();
         this.destination = destination;
@@ -36,14 +36,18 @@ export class WithdrawTask extends TaskAction {
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
-
-        let result = creep.withdraw(this.destination, RESOURCE_ENERGY);
+        let result;
+        if (this.destination instanceof Resource) {
+            result = creep.pickup(this.destination);
+        } else {
+            result = creep.withdraw(this.destination, RESOURCE_ENERGY);
+        }
         return (result === OK) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
     }
     cost() {
         // Takes one tick to withdraw, but here we
         // are weighting sources by preference
-        if (this.destination instanceof Tombstone) {
+        if (this.destination instanceof Tombstone || this.destination instanceof Resource) {
             return 1;
         }
         switch (this.destination?.structureType) {

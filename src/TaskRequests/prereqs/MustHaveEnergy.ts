@@ -4,6 +4,7 @@ import { Task } from "TaskRequests/Task";
 import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { HarvestTask } from "TaskRequests/types/HarvestTask";
 import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
+import { getCreepHomeOffice } from "utils/gameObjectSelectors";
 
 /**
  * Checks if minion is full or has enough energy to meet quantity
@@ -26,10 +27,13 @@ export class MustHaveEnergy extends TaskPrerequisite {
         if (minion.capacity === 0) return null; // Cannot carry energy
         // TODO: Check if source/container has enough energy to fill minion
         // Can get energy from harvesting
-        let sources = global.analysts.sales.getUntappedSources(minion.creep.room)
+        let office = getCreepHomeOffice(minion.creep);
+        if (!office) return [];
+
+        let sources = global.analysts.sales.getUntappedSources(office)
                                             .map(source => new HarvestTask(source));
         // Can get energy from withdrawing
-        let containers = global.analysts.logistics.getAllSources(minion.creep.room)
+        let containers = global.analysts.logistics.getAllSources(office)
                                                   .map(source => new WithdrawTask(source));
         return [...sources, ...containers];
     }
