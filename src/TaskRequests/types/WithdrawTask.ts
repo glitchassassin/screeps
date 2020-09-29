@@ -72,6 +72,10 @@ export class WithdrawTask extends TaskAction {
         }
     }
     valid() {
-        return !!this.destination;
+        if (this.destination instanceof Resource) {
+            return this.destination.amount > 0;
+        } else {
+            return (((this.destination as AnyStoreStructure)?.store as GenericStore).getUsedCapacity(RESOURCE_ENERGY) || 0) > 0;
+        }
     }
 }

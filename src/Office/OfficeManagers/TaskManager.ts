@@ -178,6 +178,9 @@ export class TaskManager extends OfficeManager {
             //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
             //             `${taskPlan.tasks.map(t => t.toString())}`)
             let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
+            if (taskPlan.minion.output >= taskRequest.capacity) {
+                taskRequest.completed = true;
+            }
             this.assign(task);
         })
     }
@@ -207,7 +210,7 @@ export class TaskManager extends OfficeManager {
     }
     getAssociatedTasks(request: TaskRequest) {
         return this.tasks.filter(task => (
-            task.actions[task.actions.length -1].constructor.name === request.task?.constructor.name &&
+            task.actions[task.actions.length -1]?.constructor.name === request.task?.constructor.name &&
             task.sourceId === request.sourceId
         ))
     }

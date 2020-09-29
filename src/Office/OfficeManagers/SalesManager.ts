@@ -24,10 +24,10 @@ export class SalesManager extends OfficeManager {
                 // Spawn Interns indefinitely
                 this.office.submit(new MinionRequest(`${this.office.name}_SourceManager`, 10, MinionTypes.INTERN, {}));
                 // Scout surrounding Territories, if needed
-                let unexplored = this.office.territories.filter(t => !t.room);
+                let unexplored = this.office.territories.filter(t => !t.scanned);
                 if (unexplored.length > 0) {
                     unexplored.forEach(territory => {
-                        this.office.submit(new TaskRequest(territory.name, new ExploreTask(new RoomPosition(25, 25, territory.name)), 5))
+                        this.office.submit(new TaskRequest(territory.name, new ExploreTask(territory.name), 5))
                     })
                 }
                 return;

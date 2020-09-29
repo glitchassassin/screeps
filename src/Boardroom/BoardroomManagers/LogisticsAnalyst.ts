@@ -12,7 +12,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getTombstones(room: Room) {
-        return room.find(FIND_TOMBSTONES);
+        return room.find(FIND_TOMBSTONES).filter(t => t.store.getUsedCapacity() > 0);
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getFreeEnergy(room: Room) {
@@ -26,8 +26,10 @@ export class LogisticsAnalyst extends BoardroomManager {
         return [
             ...territories.filter(t => t.room).map(territory => this.getFreeEnergy(territory.room as Room)).reduce((a, b) => a.concat(b), []),
             ...territories.filter(t => t.room).map(territory => this.getTombstones(territory.room as Room)).reduce((a, b) => a.concat(b), []),
-            ...this.getStorage(office),
-            ...salesAnalyst.getFranchiseLocations(office).map(franchise => franchise.container).filter(c => c) as StructureContainer[],
+            ...this.getStorage(office).filter(s => s.store.getUsedCapacity() > 0),
+            ...salesAnalyst.getFranchiseLocations(office)
+                .map(franchise => franchise.container)
+                .filter(c => c && c.store.getUsedCapacity() > 0) as StructureContainer[],
             ...hrAnalyst.getSpawns(office)
         ];
     }

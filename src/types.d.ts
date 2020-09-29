@@ -32,6 +32,13 @@ interface Memory {
     [name: string]: {
       franchiseLocations: {
         [sourceId: string]: RoomPosition
+      },
+      territories: {
+        [roomName: string]: {
+          controller: RoomPosition|undefined,
+          sources: {[id: string]: RoomPosition},
+          scanned: boolean
+        }
       }
     }
   }

@@ -26,14 +26,12 @@ export class Office {
     constructor(roomName: string) {
         this.name = roomName;
         this.center = new RoomIntelligence(roomName);
-        this.territories = Object.values(Game.map.describeExits(roomName))
-                                 .filter(room => room)
-                                 .map(room => new TerritoryIntelligence(room as string))
 
         // Initialize Memory
         if (!Memory.offices[roomName]) {
             Memory.offices[roomName] = {
-                franchiseLocations: {}
+                franchiseLocations: {},
+                territories: {}
             }
         }
 
@@ -42,6 +40,20 @@ export class Office {
             obj[sourceId] = new RoomPosition(pos.x, pos.y, pos.roomName);
             return obj;
         }, {} as {[sourceId: string]: RoomPosition});
+
+        // Load saved territory details
+        this.territories = Object.values(Game.map.describeExits(roomName))
+            .filter(room => room)
+            .map(room => {
+                let territory = new TerritoryIntelligence(room as string);
+                if (Memory.offices[roomName].territories[room as string]) {
+                    territory.controller = Memory.offices[roomName].territories[room as string].controller;
+                    territory.scanned = Memory.offices[roomName].territories[room as string].scanned;
+                    territory.sources = new Map(Object.entries(Memory.offices[roomName].territories[room as string].sources)
+                        .map(([id, pos]) => [id as Id<Source>, pos]));
+                }
+                return territory;
+            })
 
         // Create Architects
         new ControllerArchitect(this);
@@ -153,7 +165,28 @@ export class Office {
      * Execute run phase for all OfficeManagers
      */
     cleanup() {
+        if (!Memory.offices[this.name]) Memory.offices[this.name] = {
+            franchiseLocations: {},
+            territories: {}
+        }
         Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
+        Memory.offices[this.name].territories = this.territories.reduce((obj, territory) => {
+            obj[territory.name] = {
+                controller: territory.controller,
+                scanned: territory.scanned,
+                sources: [...territory.sources.entries()].reduce((a, [id, pos]) => {
+                    a[id as string] = pos
+                    return a;
+                }, {} as {[id: string]: RoomPosition})
+            }
+            return obj;
+        }, {} as {
+            [roomName: string]: {
+                controller: RoomPosition|undefined,
+                sources: {[id: string]: RoomPosition},
+                scanned: boolean
+            }
+        })
         this.managers.forEach(m => m.cleanup());
     }
 
