@@ -1,8 +1,13 @@
-import { Office } from "Office/Office"
+import { Boardroom } from "Boardroom/Boardroom"
 
 export class Analyst {
-    load = (office: Office) => {}
-    init = (office: Office) => {}
-    run = (office: Office) => {}
-    cleanup = (office: Office) => {}
+    constructor(
+        public boardroom: Boardroom
+    ) {
+        this.init();
+    }
+    load = () => {}
+    init = () => {}
+    run = () => {}
+    cleanup = () => {}
 }

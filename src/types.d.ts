@@ -35,7 +35,7 @@ interface Memory {
     }
   };
   metrics: {
-    [roomName: string]: import('./Analysts/StatisticsAnalyst').PipelineMetrics
+    [roomName: string]: import('./Boardroom/BoardroomManagers/StatisticsAnalyst').PipelineMetrics
   }
   stats: {
     gcl: {
@@ -71,16 +71,9 @@ declare namespace NodeJS {
     IS_JEST_TEST: boolean;
     log: any;
     boardroom: import('./Boardroom/Boardroom').Boardroom;
-    analysts: {
-      controller: import('./Analysts/ControllerAnalyst').ControllerAnalyst,
-      logistics: import('./Analysts/LogisticsAnalyst').LogisticsAnalyst,
-      map: import('./Analysts/MapAnalyst').MapAnalyst,
-      sales: import('./Analysts/SalesAnalyst').SalesAnalyst,
-      spawn: import('./Analysts/HRAnalyst').HRAnalyst,
-      facilities: import('./Analysts/FacilitiesAnalyst').FacilitiesAnalyst,
-      defense: import('./Analysts/DefenseAnalyst').DefenseAnalyst,
-      grafana: import('./Analysts/GrafanaAnalyst').GrafanaAnalyst,
-      statistics: import('./Analysts/StatisticsAnalyst').StatisticsAnalyst,
-    };
+    taskReport: Function;
+    taskPurge: Function;
+    officeReport: Function;
+    hrReport: Function;
   }
 }

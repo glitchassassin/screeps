@@ -60,7 +60,12 @@ export class WithdrawTask extends TaskAction {
         }
     }
     predict(minion: SpeculativeMinion) {
-        let targetCapacity = (this.destination as StructureContainer)?.store.getUsedCapacity(RESOURCE_ENERGY);
+        let targetCapacity;
+        if (this.destination instanceof Resource) {
+            targetCapacity = this.destination.amount;
+        } else {
+            targetCapacity = ((this.destination as AnyStoreStructure)?.store as GenericStore).getUsedCapacity(RESOURCE_ENERGY) || 0;
+        }
         return {
             ...minion,
             capacityUsed: Math.min(minion.capacity, minion.capacityUsed + targetCapacity)

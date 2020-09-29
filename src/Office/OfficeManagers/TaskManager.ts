@@ -49,6 +49,7 @@ export class TaskManager extends OfficeManager {
             this.tasks = deserializeArray(Task, Memory.tasks[this.office.name].tasks as string);
             // Load requests from Memory
             let deserialized = JSON.parse(Memory.tasks[this.office.name].requests as string)
+            this.requests = {};
             for (let reqType in deserialized) {
                 this.requests[reqType] = {};
                 for (let reqSource in deserialized[reqType]) {
@@ -262,4 +263,17 @@ ${requestTableRendered}
 ${idleMinionsRendered}`
         )
     }
+}
+
+global.taskReport = () => {
+    global.boardroom.offices.forEach(office => {
+        let t = office.managers.get('TaskManager') as TaskManager;
+        t.report();
+    })
+}
+global.taskPurge = () => {
+    global.boardroom.offices.forEach(office => {
+        let t = office.managers.get('TaskManager') as TaskManager;
+        t.purge();
+    })
 }

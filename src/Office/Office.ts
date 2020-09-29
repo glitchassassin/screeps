@@ -11,12 +11,14 @@ import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
 import { SalesManager } from "./OfficeManagers/SalesManager";
 import { SecurityManager } from "./OfficeManagers/SecurityManager";
 import { TaskManager } from "./OfficeManagers/TaskManager";
-import { RoomIntelligence } from "./RoomIntelligence";
+import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
+import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { table } from "table";
 
 export class Office {
     name: string;
     center: RoomIntelligence;
-    territories: RoomIntelligence[] = [];
+    territories: TerritoryIntelligence[] = [];
     private employeeIds: Set<Id<Creep>> = new Set();
     managers: Map<string, OfficeManager> = new Map();
 
@@ -83,29 +85,39 @@ export class Office {
      * Execute plan phase for all OfficeManagers
      */
     plan() {
+        let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
+
         let sales = this.managers.get('SalesManager');
         let legal = this.managers.get('LegalManager');
         let facilities = this.managers.get('FacilitiesManager');
+        let logistics = this.managers.get('LogisticsManager');
+        let security = this.managers.get('SecurityManager');
         if (this.center.room.controller?.level === 1) {
             // If RCL 1, focus on sources and controllers
-            facilities?.setStatus(OfficeManagerStatus.OFFLINE);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
-            legal?.setStatus(OfficeManagerStatus.NORMAL);
+            logistics?.setStatus(OfficeManagerStatus.OFFLINE);
+            legal?.setStatus(OfficeManagerStatus.MINIMAL);
+            facilities?.setStatus(OfficeManagerStatus.OFFLINE);
+            security?.setStatus(OfficeManagerStatus.OFFLINE);
         } else if (
             this.center.room.controller?.level === 2 &&
-            global.analysts.facilities.needsStructures(this)
+            facilitiesAnalyst.needsStructures(this)
         ) {
             // If RCL2 and infrastructure is incomplete, focus on construction
-            facilities?.setStatus(OfficeManagerStatus.NORMAL);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
+            logistics?.setStatus(OfficeManagerStatus.OFFLINE);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
+            facilities?.setStatus(OfficeManagerStatus.MINIMAL);
+            security?.setStatus(OfficeManagerStatus.OFFLINE);
         } else if (
             this.center.room.controller?.level === 2
         ) {
             // If RCL 2 and infrastructure is complete, focus on controller
-            facilities?.setStatus(OfficeManagerStatus.MINIMAL);
             sales?.setStatus(OfficeManagerStatus.NORMAL);
+            logistics?.setStatus(OfficeManagerStatus.NORMAL);
             legal?.setStatus(OfficeManagerStatus.NORMAL);
+            facilities?.setStatus(OfficeManagerStatus.OFFLINE);
+            security?.setStatus(OfficeManagerStatus.OFFLINE);
         }
 
         this.managers.forEach(m => m.plan());
@@ -124,4 +136,25 @@ export class Office {
     cleanup() {
         this.managers.forEach(m => m.cleanup());
     }
+
+    report() {
+        const statusTable = [
+            ['Manager', 'Status']
+        ];
+        this.managers.forEach(manager => {
+            statusTable.push([manager.constructor.name, manager.status]);
+        })
+        const statusTableRendered = table(statusTable, {
+            singleLine: true
+        });
+
+        console.log(`[Office ${this.name}] Status Report:
+    <strong>Managers</strong>
+${statusTableRendered}`
+        )
+    }
+}
+
+global.officeReport = () => {
+    global.boardroom.offices.forEach(office => office.report())
 }

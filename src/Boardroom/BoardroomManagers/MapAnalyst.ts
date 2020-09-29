@@ -1,11 +1,11 @@
+import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Memoize } from "typescript-memoize";
-import { Analyst } from "./Analyst";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
     return [].concat(...arr.map(f))
 }
 
-export class MapAnalyst extends Analyst {
+export class MapAnalyst extends BoardroomManager {
     @Memoize((proximity: number) => ('' + proximity))
     calculateAdjacencyMatrix(proximity=1): {x: number, y: number}[] {
         let adjacencies = [...(new Array(proximity * 2 + 1))].map((v, i) => i - proximity)

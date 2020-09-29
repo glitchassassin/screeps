@@ -1,9 +1,18 @@
 import { Office } from "Office/Office";
 import { BoardroomManager } from "./BoardroomManager";
+import { ControllerAnalyst } from "./BoardroomManagers/ControllerAnalyst";
+import { DefenseAnalyst } from "./BoardroomManagers/DefenseAnalyst";
+import { FacilitiesAnalyst } from "./BoardroomManagers/FacilitiesAnalyst";
+import { GrafanaAnalyst } from "./BoardroomManagers/GrafanaAnalyst";
+import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
+import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
+import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
+import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
+import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
 
 export class Boardroom {
     offices: Map<string, Office> = new Map();
-    managers: BoardroomManager[] = [];
+    managers: Map<string, BoardroomManager> = new Map();
 
     /**
      * Initialize boardroom managers and offices
@@ -25,7 +34,15 @@ export class Boardroom {
         })
 
         // Create BoardroomManagers
-        // [none yet]
+        new MapAnalyst(this);
+        new ControllerAnalyst(this);
+        new DefenseAnalyst(this);
+        new FacilitiesAnalyst(this);
+        new GrafanaAnalyst(this);
+        new HRAnalyst(this);
+        new LogisticsAnalyst(this);
+        new SalesAnalyst(this);
+        new StatisticsAnalyst(this);
 
         // Initialize BoardroomManagers
         this.managers.forEach(m => m.init());
@@ -37,7 +54,7 @@ export class Boardroom {
      * @param manager
      */
     register(manager: BoardroomManager) {
-        this.managers.push(manager);
+        this.managers.set(manager.constructor.name, manager);
     }
 
     /**

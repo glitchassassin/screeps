@@ -4,6 +4,7 @@ import { TaskRequest } from "TaskRequests/TaskRequest";
 import { BuildTask } from "TaskRequests/types/BuildTask";
 import { RepairTask } from "TaskRequests/types/RepairTask";
 import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
+import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 
 const buildPriority = (site: ConstructionSite) => {
     switch(site.structureType) {
@@ -26,10 +27,11 @@ export class FacilitiesManager extends OfficeManager {
     }
 
     plan() {
+        let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
         // TODO - Update these with callbacks. Until then, load each tick
-        this.sites = global.analysts.facilities.getConstructionSites(this.office);
-        this.structures = global.analysts.facilities.getStructures(this.office);
-        this.handymen = global.analysts.facilities.getHandymen(this.office);
+        this.sites = facilitiesAnalyst.getConstructionSites(this.office);
+        this.structures = facilitiesAnalyst.getStructures(this.office);
+        this.handymen = facilitiesAnalyst.getHandymen(this.office);
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
@@ -95,7 +97,7 @@ export class FacilitiesManager extends OfficeManager {
         return Math.min(repairable.length, max);
     }
     submitBuildOrders(max = 5) {
-        let buildable = this.sites.sort((a, b) => (buildPriority(a) - buildPriority(b)))
+        let buildable = this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)))
 
         buildable.slice(0, max).forEach((site, i) => {
             this.office.submit(new TaskRequest(`${this.office.name}_Facilities_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site)))

@@ -7,6 +7,7 @@ import { SalesmanMinion } from './minions/SalesmanMinion';
 import { InternMinion } from "./minions/InternMinion";
 import { LawyerMinion } from "./minions/LawyerMinion";
 import { Office } from "Office/Office";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 
 export enum MinionTypes {
     INTERN = 'INTERN',
@@ -22,9 +23,7 @@ export class MinionRequest {
     private spawned = false;
     public sourceId: string|null = null;
     public priority = 5;
-
-    @Transform(transformGameObject(StructureSpawn))
-    public assignedTo: StructureSpawn|null = null;
+    public assignedTo: Id<StructureSpawn>|null = null;
 
     @Transform((type: string) => MinionTypes[type as MinionTypes])
     public type: MinionTypes|null = null;
@@ -43,13 +42,16 @@ export class MinionRequest {
 
     fulfill(office: Office) {
         if (!this.type || !this.assignedTo) return;
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let spawn = Game.getObjectById(this.assignedTo);
+        if (!spawn) return;
 
         let energyToUse = Math.max(
             office.center.room.energyAvailable,
-            global.analysts.statistics.metrics[office.name].roomEnergyLevels.max()
+            statisticsAnalyst.metrics[office.name].roomEnergyLevels.max()
         );
 
-        if (!this.assignedTo.spawning && !this.spawned) {
+        if (!spawn.spawning && !this.spawned) {
             let minion;
             switch (this.type) {
                 case MinionTypes.HAULER:
@@ -71,11 +73,11 @@ export class MinionRequest {
             if (minion.scaleMinion(office.center.room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {
                 // Close enough, spawn the minion
                 this.spawned = minion.spawn(
-                    this.assignedTo,
+                    spawn,
                     {...this.memory, office: office.name},
                     energyToUse);
             }
-        } else if (!this.assignedTo.spawning && this.spawned) {
+        } else if (!spawn.spawning && this.spawned) {
             this.completed = true;
         }
     }

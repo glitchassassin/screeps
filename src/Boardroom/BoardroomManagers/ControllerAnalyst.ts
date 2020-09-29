@@ -1,9 +1,7 @@
+import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
-import { Analyst } from "./Analyst";
 import { MapAnalyst } from "./MapAnalyst";
-
-const mapAnalyst = new MapAnalyst();
 
 export type Depot = {
     pos: RoomPosition,
@@ -11,13 +9,14 @@ export type Depot = {
     constructionSite?: ConstructionSite
 }
 
-export class ControllerAnalyst extends Analyst {
+export class ControllerAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     calculateBestContainerLocation(office: Office) {
         let room = office.center.room;
         if (!room.controller) return null;
         let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
+        let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
         let candidate: {pos: RoomPosition, range: number}|null = (null as {pos: RoomPosition, range: number}|null);
         mapAnalyst
@@ -52,7 +51,7 @@ export class ControllerAnalyst extends Analyst {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getReservingControllers(office: Office) {
         return office.territories
-            .filter(t => t.room.controller)
-            .map(t => t.room.controller) as StructureController[]
+            .filter(t => t.room?.controller)
+            .map(t => t.room?.controller) as StructureController[]
     }
 }

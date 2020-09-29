@@ -2,9 +2,15 @@ import { deserialize, serialize } from "class-transformer";
 import { OfficeManager } from "Office/OfficeManager";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "TaskRequests/TaskRequest";
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { table } from "table";
+import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
 
 export class HRManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
+    extensions: StructureExtension[] = [];
     requests: {[id: string]: MinionRequest} = {};
     resupply: TaskRequest|null = null;
 
@@ -26,8 +32,28 @@ export class HRManager extends OfficeManager {
         }
     }
     plan() {
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         // Enroll any newly hired creeps, if they are not already on the list
         this.office.center.room.find(FIND_MY_CREEPS).forEach(c => this.office.enrollEmployee(c));
+        this.spawns = hrAnalyst.getSpawns(this.office);
+        this.extensions = hrAnalyst.getExtensions(this.office)
+
+        this.extensions.forEach(e => {
+            let energy = getTransferEnergyRemaining(e);
+            if (energy && energy > 0) {
+                this.office.submit(new TaskRequest(e.id, new ResupplyTask(e), 6, energy));
+            }
+        })
+        this.spawns.forEach((spawn) => {
+            let roomCapacity = spawn.room.energyAvailable
+            let spawnCapacity = getTransferEnergyRemaining(spawn);
+            if (!spawnCapacity) return;
+            if (roomCapacity < 200) {
+                this.office.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 10, spawnCapacity));
+            } else if (spawnCapacity > 0) {
+                this.office.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), 6, spawnCapacity));
+            }
+        })
     }
     run() {
         // Spawn Requests
@@ -37,7 +63,7 @@ export class HRManager extends OfficeManager {
                 // Find a spawn to carry out the request
                 let available = this.getIdleSpawn();
                 if (available) {
-                    r.assignedTo = available;
+                    r.assignedTo = available.id;
                 }
             }
             // Process assigned requests
@@ -60,6 +86,37 @@ export class HRManager extends OfficeManager {
     }
 
     getIdleSpawn = () => {
-        return this.spawns.find(s => !Object.values(this.requests).some(r => r.assignedTo === s));
+        return this.spawns.find(s => !Object.values(this.requests).some(r => r.assignedTo === s.id));
     }
+
+    report() {
+        const requestTable = [['Source', 'Minion', 'Priority', 'Assigned']];
+        let requests = Object.values(this.requests)
+        requestTable.push(
+            ...requests.map(r => {
+                return [
+                    Game.getObjectById(r.sourceId as Id<any>)?.toString() || r.sourceId,
+                    r.type,
+                    r.priority,
+                    r.assignedTo
+                ];
+            })
+        )
+        const requestTableRendered = table(requestTable, {
+            singleLine: true
+        });
+
+
+        console.log(`[HRManager] Status Report:
+    <strong>Requests</strong>
+${requestTableRendered}`
+        )
+    }
+}
+
+global.hrReport = () => {
+    global.boardroom.offices.forEach(office => {
+        let hr = office.managers.get('HRManager') as HRManager;
+        hr.report();
+    })
 }

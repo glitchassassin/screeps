@@ -1,11 +1,13 @@
 import { Boardroom } from "Boardroom/Boardroom";
+import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
-import { HRManager } from "Office/OfficeManagers/HRManager";
 import { TaskManager } from "Office/OfficeManagers/TaskManager";
-import { stringify } from "querystring";
-import { Analyst } from "./Analyst";
+import { ControllerAnalyst } from "./ControllerAnalyst";
+import { LogisticsAnalyst } from "./LogisticsAnalyst";
+import { SalesAnalyst } from "./SalesAnalyst";
 
-export class GrafanaAnalyst extends Analyst {
+
+export class GrafanaAnalyst extends BoardroomManager {
     deltas: {
         [id: string]: {
             building: number,
@@ -14,13 +16,15 @@ export class GrafanaAnalyst extends Analyst {
             attacking: number,
         }
     } = {};
-    load = (office: Office) => {
-        this.deltas[office.name] = {
-            building: 0,
-            repairing: 0,
-            healing: 0,
-            attacking: 0,
-        }
+    plan() {
+        this.boardroom.offices.forEach(office => {
+            this.deltas[office.name] = {
+                building: 0,
+                repairing: 0,
+                healing: 0,
+                attacking: 0,
+            }
+        });
     }
     reportBuild(officeName: string, delta: number) {
         this.deltas[officeName].building += delta;
@@ -35,14 +39,19 @@ export class GrafanaAnalyst extends Analyst {
         this.deltas[officeName].attacking += delta;
     }
     pipelineMetrics(office: Office) {
-        let upgradeDepot = global.analysts.controller.getDesignatedUpgradingLocations(office)?.container
-        let storage = global.analysts.logistics.getStorage(office);
+        let controllerAnalyst = this.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
+        let logisticsAnalyst = this.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+
+        let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container
+        let storage = logisticsAnalyst.getStorage(office);
+
         return {
-            sourcesLevel: global.analysts.sales.getSources(office).reduce((sum, source) => (sum + source.energy), 0),
-            sourcesMax: global.analysts.sales.getSources(office).reduce((sum, source) => (sum + source.energyCapacity), 0),
-            mineContainersLevel: global.analysts.sales.getFranchiseLocations(office)
+            sourcesLevel: salesAnalyst.getSources(office).reduce((sum, source) => (sum + source.energy), 0),
+            sourcesMax: salesAnalyst.getSources(office).reduce((sum, source) => (sum + source.energyCapacity), 0),
+            mineContainersLevel: salesAnalyst.getFranchiseLocations(office)
                 .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
-            mineContainersMax: global.analysts.sales.getFranchiseLocations(office)
+            mineContainersMax: salesAnalyst.getFranchiseLocations(office)
                 .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
             storageLevel: storage.reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
             storageMax: storage.reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),
@@ -77,7 +86,7 @@ export class GrafanaAnalyst extends Analyst {
             requests: requestCount
         }
     }
-    exportStats(boardroom: Boardroom) {
+    exportStats() {
         const stats: {[id: string]: {
             taskManagement: {
                 tasks: {[id: string]: number},
@@ -91,7 +100,7 @@ export class GrafanaAnalyst extends Analyst {
             controllerProgressTotal: number;
             controllerLevel: number; }
         } = {};
-        boardroom.offices.forEach(office => {
+        this.boardroom.offices.forEach(office => {
             if (office.center.room.controller?.my) {
                 stats[office.name] = {
                     taskManagement: this.taskManagementMetrics(office),

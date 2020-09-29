@@ -1,4 +1,4 @@
-import { classToClass, classToPlain, plainToClass, Transform, TransformationType, Type } from 'class-transformer';
+import { classToClass, classToPlain, Exclude, plainToClass, Transform, TransformationType, Type } from 'class-transformer';
 import { transformGameObject } from 'utils/transformGameObject';
 import { SpeculativeMinion } from './SpeculativeMinion';
 import { TaskAction } from './TaskAction';
@@ -18,10 +18,12 @@ export class Task {
     sourceId: string|null;
     cost: number;
     output: number;
+    creepId: Id<Creep>;
 
-    @Type(() => Creep)
-    @Transform(transformGameObject(Creep))
-    creep: Creep|null;
+    @Exclude()
+    public get creep() : Creep|null {
+        return Game.getObjectById(this.creepId)
+    }
 
     @Type(() => TaskAction, {
         discriminator: {
@@ -43,7 +45,7 @@ export class Task {
 
     constructor(actions: TaskAction[], creep: Creep, sourceId: string|null = null, cost: number = 0, output: number = 0) {
         this.actions = actions;
-        this.creep = creep;
+        this.creepId = creep?.id;
         this.sourceId = sourceId;
         this.cost = cost;
         this.output = output;

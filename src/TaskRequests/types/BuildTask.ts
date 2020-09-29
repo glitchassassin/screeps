@@ -1,3 +1,4 @@
+import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { report } from "process";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
@@ -42,6 +43,7 @@ export class BuildTask extends TaskAction {
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
+        let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
 
         let result = creep.build(this.destination);
         if (result === ERR_NOT_ENOUGH_ENERGY) {
@@ -49,7 +51,7 @@ export class BuildTask extends TaskAction {
         } else if (result !== OK){
             return TaskActionResult.FAILED;
         }
-        global.analysts.grafana.reportBuild(creep.memory.office||'', Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
+        grafanaAnalyst.reportBuild(creep.memory.office||'', Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
         return TaskActionResult.INPROGRESS;
     }
     /**

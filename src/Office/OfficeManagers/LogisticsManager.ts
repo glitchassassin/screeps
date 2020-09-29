@@ -1,3 +1,6 @@
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { table } from "table";
@@ -13,10 +16,14 @@ export class LogisticsManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
     haulers: Creep[] = [];
     plan() {
-        this.storage = global.analysts.logistics.getStorage(this.office)
-        this.extensions = global.analysts.spawn.getExtensions(this.office)
-        this.haulers = global.analysts.logistics.getHaulers(this.office)
-        this.spawns = global.analysts.spawn.getSpawns(this.office)
+        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+
+        this.storage = logisticsAnalyst.getStorage(this.office)
+        this.extensions = hrAnalyst.getExtensions(this.office)
+        this.haulers = logisticsAnalyst.getHaulers(this.office)
+        this.spawns = hrAnalyst.getSpawns(this.office)
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
@@ -32,9 +39,9 @@ export class LogisticsManager extends OfficeManager {
             default: {
                 // Maintain enough haulers to keep
                 // franchises drained
-                let outputAverageLevel = global.analysts.statistics.metrics[this.office.name].storageLevels.mean();
-                let outputMaxLevel = global.analysts.statistics.metrics[this.office.name].storageLevels.maxValue;
-                let inputAverageMean = global.analysts.statistics.metrics[this.office.name].mineContainerLevels.asPercent.mean();
+                let outputAverageLevel = statisticsAnalyst.metrics[this.office.name].storageLevels.mean();
+                let outputMaxLevel = statisticsAnalyst.metrics[this.office.name].storageLevels.maxValue;
+                let inputAverageMean = statisticsAnalyst.metrics[this.office.name].mineContainerLevels.asPercent.mean();
                 if (this.haulers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.HAULER));
                 } else if (Game.time % 50 === 0 && inputAverageMean > 0.1 && outputAverageLevel < outputMaxLevel) {
@@ -51,22 +58,6 @@ export class LogisticsManager extends OfficeManager {
                 // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
                 // Avoids shuffling back and forth between destination containers
                 this.office.submit(new TaskRequest(c.id, new ResupplyTask(c), 2, e));
-            }
-        })
-        this.extensions.forEach(e => {
-            let energy = getTransferEnergyRemaining(e);
-            if (energy && energy > 0) {
-                this.office.submit(new TaskRequest(e.id, new ResupplyTask(e), 6, energy));
-            }
-        })
-        this.spawns.forEach((spawn) => {
-            let roomCapacity = spawn.room.energyAvailable
-            let spawnCapacity = getTransferEnergyRemaining(spawn);
-            if (!spawnCapacity) return;
-            if (roomCapacity < 200) {
-                this.office.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 10, spawnCapacity));
-            } else if (spawnCapacity > 0) {
-                this.office.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), 6, spawnCapacity));
             }
         })
     }

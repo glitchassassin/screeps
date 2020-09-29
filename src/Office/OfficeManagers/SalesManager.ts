@@ -1,16 +1,17 @@
-import { Franchise, SalesAnalyst } from "Analysts/SalesAnalyst";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { Task } from "TaskRequests/Task";
 import { HarvestTask } from "TaskRequests/types/HarvestTask";
 import { TravelTask } from "TaskRequests/types/TravelTask";
 import { TaskManager } from "./TaskManager";
+import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 
 export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];
 
     plan() {
-        this.franchises = global.analysts.sales.getFranchiseLocations(this.office);
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+        this.franchises = salesAnalyst.getFranchiseLocations(this.office);
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {

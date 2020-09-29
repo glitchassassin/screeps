@@ -1,3 +1,5 @@
+import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
+import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { TransferTask } from "TaskRequests/types/TransferTask";
@@ -6,9 +8,10 @@ import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 export class SecurityManager extends OfficeManager {
     towers: StructureTower[] = [];
     plan() {
+        let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let room = this.office.center.room;
-        this.towers = global.analysts.defense.getTowers(this.office);
+        this.towers = defenseAnalyst.getTowers(this.office);
 
         switch (this.status) {
             case OfficeManagerStatus.MINIMAL: {
@@ -61,18 +64,20 @@ export class SecurityManager extends OfficeManager {
     }
     run() {
         if (this.status === OfficeManagerStatus.OFFLINE) return;
-        let targets = global.analysts.defense.getPrioritizedAttackTargets(this.office);
-        let healTargets = global.analysts.defense.getPrioritizedHealTargets(this.office);
+        let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
+        let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
+        let targets = defenseAnalyst.getPrioritizedAttackTargets(this.office);
+        let healTargets = defenseAnalyst.getPrioritizedHealTargets(this.office);
 
         this.towers.forEach(t => {
             // Simple priorities
             if (targets.length > 0) {
                 if (t.attack(targets[0]) === OK) {
-                    global.analysts.grafana.reportAttack(this.office.name, 10);
+                    grafanaAnalyst.reportAttack(this.office.name, 10);
                 }
             } else if (healTargets.length > 0) {
                 if (t.heal(healTargets[0]) === OK) {
-                    global.analysts.grafana.reportHeal(this.office.name, 10);
+                    grafanaAnalyst.reportHeal(this.office.name, 10);
                 }
             }
         })

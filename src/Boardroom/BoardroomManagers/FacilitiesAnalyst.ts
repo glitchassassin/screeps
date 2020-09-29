@@ -1,9 +1,8 @@
+import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
-import { Analyst } from "./Analyst";
-import { MapAnalyst } from "./MapAnalyst";
 
-export class FacilitiesAnalyst extends Analyst {
+export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getHandymen(office: Office) {
         return office.employees.filter(e => e.memory.type === 'HANDYMAN')
@@ -12,7 +11,7 @@ export class FacilitiesAnalyst extends Analyst {
     getConstructionSites(office: Office) {
         let territories = [office.center, ...office.territories]
         return [
-            ...territories.map(territory => territory.room.find(FIND_MY_CONSTRUCTION_SITES))
+            ...territories.map(territory => territory.room?.find(FIND_MY_CONSTRUCTION_SITES) || [])
                           .reduce((a, b) => a.concat(b), [])
         ]
     }
@@ -20,7 +19,7 @@ export class FacilitiesAnalyst extends Analyst {
     getStructures(office: Office) {
         let territories = [office.center, ...office.territories]
         return [
-            ...territories.map(territory => territory.room.find(FIND_STRUCTURES))
+            ...territories.map(territory => territory.room?.find(FIND_STRUCTURES) || [])
                           .reduce((a, b) => a.concat(b), [])
         ]
     }

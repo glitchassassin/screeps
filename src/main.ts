@@ -1,29 +1,9 @@
 import 'reflect-metadata';
 import { ErrorMapper } from "utils/ErrorMapper";
-import { LogisticsAnalyst } from 'Analysts/LogisticsAnalyst';
-import { HRAnalyst } from 'Analysts/HRAnalyst';
-import { ControllerAnalyst } from 'Analysts/ControllerAnalyst';
-import { MapAnalyst } from 'Analysts/MapAnalyst';
-import { SalesAnalyst } from 'Analysts/SalesAnalyst';
-import { FacilitiesAnalyst } from 'Analysts/FacilitiesAnalyst';
-import { DefenseAnalyst } from 'Analysts/DefenseAnalyst';
-import { GrafanaAnalyst } from 'Analysts/GrafanaAnalyst';
-import { StatisticsAnalyst } from 'Analysts/StatisticsAnalyst';
 import { Boardroom } from 'Boardroom/Boardroom';
 
-const profiler = require('screeps-profiler');
-
-global.analysts = {
-  logistics: new LogisticsAnalyst(),
-  spawn: new HRAnalyst(),
-  controller: new ControllerAnalyst(),
-  map: new MapAnalyst(),
-  sales: new SalesAnalyst(),
-  facilities: new FacilitiesAnalyst(),
-  defense: new DefenseAnalyst(),
-  grafana: new GrafanaAnalyst(),
-  statistics: new StatisticsAnalyst(),
-}
+import profiler from 'screeps-profiler';
+import { GrafanaAnalyst } from 'Boardroom/BoardroomManagers/GrafanaAnalyst';
 
 // Initialize memory
 if (!global.IS_JEST_TEST) {
@@ -54,12 +34,11 @@ function mainLoop() {
     }
   }
 
-  if (Game.time % 50 === 0) {
-    // Execute Boardroom plan phase
-    global.boardroom.plan()
-    // Execute Boardroom cleanup phase
-    global.boardroom.cleanup()
-  }
+
+  // Execute Boardroom plan phase
+  global.boardroom.plan()
+  // Execute Boardroom cleanup phase
+  global.boardroom.cleanup()
 
   global.boardroom.offices.forEach(office => {
     // Execute Office plan phase
@@ -68,9 +47,9 @@ function mainLoop() {
     office.run();
     // Execute Office cleanup phase
     office.cleanup();
-  })
+  });
 
-  global.analysts.grafana.exportStats(global.boardroom);
+  (global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst).exportStats();
 
   if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
     console.log("Pixel unlocked");

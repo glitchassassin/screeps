@@ -1,3 +1,4 @@
+import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { Exclude } from "class-transformer";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { Task } from "TaskRequests/Task";
@@ -15,6 +16,7 @@ import { MustHaveEnergy } from "./MustHaveEnergy";
 export class MustHaveEnergyFromSource extends MustHaveEnergy {
     toMeet(minion: SpeculativeMinion) {
         if (minion.capacity === 0) return null; // Cannot carry energy
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
         // // Get mine containers only
         // let sources = global.analysts.source.getDesignatedMiningLocations(minion.creep.room)
@@ -24,7 +26,7 @@ export class MustHaveEnergyFromSource extends MustHaveEnergy {
         // Get most full mine container only
         let office = getCreepHomeOffice(minion.creep);
         if (!office) return [];
-        let sourceContainers = (global.analysts.sales.getFranchiseLocations(office)
+        let sourceContainers = (salesAnalyst.getFranchiseLocations(office)
             .map(mine => mine.container)
             .filter(c => c) as StructureContainer[])
 

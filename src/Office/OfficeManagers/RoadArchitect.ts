@@ -1,3 +1,5 @@
+import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
+import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
 import { Transform } from 'class-transformer';
 import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
@@ -47,11 +49,13 @@ export class RoadArchitect extends OfficeManager {
     plan() {
         // Only re-check infrastructure every `n` ticks (saves CPU)
         if (this.roads.length !== 0 && Game.time % 50 !== 0) return;
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
         if (this.roads.length === 0) {
             // Draw roads between spawn and sources
-            let spawn = global.analysts.spawn.getSpawns(this.office)[0];
-            global.analysts.sales.getFranchiseLocations(this.office).forEach(franchise => {
+            let spawn = hrAnalyst.getSpawns(this.office)[0];
+            salesAnalyst.getFranchiseLocations(this.office).forEach(franchise => {
                 this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
                     swampCost: 1,
                     maxOps: 3000,
