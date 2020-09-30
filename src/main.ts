@@ -7,8 +7,6 @@ import { GrafanaAnalyst } from 'Boardroom/BoardroomManagers/GrafanaAnalyst';
 
 // Initialize memory
 if (!global.IS_JEST_TEST) {
-  console.log(Date.now(), '__buildDate__');
-
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
     // Built less than 15 seconds ago - fresh code push
     console.log('New code successfully deployed, build time', new Date(JSON.parse('__buildDate__')));

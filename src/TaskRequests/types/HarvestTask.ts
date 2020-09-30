@@ -29,7 +29,7 @@ export class HarvestTask extends TaskAction {
         this.source = source;
     }
     toString() {
-        return `[HarvestTask: {${this.source?.x},${this.source?.y}}]`
+        return `[HarvestTask: ${this.source?.roomName}{${this.source?.x},${this.source?.y}}]`
     }
 
     action(creep: Creep) {

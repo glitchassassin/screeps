@@ -38,7 +38,10 @@ interface Memory {
       },
       territories: {
         [roomName: string]: {
-          controller: RoomPosition|undefined,
+          controller: {
+            pos?: RoomPosition,
+            my?: boolean,
+          },
           sources: {[id: string]: RoomPosition},
           scanned: boolean
         }

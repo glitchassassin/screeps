@@ -86,7 +86,7 @@ export class TaskManager extends OfficeManager {
 
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
-            if (!task.creep) return false; // Creep disappeared, cancel task
+            if (!task.creep || task.actions.length === 0) return false;
             let result = task.actions[0].action(task.creep)
             if (result === TaskActionResult.SUCCESS) {
                 task.actions.shift();

@@ -30,12 +30,12 @@ export class WithdrawTask extends TaskAction {
         this.destination = destination;
     }
     toString() {
-        return `[WithdrawTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[WithdrawTask: ${this.destination?.id} ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.destination) return TaskActionResult.FAILED;
+        if (!this.destination || !Game.getObjectById(this.destination.id as Id<any>)) return TaskActionResult.FAILED;
         let result;
         if (this.destination instanceof Resource) {
             result = creep.pickup(this.destination);

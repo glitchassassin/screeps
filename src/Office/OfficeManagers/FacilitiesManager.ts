@@ -7,13 +7,16 @@ import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObj
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 
 const buildPriority = (site: ConstructionSite) => {
+    // Adds a fractional component to sub-prioritize the most
+    // complete construction sites
+    let completion = site.progress / site.progressTotal;
     switch(site.structureType) {
         case STRUCTURE_ROAD:
-            return 1;
+            return 1 + completion;
         case STRUCTURE_CONTAINER:
-            return 10;
+            return 10 + completion;
         default:
-            return 5;
+            return 5 + completion;
     }
 }
 
@@ -88,7 +91,9 @@ export class FacilitiesManager extends OfficeManager {
                 case STRUCTURE_RAMPART:
                     if (structure.hits < 100000) return true;
                 default:
-                    return structure.hits < structure.hitsMax;
+                    if (this.status === OfficeManagerStatus.NORMAL || this.status === OfficeManagerStatus.PRIORITY)
+                        return structure.hits < structure.hitsMax;
+                    return structure.hits < (structure.hitsMax / 2); // In MINIMAL mode, repair structures to half health
             }
         }).sort((a, b) => a.hits - b.hits);
         repairable.slice(0, max).forEach((structure, i) => {

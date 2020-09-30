@@ -15,8 +15,11 @@ export class Road {
         this.path = path;
     }
 
-    isBuilt() {
-        if (this.path.every(pos => Game.rooms[pos.roomName] && pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_ROAD).length > 0)) {
+    checkIfBuilt() {
+        if (this.path.every(
+            pos => Game.rooms[pos.roomName] &&
+            pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_ROAD || s.structureType === STRUCTURE_CONTAINER).length > 0
+        )) {
             this.status = "DONE";
         }
         return (this.status === "DONE")
@@ -68,5 +71,6 @@ export class RoadArchitect extends OfficeManager {
         if (road?.status === "PENDING") {
             road.build();
         }
+        road?.checkIfBuilt();
     }
 }

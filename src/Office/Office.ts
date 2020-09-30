@@ -51,7 +51,11 @@ export class Office {
             .map(room => {
                 let territory = new TerritoryIntelligence(room as string);
                 if (Memory.offices[roomName].territories[room as string]) {
-                    territory.controller = Memory.offices[roomName].territories[room as string].controller;
+                    let c = Memory.offices[roomName].territories[room as string].controller
+                    territory.controller = {
+                        pos: c.pos && new RoomPosition(c.pos.x, c.pos.y, c.pos.roomName),
+                        ...c
+                    }
                     territory.scanned = Memory.offices[roomName].territories[room as string].scanned;
                     territory.sources = new Map(Object.entries(Memory.offices[roomName].territories[room as string].sources)
                         .map(([id, pos]) => [id as Id<Source>, new RoomPosition(pos.x, pos.y, pos.roomName)]));
@@ -133,7 +137,7 @@ export class Office {
             // console.log('RCL1')
             hr?.setStatus(OfficeManagerStatus.NORMAL);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
-            logistics?.setStatus(OfficeManagerStatus.OFFLINE);
+            logistics?.setStatus(OfficeManagerStatus.MINIMAL);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
             facilities?.setStatus(OfficeManagerStatus.OFFLINE);
             security?.setStatus(OfficeManagerStatus.OFFLINE);
@@ -145,7 +149,7 @@ export class Office {
             // console.log('RCL2, building infrastructure')
             hr?.setStatus(OfficeManagerStatus.MINIMAL);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
-            logistics?.setStatus(OfficeManagerStatus.OFFLINE);
+            logistics?.setStatus(OfficeManagerStatus.MINIMAL);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
             facilities?.setStatus(OfficeManagerStatus.MINIMAL);
             security?.setStatus(OfficeManagerStatus.OFFLINE);
@@ -192,7 +196,10 @@ export class Office {
             return obj;
         }, {} as {
             [roomName: string]: {
-                controller: RoomPosition|undefined,
+                controller: {
+                    pos?: RoomPosition,
+                    my?: boolean,
+                },
                 sources: {[id: string]: RoomPosition},
                 scanned: boolean
             }
@@ -224,11 +231,21 @@ export class Office {
             ['Territory', 'Status', 'Sources', 'Controller']
         ];
         this.territories.forEach(territory => {
+            let controllerStatus = 'None';
+            if (territory.controller.my) {
+                controllerStatus = 'Owned';
+            } else if (territory.controller.owner) {
+                controllerStatus = 'Hostile';
+            } else if (territory.controller.reservation?.username !== 'LordGreywether') {
+                controllerStatus = `Hostile [${territory.controller.reservation?.ticksToEnd} ticks]`;
+            } else if (territory.controller.reservation?.username === 'LordGreywether') {
+                controllerStatus = `Reserved [${territory.controller.reservation?.ticksToEnd} ticks]`
+            }
             territoryTable.push([
                 territory.name,
                 territory.scanned ? 'SCANNED' : 'UNKNOWN',
                 `${territory.sources.size}`,
-                territory.controller ? 'Yes' : 'No'
+                controllerStatus
             ]);
         })
         const territoryTableRendered = table(territoryTable, {

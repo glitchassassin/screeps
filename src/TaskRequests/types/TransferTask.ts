@@ -33,7 +33,7 @@ export class TransferTask extends TaskAction {
         this.destination = destination;
     }
     toString() {
-        return `[TransferTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[TransferTask: ${this.destination?.id} ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {

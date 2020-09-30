@@ -1,6 +1,13 @@
+type ControllerIntelligence = {
+    pos?: RoomPosition,
+    my?: boolean,
+    owner?: string,
+    reservation?: ReservationDefinition
+}
+
 export class TerritoryIntelligence {
     sources: Map<Id<Source>, RoomPosition> = new Map();
-    controller: RoomPosition|undefined;
+    controller: ControllerIntelligence = {};
     scanned = false;
 
     constructor(
@@ -14,7 +21,11 @@ export class TerritoryIntelligence {
     scan() {
         if (!this.scanned && this.room) {
             this.room.find(FIND_SOURCES).forEach(s => this.sources.set(s.id, s.pos));
-            this.controller = this.room.controller?.pos;
+            this.controller = {
+                pos: this.room.controller?.pos,
+                my: this.room.controller?.my,
+                owner: this.room.controller?.owner?.username,
+            }
             this.scanned = true;
         }
     }

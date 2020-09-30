@@ -36,7 +36,7 @@ export class UpgradeTask extends TaskAction {
         this.destination = destination;
     }
     toString() {
-        return `[UpgradeTask: ${this.destination?.id} {${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[UpgradeTask: ${this.destination?.id} ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {

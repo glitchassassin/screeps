@@ -9,11 +9,8 @@ export class FacilitiesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {
-        let territories = [office.center, ...office.territories]
-        return [
-            ...territories.map(territory => territory.room?.find(FIND_MY_CONSTRUCTION_SITES) || [])
-                          .reduce((a, b) => a.concat(b), [])
-        ]
+        let territories = [office.center, ...office.territories].map(t => t.name)
+        return Object.values(Game.constructionSites).filter(site => territories.includes(site.pos.roomName))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStructures(office: Office) {

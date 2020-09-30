@@ -27,14 +27,7 @@ export class LegalManager extends OfficeManager {
                 return;
             }
             case OfficeManagerStatus.MINIMAL: {
-                // Request energy, but spawn no minions
-                this.office.submit(new TaskRequest(
-                    `${this.office.name}_Legal`,
-                    new UpgradeTask(this.office.center.room.controller),
-                    1,
-                    (this.office.center.room.controller?.level === 8 ? 15 : 1000) // TODO: Cap of 15 energy per tick at RCL 8, this is capacity per task
-                ));
-                return;
+                // falls through
             }
             case OfficeManagerStatus.NORMAL: {
                 // Spawn one dedicated upgrader

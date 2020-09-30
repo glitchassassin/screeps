@@ -12,7 +12,8 @@ export type Franchise = {
     source?: Source,
     container?: StructureContainer,
     constructionSite?: ConstructionSite,
-    salesmen: Creep[]
+    salesmen: Creep[],
+    maxSalesmen: number,
 }
 
 export class SalesAnalyst extends BoardroomManager {
@@ -30,6 +31,7 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFranchiseLocations(office: Office) {
+        let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         let salesmen = office.employees.filter(creep => creep.memory.type === 'SALESMAN')
         let territories = [office.center, ...office.territories]
         // If necessary, add franchise locations for territory
@@ -46,7 +48,8 @@ export class SalesAnalyst extends BoardroomManager {
                 pos: pos.franchise,
                 id: sourceId,
                 source: Game.getObjectById(sourceId as Id<Source>) || undefined,
-                salesmen: salesmen.filter(m => m.memory.source === sourceId)
+                salesmen: salesmen.filter(m => m.memory.source === sourceId),
+                maxSalesmen: mapAnalyst.calculateAdjacentPositions(pos.source).filter(p => mapAnalyst.isPositionWalkable(p)).length
             }
             if (Game.rooms[pos.franchise.roomName]) {
                 // Requires visibility
@@ -69,18 +72,22 @@ export class SalesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUntappedSources(office: Office) {
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-        return this.getSources(office).filter(source => {
-            // Assume all creeps adjacent to a source are actively working it
-            if (Game.rooms[source.roomName] && source.findInRange(FIND_CREEPS, 1)
-                .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0) >= 10) {
-                // Adjacent creeps have enough WORK parts to tap the source
-                return false;
-            } else if (mapAnalyst.calculateAdjacentPositions(source)
-                             .filter(pos => mapAnalyst.isPositionWalkable(pos)).length === 0) {
-                return false;
-            }
-            return true;
-        })
+        return this.getSources(office).filter(source => !this.isSourceTapped(source))
+    }
+    @Memoize((source: RoomPosition) => ('' + source.toString() + Game.time))
+    isSourceTapped(source: RoomPosition) {
+        let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+
+        // Assume all creeps adjacent to a source are actively working it
+        if (Game.rooms[source.roomName] && source.findInRange(FIND_CREEPS, 1)
+            .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0) >= 10) {
+            // Adjacent creeps have enough WORK parts to tap the source
+            return false;
+        } else if (mapAnalyst.calculateAdjacentPositions(source)
+                            .filter(pos => mapAnalyst.isPositionWalkable(pos)).length === 0) {
+            return false;
+        }
+        return true;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getMaxEffectiveInput(office: Office) {
