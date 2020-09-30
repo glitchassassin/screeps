@@ -34,15 +34,18 @@ export class LegalManager extends OfficeManager {
                 if (this.lawyers.length === 0) {
                     // More input than output: spawn more upgraders
                     this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
-                        ignoresRequests: true
+                        ignoresRequests: !!legalFund?.container
                     }))
                 }
-                // Place standing order for surplus energy
                 if (legalFund?.container) {
+                    // Place standing order for surplus energy to container
                     let e = getTransferEnergyRemaining(legalFund.container);
                     if (e && e > 2500) {
                         this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 1, e));
                     }
+                } else {
+                    // Place standing order for upgrades
+                    this.office.submit(new TaskRequest(this.office.name, new UpgradeTask(this.office.center.room.controller), 5, 1000));
                 }
                 return;
             }
@@ -52,7 +55,7 @@ export class LegalManager extends OfficeManager {
                 if (Game.time % 100 === 0 && statisticsAnalyst.metrics[this.office.name].controllerDepotLevels.asPercent.mean() > 0.5) {
                     // More input than output: spawn more upgraders
                     this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
-                        ignoresRequests: true
+                        ignoresRequests: !!legalFund?.container
                     }))
                 }
                 // Place order for surplus energy
@@ -61,6 +64,9 @@ export class LegalManager extends OfficeManager {
                     if (e && e > 0) {
                         this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 4, e));
                     }
+                } else {
+                    // Place standing order for upgrades
+                    this.office.submit(new TaskRequest(this.office.name, new UpgradeTask(this.office.center.room.controller), 5, 1000));
                 }
                 return;
             }
@@ -71,7 +77,9 @@ export class LegalManager extends OfficeManager {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let room = this.office.center.room;
         let taskManager = this.office.managers.get('TaskManager') as TaskManager;
-        if (!taskManager || !room.controller || this.lawyers.length === 0) return;
+        let depot = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
+        // If the dedicated container doesn't exist, fall back to upgrade requests instead
+        if (!taskManager || !room.controller || !depot?.container || this.lawyers.length === 0) return;
 
         this.lawyers.forEach(lawyer => {
             if (taskManager.isIdle(lawyer)) {
@@ -82,23 +90,12 @@ export class LegalManager extends OfficeManager {
                         new UpgradeTask(room.controller)
                     ], lawyer, `${this.office.name}_Legal`));
                 } else {
-                    // Upgrader needs energy - get from controller container, preferably
-                    let depot = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
-                    if (depot && depot.container) {
-                        taskManager.assign(new Task([
-                            new TravelTask(depot.container.pos, 1),
-                            new WithdrawTask(depot.container)
-                        ], lawyer, `${this.office.name}_Legal`));
-                    } else {
-                        // No upgrader depot exists yet; see if there's a spawn we can withdraw from instead
-                        let spawn = hrAnalyst.getSpawns(this.office).find(s => s.store.getUsedCapacity(RESOURCE_ENERGY) > 0);
-                        if (spawn) {
-                            taskManager.assign(new Task([
-                                new TravelTask(spawn.pos, 1),
-                                new WithdrawTask(spawn)
-                            ], lawyer, `${this.office.name}_Legal`));
-                        }
-                    }
+                    // Upgrader needs energy - get from dedicated controller container
+                    if (!depot?.container) return;
+                    taskManager.assign(new Task([
+                        new TravelTask(depot.container.pos, 1),
+                        new WithdrawTask(depot.container)
+                    ], lawyer, `${this.office.name}_Legal`));
                 }
             }
         })

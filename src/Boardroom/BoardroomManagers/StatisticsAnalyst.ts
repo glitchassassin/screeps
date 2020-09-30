@@ -1,4 +1,5 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
@@ -124,7 +125,7 @@ export class StatisticsAnalyst extends BoardroomManager {
             );
             this.metrics[office.name].mineContainerLevels.update(
                 salesAnalyst.getFranchiseLocations(office)
-                    .reduce((sum, mine) => (sum + (mine.container?.store.getUsedCapacity() || 0)), 0)
+                    .reduce((sum, mine) => (sum + countEnergyInContainersOrGround(mine.sourcePos)), 0)
             );
             this.metrics[office.name].roomEnergyLevels.update(office.center.room.energyAvailable);
             this.metrics[office.name].storageLevels.update(

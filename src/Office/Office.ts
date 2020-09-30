@@ -30,10 +30,14 @@ export class Office {
         // Initialize Memory
         if (!Memory.offices[roomName]) {
             Memory.offices[roomName] = {
+                employees: [],
                 franchiseLocations: {},
                 territories: {}
             }
         }
+
+        // Load saved employees
+        this.employeeIds = new Set(Memory.offices[roomName].employees as Id<Creep>[])
 
         // Load saved franchise locations
         this.franchiseLocations = Object.entries(Memory.offices[roomName].franchiseLocations).reduce((obj, [sourceId, pos]) => {
@@ -131,6 +135,9 @@ export class Office {
         // Review territories
         this.center.scan();
         this.territories.forEach(t => t.scan());
+        [this.center, ...this.territories].forEach(t =>
+            t.room?.find(FIND_MY_CREEPS).filter(c => c.memory.office === this.name).forEach(c => this.enrollEmployee(c))
+        );
 
         if (this.center.room.controller?.level === 1) {
             // If RCL 1, focus on sources and controllers
@@ -180,9 +187,11 @@ export class Office {
      */
     cleanup() {
         if (!Memory.offices[this.name]) Memory.offices[this.name] = {
+            employees: [],
             franchiseLocations: {},
             territories: {}
         }
+        Memory.offices[this.name].employees = [...this.employeeIds];
         Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
         Memory.offices[this.name].territories = this.territories.reduce((obj, territory) => {
             obj[territory.name] = {
@@ -211,6 +220,7 @@ export class Office {
         this.franchiseLocations = {};
         this.territories = [];
         Memory.offices[this.name] = {
+            employees: [],
             franchiseLocations: {},
             territories: {}
         }

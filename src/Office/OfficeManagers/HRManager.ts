@@ -35,7 +35,6 @@ export class HRManager extends OfficeManager {
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         // Enroll any newly hired creeps, if they are not already on the list
-        [this.office.center, ...this.office.territories].forEach(t => t.room?.find(FIND_MY_CREEPS).forEach(c => this.office.enrollEmployee(c)));
         this.spawns = hrAnalyst.getSpawns(this.office);
         this.extensions = hrAnalyst.getExtensions(this.office)
 

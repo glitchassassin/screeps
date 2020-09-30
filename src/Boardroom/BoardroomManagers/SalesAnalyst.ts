@@ -8,6 +8,7 @@ import { MapAnalyst } from "./MapAnalyst";
 
 export type Franchise = {
     pos: RoomPosition,
+    sourcePos: RoomPosition,
     id: string,
     source?: Source,
     container?: StructureContainer,
@@ -46,10 +47,11 @@ export class SalesAnalyst extends BoardroomManager {
         return Object.entries(office.franchiseLocations).map(([sourceId, pos]) => {
             let mine: Franchise = {
                 pos: pos.franchise,
+                sourcePos: pos.source,
                 id: sourceId,
                 source: Game.getObjectById(sourceId as Id<Source>) || undefined,
                 salesmen: salesmen.filter(m => m.memory.source === sourceId),
-                maxSalesmen: mapAnalyst.calculateAdjacentPositions(pos.source).filter(p => mapAnalyst.isPositionWalkable(p)).length
+                maxSalesmen: mapAnalyst.calculateAdjacentPositions(pos.source).filter(p => mapAnalyst.isPositionWalkable(p, true)).length
             }
             if (Game.rooms[pos.franchise.roomName]) {
                 // Requires visibility

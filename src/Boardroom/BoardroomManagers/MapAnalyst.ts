@@ -26,12 +26,15 @@ export class MapAnalyst extends BoardroomManager {
         return adjacent;
     }
     @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))
-    isPositionWalkable(pos: RoomPosition) {
+    isPositionWalkable(pos: RoomPosition, ignoreCreeps: boolean = false) {
         let terrain = Game.map.getRoomTerrain(pos.roomName);
         if (terrain.get(pos.x, pos.y) === TERRAIN_MASK_WALL) {
             return false;
         }
-        if (Game.rooms[pos.roomName] && pos.look().some(obj => (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.type))) {
+        if (Game.rooms[pos.roomName] && pos.look().some(obj => {
+            if (ignoreCreeps && obj.type === LOOK_CREEPS) return false;
+            return (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.type)
+        })) {
             return false;
         }
         return true;

@@ -13,43 +13,52 @@ export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];
 
     plan() {
+        if (this.status === OfficeManagerStatus.OFFLINE) return;
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         this.franchises = salesAnalyst.getFranchiseLocations(this.office);
 
-        switch (this.status) {
-            case OfficeManagerStatus.OFFLINE: {
-                // Manager is offline, do nothing
-                return;
-            }
-            default: {
-                // Scout surrounding Territories, if needed
-                let unexplored = this.office.territories.filter(t => !t.scanned);
-                if (unexplored.length > 0) {
-                    unexplored.forEach(territory => {
-                        this.office.submit(new TaskRequest(territory.name, new ExploreTask(territory.name), 5))
-                    })
-                }
-                // Maintains one Salesman per source,
-                // respawning with a little lead time
-                // to minimize downtime
-                this.franchises.forEach(franchise => {
-                    if (
-                        (franchise.salesmen.length === 0) || // No salesmen, OR salesmen have fewer than 5 WORK parts
-                        (
-                            franchise.salesmen.length < franchise.maxSalesmen &&
-                            franchise.salesmen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0) < 5
-                        )
-                    ) {
-                        // No salesmen at the franchise: spawn one
-                        this.office.submit(new MinionRequest(franchise.id, 10, MinionTypes.SALESMAN, {
-                            source: franchise.id,
-                            ignoresRequests: true
-                        }))
-                    }
-                })
-            }
+        let priority = 5;
+        switch(this.status) {
+            case OfficeManagerStatus.NORMAL:
+                priority = 7;
+            case OfficeManagerStatus.PRIORITY:
+                priority = 10;
         }
+        // Scout surrounding Territories, if needed
+        let unexplored = this.office.territories.filter(t => !t.scanned);
+        if (unexplored.length > 0) {
+            unexplored.forEach(territory => {
+                this.office.submit(new TaskRequest(territory.name, new ExploreTask(territory.name), 5))
+            })
+        }
+        // Maintains one Salesman per source,
+        // respawning with a little lead time
+        // to minimize downtime
+        this.franchises.forEach(franchise => {
+            // console.log(
+            //     franchise.pos,
+            //     'current salesmen:',
+            //     franchise.salesmen.length,
+            //     'out of',
+            //     franchise.maxSalesmen,
+            //     'working:',
+            //     franchise.salesmen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0),
+            //     'out of 5'
+            // );
+            if (
+                (franchise.salesmen.length === 0) || // No salesmen, OR salesmen have fewer than 5 WORK parts
+                (
+                    franchise.salesmen.length < franchise.maxSalesmen &&
+                    franchise.salesmen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0) < 5
+                )
+            ) {
+                // No salesmen at the franchise: spawn one
+                this.office.submit(new MinionRequest(franchise.id, priority, MinionTypes.SALESMAN, {
+                    source: franchise.id,
+                    ignoresRequests: true
+                }))
+            }
+        })
     }
     run() {
         let taskManager = this.office.managers.get('TaskManager') as TaskManager;
@@ -64,8 +73,8 @@ export class SalesManager extends OfficeManager {
                     // If miner is not at mine site, go there
                     if (!salesman.pos.isEqualTo(franchise.pos) && salesmenCount === 0) {
                         taskManager.assign(new Task([new TravelTask(franchise.pos, 0)], salesman, franchise.id));
-                    } else if (franchise.source && !salesman.pos.inRangeTo(franchise.source?.pos, 1)) {
-                        taskManager.assign(new Task([new TravelTask(franchise.source.pos, 1)], salesman, franchise.id));
+                    } else if (!salesman.pos.inRangeTo(franchise.sourcePos, 1)) {
+                        taskManager.assign(new Task([new TravelTask(franchise.sourcePos, 1)], salesman, franchise.id));
                     } else {
                         if (salesman.memory.spawned && !salesman.memory.arrived) {
                             salesman.memory.arrived = Game.time - salesman.memory.spawned;

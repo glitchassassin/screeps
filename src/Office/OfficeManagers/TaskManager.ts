@@ -142,7 +142,7 @@ export class TaskManager extends OfficeManager {
             requests,
             creeps,
             (taskRequest, creep) => {
-                // if (taskRequest.task?.constructor.name === 'ResupplyTask') console.log('resolving ResupplyTask');
+                // if (taskRequest.task?.constructor.name === 'ResupplyTask') console.log('resolving ResupplyTask', creep);
                 let paths = resolveTaskTrees({
                     output: 0,
                     creep,
@@ -150,14 +150,17 @@ export class TaskManager extends OfficeManager {
                     capacityUsed: creep.store.getUsedCapacity(),
                     pos: creep.pos
                 }, taskRequest.task as TaskAction)
+                let maxOutput = paths?.reduce((max, path) => (Math.max(max, path.minion.output)), 0) || 0;
                 let filteredPaths = paths?.filter(c => {
+                    // if (taskRequest.task?.constructor.name === 'ResupplyTask') console.log(JSON.stringify(c));
                     // If task plan is null, filter it
                     if (!c) return false;
                     // If task plan has withdraw and transfer loop, filter it
                     let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
                         .map(t => t.destination?.id)
                     if (tasks.length !== new Set(tasks).size) return false;
-                    if (c.minion.output == 0) return false;
+                    // If task plan has no useful output, or another task plan has higher output, filter it
+                    if (c.minion.output === 0 || c.minion.output < maxOutput) return false;
                     // Otherwise, accept it
                     return true;
                 })

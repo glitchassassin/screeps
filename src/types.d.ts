@@ -30,6 +30,7 @@ interface Memory {
   };
   offices: {
     [name: string]: {
+      employees: string[],
       franchiseLocations: {
         [sourceId: string]: {
           franchise: RoomPosition,
