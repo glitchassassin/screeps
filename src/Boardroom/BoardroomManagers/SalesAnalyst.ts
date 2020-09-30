@@ -17,13 +17,16 @@ export type Franchise = {
 
 export class SalesAnalyst extends BoardroomManager {
     franchises: Franchise[] = [];
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @Memoize((office: Office, sourcePos: RoomPosition) => ('' + office.name + sourcePos.toString() + Game.time))
     calculateBestMiningLocation(office: Office, sourcePos: RoomPosition) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let spawn = hrAnalyst.getSpawns(office)[0];
         let route = PathFinder.search(sourcePos, spawn.pos);
         if (route.incomplete) throw new Error('Unable to calculate mining location');
-        return route.path[0];
+        return {
+            franchise: route.path[0],
+            source: sourcePos
+        }
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFranchiseLocations(office: Office) {
@@ -40,14 +43,14 @@ export class SalesAnalyst extends BoardroomManager {
         // Get memorized franchise locations
         return Object.entries(office.franchiseLocations).map(([sourceId, pos]) => {
             let mine: Franchise = {
-                pos,
+                pos: pos.franchise,
                 id: sourceId,
                 source: Game.getObjectById(sourceId as Id<Source>) || undefined,
                 salesmen: salesmen.filter(m => m.memory.source === sourceId)
             }
-            if (Game.rooms[pos.roomName]) {
+            if (Game.rooms[pos.franchise.roomName]) {
                 // Requires visibility
-                pos.look().forEach(obj => {
+                pos.franchise.look().forEach(obj => {
                     if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
                         mine.container = obj.structure as StructureContainer
                     } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
@@ -61,18 +64,18 @@ export class SalesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSources (office: Office) {
         let territories = [office.center, ...office.territories]
-        return territories.map(t => t.room?.find(FIND_SOURCES) || []).reduce((a, b) => (a.concat(b)), []);
+        return territories.map(t => [...t.sources.values()]).reduce((a, b) => (a.concat(b)), []);
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUntappedSources(office: Office) {
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         return this.getSources(office).filter(source => {
             // Assume all creeps adjacent to a source are actively working it
-            if (source.pos.findInRange(FIND_CREEPS, 1)
+            if (Game.rooms[source.roomName] && source.findInRange(FIND_CREEPS, 1)
                 .reduce((a, b) => (a + b.getActiveBodyparts(WORK) * 2), 0) >= 10) {
                 // Adjacent creeps have enough WORK parts to tap the source
                 return false;
-            } else if (mapAnalyst.calculateAdjacentPositions(source.pos)
+            } else if (mapAnalyst.calculateAdjacentPositions(source)
                              .filter(pos => mapAnalyst.isPositionWalkable(pos)).length === 0) {
                 return false;
             }
@@ -89,7 +92,7 @@ export class SalesAnalyst extends BoardroomManager {
         return 2 * this.getSources(office).reduce((sum, source) => (
             sum + Math.max(
                 5,
-                minionWorkParts * mapAnalyst.calculateAdjacentPositions(source.pos)
+                minionWorkParts * mapAnalyst.calculateAdjacentPositions(source)
                                         .filter(pos => mapAnalyst.isPositionWalkable(pos)).length
             )),
         0)
@@ -105,7 +108,7 @@ export class SalesAnalyst extends BoardroomManager {
             sum + Math.max(
                 5,
                 Math.max(
-                    mapAnalyst.calculateAdjacentPositions(source.pos)
+                    mapAnalyst.calculateAdjacentPositions(source)
                           .filter(pos => mapAnalyst.isPositionWalkable(pos)).length,
                     Math.ceil(5 / minionWorkParts)
                 )

@@ -18,22 +18,16 @@ export class MustHaveEnergyFromSource extends MustHaveEnergy {
         if (minion.capacity === 0) return null; // Cannot carry energy
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
-        // // Get mine containers only
-        // let sources = global.analysts.source.getDesignatedMiningLocations(minion.creep.room)
-        //     .map(mine => mine.container)
-        //     .filter(c => c) as StructureContainer[]
-
-        // Get most full mine container only
         let office = getCreepHomeOffice(minion.creep);
         if (!office) return [];
+
+        let sources = salesAnalyst.getUntappedSources(office)
+                                            .map(franchise => new HarvestTask(franchise));
+
         let sourceContainers = (salesAnalyst.getFranchiseLocations(office)
             .map(mine => mine.container)
             .filter(c => c) as StructureContainer[])
 
-        if (sourceContainers.length === 0) return [];
-
-        let source = sourceContainers.reduce((a, b) => (a && a.store.getUsedCapacity(RESOURCE_ENERGY) > b.store.getUsedCapacity(RESOURCE_ENERGY) ? a : b))
-
-        return [new WithdrawTask(source)];
+        return [...sources, ...sourceContainers.map(source => new WithdrawTask(source))];
     }
 }

@@ -67,7 +67,7 @@ export class SalesManager extends OfficeManager {
         if (!taskManager) return;
 
         this.franchises.forEach(franchise => {
-            if (!franchise.source) return;
+            // if (!franchise.source) return;
             franchise.salesmen.forEach(salesman => {
                 if (taskManager.isIdle(salesman)) {
                     // If miner is not at mine site, go there
@@ -80,7 +80,7 @@ export class SalesManager extends OfficeManager {
                     }
                     // If mine container is not full, keep mining
                     if (franchise.container?.store.getFreeCapacity() !== 0) {
-                        taskManager.assign(new Task([new HarvestTask(franchise.source)], salesman, franchise.id));
+                        taskManager.assign(new Task([new HarvestTask(franchise.pos)], salesman, franchise.id));
                     }
                 }
             })

@@ -83,8 +83,8 @@ export class StatisticsAnalyst extends BoardroomManager {
             if (!this.metrics[office.name]) {
                 this.metrics[office.name] = {
                     mineRate: new NonNegativeDeltaMetric(
-                        salesAnalyst.getSources(office)
-                            .reduce((sum, source) => (sum + source.energyCapacity), 0),
+                        salesAnalyst.getFranchiseLocations(office)
+                            .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
                         50
                     ),
                     mineContainerLevels: new Metric(
@@ -119,8 +119,8 @@ export class StatisticsAnalyst extends BoardroomManager {
 
         this.boardroom.offices.forEach(office => {
             this.metrics[office.name].mineRate.update(
-                salesAnalyst.getSources(office)
-                    .reduce((sum, source) => (sum + source.energy), 0)
+                salesAnalyst.getFranchiseLocations(office)
+                    .reduce((sum, source) => (sum + (source.source?.energy || 0)), 0)
             );
             this.metrics[office.name].mineContainerLevels.update(
                 salesAnalyst.getFranchiseLocations(office)

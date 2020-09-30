@@ -74,9 +74,6 @@ export class TravelTask extends TaskAction {
             }
         }
         else if (result !== OK) {
-            console.log('travel error', result);
-            console.log('creep', creep.name, creep.pos, 'traveling to', this.destination);
-            console.log(this.pathCache);
             return TaskActionResult.FAILED;
         } else {
             this.tries = 0; // Successful move, not tired, not in the same position, so reset tries to 0
@@ -87,7 +84,8 @@ export class TravelTask extends TaskAction {
     cost(minion: SpeculativeMinion) {
         if (!this.destination) return Infinity
         // Gets approximate cost by range instead of calculating the exact cost. This is faster
-        return minion.pos.getRangeTo(this.destination); //PathFinder.search(minion.pos, this.destination).cost;
+        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+        return mapAnalyst.getRangeTo(minion.pos, this.destination); //PathFinder.search(minion.pos, this.destination).cost;
     }
     predict(minion: SpeculativeMinion) {
         return {

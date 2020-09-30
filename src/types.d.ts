@@ -31,7 +31,10 @@ interface Memory {
   offices: {
     [name: string]: {
       franchiseLocations: {
-        [sourceId: string]: RoomPosition
+        [sourceId: string]: {
+          franchise: RoomPosition,
+          source: RoomPosition
+        }
       },
       territories: {
         [roomName: string]: {

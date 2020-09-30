@@ -93,6 +93,7 @@ export class TaskManager extends OfficeManager {
                 if (task.actions.length > 0) {
                     task.creep?.say(task.actions[0].message);
                 } else {
+                    // TODO Should also complete parent request, if capacity is 0.
                     task.completed = true;
                     return false;
                 }
@@ -141,7 +142,7 @@ export class TaskManager extends OfficeManager {
             requests,
             creeps,
             (taskRequest, creep) => {
-                if (taskRequest.task?.action.constructor.name === 'ExploreTask') console.log('resolving ExploreTask');
+                // if (taskRequest.task?.constructor.name === 'ResupplyTask') console.log('resolving ResupplyTask');
                 let paths = resolveTaskTrees({
                     output: 0,
                     creep,
@@ -166,7 +167,7 @@ export class TaskManager extends OfficeManager {
                 }
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 2 : 1;
-                if (taskRequest.task?.action.constructor.name === 'ExploreTask') console.log('ExploreTask', JSON.stringify(bestPlan));
+                // if (taskRequest.task?.action.constructor.name === 'ResupplyTask') console.log('ResupplyTask', JSON.stringify(bestPlan));
                 return {
                     rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
                     output: bestPlan

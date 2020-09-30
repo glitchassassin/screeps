@@ -15,29 +15,30 @@ export class HarvestTask extends TaskAction {
         // return [new MustBeAtMine(this.source)]
         return [
             new MustHaveWorkParts(),
-            new MustBeAdjacent(this.source.pos),
+            new MustBeAdjacent(this.source),
         ]
     }
     message = "⚡";
 
-    @Type(() => Source)
-    @Transform(transformGameObject(Source))
-    source: Source|null = null
+
+    source: RoomPosition|null = null
     constructor(
-        source: Source|null = null,
+        source: RoomPosition|null = null,
     ) {
         super();
         this.source = source;
     }
     toString() {
-        return `[HarvestTask: ${this.source?.id} {${this.source?.pos.x},${this.source?.pos.y}}]`
+        return `[HarvestTask: {${this.source?.x},${this.source?.y}}]`
     }
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
         if (!this.source) return TaskActionResult.FAILED;
+        let source = this.source.lookFor(LOOK_SOURCES)?.[0]
+        if (!source) return  TaskActionResult.FAILED;
 
-        if (creep.harvest(this.source) === ERR_NOT_IN_RANGE) {
+        if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
             return TaskActionResult.FAILED;
         }
         if (creep.store.getCapacity() > 0) {

@@ -1,5 +1,5 @@
 import { deserialize, serialize } from "class-transformer";
-import { OfficeManager } from "Office/OfficeManager";
+import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
@@ -32,26 +32,39 @@ export class HRManager extends OfficeManager {
         }
     }
     plan() {
+        if (this.status === OfficeManagerStatus.OFFLINE) return;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         // Enroll any newly hired creeps, if they are not already on the list
-        this.office.center.room.find(FIND_MY_CREEPS).forEach(c => this.office.enrollEmployee(c));
+        [this.office.center, ...this.office.territories].forEach(t => t.room?.find(FIND_MY_CREEPS).forEach(c => this.office.enrollEmployee(c)));
         this.spawns = hrAnalyst.getSpawns(this.office);
         this.extensions = hrAnalyst.getExtensions(this.office)
+
+        let priority = 5;
+
+        switch (this.status) {
+            case OfficeManagerStatus.MINIMAL:
+                priority = 5;
+                break;
+            case OfficeManagerStatus.NORMAL:
+                priority = 6;
+                break;
+            case OfficeManagerStatus.PRIORITY:
+                priority = 7;
+                break;
+        }
 
         this.extensions.forEach(e => {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {
-                this.office.submit(new TaskRequest(e.id, new ResupplyTask(e), 6, energy));
+                this.office.submit(new TaskRequest(e.id, new ResupplyTask(e), priority, energy));
             }
         })
         this.spawns.forEach((spawn) => {
             let roomCapacity = spawn.room.energyAvailable
             let spawnCapacity = getTransferEnergyRemaining(spawn);
             if (!spawnCapacity) return;
-            if (roomCapacity < 200) {
-                this.office.submit(new TaskRequest(spawn.id, new TransferTask(spawn), 10, spawnCapacity));
-            } else if (spawnCapacity > 0) {
-                this.office.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), 6, spawnCapacity));
+            if (spawnCapacity > 0) {
+                this.office.submit(new TaskRequest(spawn.id, new ResupplyTask(spawn), priority, spawnCapacity));
             }
         })
     }

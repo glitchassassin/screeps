@@ -1,4 +1,5 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { MustHaveEnergyFromSource } from "TaskRequests/prereqs/MustHaveEnergyFromSource";
 import { Memoize } from "typescript-memoize";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
@@ -62,5 +63,10 @@ export class MapAnalyst extends BoardroomManager {
         }
 
         return costs;
+    }
+    getRangeTo(from: RoomPosition, to: RoomPosition) {
+        if (from.roomName === to.roomName) return from.getRangeTo(to);
+
+        return Game.map.getRoomLinearDistance(from.roomName, to.roomName) * 50;
     }
 }

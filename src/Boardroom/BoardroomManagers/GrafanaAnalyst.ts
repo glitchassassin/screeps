@@ -47,8 +47,8 @@ export class GrafanaAnalyst extends BoardroomManager {
         let storage = logisticsAnalyst.getStorage(office);
 
         return {
-            sourcesLevel: salesAnalyst.getSources(office).reduce((sum, source) => (sum + source.energy), 0),
-            sourcesMax: salesAnalyst.getSources(office).reduce((sum, source) => (sum + source.energyCapacity), 0),
+            sourcesLevel: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energy || 0)), 0),
+            sourcesMax: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
             mineContainersLevel: salesAnalyst.getFranchiseLocations(office)
                 .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
             mineContainersMax: salesAnalyst.getFranchiseLocations(office)

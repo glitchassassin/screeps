@@ -19,7 +19,7 @@ export class Office {
     name: string;
     center: RoomIntelligence;
     territories: TerritoryIntelligence[] = [];
-    franchiseLocations: {[sourceId: string]: RoomPosition} = {};
+    franchiseLocations: {[sourceId: string]: {franchise: RoomPosition, source: RoomPosition}} = {};
     private employeeIds: Set<Id<Creep>> = new Set();
     managers: Map<string, OfficeManager> = new Map();
 
@@ -37,9 +37,13 @@ export class Office {
 
         // Load saved franchise locations
         this.franchiseLocations = Object.entries(Memory.offices[roomName].franchiseLocations).reduce((obj, [sourceId, pos]) => {
-            obj[sourceId] = new RoomPosition(pos.x, pos.y, pos.roomName);
+            if (!pos.franchise || !pos.source) return obj;
+            obj[sourceId] = {
+                franchise: new RoomPosition(pos.franchise.x, pos.franchise.y, pos.franchise.roomName),
+                source: new RoomPosition(pos.source.x, pos.source.y, pos.source.roomName)
+            }
             return obj;
-        }, {} as {[sourceId: string]: RoomPosition});
+        }, {} as {[sourceId: string]: {franchise: RoomPosition, source: RoomPosition}});
 
         // Load saved territory details
         this.territories = Object.values(Game.map.describeExits(roomName))
@@ -50,7 +54,7 @@ export class Office {
                     territory.controller = Memory.offices[roomName].territories[room as string].controller;
                     territory.scanned = Memory.offices[roomName].territories[room as string].scanned;
                     territory.sources = new Map(Object.entries(Memory.offices[roomName].territories[room as string].sources)
-                        .map(([id, pos]) => [id as Id<Source>, pos]));
+                        .map(([id, pos]) => [id as Id<Source>, new RoomPosition(pos.x, pos.y, pos.roomName)]));
                 }
                 return territory;
             })
@@ -113,6 +117,7 @@ export class Office {
     plan() {
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
 
+        let hr = this.managers.get('HRManager');
         let sales = this.managers.get('SalesManager');
         let legal = this.managers.get('LegalManager');
         let facilities = this.managers.get('FacilitiesManager');
@@ -125,6 +130,8 @@ export class Office {
 
         if (this.center.room.controller?.level === 1) {
             // If RCL 1, focus on sources and controllers
+            // console.log('RCL1')
+            hr?.setStatus(OfficeManagerStatus.NORMAL);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
             logistics?.setStatus(OfficeManagerStatus.OFFLINE);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
@@ -135,6 +142,8 @@ export class Office {
             facilitiesAnalyst.needsStructures(this)
         ) {
             // If RCL2 and infrastructure is incomplete, focus on construction
+            // console.log('RCL2, building infrastructure')
+            hr?.setStatus(OfficeManagerStatus.MINIMAL);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
             logistics?.setStatus(OfficeManagerStatus.OFFLINE);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
@@ -144,6 +153,7 @@ export class Office {
             this.center.room.controller?.level === 2
         ) {
             // If RCL 2 and infrastructure is complete, focus on controller
+            // console.log('RCL2, infrastructure complete')
             sales?.setStatus(OfficeManagerStatus.NORMAL);
             logistics?.setStatus(OfficeManagerStatus.NORMAL);
             legal?.setStatus(OfficeManagerStatus.NORMAL);
@@ -190,6 +200,15 @@ export class Office {
         this.managers.forEach(m => m.cleanup());
     }
 
+    purge() {
+        this.franchiseLocations = {};
+        this.territories = [];
+        Memory.offices[this.name] = {
+            franchiseLocations: {},
+            territories: {}
+        }
+    }
+
     report() {
         const statusTable = [
             ['Manager', 'Status']
@@ -202,10 +221,15 @@ export class Office {
         });
 
         const territoryTable = [
-            ['Territory', 'Status']
+            ['Territory', 'Status', 'Sources', 'Controller']
         ];
         this.territories.forEach(territory => {
-            territoryTable.push([territory.name, territory.scanned ? 'SCANNED' : 'UNKNOWN']);
+            territoryTable.push([
+                territory.name,
+                territory.scanned ? 'SCANNED' : 'UNKNOWN',
+                `${territory.sources.size}`,
+                territory.controller ? 'Yes' : 'No'
+            ]);
         })
         const territoryTableRendered = table(territoryTable, {
             singleLine: true
@@ -214,7 +238,7 @@ export class Office {
         console.log(`[Office ${this.name}] Status Report:
     <strong>Managers</strong>
 ${statusTableRendered}
-    <strong>Managers</strong>
+    <strong>Territories</strong>
 ${territoryTableRendered}`
         )
     }
