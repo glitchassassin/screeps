@@ -39,9 +39,10 @@ export class LogisticsManager extends OfficeManager {
             default: {
                 // Maintain enough haulers to keep
                 // franchises drained
-                let outputAverageLevel = statisticsAnalyst.metrics[this.office.name].storageLevels.mean();
-                let outputMaxLevel = statisticsAnalyst.metrics[this.office.name].storageLevels.maxValue;
-                let inputAverageMean = statisticsAnalyst.metrics[this.office.name].mineContainerLevels.asPercent.mean();
+                let metrics = statisticsAnalyst.cache.metrics.get(this.office.name);
+                let outputAverageLevel = metrics?.storageLevels.mean() || 0;
+                let outputMaxLevel = metrics?.storageLevels.maxValue || 0;
+                let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
                 if (this.haulers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.HAULER));
                 } else if (Game.time % 50 === 0 && inputAverageMean > 0.1 && outputAverageLevel < outputMaxLevel) {

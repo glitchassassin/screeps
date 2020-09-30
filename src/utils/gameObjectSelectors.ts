@@ -1,4 +1,6 @@
-export function getBuildEnergyRemaining(target: ConstructionSite) {
+import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+
+export function getBuildEnergyRemaining(target: CachedConstructionSite|ConstructionSite) {
     return target.progressTotal - target.progress;
 }
 export function getRepairEnergyRemaining(target: Structure) {

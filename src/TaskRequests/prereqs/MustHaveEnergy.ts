@@ -36,7 +36,7 @@ export class MustHaveEnergy extends TaskPrerequisite {
         if (!office) return [];
 
         let sources = salesAnalyst.getUntappedSources(office)
-                                            .map(franchise => new HarvestTask(franchise));
+                                            .map(franchise => new HarvestTask(franchise.sourcePos));
         // Can get energy from withdrawing
         let containers = logisticsAnalyst.getAllSources(office)
                                                   .map(source => new WithdrawTask(source));

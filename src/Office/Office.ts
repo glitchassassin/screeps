@@ -158,7 +158,7 @@ export class Office {
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
             logistics?.setStatus(OfficeManagerStatus.MINIMAL);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
-            facilities?.setStatus(OfficeManagerStatus.MINIMAL);
+            facilities?.setStatus(OfficeManagerStatus.NORMAL);
             security?.setStatus(OfficeManagerStatus.OFFLINE);
         } else if (
             this.center.room.controller?.level === 2

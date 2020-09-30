@@ -26,6 +26,7 @@ export class Boardroom {
         if (!Memory.offices) Memory.offices = {};
         if (!Memory.hr) Memory.hr = {};
         if (!Memory.tasks) Memory.tasks = {};
+        if (!Memory.boardroom) Memory.boardroom = {};
 
         // Initialize Offices
         Object.values(Game.spawns).forEach(spawn => {

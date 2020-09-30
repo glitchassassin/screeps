@@ -1,8 +1,9 @@
+import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { report } from "process";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
-import { transformGameObject } from "utils/transformGameObject";
+import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "../SpeculativeMinion";
@@ -26,12 +27,10 @@ export class BuildTask extends TaskAction {
     }
     message = "🔨";
 
-    @Type(() => ConstructionSite)
-    @Transform(transformGameObject(ConstructionSite))
-    destination: ConstructionSite|null = null
+    destination: CachedConstructionSite|null = null
 
     constructor(
-        destination: ConstructionSite|null = null,
+        destination: CachedConstructionSite|null = null,
     ) {
         super();
         this.destination = destination;
@@ -42,10 +41,10 @@ export class BuildTask extends TaskAction {
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.destination) return TaskActionResult.FAILED;
+        if (!this.destination || !this.destination.gameObj) return TaskActionResult.FAILED;
         let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
 
-        let result = creep.build(this.destination);
+        let result = creep.build(this.destination.gameObj);
         if (result === ERR_NOT_ENOUGH_ENERGY) {
             return TaskActionResult.SUCCESS;
         } else if (result !== OK){
@@ -62,7 +61,7 @@ export class BuildTask extends TaskAction {
         return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
     }
     predict(minion: SpeculativeMinion) {
-        let targetCapacity = (this.destination as ConstructionSite).progressTotal - (this.destination as ConstructionSite).progress;
+        let targetCapacity = (this.destination as CachedConstructionSite).progressTotal - (this.destination as CachedConstructionSite).progress;
         return {
             ...minion,
             output: Math.min(minion.capacityUsed, targetCapacity),

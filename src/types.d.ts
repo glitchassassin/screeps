@@ -25,6 +25,9 @@ interface RoomMemory {
 interface Memory {
   uuid: number;
   log: any;
+  boardroom: {
+    [managerName: string]: string
+  }
   hr: {
     [officeName: string]: string
   };

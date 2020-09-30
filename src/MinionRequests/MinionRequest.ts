@@ -48,7 +48,7 @@ export class MinionRequest {
 
         let energyToUse = Math.max(
             office.center.room.energyAvailable,
-            statisticsAnalyst.metrics[office.name].roomEnergyLevels.max()
+            statisticsAnalyst.cache.metrics.get(office.name)?.roomEnergyLevels.max() || 0
         );
 
         if (!spawn.spawning && !this.spawned) {

@@ -4,9 +4,9 @@ import { TaskRequest } from "TaskRequests/TaskRequest";
 import { BuildTask } from "TaskRequests/types/BuildTask";
 import { RepairTask } from "TaskRequests/types/RepairTask";
 import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
-import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 
-const buildPriority = (site: ConstructionSite) => {
+const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
     // complete construction sites
     let completion = site.progress / site.progressTotal;
@@ -21,8 +21,8 @@ const buildPriority = (site: ConstructionSite) => {
 }
 
 export class FacilitiesManager extends OfficeManager {
-    structures: Structure[] = [];
-    sites: ConstructionSite[] = [];
+    structures: CachedStructure[] = [];
+    sites: CachedConstructionSite[] = [];
     handymen: Creep[] = [];
 
     init() {
@@ -83,8 +83,8 @@ export class FacilitiesManager extends OfficeManager {
         }
     }
     submitRepairOrders(max = 5) {
-        // If no towers, request repair for structures in need
-        let repairable = this.structures.filter(structure => {
+        let repairable = (this.structures.map(s => s.gameObj).filter(structure => {
+            if (!structure) return false;
             switch (structure.structureType) {
                 case STRUCTURE_WALL:
                     if (structure.hits < 100000) return true;
@@ -95,7 +95,7 @@ export class FacilitiesManager extends OfficeManager {
                         return structure.hits < structure.hitsMax;
                     return structure.hits < (structure.hitsMax / 2); // In MINIMAL mode, repair structures to half health
             }
-        }).sort((a, b) => a.hits - b.hits);
+        }) as Structure[]).sort((a, b) => a.hits - b.hits);
         repairable.slice(0, max).forEach((structure, i) => {
             this.office.submit(new TaskRequest(`${this.office.name}_Facilities_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
         })

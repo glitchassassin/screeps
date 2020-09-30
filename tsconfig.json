@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "module": "esnext",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "target": "es2017",
     "moduleResolution": "Node",
     "outDir": "dist",
@@ -9,6 +11,7 @@
     "sourceMap": true,
     "strict": true,
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "noImplicitReturns": true,
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false

@@ -24,6 +24,8 @@ export class SalesManager extends OfficeManager {
             case OfficeManagerStatus.PRIORITY:
                 priority = 10;
         }
+        // Bump priority up if we have NO salesmen
+        if (this.office.employees.filter(c => c.memory.type === 'SALESMAN').length < 2) priority += 2;
         // Scout surrounding Territories, if needed
         let unexplored = this.office.territories.filter(t => !t.scanned);
         if (unexplored.length > 0) {

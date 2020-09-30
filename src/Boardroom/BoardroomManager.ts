@@ -1,4 +1,8 @@
+import { deserialize, serialize } from "class-transformer";
+import { ClassType } from "class-transformer/ClassTransformer";
 import { Boardroom } from "./Boardroom";
+
+export class BoardroomManagerMemory { }
 
 export abstract class BoardroomManager {
     constructor(
@@ -8,12 +12,23 @@ export abstract class BoardroomManager {
         this.init();
     }
 
+    cache: BoardroomManagerMemory = new BoardroomManagerMemory();
+
     /**
      * Load any persistent data from Memory
      *
      * Invoked by constructor after every global reset
      */
-    init() { }
+    init() {
+        if (Memory.boardroom[this.cache.constructor.name]) {
+            try {
+                this.cache = deserialize(this.cache.constructor as ClassType<BoardroomManagerMemory>, Memory.boardroom[this.cache.constructor.name]);
+            }
+            catch (e) {
+                console.log(`Failed to load ${this.cache.constructor.name} cached data\n${e.stack}`);
+            }
+        }
+    }
 
     /**
      * Create requests (but don't commit any game changes)
@@ -27,5 +42,7 @@ export abstract class BoardroomManager {
      *
      * Invoked every tick
      */
-    cleanup() { }
+    cleanup() {
+        Memory.boardroom[this.cache.constructor.name] = serialize(this.cache);
+    }
 }

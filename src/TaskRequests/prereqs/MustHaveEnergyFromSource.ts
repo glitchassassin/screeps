@@ -24,7 +24,7 @@ export class MustHaveEnergyFromSource extends MustHaveEnergy {
         if (!office) return [];
 
         let sources = salesAnalyst.getUntappedSources(office)
-                                            .map(franchise => new HarvestTask(franchise));
+                                            .map(franchise => new HarvestTask(franchise.sourcePos));
 
         let sourceContainers = logisticsAnalyst.getAllSources(office)
             .filter(source => !(source instanceof StructureSpawn))

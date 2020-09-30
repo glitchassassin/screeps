@@ -7,7 +7,7 @@ import { SalesAnalyst } from "./SalesAnalyst";
 export class LogisticsAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStorage(office: Office) {
-        return office.center.room.find(FIND_STRUCTURES)
+        return office.center.room.find(FIND_MY_STRUCTURES)
             .filter(s => s.structureType === STRUCTURE_STORAGE) as StructureStorage[];
     }
     @Memoize((room: Room) => ('' + room.name + Game.time))
