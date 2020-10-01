@@ -32,9 +32,12 @@ export class ControllerArchitect extends OfficeManager {
     }
 
     run() {
+        // Architect only renders if enabled and structures are not built
         if (global.v.controller.state) {
-            if (this.office.center.controller?.pos) {
-                new RoomVisual(this.office.center.controller.pos.roomName).circle(this.office.center.controller.pos, {radius: 5, stroke: '#88f', fill: 'transparent'})
+            if (this.office.center.controller?.pos && this.depot?.pos) {
+                let vis = new RoomVisual(this.depot.pos.roomName)
+                vis.circle(this.depot.pos, {radius: 1, stroke: '#0f0', fill: 'transparent'})
+                    .line(this.depot.pos, this.office.center.controller.pos, {color: '#0f0'})
             }
         }
     }

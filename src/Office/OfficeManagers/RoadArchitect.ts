@@ -75,14 +75,16 @@ export class RoadArchitect extends OfficeManager {
     }
 
     run() {
+        // Architect only renders if enabled and roads are not built
         if (global.v.roads.state) {
             this.roads.forEach(road => {
+                if (road.status === 'DONE') return;
                 let rooms = road.path.reduce((rooms, pos) => (rooms.includes(pos.roomName) ? rooms : [...rooms, pos.roomName]), [] as string[])
                 rooms.forEach(room => {
                     // Technically this could cause weirdness if the road loops out of a room
                     // and then back into it. If that happens, we'll just need to parse this
                     // into segments a little more intelligently
-                    new RoomVisual(room).poly(road.path.filter(pos => pos.roomName === room), {lineStyle: 'dashed'});
+                    new RoomVisual(room).poly(road.path.filter(pos => pos.roomName === room), {lineStyle: 'dashed', stroke: '#0f0'});
                 })
             })
         }

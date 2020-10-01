@@ -27,6 +27,7 @@ export class SourceArchitect extends OfficeManager {
         if (global.v.franchises.state) {
             this.franchises.forEach(franchise => {
                 new RoomVisual(franchise.sourcePos.roomName).rect(franchise.sourcePos.x-2, franchise.sourcePos.y-2, 4, 4, {stroke: '#0f0', fill: 'transparent'})
+                new RoomVisual(franchise.pos.roomName).circle(franchise.pos, {radius: 1, stroke: '#0f0', fill: 'transparent'})
             })
         }
     }

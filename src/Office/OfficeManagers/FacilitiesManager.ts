@@ -25,9 +25,8 @@ export class FacilitiesManager extends OfficeManager {
     sites: CachedConstructionSite[] = [];
     handymen: Creep[] = [];
 
-    init() {
-
-    }
+    repairOrders: RoomPosition[] = [];
+    buildOrders: RoomPosition[] = [];
 
     plan() {
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
@@ -35,6 +34,9 @@ export class FacilitiesManager extends OfficeManager {
         this.sites = facilitiesAnalyst.getConstructionSites(this.office);
         this.structures = facilitiesAnalyst.getStructures(this.office);
         this.handymen = facilitiesAnalyst.getHandymen(this.office);
+
+        this.repairOrders = [];
+        this.buildOrders = [];
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
@@ -97,6 +99,7 @@ export class FacilitiesManager extends OfficeManager {
             }
         }) as Structure[]).sort((a, b) => a.hits - b.hits);
         repairable.slice(0, max).forEach((structure, i) => {
+            this.repairOrders.push(structure.pos);
             this.office.submit(new TaskRequest(`${this.office.name}_Facilities_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
         })
         return Math.min(repairable.length, max);
@@ -105,8 +108,20 @@ export class FacilitiesManager extends OfficeManager {
         let buildable = this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)))
 
         buildable.slice(0, max).forEach((site, i) => {
+            this.buildOrders.push(site.pos);
             this.office.submit(new TaskRequest(`${this.office.name}_Facilities_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
         })
         return Math.min(buildable.length, max);
+    }
+
+    run() {
+        if (global.v.construction.state) {
+            this.buildOrders.forEach(pos => {
+                new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
+            })
+            this.repairOrders.forEach(pos => {
+                new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#ff0', fill: 'transparent', lineStyle: 'dotted'});
+            })
+        }
     }
 }

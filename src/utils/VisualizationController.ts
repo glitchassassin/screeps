@@ -5,15 +5,7 @@ export class Switch {
     toggle() { this.state = !this.state; }
 }
 
-class ExclusiveSwitchSet {
-    switches: Map<string, Switch> = new Map<string, Switch>();
-
-    register(name: string, s: Switch) {
-        this.switches.set(name, s);
-    }
-
-}
-const mapSwitches = ['roads', 'franchises', 'controller'] as const;
+const mapSwitches = ['roads', 'franchises', 'controller', 'construction'] as const;
 type mapSwitchTypes = ('none'|'all'|typeof mapSwitches[number]);
 
 const reportsSwitches = ['sales', 'hr', 'task'] as const;
@@ -23,6 +15,7 @@ export class VisualizationController {
     roads = new Switch();
     franchises = new Switch();
     controller = new Switch();
+    construction = new Switch();
 
     sales = new Switch();
     hr = new Switch();
