@@ -1,7 +1,6 @@
 import { ControllerAnalyst, Depot } from '../../Boardroom/BoardroomManagers/ControllerAnalyst';
 import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
-import { SwitchState } from 'utils/VisualizationController';
 
 export class ControllerArchitect extends OfficeManager {
     depot: Depot|null = null;
@@ -33,7 +32,7 @@ export class ControllerArchitect extends OfficeManager {
     }
 
     run() {
-        if (global.v.controller.state === SwitchState.ON) {
+        if (global.v.controller.state) {
             if (this.office.center.controller?.pos) {
                 new RoomVisual(this.office.center.controller.pos.roomName).circle(this.office.center.controller.pos, {radius: 5, stroke: '#88f', fill: 'transparent'})
             }

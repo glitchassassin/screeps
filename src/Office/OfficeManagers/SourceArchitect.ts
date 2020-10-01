@@ -1,7 +1,6 @@
 import { Franchise, SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
 import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
-import { SwitchState } from 'utils/VisualizationController';
 
 export class SourceArchitect extends OfficeManager {
     franchises: Franchise[] = [];
@@ -25,7 +24,7 @@ export class SourceArchitect extends OfficeManager {
     }
 
     run() {
-        if (global.v.franchises.state === SwitchState.ON) {
+        if (global.v.franchises.state) {
             this.franchises.forEach(franchise => {
                 new RoomVisual(franchise.sourcePos.roomName).rect(franchise.sourcePos.x-2, franchise.sourcePos.y-2, 4, 4, {stroke: '#0f0', fill: 'transparent'})
             })

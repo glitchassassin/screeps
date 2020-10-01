@@ -4,7 +4,6 @@ import { Transform } from 'class-transformer';
 import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
 import { transformRoomPosition } from 'utils/transformGameObject';
-import { SwitchState } from 'utils/VisualizationController';
 
 export class Road {
     @Transform(transformRoomPosition)
@@ -76,7 +75,7 @@ export class RoadArchitect extends OfficeManager {
     }
 
     run() {
-        if (global.v.roads.state === SwitchState.ON) {
+        if (global.v.roads.state) {
             this.roads.forEach(road => {
                 let rooms = road.path.reduce((rooms, pos) => (rooms.includes(pos.roomName) ? rooms : [...rooms, pos.roomName]), [] as string[])
                 rooms.forEach(room => {

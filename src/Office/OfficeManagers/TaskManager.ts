@@ -8,7 +8,6 @@ import { TransferTask } from "TaskRequests/types/TransferTask";
 import { stablematch } from "TaskRequests/algorithms/stablematch";
 import { table } from "table";
 import { OfficeManager } from "Office/OfficeManager";
-import { SwitchState } from "utils/VisualizationController";
 import { RoomVisualTable } from "utils/RoomVisualTable";
 
 type RequestsMap<T> = {
@@ -107,7 +106,7 @@ export class TaskManager extends OfficeManager {
             return true;
         })
 
-        if (global.v.task.state === SwitchState.ON) {
+        if (global.v.task.state) {
             this.report();
         }
     }

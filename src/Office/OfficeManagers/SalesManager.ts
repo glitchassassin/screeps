@@ -11,7 +11,6 @@ import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { table } from "table";
 import { RoomVisualTable } from "utils/RoomVisualTable";
-import { SwitchState } from "utils/VisualizationController";
 
 export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];
@@ -91,7 +90,7 @@ export class SalesManager extends OfficeManager {
                 }
             })
         })
-        if (global.v.sales.state === SwitchState.ON) {
+        if (global.v.sales.state) {
             this.report();
         }
     }

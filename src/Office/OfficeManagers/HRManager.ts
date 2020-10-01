@@ -7,7 +7,6 @@ import { table } from "table";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
-import { SwitchState } from "utils/VisualizationController";
 import { RoomVisualTable } from "utils/RoomVisualTable";
 
 export class HRManager extends OfficeManager {
@@ -83,7 +82,7 @@ export class HRManager extends OfficeManager {
             // Process assigned requests
             r.fulfill(this.office);
         })
-        if (global.v.hr.state === SwitchState.ON) {
+        if (global.v.hr.state) {
             this.report();
         }
     }
