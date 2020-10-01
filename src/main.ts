@@ -4,6 +4,7 @@ import { Boardroom } from 'Boardroom/Boardroom';
 
 import profiler from 'screeps-profiler';
 import { GrafanaAnalyst } from 'Boardroom/BoardroomManagers/GrafanaAnalyst';
+import { VisualizationController } from 'utils/VisualizationController';
 
 // Initialize memory
 if (!global.IS_JEST_TEST) {
@@ -15,9 +16,10 @@ if (!global.IS_JEST_TEST) {
   }
 }
 
+// Initialize control switches
+global.v = new VisualizationController()
 
 // Initialize Boardroom
-
 global.boardroom = new Boardroom();
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change

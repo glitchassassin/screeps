@@ -7,6 +7,8 @@ import { table } from "table";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
+import { SwitchState } from "utils/VisualizationController";
+import { RoomVisualTable } from "utils/RoomVisualTable";
 
 export class HRManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
@@ -81,6 +83,23 @@ export class HRManager extends OfficeManager {
             // Process assigned requests
             r.fulfill(this.office);
         })
+        if (global.v.hr.state === SwitchState.ON) {
+            this.report();
+        }
+    }
+    report() {
+        let headers = ['Source', 'Minion', 'Priority', 'Assigned']
+        let requests = Object.values(this.requests)
+        let rows = requests.map(r => {
+            return [
+                Game.getObjectById(r.sourceId as Id<any>)?.toString() || r.sourceId,
+                r.type,
+                r.priority,
+                r.assignedTo
+            ];
+        });
+
+        RoomVisualTable(new RoomPosition(2, 15, this.office.center.name), [headers, ...rows]);
     }
     cleanup() {
         let serialized: {[id: string]: string} = {};
@@ -101,7 +120,7 @@ export class HRManager extends OfficeManager {
         return this.spawns.find(s => !Object.values(this.requests).some(r => r.assignedTo === s.id));
     }
 
-    report() {
+    consoleReport() {
         const requestTable = [['Source', 'Minion', 'Priority', 'Assigned']];
         let requests = Object.values(this.requests)
         requestTable.push(
@@ -124,11 +143,4 @@ export class HRManager extends OfficeManager {
 ${requestTableRendered}`
         )
     }
-}
-
-global.hrReport = () => {
-    global.boardroom.offices.forEach(office => {
-        let hr = office.managers.get('HRManager') as HRManager;
-        hr.report();
-    })
 }

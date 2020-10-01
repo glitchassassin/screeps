@@ -36,7 +36,7 @@ export class BuildTask extends TaskAction {
         this.destination = destination;
     }
     toString() {
-        return `[BuildTask: ${this.destination?.id} ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[BuildTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {

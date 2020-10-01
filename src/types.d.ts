@@ -95,6 +95,7 @@ declare namespace NodeJS {
     IS_JEST_TEST: boolean;
     log: any;
     boardroom: import('./Boardroom/Boardroom').Boardroom;
+    v: import('./utils/VisualizationController').VisualizationController;
     taskReport: Function;
     taskPurge: Function;
     officeReport: Function;

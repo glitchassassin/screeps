@@ -8,6 +8,10 @@ import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalys
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { ExploreTask } from "TaskRequests/types/ExploreTask";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
+import { table } from "table";
+import { RoomVisualTable } from "utils/RoomVisualTable";
+import { SwitchState } from "utils/VisualizationController";
 
 export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];
@@ -87,5 +91,23 @@ export class SalesManager extends OfficeManager {
                 }
             })
         })
+        if (global.v.sales.state === SwitchState.ON) {
+            this.report();
+        }
+    }
+    report() {
+        let headers = ['Franchise', 'Salesmen', 'Effective', 'Surplus']
+        let rows = this.franchises.map(franchise => {
+            return [
+                `${franchise.sourcePos.roomName}[${franchise.sourcePos.x}, ${franchise.sourcePos.y}]`,
+                `${franchise.salesmen.length}/${franchise.maxSalesmen}`,
+                `${(franchise.salesmen.reduce((sum, salesman) =>
+                    sum + salesman.getActiveBodyparts(WORK)
+                , 0) / 5 * 100).toFixed(0)}%`,
+                countEnergyInContainersOrGround(franchise.sourcePos)
+            ]
+        })
+
+        RoomVisualTable(new RoomPosition(2, 2, this.office.center.name), [headers, ...rows]);
     }
 }

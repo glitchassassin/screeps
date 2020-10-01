@@ -8,6 +8,8 @@ import { TransferTask } from "TaskRequests/types/TransferTask";
 import { stablematch } from "TaskRequests/algorithms/stablematch";
 import { table } from "table";
 import { OfficeManager } from "Office/OfficeManager";
+import { SwitchState } from "utils/VisualizationController";
+import { RoomVisualTable } from "utils/RoomVisualTable";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -104,6 +106,10 @@ export class TaskManager extends OfficeManager {
             }
             return true;
         })
+
+        if (global.v.task.state === SwitchState.ON) {
+            this.report();
+        }
     }
     cleanup() {
         if (!Memory.tasks[this.office.name]) Memory.tasks[this.office.name] = {
@@ -229,9 +235,7 @@ export class TaskManager extends OfficeManager {
                 t.cost
             ]))
         )
-        const taskTableRendered = table(taskTable, {
-            singleLine: true
-        });
+        RoomVisualTable(new RoomPosition(1, 2, this.office.center.name), taskTable);
 
         const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Assigned Capacity']];
         let requests = Object.values(this.requests)
@@ -250,27 +254,13 @@ export class TaskManager extends OfficeManager {
                 ];
             })
         )
-        const requestTableRendered = table(requestTable, {
-            singleLine: true
-        });
+        RoomVisualTable(new RoomPosition(1, 12, this.office.center.name), requestTable);
 
         const idleMinions = [
             ['Minion'],
             ...this.getAvailableCreeps().map(creep => [creep.name])
         ];
-        const idleMinionsRendered = table(idleMinions, {
-            singleLine: true
-        });
-
-
-        console.log(`[TaskManager] Status Report:
-    <strong>Tasks</strong>
-${taskTableRendered}
-    <strong>Requests</strong>
-${requestTableRendered}
-    <strong>Idle Minions</strong>
-${idleMinionsRendered}`
-        )
+        RoomVisualTable(new RoomPosition(1, 22, this.office.center.name), idleMinions);
     }
 }
 

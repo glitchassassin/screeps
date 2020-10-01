@@ -23,6 +23,6 @@ export class ResupplyTask extends TransferTask {
         ]
     }
     toString() {
-        return `[ResupplyTask: ${this.destination?.id} ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[ResupplyTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 }

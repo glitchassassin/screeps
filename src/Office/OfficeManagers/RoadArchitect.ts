@@ -4,6 +4,7 @@ import { Transform } from 'class-transformer';
 import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
 import { transformRoomPosition } from 'utils/transformGameObject';
+import { SwitchState } from 'utils/VisualizationController';
 
 export class Road {
     @Transform(transformRoomPosition)
@@ -72,5 +73,19 @@ export class RoadArchitect extends OfficeManager {
             road.build();
         }
         road?.checkIfBuilt();
+    }
+
+    run() {
+        if (global.v.roads.state === SwitchState.ON) {
+            this.roads.forEach(road => {
+                let rooms = road.path.reduce((rooms, pos) => (rooms.includes(pos.roomName) ? rooms : [...rooms, pos.roomName]), [] as string[])
+                rooms.forEach(room => {
+                    // Technically this could cause weirdness if the road loops out of a room
+                    // and then back into it. If that happens, we'll just need to parse this
+                    // into segments a little more intelligently
+                    new RoomVisual(room).poly(road.path.filter(pos => pos.roomName === room), {lineStyle: 'dashed'});
+                })
+            })
+        }
     }
 }

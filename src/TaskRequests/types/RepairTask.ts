@@ -39,7 +39,7 @@ export class RepairTask extends TaskAction {
         this.destinationId = destination?.id || null;
     }
     toString() {
-        return `[RepairTask: ${this.destination?.id} ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[RepairTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
     action(creep: Creep) {
