@@ -8,7 +8,7 @@ export class Switch {
 const mapSwitches = ['roads', 'franchises', 'controller', 'construction'] as const;
 type mapSwitchTypes = ('none'|'all'|typeof mapSwitches[number]);
 
-const reportsSwitches = ['sales', 'hr', 'task'] as const;
+const reportsSwitches = ['sales', 'hr', 'task', 'legal', 'logistics'] as const;
 type reportsSwitchTypes = ('none'|typeof reportsSwitches[number]);
 
 export class VisualizationController {
@@ -20,6 +20,8 @@ export class VisualizationController {
     sales = new Switch();
     hr = new Switch();
     task = new Switch();
+    legal = new Switch();
+    logistics = new Switch();
 
     map = new Proxy({}, {
         get: (target, name: mapSwitchTypes, receiver) => {

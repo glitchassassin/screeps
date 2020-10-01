@@ -11,6 +11,7 @@ import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { Table } from "Visualizations/Table";
 
 export class LegalManager extends OfficeManager {
     lawyers: Creep[] = [];
@@ -73,6 +74,7 @@ export class LegalManager extends OfficeManager {
         }
     }
     run() {
+        if (global.v.legal.state) { this.report(); }
         let controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let room = this.office.center.room;
@@ -99,5 +101,17 @@ export class LegalManager extends OfficeManager {
                 }
             }
         })
+    }
+    report() {
+        let controllers = [this.office.center, ...this.office.territories].map(t => [
+            t.name,
+            t.controller.owner || t.controller.reservation?.username || '',
+            t.controller.reservation?.ticksToEnd || ''
+        ])
+        let controllerTable = [
+            ['Controller', 'Owner', 'Reserved'],
+            ...controllers
+        ]
+        Table(new RoomPosition(2, 2, this.office.center.name), controllerTable);
     }
 }

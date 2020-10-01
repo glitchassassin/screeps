@@ -10,7 +10,9 @@ import { ExploreTask } from "TaskRequests/types/ExploreTask";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { table } from "table";
-import { RoomVisualTable } from "utils/RoomVisualTable";
+import { Table } from "Visualizations/Table";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { Bar, Meters } from "Visualizations/Meters";
 
 export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];
@@ -103,10 +105,24 @@ export class SalesManager extends OfficeManager {
                 `${(franchise.salesmen.reduce((sum, salesman) =>
                     sum + salesman.getActiveBodyparts(WORK)
                 , 0) / 5 * 100).toFixed(0)}%`,
-                countEnergyInContainersOrGround(franchise.sourcePos)
+                franchise.surplus
             ]
         })
 
-        RoomVisualTable(new RoomPosition(2, 2, this.office.center.name), [headers, ...rows]);
+        Table(new RoomPosition(2, 15, this.office.center.name), [headers, ...rows]);
+
+        let chart = new Meters(
+            this.franchises.map(franchise => new Bar(
+                `${franchise.sourcePos.roomName}[${franchise.sourcePos.x}, ${franchise.sourcePos.y}]`,
+                {
+                    fill: 'yellow',
+                    stroke: 'yellow',
+                    lineStyle: franchise.container ? 'solid' : 'dashed'
+                },
+                franchise.surplus,
+                2000
+            ))
+        )
+        chart.render(new RoomPosition(2, 2, this.office.center.name), false)
     }
 }

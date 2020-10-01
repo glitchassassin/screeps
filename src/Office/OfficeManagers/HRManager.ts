@@ -7,7 +7,7 @@ import { table } from "table";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
-import { RoomVisualTable } from "utils/RoomVisualTable";
+import { Table } from "Visualizations/Table";
 
 export class HRManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
@@ -87,7 +87,18 @@ export class HRManager extends OfficeManager {
         }
     }
     report() {
-        let headers = ['Source', 'Minion', 'Priority', 'Assigned']
+        let employeeData = new Map<string, number>();
+        this.office.employees.forEach(e => {
+            let t = e.memory.type || 'NONE'
+            employeeData.set(t, (employeeData.get(t) || 0) + 1);
+        })
+        let employeeTable = [
+            ['Role', 'Count'],
+            ...employeeData.entries()
+        ]
+        Table(new RoomPosition(2, 2, this.office.center.name), employeeTable);
+
+        let headers = ['Source', 'Role', 'Priority', 'Assigned']
         let requests = Object.values(this.requests)
         let rows = requests.map(r => {
             return [
@@ -97,8 +108,7 @@ export class HRManager extends OfficeManager {
                 r.assignedTo
             ];
         });
-
-        RoomVisualTable(new RoomPosition(2, 15, this.office.center.name), [headers, ...rows]);
+        Table(new RoomPosition(15, 2, this.office.center.name), [headers, ...rows]);
     }
     cleanup() {
         let serialized: {[id: string]: string} = {};
@@ -117,29 +127,5 @@ export class HRManager extends OfficeManager {
 
     getIdleSpawn = () => {
         return this.spawns.find(s => !Object.values(this.requests).some(r => r.assignedTo === s.id));
-    }
-
-    consoleReport() {
-        const requestTable = [['Source', 'Minion', 'Priority', 'Assigned']];
-        let requests = Object.values(this.requests)
-        requestTable.push(
-            ...requests.map(r => {
-                return [
-                    Game.getObjectById(r.sourceId as Id<any>)?.toString() || r.sourceId,
-                    r.type,
-                    r.priority,
-                    r.assignedTo
-                ];
-            })
-        )
-        const requestTableRendered = table(requestTable, {
-            singleLine: true
-        });
-
-
-        console.log(`[HRManager] Status Report:
-    <strong>Requests</strong>
-${requestTableRendered}`
-        )
     }
 }

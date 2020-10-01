@@ -8,10 +8,11 @@ import { TaskRequest } from "TaskRequests/TaskRequest";
 import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { Bar, Meters } from "Visualizations/Meters";
+import { Table } from "Visualizations/Table";
 
 export class LogisticsManager extends OfficeManager {
     storage: StructureStorage[] = [];
-    containers: StructureContainer[] = [];
     extensions: StructureExtension[] = [];
     spawns: StructureSpawn[] = [];
     haulers: Creep[] = [];
@@ -62,25 +63,30 @@ export class LogisticsManager extends OfficeManager {
             }
         })
     }
+    run() {
+        if (global.v.logistics.state) {
+            this.report();
+        }
+    }
     report() {
-        const containerTable = [['Container', 'Quantity', 'Health']];
-        containerTable.push(
-            ...this.containers.map(container => {
-                return [
-                    container.toString() || '',
-                    `${container.store.getUsedCapacity()}/${container.store.getCapacity()}`,
-                    `${container.hits}/${container.hitsMax}`
-                ];
-            })
-        )
-        const containerTableRendered = table(containerTable, {
-            singleLine: true
-        });
+        // Franchise energy level (current and average)
+        // Storage level (current)
+        // Room energy level (current and average)
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let metrics = statisticsAnalyst.cache.metrics.get(this.office.name);
 
+        let lastMineContainerLevel = metrics?.mineContainerLevels.values[metrics?.mineContainerLevels.values.length - 1] || 0
+        let lastRoomEnergyLevel = metrics?.roomEnergyLevels.values[metrics?.roomEnergyLevels.values.length - 1] || 0
+        let lastStorageLevel = metrics?.storageLevels.values[metrics?.storageLevels.values.length - 1] || 0
+        let lastControllerDepotLevel = metrics?.controllerDepotLevels.values[metrics?.controllerDepotLevels.values.length - 1] || 0
 
-        console.log(`[LogisticsManager] Status Report:
-    <strong>Containers</strong>
-${containerTableRendered}`
-        )
+        let chart = new Meters([
+            new Bar('Franchises', {fill: 'yellow', stroke: 'yellow'}, lastMineContainerLevel, metrics?.mineContainerLevels.maxValue),
+            new Bar('HR', {fill: 'magenta', stroke: 'magenta'}, lastRoomEnergyLevel, metrics?.roomEnergyLevels.maxValue),
+            new Bar('Storage', {fill: 'green', stroke: 'green'}, lastStorageLevel, metrics?.storageLevels.maxValue),
+            new Bar('Legal', {fill: 'blue', stroke: 'blue'}, lastControllerDepotLevel, metrics?.controllerDepotLevels.maxValue),
+        ])
+
+        chart.render(new RoomPosition(2, 2, this.office.center.name));
     }
 }

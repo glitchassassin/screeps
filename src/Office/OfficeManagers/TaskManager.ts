@@ -8,7 +8,7 @@ import { TransferTask } from "TaskRequests/types/TransferTask";
 import { stablematch } from "TaskRequests/algorithms/stablematch";
 import { table } from "table";
 import { OfficeManager } from "Office/OfficeManager";
-import { RoomVisualTable } from "utils/RoomVisualTable";
+import { Table } from "Visualizations/Table";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -234,7 +234,7 @@ export class TaskManager extends OfficeManager {
                 t.cost
             ]))
         )
-        RoomVisualTable(new RoomPosition(1, 2, this.office.center.name), taskTable);
+        Table(new RoomPosition(1, 2, this.office.center.name), taskTable);
 
         const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Assigned Capacity']];
         let requests = Object.values(this.requests)
@@ -253,13 +253,13 @@ export class TaskManager extends OfficeManager {
                 ];
             })
         )
-        RoomVisualTable(new RoomPosition(1, 12, this.office.center.name), requestTable);
+        Table(new RoomPosition(1, 12, this.office.center.name), requestTable);
 
         const idleMinions = [
             ['Minion'],
             ...this.getAvailableCreeps().map(creep => [creep.name])
         ];
-        RoomVisualTable(new RoomPosition(1, 22, this.office.center.name), idleMinions);
+        Table(new RoomPosition(1, 22, this.office.center.name), idleMinions);
     }
 }
 

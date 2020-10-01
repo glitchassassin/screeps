@@ -7,6 +7,7 @@ import { HRAnalyst } from "./HRAnalyst";
 import { MapAnalyst } from "./MapAnalyst";
 import { Transform, Type } from "class-transformer";
 import { transformRoomPosition } from "utils/transformGameObject";
+import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 
 export class Franchise {
     @Transform(transformRoomPosition)
@@ -16,6 +17,7 @@ export class Franchise {
     id: string;
     officeId: string;
     maxSalesmen: number;
+    private _surplus: number = 0;
 
     public get source() : Source|null {
         return Game.getObjectById(this.id as Id<Source>);
@@ -38,6 +40,11 @@ export class Franchise {
 
     public get salesmen() : Creep[] {
         return this.office?.employees.filter(c => c.memory.source === this.id) || [];
+    }
+
+    public get surplus() : number {
+        if (Game.rooms[this.pos.roomName]) this._surplus = countEnergyInContainersOrGround(this.sourcePos);
+        return this._surplus;
     }
 
 
