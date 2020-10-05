@@ -24,12 +24,14 @@ export class HRManager extends OfficeManager {
 
     init() {
         // Load requests from Memory
-        if (Memory.hr[this.office.center.name]) {
+        try {
             let deserialized = JSON.parse(Memory.hr[this.office.center.name])
             this.requests = {};
             for (let reqSource in deserialized) {
                 this.requests[reqSource] = deserialize(MinionRequest, deserialized[reqSource])
             }
+        } catch {
+            this.requests = {};
         }
     }
     plan() {
@@ -105,7 +107,7 @@ export class HRManager extends OfficeManager {
                 Game.getObjectById(r.sourceId as Id<any>)?.toString() || r.sourceId,
                 r.type,
                 r.priority,
-                r.assignedTo
+                r.assignedTo || ''
             ];
         });
         Table(new RoomPosition(15, 2, this.office.center.name), [headers, ...rows]);

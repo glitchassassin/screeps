@@ -45,7 +45,7 @@ export class TaskManager extends OfficeManager {
         this.tasks.push(task);
     }
     init() {
-        if (Memory.tasks[this.office.name]) {
+        try {
             // Load tasks from Memory
             this.tasks = deserializeArray(Task, Memory.tasks[this.office.name].tasks as string);
             // Load requests from Memory
@@ -57,7 +57,7 @@ export class TaskManager extends OfficeManager {
                     this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
                 }
             }
-        } else {
+        } catch {
             this.tasks = [];
             this.requests = {};
         }
@@ -162,7 +162,7 @@ export class TaskManager extends OfficeManager {
                     if (!c) return false;
                     // If task plan has withdraw and transfer loop, filter it
                     let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
-                        .map(t => t.destination?.id)
+                        .map(t => t instanceof WithdrawTask ? t.destination?.pos.toString() : t.destination?.toString())
                     if (tasks.length !== new Set(tasks).size) return false;
                     // If task plan has no useful output, or another task plan has higher output, filter it
                     if (c.minion.output === 0 || c.minion.output < maxOutput) return false;
@@ -253,13 +253,13 @@ export class TaskManager extends OfficeManager {
                 ];
             })
         )
-        Table(new RoomPosition(1, 12, this.office.center.name), requestTable);
+        Table(new RoomPosition(1, 17, this.office.center.name), requestTable);
 
         const idleMinions = [
             ['Minion'],
             ...this.getAvailableCreeps().map(creep => [creep.name])
         ];
-        Table(new RoomPosition(1, 22, this.office.center.name), idleMinions);
+        Table(new RoomPosition(1, 27, this.office.center.name), idleMinions);
     }
 }
 

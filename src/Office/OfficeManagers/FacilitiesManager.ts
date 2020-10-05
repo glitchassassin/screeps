@@ -3,8 +3,9 @@ import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { BuildTask } from "TaskRequests/types/BuildTask";
 import { RepairTask } from "TaskRequests/types/RepairTask";
-import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
+import { countEnergyInContainersOrGround, getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
 import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { DropTask } from "TaskRequests/types/DropTask";
 
 const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
@@ -100,7 +101,11 @@ export class FacilitiesManager extends OfficeManager {
         }) as Structure[]).sort((a, b) => a.hits - b.hits);
         repairable.slice(0, max).forEach((structure, i) => {
             this.repairOrders.push(structure.pos);
-            this.office.submit(new TaskRequest(`${this.office.name}_Facilities_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
+            let energyNeeded = getRepairEnergyRemaining(structure) - countEnergyInContainersOrGround(structure.pos)
+            if (energyNeeded > 0) {
+                this.office.submit(new TaskRequest(`${this.office.name}_RepairEnergy_${i}`, new DropTask(structure.pos, energyNeeded), 5, energyNeeded))
+            }
+            this.office.submit(new TaskRequest(`${this.office.name}_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
         })
         return Math.min(repairable.length, max);
     }
@@ -109,7 +114,11 @@ export class FacilitiesManager extends OfficeManager {
 
         buildable.slice(0, max).forEach((site, i) => {
             this.buildOrders.push(site.pos);
-            this.office.submit(new TaskRequest(`${this.office.name}_Facilities_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
+            let energyNeeded = getBuildEnergyRemaining(site) - countEnergyInContainersOrGround(site.pos)
+            if (energyNeeded > 0) {
+                this.office.submit(new TaskRequest(`${this.office.name}_BuildEnergy_${i}`, new DropTask(site.pos, getBuildEnergyRemaining(site)), 5, getBuildEnergyRemaining(site)))
+            }
+            this.office.submit(new TaskRequest(`${this.office.name}_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
         })
         return Math.min(buildable.length, max);
     }

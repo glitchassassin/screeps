@@ -56,7 +56,7 @@ export class Franchise {
         this.id = id;
         this.officeId = office?.name;
         this.maxSalesmen = mapAnalyst?.calculateAdjacentPositions(sourcePos)
-                                     .filter(pos => mapAnalyst.isPositionWalkable(pos)).length
+                                     .filter(pos => mapAnalyst.isPositionWalkable(pos, true)).length
     }
 }
 class CachedSource {
@@ -97,6 +97,7 @@ export class SalesAnalyst extends BoardroomManager {
             })
         })
     }
+    reset() { this.cache = new SalesAnalystMemory() }
 
     @Memoize((office: Office, sourcePos: RoomPosition) => ('' + office.name + sourcePos.toString() + Game.time))
     calculateBestMiningLocation(office: Office, sourcePos: RoomPosition) {

@@ -5,7 +5,7 @@ import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 
-export class TransferTask extends TaskAction {
+export class DropTask extends TaskAction {
     // Prereq: Minion must be adjacent
     //         Otherwise, move to an open space
     //         near the destination
@@ -16,8 +16,8 @@ export class TransferTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
-            new MustHaveEnergy(this.getCapacityFromDestination()),
-            new MustBeAdjacent(this.destination),
+            new MustHaveEnergy(this.amount),
+            new MustBeAdjacent(this.destination, 1),
         ]
     }
     message = "⏩";
@@ -26,46 +26,32 @@ export class TransferTask extends TaskAction {
     destination: RoomPosition|null = null;
 
     constructor(
-        destination: Structure|Creep|null = null,
+        destination: RoomPosition|null = null,
+        public amount: number
     ) {
         super();
-        this.destination = destination?.pos || null;
+        this.destination = destination || null;
     }
     toString() {
-        return `[TransferTask: ${this.destination?.roomName}{${this.destination?.x},${this.destination?.y}}]`
+        return `[DropTask: ${this.destination?.roomName}{${this.destination?.x},${this.destination?.y}}]`
     }
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
-        let target = this.destination.look().map(t => t.creep || t.structure).find(t => t) as (Creep|Structure<StructureConstant>)
-        console.log(target);
-        if (!target) return TaskActionResult.FAILED;
 
-        let result = creep.transfer(target, RESOURCE_ENERGY);
-        console.log(creep, result)
+        let result = creep.drop(RESOURCE_ENERGY, this.amount);
         return (result === OK) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
     }
     cost() {return 1;}; // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {
-        let targetCapacity = this.getCapacityFromDestination();
-
         return {
             ...minion,
-            output: Math.min(minion.capacityUsed, targetCapacity),
-            capacityUsed: Math.min(0, minion.capacityUsed - targetCapacity)
+            output: minion.capacityUsed,
+            capacityUsed: 0
         }
     }
     valid() {
-        return !!this.destination && this.getCapacityFromDestination() > 0;
-    }
-
-    getCapacityFromDestination() {
-        let targetCapacity = 1000;
-        if (this.destination?.roomName && Game.rooms[this.destination?.roomName]) {
-            let target = this.destination.look().map(t => t.creep || t.structure).find(t => t) as (Creep|AnyStoreStructure)
-            targetCapacity = (target?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) || 1000;
-        }
-        return targetCapacity;
+        return !!this.destination;
     }
 }

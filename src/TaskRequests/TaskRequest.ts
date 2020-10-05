@@ -2,6 +2,7 @@ import { Exclude, Type } from "class-transformer";
 import { Task } from "./Task";
 import { TaskAction } from "./TaskAction";
 import { BuildTask } from "./types/BuildTask";
+import { DropTask } from "./types/DropTask";
 import { ExploreTask } from "./types/ExploreTask";
 import { HarvestTask } from "./types/HarvestTask";
 import { RepairTask } from "./types/RepairTask";
@@ -33,6 +34,7 @@ export class TaskRequest {
                 { value: RepairTask, name: 'RepairTask' },
                 { value: ResupplyTask, name: 'ResupplyTask' },
                 { value: ExploreTask, name: 'ExploreTask' },
+                { value: DropTask, name: 'DropTask' },
                 { value: TaskAction, name: 'TaskAction' },
             ]
         }

@@ -5,6 +5,7 @@ import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { table } from "table";
 import { TaskRequest } from "TaskRequests/TaskRequest";
+import { DropTask } from "TaskRequests/types/DropTask";
 import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
@@ -41,27 +42,29 @@ export class LogisticsManager extends OfficeManager {
                 // Maintain enough haulers to keep
                 // franchises drained
                 let metrics = statisticsAnalyst.cache.metrics.get(this.office.name);
-                let outputAverageLevel = metrics?.storageLevels.mean() || 0;
-                let outputMaxLevel = metrics?.storageLevels.maxValue || 0;
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
                 if (this.haulers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.HAULER));
-                } else if (Game.time % 50 === 0 && inputAverageMean > 0.1 && outputAverageLevel < outputMaxLevel) {
+                } else if (Game.time % 50 === 0 && inputAverageMean > 0.1) {
                     console.log('Franchise surplus detected, spawning hauler');
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.HAULER));
                 }
             }
         }
 
-        // Request energy, if needed
-        this.storage.forEach(c => {
-            let e = getTransferEnergyRemaining(c);
-            if (e && e > 0) {
-                // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
-                // Avoids shuffling back and forth between destination containers
-                this.office.submit(new TaskRequest(c.id, new ResupplyTask(c), 2, e));
-            }
-        })
+        // Create standing order for storage, or else stockpile near spawn
+        if (this.storage.length > 0) {
+            this.storage.forEach(c => {
+                let e = getTransferEnergyRemaining(c);
+                if (e && e > 0) {
+                    // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
+                    // Avoids shuffling back and forth between destination containers
+                    this.office.submit(new TaskRequest(c.id, new ResupplyTask(c), 2, e));
+                }
+            })
+        } else {
+            this.office.submit(new TaskRequest(this.office.name + '_Logistics_Surplus', new DropTask(this.spawns[0].pos, 1), 2, 1000));
+        }
     }
     run() {
         if (global.v.logistics.state) {

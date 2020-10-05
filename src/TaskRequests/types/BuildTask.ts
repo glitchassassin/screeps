@@ -1,13 +1,13 @@
 import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
-import { Transform, TransformationType, Type } from "class-transformer";
-import { report } from "process";
+import { TaskManager } from "Office/OfficeManagers/TaskManager";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
-import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
+import { TaskRequest } from "TaskRequests/TaskRequest";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "../TaskAction";
+import { TransferTask } from "./TransferTask";
 
 export class BuildTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -43,6 +43,8 @@ export class BuildTask extends TaskAction {
         // If unable to get the creep or source, task is completed
         if (!this.destination || !this.destination.gameObj) return TaskActionResult.FAILED;
         let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
+        let office = creep.memory.office ? global.boardroom.offices.get(creep.memory.office) : undefined
+        let taskManager = office?.managers.get('TaskManager') as TaskManager;
 
         let result = creep.build(this.destination.gameObj);
         if (result === ERR_NOT_ENOUGH_ENERGY) {

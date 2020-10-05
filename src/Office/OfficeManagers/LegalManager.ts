@@ -12,6 +12,8 @@ import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { Table } from "Visualizations/Table";
+import { DropTask } from "TaskRequests/types/DropTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
 
 export class LegalManager extends OfficeManager {
     lawyers: Creep[] = [];
@@ -35,13 +37,13 @@ export class LegalManager extends OfficeManager {
                 if (this.lawyers.length === 0) {
                     // More input than output: spawn more upgraders
                     this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
-                        ignoresRequests: !!legalFund?.container
+                        ignoresRequests: true
                     }))
                 }
                 if (legalFund?.container) {
                     // Place standing order for surplus energy to container
                     let e = getTransferEnergyRemaining(legalFund.container);
-                    if (e && e > 2500) {
+                    if (e && e > 0) {
                         this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 1, e));
                     }
                 } else {
@@ -56,7 +58,7 @@ export class LegalManager extends OfficeManager {
                 if (Game.time % 100 === 0 && (statisticsAnalyst.cache.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5) {
                     // More input than output: spawn more upgraders
                     this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
-                        ignoresRequests: !!legalFund?.container
+                        ignoresRequests: true
                     }))
                 }
                 // Place order for surplus energy
@@ -92,12 +94,21 @@ export class LegalManager extends OfficeManager {
                         new UpgradeTask(room.controller)
                     ], lawyer, `${this.office.name}_Legal`));
                 } else {
-                    // Upgrader needs energy - get from dedicated controller container
-                    if (!depot?.container) return;
-                    taskManager.assign(new Task([
-                        new TravelTask(depot.container.pos, 1),
-                        new WithdrawTask(depot.container)
-                    ], lawyer, `${this.office.name}_Legal`));
+                    // Upgrader needs energy - get from dedicated controller container or a hauler
+                    if (depot?.container) {
+                        taskManager.assign(new Task([
+                            new TravelTask(depot.container.pos, 1),
+                            new WithdrawTask(depot.container)
+                        ], lawyer, `${this.office.name}_Legal`));
+                    } else {
+                        taskManager.submit(new TaskRequest(
+                            lawyer.id,
+                            new TransferTask(lawyer),
+                            1,
+                            lawyer.store.getCapacity()
+                        ))
+                    }
+
                 }
             }
         })

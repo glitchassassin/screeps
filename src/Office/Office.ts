@@ -156,7 +156,7 @@ export class Office {
             // console.log('RCL2, building infrastructure')
             hr?.setStatus(OfficeManagerStatus.MINIMAL);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
-            logistics?.setStatus(OfficeManagerStatus.MINIMAL);
+            logistics?.setStatus(OfficeManagerStatus.NORMAL);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);
             facilities?.setStatus(OfficeManagerStatus.NORMAL);
             security?.setStatus(OfficeManagerStatus.OFFLINE);

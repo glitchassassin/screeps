@@ -15,7 +15,7 @@ export class HaulerMinion {
     }
     buildMinion = (memory: CreepMemory) => {
         return {
-            favoredTasks: ['TransferTask'],
+            favoredTasks: ['TransferTask', 'ResupplyTask', 'DropTask'],
             ...memory,
             type: 'HAULER'
         };
