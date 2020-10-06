@@ -34,16 +34,18 @@ const franchiseProxy = (franchise: Franchise): Franchise => {
                 return Game.getObjectById(target.id) ?? undefined;
             } else if (prop === 'container') {
                 if (!Game.rooms[target.pos.roomName]) return undefined;
-                return (target.pos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer|undefined);
+                let pos = new RoomPosition(target.pos.x, target.pos.y, target.pos.roomName);
+                return (pos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer|undefined);
             } else if (prop === 'constructionSite') {
                 if (!Game.rooms[target.pos.roomName]) return undefined;
-                return (target.pos.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER) as ConstructionSite|undefined);
+                let pos = new RoomPosition(target.pos.x, target.pos.y, target.pos.roomName);
+                return (pos.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER) as ConstructionSite|undefined);
             } else if (prop === 'office') {
                 return global.boardroom.offices.get(target.officeId);
             } else if (prop === 'salesmen') {
                 return global.boardroom.offices.get(target.officeId)?.employees.filter(c => c.memory.source === target.id) || [];
             } else if (prop === 'surplus') {
-                if (Game.rooms[target.pos.roomName]) target.surplus = countEnergyInContainersOrGround(target.sourcePos);
+                if (Game.rooms[target.pos.roomName]) target.surplus = countEnergyInContainersOrGround(new RoomPosition(target.sourcePos.x, target.sourcePos.y, target.sourcePos.roomName));
                 return target.surplus;
             } else {
                 return target[prop];

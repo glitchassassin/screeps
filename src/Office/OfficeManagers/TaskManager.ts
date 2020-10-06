@@ -8,6 +8,7 @@ import { stablematch } from "TaskRequests/algorithms/stablematch";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
 import { DepotTask } from "TaskRequests/types/DepotTask";
+import { log } from "utils/logger";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -160,9 +161,9 @@ export class TaskManager extends OfficeManager {
             });
         priorities.forEach(([creep, taskRequest, taskPlan]) => {
             if (!taskPlan) return;
-            // console.log(`[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
-            //             `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
-            //             `${taskPlan.tasks.map(t => t.toString())}`)
+            log('TaskManager', `[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
+                        `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
+                        `${taskPlan.tasks.map(t => t.toString())}`)
             let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
             if (taskPlan.minion.output >= taskRequest.capacity) {
                 taskRequest.completed = true;

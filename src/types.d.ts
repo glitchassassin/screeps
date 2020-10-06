@@ -104,5 +104,6 @@ declare namespace NodeJS {
     hrReport: Function;
     purge: Function;
     reportCPU: Function;
+    debug: {[id: string]: boolean}
   }
 }

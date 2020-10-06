@@ -5,6 +5,7 @@ import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
 import { withdraw } from "TaskRequests/activity/Withdraw";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
+import { log } from "utils/logger";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
@@ -51,8 +52,10 @@ export class BuildTask extends TaskAction {
                 let result = creep.build(this.destination.gameObj);
                 if (result === ERR_NOT_IN_RANGE) {
                     let result = travel(creep, this.destination.pos, 3);
+                    if (result !== OK) log('BuildTask', `travel: ${result}`)
                     return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
                 } else if (result !== OK) {
+                    log('BuildTask', `build: ${result}`)
                     return TaskActionResult.FAILED;
                 }
 
@@ -67,6 +70,7 @@ export class BuildTask extends TaskAction {
                     return this.action(creep); // Switch to building
                 }
                 let result = getEnergy(creep);
+                if (result !== OK) log('BuildTask', `energy: ${result}`)
                 return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }

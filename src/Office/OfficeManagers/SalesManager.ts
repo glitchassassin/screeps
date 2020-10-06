@@ -68,7 +68,6 @@ export class SalesManager extends OfficeManager {
         if (!taskManager) return;
 
         this.franchises.forEach(franchise => {
-            console.log(franchise.salesmen);
 
             franchise.salesmen.forEach(salesman => {
                 if (taskManager.isIdle(salesman)) {
