@@ -44,16 +44,12 @@ export class DepotTask extends TaskAction {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
 
-        // Times out after `n` ticks, if not emptied sooner
-        if (!this.timeout) this.timeout = Game.time + 500
-        if (Game.time > this.timeout) {
-            creep.memory.depot = false;
-            return TaskActionResult.FAILED;
-        }
-
         // Wait for minions to request resources
         creep.memory.depot = (creep.store.getUsedCapacity() !== 0);
         return (!creep.memory.depot) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
+    }
+    cancel(creep: Creep) {
+        creep.memory.depot = false;
     }
     cost() {return 1;}; // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {

@@ -90,7 +90,12 @@ export class SalesAnalyst extends BoardroomManager {
             // If necessary, add franchise locations for territory
             territories.forEach(t => {
                 t.sources.forEach((s, id) => {
-                    if (!this.cache.franchises.has(id)) {
+                    if (t.isHostile && this.cache.franchises.has(id)) {
+                        console.log('Removing now hostile franchise', id);
+                        this.cache.franchises.delete(id);
+                        return;
+                    }
+                    if (!t.isHostile && !this.cache.franchises.has(id)) {
                         this.cache.franchises.set(id, new Franchise(office, id, s, this.calculateBestMiningLocation(office, s)));
                     }
                 })
@@ -109,7 +114,7 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFranchiseLocations(office: Office) {
-        let territories = [office.center, ...office.territories].map(t => t.name)
+        let territories = [office.center, ...office.territories.filter(t => !t.isHostile)].map(t => t.name)
         return Array.from(this.cache.franchises.values()).filter(f => territories.includes(f.pos.roomName))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

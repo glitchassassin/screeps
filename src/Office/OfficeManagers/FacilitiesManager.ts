@@ -16,6 +16,8 @@ const buildPriority = (site: CachedConstructionSite) => {
             return 1 + completion;
         case STRUCTURE_CONTAINER:
             return 10 + completion;
+        case STRUCTURE_EXTENSION:
+            return 12 + completion;
         default:
             return 5 + completion;
     }
@@ -95,8 +97,8 @@ export class FacilitiesManager extends OfficeManager {
                     if (structure.hits < 100000) return true;
                 default:
                     if (this.status === OfficeManagerStatus.NORMAL || this.status === OfficeManagerStatus.PRIORITY)
-                        return structure.hits < structure.hitsMax;
-                    return structure.hits < (structure.hitsMax / 2); // In MINIMAL mode, repair structures to half health
+                        return structure.hits < (structure.hitsMax * 0.8);
+                    return structure.hits < (structure.hitsMax * 0.5); // In MINIMAL mode, repair structures below half health
             }
         }) as Structure[]).sort((a, b) => a.hits - b.hits);
         repairable.slice(0, max).forEach((structure, i) => {

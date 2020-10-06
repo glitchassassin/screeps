@@ -93,6 +93,7 @@ export class TaskManager extends OfficeManager {
                 let originatingRequest = task.sourceId?.replace('_depot', '');
                 if (originatingRequest && !this.hasTaskFor(originatingRequest)) {
                     console.log('No tasks open for original request', originatingRequest)
+                    task.actions[0].cancel(task.creep);
                     return false;
                 }
             }

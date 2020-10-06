@@ -238,7 +238,7 @@ export class Office {
         });
 
         const territoryTable = [
-            ['Territory', 'Status', 'Sources', 'Controller']
+            ['Territory', 'Status', 'Sources', 'Controller', 'Last Hostile Activity']
         ];
         this.territories.forEach(territory => {
             let controllerStatus = 'None';
@@ -246,16 +246,17 @@ export class Office {
                 controllerStatus = 'Owned';
             } else if (territory.controller.owner) {
                 controllerStatus = 'Hostile';
-            } else if (territory.controller.reservation?.username !== 'LordGreywether') {
+            } else if (territory.controller.reservation?.username && territory.controller.reservation?.username !== 'LordGreywether') {
                 controllerStatus = `Hostile [${territory.controller.reservation?.ticksToEnd} ticks]`;
-            } else if (territory.controller.reservation?.username === 'LordGreywether') {
+            } else if (territory.controller.reservation?.username && territory.controller.reservation?.username === 'LordGreywether') {
                 controllerStatus = `Reserved [${territory.controller.reservation?.ticksToEnd} ticks]`
             }
             territoryTable.push([
                 territory.name,
                 territory.scanned ? 'SCANNED' : 'UNKNOWN',
                 `${territory.sources.size}`,
-                controllerStatus
+                controllerStatus,
+                territory.lastHostileActivity?.toFixed(0) || ''
             ]);
         })
         const territoryTableRendered = table(territoryTable, {

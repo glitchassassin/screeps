@@ -14,4 +14,5 @@ export class TaskAction {
     cost(minion: SpeculativeMinion) { return 0; }
     predict(minion: SpeculativeMinion) { return minion; }
     valid() { return true; }
+    cancel(creep: Creep) { }
 }
