@@ -1,12 +1,6 @@
-import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
-import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
-import { Transform } from 'class-transformer';
-import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
-import { transformRoomPosition } from 'utils/transformGameObject';
 
 class ExtensionBlock {
-    @Transform(transformRoomPosition)
     center: RoomPosition
 
     status: "PENDING"|"INPROGRESS"|"DONE" = "PENDING";
@@ -35,7 +29,7 @@ export class ExtensionArchitect extends OfficeManager {
 
     plan() {
         // Only re-check infrastructure every `n` ticks (saves CPU)
-        
+
     }
 
     run() {

@@ -1,8 +1,5 @@
-import { MustHavePath } from "TaskRequests/prereqs/MustHavePath";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { Exclude, Transform, TransformationType, Type } from "class-transformer";
-import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { travel } from "TaskRequests/activity/Travel";
 
@@ -16,7 +13,6 @@ export class TravelTask extends TaskAction {
     message = "🚗";
 
     // @Type(() => RoomPosition)
-    @Transform(transformRoomPosition)
     destination: RoomPosition|null = null;
     distance: number;
 

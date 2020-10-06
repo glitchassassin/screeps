@@ -1,11 +1,6 @@
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
-import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { travel } from "TaskRequests/activity/Travel";
-import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 
 export class ExploreTask extends TaskAction {
     // Prereq: Minion must be adjacent

@@ -9,7 +9,6 @@ export class HarvestTask extends TaskAction {
     //         near the source
     getPrereqs() {
         if (!this.source) return [];
-        // return [new MustBeAtMine(this.source)]
         return [
             new MustHaveWorkParts(),
         ]

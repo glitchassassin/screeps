@@ -1,10 +1,8 @@
-import { Transform, TransformationType, Type } from "class-transformer";
 import { withdraw } from "TaskRequests/activity/Withdraw";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveCarryCapacity } from "TaskRequests/prereqs/MustHaveCarryCapacity";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { transformGameObject } from "utils/transformGameObject";
 
 export class WithdrawTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -21,8 +19,6 @@ export class WithdrawTask extends TaskAction {
     }
     message = "⏪";
 
-    @Type(() => Structure)
-    @Transform(transformGameObject(Structure))
     destination: Structure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|null = null;
     constructor(
         destination: Structure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|null = null,

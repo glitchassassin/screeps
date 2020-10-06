@@ -1,8 +1,6 @@
-import { BoardroomManager, BoardroomManagerMemory } from "Boardroom/BoardroomManager";
-import { deserialize, serialize, Transform, Type } from "class-transformer";
+import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
-import { transformRoomPosition } from "utils/transformGameObject";
 import { MapAnalyst } from "./MapAnalyst";
 
 export type Depot = {
@@ -10,29 +8,8 @@ export type Depot = {
     container?: StructureContainer,
     constructionSite?: ConstructionSite
 }
-class CachedController {
-    @Transform(transformRoomPosition)
-    public pos: RoomPosition;
-    public roomName: string;
-    public owner: string|undefined;
-    public my: boolean
-
-    constructor(controller: StructureController) {
-        this.pos = controller.pos;
-        this.roomName = controller.room.name;
-        this.owner = controller.owner?.username;
-        this.my = controller.my;
-    }
-}
-
-class ControllerAnalystMemory extends BoardroomManagerMemory {
-    @Type(() => CachedController)
-    public controllers: Map<string, CachedController> = new Map();
-}
 
 export class ControllerAnalyst extends BoardroomManager {
-    cache = new ControllerAnalystMemory();
-
     @Memoize((office: Office) => ('' + office.name + Game.time))
     calculateBestContainerLocation(office: Office) {
         let room = office.center.room;

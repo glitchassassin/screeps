@@ -1,12 +1,7 @@
 import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
-import { Exclude, Transform, TransformationType, Type } from "class-transformer";
-import { assert } from "console";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
-import { transformGameObject } from "utils/transformGameObject";
-import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
@@ -33,7 +28,6 @@ export class RepairTask extends TaskAction {
     state = RepairStates.GETTING_ENERGY;
     destinationId: Id<Structure>|null = null
 
-    @Exclude()
     public get destination() : Structure|null {
         return this.destinationId && Game.getObjectById(this.destinationId)
     }

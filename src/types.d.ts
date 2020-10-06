@@ -28,7 +28,7 @@ interface Memory {
   log: any;
   respawnTick: number;
   boardroom: {
-    [managerName: string]: string
+    [managerName: string]: any
   }
   hr: {
     [officeName: string]: string

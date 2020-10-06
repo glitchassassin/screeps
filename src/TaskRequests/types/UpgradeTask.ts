@@ -1,10 +1,5 @@
-import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
-import { Task } from "../Task";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { Transform, TransformationType, Type } from "class-transformer";
-import { transformGameObject } from "utils/transformGameObject";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
@@ -31,8 +26,6 @@ export class UpgradeTask extends TaskAction {
     message = "⏫";
     state = UpgradeStates.GETTING_ENERGY;
 
-    @Type(() => StructureController)
-    @Transform(transformGameObject(StructureController))
     destination: StructureController|null = null;
 
     constructor(

@@ -1,5 +1,4 @@
-import { BoardroomManager, BoardroomManagerMemory } from "Boardroom/BoardroomManager";
-import { Type } from "class-transformer";
+import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
@@ -69,38 +68,14 @@ export class NonNegativeDeltaMetric extends DeltaMetric {
 }
 
 export class PipelineMetrics {
-    @Type(() => NonNegativeDeltaMetric)
-    mineRate: NonNegativeDeltaMetric
-    @Type(() => Metric)
-    mineContainerLevels: Metric
-    @Type(() => Metric)
-    roomEnergyLevels: Metric
-    @Type(() => Metric)
-    storageLevels: Metric
-    @Type(() => Metric)
-    controllerDepotLevels: Metric
-    @Type(() => DeltaMetric)
-    controllerDepotFillRate: DeltaMetric
     constructor(
-        mineRate: NonNegativeDeltaMetric,
-        mineContainerLevels: Metric,
-        roomEnergyLevels: Metric,
-        storageLevels: Metric,
-        controllerDepotLevels: Metric,
-        controllerDepotFillRate: DeltaMetric,
-    ) {
-        this.mineRate = mineRate;
-        this.mineContainerLevels = mineContainerLevels;
-        this.roomEnergyLevels = roomEnergyLevels;
-        this.storageLevels = storageLevels;
-        this.controllerDepotLevels = controllerDepotLevels;
-        this.controllerDepotFillRate = controllerDepotFillRate;
-    }
-}
-
-class StatisticsAnalystMemory extends BoardroomManagerMemory {
-    @Type(() => PipelineMetrics)
-    public metrics: Map<string, PipelineMetrics> = new Map();
+        public mineRate: NonNegativeDeltaMetric,
+        public mineContainerLevels: Metric,
+        public roomEnergyLevels: Metric,
+        public storageLevels: Metric,
+        public controllerDepotLevels: Metric,
+        public controllerDepotFillRate: DeltaMetric,
+    ) { }
 }
 
 export class StatisticsAnalyst extends BoardroomManager {

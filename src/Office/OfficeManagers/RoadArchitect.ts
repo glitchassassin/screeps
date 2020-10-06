@@ -1,12 +1,8 @@
 import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
 import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
-import { Transform } from 'class-transformer';
-import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
-import { transformRoomPosition } from 'utils/transformGameObject';
 
 export class Road {
-    @Transform(transformRoomPosition)
     path: RoomPosition[] = [];
 
     status: "PENDING"|"INPROGRESS"|"DONE" = "PENDING";

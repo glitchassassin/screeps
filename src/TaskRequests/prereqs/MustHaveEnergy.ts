@@ -1,10 +1,7 @@
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
-import { Exclude } from "class-transformer";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
-import { Task } from "TaskRequests/Task";
 import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
-import { HarvestTask } from "TaskRequests/types/HarvestTask";
 import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
 import { getCreepHomeOffice } from "utils/gameObjectSelectors";
 

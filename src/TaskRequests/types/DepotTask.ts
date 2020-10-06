@@ -1,10 +1,8 @@
-import { Transform } from "class-transformer";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { transformRoomPosition } from "utils/transformGameObject";
 
 export class DepotTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -23,8 +21,6 @@ export class DepotTask extends TaskAction {
         ]
     }
     message = "⏩";
-
-    @Transform(transformRoomPosition)
     destination: RoomPosition|null = null;
 
     timeout?: number;

@@ -1,6 +1,3 @@
-import { Transform } from "class-transformer";
-import { UpgradeTask } from "TaskRequests/types/UpgradeTask";
-import { transformGameObject } from "utils/transformGameObject";
 import { HandymanMinion } from "./minions/HandymanMinion";
 import { CarrierMinion } from "./minions/CarrierMinion";
 import { SalesmanMinion } from './minions/SalesmanMinion';
@@ -24,8 +21,6 @@ export class MinionRequest {
     public sourceId: string|null = null;
     public priority = 5;
     public assignedTo: Id<StructureSpawn>|null = null;
-
-    @Transform((type: string) => MinionTypes[type as MinionTypes])
     public type: MinionTypes|null = null;
     public memory: CreepMemory = {};
     constructor(

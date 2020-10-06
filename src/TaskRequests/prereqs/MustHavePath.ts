@@ -1,5 +1,3 @@
-import { Exclude, Transform, TransformationType } from "class-transformer";
-import { transformRoomPosition } from "utils/transformGameObject";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
 
@@ -9,7 +7,6 @@ import { TaskPrerequisite } from "../TaskPrerequisite";
  * @param pos Get reference when prerequisite is checked
  */
 export class MustHavePath extends TaskPrerequisite {
-    @Transform(transformRoomPosition)
     pos: RoomPosition
     constructor(
         pos: RoomPosition

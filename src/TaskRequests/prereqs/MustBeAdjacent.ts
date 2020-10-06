@@ -1,9 +1,6 @@
-import { Exclude, Transform, TransformationType } from "class-transformer";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
 import { TravelTask } from "TaskRequests/types/TravelTask";
-import { Task } from "TaskRequests/Task";
-import { transformRoomPosition } from "utils/transformGameObject";
 
 /**
  * Checks if minion is adjacent to a given position
@@ -11,7 +8,6 @@ import { transformRoomPosition } from "utils/transformGameObject";
  * @param pos Get reference when prerequisite is checked
  */
 export class MustBeAdjacent extends TaskPrerequisite {
-    @Transform(transformRoomPosition)
     pos: RoomPosition
     distance: number
     constructor(

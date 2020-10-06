@@ -34,7 +34,7 @@ export class SalesManager extends OfficeManager {
             priority += 2;
         }
         // Bump priority down if we currently have a franchise surplus
-        if (this.franchises.reduce((surplus, franchise) => surplus + franchise.surplus, 0) > this.franchises.length * CONTAINER_CAPACITY) {
+        if (this.franchises.reduce((surplus, franchise) => surplus + (franchise.surplus ?? 0), 0) > this.franchises.length * CONTAINER_CAPACITY) {
             priority -= 2;
         }
         // Scout surrounding Territories, if needed
@@ -113,7 +113,7 @@ export class SalesManager extends OfficeManager {
                     stroke: 'yellow',
                     lineStyle: franchise.container ? 'solid' : 'dashed'
                 },
-                franchise.surplus,
+                franchise.surplus ?? 0,
                 2000
             ))
         )

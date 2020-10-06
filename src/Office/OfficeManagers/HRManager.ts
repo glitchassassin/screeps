@@ -1,6 +1,5 @@
-import { deserialize, serialize } from "class-transformer";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
+import { MinionRequest } from "MinionRequests/MinionRequest";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { table } from "table";
@@ -22,18 +21,6 @@ export class HRManager extends OfficeManager {
         }
     }
 
-    init() {
-        // Load requests from Memory
-        try {
-            let deserialized = JSON.parse(Memory.hr[this.office.center.name])
-            this.requests = {};
-            for (let reqSource in deserialized) {
-                this.requests[reqSource] = deserialize(MinionRequest, deserialized[reqSource])
-            }
-        } catch {
-            this.requests = {};
-        }
-    }
     plan() {
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
@@ -114,20 +101,6 @@ export class HRManager extends OfficeManager {
             ];
         });
         Table(new RoomPosition(15, 2, this.office.center.name), [headers, ...rows]);
-    }
-    cleanup() {
-        let serialized: {[id: string]: string} = {};
-
-        for (let reqSource in this.requests) {
-            serialized = {};
-            if (this.requests[reqSource].completed || Game.time > this.requests[reqSource].created + 500) {
-                // Completed or timed out
-                delete this.requests[reqSource]
-            } else {
-                serialized[reqSource] = serialize(this.requests[reqSource])
-            }
-        }
-        Memory.hr[this.office.center.name] = JSON.stringify(serialized);
     }
 
     getIdleSpawn = () => {
