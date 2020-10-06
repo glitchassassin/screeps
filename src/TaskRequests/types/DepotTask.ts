@@ -1,10 +1,10 @@
-import { Exclude, Transform, TransformationType, Type } from "class-transformer";
+import { Transform } from "class-transformer";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
-import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
+import { MustHaveEnergyFromSource } from "TaskRequests/prereqs/MustHaveEnergyFromSource";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
+import { transformRoomPosition } from "utils/transformGameObject";
 
 export class DepotTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -18,7 +18,7 @@ export class DepotTask extends TaskAction {
         if (!this.destination) return [];
         return [
             new MustHaveNoWorkParts(),
-            new MustHaveEnergy(this.amount),
+            new MustHaveEnergyFromSource(this.amount),
             new MustBeAdjacent(this.destination, 1),
         ]
     }

@@ -30,7 +30,7 @@ class Route {
             this.recalculatedPath += 1;
             this.calculatePath(creep, true);
         }
-
+        this.lastPos = creep.pos;
         let result = creep.moveByPath(this.path);
         return (result === ERR_TIRED) ? OK : result;
     }

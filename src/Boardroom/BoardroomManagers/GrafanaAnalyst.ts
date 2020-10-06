@@ -86,7 +86,7 @@ export class GrafanaAnalyst extends BoardroomManager {
             requests: requestCount
         }
     }
-    exportStats() {
+    cleanup() {
         const stats: {[id: string]: {
             taskManagement: {
                 tasks: {[id: string]: number},

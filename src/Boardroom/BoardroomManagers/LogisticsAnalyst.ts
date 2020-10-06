@@ -32,7 +32,7 @@ export class LogisticsAnalyst extends BoardroomManager {
             ...salesAnalyst.getFranchiseLocations(office)
                 .map(franchise => franchise.container)
                 .filter(c => c && c.store.getUsedCapacity() > 0) as StructureContainer[],
-            ...hrAnalyst.getSpawns(office)
+            // ...hrAnalyst.getSpawns(office)
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

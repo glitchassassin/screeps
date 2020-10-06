@@ -44,10 +44,10 @@ export class LogisticsManager extends OfficeManager {
                 let metrics = statisticsAnalyst.cache.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
                 if (this.carriers.length === 0) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.CARRIER));
+                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 } else if (Game.time % 50 === 0 && inputAverageMean > 0.1) {
                     console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% detected, spawning carrier`);
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 7, MinionTypes.CARRIER));
+                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 }
             }
         }

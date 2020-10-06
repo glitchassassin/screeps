@@ -50,20 +50,19 @@ function mainLoop() {
 
   try {
     // Execute Boardroom plan phase
-  global.boardroom.plan()
-  // Execute Boardroom cleanup phase
-  global.boardroom.cleanup()
+    global.boardroom.plan()
 
-  global.boardroom.offices.forEach(office => {
-    // Execute Office plan phase
-    office.plan();
-    // Execute Office run phase
-    office.run();
-    // Execute Office cleanup phase
-    office.cleanup();
-  });
+    global.boardroom.offices.forEach(office => {
+      // Execute Office plan phase
+      office.plan();
+      // Execute Office run phase
+      office.run();
+      // Execute Office cleanup phase
+      office.cleanup();
+    });
 
-  (global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst).exportStats();
+    // Execute Boardroom cleanup phase
+    global.boardroom.cleanup();
   } catch(e) {
     console.log(e, e.stack)
   }
