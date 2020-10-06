@@ -89,6 +89,13 @@ export class TaskManager extends OfficeManager {
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
             if (!task.creep || task.actions.length === 0) return false;
+            if (task.actions[0] instanceof DepotTask) {
+                let originatingRequest = task.sourceId?.replace('_depot', '');
+                if (originatingRequest && !this.hasTaskFor(originatingRequest)) {
+                    console.log('No tasks open for original request', originatingRequest)
+                    return false;
+                }
+            }
             let result = task.actions[0].action(task.creep)
             if (result === TaskActionResult.SUCCESS) {
                 task.actions.shift();
@@ -100,6 +107,7 @@ export class TaskManager extends OfficeManager {
                     return false;
                 }
             } else if (result === TaskActionResult.FAILED) {
+                // console.log(`<span style="color: white">[ <span style="color: red">FAILED</span> ] ${task.actions[0].toString()} ${task.creep.toString()} </span>`)
                 // Cancel task
                 task.completed = true;
                 return false;

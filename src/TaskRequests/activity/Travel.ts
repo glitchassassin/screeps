@@ -24,7 +24,9 @@ class Route {
     }
 
     run(creep: Creep) {
-        if (this.recalculatedPath > 2 || !this.path) return ERR_NO_PATH;
+        if (this.recalculatedPath > 2 || !this.path) {
+            return ERR_NO_PATH;
+        }
         this.stuckForTicks = (this.lastPos && creep.pos.isEqualTo(this.lastPos)) ? this.stuckForTicks + 1 : 0;
         if (this.stuckForTicks > 2) {
             this.recalculatedPath += 1;
@@ -47,5 +49,9 @@ export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
         routeCache.set(routeKey, route);
     }
 
-    return route.run(creep);
+    let result = route.run(creep);
+    if (result !== OK) {
+        routeCache.delete(routeKey);
+    }
+    return result;
 }

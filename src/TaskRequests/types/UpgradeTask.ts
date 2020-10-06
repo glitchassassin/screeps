@@ -59,10 +59,8 @@ export class UpgradeTask extends TaskAction {
                 let result = creep.upgradeController(this.destination);
                 if (result === ERR_NOT_IN_RANGE) {
                     let result = travel(creep, this.destination.pos, 3);
-                    if (result !== OK) console.log('travel failed', result)
                     return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED;
                 } else if (result !== OK) {
-                    console.log('Upgrade failed', result)
                     return TaskActionResult.FAILED;
                 }
                 return TaskActionResult.INPROGRESS;

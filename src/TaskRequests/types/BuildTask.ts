@@ -67,7 +67,6 @@ export class BuildTask extends TaskAction {
                     return this.action(creep); // Switch to building
                 }
                 let result = getEnergy(creep);
-                console.log(result);
                 return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }

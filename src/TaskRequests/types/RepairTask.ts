@@ -2,6 +2,7 @@ import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { assert } from "console";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
+import { travel } from "TaskRequests/activity/Travel";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
@@ -59,11 +60,18 @@ export class RepairTask extends TaskAction {
                 }
 
                 let result = creep.repair(this.destination);
-                if (result !== OK){ return TaskActionResult.FAILED; }
+                if (result === ERR_NOT_IN_RANGE) {
+                    let result = travel(creep, this.destination.pos, 3);
+                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                }
+                else if (result !== OK) {
+                    return TaskActionResult.FAILED;
+                }
 
                 // Report successful build action
                 let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
                 grafanaAnalyst.reportRepair(creep.memory.office||'', Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
+
                 return (this.destination.hits === this.destination.hitsMax) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
             }
             case RepairStates.GETTING_ENERGY: {
@@ -72,7 +80,6 @@ export class RepairTask extends TaskAction {
                     return this.action(creep); // Switch to repairing
                 }
                 let result = getEnergy(creep);
-
                 return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }

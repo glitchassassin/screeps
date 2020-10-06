@@ -65,7 +65,7 @@ export class FacilitiesManager extends OfficeManager {
                 if (jobs < 5) {
                     jobs += this.submitBuildOrders(2 - jobs);
                 }
-                if (jobs > 0 && this.handymen.length < (jobs / 2)) {
+                if (jobs > 0 && (this.handymen.length < (jobs / 2) || this.handymen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0) < (5 * jobs))) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
                 }
                 return;

@@ -63,11 +63,6 @@ export class Boardroom {
      * Run plan phase for boardroom managers
      */
     plan() {
-        this.offices.forEach((office, key) => {
-            if (!office.center.room) {
-                this.offices.delete(key);
-            }
-        })
         this.managers.forEach(m => m.plan());
     }
 

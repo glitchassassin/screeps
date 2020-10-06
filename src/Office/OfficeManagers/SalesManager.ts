@@ -30,7 +30,13 @@ export class SalesManager extends OfficeManager {
                 priority = 10;
         }
         // Bump priority up if we have NO salesmen
-        if (this.office.employees.filter(c => c.memory.type === 'SALESMAN').length < 2) priority += 2;
+        if (this.office.employees.filter(c => c.memory.type === 'SALESMAN').length < 2) {
+            priority += 2;
+        }
+        // Bump priority down if we currently have a franchise surplus
+        if (this.franchises.reduce((surplus, franchise) => surplus + franchise.surplus, 0) > this.franchises.length * CONTAINER_CAPACITY) {
+            priority -= 2;
+        }
         // Scout surrounding Territories, if needed
         let unexplored = this.office.territories.filter(t => !t.scanned);
         if (unexplored.length > 0) {

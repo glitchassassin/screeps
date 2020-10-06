@@ -55,6 +55,9 @@ export class HRManager extends OfficeManager {
                 break;
         }
 
+        // Scale priority of spawn energy based on requests in queue
+        priority += Object.keys(this.requests).length / 2
+
         this.extensions.forEach(e => {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {

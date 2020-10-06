@@ -29,6 +29,7 @@ export class HarvestTask extends TaskAction {
     }
 
     action(creep: Creep) {
+        if (creep.name === 'salesman53045') console.log(creep, this);
         // If unable to get the creep or source, task is completed
         if (!this.source) return TaskActionResult.FAILED;
         if (creep.pos.roomName !== this.source.roomName) {
