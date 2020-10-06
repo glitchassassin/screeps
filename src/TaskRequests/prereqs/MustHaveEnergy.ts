@@ -35,11 +35,9 @@ export class MustHaveEnergy extends TaskPrerequisite {
         let office = getCreepHomeOffice(minion.creep);
         if (!office) return [];
 
-        let sources = salesAnalyst.getUntappedSources(office)
-                                            .map(franchise => new HarvestTask(franchise.sourcePos));
         // Can get energy from withdrawing
-        let containers = logisticsAnalyst.getAllSources(office)
+        let containers = logisticsAnalyst.getUnallocatedSources(office)
                                                   .map(source => new WithdrawTask(source));
-        return [...sources, ...containers];
+        return containers;
     }
 }

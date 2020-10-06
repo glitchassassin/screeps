@@ -1,7 +1,6 @@
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
-import { MustHaveEnergyFromSource } from "TaskRequests/prereqs/MustHaveEnergyFromSource";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction } from "TaskRequests/TaskAction";

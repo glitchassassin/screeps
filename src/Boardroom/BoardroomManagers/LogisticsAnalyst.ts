@@ -36,6 +36,10 @@ export class LogisticsAnalyst extends BoardroomManager {
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
+    getUnallocatedSources(office: Office): (AnyStoreStructure|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+        return this.getAllSources(office).filter(source => !(source instanceof Creep)) as (AnyStoreStructure|Tombstone|Resource<RESOURCE_ENERGY>)[];
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
     getCarriers(office: Office): (Creep)[] {
         return office.employees.filter(c => c.memory.type === 'CARRIER');
     }

@@ -1,6 +1,6 @@
 import { Transform } from "class-transformer";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
-import { MustHaveEnergyFromSource } from "TaskRequests/prereqs/MustHaveEnergyFromSource";
+import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
@@ -18,7 +18,7 @@ export class DepotTask extends TaskAction {
         if (!this.destination) return [];
         return [
             new MustHaveNoWorkParts(),
-            new MustHaveEnergyFromSource(this.amount),
+            new MustHaveEnergy(this.amount),
             new MustBeAdjacent(this.destination, 1),
         ]
     }
@@ -45,7 +45,7 @@ export class DepotTask extends TaskAction {
         if (!this.destination) return TaskActionResult.FAILED;
 
         // Times out after `n` ticks, if not emptied sooner
-        if (!this.timeout) this.timeout = Game.time + 200
+        if (!this.timeout) this.timeout = Game.time + 500
         if (Game.time > this.timeout) {
             creep.memory.depot = false;
             return TaskActionResult.FAILED;

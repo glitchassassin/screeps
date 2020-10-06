@@ -1,5 +1,4 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { MustHaveEnergyFromSource } from "TaskRequests/prereqs/MustHaveEnergyFromSource";
 import { Memoize } from "typescript-memoize";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {

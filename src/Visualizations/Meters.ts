@@ -25,7 +25,7 @@ export class Bar {
         vis.text(this.value.toFixed(0), center, pos.y + height - 2.5);
 
         // Draw bar, scaled
-        vis.rect(pos.x, pos.y + 0.5 + (maxHeight - maxValueHeight), width, maxValueHeight, {...this.style, strokeWidth: 0.3, fill: 'transparent'});
+        vis.rect(pos.x, pos.y + 0.5 + (maxHeight - maxValueHeight), width, maxValueHeight, {...this.style, strokeWidth: 0.1, fill: 'transparent'});
         vis.rect(pos.x, pos.y + 0.5 + (maxHeight - valueHeight), width, valueHeight, {...this.style, stroke: 'transparent',});
     }
 }
