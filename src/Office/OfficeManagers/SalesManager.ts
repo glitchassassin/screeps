@@ -56,7 +56,9 @@ export class SalesManager extends OfficeManager {
                 )
             ) {
                 // No salesmen at the franchise: spawn one
-                this.office.submit(new MinionRequest(franchise.id, priority, MinionTypes.SALESMAN, {
+                // Scale priority by distance
+                let distance = Game.map.getRoomLinearDistance(this.office.center.name, franchise.pos.roomName);
+                this.office.submit(new MinionRequest(franchise.id, priority - distance, MinionTypes.SALESMAN, {
                     source: franchise.id,
                     ignoresRequests: true
                 }))

@@ -42,6 +42,11 @@ const sitesProxy = <T extends GenericSite>(constructionSites: {[id: string]: T})
     return new Proxy(constructionSites, {
         get: (target, prop: string) => {
             if (target[prop]) {
+                if (Game.rooms[target[prop].pos.roomName] && !Game.getObjectById(target[prop].id)) {
+                    // Room is visible but target does not exist
+                    delete target[prop];
+                    return undefined;
+                }
                 return siteProxy(target[prop]);
             }
             return undefined;
@@ -73,25 +78,11 @@ export class FacilitiesAnalyst extends BoardroomManager {
         let visibleSites = Object.values(Game.rooms).map(room => room.find(FIND_CONSTRUCTION_SITES) || []).reduce((a, b) => a.concat(b), []);
         let visibleStructures = Object.values(Game.rooms).map(room => room.find(FIND_STRUCTURES) || []).reduce((a, b) => a.concat(b), []);
 
-        // Purge old construction sites
-        Object.entries(this.memory.constructionSites).forEach(([siteId, site]) => {
-            if (Game.rooms[site.pos.roomName] && !Game.getObjectById(siteId as Id<ConstructionSite>)) {
-                // Room is visible, but construction site no longer exists
-                delete this.memory.constructionSites[siteId];
-            }
-        });
         // Refresh construction sites
         [...ownedSites, ...visibleSites].forEach(site => {
             this.memory.constructionSites[site.id] = unwrapConstructionSite(site);
         })
 
-        // Purge old structures
-        Object.entries(this.memory.structures).forEach(([structureId, structure]) => {
-            if (Game.rooms[structure.pos.roomName] && !Game.getObjectById(structureId as Id<Structure>)) {
-                // Room is visible, but structure no longer exists
-                delete this.memory.structures[structureId]
-            }
-        });
         // Refresh structures
         visibleStructures.forEach(structure => {
             this.memory.structures[structure.id] = unwrapStructure(structure);

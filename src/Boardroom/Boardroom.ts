@@ -63,7 +63,10 @@ export class Boardroom {
      * Run plan phase for boardroom managers
      */
     plan() {
-        this.managers.forEach(m => m.plan());
+        this.managers.forEach(m => {
+            m.plan()
+            global.reportCPU(`${m.constructor.name}.plan()`)
+        });
     }
 
     /**

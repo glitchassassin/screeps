@@ -5,6 +5,7 @@ import profiler from 'screeps-profiler';
 import { GrafanaAnalyst } from 'Boardroom/BoardroomManagers/GrafanaAnalyst';
 import { VisualizationController } from 'utils/VisualizationController';
 import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
+import { log } from 'utils/logger';
 
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -20,7 +21,7 @@ resetMemoryOnRespawn();
 
 let lastCPU = 0;
 global.reportCPU = (message: string) => {
-  console.log(message, Game.cpu.getUsed() - lastCPU);
+  log('CPU', `${message} ${(Game.cpu.getUsed() - lastCPU).toFixed(3)}`);
   lastCPU = Game.cpu.getUsed();
 }
 
@@ -49,6 +50,7 @@ global.purge = () => {
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
   lastCPU = 0;
+  global.reportCPU('Start Loop')
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {
     for (const name in Memory.creeps) {
@@ -57,27 +59,28 @@ function mainLoop() {
       }
     }
   }
+  global.reportCPU('Cleared Creeps (first memory access)')
   try {
     // Execute Boardroom plan phase
-    global.reportCPU('Start:')
+
     global.boardroom.plan()
-    global.reportCPU('Boardroom Plan:')
+    global.reportCPU('Boardroom Plan')
 
     global.boardroom.offices.forEach(office => {
       // Execute Office plan phase
       office.plan();
-      global.reportCPU(`Office ${office.name} Plan:`)
+      global.reportCPU(`Office ${office.name} Plan`)
       // Execute Office run phase
       office.run();
-      global.reportCPU(`Office ${office.name} Run:`)
+      global.reportCPU(`Office ${office.name} Run`)
       // Execute Office cleanup phase
       office.cleanup();
-      global.reportCPU(`Office ${office.name} Cleanup:`)
+      global.reportCPU(`Office ${office.name} Cleanup`)
     });
 
     // Execute Boardroom cleanup phase
     global.boardroom.cleanup();
-    global.reportCPU(`Boardroom Cleanup:`)
+    global.reportCPU(`Boardroom Cleanup`)
   } catch(e) {
     console.log(e, e.stack)
   }
