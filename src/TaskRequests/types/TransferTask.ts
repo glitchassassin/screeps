@@ -63,7 +63,7 @@ export class TransferTask extends TaskAction {
     getCapacityFromDestination() {
         let targetCapacity = 1000;
         if (this.destination?.roomName && Game.rooms[this.destination?.roomName]) {
-            let target = this.destination.look().map(t => t.creep || t.structure).find(t => t) as (Creep|AnyStoreStructure)
+            let target = this.destination.look().map(t => t.creep || (t.structure as AnyStoreStructure)).find(t => t?.store) as (Creep|AnyStoreStructure)
             targetCapacity = (target?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) || 1000;
         }
         return targetCapacity;

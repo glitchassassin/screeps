@@ -70,6 +70,9 @@ export class Boardroom {
      * Run cleanup phase for boardroom managers
      */
     cleanup() {
-        this.managers.forEach(m => m.cleanup());
+        this.managers.forEach(m => {
+            m.cleanup()
+            global.reportCPU(`Boardroom Cleanup ${m.constructor.name}`);
+        });
     }
 }

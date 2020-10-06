@@ -41,7 +41,7 @@ export class LogisticsManager extends OfficeManager {
             default: {
                 // Maintain enough carriers to keep
                 // franchises drained
-                let metrics = statisticsAnalyst.cache.metrics.get(this.office.name);
+                let metrics = statisticsAnalyst.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
                 if (this.carriers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
@@ -76,7 +76,7 @@ export class LogisticsManager extends OfficeManager {
         // Storage level (current)
         // Room energy level (current and average)
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let metrics = statisticsAnalyst.cache.metrics.get(this.office.name);
+        let metrics = statisticsAnalyst.metrics.get(this.office.name);
 
         let lastMineContainerLevel = metrics?.mineContainerLevels.values[metrics?.mineContainerLevels.values.length - 1] || 0
         let lastRoomEnergyLevel = metrics?.roomEnergyLevels.values[metrics?.roomEnergyLevels.values.length - 1] || 0

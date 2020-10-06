@@ -179,13 +179,16 @@ export class Office {
      * Execute run phase for all OfficeManagers
      */
     run() {
-        this.managers.forEach(m => m.run());
+        this.managers.forEach(m => {
+            m.run();
+        });
     }
 
     /**
      * Execute run phase for all OfficeManagers
      */
     cleanup() {
+        global.reportCPU(`Office Cleanup Start`);
         if (!Memory.offices[this.name]) Memory.offices[this.name] = {
             employees: [],
             franchiseLocations: {},
@@ -213,7 +216,10 @@ export class Office {
                 scanned: boolean
             }
         })
-        this.managers.forEach(m => m.cleanup());
+        global.reportCPU(`Office Cleanup Managers Start`);
+        this.managers.forEach(m => {
+            m.cleanup()
+        });
     }
 
     purge() {

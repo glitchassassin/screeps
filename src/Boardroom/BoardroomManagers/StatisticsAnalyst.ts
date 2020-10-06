@@ -5,13 +5,6 @@ import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
 
-class asPercent {
-    constructor(private parent: Metric) {}
-    mean() { return (this.parent.mean() / this.parent.maxValue) }
-    max() { return (this.parent.max() / this.parent.maxValue) }
-    min() { return (this.parent.min() / this.parent.maxValue) }
-}
-
 export class Metric {
     values: number[] = [];
 
@@ -111,10 +104,10 @@ class StatisticsAnalystMemory extends BoardroomManagerMemory {
 }
 
 export class StatisticsAnalyst extends BoardroomManager {
-    cache = new StatisticsAnalystMemory();
+    metrics: Map<string, PipelineMetrics> = new Map();
 
     reset() {
-        this.cache = new StatisticsAnalystMemory();
+        this.metrics = new Map();
         Memory.boardroom.StatisticsAnalyst = "";
     }
 
@@ -124,8 +117,8 @@ export class StatisticsAnalyst extends BoardroomManager {
         let controllerAnalyst = this.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
 
         this.boardroom.offices.forEach(office => {
-            if (!this.cache.metrics.has(office.name)) {
-                this.cache.metrics.set(office.name,  new PipelineMetrics(
+            if (!this.metrics.has(office.name)) {
+                this.metrics.set(office.name,  new PipelineMetrics(
                     new NonNegativeDeltaMetric( // mineRate
                         salesAnalyst.getFranchiseLocations(office)
                             .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
@@ -153,7 +146,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     )
                 ));
             } else {
-                let metrics = this.cache.metrics.get(office.name) as PipelineMetrics;
+                let metrics = this.metrics.get(office.name) as PipelineMetrics;
                 metrics.mineRate.maxValue = salesAnalyst.getFranchiseLocations(office)
                     .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0)
                 metrics.mineRate.update(
@@ -190,7 +183,7 @@ export class StatisticsAnalyst extends BoardroomManager {
     }
     report = () => {
         this.boardroom.offices.forEach(office => {
-            let metrics = this.cache.metrics.get(office.name)
+            let metrics = this.metrics.get(office.name)
             if (!metrics) return;
             console.log(`Statistics for ${office.name}:
     Mine Rate: ${metrics.mineRate.mean().toFixed(2)} units/tick

@@ -103,5 +103,6 @@ declare namespace NodeJS {
     officeReport: Function;
     hrReport: Function;
     purge: Function;
+    reportCPU: Function;
   }
 }

@@ -38,7 +38,7 @@ export class SalesManager extends OfficeManager {
             priority -= 2;
         }
         // Scout surrounding Territories, if needed
-        let unexplored = this.office.territories.filter(t => !t.scanned);
+        let unexplored = this.office.territories.filter(t => !t.scanned && !t.isHostile);
         if (unexplored.length > 0) {
             unexplored.forEach(territory => {
                 this.office.submit(new TaskRequest(territory.name, new ExploreTask(territory.name), 5))

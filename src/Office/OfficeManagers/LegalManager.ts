@@ -55,7 +55,7 @@ export class LegalManager extends OfficeManager {
             case OfficeManagerStatus.PRIORITY: {
                 // Spawn dedicated upgraders as long
                 // as there is energy to spend
-                if (Game.time % 100 === 0 && (statisticsAnalyst.cache.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5) {
+                if (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5) {
                     // More input than output: spawn more upgraders
                     this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
                         ignoresRequests: true

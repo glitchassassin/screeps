@@ -46,22 +46,22 @@ export class TaskManager extends OfficeManager {
         this.tasks.push(task);
     }
     init() {
-        try {
-            // Load tasks from Memory
-            this.tasks = deserializeArray(Task, Memory.tasks[this.office.name].tasks as string);
-            // Load requests from Memory
-            let deserialized = JSON.parse(Memory.tasks[this.office.name].requests as string)
-            this.requests = {};
-            for (let reqType in deserialized) {
-                this.requests[reqType] = {};
-                for (let reqSource in deserialized[reqType]) {
-                    this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
-                }
-            }
-        } catch {
+        // try {
+        //     // Load tasks from Memory
+        //     this.tasks = deserializeArray(Task, Memory.tasks[this.office.name].tasks as string);
+        //     // Load requests from Memory
+        //     let deserialized = JSON.parse(Memory.tasks[this.office.name].requests as string)
+        //     this.requests = {};
+        //     for (let reqType in deserialized) {
+        //         this.requests[reqType] = {};
+        //         for (let reqSource in deserialized[reqType]) {
+        //             this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
+        //         }
+        //     }
+        // } catch {
             this.tasks = [];
             this.requests = {};
-        }
+        // }
     }
     run() {
         // Assign requests
@@ -121,35 +121,35 @@ export class TaskManager extends OfficeManager {
         }
     }
     cleanup() {
-        if (!Memory.tasks[this.office.name]) Memory.tasks[this.office.name] = {
-            tasks: '',
-            requests: ''
-        }
+        // if (!Memory.tasks[this.office.name]) Memory.tasks[this.office.name] = {
+        //     tasks: '',
+        //     requests: ''
+        // }
 
-        // Write tasks to memory
-        Memory.tasks[this.office.name].tasks = serialize(this.tasks
-            .filter(task => !task.completed || Game.time > task.created + 500))
+        // // Write tasks to memory
+        // Memory.tasks[this.office.name].tasks = serialize(this.tasks
+        //     .filter(task => !task.completed || Game.time > task.created + 500))
 
-        // Write requests to memory
-        let serialized: RequestsMap<string> = {};
+        // // Write requests to memory
+        // let serialized: RequestsMap<string> = {};
 
-        for (let reqType in this.requests) {
-            serialized[reqType] = {};
-            for (let reqSource in this.requests[reqType]) {
-                if (this.requests[reqType][reqSource].completed ||
-                    !this.requests[reqType][reqSource].task?.valid() ||
-                    Game.time > this.requests[reqType][reqSource].created + 500) {
-                    // Completed, no longer valid, or timed out
-                    delete this.requests[reqType][reqSource]
-                } else {
-                    // Clean up linked tasks
-                    this.requests[reqType][reqSource].assignedTasks = this.requests[reqType][reqSource].assignedTasks.filter(t => !t.completed);
-                    serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])
-                }
-            }
-        }
+        // for (let reqType in this.requests) {
+        //     serialized[reqType] = {};
+        //     for (let reqSource in this.requests[reqType]) {
+        //         if (this.requests[reqType][reqSource].completed ||
+        //             !this.requests[reqType][reqSource].task?.valid() ||
+        //             Game.time > this.requests[reqType][reqSource].created + 500) {
+        //             // Completed, no longer valid, or timed out
+        //             delete this.requests[reqType][reqSource]
+        //         } else {
+        //             // Clean up linked tasks
+        //             this.requests[reqType][reqSource].assignedTasks = this.requests[reqType][reqSource].assignedTasks.filter(t => !t.completed);
+        //             serialized[reqType][reqSource] = serialize(this.requests[reqType][reqSource])
+        //         }
+        //     }
+        // }
 
-        Memory.tasks[this.office.name].requests = JSON.stringify(serialized);
+        // Memory.tasks[this.office.name].requests = JSON.stringify(serialized);
     }
 
     assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
