@@ -2,6 +2,7 @@ import { Exclude, Transform, TransformationType, Type } from "class-transformer"
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { MustHaveEnergyFromSource } from "TaskRequests/prereqs/MustHaveEnergyFromSource";
+import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction } from "TaskRequests/TaskAction";
 import { transformGameObject } from "utils/transformGameObject";
@@ -18,6 +19,7 @@ export class ResupplyTask extends TransferTask {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveNoWorkParts(),
             new MustHaveEnergy(this.getCapacityFromDestination()),
             new MustBeAdjacent(this.destination),
         ]

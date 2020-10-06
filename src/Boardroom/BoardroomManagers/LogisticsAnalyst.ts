@@ -19,13 +19,15 @@ export class LogisticsAnalyst extends BoardroomManager {
         return room.find(FIND_DROPPED_RESOURCES).filter(r => r.resourceType === RESOURCE_ENERGY) as Resource<RESOURCE_ENERGY>[];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getAllSources(office: Office): (AnyStoreStructure|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+    getAllSources(office: Office): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let territories = [office.center, ...office.territories];
+        let depots = office.employees.filter(creep => creep.memory.depot);
         return [
             ...territories.filter(t => t.room).map(territory => this.getFreeEnergy(territory.room as Room)).reduce((a, b) => a.concat(b), []),
             ...territories.filter(t => t.room).map(territory => this.getTombstones(territory.room as Room)).reduce((a, b) => a.concat(b), []),
+            ...depots,
             ...this.getStorage(office).filter(s => s.store.getUsedCapacity() > 0),
             ...salesAnalyst.getFranchiseLocations(office)
                 .map(franchise => franchise.container)
@@ -34,7 +36,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getHaulers(office: Office): (Creep)[] {
-        return office.employees.filter(c => c.memory.type === 'HAULER');
+    getCarriers(office: Office): (Creep)[] {
+        return office.employees.filter(c => c.memory.type === 'CARRIER');
     }
 }

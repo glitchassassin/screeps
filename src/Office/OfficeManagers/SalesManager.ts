@@ -42,16 +42,6 @@ export class SalesManager extends OfficeManager {
         // respawning with a little lead time
         // to minimize downtime
         this.franchises.forEach(franchise => {
-            // console.log(
-            //     franchise.pos,
-            //     'current salesmen:',
-            //     franchise.salesmen.length,
-            //     'out of',
-            //     franchise.maxSalesmen,
-            //     'working:',
-            //     franchise.salesmen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0),
-            //     'out of 5'
-            // );
             if (
                 (franchise.salesmen.length === 0) || // No salesmen, OR salesmen have fewer than 5 WORK parts
                 (
@@ -80,14 +70,12 @@ export class SalesManager extends OfficeManager {
                     // If miner is not at mine site, go there
                     if (!salesman.pos.isEqualTo(franchise.pos) && salesmenCount === 0) {
                         taskManager.assign(new Task([new TravelTask(franchise.pos, 0)], salesman, franchise.id));
-                    } else if (!salesman.pos.inRangeTo(franchise.sourcePos, 1)) {
-                        taskManager.assign(new Task([new TravelTask(franchise.sourcePos, 1)], salesman, franchise.id));
                     } else {
                         if (salesman.memory.spawned && !salesman.memory.arrived) {
                             salesman.memory.arrived = Game.time - salesman.memory.spawned;
                         }
                         // Keep mining ad infinitum.
-                        taskManager.assign(new Task([new HarvestTask(franchise.source?.pos)], salesman, franchise.id));
+                        taskManager.assign(new Task([new HarvestTask(franchise.sourcePos)], salesman, franchise.id));
                     }
                 }
             })

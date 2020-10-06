@@ -45,13 +45,13 @@ export class HRManager extends OfficeManager {
 
         switch (this.status) {
             case OfficeManagerStatus.MINIMAL:
-                priority = 5;
-                break;
-            case OfficeManagerStatus.NORMAL:
                 priority = 6;
                 break;
-            case OfficeManagerStatus.PRIORITY:
+            case OfficeManagerStatus.NORMAL:
                 priority = 7;
+                break;
+            case OfficeManagerStatus.PRIORITY:
+                priority = 8;
                 break;
         }
 

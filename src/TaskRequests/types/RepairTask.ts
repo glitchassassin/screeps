@@ -1,12 +1,18 @@
 import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { assert } from "console";
+import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustBeAdjacent } from "../prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "../prereqs/MustHaveEnergy";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "../TaskAction";
+
+enum RepairStates {
+    GETTING_ENERGY = 'GETTING_ENERGY',
+    REPAIRING = 'REPAIRING'
+}
 
 export class RepairTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -19,12 +25,11 @@ export class RepairTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
-            new MustHaveWorkParts(),
-            new MustHaveEnergy((this.destination.hitsMax - this.destination.hits)/100),
-            new MustBeAdjacent(this.destination.pos, 3),
+            new MustHaveWorkParts()
         ]
     }
     message = "🛠";
+    state = RepairStates.GETTING_ENERGY;
     destinationId: Id<Structure>|null = null
 
     @Exclude()
@@ -42,19 +47,35 @@ export class RepairTask extends TaskAction {
         return `[RepairTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
-    action(creep: Creep) {
+    action(creep: Creep): TaskActionResult {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
-        let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
 
-        let result = creep.repair(this.destination);
-        if (result === ERR_NOT_ENOUGH_ENERGY) {
-            return TaskActionResult.SUCCESS;
-        } else if (result !== OK){
-            return TaskActionResult.FAILED;
+        switch (this.state) {
+            case RepairStates.REPAIRING: {
+                if (creep.store.getUsedCapacity() === 0) {
+                    this.state = RepairStates.GETTING_ENERGY;
+                    return this.action(creep); // Switch to getting energy
+                }
+
+                let result = creep.repair(this.destination);
+                if (result !== OK){ return TaskActionResult.FAILED; }
+
+                // Report successful build action
+                let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
+                grafanaAnalyst.reportRepair(creep.memory.office||'', Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
+                return (this.destination.hits === this.destination.hitsMax) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
+            }
+            case RepairStates.GETTING_ENERGY: {
+                if (creep.store.getUsedCapacity() > 0) {
+                    this.state = RepairStates.REPAIRING;
+                    return this.action(creep); // Switch to repairing
+                }
+                let result = getEnergy(creep);
+
+                return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+            }
         }
-        grafanaAnalyst.reportRepair(creep.memory.office||'', Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
-        return (this.destination.hits === this.destination.hitsMax) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
     }
     /**
      * Calculates cost based on the effectiveness of the minion
@@ -64,11 +85,10 @@ export class RepairTask extends TaskAction {
         return minion.capacity/(minion.creep.getActiveBodyparts(WORK) * 5)
     }
     predict(minion: SpeculativeMinion) {
-        let targetCapacity = ((this.destination as Structure).hitsMax - (this.destination as Structure).hits)/100;
         return {
             ...minion,
-            output: Math.min(minion.capacityUsed, targetCapacity),
-            capacityUsed: Math.max(0, minion.capacityUsed - targetCapacity)
+            output: minion.capacity,
+            capacityUsed: minion.capacity
         }
     }
     valid() {

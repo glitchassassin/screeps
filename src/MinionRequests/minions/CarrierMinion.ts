@@ -1,8 +1,8 @@
-export class HaulerMinion {
+export class CarrierMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
         if (scale.length === 0) return false;
-        return spawn.spawnCreep(scale, `hauler${Game.time}`, {
+        return spawn.spawnCreep(scale, `carrier${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
@@ -17,7 +17,7 @@ export class HaulerMinion {
         return {
             favoredTasks: ['TransferTask', 'ResupplyTask', 'DropTask'],
             ...memory,
-            type: 'HAULER'
+            type: 'CARRIER'
         };
     }
 }

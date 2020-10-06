@@ -6,6 +6,13 @@ import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject } from "utils/transformGameObject";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
+import { getEnergy } from "TaskRequests/activity/GetEnergy";
+import { travel } from "TaskRequests/activity/Travel";
+
+enum UpgradeStates {
+    GETTING_ENERGY = 'GETTING_ENERGY',
+    UPGRADING = 'UPGRADING'
+}
 
 export class UpgradeTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -19,11 +26,10 @@ export class UpgradeTask extends TaskAction {
         if (!this.destination) return [];
         return [
             new MustHaveWorkParts(),
-            new MustHaveEnergy(1000), // No cap on upgrade energy
-            new MustBeAdjacent(this.destination.pos, 3),
         ]
     }
     message = "⏫";
+    state = UpgradeStates.GETTING_ENERGY;
 
     @Type(() => StructureController)
     @Transform(transformGameObject(StructureController))
@@ -39,17 +45,37 @@ export class UpgradeTask extends TaskAction {
         return `[UpgradeTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
     }
 
-    action(creep: Creep) {
+    action(creep: Creep): TaskActionResult {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
 
-        let result = creep.upgradeController(this.destination);
-        if (result === ERR_NOT_ENOUGH_ENERGY) {
-            return TaskActionResult.SUCCESS;
-        } else if (result !== OK) {
-            return TaskActionResult.FAILED;
+        switch (this.state) {
+            case UpgradeStates.UPGRADING: {
+                if (creep.store.getUsedCapacity() === 0) {
+                    this.state = UpgradeStates.GETTING_ENERGY;
+                    return this.action(creep); // Switch to getting energy
+                }
+
+                let result = creep.upgradeController(this.destination);
+                if (result === ERR_NOT_IN_RANGE) {
+                    let result = travel(creep, this.destination.pos, 3);
+                    if (result !== OK) console.log('travel failed', result)
+                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED;
+                } else if (result !== OK) {
+                    console.log('Upgrade failed', result)
+                    return TaskActionResult.FAILED;
+                }
+                return TaskActionResult.INPROGRESS;
+            }
+            case UpgradeStates.GETTING_ENERGY: {
+                if (creep.store.getUsedCapacity() > 0) {
+                    this.state = UpgradeStates.UPGRADING;
+                    return this.action(creep); // Switch to upgrading
+                }
+                let result = getEnergy(creep);
+                return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+            }
         }
-        return TaskActionResult.INPROGRESS;
     }
     cost(minion: SpeculativeMinion) {
         // Approximate effectiveness of minion based on number of WORK parts

@@ -1,12 +1,11 @@
 import 'reflect-metadata';
 import { ErrorMapper } from "utils/ErrorMapper";
 import { Boardroom } from 'Boardroom/Boardroom';
-
 import profiler from 'screeps-profiler';
 import { GrafanaAnalyst } from 'Boardroom/BoardroomManagers/GrafanaAnalyst';
 import { VisualizationController } from 'utils/VisualizationController';
+import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 
-// Initialize memory
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
     // Built less than 15 seconds ago - fresh code push
@@ -15,12 +14,27 @@ if (!global.IS_JEST_TEST) {
     console.log('Global reset detected');
   }
 }
+// If respawning, wipe memory clean
+resetMemoryOnRespawn();
 
 // Initialize control switches
 global.v = new VisualizationController()
 
 // Initialize Boardroom
 global.boardroom = new Boardroom();
+
+global.purge = () => {
+  Memory.flags = {};
+  Memory.rooms = {};
+  Memory.creeps = {};
+  Memory.metrics = {};
+  Memory.offices = {};
+  Memory.hr = {};
+  Memory.tasks = {};
+  Memory.boardroom = {};
+
+  global.boardroom = new Boardroom();
+}
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code

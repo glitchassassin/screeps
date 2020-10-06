@@ -9,6 +9,7 @@ import { stablematch } from "TaskRequests/algorithms/stablematch";
 import { table } from "table";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
+import { DepotTask } from "TaskRequests/types/DepotTask";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -147,7 +148,7 @@ export class TaskManager extends OfficeManager {
             requests,
             creeps,
             (taskRequest, creep) => {
-                // if (taskRequest.task?.constructor.name === 'ResupplyTask') console.log('resolving ResupplyTask', creep);
+                // if (taskRequest.task?.constructor.name === 'BuildTask') console.log('resolving BuildTask', creep);
                 let paths = resolveTaskTrees({
                     output: 0,
                     creep,
@@ -157,7 +158,7 @@ export class TaskManager extends OfficeManager {
                 }, taskRequest.task as TaskAction)
                 let maxOutput = paths?.reduce((max, path) => (Math.max(max, path.minion.output)), 0) || 0;
                 let filteredPaths = paths?.filter(c => {
-                    // if (taskRequest.task?.constructor.name === 'ResupplyTask') console.log(JSON.stringify(c));
+                    // if (taskRequest.task?.constructor.name === 'BuildTask') console.log(JSON.stringify(c));
                     // If task plan is null, filter it
                     if (!c) return false;
                     // If task plan has withdraw and transfer loop, filter it
@@ -175,7 +176,7 @@ export class TaskManager extends OfficeManager {
                 }
                 let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
                 let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 2 : 1;
-                // if (taskRequest.task?.action.constructor.name === 'ResupplyTask') console.log('ResupplyTask', JSON.stringify(bestPlan));
+                // if (taskRequest.task?.action.constructor.name === 'BuildTask') console.log('BuildTask', JSON.stringify(bestPlan));
                 return {
                     rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
                     output: bestPlan
@@ -191,6 +192,10 @@ export class TaskManager extends OfficeManager {
                 taskRequest.completed = true;
             }
             this.assign(task);
+            // If necessary, create Depot request for assigned tasks.
+            if (taskRequest.depot) {
+                this.submit(new TaskRequest(taskRequest.sourceId + "_depot", new DepotTask(taskRequest.depot, taskRequest.capacity), taskRequest.priority, taskRequest.capacity))
+            }
         })
     }
     isIdle = (creep: Creep) => {

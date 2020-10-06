@@ -5,7 +5,7 @@ import { BuildTask } from "TaskRequests/types/BuildTask";
 import { RepairTask } from "TaskRequests/types/RepairTask";
 import { countEnergyInContainersOrGround, getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
 import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { DropTask } from "TaskRequests/types/DropTask";
+import { DepotTask } from "TaskRequests/types/DepotTask";
 
 const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
@@ -61,9 +61,9 @@ export class FacilitiesManager extends OfficeManager {
                 // Perform repairs if needed, or
                 // delegate resources to new
                 // construction.
-                let jobs = this.submitRepairOrders(5);
+                let jobs = this.submitRepairOrders(2);
                 if (jobs < 5) {
-                    jobs += this.submitBuildOrders(5 - jobs);
+                    jobs += this.submitBuildOrders(2 - jobs);
                 }
                 if (jobs > 0 && this.handymen.length < (jobs / 2)) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
@@ -74,9 +74,9 @@ export class FacilitiesManager extends OfficeManager {
                 // Dedicate extra resources to
                 // new construction, performing
                 // repairs if needed.
-                let jobs = this.submitRepairOrders(5);
+                let jobs = this.submitRepairOrders(2);
                 if (jobs < 5) {
-                    jobs += this.submitBuildOrders(5 - jobs);
+                    jobs += this.submitBuildOrders(2 - jobs);
                 }
                 if (jobs > 0 && this.handymen.length < jobs) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN))
@@ -101,11 +101,7 @@ export class FacilitiesManager extends OfficeManager {
         }) as Structure[]).sort((a, b) => a.hits - b.hits);
         repairable.slice(0, max).forEach((structure, i) => {
             this.repairOrders.push(structure.pos);
-            let energyNeeded = getRepairEnergyRemaining(structure) - countEnergyInContainersOrGround(structure.pos)
-            if (energyNeeded > 0) {
-                this.office.submit(new TaskRequest(`${this.office.name}_RepairEnergy_${i}`, new DropTask(structure.pos, energyNeeded), 5, energyNeeded))
-            }
-            this.office.submit(new TaskRequest(`${this.office.name}_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure)))
+            this.office.submit(new TaskRequest(`${this.office.name}_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure), structure.pos))
         })
         return Math.min(repairable.length, max);
     }
@@ -115,10 +111,7 @@ export class FacilitiesManager extends OfficeManager {
         buildable.slice(0, max).forEach((site, i) => {
             this.buildOrders.push(site.pos);
             let energyNeeded = getBuildEnergyRemaining(site) - countEnergyInContainersOrGround(site.pos)
-            if (energyNeeded > 0) {
-                this.office.submit(new TaskRequest(`${this.office.name}_BuildEnergy_${i}`, new DropTask(site.pos, getBuildEnergyRemaining(site)), 5, getBuildEnergyRemaining(site)))
-            }
-            this.office.submit(new TaskRequest(`${this.office.name}_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site)))
+            this.office.submit(new TaskRequest(`${this.office.name}_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site), site.pos))
         })
         return Math.min(buildable.length, max);
     }

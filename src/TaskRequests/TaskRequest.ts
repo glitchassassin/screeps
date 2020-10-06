@@ -1,8 +1,9 @@
-import { Exclude, Type } from "class-transformer";
+import { Exclude, Transform, Type } from "class-transformer";
+import { transformRoomPosition } from "utils/transformGameObject";
 import { Task } from "./Task";
 import { TaskAction } from "./TaskAction";
 import { BuildTask } from "./types/BuildTask";
-import { DropTask } from "./types/DropTask";
+import { DepotTask } from "./types/DepotTask";
 import { ExploreTask } from "./types/ExploreTask";
 import { HarvestTask } from "./types/HarvestTask";
 import { RepairTask } from "./types/RepairTask";
@@ -15,9 +16,6 @@ import { WithdrawTask } from "./types/WithdrawTask";
 export class TaskRequest {
     completed = false;
     created = Game.time;
-    sourceId: string|null = null;
-    priority: number;
-    capacity: number;
 
     assignedTasks: Task[] = [];
 
@@ -34,22 +32,24 @@ export class TaskRequest {
                 { value: RepairTask, name: 'RepairTask' },
                 { value: ResupplyTask, name: 'ResupplyTask' },
                 { value: ExploreTask, name: 'ExploreTask' },
-                { value: DropTask, name: 'DropTask' },
+                { value: DepotTask, name: 'DepotTask' },
                 { value: TaskAction, name: 'TaskAction' },
             ]
         }
     })
     task: TaskAction|null = null;
 
+    @Transform(transformRoomPosition)
+    depot: RoomPosition|null
+
     constructor(
-        sourceId: string|null = null,
+        public sourceId: string|null = null,
         task: TaskAction|null = null,
-        priority = 5,
-        capacity = 0
+        public priority = 5,
+        public capacity = 0,
+        depot: RoomPosition|null = null
     ) {
-        this.sourceId = sourceId;
         this.task = task;
-        this.priority = priority;
-        this.capacity = capacity;
+        this.depot = depot;
     }
 }

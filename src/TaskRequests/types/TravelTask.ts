@@ -4,6 +4,7 @@ import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { travel } from "TaskRequests/activity/Travel";
 
 export class TravelTask extends TaskAction {
     // Prereq: Minion must have a path to destination
@@ -18,14 +19,6 @@ export class TravelTask extends TaskAction {
     @Transform(transformRoomPosition)
     destination: RoomPosition|null = null;
     distance: number;
-
-    tries: number = 0;
-    repaths: number = 0;
-
-    @Exclude()
-    pathCache: RoomPosition[] = [];
-    @Transform(transformRoomPosition)
-    lastPosition: RoomPosition|null = null
 
     constructor(
         destination: RoomPosition|null = null,
@@ -44,41 +37,11 @@ export class TravelTask extends TaskAction {
         if (!this.destination) return TaskActionResult.FAILED;
         if (creep.pos.inRangeTo(this.destination, this.distance)) return TaskActionResult.SUCCESS ;
 
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+        let result = travel(creep, this.destination, this.distance)
 
-        if (this.pathCache.length === 0) {
-            let route = PathFinder.search(creep.pos, {pos: this.destination, range: this.distance}, {
-                roomCallback: (room) => mapAnalyst.getCostMatrix(room)
-            })
-            this.pathCache = route.path;
-        }
-
-        let result = creep.moveByPath(this.pathCache);
-        if (result === ERR_TIRED) {
-            return TaskActionResult.INPROGRESS; // Just need to wait for minion to catch up
-        } else if (result === ERR_NOT_FOUND || this.lastPosition?.isEqualTo(creep.pos)) {
-            this.tries += 1;
-            if (this.tries > 2) {
-                // Stuck for three ticks, repath and try again
-                this.repaths += 1;
-                if (this.repaths > 2) {
-                    // Attempted three repaths, abort
-                    return TaskActionResult.FAILED;
-                } else {
-                    let route = PathFinder.search(creep.pos, {pos: this.destination, range: this.distance}, {
-                        roomCallback: (room) => mapAnalyst.getCostMatrix(room, true)
-                    })
-                    this.pathCache = route.path;
-                    creep.moveByPath(this.pathCache);
-                }
-            }
-        }
-        else if (result !== OK) {
+        if (result !== OK) {
             return TaskActionResult.FAILED;
-        } else {
-            this.tries = 0; // Successful move, not tired, not in the same position, so reset tries to 0
         }
-        this.lastPosition = creep.pos;
         return TaskActionResult.INPROGRESS;
     }
     cost(minion: SpeculativeMinion) {

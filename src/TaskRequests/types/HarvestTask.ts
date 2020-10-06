@@ -1,10 +1,7 @@
-import { MustBeAtMine } from "TaskRequests/prereqs/MustBeAtMine";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { Transform, TransformationType, Type } from "class-transformer";
-import { transformGameObject } from "utils/transformGameObject";
-import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
+import { travel } from "TaskRequests/activity/Travel";
 
 export class HarvestTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -15,7 +12,6 @@ export class HarvestTask extends TaskAction {
         // return [new MustBeAtMine(this.source)]
         return [
             new MustHaveWorkParts(),
-            new MustBeAdjacent(this.source),
         ]
     }
     message = "⚡";
@@ -35,25 +31,21 @@ export class HarvestTask extends TaskAction {
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
         if (!this.source) return TaskActionResult.FAILED;
+        if (creep.pos.roomName !== this.source.roomName) {
+            travel(creep, this.source);
+            return TaskActionResult.INPROGRESS;
+        }
+
         let source = this.source.lookFor(LOOK_SOURCES)?.[0]
-        if (!source) return  TaskActionResult.FAILED;
 
         if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-            return TaskActionResult.FAILED;
+            travel(creep, source.pos);
+            return TaskActionResult.INPROGRESS;
         }
         if (creep.store.getCapacity() > 0) {
             // If can carry, is the creep full?
             if (creep.store.getFreeCapacity() == 0) {
                 return TaskActionResult.SUCCESS;
-            }
-        } else {
-            // If cannot carry, is the local container full?
-            let container = creep.pos.lookFor(LOOK_STRUCTURES)
-                .find(s => s.structureType === STRUCTURE_CONTAINER)
-            // If the container is full or missing, we cannot store,
-            // so there is no point in harvesting
-            if (!container || (container as StructureContainer).store.getFreeCapacity() === 0) {
-                return TaskActionResult.FAILED;
             }
         }
         return TaskActionResult.INPROGRESS;

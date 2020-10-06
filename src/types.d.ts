@@ -10,6 +10,7 @@ interface CreepMemory {
   spawned?: number
   arrived?: number
   office?: string
+  depot?: boolean
 }
 
 interface FlagMemory {
@@ -25,6 +26,7 @@ interface RoomMemory {
 interface Memory {
   uuid: number;
   log: any;
+  respawnTick: number;
   boardroom: {
     [managerName: string]: string
   }
@@ -100,5 +102,6 @@ declare namespace NodeJS {
     taskPurge: Function;
     officeReport: Function;
     hrReport: Function;
+    purge: Function;
   }
 }

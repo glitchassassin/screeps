@@ -1,6 +1,7 @@
 import { Exclude, Transform, TransformationType, Type } from "class-transformer";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
+import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { transformGameObject, transformRoomPosition } from "utils/transformGameObject";
@@ -16,6 +17,7 @@ export class TransferTask extends TaskAction {
     getPrereqs() {
         if (!this.destination) return [];
         return [
+            new MustHaveNoWorkParts(),
             new MustHaveEnergy(this.getCapacityFromDestination()),
             new MustBeAdjacent(this.destination),
         ]
@@ -39,11 +41,9 @@ export class TransferTask extends TaskAction {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
         let target = this.destination.look().map(t => t.creep || t.structure).find(t => t) as (Creep|Structure<StructureConstant>)
-        console.log(target);
         if (!target) return TaskActionResult.FAILED;
 
         let result = creep.transfer(target, RESOURCE_ENERGY);
-        console.log(creep, result)
         return (result === OK) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
     }
     cost() {return 1;}; // Takes one tick to transfer

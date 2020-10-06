@@ -12,7 +12,7 @@ import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { Table } from "Visualizations/Table";
-import { DropTask } from "TaskRequests/types/DropTask";
+import { DepotTask } from "TaskRequests/types/DepotTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
 
 export class LegalManager extends OfficeManager {
@@ -47,8 +47,8 @@ export class LegalManager extends OfficeManager {
                         this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 1, e));
                     }
                 } else {
-                    // Place standing order for upgrades
-                    this.office.submit(new TaskRequest(this.office.name, new UpgradeTask(this.office.center.room.controller), 5, 1000));
+                    // Place standing order for upgrade energy
+                    this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller?.pos, 1000), 5, 1000));
                 }
                 return;
             }
@@ -68,8 +68,8 @@ export class LegalManager extends OfficeManager {
                         this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 4, e));
                     }
                 } else {
-                    // Place standing order for upgrades
-                    this.office.submit(new TaskRequest(this.office.name, new UpgradeTask(this.office.center.room.controller), 5, 1000));
+                    // Place standing order for upgrade energy
+                    this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller?.pos, 1000), 5, 1000));
                 }
                 return;
             }
@@ -77,39 +77,17 @@ export class LegalManager extends OfficeManager {
     }
     run() {
         if (global.v.legal.state) { this.report(); }
-        let controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let room = this.office.center.room;
         let taskManager = this.office.managers.get('TaskManager') as TaskManager;
-        let depot = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
-        // If the dedicated container doesn't exist, fall back to upgrade requests instead
-        if (!taskManager || !room.controller || !depot?.container || this.lawyers.length === 0) return;
+
+        if (!taskManager || !room.controller || this.lawyers.length === 0) return;
 
         this.lawyers.forEach(lawyer => {
             if (taskManager.isIdle(lawyer)) {
-                if(lawyer.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
-                    // Upgrader has energy - dump it into controller
-                    taskManager.assign(new Task([
-                        new TravelTask((room.controller as StructureController).pos, 3),
-                        new UpgradeTask(room.controller)
-                    ], lawyer, `${this.office.name}_Legal`));
-                } else {
-                    // Upgrader needs energy - get from dedicated controller container or a hauler
-                    if (depot?.container) {
-                        taskManager.assign(new Task([
-                            new TravelTask(depot.container.pos, 1),
-                            new WithdrawTask(depot.container)
-                        ], lawyer, `${this.office.name}_Legal`));
-                    } else {
-                        taskManager.submit(new TaskRequest(
-                            lawyer.id,
-                            new TransferTask(lawyer),
-                            1,
-                            lawyer.store.getCapacity()
-                        ))
-                    }
-
-                }
+                // Send upgrader to controller
+                taskManager.assign(new Task([
+                    new UpgradeTask(room.controller)
+                ], lawyer, `${this.office.name}_Legal`));
             }
         })
     }

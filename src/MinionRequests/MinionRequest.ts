@@ -2,7 +2,7 @@ import { Transform } from "class-transformer";
 import { UpgradeTask } from "TaskRequests/types/UpgradeTask";
 import { transformGameObject } from "utils/transformGameObject";
 import { HandymanMinion } from "./minions/HandymanMinion";
-import { HaulerMinion } from "./minions/HaulerMinion";
+import { CarrierMinion } from "./minions/CarrierMinion";
 import { SalesmanMinion } from './minions/SalesmanMinion';
 import { InternMinion } from "./minions/InternMinion";
 import { LawyerMinion } from "./minions/LawyerMinion";
@@ -14,7 +14,7 @@ export enum MinionTypes {
     SALESMAN = 'SALESMAN',
     LAWYER = 'LAWYER',
     HANDYMAN = 'HANDYMAN',
-    HAULER = 'HAULER'
+    CARRIER = 'CARRIER'
 }
 
 export class MinionRequest {
@@ -54,8 +54,8 @@ export class MinionRequest {
         if (!spawn.spawning && !this.spawned) {
             let minion;
             switch (this.type) {
-                case MinionTypes.HAULER:
-                    minion = new HaulerMinion();
+                case MinionTypes.CARRIER:
+                    minion = new CarrierMinion();
                     break;
                 case MinionTypes.INTERN:
                     minion = new InternMinion();

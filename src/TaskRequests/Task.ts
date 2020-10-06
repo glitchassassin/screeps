@@ -4,7 +4,7 @@ import { SpeculativeMinion } from './SpeculativeMinion';
 import { TaskAction } from './TaskAction';
 import { TaskPrerequisite } from './TaskPrerequisite';
 import { BuildTask } from './types/BuildTask';
-import { DropTask } from './types/DropTask';
+import { DepotTask } from './types/DepotTask';
 import { ExploreTask } from './types/ExploreTask';
 import { HarvestTask } from './types/HarvestTask';
 import { RepairTask } from './types/RepairTask';
@@ -40,7 +40,7 @@ export class Task {
                 { value: RepairTask, name: 'RepairTask' },
                 { value: ResupplyTask, name: 'ResupplyTask' },
                 { value: ExploreTask, name: 'ExploreTask' },
-                { value: DropTask, name: 'DropTask' },
+                { value: DepotTask, name: 'DepotTask' },
                 { value: TaskAction, name: 'TaskAction' },
             ]
         }
