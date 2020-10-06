@@ -68,6 +68,7 @@ export class SalesManager extends OfficeManager {
         if (!taskManager) return;
 
         this.franchises.forEach(franchise => {
+            console.log(franchise.salesmen);
 
             franchise.salesmen.forEach(salesman => {
                 if (taskManager.isIdle(salesman)) {
@@ -99,7 +100,7 @@ export class SalesManager extends OfficeManager {
                 `${(franchise.salesmen.reduce((sum, salesman) =>
                     sum + salesman.getActiveBodyparts(WORK)
                 , 0) / 5 * 100).toFixed(0)}%`,
-                franchise.surplus
+                franchise.surplus ?? 0
             ]
         })
 

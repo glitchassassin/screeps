@@ -72,7 +72,6 @@ export class Boardroom {
     cleanup() {
         this.managers.forEach(m => {
             m.cleanup()
-            global.reportCPU(`Boardroom Cleanup ${m.constructor.name}`);
         });
     }
 }

@@ -28,6 +28,8 @@ const franchiseProxy = (franchise: Franchise): Franchise => {
                 return undefined;
             } else if (prop === 'pos' && target.pos) {
                 return new RoomPosition(target.pos.x, target.pos.y, target.pos.roomName);
+            } else if (prop === 'sourcePos' && target.sourcePos) {
+                return new RoomPosition(target.sourcePos.x, target.sourcePos.y, target.sourcePos.roomName);
             } else if (prop === 'source') {
                 return Game.getObjectById(target.id) ?? undefined;
             } else if (prop === 'container') {
@@ -39,7 +41,7 @@ const franchiseProxy = (franchise: Franchise): Franchise => {
             } else if (prop === 'office') {
                 return global.boardroom.offices.get(target.officeId);
             } else if (prop === 'salesmen') {
-                return target.office?.employees.filter(c => c.memory.source === target.id) || [];
+                return global.boardroom.offices.get(target.officeId)?.employees.filter(c => c.memory.source === target.id) || [];
             } else if (prop === 'surplus') {
                 if (Game.rooms[target.pos.roomName]) target.surplus = countEnergyInContainersOrGround(target.sourcePos);
                 return target.surplus;
