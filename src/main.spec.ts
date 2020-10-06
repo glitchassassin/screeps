@@ -1,7 +1,12 @@
 import {assert} from "chai";
-import {loop} from "./main";
 import {Game, Memory} from "../test/unit/mock"
 import { mockGlobal } from "screeps-jest";
+
+mockGlobal<Game>('Game', Game, true);
+mockGlobal<Memory>('Memory', Memory, true);
+global.IS_JEST_TEST = true;
+
+import {loop} from "./main";
 
 describe("main", () => {
   beforeEach(() => {

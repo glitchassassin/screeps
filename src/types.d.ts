@@ -9,6 +9,8 @@ interface CreepMemory {
   favoredTasks?: string[]
   spawned?: number
   arrived?: number
+  office?: string
+  depot?: boolean
 }
 
 interface FlagMemory {
@@ -19,14 +21,47 @@ interface FlagMemory {
 interface RoomMemory {
   tasks?: string;
   requests?: string;
-  spawnRequests?: string;
 }
 
 interface Memory {
   uuid: number;
   log: any;
+  respawnTick: number;
+  boardroom: {
+    [managerName: string]: string
+  }
+  hr: {
+    [officeName: string]: string
+  };
+  offices: {
+    [name: string]: {
+      employees: string[],
+      franchiseLocations: {
+        [sourceId: string]: {
+          franchise: RoomPosition,
+          source: RoomPosition
+        }
+      },
+      territories: {
+        [roomName: string]: {
+          controller: {
+            pos?: RoomPosition,
+            my?: boolean,
+          },
+          sources: {[id: string]: RoomPosition},
+          scanned: boolean
+        }
+      }
+    }
+  }
+  tasks: {
+    [officeName: string]: {
+      tasks: string,
+      requests: string
+    }
+  };
   metrics: {
-    [roomName: string]: import('./analysts/StatisticsAnalyst').PipelineMetrics
+    [roomName: string]: import('./Boardroom/BoardroomManagers/StatisticsAnalyst').PipelineMetrics
   }
   stats: {
     gcl: {
@@ -39,7 +74,7 @@ interface Memory {
       limit: number,
       used: number
     },
-    rooms: {[id: string]: {
+    offices: {[id: string]: {
       taskManagement: {
         tasks: {[id: string]: number},
         requests: {[id: string]: number},
@@ -59,35 +94,14 @@ interface Memory {
 // `global` extension samples
 declare namespace NodeJS {
   interface Global {
+    IS_JEST_TEST: boolean;
     log: any;
-    analysts: {
-      controller: import('./analysts/ControllerAnalyst').ControllerAnalyst,
-      logistics: import('./analysts/LogisticsAnalyst').LogisticsAnalyst,
-      map: import('./analysts/MapAnalyst').MapAnalyst,
-      source: import('./analysts/SourceAnalyst').SourceAnalyst,
-      spawn: import('./analysts/SpawnAnalyst').SpawnAnalyst,
-      builder: import('./analysts/BuilderAnalyst').BuilderAnalyst,
-      defense: import('./analysts/DefenseAnalyst').DefenseAnalyst,
-      grafana: import('./analysts/GrafanaAnalyst').GrafanaAnalyst,
-      statistics: import('./analysts/StatisticsAnalyst').StatisticsAnalyst,
-    };
-    managers: {
-      logistics: import('./managers/LogisticsManager').LogisticsManager,
-      controller: import('./managers/ControllerManager').ControllerManager,
-      source: import('./managers/SourceManager').SourceManager,
-      builder: import('./managers/BuilderManager').BuilderManager,
-      defense: import('./managers/DefenseManager').DefenseManager,
-    };
-    supervisors: {
-      [id: string]: {
-        task: import('./supervisors/TaskSupervisor').TaskSupervisor,
-        spawn: import('./supervisors/SpawnSupervisor').SpawnSupervisor,
-      }
-    };
-    architects: {
-      controller: import('./architects/ControllerArchitect').ControllerArchitect,
-      source: import('./architects/SourceArchitect').SourceArchitect,
-      road: import('./architects/RoadArchitect').RoadArchitect,
-    }
+    boardroom: import('./Boardroom/Boardroom').Boardroom;
+    v: import('./utils/VisualizationController').VisualizationController;
+    taskReport: Function;
+    taskPurge: Function;
+    officeReport: Function;
+    hrReport: Function;
+    purge: Function;
   }
 }
