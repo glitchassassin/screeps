@@ -12,11 +12,12 @@ export class SalesmanMinion {
     scaleMinion = (energy: number) => {
         if (energy < 200) {
             return [];
-        } else{
-            let workParts = Math.min(5, Math.floor((energy - 50) / 100))
+        } else {
+            let workParts = Math.min(5, Math.floor((energy * 2/3) / 100))
+            let moveParts = Math.min(5, Math.floor((energy * 1/3) / 50))
             return [
                 ...Array(workParts).fill(WORK),
-                MOVE
+                ...Array(moveParts).fill(MOVE),
             ]
         }
     }
