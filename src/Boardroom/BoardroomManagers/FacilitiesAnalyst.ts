@@ -96,12 +96,12 @@ export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {
         let territories = [office.center, ...office.territories].map(t => t.name)
-        return Object.values(this.memory.constructionSites).filter(site => territories.includes(site.pos.roomName));
+        return Object.values(this.memory.constructionSites).filter(site => site && territories.includes(site.pos.roomName));
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStructures(office: Office) {
         let territories = [office.center, ...office.territories].map(t => t.name)
-        return Object.values(this.memory.structures).filter(site => territories.includes(site.pos.roomName));
+        return Object.values(this.memory.structures).filter(site => site && territories.includes(site.pos.roomName));
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
