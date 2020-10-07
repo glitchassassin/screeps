@@ -45,6 +45,9 @@ export class GrafanaAnalyst extends BoardroomManager {
         let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container
         let storage = logisticsAnalyst.getStorage(office);
 
+        let fleet = logisticsAnalyst.getCarriers(office);
+        let mobileDepots = fleet.filter(c => c.memory.depot);
+
         return {
             sourcesLevel: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energy || 0)), 0),
             sourcesMax: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
@@ -56,6 +59,10 @@ export class GrafanaAnalyst extends BoardroomManager {
             storageMax: storage.reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),
             upgradeDepotLevel: upgradeDepot?.store.energy || 0,
             upgradeDepotMax: upgradeDepot?.store.getCapacity() || 0,
+            carrierFleetLevel: fleet.reduce((sum, creep) => sum + creep.store.getUsedCapacity(RESOURCE_ENERGY), 0),
+            carrierFleetMax: fleet.reduce((sum, creep) => sum + creep.store.getCapacity(RESOURCE_ENERGY), 0),
+            mobileDepotsLevel: mobileDepots.reduce((sum, creep) => sum + creep.store.getUsedCapacity(RESOURCE_ENERGY), 0),
+            mobileDepotsMax: mobileDepots.reduce((sum, creep) => sum + creep.store.getCapacity(RESOURCE_ENERGY), 0),
             roomEnergyLevel: office.center.room.energyAvailable,
             roomEnergyMax: office.center.room.energyCapacityAvailable,
             buildDelta: this.deltas[office.name].building,
