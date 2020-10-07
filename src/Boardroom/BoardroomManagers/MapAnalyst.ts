@@ -69,6 +69,30 @@ export class MapAnalyst extends BoardroomManager {
     getRangeTo(from: RoomPosition, to: RoomPosition) {
         if (from.roomName === to.roomName) return from.getRangeTo(to);
 
-        return Game.map.getRoomLinearDistance(from.roomName, to.roomName) * 50;
+        // Calculate global positions
+        let fromGlobal = this.globalPosition(from);
+        let toGlobal = this.globalPosition(to);
+
+        return Math.max( Math.abs((fromGlobal.x-toGlobal.x)), Math.abs((fromGlobal.y-toGlobal.y)) );
     }
+    globalPosition(pos: RoomPosition) {
+        let {x,y,roomName} = pos;
+        if(!_.inRange(x, 0, 50)) throw new RangeError('x value ' + x + ' not in range');
+        if(!_.inRange(y, 0, 50)) throw new RangeError('y value ' + y + ' not in range');
+        if(roomName == 'sim') throw new RangeError('Sim room does not have world position');
+        let match = roomName.match(/^([WE])([0-9]+)([NS])([0-9]+)$/);
+        if (!match) throw new Error('Invalid room name')
+        let [name,h,wx,v,wy] = match
+        if(h == 'W') x = ~x;
+        if(v == 'N') y = ~y;
+        return {
+            x: (50*Number(wx))+x,
+            y: (50*Number(wy))+y
+        };
+    }
+    isHighway(roomName: string) {
+        let parsed = roomName.match(/^[WE]([0-9]+)[NS]([0-9]+)$/);
+        if (!parsed) throw new Error('Invalid room name')
+		return (Number(parsed[1]) % 10 === 0) || (Number(parsed[2]) % 10 === 0);
+	}
 }
