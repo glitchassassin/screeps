@@ -46,7 +46,7 @@ export class GrafanaAnalyst extends BoardroomManager {
         let storage = logisticsAnalyst.getStorage(office);
 
         let fleet = logisticsAnalyst.getCarriers(office);
-        let mobileDepots = logisticsAnalyst.depots.get(office) ?? [];
+        let mobileDepots = logisticsAnalyst.depots.get(office.name) ?? [];
 
         return {
             sourcesLevel: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energy || 0)), 0),

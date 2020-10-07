@@ -48,10 +48,15 @@ export class LegalManager extends OfficeManager {
                 return;
             }
             case OfficeManagerStatus.PRIORITY: {
-                // Spawn dedicated upgraders as long
-                // as there is energy to spend
-                if (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5) {
+                // Spawn one dedicated upgrader
+                if (this.lawyers.length === 0) {
                     // More input than output: spawn more upgraders
+                    this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 6, MinionTypes.LAWYER, {
+                        ignoresRequests: true
+                    }))
+                } else if (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5) {
+                    // Spawn dedicated upgraders as long
+                    // as there is energy to spend
                     this.office.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
                         ignoresRequests: true
                     }))
@@ -65,7 +70,7 @@ export class LegalManager extends OfficeManager {
                 } else {
                     // Place standing order for upgrade energy
                     if (this.office.center.room.controller)
-                        this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller.pos, 1000), 5, 1000));
+                        this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller.pos, 100), 5, 100));
                 }
                 return;
             }

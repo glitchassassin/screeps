@@ -5,10 +5,12 @@ import { MapAnalyst } from "./MapAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
 
 export class LogisticsAnalyst extends BoardroomManager {
-    depots = new Map<Office, Creep[]>();
+    depots = new Map<string, Creep[]>();
+    newDepots = new Map<string, Creep[]>();
 
-    plan() {
-        this.depots = new Map<Office, Creep[]>();
+    cleanup() {
+        this.depots = this.newDepots;
+        this.newDepots = new Map<string, Creep[]>();
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -34,17 +36,20 @@ export class LogisticsAnalyst extends BoardroomManager {
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
-        let distance = new Map<(AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>), number>();
-        return this.getAllSources(office).sort((a, b) => {
-            if (!distance.has(a)) distance.set(a, mapAnalyst.getRangeTo(pos, a.pos))
-            if (!distance.has(b)) distance.set(b, mapAnalyst.getRangeTo(pos, b.pos))
-            return (distance.get(a) as number) - (distance.get(b) as number)
-        })[0]
+        let distance = new Map<string, number>();
+        let sorted = this.getAllSources(office).sort((a, b) => {
+            if (!distance.has(a.id)){
+                distance.set(a.id, mapAnalyst.getRangeTo(pos, a.pos))
+            }
+            if (!distance.has(b.id)) distance.set(b.id, mapAnalyst.getRangeTo(pos, b.pos))
+            return (distance.get(a.id) as number) - (distance.get(b.id) as number)
+        })
+        return sorted[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getAllSources(office: Office): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let territories = [office.center, ...office.territories];
-        let depots = this.depots.get(office) ?? [];
+        let depots = this.depots.get(office.name) ?? [];
         return [
             ...this.getFreeSources(office),
             ...depots,
@@ -77,15 +82,14 @@ export class LogisticsAnalyst extends BoardroomManager {
     getCarriers(office: Office): (Creep)[] {
         return office.employees.filter(c => c.memory.type === 'CARRIER');
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
     reportDepot(creep: Creep) {
         if (!creep.memory.office) return;
         let office = global.boardroom.offices.get(creep.memory.office)
         if (!office) return;
-        let depots = this.depots.get(office);
+        let depots = this.newDepots.get(office.name);
 
         if (!depots) {
-            this.depots.set(office, [creep]);
+            this.newDepots.set(office.name, [creep]);
         } else {
             depots.push(creep);
         }

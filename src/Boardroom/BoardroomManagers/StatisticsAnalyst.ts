@@ -73,6 +73,8 @@ export class PipelineMetrics {
         public mineContainerLevels: Metric,
         public roomEnergyLevels: Metric,
         public storageLevels: Metric,
+        public fleetLevels: Metric,
+        public mobileDepotLevels: Metric,
         public controllerDepotLevels: Metric,
         public controllerDepotFillRate: DeltaMetric,
     ) { }
@@ -111,6 +113,14 @@ export class StatisticsAnalyst extends BoardroomManager {
                         logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0),
                         50
                     ),
+                    new Metric( // fleetLevels
+                        logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0),
+                        50
+                    ),
+                    new Metric( // mobileDepotLevels
+                        logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getCapacity()), 0) ?? 0,
+                        50
+                    ),
                     new Metric( // controllerDepotLevels
                         controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
                         50
@@ -141,7 +151,18 @@ export class StatisticsAnalyst extends BoardroomManager {
                 metrics.storageLevels.maxValue = logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0);
                 metrics.storageLevels.update(
                     logisticsAnalyst.getStorage(office)
-                        .reduce((sum, container) => (sum + container.store.getUsedCapacity()), 0)
+                        .reduce((sum, storage) => (sum + storage.store.getUsedCapacity()), 0)
+                );
+
+                metrics.fleetLevels.maxValue = logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0);
+                metrics.fleetLevels.update(
+                    logisticsAnalyst.getCarriers(office)
+                        .reduce((sum, creep) => (sum + creep.store.getUsedCapacity()), 0)
+                );
+
+                metrics.mobileDepotLevels.maxValue = logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getCapacity()), 0) ?? 0;
+                metrics.mobileDepotLevels.update(
+                    logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getUsedCapacity()), 0) ?? 0
                 );
 
                 metrics.controllerDepotLevels.maxValue = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0;
