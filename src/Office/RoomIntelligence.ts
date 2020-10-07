@@ -36,11 +36,11 @@ export class TerritoryIntelligence {
         }
         this.scanned = true;
         let events = this.room.getEventLog();
-        if (this.controller.owner && !this.controller.my) {
-            this.lastHostileActivity = Game.time;
-        } else if (this.room.find(FIND_STRUCTURES).some(s => s.structureType === STRUCTURE_KEEPER_LAIR)) {
-            this.lastHostileActivity = Game.time;
-        } else if (events.some(e => e.event === EVENT_ATTACK || e.event === EVENT_ATTACK_CONTROLLER)) {
+        if (
+            (this.controller.owner && !this.controller.my) ||
+            (this.room.find(FIND_STRUCTURES).some(s => s.structureType === STRUCTURE_KEEPER_LAIR)) ||
+            (events.some(e => e.event === EVENT_ATTACK || e.event === EVENT_ATTACK_CONTROLLER))
+        ) {
             this.lastHostileActivity = Game.time;
         }
     }

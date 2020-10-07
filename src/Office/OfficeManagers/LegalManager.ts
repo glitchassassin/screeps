@@ -1,18 +1,15 @@
-import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { UpgradeTask } from "TaskRequests/types/UpgradeTask";
-import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { Task } from "TaskRequests/Task";
-import { TravelTask } from "TaskRequests/types/TravelTask";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskManager } from "./TaskManager";
-import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
-import { TransferTask } from "TaskRequests/types/TransferTask";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { Table } from "Visualizations/Table";
+import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
+import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import { Task } from "TaskRequests/Task";
+import { TaskRequest } from "TaskRequests/TaskRequest";
 import { DepotTask } from "TaskRequests/types/DepotTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
+import { UpgradeTask } from "TaskRequests/types/UpgradeTask";
+import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { Table } from "Visualizations/Table";
+import { TaskManager } from "./TaskManager";
 
 export class LegalManager extends OfficeManager {
     lawyers: Creep[] = [];
@@ -29,7 +26,7 @@ export class LegalManager extends OfficeManager {
                 return;
             }
             case OfficeManagerStatus.MINIMAL: {
-                // falls through
+                // fall through
             }
             case OfficeManagerStatus.NORMAL: {
                 // Spawn one dedicated upgrader
@@ -47,7 +44,8 @@ export class LegalManager extends OfficeManager {
                     }
                 } else {
                     // Place standing order for upgrade energy
-                    this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller?.pos, 1000), 5, 1000));
+                    if (this.office.center.room.controller)
+                        this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller.pos, 1000), 5, 1000));
                 }
                 return;
             }
@@ -68,7 +66,8 @@ export class LegalManager extends OfficeManager {
                     }
                 } else {
                     // Place standing order for upgrade energy
-                    this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller?.pos, 1000), 5, 1000));
+                    if (this.office.center.room.controller)
+                        this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller.pos, 1000), 5, 1000));
                 }
                 return;
             }

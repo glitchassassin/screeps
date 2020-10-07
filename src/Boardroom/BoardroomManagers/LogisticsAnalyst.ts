@@ -1,7 +1,6 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
-import { HRAnalyst } from "./HRAnalyst";
 import { MapAnalyst } from "./MapAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
 

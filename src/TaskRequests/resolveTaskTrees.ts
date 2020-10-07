@@ -1,7 +1,5 @@
-import { Task } from "./Task"
 import { SpeculativeMinion } from "./SpeculativeMinion";
 import { TaskAction } from "./TaskAction";
-import { TaskPrerequisite } from "./TaskPrerequisite";
 
 export type TaskPlan = {
     cost: number,
@@ -38,7 +36,7 @@ export const resolveTaskTrees = (minion: SpeculativeMinion, task: TaskAction): T
                 return [];
             } // Prereq (and therefore this TaskAction) cannot be met
 
-            return ((altTasks as TaskAction[])
+            return (altTasks
                 .map(t => { // For each prereq alternative
                     let altTaskPlans = resolveTaskTrees(plan.minion, t)
                     if (!altTaskPlans || altTaskPlans.length === 0) return;

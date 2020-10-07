@@ -1,9 +1,6 @@
 import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
-import { withdraw } from "TaskRequests/activity/Withdraw";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { log } from "utils/logger";
 import { SpeculativeMinion } from "../SpeculativeMinion";
@@ -59,9 +56,6 @@ export class BuildTask extends TaskAction {
                     return TaskActionResult.FAILED;
                 }
 
-                // Report successful build action
-                let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
-                grafanaAnalyst.reportBuild(creep.memory.office||'', Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
                 return TaskActionResult.INPROGRESS;
             }
             case BuildStates.GETTING_ENERGY: {

@@ -1,5 +1,4 @@
 import { Franchise, SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
-import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
 
 export class SourceArchitect extends OfficeManager {

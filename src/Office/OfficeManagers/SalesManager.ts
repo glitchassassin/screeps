@@ -1,18 +1,14 @@
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { Task } from "TaskRequests/Task";
-import { HarvestTask } from "TaskRequests/types/HarvestTask";
-import { TravelTask } from "TaskRequests/types/TravelTask";
-import { TaskManager } from "./TaskManager";
 import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
+import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import { Task } from "TaskRequests/Task";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { ExploreTask } from "TaskRequests/types/ExploreTask";
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
-import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
-import { table } from "table";
-import { Table } from "Visualizations/Table";
-import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { HarvestTask } from "TaskRequests/types/HarvestTask";
+import { TravelTask } from "TaskRequests/types/TravelTask";
 import { Bar, Meters } from "Visualizations/Meters";
+import { Table } from "Visualizations/Table";
+import { TaskManager } from "./TaskManager";
 
 export class SalesManager extends OfficeManager {
     franchises: Franchise[] = [];

@@ -21,7 +21,7 @@ export class Road {
         return (this.status === "DONE")
     }
     build() {
-        this.path.forEach(pos => pos.createConstructionSite(STRUCTURE_ROAD));
+        this.path.forEach(pos => Game.rooms[pos.roomName] && pos.createConstructionSite(STRUCTURE_ROAD));
         this.status = "INPROGRESS";
     }
 }
@@ -61,9 +61,10 @@ export class RoadArchitect extends OfficeManager {
                     roomCallback: roadPlannerCallback
                 }).path))
             })
+            this.roads.sort((a, b) => a.path.length - b.path.length);
         }
 
-        let road = this.roads.sort((a, b) => a.path.length - b.path.length).find(road => road.status !== "DONE");
+        let road = this.roads.find(road => road.status !== "DONE");
         if (road?.status === "PENDING") {
             road.build();
         }

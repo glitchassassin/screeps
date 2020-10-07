@@ -96,7 +96,6 @@ export class SalesAnalyst extends BoardroomManager {
             territories.forEach(t => {
                 t.sources.forEach((s, id) => {
                     if (t.isHostile && this.memory.franchises[id]) {
-                        console.log('Removing now hostile franchise', id);
                         delete this.memory.franchises[id];
                         return;
                     }

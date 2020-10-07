@@ -40,7 +40,7 @@ export class ExploreTask extends TaskAction {
         }
         return TaskActionResult.INPROGRESS;
     }
-    cost() {return 1;}; // Takes one tick to transfer
+    cost() {return 1;} // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {
         return {
             ...minion,

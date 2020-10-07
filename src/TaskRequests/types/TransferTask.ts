@@ -37,7 +37,7 @@ export class TransferTask extends TaskAction {
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
-        let target = this.destination.look().map(t => t.creep || t.structure).find(t => t) as (Creep|Structure<StructureConstant>)
+        let target = this.destination.look().map(t => t.creep || t.structure).find(t => t)
         if (!target) log('TransferTask', `No target at destination`);
         if (!target) return TaskActionResult.FAILED;
 
@@ -45,7 +45,7 @@ export class TransferTask extends TaskAction {
         if (result !== OK) log('TransferTask', `transfer: ${result}`);
         return (result === OK || result === ERR_FULL) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
     }
-    cost() {return 1;}; // Takes one tick to transfer
+    cost() {return 1;} // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {
         let targetCapacity = this.getCapacityFromDestination();
 
@@ -62,7 +62,7 @@ export class TransferTask extends TaskAction {
     getCapacityFromDestination() {
         let targetCapacity = 1000;
         if (this.destination?.roomName && Game.rooms[this.destination?.roomName]) {
-            let target = this.destination.look().map(t => t.creep || (t.structure as AnyStoreStructure)).find(t => t?.store) as (Creep|AnyStoreStructure)
+            let target = this.destination.look().map(t => t.creep || (t.structure as AnyStoreStructure)).find(t => t?.store)
             targetCapacity = (target?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) || 1000;
         }
         return targetCapacity;

@@ -1,4 +1,3 @@
-import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
 import { TaskManager } from "Office/OfficeManagers/TaskManager";
@@ -11,32 +10,30 @@ export class GrafanaAnalyst extends BoardroomManager {
     deltas: {
         [id: string]: {
             building: number,
-            repairing: number,
-            healing: number,
-            attacking: number,
+            repairing: number
         }
     } = {};
     plan() {
         this.boardroom.offices.forEach(office => {
             this.deltas[office.name] = {
                 building: 0,
-                repairing: 0,
-                healing: 0,
-                attacking: 0,
-            }
+                repairing: 0
+            };
+
+            [office.center, ...office.territories]
+                .map(t => t.room)
+                .forEach(room => {
+                    if (!room) return;
+                    room.getEventLog().forEach(event => {
+                        switch (event.event) {
+                            case EVENT_BUILD:
+                                this.deltas[office.name].building += event.data.energySpent;
+                            case EVENT_REPAIR:
+                                this.deltas[office.name].repairing += event.data.energySpent;
+                        }
+                    })
+                })
         });
-    }
-    reportBuild(officeName: string, delta: number) {
-        this.deltas[officeName].building += delta;
-    }
-    reportRepair(officeName: string, delta: number) {
-        this.deltas[officeName].repairing += delta;
-    }
-    reportHeal(officeName: string, delta: number) {
-        this.deltas[officeName].healing += delta;
-    }
-    reportAttack(officeName: string, delta: number) {
-        this.deltas[officeName].attacking += delta;
     }
     pipelineMetrics(office: Office) {
         let controllerAnalyst = this.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
@@ -50,7 +47,7 @@ export class GrafanaAnalyst extends BoardroomManager {
             sourcesLevel: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energy || 0)), 0),
             sourcesMax: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
             mineContainersLevel: salesAnalyst.getFranchiseLocations(office)
-                .reduce((sum, mine) => (sum + (mine.container?.store.energy || 0)), 0),
+                .reduce((sum, mine) => (sum + (mine.surplus || 0)), 0),
             mineContainersMax: salesAnalyst.getFranchiseLocations(office)
                 .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
             storageLevel: storage.reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
@@ -61,8 +58,6 @@ export class GrafanaAnalyst extends BoardroomManager {
             roomEnergyMax: office.center.room.energyCapacityAvailable,
             buildDelta: this.deltas[office.name].building,
             repairDelta: this.deltas[office.name].repairing,
-            healDelta: this.deltas[office.name].healing,
-            attackDelta: this.deltas[office.name].attacking,
         }
     }
     taskManagementMetrics(office: Office) {

@@ -3,13 +3,10 @@ import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { table } from "table";
 import { TaskRequest } from "TaskRequests/TaskRequest";
-import { DepotTask } from "TaskRequests/types/DepotTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
-import { Table } from "Visualizations/Table";
 
 export class LogisticsManager extends OfficeManager {
     storage: StructureStorage[] = [];
@@ -36,6 +33,7 @@ export class LogisticsManager extends OfficeManager {
                 if (this.carriers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 }
+                break;
             }
             default: {
                 // Maintain enough carriers to keep
@@ -48,6 +46,7 @@ export class LogisticsManager extends OfficeManager {
                     console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% detected, spawning carrier`);
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 }
+                break;
             }
         }
 

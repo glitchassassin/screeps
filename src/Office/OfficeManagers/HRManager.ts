@@ -1,12 +1,11 @@
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { MinionRequest } from "MinionRequests/MinionRequest";
-import { TaskRequest } from "TaskRequests/TaskRequest";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { table } from "table";
-import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { MinionRequest } from "MinionRequests/MinionRequest";
+import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import { TaskRequest } from "TaskRequests/TaskRequest";
 import { TransferTask } from "TaskRequests/types/TransferTask";
-import { Table } from "Visualizations/Table";
+import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
+import { Table } from "Visualizations/Table";
 
 export class HRManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
@@ -53,7 +52,6 @@ export class HRManager extends OfficeManager {
             }
         })
         this.spawns.forEach((spawn) => {
-            let roomCapacity = spawn.room.energyAvailable
             let spawnCapacity = getTransferEnergyRemaining(spawn);
             if (!spawnCapacity) return;
             if (spawnCapacity > 0) {

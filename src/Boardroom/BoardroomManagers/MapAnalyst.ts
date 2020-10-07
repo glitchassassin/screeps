@@ -21,7 +21,7 @@ export class MapAnalyst extends BoardroomManager {
         let adjacent: RoomPosition[] = [];
         adjacent = this.calculateAdjacencyMatrix(proximity)
             .map(offset => new RoomPosition(pos.x + offset.x, pos.y + offset.y, pos.roomName))
-            .filter(roomPos => roomPos !== null) as RoomPosition[]
+            .filter(roomPos => roomPos !== null)
         return adjacent;
     }
     @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))
@@ -82,7 +82,7 @@ export class MapAnalyst extends BoardroomManager {
         if(roomName == 'sim') throw new RangeError('Sim room does not have world position');
         let match = roomName.match(/^([WE])([0-9]+)([NS])([0-9]+)$/);
         if (!match) throw new Error('Invalid room name')
-        let [name,h,wx,v,wy] = match
+        let [,h,wx,v,wy] = match
         if(h == 'W') x = ~x;
         if(v == 'N') y = ~y;
         return {

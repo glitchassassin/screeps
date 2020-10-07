@@ -1,4 +1,3 @@
-import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
@@ -9,6 +8,13 @@ import { TaskAction, TaskActionResult } from "../TaskAction";
 enum RepairStates {
     GETTING_ENERGY = 'GETTING_ENERGY',
     REPAIRING = 'REPAIRING'
+}
+
+const repairToMax = (structure: Structure) => {
+    if (structure instanceof StructureWall || structure instanceof StructureRampart) {
+        return Math.max(structure.hitsMax, 100000)
+    }
+    return structure.hitsMax;
 }
 
 export class RepairTask extends TaskAction {
@@ -52,6 +58,8 @@ export class RepairTask extends TaskAction {
         // If unable to get the destination position, task is canceled
         if (!this.pos) return TaskActionResult.FAILED;
 
+        if (this.destination && this.destination.hits === repairToMax(this.destination)) return TaskActionResult.SUCCESS;
+
         switch (this.state) {
             case RepairStates.REPAIRING: {
                 if (creep.store.getUsedCapacity() === 0) {
@@ -80,11 +88,7 @@ export class RepairTask extends TaskAction {
                     return TaskActionResult.FAILED;
                 }
 
-                // Report successful build action
-                let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
-                grafanaAnalyst.reportRepair(creep.memory.office||'', Math.max(1 * creep.getActiveBodyparts(WORK), creep.store.energy))
-
-                return (this.destination.hits === this.destination.hitsMax) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
+                return TaskActionResult.INPROGRESS;
             }
             case RepairStates.GETTING_ENERGY: {
                 if (creep.store.getUsedCapacity() > 0) {

@@ -1,5 +1,4 @@
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
-import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { TransferTask } from "TaskRequests/types/TransferTask";
@@ -10,7 +9,6 @@ export class SecurityManager extends OfficeManager {
     plan() {
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
         if (this.status === OfficeManagerStatus.OFFLINE) return;
-        let room = this.office.center.room;
         this.towers = defenseAnalyst.getTowers(this.office);
 
         switch (this.status) {
@@ -65,20 +63,15 @@ export class SecurityManager extends OfficeManager {
     run() {
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
-        let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
         let targets = defenseAnalyst.getPrioritizedAttackTargets(this.office);
         let healTargets = defenseAnalyst.getPrioritizedHealTargets(this.office);
 
         this.towers.forEach(t => {
             // Simple priorities
             if (targets.length > 0) {
-                if (t.attack(targets[0]) === OK) {
-                    grafanaAnalyst.reportAttack(this.office.name, 10);
-                }
+                t.attack(targets[0])
             } else if (healTargets.length > 0) {
-                if (t.heal(healTargets[0]) === OK) {
-                    grafanaAnalyst.reportHeal(this.office.name, 10);
-                }
+                t.heal(healTargets[0])
             }
         })
     }

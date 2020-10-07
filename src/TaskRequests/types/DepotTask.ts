@@ -22,12 +22,11 @@ export class DepotTask extends TaskAction {
         ]
     }
     message = "⏩";
-    destination: RoomPosition|null = null;
 
     timeout?: number;
 
     constructor(
-        destination: RoomPosition|null = null,
+        public destination: RoomPosition,
         public amount: number
     ) {
         super();
@@ -50,7 +49,7 @@ export class DepotTask extends TaskAction {
     cancel(creep: Creep) {
         creep.memory.depot = false;
     }
-    cost() {return 1;}; // Takes one tick to transfer
+    cost() {return 1;} // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {
         return {
             ...minion,

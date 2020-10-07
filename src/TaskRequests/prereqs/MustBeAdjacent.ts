@@ -1,6 +1,6 @@
+import { TravelTask } from "TaskRequests/types/TravelTask";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskPrerequisite } from "../TaskPrerequisite";
-import { TravelTask } from "TaskRequests/types/TravelTask";
 
 /**
  * Checks if minion is adjacent to a given position
@@ -21,7 +21,7 @@ export class MustBeAdjacent extends TaskPrerequisite {
 
     met(minion: SpeculativeMinion) {
         return minion.pos.inRangeTo(this.pos, 1)
-    };
+    }
     toMeet(minion: SpeculativeMinion) {
         return [new TravelTask(this.pos, this.distance)];
     }

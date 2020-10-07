@@ -1,10 +1,9 @@
-import { HandymanMinion } from "./minions/HandymanMinion";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { CarrierMinion } from "./minions/CarrierMinion";
-import { SalesmanMinion } from './minions/SalesmanMinion';
+import { HandymanMinion } from "./minions/HandymanMinion";
 import { InternMinion } from "./minions/InternMinion";
 import { LawyerMinion } from "./minions/LawyerMinion";
-import { Office } from "Office/Office";
-import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { SalesmanMinion } from './minions/SalesmanMinion';
 
 export enum MinionTypes {
     INTERN = 'INTERN',
