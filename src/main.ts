@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import MemHack from 'utils/memhack';
 import { ErrorMapper } from "utils/ErrorMapper";
 import { Boardroom } from 'Boardroom/Boardroom';
 import profiler from 'screeps-profiler';
@@ -51,6 +52,7 @@ global.purge = () => {
 function mainLoop() {
   lastCPU = 0;
   global.reportCPU('Start Loop')
+  MemHack.pretick();
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {
     for (const name in Memory.creeps) {

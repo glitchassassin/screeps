@@ -26,8 +26,10 @@ export class SalesManager extends OfficeManager {
         switch(this.status) {
             case OfficeManagerStatus.NORMAL:
                 priority = 7;
+                break;
             case OfficeManagerStatus.PRIORITY:
                 priority = 10;
+                break;
         }
         // Bump priority up if we have NO salesmen
         if (this.office.employees.filter(c => c.memory.type === 'SALESMAN').length < 2) {

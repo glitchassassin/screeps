@@ -3,6 +3,7 @@ import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
+import { log } from "utils/logger";
 
 export class TransferTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -37,10 +38,12 @@ export class TransferTask extends TaskAction {
         // If unable to get the creep or source, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
         let target = this.destination.look().map(t => t.creep || t.structure).find(t => t) as (Creep|Structure<StructureConstant>)
+        if (!target) log('TransferTask', `No target at destination`);
         if (!target) return TaskActionResult.FAILED;
 
         let result = creep.transfer(target, RESOURCE_ENERGY);
-        return (result === OK) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
+        if (result !== OK) log('TransferTask', `transfer: ${result}`);
+        return (result === OK || result === ERR_FULL) ? TaskActionResult.SUCCESS : TaskActionResult.FAILED;
     }
     cost() {return 1;}; // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {

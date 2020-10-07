@@ -21,7 +21,7 @@ export class TerritoryIntelligence {
 
 
     public get isHostile() : boolean {
-        return (!!this.lastHostileActivity)
+        return (!!this.lastHostileActivity && Game.time - this.lastHostileActivity < 2000)
     }
 
 
@@ -50,6 +50,10 @@ export class RoomIntelligence extends TerritoryIntelligence {
 
     public get room() : Room {
         return Game.rooms[this.name];
+    }
+
+    public get isHostile() : boolean {
+        return false;
     }
 
 }

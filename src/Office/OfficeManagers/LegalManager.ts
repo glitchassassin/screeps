@@ -7,13 +7,12 @@ import { TravelTask } from "TaskRequests/types/TravelTask";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { TaskManager } from "./TaskManager";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
-import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { Table } from "Visualizations/Table";
 import { DepotTask } from "TaskRequests/types/DepotTask";
-import { TransferTask } from "TaskRequests/types/TransferTask";
 
 export class LegalManager extends OfficeManager {
     lawyers: Creep[] = [];
@@ -44,7 +43,7 @@ export class LegalManager extends OfficeManager {
                     // Place standing order for surplus energy to container
                     let e = getTransferEnergyRemaining(legalFund.container);
                     if (e && e > 0) {
-                        this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 1, e));
+                        this.office.submit(new TaskRequest(legalFund.container.id, new TransferTask(legalFund.container), 1, e));
                     }
                 } else {
                     // Place standing order for upgrade energy
@@ -65,7 +64,7 @@ export class LegalManager extends OfficeManager {
                 if (legalFund?.container) {
                     let e = getTransferEnergyRemaining(legalFund.container);
                     if (e && e > 0) {
-                        this.office.submit(new TaskRequest(legalFund.container.id, new ResupplyTask(legalFund.container), 4, e));
+                        this.office.submit(new TaskRequest(legalFund.container.id, new TransferTask(legalFund.container), 4, e));
                     }
                 } else {
                     // Place standing order for upgrade energy

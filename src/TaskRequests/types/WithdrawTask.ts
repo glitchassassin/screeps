@@ -42,13 +42,19 @@ export class WithdrawTask extends TaskAction {
         // Takes one tick to withdraw, but here we
         // are weighting sources by preference
         if (this.destination instanceof Tombstone || this.destination instanceof Resource) {
-            return 1;
+            return -20;
         } else if (this.destination instanceof Creep) {
-            return 2;
+            return 0;
         }
+        let store = ((this.destination as AnyStoreStructure).store as GenericStore);
+        let capacity = store.getCapacity(RESOURCE_ENERGY);
+        if (!capacity) return Infinity;
+
         switch (this.destination?.structureType) {
             case STRUCTURE_CONTAINER:
-                return 2;
+                // Full container = cost of -20
+                // Empty container = cost of 20
+                return ((store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) / capacity - 0.5) * -20;
             case STRUCTURE_SPAWN:
                 return 1000;
             default:

@@ -9,6 +9,7 @@ import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
 import { DepotTask } from "TaskRequests/types/DepotTask";
 import { log } from "utils/logger";
+import { table } from "table";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -80,6 +81,7 @@ export class TaskManager extends OfficeManager {
             requests = priorities.get(priority) as TaskRequest[];
             let creeps = this.getAvailableCreeps();
             if (creeps.length > 0 && requests.length > 0) {
+                log('TaskManager', `Assigning ${requests.length} tasks of priority ${priority} to ${creeps.length} available minions`)
                 this.assignRequestsToCreeps(requests, creeps);
             }
         });
@@ -91,24 +93,31 @@ export class TaskManager extends OfficeManager {
             if (task.actions[0] instanceof DepotTask) {
                 let originatingRequest = task.sourceId?.replace('_depot', '');
                 if (originatingRequest && !this.hasTaskFor(originatingRequest)) {
-                    console.log('No tasks open for original request', originatingRequest)
                     task.actions[0].cancel(task.creep);
                     return false;
                 }
             }
-            let result = task.actions[0].action(task.creep)
+            let action = task.actions[0];
+            let result = action.action(task.creep)
             if (result === TaskActionResult.SUCCESS) {
                 task.actions.shift();
                 if (task.actions.length > 0) {
                     task.creep?.say(task.actions[0].message);
                 } else {
-                    // TODO Should also complete parent request, if capacity is 0.
+                    if (action && task.sourceId) {
+                        let request = this.requests[action.constructor.name]?.[task.sourceId];
+                        if (request && request.capacity <= 0) request.completed = true;
+                    }
                     task.completed = true;
                     return false;
                 }
             } else if (result === TaskActionResult.FAILED) {
                 // console.log(`<span style="color: white">[ <span style="color: red">FAILED</span> ] ${task.actions[0].toString()} ${task.creep.toString()} </span>`)
                 // Cancel task
+                if (action && task.sourceId) {
+                    let request = this.requests[action.constructor.name]?.[task.sourceId];
+                    if (request && request.capacity <= 0) request.completed = true;
+                }
                 task.completed = true;
                 return false;
             }
@@ -117,6 +126,16 @@ export class TaskManager extends OfficeManager {
 
         if (global.v.task.state) {
             this.report();
+        }
+    }
+
+    cleanup() {
+        for (let reqType in this.requests) {
+            for (let reqSource in this.requests[reqType]) {
+                if (this.requests[reqType][reqSource].completed) {
+                    delete this.requests[reqType][reqSource];
+                }
+            }
         }
     }
 
@@ -165,7 +184,8 @@ export class TaskManager extends OfficeManager {
                         `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
                         `${taskPlan.tasks.map(t => t.toString())}`)
             let task = new Task(taskPlan.tasks, creep, taskRequest.sourceId, taskPlan.cost, taskPlan.minion.output);
-            if (taskPlan.minion.output >= taskRequest.capacity) {
+            taskRequest.capacity -= taskPlan.minion.output;
+            if (taskRequest.capacity <= 0) {
                 taskRequest.completed = true;
             }
             this.assign(task);
@@ -216,7 +236,7 @@ export class TaskManager extends OfficeManager {
                 t.cost
             ]))
         )
-        Table(new RoomPosition(1, 2, this.office.center.name), taskTable);
+        // Table(new RoomPosition(1, 2, this.office.center.name), taskTable);
 
         const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Assigned Capacity']];
         let requests = Object.values(this.requests)
@@ -235,13 +255,13 @@ export class TaskManager extends OfficeManager {
                 ];
             })
         )
-        Table(new RoomPosition(1, 17, this.office.center.name), requestTable);
+        Table(new RoomPosition(1, 1, this.office.center.name), requestTable);
 
         const idleMinions = [
             ['Minion'],
             ...this.getAvailableCreeps().map(creep => [creep.name])
         ];
-        Table(new RoomPosition(1, 27, this.office.center.name), idleMinions);
+        // Table(new RoomPosition(1, 27, this.office.center.name), idleMinions);
     }
 }
 

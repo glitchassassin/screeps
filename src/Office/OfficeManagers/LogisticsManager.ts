@@ -6,7 +6,6 @@ import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { table } from "table";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { DepotTask } from "TaskRequests/types/DepotTask";
-import { ResupplyTask } from "TaskRequests/types/ResupplyTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
@@ -57,9 +56,9 @@ export class LogisticsManager extends OfficeManager {
             this.storage.forEach(c => {
                 let e = getTransferEnergyRemaining(c);
                 if (e && e > 0) {
-                    // Use a ResupplyTask instead of a TransferTask to only get energy from a source container.
+                    // Use a TransferTask instead of a TransferTask to only get energy from a source container.
                     // Avoids shuffling back and forth between destination containers
-                    this.office.submit(new TaskRequest(c.id, new ResupplyTask(c), 2, e));
+                    this.office.submit(new TaskRequest(c.id, new TransferTask(c), 2, e));
                 }
             })
         } else {

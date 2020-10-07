@@ -35,15 +35,13 @@ export class MinionRequest {
         this.memory = memory;
     }
 
-    fulfill(office: Office) {
-        if (!this.type || !this.assignedTo) return;
+    fulfill(spawn: StructureSpawn) {
+        if (!this.type) return;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let spawn = Game.getObjectById(this.assignedTo);
-        if (!spawn) return;
 
         let energyToUse = Math.max(
-            office.center.room.energyAvailable,
-            statisticsAnalyst.metrics.get(office.name)?.roomEnergyLevels.max() || 0
+            spawn.room.energyAvailable,
+            statisticsAnalyst.metrics.get(spawn.room.name)?.roomEnergyLevels.max() || 0
         );
 
         if (!spawn.spawning && !this.spawned) {
@@ -65,11 +63,11 @@ export class MinionRequest {
                     minion = new HandymanMinion();
                     break;
             }
-            if (minion.scaleMinion(office.center.room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {
+            if (minion.scaleMinion(spawn.room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {
                 // Close enough, spawn the minion
                 this.spawned = minion.spawn(
                     spawn,
-                    {...this.memory, office: office.name},
+                    {...this.memory, office: spawn.room.name},
                     energyToUse);
             }
         } else if (!spawn.spawning && this.spawned) {

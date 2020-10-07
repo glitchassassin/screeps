@@ -1,5 +1,9 @@
 // example declaration file - remove these and add your own custom typings
 
+interface RawMemory {
+  _parsed: Memory
+}
+
 // memory extension samples
 interface CreepMemory {
   type?: string
@@ -49,7 +53,8 @@ interface Memory {
             my?: boolean,
           },
           sources: {[id: string]: RoomPosition},
-          scanned: boolean
+          scanned: boolean,
+          lastHostileActivity?: number
         }
       }
     }
@@ -105,5 +110,6 @@ declare namespace NodeJS {
     purge: Function;
     reportCPU: Function;
     debug: {[id: string]: boolean}
+    Memory?: Memory
   }
 }

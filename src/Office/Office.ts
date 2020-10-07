@@ -61,6 +61,7 @@ export class Office {
                         ...c
                     }
                     territory.scanned = Memory.offices[roomName].territories[room as string].scanned;
+                    territory.lastHostileActivity = Memory.offices[roomName].territories[room as string].lastHostileActivity;
                     territory.sources = new Map(Object.entries(Memory.offices[roomName].territories[room as string].sources)
                         .map(([id, pos]) => [id as Id<Source>, new RoomPosition(pos.x, pos.y, pos.roomName)]));
                 }
@@ -200,6 +201,7 @@ export class Office {
             obj[territory.name] = {
                 controller: territory.controller,
                 scanned: territory.scanned,
+                lastHostileActivity: territory.lastHostileActivity,
                 sources: [...territory.sources.entries()].reduce((a, [id, pos]) => {
                     a[id as string] = pos
                     return a;
@@ -213,7 +215,8 @@ export class Office {
                     my?: boolean,
                 },
                 sources: {[id: string]: RoomPosition},
-                scanned: boolean
+                scanned: boolean,
+                lastHostileActivity?: number
             }
         })
         global.reportCPU(`Office Cleanup Managers Start`);
