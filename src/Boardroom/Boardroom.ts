@@ -65,7 +65,6 @@ export class Boardroom {
     plan() {
         this.managers.forEach(m => {
             m.plan()
-            global.reportCPU(`${m.constructor.name}.plan()`)
         });
     }
 
@@ -76,5 +75,21 @@ export class Boardroom {
         this.managers.forEach(m => {
             m.cleanup()
         });
+    }
+
+    getClosestOffice(pos: RoomPosition) {
+        let mapAnalyst = this.managers.get('MapAnalyst') as MapAnalyst;
+        let closest: Office|undefined = undefined;
+        let distance: number;
+        this.offices.forEach(office => {
+            let center = office.center.room.getPositionAt(25, 25)
+            if (!center) return;
+            let range = mapAnalyst.getRangeTo(pos, center);
+            if (!distance || range < distance) {
+                distance = range;
+                closest = office;
+            }
+        })
+        return closest;
     }
 }

@@ -1,4 +1,5 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { log } from "utils/logger";
 
 class Route {
     lastPos?: RoomPosition;
@@ -45,10 +46,12 @@ export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
 
     let route = routeCache.get(routeKey);
     if (!route || !pos.isEqualTo(route.pos)) {
+        log('Travel', 'Generating new route');
         route = new Route(creep, pos, range);
         routeCache.set(routeKey, route);
     }
 
+    log('Travel', 'Traveling');
     let result = route.run(creep);
     if (result !== OK) {
         routeCache.delete(routeKey);

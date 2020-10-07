@@ -2,6 +2,7 @@ import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
 import { HRAnalyst } from "./HRAnalyst";
+import { MapAnalyst } from "./MapAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
 
 export class LogisticsAnalyst extends BoardroomManager {
@@ -22,6 +23,18 @@ export class LogisticsAnalyst extends BoardroomManager {
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getFreeEnergy(room: Room) {
         return room.find(FIND_DROPPED_RESOURCES).filter(r => r.resourceType === RESOURCE_ENERGY) as Resource<RESOURCE_ENERGY>[];
+    }
+    @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
+    getClosestAllSources(pos: RoomPosition): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|undefined) {
+        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
+        let office = global.boardroom.getClosestOffice(pos);
+        if (!office) return undefined;
+        let distance = new Map<(AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>), number>();
+        return this.getAllSources(office).sort((a, b) => {
+            if (!distance.has(a)) distance.set(a, mapAnalyst.getRangeTo(pos, a.pos))
+            if (!distance.has(b)) distance.set(b, mapAnalyst.getRangeTo(pos, b.pos))
+            return (distance.get(a) as number) - (distance.get(b) as number)
+        })[0]
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getAllSources(office: Office): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {

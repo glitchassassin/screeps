@@ -11,12 +11,7 @@ export const getEnergy = (creep: Creep) => {
         let office = global.boardroom.offices.get(creep.memory.office || '');
         if (!office) return ERR_NOT_FOUND;
 
-        let distance: {[id: string]: number} = {};
-        sourceId = logisticsAnalyst.getAllSources(office).sort((a, b) => {
-            if (!distance[a.id]) { distance[a.id] = PathFinder.search(creep.pos, {pos: a.pos, range: 1}).cost }
-            if (!distance[b.id]) { distance[b.id] = PathFinder.search(creep.pos, {pos: b.pos, range: 1}).cost }
-            return (distance[a.id] - distance[b.id])
-        })[0]?.id;
+        sourceId = logisticsAnalyst.getClosestAllSources(creep.pos)?.id;
     }
     let source = Game.getObjectById(sourceId as Id<Creep|Tombstone|Resource|Structure>)
     // Unable to find source?

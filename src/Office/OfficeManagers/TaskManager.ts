@@ -10,6 +10,8 @@ import { Table } from "Visualizations/Table";
 import { DepotTask } from "TaskRequests/types/DepotTask";
 import { log } from "utils/logger";
 import { table } from "table";
+import { stringify } from "querystring";
+import { Metric } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -64,9 +66,9 @@ export class TaskManager extends OfficeManager {
         // }
     }
     run() {
+        global.reportCPU('TaskManager run');
         // Assign requests
-        let requests = _.shuffle(this.getRequestsFlattened()
-            .filter(t => t.task?.valid() && (outputOfTasks(this.getAssociatedTasks(t)) < t.capacity || t.capacity === 0)))
+        let requests = this.getRequestsFlattened()
 
         let priorities = new Map<number, TaskRequest[]>();
 
@@ -76,6 +78,7 @@ export class TaskManager extends OfficeManager {
                 (priorities.get(r.priority) || []).concat(r)
             )
         );
+        global.reportCPU('TaskManager requests prepared');
         // Sort requests by priority descending
         [...priorities.keys()].sort((a, b) => (b - a)).forEach(priority => {
             requests = priorities.get(priority) as TaskRequest[];
@@ -85,8 +88,10 @@ export class TaskManager extends OfficeManager {
                 this.assignRequestsToCreeps(requests, creeps);
             }
         });
+        global.reportCPU('TaskManager requests assigned');
 
 
+        let cpuDiagnostics = new Map<string, Metric>();
         // Run assigned tasks
         this.tasks = this.tasks.filter(task => {
             if (!task.creep || task.actions.length === 0) return false;
@@ -98,7 +103,15 @@ export class TaskManager extends OfficeManager {
                 }
             }
             let action = task.actions[0];
+            // CPU Debug
+            let metric = cpuDiagnostics.get(action.constructor.name) ?? new Metric(20, 50)
+            cpuDiagnostics.set(action.constructor.name, metric);
+            let cpuStart = Game.cpu.getUsed();
+            // End CPU Debug
             let result = action.action(task.creep)
+            // CPU Debug
+            metric.update(Game.cpu.getUsed() - cpuStart);
+            // End CPU Debug
             if (result === TaskActionResult.SUCCESS) {
                 task.actions.shift();
                 if (task.actions.length > 0) {
@@ -122,7 +135,11 @@ export class TaskManager extends OfficeManager {
                 return false;
             }
             return true;
+        });
+        [...cpuDiagnostics.entries()].sort(([a_name, a_metric], [b_name, b_metric]) => a_metric.mean() - b_metric.mean()).forEach(([action, metric]) => {
+            log('TaskManagerCPU', `[${action.padEnd(15)}] Average: ${metric.mean().toFixed(3)} Max: ${metric.max().toFixed(3)} Min: ${metric.min().toFixed(3)} Count: ${metric.values.length}`);
         })
+        global.reportCPU('TaskManager tasks run');
 
         if (global.v.task.state) {
             this.report();
@@ -132,7 +149,13 @@ export class TaskManager extends OfficeManager {
     cleanup() {
         for (let reqType in this.requests) {
             for (let reqSource in this.requests[reqType]) {
-                if (this.requests[reqType][reqSource].completed) {
+                let request = this.requests[reqType][reqSource];
+                if (
+                    request.completed ||
+                    !request.task?.valid() ||
+                    outputOfTasks(this.getAssociatedTasks(request)) < request.capacity ||
+                    request.capacity === 0
+                ) {
                     delete this.requests[reqType][reqSource];
                 }
             }

@@ -182,6 +182,7 @@ export class Office {
     run() {
         this.managers.forEach(m => {
             m.run();
+            // global.reportCPU(`Office ${m.constructor.name} Run`);
         });
     }
 

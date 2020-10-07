@@ -3,6 +3,7 @@ import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
+import { log } from "utils/logger";
 
 enum UpgradeStates {
     GETTING_ENERGY = 'GETTING_ENERGY',
@@ -51,11 +52,13 @@ export class UpgradeTask extends TaskAction {
 
                 let result = creep.upgradeController(this.destination);
                 if (result === ERR_NOT_IN_RANGE) {
+                    log('UpgradeTask', 'traveling');
                     let result = travel(creep, this.destination.pos, 3);
                     return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED;
                 } else if (result !== OK) {
                     return TaskActionResult.FAILED;
                 }
+                log('UpgradeTask', 'upgrading');
                 return TaskActionResult.INPROGRESS;
             }
             case UpgradeStates.GETTING_ENERGY: {
@@ -63,6 +66,7 @@ export class UpgradeTask extends TaskAction {
                     this.state = UpgradeStates.UPGRADING;
                     return this.action(creep); // Switch to upgrading
                 }
+                log('UpgradeTask', 'getting energy');
                 let result = getEnergy(creep);
                 return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }

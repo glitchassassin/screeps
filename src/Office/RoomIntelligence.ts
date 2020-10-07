@@ -21,7 +21,7 @@ export class TerritoryIntelligence {
 
 
     public get isHostile() : boolean {
-        return (!!this.lastHostileActivity && Game.time - this.lastHostileActivity < 2000)
+        return (!!this.lastHostileActivity)
     }
 
 
