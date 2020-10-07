@@ -46,11 +46,14 @@ export class BuildTask extends TaskAction {
                     return this.action(creep); // Switch to getting energy
                 }
 
+                // If out of the room, travel there
+                if (creep.pos.roomName !== this.destination.pos.roomName) {
+                    return (travel(creep, this.destination.pos, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                }
+
                 let result = creep.build(this.destination.gameObj);
                 if (result === ERR_NOT_IN_RANGE) {
-                    let result = travel(creep, this.destination.pos, 3);
-                    if (result !== OK) log('BuildTask', `travel: ${result}`)
-                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                    return (travel(creep, this.destination.pos, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
                 } else if (result !== OK) {
                     log('BuildTask', `build: ${result}`)
                     return TaskActionResult.FAILED;
@@ -63,9 +66,7 @@ export class BuildTask extends TaskAction {
                     this.state = BuildStates.BUILDING;
                     return this.action(creep); // Switch to building
                 }
-                let result = getEnergy(creep);
-                if (result !== OK) log('BuildTask', `energy: ${result}`)
-                return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                return (getEnergy(creep) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }
     }

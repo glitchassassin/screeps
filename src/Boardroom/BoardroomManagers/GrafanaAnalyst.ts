@@ -28,8 +28,10 @@ export class GrafanaAnalyst extends BoardroomManager {
                         switch (event.event) {
                             case EVENT_BUILD:
                                 this.deltas[office.name].building += event.data.energySpent;
+                                break;
                             case EVENT_REPAIR:
                                 this.deltas[office.name].repairing += event.data.energySpent;
+                                break;
                         }
                     })
                 })

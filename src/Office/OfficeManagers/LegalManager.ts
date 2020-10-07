@@ -25,9 +25,7 @@ export class LegalManager extends OfficeManager {
                 // Manager is offline, do nothing
                 return;
             }
-            case OfficeManagerStatus.MINIMAL: {
-                // fall through
-            }
+            case OfficeManagerStatus.MINIMAL: // fall through
             case OfficeManagerStatus.NORMAL: {
                 // Spawn one dedicated upgrader
                 if (this.lawyers.length === 0) {

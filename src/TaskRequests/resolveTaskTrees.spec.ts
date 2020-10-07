@@ -1,12 +1,11 @@
+import { Boardroom } from 'Boardroom/Boardroom';
+import { assert } from "chai";
+import { Office } from 'Office/Office';
 import 'reflect-metadata';
 import { mockGlobal, mockInstanceOf } from 'screeps-jest';
-import {assert} from "chai";
-import { Task } from "TaskRequests/Task";
-import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
+import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { TaskAction } from './TaskAction';
-import { Boardroom } from 'Boardroom/Boardroom';
-import { Office } from 'Office/Office';
 
 class MockTaskPrerequisite extends TaskPrerequisite {
   constructor(

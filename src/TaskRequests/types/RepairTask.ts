@@ -69,9 +69,7 @@ export class RepairTask extends TaskAction {
 
                 // If out of the room, travel there
                 if (creep.pos.roomName !== this.pos.roomName) {
-                    let result = travel(creep, this.pos, 3);
-                    if (result !== OK) log('RepairTask', `travel to room: ${result}`);
-                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                    return (travel(creep, this.pos, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
                 }
 
                 // If we are in the room, but can't find the destination, task is canceled
@@ -79,12 +77,9 @@ export class RepairTask extends TaskAction {
 
                 let result = creep.repair(this.destination);
                 if (result === ERR_NOT_IN_RANGE) {
-                    let result = travel(creep, this.pos, 3);
-                    if (result !== OK) log('RepairTask', `travel: ${result}`);
-                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                    return (travel(creep, this.pos, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
                 }
                 else if (result !== OK) {
-                    log('RepairTask', `repair: ${result}`);
                     return TaskActionResult.FAILED;
                 }
 
@@ -95,9 +90,7 @@ export class RepairTask extends TaskAction {
                     this.state = RepairStates.REPAIRING;
                     return this.action(creep); // Switch to repairing
                 }
-                let result = getEnergy(creep);
-                if (result !== OK) log('RepairTask', `getEnergy: ${result}`);
-                return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                return (getEnergy(creep) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }
     }
