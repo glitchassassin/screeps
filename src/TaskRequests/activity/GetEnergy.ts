@@ -2,7 +2,7 @@ import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { travel } from "./Travel";
 import { withdraw } from "./Withdraw";
 
-let jobCache = new Map<Id<Creep>, string>();
+const jobCache = new Map<Id<Creep>, string>();
 
 export const getEnergy = (creep: Creep) => {
     let sourceId = jobCache.get(creep.id);
@@ -15,7 +15,10 @@ export const getEnergy = (creep: Creep) => {
     }
     let source = Game.getObjectById(sourceId as Id<Creep|Tombstone|Resource|Structure>)
     // Unable to find source?
-    if (!source) return ERR_NOT_FOUND
+    if (!sourceId || !source) return ERR_NOT_FOUND
+
+    jobCache.set(creep.id, sourceId);
+
     let result = withdraw(creep, source)
     if (result === ERR_NOT_IN_RANGE) {
         return travel(creep, source.pos, 1);
