@@ -12,6 +12,7 @@ import { log } from "utils/logger";
 import { table } from "table";
 import { stringify } from "querystring";
 import { Metric } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -98,6 +99,7 @@ export class TaskManager extends OfficeManager {
             if (task.actions[0] instanceof DepotTask) {
                 let originatingRequest = task.sourceId?.replace('_depot', '');
                 if (originatingRequest && !this.hasTaskFor(originatingRequest)) {
+                    log('TaskManager', `canceling DepotTask as parent request ${originatingRequest} is unassigned`);
                     task.actions[0].cancel(task.creep);
                     return false;
                 }
@@ -153,8 +155,7 @@ export class TaskManager extends OfficeManager {
                 if (
                     request.completed ||
                     !request.task?.valid() ||
-                    outputOfTasks(this.getAssociatedTasks(request)) < request.capacity ||
-                    request.capacity === 0
+                    request.capacity <= 0
                 ) {
                     delete this.requests[reqType][reqSource];
                 }
@@ -214,7 +215,9 @@ export class TaskManager extends OfficeManager {
             this.assign(task);
             // If necessary, create Depot request for assigned tasks.
             if (taskRequest.depot) {
-                this.submit(new TaskRequest(taskRequest.sourceId + "_depot", new DepotTask(taskRequest.depot, taskRequest.capacity), taskRequest.priority, taskRequest.capacity))
+                let depotRequest = new TaskRequest(taskRequest.sourceId + "_depot", new DepotTask(taskRequest.depot, taskRequest.capacity), taskRequest.priority, taskRequest.capacity);
+                console.log(JSON.stringify(depotRequest));
+                this.submit(depotRequest)
             }
         })
     }
@@ -259,9 +262,9 @@ export class TaskManager extends OfficeManager {
                 t.cost
             ]))
         )
-        // Table(new RoomPosition(1, 2, this.office.center.name), taskTable);
+        Table(new RoomPosition(0, 0, this.office.center.name), taskTable);
 
-        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Assigned Capacity']];
+        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Depot']];
         let requests = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
@@ -269,22 +272,23 @@ export class TaskManager extends OfficeManager {
             ...requests.map(r => {
                 let assignedTasks = this.getAssociatedTasks(r);
                 return [
-                    Game.getObjectById(r.sourceId as Id<any>)?.toString() || r.sourceId,
-                    r.task?.toString(),
-                    r.priority,
-                    r.capacity,
-                    assignedTasks.length,
-                    outputOfTasks(assignedTasks)
+                    r.sourceId ?? '',
+                    r.task?.toString() ?? '',
+                    r.priority.toFixed(0) ?? '',
+                    r.capacity.toFixed(0) ?? '',
+                    assignedTasks.length.toFixed(0),
+                    r.depot ? 'Yes' : '',
+                    // outputOfTasks(assignedTasks).toFixed(0) ?? ''
                 ];
             })
         )
-        Table(new RoomPosition(1, 1, this.office.center.name), requestTable);
+        Table(new RoomPosition(0, 25, this.office.center.name), requestTable);
 
         const idleMinions = [
             ['Minion'],
             ...this.getAvailableCreeps().map(creep => [creep.name])
         ];
-        // Table(new RoomPosition(1, 27, this.office.center.name), idleMinions);
+        Table(new RoomPosition(0, 40, this.office.center.name), idleMinions);
     }
 }
 

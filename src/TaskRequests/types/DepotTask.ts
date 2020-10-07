@@ -3,6 +3,7 @@ import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
+import { log } from "utils/logger";
 
 export class DepotTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -38,10 +39,12 @@ export class DepotTask extends TaskAction {
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
+        log('DepotTask', `location: ${this.destination}`);
         if (!this.destination) return TaskActionResult.FAILED;
 
         // Wait for minions to request resources
         creep.memory.depot = (creep.store.getUsedCapacity() !== 0);
+        log('DepotTask', `isDepot: ${creep.memory.depot}`);
         return (!creep.memory.depot) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
     }
     cancel(creep: Creep) {
@@ -56,6 +59,7 @@ export class DepotTask extends TaskAction {
         }
     }
     valid() {
+        log('DepotTask', `valid? location: ${this.destination} ${!!this.destination}`);
         return !!this.destination;
     }
 }

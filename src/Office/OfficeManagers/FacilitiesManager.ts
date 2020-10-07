@@ -92,9 +92,9 @@ export class FacilitiesManager extends OfficeManager {
             if (!structure) return false;
             switch (structure.structureType) {
                 case STRUCTURE_WALL:
-                    if (structure.hits < 100000) return true;
+                    if (structure.hits < Math.min(100000, structure.hitsMax)) return true;
                 case STRUCTURE_RAMPART:
-                    if (structure.hits < 100000) return true;
+                    if ((structure as StructureRampart).my && structure.hits < Math.min(100000, structure.hitsMax)) return true;
                 default:
                     if (this.status === OfficeManagerStatus.NORMAL || this.status === OfficeManagerStatus.PRIORITY)
                         return structure.hits < (structure.hitsMax * 0.8);

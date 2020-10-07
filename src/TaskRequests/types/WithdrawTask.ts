@@ -3,6 +3,7 @@ import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveCarryCapacity } from "TaskRequests/prereqs/MustHaveCarryCapacity";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
+import { log } from "utils/logger";
 
 export class WithdrawTask extends TaskAction {
     // Prereq: Minion must be adjacent
@@ -42,8 +43,10 @@ export class WithdrawTask extends TaskAction {
         // Takes one tick to withdraw, but here we
         // are weighting sources by preference
         if (this.destination instanceof Tombstone || this.destination instanceof Resource) {
+            log('WithdrawTask', `target: ${this.destination} cost: ${-20}`);
             return -20;
         } else if (this.destination instanceof Creep) {
+            log('WithdrawTask', `target: ${this.destination} cost: ${0}`);
             return 0;
         }
         let store = ((this.destination as AnyStoreStructure).store as GenericStore);
@@ -54,10 +57,13 @@ export class WithdrawTask extends TaskAction {
             case STRUCTURE_CONTAINER:
                 // Full container = cost of -20
                 // Empty container = cost of 20
+                log('WithdrawTask', `target: ${this.destination} cost: ${((store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) / capacity - 0.5) * -20}`);
                 return ((store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) / capacity - 0.5) * -20;
             case STRUCTURE_SPAWN:
+                log('WithdrawTask', `target: ${this.destination} cost: ${1000}`);
                 return 1000;
             default:
+                log('WithdrawTask', `target: ${this.destination} cost: ${10}`);
                 return 10;
         }
     }

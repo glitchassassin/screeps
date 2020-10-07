@@ -2,6 +2,7 @@ import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
+import { log } from "utils/logger";
 import { SpeculativeMinion } from "../SpeculativeMinion";
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
@@ -26,25 +27,30 @@ export class RepairTask extends TaskAction {
     }
     message = "🛠";
     state = RepairStates.GETTING_ENERGY;
-    destinationId: Id<Structure>|null = null
+    pos?: RoomPosition;
+    id?: Id<Structure>;
 
     public get destination() : Structure|null {
-        return this.destinationId && Game.getObjectById(this.destinationId)
+        if ((!this.pos || !this.id) || this.pos && !Game.rooms[this.pos.roomName]) {
+            return null // Room not visible, or pos/id not set
+        }
+        return Game.getObjectById(this.id);
     }
 
     constructor(
-        destination: Structure|null = null,
+        destination?: Structure,
     ) {
         super();
-        this.destinationId = destination?.id || null;
+        this.pos = destination?.pos;
+        this.id = destination?.id;
     }
     toString() {
-        return `[RepairTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
+        return `[RepairTask: ${this.pos?.roomName}{${this.pos?.x},${this.pos?.y}}]`
     }
 
     action(creep: Creep): TaskActionResult {
-        // If unable to get the creep or source, task is completed
-        if (!this.destination) return TaskActionResult.FAILED;
+        // If unable to get the destination position, task is canceled
+        if (!this.pos) return TaskActionResult.FAILED;
 
         switch (this.state) {
             case RepairStates.REPAIRING: {
@@ -53,12 +59,24 @@ export class RepairTask extends TaskAction {
                     return this.action(creep); // Switch to getting energy
                 }
 
+                // If out of the room, travel there
+                if (creep.pos.roomName !== this.pos.roomName) {
+                    let result = travel(creep, this.pos, 3);
+                    if (result !== OK) log('RepairTask', `travel to room: ${result}`);
+                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                }
+
+                // If we are in the room, but can't find the destination, task is canceled
+                if (!this.destination) return TaskActionResult.FAILED;
+
                 let result = creep.repair(this.destination);
                 if (result === ERR_NOT_IN_RANGE) {
-                    let result = travel(creep, this.destination.pos, 3);
+                    let result = travel(creep, this.pos, 3);
+                    if (result !== OK) log('RepairTask', `travel: ${result}`);
                     return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
                 }
                 else if (result !== OK) {
+                    log('RepairTask', `repair: ${result}`);
                     return TaskActionResult.FAILED;
                 }
 
@@ -74,6 +92,7 @@ export class RepairTask extends TaskAction {
                     return this.action(creep); // Switch to repairing
                 }
                 let result = getEnergy(creep);
+                if (result !== OK) log('RepairTask', `getEnergy: ${result}`);
                 return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }
@@ -93,6 +112,7 @@ export class RepairTask extends TaskAction {
         }
     }
     valid() {
-        return !!this.destination && this.destination.hits < this.destination.hitsMax;
+        log('RepairTask', `valid? ${this.pos}, ${this.destination}, ${this.destination?.hits} ${this.destination?.hitsMax}`)
+        return !!(this.destination ? this.destination.hits < this.destination.hitsMax : this.pos);
     }
 }
