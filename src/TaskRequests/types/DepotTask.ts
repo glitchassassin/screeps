@@ -1,3 +1,4 @@
+import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { MustBeAdjacent } from "TaskRequests/prereqs/MustBeAdjacent";
 import { MustHaveEnergy } from "TaskRequests/prereqs/MustHaveEnergy";
 import { MustHaveNoWorkParts } from "TaskRequests/prereqs/MustHaveNoWorkParts";
@@ -42,12 +43,12 @@ export class DepotTask extends TaskAction {
         if (!this.destination) return TaskActionResult.FAILED;
 
         // Wait for minions to request resources
-        creep.memory.depot = (creep.store.getUsedCapacity() !== 0);
-        log('DepotTask', `isDepot: ${creep.memory.depot}`);
-        return (!creep.memory.depot) ? TaskActionResult.SUCCESS : TaskActionResult.INPROGRESS;
-    }
-    cancel(creep: Creep) {
-        creep.memory.depot = false;
+        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        if (creep.store.getUsedCapacity() > 0) {
+            logisticsAnalyst.reportDepot(creep);
+            return TaskActionResult.INPROGRESS;
+        }
+        return TaskActionResult.SUCCESS;
     }
     cost() {return 1;} // Takes one tick to transfer
     predict(minion: SpeculativeMinion) {

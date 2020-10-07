@@ -97,7 +97,6 @@ export class TaskManager extends OfficeManager {
                 let originatingRequest = task.sourceId?.replace('_depot', '');
                 if (originatingRequest && !this.hasTaskFor(originatingRequest)) {
                     log('TaskManager', `canceling DepotTask as parent request ${originatingRequest} is unassigned`);
-                    task.actions[0].cancel(task.creep);
                     return false;
                 }
             }
@@ -261,7 +260,7 @@ export class TaskManager extends OfficeManager {
         )
         Table(new RoomPosition(0, 0, this.office.center.name), taskTable);
 
-        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Depot']];
+        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Depot', 'Assigned Output']];
         let requests = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
@@ -275,7 +274,7 @@ export class TaskManager extends OfficeManager {
                     r.capacity.toFixed(0) ?? '',
                     assignedTasks.length.toFixed(0),
                     r.depot ? 'Yes' : '',
-                    // outputOfTasks(assignedTasks).toFixed(0) ?? ''
+                    outputOfTasks(assignedTasks).toFixed(0) ?? ''
                 ];
             })
         )

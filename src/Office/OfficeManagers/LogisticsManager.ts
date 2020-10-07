@@ -67,6 +67,7 @@ export class LogisticsManager extends OfficeManager {
     run() {
         if (global.v.logistics.state) {
             this.report();
+            this.map();
         }
     }
     report() {
@@ -89,5 +90,11 @@ export class LogisticsManager extends OfficeManager {
         ])
 
         chart.render(new RoomPosition(2, 2, this.office.center.name));
+    }
+    map() {
+        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        let depots = logisticsAnalyst.depots.get(this.office)
+
+        depots?.forEach(c => new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'}))
     }
 }

@@ -5,6 +5,12 @@ import { MapAnalyst } from "./MapAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
 
 export class LogisticsAnalyst extends BoardroomManager {
+    depots = new Map<Office, Creep[]>();
+
+    plan() {
+        this.depots = new Map<Office, Creep[]>();
+    }
+
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStorage(office: Office) {
         return office.center.room.find(FIND_MY_STRUCTURES)
@@ -38,7 +44,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getAllSources(office: Office): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let territories = [office.center, ...office.territories];
-        let depots = office.employees.filter(creep => creep.memory.depot);
+        let depots = this.depots.get(office) ?? [];
         return [
             ...this.getFreeSources(office),
             ...depots,
@@ -70,5 +76,18 @@ export class LogisticsAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getCarriers(office: Office): (Creep)[] {
         return office.employees.filter(c => c.memory.type === 'CARRIER');
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    reportDepot(creep: Creep) {
+        if (!creep.memory.office) return;
+        let office = global.boardroom.offices.get(creep.memory.office)
+        if (!office) return;
+        let depots = this.depots.get(office);
+
+        if (!depots) {
+            this.depots.set(office, [creep]);
+        } else {
+            depots.push(creep);
+        }
     }
 }
