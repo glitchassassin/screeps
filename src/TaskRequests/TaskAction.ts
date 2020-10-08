@@ -8,6 +8,7 @@ export enum TaskActionResult {
 }
 
 export class TaskAction {
+    constructor(public priority: number) {}
     message = "☑";
     getPrereqs(): TaskPrerequisite[] { return []; }
     action(creep: Creep) { return TaskActionResult.SUCCESS; }

@@ -1,7 +1,7 @@
 import { Metric } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
 import { Task } from "TaskRequests/Task";
-import { TaskActionResult } from "TaskRequests/TaskAction";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { DepotTask } from "TaskRequests/types/DepotTask";
 import { log } from "utils/logger";
@@ -18,33 +18,33 @@ function outputOfTasks(tasks: Task[]) {
 }
 
 export class TaskManager extends OfficeManager {
-    tasks: Task[] = [];
-    requests: RequestsMap<TaskRequest> = {};
+    assignments = new Map<TaskAction, Creep>();
+    requests = new Map<string, TaskAction>();
 
     purge = () => {
-        this.requests = {};
-        this.tasks = [];
+        this.requests = new Map<string, TaskAction>();
+        this.assignments = new Map<TaskAction, Creep>();
     }
 
-    submit = (request: TaskRequest) => {
-        if (!request.sourceId || !request.task) return;
-        if (this.requests[request.task.constructor.name] === undefined) {
-            this.requests[request.task.constructor.name] = {};
+    submit = (sourceId: string, request: TaskAction) => {
+        let key = request.constructor.name + '_' + sourceId;
+        let existingRequest = this.requests.get(key);
+        if (!existingRequest || request.priority > existingRequest.priority) {
+            this.requests.set(key, request);
+            if (existingRequest) {
+                this.assignments.delete(existingRequest);
+            }
         }
-        this.requests[request.task.constructor.name][request.sourceId] = request;
-    }
-    assign = (task: Task) => {
-        task.creep?.say(task.actions[0].message);
-        this.tasks.push(task);
     }
     run() {
         global.reportCPU('TaskManager run');
         // Assign requests
-        let requests = this.getRequestsFlattened()
+        let priorities = new Map<number, TaskAction[]>();
+        // FIX availableCreeps
+        // Then pick up at assigning tasks to creeps
+        let availableCreeps = this.getAvailableCreeps();
 
-        let priorities = new Map<number, TaskRequest[]>();
-
-        requests.forEach(r =>
+        this.requests.forEach(r =>
             priorities.set(
                 r.priority,
                 (priorities.get(r.priority) || []).concat(r)
@@ -53,7 +53,7 @@ export class TaskManager extends OfficeManager {
         global.reportCPU('TaskManager requests prepared');
         // Sort requests by priority descending
         [...priorities.keys()].sort((a, b) => (b - a)).forEach(priority => {
-            requests = priorities.get(priority) as TaskRequest[];
+            let requests = priorities.get(priority) as TaskAction[];
             let creeps = this.getAvailableCreeps();
             if (creeps.length > 0 && requests.length > 0) {
                 log('TaskManager', `Assigning ${requests.length} tasks of priority ${priority} to ${creeps.length} available minions`)
@@ -159,7 +159,7 @@ export class TaskManager extends OfficeManager {
         return !this.tasks.some(t => t.creep?.id === creep.id);
     }
     getAvailableCreeps = () => {
-        return this.office.employees.filter(c => !c.memory.ignoresRequests && this.isIdle(c))
+        return this.office.employees.filter(c => !c.memory.ignoresRequests && )
     }
     hasTaskFor = (id: string) => {
         return this.tasks.some(t => t.sourceId === id);
