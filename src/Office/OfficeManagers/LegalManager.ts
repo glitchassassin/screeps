@@ -43,7 +43,7 @@ export class LegalManager extends OfficeManager {
                 } else {
                     // Place standing order for upgrade energy
                     if (this.office.center.room.controller)
-                        this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller.pos, 1000), 5, 1000));
+                        this.office.submit(new TaskRequest(this.office.name, new DepotTask(this.office.center.room.controller.pos, 100), 5, 100));
                 }
                 return;
             }
