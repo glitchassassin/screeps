@@ -38,8 +38,8 @@ export class TerritoryIntelligence {
         let events = this.room.getEventLog();
         if (
             (this.controller.owner && !this.controller.my) ||
-            (this.room.find(FIND_STRUCTURES).some(s => s.structureType === STRUCTURE_KEEPER_LAIR)) ||
-            (events.some(e => e.event === EVENT_ATTACK || e.event === EVENT_ATTACK_CONTROLLER))
+            (this.room.find(FIND_STRUCTURES).some(s => s.structureType === STRUCTURE_KEEPER_LAIR)) //||
+            // (events.some(e => e.event === EVENT_ATTACK || e.event === EVENT_ATTACK_CONTROLLER))
         ) {
             this.lastHostileActivity = Game.time;
         }
