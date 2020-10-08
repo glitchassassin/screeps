@@ -1,9 +1,6 @@
 import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { GrafanaAnalyst } from "Boardroom/BoardroomManagers/GrafanaAnalyst";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { getEnergy } from "TaskRequests/activity/GetEnergy";
 import { travel } from "TaskRequests/activity/Travel";
-import { withdraw } from "TaskRequests/activity/Withdraw";
 import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { log } from "utils/logger";
 import { SpeculativeMinion } from "../SpeculativeMinion";
@@ -40,7 +37,7 @@ export class BuildTask extends TaskAction {
 
     action(creep: Creep): TaskActionResult {
         // If unable to get the creep or source, task is completed
-        if (!this.destination || !this.destination.gameObj) return TaskActionResult.SUCCESS;
+        if (!this.destination) return TaskActionResult.SUCCESS;
 
         switch (this.state) {
             case BuildStates.BUILDING: {
@@ -49,19 +46,22 @@ export class BuildTask extends TaskAction {
                     return this.action(creep); // Switch to getting energy
                 }
 
+                // If out of the room, travel there
+                if (creep.pos.roomName !== this.destination.pos.roomName) {
+                    log('BuildTask', `${creep.name} traveling to room`)
+                    return (travel(creep, this.destination.pos, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                }
+
+                if (!this.destination.gameObj) return TaskActionResult.SUCCESS; // In the room, but the construction site is gone
                 let result = creep.build(this.destination.gameObj);
                 if (result === ERR_NOT_IN_RANGE) {
-                    let result = travel(creep, this.destination.pos, 3);
-                    if (result !== OK) log('BuildTask', `travel: ${result}`)
-                    return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                    log('BuildTask', `${creep.name} traveling to construction site`)
+                    return (travel(creep, this.destination.pos, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
                 } else if (result !== OK) {
-                    log('BuildTask', `build: ${result}`)
+                    log('BuildTask', `${creep.name} build failed: ${result}`)
                     return TaskActionResult.FAILED;
                 }
 
-                // Report successful build action
-                let grafanaAnalyst = global.boardroom.managers.get('GrafanaAnalyst') as GrafanaAnalyst;
-                grafanaAnalyst.reportBuild(creep.memory.office||'', Math.max(5 * creep.getActiveBodyparts(WORK), creep.store.energy))
                 return TaskActionResult.INPROGRESS;
             }
             case BuildStates.GETTING_ENERGY: {
@@ -69,9 +69,8 @@ export class BuildTask extends TaskAction {
                     this.state = BuildStates.BUILDING;
                     return this.action(creep); // Switch to building
                 }
-                let result = getEnergy(creep);
-                if (result !== OK) log('BuildTask', `energy: ${result}`)
-                return (result === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
+                log('BuildTask', `${creep.name} getting energy`)
+                return (getEnergy(creep) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED
             }
         }
     }

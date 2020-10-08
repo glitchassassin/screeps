@@ -1,5 +1,4 @@
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { SpeculativeMinion } from "TaskRequests/SpeculativeMinion";
 import { TaskPrerequisite } from "TaskRequests/TaskPrerequisite";
 import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
@@ -21,10 +20,9 @@ export class MustHaveEnergy extends TaskPrerequisite {
         return minion.capacity > 0 &&
                // Minion has a full tank or enough to meet `quantity`
                minion.capacityUsed >= Math.min(this.quantity, minion.capacity)
-    };
+    }
     toMeet(minion: SpeculativeMinion) {
         if (minion.capacity === 0) return null; // Cannot carry energy
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
 
         // TODO: Check if source/container has enough energy to fill minion

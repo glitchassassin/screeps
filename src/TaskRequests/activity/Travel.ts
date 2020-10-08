@@ -37,6 +37,17 @@ class Route {
         let result = creep.moveByPath(this.path);
         return (result === ERR_TIRED) ? OK : result;
     }
+    visualize() {
+        if (!this.path) return;
+        let rooms = this.path.reduce((r, pos) => (r.includes(pos.roomName) ? r : [...r, pos.roomName]), [] as string[])
+        rooms.forEach(room => {
+            // Technically this could cause weirdness if the road loops out of a room
+            // and then back into it. If that happens, we'll just need to parse this
+            // into segments a little more intelligently
+            if (!this.path) return;
+            new RoomVisual(room).poly(this.path.filter(pos => pos.roomName === room), {lineStyle: 'dotted', stroke: '#fff'});
+        })
+    }
 }
 
 let routeCache = new Map<Id<Creep>, Route>()
@@ -52,6 +63,7 @@ export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
     }
 
     log('Travel', 'Traveling');
+    route.visualize();
     let result = route.run(creep);
     if (result !== OK) {
         routeCache.delete(routeKey);

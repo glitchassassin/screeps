@@ -1,11 +1,10 @@
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
+import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { BuildTask } from "TaskRequests/types/BuildTask";
 import { RepairTask } from "TaskRequests/types/RepairTask";
-import { countEnergyInContainersOrGround, getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
-import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { DepotTask } from "TaskRequests/types/DepotTask";
+import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
 
 const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
@@ -28,18 +27,24 @@ export class FacilitiesManager extends OfficeManager {
     sites: CachedConstructionSite[] = [];
     handymen: Creep[] = [];
 
-    repairOrders: RoomPosition[] = [];
-    buildOrders: RoomPosition[] = [];
+    repairOrders = new Map<Id<Structure>, TaskRequest>();
+    buildOrders = new Map<Id<ConstructionSite>, TaskRequest>();
 
     plan() {
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
         // TODO - Update these with callbacks. Until then, load each tick
         this.sites = facilitiesAnalyst.getConstructionSites(this.office);
+        this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)));
         this.structures = facilitiesAnalyst.getStructures(this.office);
         this.handymen = facilitiesAnalyst.getHandymen(this.office);
 
-        this.repairOrders = [];
-        this.buildOrders = [];
+        // Check if existing requests are fulfilled
+        this.repairOrders.forEach((request, id) => {
+            if (request.completed) this.repairOrders.delete(id);
+        })
+        this.buildOrders.forEach((request, id) => {
+            if (request.completed) this.buildOrders.delete(id);
+        })
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
@@ -88,43 +93,49 @@ export class FacilitiesManager extends OfficeManager {
         }
     }
     submitRepairOrders(max = 5) {
+        if (this.repairOrders.size >= max) return this.repairOrders.size;
+
         let repairable = (this.structures.map(s => s.gameObj).filter(structure => {
             if (!structure) return false;
             switch (structure.structureType) {
                 case STRUCTURE_WALL:
-                    if (structure.hits < Math.min(100000, structure.hitsMax)) return true;
+                    return false;
+                    // return (structure.hits < Math.min(100000, structure.hitsMax));
                 case STRUCTURE_RAMPART:
-                    if ((structure as StructureRampart).my && structure.hits < Math.min(100000, structure.hitsMax)) return true;
+                    return ((structure as StructureRampart).my && structure.hits < Math.min(100000, structure.hitsMax));
                 default:
                     if (this.status === OfficeManagerStatus.NORMAL || this.status === OfficeManagerStatus.PRIORITY)
                         return structure.hits < (structure.hitsMax * 0.8);
                     return structure.hits < (structure.hitsMax * 0.5); // In MINIMAL mode, repair structures below half health
             }
         }) as Structure[]).sort((a, b) => a.hits - b.hits);
-        repairable.slice(0, max).forEach((structure, i) => {
-            this.repairOrders.push(structure.pos);
-            this.office.submit(new TaskRequest(`${this.office.name}_Repair_${i}`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure), structure.pos))
+        repairable.slice(0, max - this.repairOrders.size).forEach((structure, i) => {
+            let req = new TaskRequest(`${structure.id}_repair`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure), structure.pos);
+            this.repairOrders.set(structure.id, req);
+            this.office.submit(req);
         })
-        return Math.min(repairable.length, max);
+        return this.repairOrders.size;
     }
     submitBuildOrders(max = 5) {
-        let buildable = this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)))
+        if (this.buildOrders.size >= max) return this.buildOrders.size;
 
-        buildable.slice(0, max).forEach((site, i) => {
-            this.buildOrders.push(site.pos);
-            let energyNeeded = getBuildEnergyRemaining(site) - countEnergyInContainersOrGround(site.pos)
-            this.office.submit(new TaskRequest(`${this.office.name}_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site), site.pos))
+        this.sites.slice(0, max - this.buildOrders.size).forEach((site, i) => {
+            let req = new TaskRequest(`${this.office.name}_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site), site.pos);
+            this.buildOrders.set(site.id, req);
+            this.office.submit(req);
         })
-        return Math.min(buildable.length, max);
+        return this.buildOrders.size;
     }
 
     run() {
         if (global.v.construction.state) {
-            this.buildOrders.forEach(pos => {
-                new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
+            this.buildOrders.forEach(task => {
+                let pos = task.depot
+                if (pos) new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
             })
-            this.repairOrders.forEach(pos => {
-                new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#ff0', fill: 'transparent', lineStyle: 'dotted'});
+            this.repairOrders.forEach(task => {
+                let pos = task.depot
+                if (pos) new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#ff0', fill: 'transparent', lineStyle: 'dotted'});
             })
         }
     }

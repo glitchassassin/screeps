@@ -3,13 +3,10 @@ import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { table } from "table";
 import { TaskRequest } from "TaskRequests/TaskRequest";
-import { DepotTask } from "TaskRequests/types/DepotTask";
 import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
-import { Table } from "Visualizations/Table";
 
 export class LogisticsManager extends OfficeManager {
     storage: StructureStorage[] = [];
@@ -36,6 +33,7 @@ export class LogisticsManager extends OfficeManager {
                 if (this.carriers.length === 0) {
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 }
+                break;
             }
             default: {
                 // Maintain enough carriers to keep
@@ -48,6 +46,7 @@ export class LogisticsManager extends OfficeManager {
                     console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% detected, spawning carrier`);
                     this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 }
+                break;
             }
         }
 
@@ -68,6 +67,7 @@ export class LogisticsManager extends OfficeManager {
     run() {
         if (global.v.logistics.state) {
             this.report();
+            this.map();
         }
     }
     report() {
@@ -79,16 +79,26 @@ export class LogisticsManager extends OfficeManager {
 
         let lastMineContainerLevel = metrics?.mineContainerLevels.values[metrics?.mineContainerLevels.values.length - 1] || 0
         let lastRoomEnergyLevel = metrics?.roomEnergyLevels.values[metrics?.roomEnergyLevels.values.length - 1] || 0
+        let lastFleetLevel = metrics?.fleetLevels.values[metrics?.fleetLevels.values.length - 1] || 0
+        let lastMobileDepotLevel = metrics?.mobileDepotLevels.values[metrics?.mobileDepotLevels.values.length - 1] || 0
         let lastStorageLevel = metrics?.storageLevels.values[metrics?.storageLevels.values.length - 1] || 0
         let lastControllerDepotLevel = metrics?.controllerDepotLevels.values[metrics?.controllerDepotLevels.values.length - 1] || 0
 
         let chart = new Meters([
             new Bar('Franchises', {fill: 'yellow', stroke: 'yellow'}, lastMineContainerLevel, metrics?.mineContainerLevels.maxValue),
             new Bar('HR', {fill: 'magenta', stroke: 'magenta'}, lastRoomEnergyLevel, metrics?.roomEnergyLevels.maxValue),
+            new Bar('Fleet', {fill: 'purple', stroke: 'purple'}, lastFleetLevel, metrics?.fleetLevels.maxValue),
+            new Bar('Depots', {fill: 'brown', stroke: 'brown'}, lastMobileDepotLevel, metrics?.mobileDepotLevels.maxValue),
             new Bar('Storage', {fill: 'green', stroke: 'green'}, lastStorageLevel, metrics?.storageLevels.maxValue),
             new Bar('Legal', {fill: 'blue', stroke: 'blue'}, lastControllerDepotLevel, metrics?.controllerDepotLevels.maxValue),
         ])
 
         chart.render(new RoomPosition(2, 2, this.office.center.name));
+    }
+    map() {
+        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        let depots = logisticsAnalyst.depots.get(this.office.name)
+
+        depots?.forEach(c => new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'}))
     }
 }

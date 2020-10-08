@@ -14,7 +14,7 @@ export class ControllerAnalyst extends BoardroomManager {
     calculateBestContainerLocation(office: Office) {
         let room = office.center.room;
         if (!room.controller) return null;
-        let spawn = Object.values(Game.spawns).find(spawn => spawn.room === room);
+        let spawn = Object.values(Game.spawns).find(s => s.room === room);
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 

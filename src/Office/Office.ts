@@ -1,7 +1,9 @@
+import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { MinionRequest } from "MinionRequests/MinionRequest";
 import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
 import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
-import { MinionRequest } from "MinionRequests/MinionRequest";
+import { table } from "table";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
@@ -12,8 +14,6 @@ import { SalesManager } from "./OfficeManagers/SalesManager";
 import { SecurityManager } from "./OfficeManagers/SecurityManager";
 import { TaskManager } from "./OfficeManagers/TaskManager";
 import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
-import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { table } from "table";
 
 export class Office {
     name: string;
@@ -143,7 +143,7 @@ export class Office {
         if (this.center.room.controller?.level === 1) {
             // If RCL 1, focus on sources and controllers
             // console.log('RCL1')
-            hr?.setStatus(OfficeManagerStatus.NORMAL);
+            hr?.setStatus(OfficeManagerStatus.PRIORITY);
             sales?.setStatus(OfficeManagerStatus.MINIMAL);
             logistics?.setStatus(OfficeManagerStatus.MINIMAL);
             legal?.setStatus(OfficeManagerStatus.MINIMAL);

@@ -37,7 +37,7 @@ export class ExtensionArchitect extends OfficeManager {
         if (global.v.roads.state) {
             this.roads.forEach(road => {
                 if (road.status === 'DONE') return;
-                let rooms = road.path.reduce((rooms, pos) => (rooms.includes(pos.roomName) ? rooms : [...rooms, pos.roomName]), [] as string[])
+                let rooms = road.path.reduce((r, pos) => (r.includes(pos.roomName) ? r : [...r, pos.roomName]), [] as string[])
                 rooms.forEach(room => {
                     // Technically this could cause weirdness if the road loops out of a room
                     // and then back into it. If that happens, we'll just need to parse this

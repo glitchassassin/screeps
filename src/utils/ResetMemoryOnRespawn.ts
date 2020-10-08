@@ -52,7 +52,7 @@ export const resetMemoryOnRespawn = () => {
     }
 
     // check for 0 creeps
-    for(const creepName in Game.creeps) {
+    if(Object.keys(Game.creeps).length > 0) {
         return false;
     }
 

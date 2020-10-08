@@ -1,6 +1,5 @@
-import { ControllerAnalyst, Depot } from '../../Boardroom/BoardroomManagers/ControllerAnalyst';
-import { Office } from 'Office/Office';
 import { OfficeManager } from 'Office/OfficeManager';
+import { ControllerAnalyst, Depot } from '../../Boardroom/BoardroomManagers/ControllerAnalyst';
 
 export class ControllerArchitect extends OfficeManager {
     depot: Depot|null = null;

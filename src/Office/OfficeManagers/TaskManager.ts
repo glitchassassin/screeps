@@ -1,18 +1,15 @@
+import { Metric } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { OfficeManager } from "Office/OfficeManager";
+import { stablematch } from "TaskRequests/algorithms/stablematch";
+import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
 import { Task } from "TaskRequests/Task";
 import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 import { TaskRequest } from "TaskRequests/TaskRequest";
-import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
-import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
-import { TransferTask } from "TaskRequests/types/TransferTask";
-import { stablematch } from "TaskRequests/algorithms/stablematch";
-import { OfficeManager } from "Office/OfficeManager";
-import { Table } from "Visualizations/Table";
 import { DepotTask } from "TaskRequests/types/DepotTask";
+import { TransferTask } from "TaskRequests/types/TransferTask";
+import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
 import { log } from "utils/logger";
-import { table } from "table";
-import { stringify } from "querystring";
-import { Metric } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { Table } from "Visualizations/Table";
 
 type RequestsMap<T> = {
     [id: string]: {
@@ -100,7 +97,6 @@ export class TaskManager extends OfficeManager {
                 let originatingRequest = task.sourceId?.replace('_depot', '');
                 if (originatingRequest && !this.hasTaskFor(originatingRequest)) {
                     log('TaskManager', `canceling DepotTask as parent request ${originatingRequest} is unassigned`);
-                    task.actions[0].cancel(task.creep);
                     return false;
                 }
             }
@@ -157,6 +153,7 @@ export class TaskManager extends OfficeManager {
                     !request.task?.valid() ||
                     request.capacity <= 0
                 ) {
+                    this.requests[reqType][reqSource].completed = true;
                     delete this.requests[reqType][reqSource];
                 }
             }
@@ -216,7 +213,6 @@ export class TaskManager extends OfficeManager {
             // If necessary, create Depot request for assigned tasks.
             if (taskRequest.depot) {
                 let depotRequest = new TaskRequest(taskRequest.sourceId + "_depot", new DepotTask(taskRequest.depot, taskRequest.capacity), taskRequest.priority, taskRequest.capacity);
-                console.log(JSON.stringify(depotRequest));
                 this.submit(depotRequest)
             }
         })
@@ -264,7 +260,7 @@ export class TaskManager extends OfficeManager {
         )
         Table(new RoomPosition(0, 0, this.office.center.name), taskTable);
 
-        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Depot']];
+        const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Depot', 'Assigned Output']];
         let requests = Object.values(this.requests)
             .map(taskType => Object.values(taskType))
             .reduce((a, b) => a.concat(b), [])
@@ -278,7 +274,7 @@ export class TaskManager extends OfficeManager {
                     r.capacity.toFixed(0) ?? '',
                     assignedTasks.length.toFixed(0),
                     r.depot ? 'Yes' : '',
-                    // outputOfTasks(assignedTasks).toFixed(0) ?? ''
+                    outputOfTasks(assignedTasks).toFixed(0) ?? ''
                 ];
             })
         )

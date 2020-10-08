@@ -1,12 +1,11 @@
-import 'reflect-metadata';
-import MemHack from 'utils/memhack';
-import { ErrorMapper } from "utils/ErrorMapper";
 import { Boardroom } from 'Boardroom/Boardroom';
+import 'reflect-metadata';
 import profiler from 'screeps-profiler';
-import { GrafanaAnalyst } from 'Boardroom/BoardroomManagers/GrafanaAnalyst';
-import { VisualizationController } from 'utils/VisualizationController';
-import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
+import { ErrorMapper } from "utils/ErrorMapper";
 import { log } from 'utils/logger';
+import MemHack from 'utils/memhack';
+import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
+import { VisualizationController } from 'utils/VisualizationController';
 
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
