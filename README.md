@@ -1,6 +1,8 @@
-# Screeps Typescript Starter
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=glitchassassin_screeps&metric=alert_status)](https://sonarcloud.io/dashboard?id=glitchassassin_screeps)
 
-Screeps Typescript Starter is a starting point for a Screeps AI written in Typescript. It provides everything you need to start writing your AI whilst leaving `main.ts` as empty as possible.
+# Screeps AI: Grey Company
+
+This code is based on the Screeps Typescript Starter.
 
 ## Basic Usage
 

@@ -161,6 +161,7 @@ export class TaskManager extends OfficeManager {
     }
 
     assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
+        global.reportCPU('Before Stablematch')
         let priorities = stablematch(
             requests.map(r => ({value: r, capacity: r.capacity})),
             creeps.map(c => ({value: c, capacity: c.store.getCapacity()})),
@@ -199,6 +200,7 @@ export class TaskManager extends OfficeManager {
                     match: bestPlan
                 }
             });
+        global.reportCPU('Stablematch timing')
         priorities.forEach(([taskRequest, creep, taskPlan]) => {
             if (!taskPlan) return;
             log('TaskManager', `[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
@@ -258,7 +260,7 @@ export class TaskManager extends OfficeManager {
                 t.cost
             ]))
         )
-        Table(new RoomPosition(0, 0, this.office.center.name), taskTable);
+        // Table(new RoomPosition(0, 0, this.office.center.name), taskTable);
 
         const requestTable = [['Source', 'Action', 'Priority', 'Capacity', 'Assigned', 'Depot', 'Assigned Output']];
         let requests = Object.values(this.requests)
@@ -278,7 +280,7 @@ export class TaskManager extends OfficeManager {
                 ];
             })
         )
-        Table(new RoomPosition(0, 25, this.office.center.name), requestTable);
+        Table(new RoomPosition(0, 0, this.office.center.name), requestTable);
 
         const idleMinions = [
             ['Minion'],

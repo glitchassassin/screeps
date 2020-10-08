@@ -8,15 +8,37 @@ export class Road {
     status: "PENDING"|"INPROGRESS"|"DONE" = "PENDING";
 
     constructor(path: RoomPosition[]) {
-        this.path = path;
+        this.path = path.filter(pos => !(
+            pos.x === 0  || // Eliminate room exits
+            pos.x === 49 ||
+            pos.y === 0  ||
+            pos.y === 49
+        ));
     }
 
     checkIfBuilt() {
-        if (this.path.every(
-            pos => Game.rooms[pos.roomName] &&
-            pos.lookFor(LOOK_STRUCTURES).filter(s => s.structureType === STRUCTURE_ROAD || s.structureType === STRUCTURE_CONTAINER).length > 0
-        )) {
+        let done = 0;
+        let inprogress = 0;
+        this.path.forEach(pos => {
+            pos.look().forEach(lookItem => {
+                if (
+                    lookItem.structure?.structureType === STRUCTURE_ROAD ||
+                    lookItem.structure?.structureType === STRUCTURE_CONTAINER
+                ) {
+                    done += 1;
+                    return;
+                } else if (lookItem.constructionSite?.structureType === STRUCTURE_ROAD) {
+                    inprogress += 1
+                    return;
+                }
+            })
+        })
+        if (done >= this.path.length) {
             this.status = "DONE";
+        } else if (done + inprogress >= this.path.length) {
+            this.status = "INPROGRESS";
+        } else {
+            this.status = "PENDING";
         }
         return (this.status === "DONE")
     }
@@ -63,12 +85,16 @@ export class RoadArchitect extends OfficeManager {
             })
             this.roads.sort((a, b) => a.path.length - b.path.length);
         }
-
-        let road = this.roads.find(r => r.status !== "DONE");
-        if (road?.status === "PENDING") {
-            road.build();
-        }
-        road?.checkIfBuilt();
+        let inprogress = 0;
+        this.roads.forEach(road => {
+            if (road.status === 'DONE') return;
+            road?.checkIfBuilt();
+            if (road.status === 'INPROGRESS') inprogress += 1;
+            if (road?.status === 'PENDING' && inprogress === 0) {
+                road.build();
+                inprogress += 1;
+            }
+        })
     }
 
     run() {
@@ -76,12 +102,13 @@ export class RoadArchitect extends OfficeManager {
         if (global.v.roads.state) {
             this.roads.forEach(road => {
                 if (road.status === 'DONE') return;
+                let strokeWidth = (road.status === 'INPROGRESS' ? 0.2 : 0.05)
                 let rooms = road.path.reduce((r, pos) => (r.includes(pos.roomName) ? r : [...r, pos.roomName]), [] as string[])
                 rooms.forEach(room => {
                     // Technically this could cause weirdness if the road loops out of a room
                     // and then back into it. If that happens, we'll just need to parse this
                     // into segments a little more intelligently
-                    new RoomVisual(room).poly(road.path.filter(pos => pos.roomName === room), {lineStyle: 'dashed', stroke: '#0f0'});
+                    new RoomVisual(room).poly(road.path.filter(pos => pos.roomName === room), {lineStyle: 'dashed', stroke: '#0f0', strokeWidth});
                 })
             })
         }

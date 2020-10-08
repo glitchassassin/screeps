@@ -21,7 +21,7 @@ resetMemoryOnRespawn();
 
 let lastCPU = 0;
 global.reportCPU = (message: string) => {
-  log('CPU', `${message} ${(Game.cpu.getUsed() - lastCPU).toFixed(3)}`);
+  log('CPU', `${message.padEnd(40)} ${(Game.cpu.getUsed() - lastCPU).toFixed(3)} ${Game.cpu.getUsed().toFixed(3)}`);
   lastCPU = Game.cpu.getUsed();
 }
 
@@ -50,7 +50,7 @@ global.purge = () => {
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
   lastCPU = 0;
-  global.reportCPU('Start Loop')
+  global.reportCPU('  -=<{ Logging CPU }>=-')
   MemHack.pretick();
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {
