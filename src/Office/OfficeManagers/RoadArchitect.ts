@@ -21,7 +21,7 @@ export class Road {
         return (this.status === "DONE")
     }
     build() {
-        this.path.forEach(pos => pos.createConstructionSite(STRUCTURE_ROAD));
+        this.path.forEach(pos => Game.rooms[pos.roomName] && pos.createConstructionSite(STRUCTURE_ROAD));
         this.status = "INPROGRESS";
     }
 }

@@ -1,76 +1,92 @@
-import { TaskPlan } from "TaskRequests/resolveTaskTrees";
-import { TaskRequest } from "TaskRequests/TaskRequest";
 
-type Rated<T, Output> = {
+interface Operand<T> {
     value: T,
+    capacity?: number
+}
+
+interface Match<T> {
     rating: number,
-    output: Output
+    match?: T
 }
 
-export function calculatePreferences<TaskRequest, Creep, TaskPlan>(
-    proposers: TaskRequest[],
-    accepters: Creep[],
-    comparison: (p: TaskRequest, a: Creep) => {rating: number, output: TaskPlan|null}) {
-        let results = {
-            accepters: new Map<Creep, Map<TaskRequest, Rated<TaskRequest, TaskPlan>>>(),
-            proposers: new Map<TaskRequest, {priorities: Rated<Creep, TaskPlan>[], map: Map<Creep, Rated<Creep, TaskPlan>>}>()
-        }
-        accepters.forEach(a => results.accepters.set(a, new Map<TaskRequest, Rated<TaskRequest, TaskPlan>>()))
-
-        proposers.forEach(p => {
-
-            let map = new Map<Creep, Rated<Creep, TaskPlan>>();
-            accepters.forEach(a => {
-                const {rating, output} = comparison(p, a)
-                if (output !== null) {
-                    results.accepters.get(a)?.set(p, {value: p, rating, output});
-                    map.set(a, {value: a, rating, output});
-                }
-            })
-            results.proposers.set(p, {
-                priorities: [...map.values()].sort((a, b) => a.rating - b.rating),
-                map
-            });
-        });
-
-        return results;
+class Proposer<P, A> {
+    preferences: Accepter<P, A>[] = [];
+    constructor(
+        public value: P,
+        public capacity: number
+    ) {};
 }
-export function stablematch(
-    proposers: TaskRequest[],
-    accepters: Creep[],
-    comparison: (p: TaskRequest, a: Creep) => {rating: number, output: TaskPlan|null}): [Creep, TaskRequest, TaskPlan][] {
-        let preferences = calculatePreferences(proposers, accepters, comparison);
 
-        let capacities = new Map<TaskRequest, number>();
-        let pool = [...proposers];
-        pool.forEach(proposer => (capacities.set(proposer, proposer.capacity)));
+class Accepter<P, A> {
+    preferences = new Map<Proposer<P, A>, Match<any>>();
+    bestOffer?: Proposer<P, A>;
+    constructor(
+        public value: A,
+        public capacity: number
+    ) {};
 
-        let matches = new Map<Creep, Rated<TaskRequest, TaskPlan>>();
-        while (pool.length > 0) {
-            let p = pool.shift();
-            if (!p) continue;
-            // Propose to favored match
-            let idealMatch = preferences.proposers.get(p)?.priorities.shift()?.value;
-            if (!idealMatch) continue;
-            let ratedProposer = preferences.accepters.get(idealMatch)?.get(p);
-            if (!ratedProposer || !ratedProposer.output) continue; // Minion cannot fulfill task request
-            let existingMatch = matches.get(idealMatch);
-            if (!existingMatch) {
-                // Accepter has no proposals yet: provisionally accept
-                matches.set(idealMatch, ratedProposer);
-                // Reduce proposer's capacity
-                capacities.set(p, (capacities.get(p) as number) - ratedProposer.output.minion.output)
-            } else if (existingMatch.rating < ratedProposer.rating) {
-                // Accepter trades up
-                matches.set(idealMatch, ratedProposer);
-                // Jilted proposer moves back to the pool
-                pool.push(existingMatch.value);
-                // Add capacity back to jilted proposer
-                capacities.set(existingMatch.value, (capacities.get(existingMatch.value) as number) + existingMatch.output.minion.output)
-            } else {
-                pool.push(p);
-                // Accepter rejects proposer: keep going down the priority list
+    result() {
+        return this.bestOffer && this.preferences.get(this.bestOffer);
+    }
+}
+
+/**
+ *
+ * @param proposers A list of any kind of value with optional capacity
+ * @param accepters A list of any kind of value with optional capacity
+ * @param matchFunction Compares a proposer and an accepter and returns a rating and an optional match. A lower rating is better than a higher rating.
+ */
+export const stablematch = <P, A, Result>(
+    proposers: Operand<P>[],
+    accepters: Operand<A>[],
+    matchFunction: (proposer: P, accepter: A) => Match<Result>
+) => {
+    // Set up pool of proposers
+    let pool: Proposer<P, A>[] = [];
+    let accepterPool = new Map<Operand<A>, Accepter<P, A>>()
+    proposers.forEach(proposer => {
+        let p = new Proposer<P, A>(proposer.value, proposer.capacity ?? 1);
+        let preferences = new Map<Accepter<P, A>, Match<Result>>()
+        accepters.forEach(accepter => {
+            let a = accepterPool.get(accepter) ?? new Accepter(accepter.value, accepter.capacity ?? 1);
+            let match = matchFunction(proposer.value, accepter.value);
+            a.preferences.set(p, match);
+            preferences.set(a, match);
+            accepterPool.set(accepter, a);
+        })
+        p.preferences = [...preferences.entries()].sort(([,match1], [,match2]) => match1.rating - match2.rating).map(([a]) => a);
+        pool.push(p);
+    })
+
+    while (pool.length > 0) {
+        let p = pool.shift();
+        if (!p) throw new Error('Invalid Proposer'); // Should never be thrown
+        // console.log('Proposer: ', p.value);
+        let a = p.preferences.shift();
+        if (!a) continue; // Proposer has no more preferred accepters
+        // console.log('Accepter: ', a.value);
+        let preference = a.preferences.get(p)
+        let bestOffer = a.bestOffer && a.preferences.get(a.bestOffer)
+        if (!preference) throw new Error('Proposer not rated by accepter'); // Should never be thrown
+        if (!bestOffer || (preference.rating < bestOffer.rating)) {
+            // console.log('Accepting', p.value);
+            if (a.bestOffer) {
+                // console.log('jilting', a.bestOffer.value);
+                a.bestOffer.capacity += a.capacity;
+                pool.push(a.bestOffer);
             }
+            a.bestOffer = p;
+            p.capacity -= a.capacity;
         }
-        return [...matches.entries()].map(([a, p]) => [a, p.value, p.output]);
+        if (p.capacity > 0) {
+            // console.log('Returning', p.value, 'to the pool');
+            pool.push(p);
+        }
+    }
+
+    return [...accepterPool.values()].map(a => {
+        let r = a.result();
+        if (!a.bestOffer || !r) return undefined;
+        return [a.bestOffer.value, a.value, r.match]
+    }).filter(a => a !== undefined) as [P, A, Result][]
 }

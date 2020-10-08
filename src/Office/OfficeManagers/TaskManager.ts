@@ -165,8 +165,8 @@ export class TaskManager extends OfficeManager {
 
     assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
         let priorities = stablematch(
-            requests,
-            creeps,
+            requests.map(r => ({value: r, capacity: r.capacity})),
+            creeps.map(c => ({value: c, capacity: c.store.getCapacity()})),
             (taskRequest, creep) => {
                 // if (taskRequest.task?.constructor.name === 'BuildTask') console.log('resolving BuildTask', creep);
                 let paths = resolveTaskTrees({
@@ -199,10 +199,10 @@ export class TaskManager extends OfficeManager {
                 // if (taskRequest.task?.action.constructor.name === 'BuildTask') console.log('BuildTask', JSON.stringify(bestPlan));
                 return {
                     rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
-                    output: bestPlan
+                    match: bestPlan
                 }
             });
-        priorities.forEach(([creep, taskRequest, taskPlan]) => {
+        priorities.forEach(([taskRequest, creep, taskPlan]) => {
             if (!taskPlan) return;
             log('TaskManager', `[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
                         `Outcome: [${taskPlan.minion.capacityUsed}/${taskPlan.minion.capacity}] => ${taskPlan.minion.output} at (${JSON.stringify(taskPlan.minion.pos)}) \n` +
