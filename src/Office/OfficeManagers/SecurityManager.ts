@@ -1,13 +1,14 @@
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
+import { LogisticsRequest } from "Logistics/LogisticsRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { LogisticsManager } from "./LogisticsManager";
 
 export class SecurityManager extends OfficeManager {
     towers: StructureTower[] = [];
     plan() {
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
+        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         this.towers = defenseAnalyst.getTowers(this.office);
 
@@ -17,13 +18,16 @@ export class SecurityManager extends OfficeManager {
                     // Request energy, if needed
                     let e = getTransferEnergyRemaining(t);
                     if (e) {
+                        let priority = 1;
                         if (e > 700) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 5, e));
+                            priority = 5;
                         } else if (e > 150) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 4, e));
+                            priority = 4;
                         } else if (e > 0) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
+                            priority = 1;
                         }
+
+                        logisticsManager.submit(t.id, new LogisticsRequest(t, priority));
                     }
                 })
                 return;
@@ -33,13 +37,16 @@ export class SecurityManager extends OfficeManager {
                     // Request energy, if needed
                     let e = getTransferEnergyRemaining(t);
                     if (e) {
+                        let priority = 1;
                         if (e > 700) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 9, e));
+                            priority = 9;
                         } else if (e > 150) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 5, e));
+                            priority = 5;
                         } else if (e > 0) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
+                            priority = 1;
                         }
+
+                        logisticsManager.submit(t.id, new LogisticsRequest(t, priority));
                     }
                 })
                 return;
@@ -49,11 +56,14 @@ export class SecurityManager extends OfficeManager {
                     // Request energy, if needed
                     let e = getTransferEnergyRemaining(t);
                     if (e) {
+                        let priority = 1;
                         if (e > 150) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 9, e));
+                            priority = 9;
                         } else if (e > 0) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
+                            priority = 1;
                         }
+
+                        logisticsManager.submit(t.id, new LogisticsRequest(t, priority));
                     }
                 })
                 return;

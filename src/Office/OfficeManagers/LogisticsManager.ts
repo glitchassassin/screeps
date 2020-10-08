@@ -1,27 +1,54 @@
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { LogisticsRequest, ResupplyRequest } from "Logistics/LogisticsRequest";
+import { LogisticsRoute } from "Logistics/LogisticsRoute";
+import { LogisticsSource } from "Logistics/LogisticsSource";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { TransferTask } from "TaskRequests/types/TransferTask";
-import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { getFreeCapacity } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
 
 export class LogisticsManager extends OfficeManager {
-    storage: StructureStorage[] = [];
+    storage?: StructureStorage;
     extensions: StructureExtension[] = [];
     spawns: StructureSpawn[] = [];
     carriers: Creep[] = [];
+
+    sources = new Map<RoomPosition, LogisticsSource>();
+    requests = new Map<string, LogisticsRequest>();
+    routes = new Map<Creep, LogisticsRoute>();
+
+    submit(requestId: string, request: LogisticsRequest) {
+        let req = this.requests.get(requestId);
+        if (!req || req.priority < request.priority) {
+            if (req) req.completed = true;
+            this.requests.set(requestId, request);
+        }
+    }
+
     plan() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
 
-        this.storage = logisticsAnalyst.getStorage(this.office)
+        this.storage = logisticsAnalyst.getStorage(this.office)[0];
         this.extensions = hrAnalyst.getExtensions(this.office)
         this.carriers = logisticsAnalyst.getCarriers(this.office)
         this.spawns = hrAnalyst.getSpawns(this.office)
+
+        // Update LogisticsSources
+        salesAnalyst.getFranchiseLocations(this.office).forEach(f => {
+            if (!this.sources.has(f.sourcePos)) {
+                this.sources.set(f.sourcePos, new LogisticsSource(f.sourcePos))
+            }
+        });
+        if (this.storage && !this.sources.has(this.storage.pos)) {
+            this.sources.set(this.storage.pos, new LogisticsSource(this.storage.pos, false))
+        }
+        // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
@@ -50,21 +77,31 @@ export class LogisticsManager extends OfficeManager {
             }
         }
 
-        // Create standing order for storage, or else stockpile near spawn
-        if (this.storage.length > 0) {
-            this.storage.forEach(c => {
-                let e = getTransferEnergyRemaining(c);
-                if (e && e > 0) {
-                    // Use a TransferTask instead of a TransferTask to only get energy from a source container.
-                    // Avoids shuffling back and forth between destination containers
-                    this.office.submit(new TaskRequest(c.id, new TransferTask(c), 2, e));
-                }
-            })
-        } else {
-            // this.office.submit(new TaskRequest(this.office.name + '_Logistics_Surplus', new DepotTask(this.spawns[0].pos, 1), 2, 1000));
+        // Make sure we have a standing request for storage
+        if (this.storage && getFreeCapacity(this.storage) > 0) {
+            this.submit(this.storage.id, new ResupplyRequest(this.storage, 1))
+        }
+
+        // Try to route requests
+        let idleCarriers = this.carriers.filter(c => !this.routes.has(c));
+        let requests = [...this.requests.values()].sort((a, b) => (a.priority - b.priority));
+        while (requests.length > 0) {
+            let carrier = idleCarriers.shift();
+            if (!carrier) break;
+            let route = new LogisticsRoute(carrier, requests[0], [...this.sources.values()]);
+            if (route.commit()) {
+                this.routes.set(carrier, route);
+            }
         }
     }
     run() {
+        // Execute routes
+        this.routes.forEach((route, creep) => {
+            route.run();
+            if (route.completed) this.routes.delete(creep);
+        })
+
+        // Display visuals
         if (global.v.logistics.state) {
             this.report();
             this.map();

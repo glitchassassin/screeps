@@ -1,27 +1,13 @@
-import { SpeculativeMinion } from "../SpeculativeMinion";
-import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
-import { MustHaveWorkParts } from "TaskRequests/prereqs/MustHaveWorkParts";
 import { travel } from "TaskRequests/activity/Travel";
+import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
 
 export class HarvestTask extends TaskAction {
-    // Prereq: Minion must be adjacent
-    //         Otherwise, move to an open space
-    //         near the source
-    getPrereqs() {
-        if (!this.source) return [];
-        return [
-            new MustHaveWorkParts(),
-        ]
-    }
     message = "⚡";
 
-
-    source: RoomPosition|null = null
     constructor(
-        source: RoomPosition|null = null,
+        public source: RoomPosition,
     ) {
         super();
-        this.source = source;
     }
     toString() {
         return `[HarvestTask: ${this.source?.roomName}{${this.source?.x},${this.source?.y}}]`
@@ -48,20 +34,5 @@ export class HarvestTask extends TaskAction {
             }
         }
         return TaskActionResult.INPROGRESS;
-    }
-    cost(minion: SpeculativeMinion) {
-        // Approximate effectiveness of minion based on number of WORK parts
-        // TODO: Adjust this to compare against the creep's capacity, or the
-        //       local container, if applicable
-        return 1/(minion.creep.getActiveBodyparts(WORK) * 2)
-    }
-    predict(minion: SpeculativeMinion) {
-        return {
-            ...minion,
-            capacityUsed: minion.capacity,
-        }
-    }
-    valid() {
-        return !!this.source;
     }
 }

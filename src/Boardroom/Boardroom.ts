@@ -77,7 +77,7 @@ export class Boardroom {
         });
     }
 
-    getClosestOffice(pos: RoomPosition) {
+    getClosestOffice(pos: RoomPosition): Office|undefined {
         let mapAnalyst = this.managers.get('MapAnalyst') as MapAnalyst;
         let closest: Office|undefined = undefined;
         let distance: number;

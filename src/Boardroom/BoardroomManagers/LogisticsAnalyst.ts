@@ -1,4 +1,5 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { LogisticsSource } from "Logistics/LogisticsSource";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
 import { MapAnalyst } from "./MapAnalyst";

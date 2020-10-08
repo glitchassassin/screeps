@@ -21,3 +21,16 @@ export function countEnergyInContainersOrGround(pos: RoomPosition) {
         .reduce((sum, container) => (sum + (container as StructureContainer).store.getUsedCapacity(RESOURCE_ENERGY)), 0)
     return resources + containers;
 }
+export function getCapacity(gameObj: Resource<RESOURCE_ENERGY>|AnyStoreStructure|Creep): number {
+    if (gameObj instanceof Resource) {
+        return gameObj.amount;
+    } else {
+        return (gameObj.store as GenericStore).getUsedCapacity(RESOURCE_ENERGY) ?? 0;
+    }
+}
+export function getFreeCapacity(gameObj: AnyStoreStructure|Creep): number {
+    return (gameObj.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) ?? 0;
+}
+export function getMaxCapacity(gameObj: AnyStoreStructure|Creep): number {
+    return (gameObj.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
+}

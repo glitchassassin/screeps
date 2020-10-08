@@ -1,13 +1,9 @@
 import { Metric } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
-import { stablematch } from "TaskRequests/algorithms/stablematch";
-import { resolveTaskTrees } from "TaskRequests/resolveTaskTrees";
 import { Task } from "TaskRequests/Task";
-import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
+import { TaskActionResult } from "TaskRequests/TaskAction";
 import { TaskRequest } from "TaskRequests/TaskRequest";
 import { DepotTask } from "TaskRequests/types/DepotTask";
-import { TransferTask } from "TaskRequests/types/TransferTask";
-import { WithdrawTask } from "TaskRequests/types/WithdrawTask";
 import { log } from "utils/logger";
 import { Table } from "Visualizations/Table";
 
@@ -28,10 +24,6 @@ export class TaskManager extends OfficeManager {
     purge = () => {
         this.requests = {};
         this.tasks = [];
-        if (Memory.tasks[this.office.name]) {
-            Memory.tasks[this.office.name].tasks = "";
-            Memory.tasks[this.office.name].requests = "";
-        }
     }
 
     submit = (request: TaskRequest) => {
@@ -44,24 +36,6 @@ export class TaskManager extends OfficeManager {
     assign = (task: Task) => {
         task.creep?.say(task.actions[0].message);
         this.tasks.push(task);
-    }
-    init() {
-        // try {
-        //     // Load tasks from Memory
-        //     this.tasks = deserializeArray(Task, Memory.tasks[this.office.name].tasks as string);
-        //     // Load requests from Memory
-        //     let deserialized = JSON.parse(Memory.tasks[this.office.name].requests as string)
-        //     this.requests = {};
-        //     for (let reqType in deserialized) {
-        //         this.requests[reqType] = {};
-        //         for (let reqSource in deserialized[reqType]) {
-        //             this.requests[reqType][reqSource] = deserialize(TaskRequest, deserialized[reqType][reqSource])
-        //         }
-        //     }
-        // } catch {
-            this.tasks = [];
-            this.requests = {};
-        // }
     }
     run() {
         global.reportCPU('TaskManager run');
@@ -83,7 +57,9 @@ export class TaskManager extends OfficeManager {
             let creeps = this.getAvailableCreeps();
             if (creeps.length > 0 && requests.length > 0) {
                 log('TaskManager', `Assigning ${requests.length} tasks of priority ${priority} to ${creeps.length} available minions`)
-                this.assignRequestsToCreeps(requests, creeps);
+                for (let request of requests) {
+                    if
+                }
             }
         });
         global.reportCPU('TaskManager requests assigned');
@@ -161,46 +137,6 @@ export class TaskManager extends OfficeManager {
     }
 
     assignRequestsToCreeps = (requests: TaskRequest[], creeps: Creep[]) => {
-        global.reportCPU('Before Stablematch')
-        let priorities = stablematch(
-            requests.map(r => ({value: r, capacity: r.capacity})),
-            creeps.map(c => ({value: c, capacity: c.store.getCapacity()})),
-            (taskRequest, creep) => {
-                // if (taskRequest.task?.constructor.name === 'BuildTask') console.log('resolving BuildTask', creep);
-                let paths = resolveTaskTrees({
-                    output: 0,
-                    creep,
-                    capacity: creep.store.getCapacity(),
-                    capacityUsed: creep.store.getUsedCapacity(),
-                    pos: creep.pos
-                }, taskRequest.task as TaskAction)
-                let maxOutput = paths?.reduce((max, path) => (Math.max(max, path.minion.output)), 0) || 0;
-                let filteredPaths = paths?.filter(c => {
-                    // if (taskRequest.task?.constructor.name === 'BuildTask') console.log(JSON.stringify(c));
-                    // If task plan is null, filter it
-                    if (!c) return false;
-                    // If task plan has withdraw and transfer loop, filter it
-                    let tasks = (c.tasks.filter(t => t instanceof WithdrawTask || t instanceof TransferTask) as (WithdrawTask|TransferTask)[])
-                        .map(t => t instanceof WithdrawTask ? t.destination?.pos.toString() : t.destination?.toString())
-                    if (tasks.length !== new Set(tasks).size) return false;
-                    // If task plan has no useful output, or another task plan has higher output, filter it
-                    if (c.minion.output === 0 || c.minion.output < maxOutput) return false;
-                    // Otherwise, accept it
-                    return true;
-                })
-
-                if (!filteredPaths || filteredPaths.length === 0) {
-                    return {rating: Infinity, output: null};
-                }
-                let bestPlan = filteredPaths.reduce((a, b) => (a && a.cost < b.cost) ? a : b)
-                let weight = (taskRequest.task && creep.memory.favoredTasks?.includes(taskRequest.task?.action.constructor.name)) ? 2 : 1;
-                // if (taskRequest.task?.action.constructor.name === 'BuildTask') console.log('BuildTask', JSON.stringify(bestPlan));
-                return {
-                    rating: weight * (bestPlan.minion.output/bestPlan.cost), // rating = output/tick, with a bonus if the minion likes the work
-                    match: bestPlan
-                }
-            });
-        global.reportCPU('Stablematch timing')
         priorities.forEach(([taskRequest, creep, taskPlan]) => {
             if (!taskPlan) return;
             log('TaskManager', `[TaskManager] Task plan accepted for ${taskPlan.minion.creep} with cost ${taskPlan.cost}:\n` +
