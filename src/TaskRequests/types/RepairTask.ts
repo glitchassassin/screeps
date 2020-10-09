@@ -23,8 +23,9 @@ export class RepairTask extends GetEnergyAndWorkTask {
 
     constructor(
         destination: Structure,
+        public priority: number
     ) {
-        super();
+        super(priority);
         this.pos = destination.pos;
         this.id = destination.id;
     }

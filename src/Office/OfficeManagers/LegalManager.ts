@@ -1,6 +1,6 @@
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
-import { LogisticsRequest } from "Logistics/LogisticsRequest";
+import { TransferRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { Task } from "TaskRequests/Task";
@@ -40,7 +40,7 @@ export class LegalManager extends OfficeManager {
                     // Place standing order for surplus energy to container
                     let e = getTransferEnergyRemaining(legalFund.container);
                     if (e && e > 0) {
-                        logisticsManager.submit(legalFund.container.id, new LogisticsRequest(legalFund.container, 1));
+                        logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, 1));
                     }
                 } else {
                     // Place standing order for upgrade energy
@@ -67,7 +67,7 @@ export class LegalManager extends OfficeManager {
                 if (legalFund?.container) {
                     let e = getTransferEnergyRemaining(legalFund.container);
                     if (e && e > 0) {
-                        logisticsManager.submit(legalFund.container.id, new LogisticsRequest(legalFund.container, 4));
+                        logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, 4));
                     }
                 } else {
                     // Place standing order for upgrade energy

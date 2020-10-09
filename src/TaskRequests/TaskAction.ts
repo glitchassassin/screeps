@@ -1,5 +1,3 @@
-import { SpeculativeMinion } from "./SpeculativeMinion";
-import { TaskPrerequisite } from "./TaskPrerequisite";
 
 export enum TaskActionResult {
     SUCCESS = 'SUCCESS',
@@ -8,12 +6,11 @@ export enum TaskActionResult {
 }
 
 export class TaskAction {
+    public capacity = 1;
+    public assigned = 0;
     constructor(public priority: number) {}
     message = "☑";
-    getPrereqs(): TaskPrerequisite[] { return []; }
     action(creep: Creep) { return TaskActionResult.SUCCESS; }
-    cost(minion: SpeculativeMinion) { return 0; }
-    predict(minion: SpeculativeMinion) { return minion; }
     valid() { return true; }
-    cancel(creep: Creep) { }
+    canBeFulfilledBy(creep: Creep) { return false; }
 }

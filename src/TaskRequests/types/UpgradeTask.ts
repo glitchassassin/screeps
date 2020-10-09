@@ -6,9 +6,10 @@ export class UpgradeTask extends GetEnergyAndWorkTask {
     message = "⏫";
 
     constructor(
-        public destination: StructureController
+        public destination: StructureController,
+        public priority: number
     ) {
-        super();
+        super(priority);
     }
     toString() {
         return `[UpgradeTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`

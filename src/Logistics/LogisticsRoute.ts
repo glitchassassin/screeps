@@ -114,7 +114,7 @@ export class LogisticsRoute {
                 break;
             }
             case RouteState.FULFILLING: {
-                let result = this.requests[0].transfer(this.creep);
+                let result = this.requests[0].action(this.creep);
                 if (result !== OK) {
                     this.state = RouteState.CANCELLED;
                 }

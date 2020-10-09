@@ -6,8 +6,9 @@ export class HarvestTask extends TaskAction {
 
     constructor(
         public source: RoomPosition,
+        public priority: number
     ) {
-        super();
+        super(priority);
     }
     toString() {
         return `[HarvestTask: ${this.source?.roomName}{${this.source?.x},${this.source?.y}}]`

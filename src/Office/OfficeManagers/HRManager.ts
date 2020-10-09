@@ -1,8 +1,7 @@
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { LogisticsRequest } from "Logistics/LogisticsRequest";
+import { TransferRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 import { Table } from "Visualizations/Table";
@@ -50,14 +49,14 @@ export class HRManager extends OfficeManager {
         this.extensions.forEach(e => {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {
-                logisticsManager.submit(e.id, new LogisticsRequest(e, priority));
+                logisticsManager.submit(e.id, new TransferRequest(e, priority));
             }
         })
         this.spawns.forEach((spawn) => {
             let spawnCapacity = getTransferEnergyRemaining(spawn);
             if (!spawnCapacity) return;
             if (spawnCapacity > 0) {
-                logisticsManager.submit(spawn.id, new LogisticsRequest(spawn, priority));
+                logisticsManager.submit(spawn.id, new TransferRequest(spawn, priority));
             }
         })
     }

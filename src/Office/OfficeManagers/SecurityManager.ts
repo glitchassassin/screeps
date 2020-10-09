@@ -1,5 +1,5 @@
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
-import { LogisticsRequest } from "Logistics/LogisticsRequest";
+import { TransferRequest } from "Logistics/LogisticsRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { LogisticsManager } from "./LogisticsManager";
@@ -27,7 +27,7 @@ export class SecurityManager extends OfficeManager {
                             priority = 1;
                         }
 
-                        logisticsManager.submit(t.id, new LogisticsRequest(t, priority));
+                        logisticsManager.submit(t.id, new TransferRequest(t, priority));
                     }
                 })
                 return;
@@ -46,7 +46,7 @@ export class SecurityManager extends OfficeManager {
                             priority = 1;
                         }
 
-                        logisticsManager.submit(t.id, new LogisticsRequest(t, priority));
+                        logisticsManager.submit(t.id, new TransferRequest(t, priority));
                     }
                 })
                 return;
@@ -63,7 +63,7 @@ export class SecurityManager extends OfficeManager {
                             priority = 1;
                         }
 
-                        logisticsManager.submit(t.id, new LogisticsRequest(t, priority));
+                        logisticsManager.submit(t.id, new TransferRequest(t, priority));
                     }
                 })
                 return;

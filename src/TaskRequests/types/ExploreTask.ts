@@ -5,9 +5,10 @@ export class ExploreTask extends TaskAction {
     message = "🕵";
 
     constructor(
-        public destination: string
+        public destination: string,
+        public priority: number
     ) {
-        super();
+        super(priority);
     }
     toString() {
         return `[ExploreTask: ${this.destination}]`

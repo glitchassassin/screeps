@@ -7,9 +7,10 @@ export class BuildTask extends GetEnergyAndWorkTask {
     message = "🔨";
 
     constructor(
-        public destination: CachedConstructionSite
+        public destination: CachedConstructionSite,
+        public priority: number
     ) {
-        super();
+        super(priority);
     }
     toString() {
         return `[BuildTask: ${this.destination?.pos.roomName}{${this.destination?.pos.x},${this.destination?.pos.y}}]`
