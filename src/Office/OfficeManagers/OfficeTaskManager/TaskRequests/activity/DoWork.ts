@@ -1,4 +1,4 @@
-import { TaskActionResult } from "TaskRequests/TaskAction";
+import { TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 import { travel } from "./Travel";
 
 export const doWork = (creep: Creep, destination: RoomPosition, callback: (creep: Creep) => ScreepsReturnCode) => {

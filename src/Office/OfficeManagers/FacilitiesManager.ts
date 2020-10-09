@@ -1,9 +1,10 @@
 import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManagerStatus } from "Office/OfficeManager";
-import { BuildTask } from "TaskRequests/types/BuildTask";
-import { RepairTask } from "TaskRequests/types/RepairTask";
-import { OfficeTaskManager } from "./TaskManager";
+import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
+import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
+import { HRManager } from "./HRManager";
+import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
 
 const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
@@ -29,6 +30,7 @@ export class FacilitiesManager extends OfficeTaskManager {
     plan() {
         super.plan();
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
+        let hrManager = this.office.managers.get('HRManager') as HRManager;
         // TODO - Update these with callbacks. Until then, load each tick
         this.sites = facilitiesAnalyst.getConstructionSites(this.office);
         this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)));
@@ -46,7 +48,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 // new construction
                 let jobs = this.submitOrders(2);
                 if (jobs > 0 && this.handymen.length < 1) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN))
                 }
                 return;
             }
@@ -56,7 +58,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 // construction.
                 let jobs = this.submitOrders(2);
                 if (jobs > 0 && (this.handymen.length < (jobs / 2))) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
                 }
                 return;
             }
@@ -66,7 +68,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 // repairs if needed.
                 let jobs = this.submitOrders(2);
                 if (jobs > 0 && this.handymen.length < jobs) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN))
                 }
                 return;
             }
@@ -92,9 +94,9 @@ export class FacilitiesManager extends OfficeTaskManager {
 
         [...repairable, ...this.sites].slice(0, max - this.requests.size).forEach((site) => {
             if (site instanceof Structure) {
-                this.submit(`${site.id}_repair`, new RepairTask(site))
+                this.submit(`${site.id}_repair`, new RepairTask(site, 5))
             } else if (site instanceof ConstructionSite) {
-                this.submit(`${site.id}_build`, new BuildTask(site))
+                this.submit(`${site.id}_build`, new BuildTask(site, 5))
             }
         })
         return this.requests.size;

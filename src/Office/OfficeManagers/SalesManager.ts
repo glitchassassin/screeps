@@ -1,19 +1,17 @@
 import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { Task } from "TaskRequests/Task";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { ExploreTask } from "TaskRequests/types/ExploreTask";
-import { HarvestTask } from "TaskRequests/types/HarvestTask";
-import { TravelTask } from "TaskRequests/types/TravelTask";
+import { OfficeManagerStatus } from "Office/OfficeManager";
+import { HarvestTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/HarvestTask";
 import { Bar, Meters } from "Visualizations/Meters";
 import { Table } from "Visualizations/Table";
-import { TaskManager } from "./TaskManager";
+import { HRManager } from "./HRManager";
+import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
 
-export class SalesManager extends OfficeManager {
+export class SalesManager extends OfficeTaskManager {
     franchises: Franchise[] = [];
 
     plan() {
+        super.plan();
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         this.franchises = salesAnalyst.getFranchiseLocations(this.office);
@@ -35,13 +33,6 @@ export class SalesManager extends OfficeManager {
         if (this.franchises.reduce((surplus, franchise) => surplus + (franchise.surplus ?? 0), 0) > this.franchises.length * CONTAINER_CAPACITY) {
             priority -= 2;
         }
-        // Scout surrounding Territories, if needed
-        let unexplored = this.office.territories.filter(t => !t.scanned && !t.isHostile);
-        if (unexplored.length > 0) {
-            unexplored.forEach(territory => {
-                this.office.submit(new TaskRequest(territory.name, new ExploreTask(territory.name), 5))
-            })
-        }
         // Maintains one Salesman per source,
         // respawning with a little lead time
         // to minimize downtime
@@ -56,7 +47,8 @@ export class SalesManager extends OfficeManager {
                 // No salesmen at the franchise: spawn one
                 // Scale priority by distance
                 let distance = Game.map.getRoomLinearDistance(this.office.center.name, franchise.pos.roomName);
-                this.office.submit(new MinionRequest(franchise.id, priority - distance, MinionTypes.SALESMAN, {
+                let hrManager = this.office.managers.get('HRManager') as HRManager;
+                hrManager.submit(new MinionRequest(franchise.id, priority - distance, MinionTypes.SALESMAN, {
                     source: franchise.id,
                     ignoresRequests: true
                 }))
@@ -64,25 +56,13 @@ export class SalesManager extends OfficeManager {
         })
     }
     run() {
-        let taskManager = this.office.managers.get('TaskManager') as TaskManager;
-        if (!taskManager) return;
+        super.run();
 
         this.franchises.forEach(franchise => {
-
             franchise.salesmen.forEach(salesman => {
-                if (taskManager.isIdle(salesman)) {
-                    // Are there creeps at the primary franchise location already?
-                    let salesmenCount = Game.rooms[franchise.pos.roomName] && franchise.pos.lookFor(LOOK_CREEPS).length
-                    // If miner is not at mine site, go there
-                    if (!salesman.pos.isEqualTo(franchise.pos) && salesmenCount === 0) {
-                        taskManager.assign(new Task([new TravelTask(franchise.pos, 0)], salesman, franchise.id));
-                    } else {
-                        if (salesman.memory.spawned && !salesman.memory.arrived) {
-                            salesman.memory.arrived = Game.time - salesman.memory.spawned;
-                        }
-                        // Keep mining ad infinitum.
-                        taskManager.assign(new Task([new HarvestTask(franchise.sourcePos)], salesman, franchise.id));
-                    }
+                if (this.isIdle(salesman)) {
+                    // Keep mining ad infinitum.
+                    this.submit(salesman.id, new HarvestTask(franchise.sourcePos, 10))
                 }
             })
         })

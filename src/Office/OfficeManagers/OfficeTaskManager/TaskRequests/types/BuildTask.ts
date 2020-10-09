@@ -1,5 +1,5 @@
 import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { doWork } from "TaskRequests/activity/DoWork";
+import { doWork } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/DoWork";
 import { TaskActionResult } from "../TaskAction";
 import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 

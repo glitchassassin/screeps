@@ -1,16 +1,27 @@
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
 import { TransferRequest } from "Logistics/LogisticsRequest";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import { OfficeManagerStatus } from "Office/OfficeManager";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { LogisticsManager } from "./LogisticsManager";
+import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { ExploreTask } from "./OfficeTaskManager/TaskRequests/types/ExploreTask";
 
-export class SecurityManager extends OfficeManager {
+export class SecurityManager extends OfficeTaskManager {
     towers: StructureTower[] = [];
     plan() {
+        super.plan();
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         this.towers = defenseAnalyst.getTowers(this.office);
+
+        // Scout surrounding Territories, if needed
+        let unexplored = this.office.territories.filter(t => !t.scanned && !t.isHostile);
+        if (unexplored.length > 0) {
+            unexplored.forEach(territory => {
+                this.submit(territory.name, new ExploreTask(territory.name, 5))
+            })
+        }
 
         switch (this.status) {
             case OfficeManagerStatus.MINIMAL: {
@@ -71,6 +82,7 @@ export class SecurityManager extends OfficeManager {
         }
     }
     run() {
+        super.run();
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
         let targets = defenseAnalyst.getPrioritizedAttackTargets(this.office);

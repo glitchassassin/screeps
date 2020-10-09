@@ -1,4 +1,9 @@
 import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+
+export interface WithPos {
+    pos: RoomPosition
+}
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite|ConstructionSite) {
     return target.progressTotal - target.progress;
@@ -33,4 +38,16 @@ export function getFreeCapacity(gameObj: AnyStoreStructure|Creep): number {
 }
 export function getMaxCapacity(gameObj: AnyStoreStructure|Creep): number {
     return (gameObj.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
+}
+
+export function sortByDistanceTo<T extends WithPos>(pos: RoomPosition) {
+    let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+    let distance = new Map<T, number>();
+    return (a: T, b: T) => {
+        if (!distance.has(a)){
+            distance.set(a, mapAnalyst.getRangeTo(pos, a.pos))
+        }
+        if (!distance.has(b)) distance.set(b, mapAnalyst.getRangeTo(pos, b.pos))
+        return (distance.get(a) as number) - (distance.get(b) as number)
+    }
 }

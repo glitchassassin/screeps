@@ -1,5 +1,5 @@
-import { doWork } from "TaskRequests/activity/DoWork";
-import { TaskActionResult } from "TaskRequests/TaskAction";
+import { doWork } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/DoWork";
+import { TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 
 export class UpgradeTask extends GetEnergyAndWorkTask {

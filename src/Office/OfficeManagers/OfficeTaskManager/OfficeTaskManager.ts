@@ -1,5 +1,5 @@
 import { OfficeManager } from "Office/OfficeManager";
-import { TaskAction } from "TaskRequests/TaskAction";
+import { TaskAction } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
 export class OfficeTaskManager extends OfficeManager {
     requests = new Map<string, TaskAction>();

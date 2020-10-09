@@ -1,5 +1,5 @@
-import { travel } from "TaskRequests/activity/Travel";
-import { TaskAction, TaskActionResult } from "TaskRequests/TaskAction";
+import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
+import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
 export class HarvestTask extends TaskAction {
     message = "⚡";

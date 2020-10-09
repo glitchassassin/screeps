@@ -1,4 +1,4 @@
-import { getEnergy } from "TaskRequests/activity/GetEnergy";
+import { getEnergy } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/GetEnergy";
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
 enum WorkStates {

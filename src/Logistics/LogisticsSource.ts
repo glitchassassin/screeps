@@ -1,5 +1,4 @@
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { travel } from "TaskRequests/activity/Travel";
+import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 import { getCapacity } from "utils/gameObjectSelectors";
 
 type LogisticsSources = Resource<RESOURCE_ENERGY>|StructureStorage|StructureContainer;

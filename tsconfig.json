@@ -14,7 +14,8 @@
     "emitDecoratorMetadata": true,
     "noImplicitReturns": true,
     "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false
+    "allowUnreachableCode": false,
+    "downlevelIteration": true
   },
   "exclude": [
     "node_modules"

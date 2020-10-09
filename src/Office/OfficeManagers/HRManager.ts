@@ -12,7 +12,6 @@ export class HRManager extends OfficeManager {
     extensions: StructureExtension[] = [];
     requests: {[id: string]: MinionRequest} = {};
     assignments: Map<Id<StructureSpawn>, MinionRequest> = new Map();
-    resupply: TaskRequest|null = null;
 
     submit = (request: MinionRequest) => {
         if (!request.sourceId) return;
@@ -62,7 +61,7 @@ export class HRManager extends OfficeManager {
     }
     run() {
         // Spawn Requests
-        let assignedRequests = [...this.assignments.values()]
+        let assignedRequests = Array.from(this.assignments.values())
 
         Object.values(this.requests)
             .sort((a, b) => (b.priority - a.priority)).forEach(r => {

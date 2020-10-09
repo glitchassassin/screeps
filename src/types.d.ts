@@ -80,10 +80,6 @@ interface Memory {
       used: number
     },
     offices: {[id: string]: {
-      taskManagement: {
-        tasks: {[id: string]: number},
-        requests: {[id: string]: number},
-      },
       pipelineMetrics: {
         sourcesLevel: number,
         mineContainersLevel: number

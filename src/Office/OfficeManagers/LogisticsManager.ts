@@ -7,8 +7,9 @@ import { LogisticsRoute } from "Logistics/LogisticsRoute";
 import { LogisticsSource } from "Logistics/LogisticsSource";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { getFreeCapacity } from "utils/gameObjectSelectors";
+import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
+import { HRManager } from "./HRManager";
 
 export class LogisticsManager extends OfficeManager {
     storage?: StructureStorage;
@@ -33,6 +34,7 @@ export class LogisticsManager extends OfficeManager {
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let hrManager = this.office.managers.get('HRManager') as HRManager;
 
         this.storage = logisticsAnalyst.getStorage(this.office)[0];
         this.extensions = hrAnalyst.getExtensions(this.office)
@@ -55,23 +57,16 @@ export class LogisticsManager extends OfficeManager {
                 // Manager is offline, do nothing
                 return;
             }
-            case OfficeManagerStatus.MINIMAL: {
-                // Maintain one carrier
-                if (this.carriers.length === 0) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
-                }
-                break;
-            }
             default: {
                 // Maintain enough carriers to keep
                 // franchises drained
                 let metrics = statisticsAnalyst.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
                 if (this.carriers.length === 0) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 } else if (Game.time % 50 === 0 && inputAverageMean > 0.1) {
                     console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% detected, spawning carrier`);
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
                 }
                 break;
             }
@@ -84,13 +79,55 @@ export class LogisticsManager extends OfficeManager {
 
         // Try to route requests
         let idleCarriers = this.carriers.filter(c => !this.routes.has(c));
-        let requests = [...this.requests.values()].sort((a, b) => (a.priority - b.priority));
-        while (requests.length > 0) {
+        // Prioritize requests
+        let priorities = new Map<number, LogisticsRequest[]>();
+        for (let [,req] of this.requests) {
+            let level = priorities.get(req.priority);
+            if (!level) {
+                level = [];
+                priorities.set(req.priority, level)
+            }
+            level.push(req);
+        }
+
+        while (priorities.size > 0) {
             let carrier = idleCarriers.shift();
             if (!carrier) break;
-            let route = new LogisticsRoute(carrier, requests[0], [...this.sources.values()]);
+
+            // Get requests for highest priority level
+            let priority = Math.max(...priorities.keys());
+            let level = priorities.get(priority);
+            if (!level || level.length === 0) {
+                priorities.delete(priority);
+                continue;
+            }
+
+            // Set up route for initial request
+            let request = level.shift() as LogisticsRequest;
+            let route = new LogisticsRoute(carrier, request, [...this.sources.values()]);
+            // Fulfill other close requests, by priority order
+            level.sort(sortByDistanceTo(request.pos));
+            while (priorities.size > 0) {
+                // Get next request
+                let request = level?.shift();
+                // If no more requests for this priority, skip to next
+                if (!request) {
+                    // End of level
+                    priorities.delete(priority);
+                    priority = Math.max(...priorities.keys());
+                    level = priorities.get(priority);
+                    if (!level || level.length === 0) {
+                        priorities.delete(priority);
+                    }
+                    continue;
+                }
+                if (!route.extend(request)) break; // No more requests for route
+            }
+
             if (route.commit()) {
                 this.routes.set(carrier, route);
+            } else {
+                throw new Error('Failed to commit route');
             }
         }
     }

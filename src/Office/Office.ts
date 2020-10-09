@@ -1,10 +1,8 @@
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { MinionRequest } from "MinionRequests/MinionRequest";
 import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
 import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
 import { table } from "table";
-import { TaskRequest } from "TaskRequests/TaskRequest";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
 import { HRManager } from "./OfficeManagers/HRManager";
@@ -12,7 +10,6 @@ import { LegalManager } from "./OfficeManagers/LegalManager";
 import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
 import { SalesManager } from "./OfficeManagers/SalesManager";
 import { SecurityManager } from "./OfficeManagers/SecurityManager";
-import { TaskManager } from "./OfficeManagers/TaskManager";
 import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
 
 export class Office {
@@ -80,7 +77,6 @@ export class Office {
         new LogisticsManager(this);
         new SalesManager(this);
         new SecurityManager(this);
-        new TaskManager(this);
 
     }
 
@@ -103,20 +99,6 @@ export class Office {
 
     register(manager: OfficeManager) {
         this.managers.set(manager.constructor.name, manager);
-    }
-
-    /**
-     * Submit MinionRequests and TaskRequests to respective managers
-     */
-    submit(request: MinionRequest|TaskRequest) {
-        if (request instanceof MinionRequest) {
-            let hr = this.managers.get('HRManager') as HRManager|undefined;
-            hr?.submit(request);
-        }
-        if (request instanceof TaskRequest) {
-            let minions = this.managers.get('TaskManager') as TaskManager|undefined;
-            minions?.submit(request)
-        }
     }
 
     /**
@@ -196,14 +178,14 @@ export class Office {
             franchiseLocations: {},
             territories: {}
         }
-        Memory.offices[this.name].employees = [...this.employeeIds];
+        Memory.offices[this.name].employees = Array.from(this.employeeIds);
         Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
         Memory.offices[this.name].territories = this.territories.reduce((obj, territory) => {
             obj[territory.name] = {
                 controller: territory.controller,
                 scanned: territory.scanned,
                 lastHostileActivity: territory.lastHostileActivity,
-                sources: [...territory.sources.entries()].reduce((a, [id, pos]) => {
+                sources: Array.from(territory.sources.entries()).reduce((a, [id, pos]) => {
                     a[id as string] = pos
                     return a;
                 }, {} as {[id: string]: RoomPosition})

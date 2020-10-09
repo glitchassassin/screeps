@@ -1,6 +1,5 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
-import { TaskManager } from "Office/OfficeManagers/TaskManager";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
@@ -69,33 +68,8 @@ export class GrafanaAnalyst extends BoardroomManager {
             repairDelta: this.deltas[office.name].repairing,
         }
     }
-    taskManagementMetrics(office: Office) {
-        let taskManager = office.managers.get('TaskManager') as TaskManager;
-        if (!taskManager) return {tasks: {}, requests: {}};
-
-        let taskCount: {[id: string]: number} = {};
-        taskManager.tasks.forEach(t => {
-            let name = t.actions[0].constructor.name;
-            taskCount[name] = 1 + (taskCount[name] || 0);
-        });
-
-        let requestCount: {[id: string]: number} = {};
-        taskManager.getRequestsFlattened().forEach(r => {
-            if (!r.task) return;
-            let name = r.task.constructor.name;
-            requestCount[name] = 1 + (requestCount[name] || 0);
-        });
-        return {
-            tasks: taskCount,
-            requests: requestCount
-        }
-    }
     cleanup() {
         const stats: {[id: string]: {
-            taskManagement: {
-                tasks: {[id: string]: number},
-                requests: {[id: string]: number},
-            },
             pipelineMetrics: {
                 sourcesLevel: number,
                 mineContainersLevel: number
@@ -107,7 +81,6 @@ export class GrafanaAnalyst extends BoardroomManager {
         this.boardroom.offices.forEach(office => {
             if (office.center.room.controller?.my) {
                 stats[office.name] = {
-                    taskManagement: this.taskManagementMetrics(office),
                     pipelineMetrics: this.pipelineMetrics(office),
                     controllerProgress: office.center.room.controller.progress,
                     controllerProgressTotal: office.center.room.controller.progressTotal,
