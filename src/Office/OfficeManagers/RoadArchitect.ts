@@ -20,6 +20,7 @@ export class Road {
         let done = 0;
         let inprogress = 0;
         this.path.forEach(pos => {
+            if (!Game.rooms[pos.roomName]) return;
             pos.look().forEach(lookItem => {
                 if (
                     lookItem.structure?.structureType === STRUCTURE_ROAD ||
