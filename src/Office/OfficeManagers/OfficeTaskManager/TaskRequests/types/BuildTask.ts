@@ -17,7 +17,8 @@ export class BuildTask extends GetEnergyAndWorkTask {
     }
 
     valid() {
-        return (!!this.destination)
+        // If we can see the room and the site does not exist, return false
+        return !(Game.rooms[this.destination.pos.roomName] && !this.destination.gameObj)
     }
 
     work(creep: Creep): TaskActionResult {
