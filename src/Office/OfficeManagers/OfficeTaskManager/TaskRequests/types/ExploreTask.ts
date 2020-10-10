@@ -26,4 +26,8 @@ export class ExploreTask extends TaskAction {
         }
         return TaskActionResult.INPROGRESS;
     }
+
+    canBeFulfilledBy(creep: Creep) {
+        return creep.getActiveBodyparts(MOVE) > 0
+    }
 }

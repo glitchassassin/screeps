@@ -1,3 +1,4 @@
+import { Franchise } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
@@ -5,35 +6,38 @@ export class HarvestTask extends TaskAction {
     message = "⚡";
 
     constructor(
-        public source: RoomPosition,
+        public franchise: Franchise,
         public priority: number
     ) {
         super(priority);
     }
     toString() {
-        return `[HarvestTask: ${this.source?.roomName}{${this.source?.x},${this.source?.y}}]`
+        return `[HarvestTask: ${this.franchise.pos?.roomName}{${this.franchise.pos?.x},${this.franchise.pos?.y}}]`
     }
 
     action(creep: Creep) {
         // If unable to get the creep or source, task is completed
-        if (!this.source) return TaskActionResult.FAILED;
-        if (creep.pos.roomName !== this.source.roomName) {
-            travel(creep, this.source);
+        if (!this.franchise) return TaskActionResult.FAILED;
+        if (creep.pos.roomName !== this.franchise.pos.roomName) {
+            travel(creep, this.franchise.pos);
             return TaskActionResult.INPROGRESS;
         }
 
-        let source = this.source.lookFor(LOOK_SOURCES)?.[0]
-
-        if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-            travel(creep, source.pos);
+        if (!creep.pos.isEqualTo(this.franchise.pos) && this.franchise.pos.lookFor(LOOK_CREEPS).length === 0) {
+            // Prefer the main franchise location
+            travel(creep, this.franchise.pos, 0);
             return TaskActionResult.INPROGRESS;
+        } else if (!creep.pos.isNearTo(this.franchise.sourcePos)) {
+            travel(creep, this.franchise.sourcePos, 1);
         }
-        if (creep.store.getCapacity() > 0) {
-            // If can carry, is the creep full?
-            if (creep.store.getFreeCapacity() == 0) {
-                return TaskActionResult.SUCCESS;
-            }
-        }
+
+        if (!this.franchise.source) return TaskActionResult.FAILED;
+        creep.harvest(this.franchise.source);
+
         return TaskActionResult.INPROGRESS;
+    }
+
+    canBeFulfilledBy(creep: Creep) {
+        return creep.getActiveBodyparts(WORK) > 0 && creep.getActiveBodyparts(MOVE) > 0 && creep.memory.source === this.franchise.id;
     }
 }

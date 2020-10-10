@@ -1,18 +1,18 @@
 import { OfficeManager } from "Office/OfficeManager";
-import { TaskAction } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
+import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
 export class OfficeTaskManager extends OfficeManager {
     requests = new Map<string, TaskAction>();
-    assignments = new Map<Creep, TaskAction>();
+    assignments = new Map<Id<Creep>, TaskAction>();
 
     submit = (sourceId: string, request: TaskAction) => {
         let key = request.constructor.name + '_' + sourceId;
         let existingRequest = this.requests.get(key);
         if (!existingRequest || request.priority > existingRequest.priority) {
             this.requests.set(key, request);
-            for (let [creep, task] of this.assignments) {
+            for (let [creepId, task] of this.assignments) {
                 if (task === existingRequest) {
-                    this.assignments.delete(creep);
+                    this.assignments.delete(creepId);
                 }
             }
         }
@@ -36,7 +36,7 @@ export class OfficeTaskManager extends OfficeManager {
                 for (let request of requests) {
                     for (let creep of creeps) {
                         if (request.canBeFulfilledBy(creep)) {
-                            this.assignments.set(creep, request);
+                            this.assignments.set(creep.id, request);
                         }
                     }
                 }
@@ -44,26 +44,33 @@ export class OfficeTaskManager extends OfficeManager {
         });
 
         // Run assigned tasks
-        for (let [creep, task] of this.assignments) {
-            if (!task.valid()) this.assignments.delete(creep);
+        for (let [creepId, task] of this.assignments) {
+            let creep = Game.getObjectById(creepId)
+            if (!creep || !task.valid()) {
+                this.assignments.delete(creepId);
+                continue;
+            }
 
-            task.action(creep);
+            let result = task.action(creep);
+            if (result !== TaskActionResult.INPROGRESS) {
+                this.assignments.delete(creepId);
+            }
         }
     }
 
     cleanup() {
-        for (let [creep,task] of this.assignments) {
-            if (!task.valid()) this.assignments.delete(creep);
+        for (let [creepId,task] of this.assignments) {
+            if (!task.valid()) this.assignments.delete(creepId);
         }
     }
 
     isIdle = (creep: Creep) => {
         for (let [c] of this.assignments) {
-            if (c === creep) return false;
+            if (c === creep.id) return false;
         }
         return true;
     }
     getAvailableCreeps = () => {
-        return this.office.employees.filter(c => !c.memory.ignoresRequests && this.isIdle(c))
+        return this.office.employees.filter(c => c.memory.manager === this.constructor.name && this.isIdle(c))
     }
 }

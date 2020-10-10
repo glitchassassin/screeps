@@ -62,7 +62,7 @@ export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
         routeCache.set(routeKey, route);
     }
 
-    log('Travel', 'Traveling');
+    log('Travel', `${creep.name} traveling`);
     route.visualize();
     let result = route.run(creep);
     if (result !== OK) {

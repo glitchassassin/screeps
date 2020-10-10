@@ -4,6 +4,7 @@ import { getCapacity } from "utils/gameObjectSelectors";
 
 export class LogisticsRequest {
     public completed = false;
+    public assigned = false;
     public resupply = false;
 
     constructor(
@@ -47,6 +48,9 @@ export class DepotRequest extends LogisticsRequest {
     action(creep: Creep) {
         // Wait for minions to request resources
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        if (!creep.pos.isNearTo(this.pos)) {
+            return travel(creep, this.pos)
+        }
         if (creep.store.getUsedCapacity() === 0) {
             this.completed = true;
             return OK;

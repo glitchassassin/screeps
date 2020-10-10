@@ -48,7 +48,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 // new construction
                 let jobs = this.submitOrders(2);
                 if (jobs > 0 && this.handymen.length < 1) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
                 }
                 return;
             }
@@ -58,7 +58,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 // construction.
                 let jobs = this.submitOrders(2);
                 if (jobs > 0 && (this.handymen.length < (jobs / 2))) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
                 }
                 return;
             }
@@ -68,7 +68,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 // repairs if needed.
                 let jobs = this.submitOrders(2);
                 if (jobs > 0 && this.handymen.length < jobs) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
                 }
                 return;
             }
@@ -95,7 +95,7 @@ export class FacilitiesManager extends OfficeTaskManager {
         [...repairable, ...this.sites].slice(0, max - this.requests.size).forEach((site) => {
             if (site instanceof Structure) {
                 this.submit(`${site.id}_repair`, new RepairTask(site, 5))
-            } else if (site instanceof ConstructionSite) {
+            } else {
                 this.submit(`${site.id}_build`, new BuildTask(site, 5))
             }
         })

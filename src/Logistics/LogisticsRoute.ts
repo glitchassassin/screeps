@@ -75,6 +75,8 @@ export class LogisticsRoute {
 
         // Reserve capacity at the source
         this.source.reserve(this.requests.reduce((sum, req) => sum + req.capacity, 0));
+        // Assign requests
+        this.requests.forEach(r => r.assigned = true);
         this.state = RouteState.GETTING_ENERGY;
         return true;
     }
@@ -82,6 +84,8 @@ export class LogisticsRoute {
     run() {
         // Validate current state
         if (!this.creep) { // Creep not found
+            // Unassign remaining requests
+            this.requests.forEach(r => r.assigned = false);
             // If creep has not withdrawn, cancel reservation
             if (this.state === RouteState.GETTING_ENERGY) {
                 this.source?.unreserve(this.requests.reduce((sum, req) => sum + req.capacity, 0))

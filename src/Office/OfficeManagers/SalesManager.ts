@@ -26,7 +26,7 @@ export class SalesManager extends OfficeTaskManager {
                 break;
         }
         // Bump priority up if we have NO salesmen
-        if (this.office.employees.filter(c => c.memory.type === 'SALESMAN').length < 2) {
+        if (this.office.employees.filter(c => c.memory.type === 'SALESMAN').length === 0) {
             priority += 2;
         }
         // Bump priority down if we currently have a franchise surplus
@@ -50,22 +50,19 @@ export class SalesManager extends OfficeTaskManager {
                 let hrManager = this.office.managers.get('HRManager') as HRManager;
                 hrManager.submit(new MinionRequest(franchise.id, priority - distance, MinionTypes.SALESMAN, {
                     source: franchise.id,
-                    ignoresRequests: true
+                    manager: this.constructor.name
                 }))
             }
+            franchise.salesmen.forEach(salesman => {
+                if (this.isIdle(salesman)) {
+                    // Keep mining ad infinitum.
+                    this.submit(salesman.id, new HarvestTask(franchise, 10))
+                }
+            })
         })
     }
     run() {
         super.run();
-
-        this.franchises.forEach(franchise => {
-            franchise.salesmen.forEach(salesman => {
-                if (this.isIdle(salesman)) {
-                    // Keep mining ad infinitum.
-                    this.submit(salesman.id, new HarvestTask(franchise.sourcePos, 10))
-                }
-            })
-        })
         if (global.v.sales.state) {
             this.report();
         }

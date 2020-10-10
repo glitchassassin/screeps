@@ -8,8 +8,7 @@ interface RawMemory {
 interface CreepMemory {
   type?: string
   source?: string
-  task?: string
-  ignoresRequests?: boolean
+  manager?: string
   favoredTasks?: string[]
   spawned?: number
   arrived?: number

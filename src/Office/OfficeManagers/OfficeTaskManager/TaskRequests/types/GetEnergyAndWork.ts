@@ -32,4 +32,8 @@ export class GetEnergyAndWorkTask extends TaskAction {
             }
         }
     }
+
+    canBeFulfilledBy(creep: Creep) {
+        return creep.getActiveBodyparts(WORK) > 0 && creep.getActiveBodyparts(CARRY) > 0 && creep.getActiveBodyparts(MOVE) > 0
+    }
 }

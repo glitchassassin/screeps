@@ -16,10 +16,11 @@ export class LogisticsManager extends OfficeManager {
     extensions: StructureExtension[] = [];
     spawns: StructureSpawn[] = [];
     carriers: Creep[] = [];
+    lastMinionRequest = 0;
 
     sources = new Map<RoomPosition, LogisticsSource>();
     requests = new Map<string, LogisticsRequest>();
-    routes = new Map<Creep, LogisticsRoute>();
+    routes = new Map<Id<Creep>, LogisticsRoute>();
 
     submit(requestId: string, request: LogisticsRequest) {
         let req = this.requests.get(requestId);
@@ -39,6 +40,7 @@ export class LogisticsManager extends OfficeManager {
         this.storage = logisticsAnalyst.getStorage(this.office)[0];
         this.extensions = hrAnalyst.getExtensions(this.office)
         this.carriers = logisticsAnalyst.getCarriers(this.office)
+        let idleCarriers = this.carriers.filter(c => !this.routes.has(c.id));
         this.spawns = hrAnalyst.getSpawns(this.office)
 
         // Update LogisticsSources
@@ -62,11 +64,12 @@ export class LogisticsManager extends OfficeManager {
                 // franchises drained
                 let metrics = statisticsAnalyst.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
-                if (this.carriers.length === 0) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
-                } else if (Game.time % 50 === 0 && inputAverageMean > 0.1) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% detected, spawning carrier`);
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
+                let unassignedRequests = Array.from(this.requests.values()).filter(r => !r.assigned).length;
+                let requestCapacity = unassignedRequests / this.requests.size;
+                if (Game.time - this.lastMinionRequest > 50 && inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5) {
+                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unassigned, spawning carrier`);
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
+                    this.lastMinionRequest = Game.time;
                 }
                 break;
             }
@@ -78,10 +81,10 @@ export class LogisticsManager extends OfficeManager {
         }
 
         // Try to route requests
-        let idleCarriers = this.carriers.filter(c => !this.routes.has(c));
         // Prioritize requests
         let priorities = new Map<number, LogisticsRequest[]>();
         for (let [,req] of this.requests) {
+            if (req.assigned) continue;
             let level = priorities.get(req.priority);
             if (!level) {
                 level = [];
@@ -105,6 +108,7 @@ export class LogisticsManager extends OfficeManager {
             // Set up route for initial request
             let request = level.shift() as LogisticsRequest;
             let route = new LogisticsRoute(carrier, request, [...this.sources.values()]);
+
             // Fulfill other close requests, by priority order
             level.sort(sortByDistanceTo(request.pos));
             while (priorities.size > 0) {
@@ -125,7 +129,7 @@ export class LogisticsManager extends OfficeManager {
             }
 
             if (route.commit()) {
-                this.routes.set(carrier, route);
+                this.routes.set(carrier.id, route);
             } else {
                 throw new Error('Failed to commit route');
             }
@@ -133,15 +137,24 @@ export class LogisticsManager extends OfficeManager {
     }
     run() {
         // Execute routes
-        this.routes.forEach((route, creep) => {
+        this.routes.forEach((route, creepId) => {
             route.run();
-            if (route.completed) this.routes.delete(creep);
+            if (route.completed) {
+                this.routes.delete(creepId);
+            }
         })
 
         // Display visuals
         if (global.v.logistics.state) {
             this.report();
             this.map();
+        }
+    }
+    cleanup() {
+        for (let [id,req] of this.requests) {
+            if (req.completed) {
+                this.requests.delete(id);
+            }
         }
     }
     report() {

@@ -1,6 +1,5 @@
 import { Boardroom } from 'Boardroom/Boardroom';
 import 'reflect-metadata';
-import profiler from 'screeps-profiler';
 import { ErrorMapper } from "utils/ErrorMapper";
 import { log } from 'utils/logger';
 import MemHack from 'utils/memhack';
@@ -93,7 +92,5 @@ function mainLoop() {
   }
 }
 
-profiler.enable();
-export const loop = ErrorMapper.wrapLoop(() => {
-  profiler.wrap(mainLoop)
-});
+
+export const loop = ErrorMapper.wrapLoop(mainLoop);
