@@ -1,6 +1,6 @@
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
-import { getCapacity } from "utils/gameObjectSelectors";
+import { getFreeCapacity } from "utils/gameObjectSelectors";
 
 export class LogisticsRequest {
     public completed = false;
@@ -24,7 +24,7 @@ export class TransferRequest extends LogisticsRequest {
     ) {
         super(target.pos, priority, capacity);
         if (this.capacity === -1) {
-            this.capacity = getCapacity(target);
+            this.capacity = getFreeCapacity(target);
         }
     }
 

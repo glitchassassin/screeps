@@ -16,6 +16,7 @@ export class LogisticsRoute {
     source?: LogisticsSource;
     requests: LogisticsRequest[];
     private _creep: Id<Creep>;
+    public maxCapacity: number = 0;
     public capacity: number = 0;
 
 
@@ -55,14 +56,15 @@ export class LogisticsRoute {
         })
 
         if (this.source) {
-            this.capacity = Math.max(creep.store.getCapacity(), creep.store.getUsedCapacity() + this.source.capacity);
-            this.capacity -= request.capacity;
+            this.maxCapacity = Math.min(creep.store.getCapacity(), creep.store.getUsedCapacity() + this.source.capacity);
+            this.capacity = this.maxCapacity - request.capacity;
         }
     }
 
     extend(request: LogisticsRequest) {
         if (this.capacity > 0) {
             this.requests.push(request);
+            this.capacity -= request.capacity;
             return true;
         }
         return false;

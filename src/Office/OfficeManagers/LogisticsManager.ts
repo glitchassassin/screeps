@@ -9,6 +9,7 @@ import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
 import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
+import { Table } from "Visualizations/Table";
 import { HRManager } from "./HRManager";
 
 export class LogisticsManager extends OfficeManager {
@@ -181,6 +182,31 @@ export class LogisticsManager extends OfficeManager {
         ])
 
         chart.render(new RoomPosition(2, 2, this.office.center.name));
+
+        // Requests
+        const taskTable: any[][] = [['Source', 'Type', 'Priority', 'Capacity', 'Assigned']];
+        for (let [, req] of this.requests) {
+            taskTable.push([
+                req.pos,
+                req.constructor.name,
+                req.capacity,
+                req.priority,
+                req.assigned ? 'Yes' : ''
+            ])
+        }
+        Table(new RoomPosition(0, 20, this.office.center.name), taskTable);
+
+        // Routes
+        const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Capacity']];
+        for (let [, route] of this.routes) {
+            routeTable.push([
+                route.source?.pos.toString() + `(${route.source?.primary ? 'Primary': 'Secondary'})`,
+                route.requests.length,
+                route.creep?.name,
+                `${route.capacity}/${route.maxCapacity}`,
+            ])
+        }
+        Table(new RoomPosition(0, 40, this.office.center.name), routeTable);
     }
     map() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;

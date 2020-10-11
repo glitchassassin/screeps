@@ -94,9 +94,9 @@ export class FacilitiesManager extends OfficeTaskManager {
 
         [...repairable, ...this.sites].slice(0, max - this.requests.size).forEach((site) => {
             if (site instanceof Structure) {
-                this.submit(`${site.id}_repair`, new RepairTask(site, 5))
+                this.submit(`${site.id}`, new RepairTask(site, 5))
             } else {
-                this.submit(`${site.id}_build`, new BuildTask(site, 5))
+                this.submit(`${site.id}`, new BuildTask(site, 5))
             }
         })
         return this.requests.size;
@@ -105,6 +105,7 @@ export class FacilitiesManager extends OfficeTaskManager {
     run() {
         super.run();
         if (global.v.construction.state) {
+            super.report();
             this.requests.forEach(task => {
                 if (task instanceof BuildTask) {
                     new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
