@@ -8,8 +8,7 @@ interface RawMemory {
 interface CreepMemory {
   type?: string
   source?: string
-  task?: string
-  ignoresRequests?: boolean
+  manager?: string
   favoredTasks?: string[]
   spawned?: number
   arrived?: number
@@ -80,10 +79,6 @@ interface Memory {
       used: number
     },
     offices: {[id: string]: {
-      taskManagement: {
-        tasks: {[id: string]: number},
-        requests: {[id: string]: number},
-      },
       pipelineMetrics: {
         sourcesLevel: number,
         mineContainersLevel: number

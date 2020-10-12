@@ -4,7 +4,7 @@
     "lib": [
       "esnext"
     ],
-    "target": "es2017",
+    "target": "ES5",
     "moduleResolution": "Node",
     "outDir": "dist",
     "baseUrl": "src/",
@@ -14,7 +14,8 @@
     "emitDecoratorMetadata": true,
     "noImplicitReturns": true,
     "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false
+    "allowUnreachableCode": false,
+    "downlevelIteration": true
   },
   "exclude": [
     "node_modules"

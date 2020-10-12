@@ -1,18 +1,17 @@
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { TransferRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { TransferTask } from "TaskRequests/types/TransferTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 import { Table } from "Visualizations/Table";
+import { LogisticsManager } from "./LogisticsManager";
 
 export class HRManager extends OfficeManager {
     spawns: StructureSpawn[] = [];
     extensions: StructureExtension[] = [];
     requests: {[id: string]: MinionRequest} = {};
     assignments: Map<Id<StructureSpawn>, MinionRequest> = new Map();
-    resupply: TaskRequest|null = null;
 
     submit = (request: MinionRequest) => {
         if (!request.sourceId) return;
@@ -24,6 +23,7 @@ export class HRManager extends OfficeManager {
     plan() {
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
+        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         // Enroll any newly hired creeps, if they are not already on the list
         this.spawns = hrAnalyst.getSpawns(this.office);
         this.extensions = hrAnalyst.getExtensions(this.office)
@@ -48,20 +48,20 @@ export class HRManager extends OfficeManager {
         this.extensions.forEach(e => {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {
-                this.office.submit(new TaskRequest(e.id, new TransferTask(e), priority, energy));
+                logisticsManager.submit(e.id, new TransferRequest(e, priority));
             }
         })
         this.spawns.forEach((spawn) => {
             let spawnCapacity = getTransferEnergyRemaining(spawn);
             if (!spawnCapacity) return;
             if (spawnCapacity > 0) {
-                this.office.submit(new TaskRequest(spawn.id, new TransferTask(spawn), priority, spawnCapacity));
+                logisticsManager.submit(spawn.id, new TransferRequest(spawn, priority));
             }
         })
     }
     run() {
         // Spawn Requests
-        let assignedRequests = [...this.assignments.values()]
+        let assignedRequests = Array.from(this.assignments.values())
 
         Object.values(this.requests)
             .sort((a, b) => (b.priority - a.priority)).forEach(r => {

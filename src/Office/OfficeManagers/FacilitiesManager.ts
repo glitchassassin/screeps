@@ -1,10 +1,13 @@
 import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { DepotRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { BuildTask } from "TaskRequests/types/BuildTask";
-import { RepairTask } from "TaskRequests/types/RepairTask";
-import { getBuildEnergyRemaining, getRepairEnergyRemaining } from "utils/gameObjectSelectors";
+import { OfficeManagerStatus } from "Office/OfficeManager";
+import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
+import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
+import { HRManager } from "./HRManager";
+import { LogisticsManager } from "./LogisticsManager";
+import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { TaskAction } from "./OfficeTaskManager/TaskRequests/TaskAction";
 
 const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
@@ -22,29 +25,23 @@ const buildPriority = (site: CachedConstructionSite) => {
     }
 }
 
-export class FacilitiesManager extends OfficeManager {
+export class FacilitiesManager extends OfficeTaskManager {
     structures: CachedStructure[] = [];
     sites: CachedConstructionSite[] = [];
     handymen: Creep[] = [];
 
-    repairOrders = new Map<Id<Structure>, TaskRequest>();
-    buildOrders = new Map<Id<ConstructionSite>, TaskRequest>();
+    depotRequests = new Map<TaskAction, DepotRequest>();
 
     plan() {
+        super.plan();
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
+        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
+        let hrManager = this.office.managers.get('HRManager') as HRManager;
         // TODO - Update these with callbacks. Until then, load each tick
         this.sites = facilitiesAnalyst.getConstructionSites(this.office);
         this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)));
         this.structures = facilitiesAnalyst.getStructures(this.office);
         this.handymen = facilitiesAnalyst.getHandymen(this.office);
-
-        // Check if existing requests are fulfilled
-        this.repairOrders.forEach((request, id) => {
-            if (request.completed) this.repairOrders.delete(id);
-        })
-        this.buildOrders.forEach((request, id) => {
-            if (request.completed) this.buildOrders.delete(id);
-        })
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
@@ -55,45 +52,51 @@ export class FacilitiesManager extends OfficeManager {
                 // Perform repairs if needed, or
                 // delegate minimal resources to
                 // new construction
-                let jobs = this.submitRepairOrders(2);
-                if (jobs < 2) {
-                    jobs += this.submitBuildOrders(2 - jobs);
-                }
+                let jobs = this.submitOrders(2);
                 if (jobs > 0 && this.handymen.length < 1) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
                 }
-                return;
+                break;
             }
             case OfficeManagerStatus.NORMAL: {
                 // Perform repairs if needed, or
                 // delegate resources to new
                 // construction.
-                let jobs = this.submitRepairOrders(2);
-                if (jobs < 5) {
-                    jobs += this.submitBuildOrders(2 - jobs);
+                let jobs = this.submitOrders(2);
+                if (jobs > 0 && (this.handymen.length < (jobs / 2))) {
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
                 }
-                if (jobs > 0 && (this.handymen.length < (jobs / 2) || this.handymen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0) < (5 * jobs))) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN))
-                }
-                return;
+                break;
             }
             case OfficeManagerStatus.PRIORITY: {
                 // Dedicate extra resources to
                 // new construction, performing
                 // repairs if needed.
-                let jobs = this.submitRepairOrders(2);
-                if (jobs < 5) {
-                    jobs += this.submitBuildOrders(2 - jobs);
-                }
+                let jobs = this.submitOrders(2);
                 if (jobs > 0 && this.handymen.length < jobs) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN))
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
                 }
-                return;
+                break;
+            }
+        }
+        // Request depots for active assignments
+        for (const [creepId, request] of this.assignments) {
+            let pos = (request as BuildTask|RepairTask).pos;
+            let needsDepot = true;
+            for (let [sourcePos] of logisticsManager.sources) {
+                if (pos.inRangeTo(sourcePos, 5)) {
+                    needsDepot = false;
+                }
+            }
+            if (needsDepot && !this.depotRequests.has(request)) {
+                let depotReq = new DepotRequest(pos, request.priority, request.capacity);
+                logisticsManager.submit(creepId, depotReq);
+                this.depotRequests.set(request, depotReq);
             }
         }
     }
-    submitRepairOrders(max = 5) {
-        if (this.repairOrders.size >= max) return this.repairOrders.size;
+    submitOrders(max = 5) {
+        if (this.requests.size >= max) return this.requests.size;
 
         let repairable = (this.structures.map(s => s.gameObj).filter(structure => {
             if (!structure) return false;
@@ -109,34 +112,41 @@ export class FacilitiesManager extends OfficeManager {
                     return structure.hits < (structure.hitsMax * 0.5); // In MINIMAL mode, repair structures below half health
             }
         }) as Structure[]).sort((a, b) => a.hits - b.hits);
-        repairable.slice(0, max - this.repairOrders.size).forEach((structure, i) => {
-            let req = new TaskRequest(`${structure.id}_repair`, new RepairTask(structure), 5, getRepairEnergyRemaining(structure), structure.pos);
-            this.repairOrders.set(structure.id, req);
-            this.office.submit(req);
-        })
-        return this.repairOrders.size;
-    }
-    submitBuildOrders(max = 5) {
-        if (this.buildOrders.size >= max) return this.buildOrders.size;
 
-        this.sites.slice(0, max - this.buildOrders.size).forEach((site, i) => {
-            let req = new TaskRequest(`${this.office.name}_Build_${i}`, new BuildTask(site), 5, getBuildEnergyRemaining(site), site.pos);
-            this.buildOrders.set(site.id, req);
-            this.office.submit(req);
+        [...repairable, ...this.sites].slice(0, max - this.requests.size).forEach((site) => {
+            if (site instanceof Structure) {
+                this.submit(`${site.id}`, new RepairTask(site, 5))
+            } else {
+                this.submit(`${site.id}`, new BuildTask(site, Math.floor(buildPriority(site))))
+            }
         })
-        return this.buildOrders.size;
+        return this.requests.size;
     }
 
     run() {
+        super.run();
         if (global.v.construction.state) {
-            this.buildOrders.forEach(task => {
-                let pos = task.depot
-                if (pos) new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
+            super.report();
+            this.requests.forEach(task => {
+                if (task instanceof BuildTask) {
+                    new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
+                } else if (task instanceof RepairTask) {
+                    new RoomVisual(task.pos.roomName).rect(task.pos.x-1, task.pos.y-1, 2, 2, {stroke: 'yellow', fill: 'transparent', lineStyle: 'dotted'});
+                }
             })
-            this.repairOrders.forEach(task => {
-                let pos = task.depot
-                if (pos) new RoomVisual(pos.roomName).rect(pos.x-1, pos.y-1, 2, 2, {stroke: '#ff0', fill: 'transparent', lineStyle: 'dotted'});
-            })
+        }
+    }
+
+    cleanup() {
+        super.cleanup();
+        let activeAssignments = Array.from(this.assignments.values());
+        for (const [req, depot] of this.depotRequests) {
+            if (!activeAssignments.includes(req)) {
+                depot.completed = true;
+            }
+            if (depot.completed) {
+                this.depotRequests.delete(req);
+            }
         }
     }
 }

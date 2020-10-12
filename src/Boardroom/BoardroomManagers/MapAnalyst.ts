@@ -57,6 +57,16 @@ export class MapAnalyst extends BoardroomManager {
           }
         });
 
+        room.find(FIND_CONSTRUCTION_SITES).forEach(function(struct) {
+            if (struct.structureType !== STRUCTURE_ROAD &&
+                struct.structureType !== STRUCTURE_CONTAINER &&
+                (struct.structureType !== STRUCTURE_RAMPART || !struct.my)
+            ) {
+              // Can't walk through non-walkable construction sites
+              costs.set(struct.pos.x, struct.pos.y, 0xff);
+            }
+        });
+
         // Avoid creeps in the room
         if (avoidCreeps) {
             room.find(FIND_CREEPS).forEach(function(creep) {

@@ -1,73 +1,169 @@
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { LogisticsRequest, ResupplyRequest } from "Logistics/LogisticsRequest";
+import { LogisticsRoute } from "Logistics/LogisticsRoute";
+import { LogisticsSource } from "Logistics/LogisticsSource";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { TransferTask } from "TaskRequests/types/TransferTask";
-import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
+import { Table } from "Visualizations/Table";
+import { HRManager } from "./HRManager";
 
 export class LogisticsManager extends OfficeManager {
-    storage: StructureStorage[] = [];
+    storage?: StructureStorage;
     extensions: StructureExtension[] = [];
     spawns: StructureSpawn[] = [];
     carriers: Creep[] = [];
+    lastMinionRequest = 0;
+
+    sources = new Map<RoomPosition, LogisticsSource>();
+    requests = new Map<string, LogisticsRequest>();
+    routes = new Map<Id<Creep>, LogisticsRoute>();
+
+    submit(requestId: string, request: LogisticsRequest) {
+        let req = this.requests.get(requestId);
+        if (!req || req.priority < request.priority) {
+            if (req) req.completed = true;
+            this.requests.set(requestId, request);
+        }
+    }
+
     plan() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let hrManager = this.office.managers.get('HRManager') as HRManager;
 
-        this.storage = logisticsAnalyst.getStorage(this.office)
+        this.storage = logisticsAnalyst.getStorage(this.office)[0];
         this.extensions = hrAnalyst.getExtensions(this.office)
         this.carriers = logisticsAnalyst.getCarriers(this.office)
+        let idleCarriers = this.carriers.filter(c => !this.routes.has(c.id));
         this.spawns = hrAnalyst.getSpawns(this.office)
+
+        // Update LogisticsSources
+        salesAnalyst.getFranchiseLocations(this.office).forEach(f => {
+            if (!this.sources.has(f.sourcePos)) {
+                this.sources.set(f.sourcePos, new LogisticsSource(f.sourcePos))
+            }
+        });
+        if (this.storage && !this.sources.has(this.storage.pos)) {
+            this.sources.set(this.storage.pos, new LogisticsSource(this.storage.pos, false))
+        }
+        // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
                 // Manager is offline, do nothing
                 return;
             }
-            case OfficeManagerStatus.MINIMAL: {
-                // Maintain one carrier
-                if (this.carriers.length === 0) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
-                }
-                break;
-            }
             default: {
                 // Maintain enough carriers to keep
                 // franchises drained
                 let metrics = statisticsAnalyst.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
-                if (this.carriers.length === 0) {
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
-                } else if (Game.time % 50 === 0 && inputAverageMean > 0.1) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% detected, spawning carrier`);
-                    this.office.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER));
+                let unassignedRequests = Array.from(this.requests.values()).filter(r => !r.assigned).length;
+                let requestCapacity = unassignedRequests / this.requests.size;
+                if (Game.time - this.lastMinionRequest > 50 && inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5) {
+                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unassigned, spawning carrier`);
+                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
+                    this.lastMinionRequest = Game.time;
                 }
                 break;
             }
         }
 
-        // Create standing order for storage, or else stockpile near spawn
-        if (this.storage.length > 0) {
-            this.storage.forEach(c => {
-                let e = getTransferEnergyRemaining(c);
-                if (e && e > 0) {
-                    // Use a TransferTask instead of a TransferTask to only get energy from a source container.
-                    // Avoids shuffling back and forth between destination containers
-                    this.office.submit(new TaskRequest(c.id, new TransferTask(c), 2, e));
+        // Make sure we have a standing request for storage
+        if (this.storage && getFreeCapacity(this.storage) > 0) {
+            this.submit(this.storage.id, new ResupplyRequest(this.storage, 1))
+        }
+
+        // Try to route requests
+        // Prioritize requests
+        let priorities = new Map<number, LogisticsRequest[]>();
+        for (let [,req] of this.requests) {
+            if (req.assigned && req.assignedCapacity >= req.capacity) continue;
+            let level = priorities.get(req.priority);
+            if (!level) {
+                level = [];
+                priorities.set(req.priority, level)
+            }
+            level.push(req);
+        }
+
+        while (priorities.size > 0) {
+            let carrier = idleCarriers.shift();
+            if (!carrier) break;
+
+            // Get requests for highest priority level
+            let priority = Math.max(...priorities.keys());
+            let level = priorities.get(priority);
+            if (!level || level.length === 0) {
+                priorities.delete(priority);
+                continue;
+            }
+
+            // Set up route for initial request
+            let request = level.shift() as LogisticsRequest;
+            let route = new LogisticsRoute(carrier, request, [...this.sources.values()]);
+
+            // Fulfill other close requests, by priority order
+            level.sort(sortByDistanceTo(request.pos));
+            while (priorities.size > 0) {
+                // Get next request
+                let request = level?.shift();
+                // If no more requests for this priority, skip to next
+                if (!request) {
+                    // End of level
+                    priorities.delete(priority);
+                    priority = Math.max(...priorities.keys());
+                    level = priorities.get(priority);
+                    if (!level || level.length === 0) {
+                        priorities.delete(priority);
+                    }
+                    continue;
                 }
-            })
-        } else {
-            // this.office.submit(new TaskRequest(this.office.name + '_Logistics_Surplus', new DepotTask(this.spawns[0].pos, 1), 2, 1000));
+                if (!route.extend(request)) break; // No more requests for route
+            }
+
+            if (route.commit()) {
+                this.routes.set(carrier.id, route);
+            } else {
+                throw new Error('Failed to commit route');
+            }
         }
     }
     run() {
+        // Execute routes
+        this.routes.forEach((route, creepId) => {
+            route.run();
+            if (route.completed) {
+                this.routes.delete(creepId);
+            }
+        })
+
+        // Display visuals
         if (global.v.logistics.state) {
             this.report();
             this.map();
+        }
+    }
+    cleanup() {
+        let assignedRequests: LogisticsRequest[] = [];
+        for (let [,route] of this.routes) {
+            assignedRequests.push(...route.requests)
+        }
+        for (let [id,req] of this.requests) {
+            if (req.completed) {
+                this.requests.delete(id);
+                continue;
+            }
+            if (!assignedRequests.includes(req)) {
+                req.assigned = false;
+            }
         }
     }
     report() {
@@ -94,6 +190,31 @@ export class LogisticsManager extends OfficeManager {
         ])
 
         chart.render(new RoomPosition(2, 2, this.office.center.name));
+
+        // Requests
+        const taskTable: any[][] = [['Source', 'Type', 'Priority', 'Capacity', 'Assigned']];
+        for (let [, req] of this.requests) {
+            taskTable.push([
+                req.pos,
+                req.constructor.name,
+                req.priority,
+                req.capacity,
+                req.assignedCapacity
+            ])
+        }
+        Table(new RoomPosition(0, 20, this.office.center.name), taskTable);
+
+        // Routes
+        const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Utilized Capacity']];
+        for (let [, route] of this.routes) {
+            routeTable.push([
+                route.source?.pos.toString() + `(${route.source?.primary ? 'Primary': 'Secondary'})`,
+                route.requests.map(r => r.constructor.name).join('->'),
+                route.creep?.name,
+                `${Math.min(route.maxCapacity, route.maxCapacity - route.capacity)}/${route.maxCapacity}`,
+            ])
+        }
+        Table(new RoomPosition(0, 40, this.office.center.name), routeTable);
     }
     map() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;

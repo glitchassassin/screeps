@@ -1,15 +1,27 @@
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { TaskRequest } from "TaskRequests/TaskRequest";
-import { TransferTask } from "TaskRequests/types/TransferTask";
+import { TransferRequest } from "Logistics/LogisticsRequest";
+import { OfficeManagerStatus } from "Office/OfficeManager";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
+import { LogisticsManager } from "./LogisticsManager";
+import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { ExploreTask } from "./OfficeTaskManager/TaskRequests/types/ExploreTask";
 
-export class SecurityManager extends OfficeManager {
+export class SecurityManager extends OfficeTaskManager {
     towers: StructureTower[] = [];
     plan() {
+        super.plan();
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
+        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         this.towers = defenseAnalyst.getTowers(this.office);
+
+        // Scout surrounding Territories, if needed
+        let unexplored = this.office.territories.filter(t => !t.scanned && !t.isHostile);
+        if (unexplored.length > 0) {
+            unexplored.forEach(territory => {
+                this.submit(territory.name, new ExploreTask(territory.name, 5))
+            })
+        }
 
         switch (this.status) {
             case OfficeManagerStatus.MINIMAL: {
@@ -17,13 +29,16 @@ export class SecurityManager extends OfficeManager {
                     // Request energy, if needed
                     let e = getTransferEnergyRemaining(t);
                     if (e) {
+                        let priority = 1;
                         if (e > 700) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 5, e));
+                            priority = 5;
                         } else if (e > 150) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 4, e));
+                            priority = 4;
                         } else if (e > 0) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
+                            priority = 1;
                         }
+
+                        logisticsManager.submit(t.id, new TransferRequest(t, priority));
                     }
                 })
                 return;
@@ -33,13 +48,16 @@ export class SecurityManager extends OfficeManager {
                     // Request energy, if needed
                     let e = getTransferEnergyRemaining(t);
                     if (e) {
+                        let priority = 1;
                         if (e > 700) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 9, e));
+                            priority = 9;
                         } else if (e > 150) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 5, e));
+                            priority = 5;
                         } else if (e > 0) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
+                            priority = 1;
                         }
+
+                        logisticsManager.submit(t.id, new TransferRequest(t, priority));
                     }
                 })
                 return;
@@ -49,11 +67,14 @@ export class SecurityManager extends OfficeManager {
                     // Request energy, if needed
                     let e = getTransferEnergyRemaining(t);
                     if (e) {
+                        let priority = 1;
                         if (e > 150) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 9, e));
+                            priority = 9;
                         } else if (e > 0) {
-                            this.office.submit(new TaskRequest(t.id, new TransferTask(t), 1, e));
+                            priority = 1;
                         }
+
+                        logisticsManager.submit(t.id, new TransferRequest(t, priority));
                     }
                 })
                 return;
@@ -61,6 +82,7 @@ export class SecurityManager extends OfficeManager {
         }
     }
     run() {
+        super.run();
         if (this.status === OfficeManagerStatus.OFFLINE) return;
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
         let targets = defenseAnalyst.getPrioritizedAttackTargets(this.office);
