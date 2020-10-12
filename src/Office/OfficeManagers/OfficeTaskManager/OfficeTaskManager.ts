@@ -61,7 +61,10 @@ export class OfficeTaskManager extends OfficeManager {
 
     cleanup() {
         for (let [creepId,task] of this.assignments) {
-            if (!task.valid()) this.assignments.delete(creepId);
+            if (!task.valid() || !Game.getObjectById(creepId)) this.assignments.delete(creepId);
+        }
+        for (let [sourceId,task] of this.requests) {
+            if (!task.valid()) this.requests.delete(sourceId);
         }
     }
 
@@ -75,13 +78,15 @@ export class OfficeTaskManager extends OfficeManager {
         return this.office.employees.filter(c => c.memory.manager === this.constructor.name && this.isIdle(c))
     }
     report() {
-        const taskTable = [['Source', 'Task', 'Assigned Minions']];
+        const taskTable: any[][] = [['Source', 'Task', 'Priority', 'Capacity', 'Assigned Minions']];
         for (let [sourceId, req] of this.requests) {
             let assignedTasks = [...this.assignments.values()].filter(r => r === req);
             taskTable.push([
                 sourceId,
                 req.constructor.name,
-                assignedTasks.length.toFixed(0)
+                req.priority,
+                req.capacity,
+                assignedTasks.length
             ])
         }
         Table(new RoomPosition(0, 40, this.office.center.name), taskTable);

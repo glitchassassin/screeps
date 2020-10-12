@@ -3,6 +3,7 @@ import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/act
 import { getFreeCapacity } from "utils/gameObjectSelectors";
 
 export class LogisticsRequest {
+    public assignedCapacity = 0;
     public completed = false;
     public assigned = false;
     public resupply = false;

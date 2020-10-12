@@ -85,7 +85,7 @@ export class LogisticsManager extends OfficeManager {
         // Prioritize requests
         let priorities = new Map<number, LogisticsRequest[]>();
         for (let [,req] of this.requests) {
-            if (req.assigned) continue;
+            if (req.assigned && req.assignedCapacity >= req.capacity) continue;
             let level = priorities.get(req.priority);
             if (!level) {
                 level = [];
@@ -152,9 +152,17 @@ export class LogisticsManager extends OfficeManager {
         }
     }
     cleanup() {
+        let assignedRequests: LogisticsRequest[] = [];
+        for (let [,route] of this.routes) {
+            assignedRequests.push(...route.requests)
+        }
         for (let [id,req] of this.requests) {
             if (req.completed) {
                 this.requests.delete(id);
+                continue;
+            }
+            if (!assignedRequests.includes(req)) {
+                req.assigned = false;
             }
         }
     }
@@ -189,21 +197,21 @@ export class LogisticsManager extends OfficeManager {
             taskTable.push([
                 req.pos,
                 req.constructor.name,
-                req.capacity,
                 req.priority,
-                req.assigned ? 'Yes' : ''
+                req.capacity,
+                req.assignedCapacity
             ])
         }
         Table(new RoomPosition(0, 20, this.office.center.name), taskTable);
 
         // Routes
-        const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Capacity']];
+        const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Utilized Capacity']];
         for (let [, route] of this.routes) {
             routeTable.push([
                 route.source?.pos.toString() + `(${route.source?.primary ? 'Primary': 'Secondary'})`,
-                route.requests.length,
+                route.requests.map(r => r.constructor.name).join('->'),
                 route.creep?.name,
-                `${route.capacity}/${route.maxCapacity}`,
+                `${Math.min(route.maxCapacity, route.maxCapacity - route.capacity)}/${route.maxCapacity}`,
             ])
         }
         Table(new RoomPosition(0, 40, this.office.center.name), routeTable);

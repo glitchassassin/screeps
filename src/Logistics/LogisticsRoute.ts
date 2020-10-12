@@ -1,5 +1,5 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
-import { LogisticsRequest } from "./LogisticsRequest";
+import { DepotRequest, LogisticsRequest } from "./LogisticsRequest";
 import { LogisticsSource } from "./LogisticsSource";
 
 enum RouteState {
@@ -18,6 +18,7 @@ export class LogisticsRoute {
     private _creep: Id<Creep>;
     public maxCapacity: number = 0;
     public capacity: number = 0;
+    public assignedCapacity = new Map<LogisticsRequest, number>();
 
 
     public get creep() {
@@ -57,13 +58,24 @@ export class LogisticsRoute {
 
         if (this.source) {
             this.maxCapacity = Math.min(creep.store.getCapacity(), creep.store.getUsedCapacity() + this.source.capacity);
-            this.capacity = this.maxCapacity - request.capacity;
+            this.assignedCapacity.set(request, Math.min(this.maxCapacity, request.capacity));
+            if (request instanceof DepotRequest) {
+                this.capacity = 0;
+            } else {
+                this.capacity = this.maxCapacity - request.capacity;
+            }
         }
     }
 
     extend(request: LogisticsRequest) {
         if (this.capacity > 0) {
             this.requests.push(request);
+            if (request instanceof DepotRequest) {
+                // Don't try to assign other requests after a DepotRequest
+                this.capacity = 0;
+                return true;
+            }
+            this.assignedCapacity.set(request, Math.min(this.capacity, request.capacity));
             this.capacity -= request.capacity;
             return true;
         }
@@ -76,9 +88,12 @@ export class LogisticsRoute {
         if (!this.requests || this.requests.length === 0) return false;
 
         // Reserve capacity at the source
-        this.source.reserve(this.requests.reduce((sum, req) => sum + req.capacity, 0));
+        this.source.reserve(this.maxCapacity);
         // Assign requests
-        this.requests.forEach(r => r.assigned = true);
+        this.requests.forEach(r => {
+            r.assigned = true;
+            r.assignedCapacity += this.assignedCapacity.get(r) ?? 0
+        });
         this.state = RouteState.GETTING_ENERGY;
         return true;
     }
@@ -87,7 +102,10 @@ export class LogisticsRoute {
         // Validate current state
         if (!this.creep) { // Creep not found
             // Unassign remaining requests
-            this.requests.forEach(r => r.assigned = false);
+            this.requests.forEach(r => {
+                r.assigned = false;
+                r.assignedCapacity -= this.assignedCapacity.get(r) ?? 0
+            });
             // If creep has not withdrawn, cancel reservation
             if (this.state === RouteState.GETTING_ENERGY) {
                 this.source?.unreserve(this.requests.reduce((sum, req) => sum + req.capacity, 0))
