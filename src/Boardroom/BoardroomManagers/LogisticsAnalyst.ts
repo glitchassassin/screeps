@@ -49,12 +49,12 @@ export class LogisticsAnalyst extends BoardroomManager {
         return results.sort((a, b) => getCapacity(b) - getCapacity(a))
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
-    getClosestAllSources(pos: RoomPosition): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|undefined) {
+    getClosestAllSources(pos: RoomPosition, resource = RESOURCE_ENERGY): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|undefined) {
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
         let distance = new Map<string, number>();
-        let sorted = this.getAllSources(office).sort((a, b) => {
+        let sorted = this.getAllSources(office).filter(s => getCapacity(s) > 0).sort((a, b) => {
             if (!distance.has(a.id)){
                 distance.set(a.id, mapAnalyst.getRangeTo(pos, a.pos))
             }

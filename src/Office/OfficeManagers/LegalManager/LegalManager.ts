@@ -6,11 +6,14 @@ import { OfficeManagerStatus } from "Office/OfficeManager";
 import { UpgradeTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/UpgradeTask";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Table } from "Visualizations/Table";
-import { HRManager } from "./HRManager";
-import { LogisticsManager } from "./LogisticsManager";
-import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { HRManager } from "../HRManager";
+import { LogisticsManager } from "../LogisticsManager";
+import { OfficeTaskManager } from "../OfficeTaskManager/OfficeTaskManager";
+import { ReserveTask } from "../OfficeTaskManager/TaskRequests/types/ReserveTask";
+import { ShouldReserveTerritory } from "./Strategies/ShouldReserveTerritory";
 
 export class LegalManager extends OfficeTaskManager {
+    paralegals: Creep[] = [];
     lawyers: Creep[] = [];
     depotRequest?: DepotRequest;
 
@@ -21,6 +24,7 @@ export class LegalManager extends OfficeTaskManager {
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let hrManager = this.office.managers.get('HRManager') as HRManager;
         let legalFund = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
+        this.paralegals = this.office.employees.filter(c => c.memory.type === 'PARALEGAL');
         this.lawyers = this.office.employees.filter(c => c.memory.type === 'LAWYER');
 
         let transferPriority = 1;
@@ -39,16 +43,31 @@ export class LegalManager extends OfficeTaskManager {
             }
         }
 
+        // Evaluate territories to reserve
+        this.office.territories.forEach(t => {
+            if (ShouldReserveTerritory(t)) {
+                this.submit(t.name, new ReserveTask(t, 5));
+            }
+        })
+
         // Spawn one dedicated upgrader
         if (
-            this.lawyers.length === 0 ||
+            this.paralegals.length === 0 ||
             (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5)
         ) {
             // More input than output: spawn more upgraders
+            hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.PARALEGAL, {
+                manager: this.constructor.name
+            }))
+        }
+        // Spawn lawyers to handle ReserveTask requests
+        if (Array.from(this.requests.values()).filter(r => r instanceof ReserveTask).length > this.lawyers.length) {
             hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
                 manager: this.constructor.name
             }))
         }
+
+
         if (legalFund?.container) {
             // Just in case we have any pending depots once container is built
             if (this.depotRequest) {
@@ -70,12 +89,7 @@ export class LegalManager extends OfficeTaskManager {
             }
         }
 
-        this.lawyers.forEach(lawyer => {
-            if (this.isIdle(lawyer)) {
-                // Send upgrader to controller
-                this.submit(lawyer.id, new UpgradeTask(this.office.center.room.controller as StructureController, 5));
-            }
-        })
+        this.submit(this.office.name, new UpgradeTask(this.office.center.room.controller as StructureController, 5));
     }
     run() {
         super.run()

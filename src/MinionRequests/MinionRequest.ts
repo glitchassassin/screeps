@@ -4,11 +4,13 @@ import { EngineerMinion } from "./minions/EngineerMinion";
 import { GuardMinion } from "./minions/GuardMinion";
 import { InternMinion } from "./minions/InternMinion";
 import { LawyerMinion } from "./minions/LawyerMinion";
+import { ParalegalMinion } from "./minions/ParalegalMinion";
 import { SalesmanMinion } from './minions/SalesmanMinion';
 
 export enum MinionTypes {
     INTERN = 'INTERN',
     SALESMAN = 'SALESMAN',
+    PARALEGAL = 'PARALEGAL',
     LAWYER = 'LAWYER',
     ENGINEER = 'ENGINEER',
     CARRIER = 'CARRIER',
@@ -56,6 +58,9 @@ export class MinionRequest {
                     break;
                 case MinionTypes.SALESMAN:
                     minion = new SalesmanMinion();
+                    break;
+                case MinionTypes.PARALEGAL:
+                    minion = new ParalegalMinion();
                     break;
                 case MinionTypes.LAWYER:
                     minion = new LawyerMinion();

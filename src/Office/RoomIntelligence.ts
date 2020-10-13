@@ -3,7 +3,8 @@ type ControllerIntelligence = {
     my?: boolean,
     owner?: string,
     reservation?: ReservationDefinition,
-    level?: number
+    level?: number,
+    blocked?: number,
 }
 
 export class TerritoryIntelligence {
@@ -38,7 +39,8 @@ export class TerritoryIntelligence {
             pos: this.room.controller?.pos,
             my: this.room.controller?.my,
             owner: this.room.controller?.owner?.username || this.room.controller?.reservation?.username,
-            level: this.room.controller?.level
+            level: this.room.controller?.level,
+            blocked: this.room.controller?.upgradeBlocked
         }
         this.scanned = Game.time;
         let events = this.room.getEventLog();

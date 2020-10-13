@@ -7,7 +7,7 @@ import { table } from "table";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
 import { HRManager } from "./OfficeManagers/HRManager";
-import { LegalManager } from "./OfficeManagers/LegalManager";
+import { LegalManager } from "./OfficeManagers/LegalManager/LegalManager";
 import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
 import { SalesManager } from "./OfficeManagers/SalesManager";
 import { SecurityManager } from "./OfficeManagers/SecurityManager/SecurityManager";

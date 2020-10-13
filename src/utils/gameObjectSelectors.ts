@@ -23,7 +23,7 @@ export function countEnergyInContainersOrGround(pos: RoomPosition) {
     let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
     return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + getCapacity(resource)), 0)
 }
-export function getCapacity(gameObj: Resource<RESOURCE_ENERGY>|AnyStoreStructure|Creep): number {
+export function getCapacity(gameObj: Resource<RESOURCE_ENERGY>|AnyStoreStructure|Creep|Tombstone): number {
     if (gameObj instanceof Resource) {
         return gameObj.amount;
     } else {

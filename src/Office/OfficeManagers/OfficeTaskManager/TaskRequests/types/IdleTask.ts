@@ -16,7 +16,7 @@ export class IdleTask extends TaskAction {
     }
 
     action(creep: Creep) {
-        if (creep.pos.inRangeTo(this.pos, 3)) return TaskActionResult.SUCCESS;
+        if (creep.pos.inRangeTo(this.pos, 2)) return TaskActionResult.SUCCESS;
         // If unable to get the creep or source, task is completed
         travel(creep, this.pos);
         return TaskActionResult.INPROGRESS;

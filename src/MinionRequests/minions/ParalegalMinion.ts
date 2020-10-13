@@ -1,8 +1,8 @@
-export class LawyerMinion {
+export class ParalegalMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
         if (scale.length === 0) return false;
-        return spawn.spawnCreep(scale, `lawyer${Game.time}`, {
+        return spawn.spawnCreep(scale, `paralegal${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
@@ -11,18 +11,16 @@ export class LawyerMinion {
             return [];
         }
         else {
-            // Equal claim and move parts
-            let claimParts = Math.floor(((600/650) * energy) / 600)
-            return [
-                ...Array(claimParts).fill(CLAIM),
-                ...Array(claimParts).fill(MOVE),
-            ]
+            // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
+            let workParts = Math.min(15, Math.floor((energy - 100) / 100))
+            return [...Array(workParts).fill(WORK), CARRY, MOVE]
         }
     }
     buildMinion = (memory: CreepMemory) => {
         return {
+            favoredTasks: ['UpgradeTask'],
             ...memory,
-            type: 'LAWYER'
+            type: 'PARALEGAL'
         };
     }
 }

@@ -9,7 +9,7 @@ import { LogisticsManager } from "../LogisticsManager";
 import { OfficeTaskManager } from "../OfficeTaskManager/OfficeTaskManager";
 import { DefenseTask } from "../OfficeTaskManager/TaskRequests/types/DefenseTask";
 import { ExploreTask } from "../OfficeTaskManager/TaskRequests/types/ExploreTask";
-import { IdleTask } from "../OfficeTaskManager/TaskRequests/types/IdleTask";
+import { RecycleTask } from "../OfficeTaskManager/TaskRequests/types/RecycleTask";
 import { ShouldDefendRoom } from "./Strategists/ShouldDefendRoom";
 
 export class SecurityManager extends OfficeTaskManager {
@@ -61,7 +61,7 @@ export class SecurityManager extends OfficeTaskManager {
 
         // Plan defensive operations
         this.office.territories.forEach(t => {
-            if (t.isHostile && ShouldDefendRoom(t)) {
+            if (ShouldDefendRoom(t)) {
                 this.submit(`${t.name}_Defense`, new DefenseTask(t, priority));
             }
         })
@@ -84,8 +84,8 @@ export class SecurityManager extends OfficeTaskManager {
                 break;
             }
         }
-        // Set a recall post for guards
-        this.submit(`${this.office.name}_Sec_Idle`, new IdleTask(new RoomPosition(25, 25, this.office.name), 1))
+        // Recycle any unneeded guards
+        this.submit(`${this.office.name}_Sec_Idle`, new RecycleTask(hrManager.spawns[0], 1))
     }
     run() {
         super.run();

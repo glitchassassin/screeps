@@ -19,8 +19,7 @@ export class ExploreTask extends TaskAction {
         if (!this.destination) return TaskActionResult.FAILED;
         if (creep.pos.roomName === this.destination) return TaskActionResult.SUCCESS;
 
-        let result = travel(creep, new RoomPosition(25, 25, this.destination))
-
+        let result = travel(creep, new RoomPosition(25, 25, this.destination), 20)
         if (result !== OK) {
             console.log('explore failed', result);
             return TaskActionResult.FAILED;

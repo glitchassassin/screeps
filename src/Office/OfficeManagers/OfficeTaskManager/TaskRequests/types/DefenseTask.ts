@@ -19,7 +19,7 @@ export class DefenseTask extends TaskAction {
 
     valid() {
         // Once territory is no longer hostile or no longer worthwhile, abort
-        return this.territory.isHostile && ShouldDefendRoom(this.territory);
+        return ShouldDefendRoom(this.territory);
     }
 
     canBeFulfilledBy(creep: Creep) {
