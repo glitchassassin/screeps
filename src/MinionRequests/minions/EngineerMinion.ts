@@ -1,8 +1,8 @@
-export class HandymanMinion {
+export class EngineerMinion {
     spawn = (spawn: StructureSpawn, memory: CreepMemory, energy: number) => {
         let scale = this.scaleMinion(energy);
         if (scale.length === 0) return false;
-        return spawn.spawnCreep(scale, `handyman${Game.time}`, {
+        return spawn.spawnCreep(scale, `engineer${Game.time}`, {
             memory: this.buildMinion(memory)
         }) === OK;
     }
@@ -25,7 +25,7 @@ export class HandymanMinion {
         return {
             favoredTasks: ['BuildTask', 'RepairTask'],
             ...memory,
-            type: 'HANDYMAN'
+            type: 'ENGINEER'
         };
     }
 }

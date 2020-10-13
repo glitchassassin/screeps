@@ -11,8 +11,10 @@ interface GenericSite {
 export interface CachedStructure extends GenericSite {
     id: Id<Structure>,
     gameObj?: Structure,
+    hits: number,
+    hitsMax: number,
 }
-const unwrapStructure = ({pos, id, structureType}: CachedStructure): CachedStructure => ({pos, id, structureType});
+const unwrapStructure = ({pos, id, hits, hitsMax, structureType}: CachedStructure): CachedStructure => ({pos, id, hits, hitsMax, structureType});
 
 export interface CachedConstructionSite extends GenericSite {
     id: Id<ConstructionSite>,
@@ -90,8 +92,8 @@ export class FacilitiesAnalyst extends BoardroomManager {
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getHandymen(office: Office) {
-        return office.employees.filter(e => e.memory.type === 'HANDYMAN')
+    getEngineers(office: Office) {
+        return office.employees.filter(e => e.memory.type === 'ENGINEER')
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {

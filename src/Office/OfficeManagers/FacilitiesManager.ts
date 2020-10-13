@@ -5,6 +5,7 @@ import { OfficeManagerStatus } from "Office/OfficeManager";
 import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
 import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
 import profiler from "screeps-profiler";
+import { Table } from "Visualizations/Table";
 import { HRManager } from "./HRManager";
 import { LogisticsManager } from "./LogisticsManager";
 import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
@@ -25,11 +26,21 @@ const buildPriority = (site: CachedConstructionSite) => {
             return 5 + completion;
     }
 }
+const repairRemaining = (structure: CachedStructure) => {
+    let hitsMax = (structure.hitsMax ?? 0);
+    if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) {
+        hitsMax = Math.min(structure.hitsMax, 100000);
+    }
+    return hitsMax - (structure.hits ?? 0)
+}
 
 export class FacilitiesManager extends OfficeTaskManager {
     structures: CachedStructure[] = [];
     sites: CachedConstructionSite[] = [];
-    handymen: Creep[] = [];
+    engineers: Creep[] = [];
+
+    workExpectancy: number = 0;
+    totalWork: number = 0;
 
     depotRequests = new Map<TaskAction, DepotRequest>();
 
@@ -42,44 +53,49 @@ export class FacilitiesManager extends OfficeTaskManager {
         this.sites = facilitiesAnalyst.getConstructionSites(this.office);
         this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)));
         this.structures = facilitiesAnalyst.getStructures(this.office);
-        this.handymen = facilitiesAnalyst.getHandymen(this.office);
+        this.engineers = facilitiesAnalyst.getEngineers(this.office);
 
+        // (WORK * 5) * ttl = max construction output
+        // 0.5 = expected efficiency
+        this.workExpectancy = this.engineers.reduce((sum, creep) =>
+            sum + (creep.getActiveBodyparts(WORK) * (creep.ticksToLive ?? 1500) * 2.5),
+        0);
+        // Calculate construction energy
+        this.totalWork = this.sites.reduce((sum, site) =>
+            sum + (site.progressTotal - site.progress),
+        0);
+        // Calculate repair energy (and scale by 5, to match construction output rate)
+        this.totalWork += this.structures.reduce((sum, structure) => {
+            if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) return sum;
+            return sum + ((repairRemaining(structure) / 100) * 5)
+        }, 0);
+
+
+        let shouldSpawnEngineer = false;
+        let spawnPriority = 5;
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
                 // Manager is offline, do nothing
                 return;
             }
-            case OfficeManagerStatus.MINIMAL: {
-                // Perform repairs if needed, or
-                // delegate minimal resources to
-                // new construction
-                let jobs = this.submitOrders(2);
-                if (jobs > 0 && this.handymen.length < 1) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 4, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
-                }
-                break;
-            }
+            case OfficeManagerStatus.MINIMAL: // falls through
             case OfficeManagerStatus.NORMAL: {
-                // Perform repairs if needed, or
-                // delegate resources to new
-                // construction.
-                let jobs = this.submitOrders(2);
-                if (jobs > 0 && (this.handymen.length < (jobs / 2))) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 5, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
-                }
+                shouldSpawnEngineer = (this.workExpectancy < this.totalWork);
                 break;
             }
             case OfficeManagerStatus.PRIORITY: {
-                // Dedicate extra resources to
-                // new construction, performing
-                // repairs if needed.
-                let jobs = this.submitOrders(2);
-                if (jobs > 0 && this.handymen.length < jobs) {
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, 6, MinionTypes.HANDYMAN, {manager: this.constructor.name}))
-                }
+                shouldSpawnEngineer = (this.workExpectancy < (this.totalWork * 1.5));
+                spawnPriority = 6;
                 break;
             }
         }
+
+        // Submit prioritized work orders
+        this.submitOrders(2);
+        if (shouldSpawnEngineer) {
+            hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, spawnPriority, MinionTypes.ENGINEER, {manager: this.constructor.name}))
+        }
+
         // Request depots for active assignments
         for (const [creepId, request] of this.assignments) {
             let pos = (request as BuildTask|RepairTask).pos;
@@ -127,8 +143,15 @@ export class FacilitiesManager extends OfficeTaskManager {
 
     run() {
         super.run();
-        if (global.v.construction.state) {
+        if (global.v.facilities.state) {
             super.report();
+            let statusTable = [
+                ['Work Expectancy', 'Work Pending'],
+                [this.workExpectancy, this.totalWork]
+            ]
+            Table(new RoomPosition(2, 2, this.office.center.name), statusTable);
+        }
+        if (global.v.construction.state) {
             this.requests.forEach(task => {
                 if (task instanceof BuildTask) {
                     new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});

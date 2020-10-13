@@ -8,7 +8,7 @@ type ControllerIntelligence = {
 export class TerritoryIntelligence {
     sources: Map<Id<Source>, RoomPosition> = new Map();
     controller: ControllerIntelligence = {};
-    scanned = false;
+    scanned = 0;
     lastHostileActivity?: number;
 
     constructor(
@@ -34,7 +34,7 @@ export class TerritoryIntelligence {
             my: this.room.controller?.my,
             owner: this.room.controller?.owner?.username || this.room.controller?.reservation?.username,
         }
-        this.scanned = true;
+        this.scanned = Game.time;
         let events = this.room.getEventLog();
         if (
             (this.controller.owner && !this.controller.my) ||
@@ -42,6 +42,8 @@ export class TerritoryIntelligence {
             // (events.some(e => e.event === EVENT_ATTACK || e.event === EVENT_ATTACK_CONTROLLER))
         ) {
             this.lastHostileActivity = Game.time;
+        } else {
+            this.lastHostileActivity = undefined;
         }
     }
 }

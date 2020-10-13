@@ -19,4 +19,9 @@ export class DefenseAnalyst extends BoardroomManager {
     getPrioritizedHealTargets(office: Office) {
         return office.center.room.find(FIND_MY_CREEPS).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
     }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getInterns(office: Office) {
+        return office.employees.filter(c => c.memory.type === 'INTERN');
+    }
+
 }

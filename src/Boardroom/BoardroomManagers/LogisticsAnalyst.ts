@@ -36,6 +36,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
     getRealLogisticsSources(pos: RoomPosition): RealLogisticsSources[] {
+        if (!Game.rooms[pos.roomName]) return [];
         let items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
         let results: RealLogisticsSources[] = [];
         for (let item of items) {

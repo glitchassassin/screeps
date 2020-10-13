@@ -7,12 +7,7 @@ export class InternMinion {
         }) === OK;
     }
     scaleMinion = (energy: number) => {
-        if (energy > 200 && energy < 550) {
-            return [WORK, CARRY, MOVE]
-        } else if (energy >= 550) {
-            return [WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE]
-        }
-        return [];
+        return [TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE];
     }
     buildMinion = (memory: CreepMemory) => {
         return {

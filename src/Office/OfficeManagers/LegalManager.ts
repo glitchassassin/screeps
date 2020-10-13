@@ -23,6 +23,7 @@ export class LegalManager extends OfficeTaskManager {
         let legalFund = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
         this.lawyers = this.office.employees.filter(c => c.memory.type === 'LAWYER');
 
+        let transferPriority = 1;
         switch (this.status) {
             case OfficeManagerStatus.OFFLINE: {
                 // Manager is offline, do nothing
@@ -30,67 +31,45 @@ export class LegalManager extends OfficeTaskManager {
             }
             case OfficeManagerStatus.MINIMAL: // fall through
             case OfficeManagerStatus.NORMAL: {
-                // Spawn one dedicated upgrader
-                if (this.lawyers.length === 0) {
-                    // More input than output: spawn more upgraders
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
-                        manager: this.constructor.name
-                    }))
-                }
-                if (legalFund?.container) {
-                    // Place standing order for surplus energy to container
-                    let e = getTransferEnergyRemaining(legalFund.container);
-                    if (e && e > 0) {
-                        logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, 1));
-                    }
-                } else {
-                    // Place standing order for upgrade energy
-                    if (this.office.center.room.controller) {
-                        if (!this.depotRequest || this.depotRequest.completed) {
-                            this.depotRequest = new DepotRequest(this.office.center.room.controller.pos, 5, 100);
-                        }
-                        logisticsManager.submit(this.office.center.name, this.depotRequest);
-                    }
-                }
                 break;
             }
             case OfficeManagerStatus.PRIORITY: {
-                // Spawn one dedicated upgrader
-                if (this.lawyers.length === 0) {
-                    // More input than output: spawn more upgraders
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 6, MinionTypes.LAWYER, {
-                        manager: this.constructor.name
-                    }))
-                } else if (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5) {
-                    // Spawn dedicated upgraders as long
-                    // as there is energy to spend
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
-                        manager: this.constructor.name
-                    }))
-                }
-                // Place order for surplus energy
-                if (legalFund?.container) {
-                    // Just in case we have any pending depots once container is built
-                    if (this.depotRequest) {
-                        this.depotRequest.completed = true;
-                        this.depotRequest = undefined;
-                    }
-                    let e = getTransferEnergyRemaining(legalFund.container);
-                    if (e && e > 0) {
-                        logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, 4));
-                    }
-                } else {
-                    // Place standing order for upgrade energy
-                    if (this.office.center.room.controller) {
-                        if (!this.depotRequest || this.depotRequest.completed) {
-                            this.depotRequest = new DepotRequest(this.office.center.room.controller.pos, 5, 100);
-                        }
-                        logisticsManager.submit(this.office.center.name, this.depotRequest);
-                    }
-                }
+                transferPriority = 4;
                 break;
             }
         }
+
+        // Spawn one dedicated upgrader
+        if (
+            this.lawyers.length === 0 ||
+            (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5)
+        ) {
+            // More input than output: spawn more upgraders
+            hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
+                manager: this.constructor.name
+            }))
+        }
+        if (legalFund?.container) {
+            // Just in case we have any pending depots once container is built
+            if (this.depotRequest) {
+                this.depotRequest.completed = true;
+                this.depotRequest = undefined;
+            }
+            // Place standing order for surplus energy to container
+            let e = getTransferEnergyRemaining(legalFund.container);
+            if (e && e > 0) {
+                logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, transferPriority));
+            }
+        } else {
+            // Place standing order for upgrade energy
+            if (this.office.center.room.controller) {
+                if (!this.depotRequest || this.depotRequest.completed) {
+                    this.depotRequest = new DepotRequest(this.office.center.room.controller.pos, 5, 100);
+                }
+                logisticsManager.submit(this.office.center.name, this.depotRequest);
+            }
+        }
+
         this.lawyers.forEach(lawyer => {
             if (this.isIdle(lawyer)) {
                 // Send upgrader to controller

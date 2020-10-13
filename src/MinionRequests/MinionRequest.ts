@@ -1,6 +1,7 @@
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { CarrierMinion } from "./minions/CarrierMinion";
-import { HandymanMinion } from "./minions/HandymanMinion";
+import { EngineerMinion } from "./minions/EngineerMinion";
+import { GuardMinion } from "./minions/GuardMinion";
 import { InternMinion } from "./minions/InternMinion";
 import { LawyerMinion } from "./minions/LawyerMinion";
 import { SalesmanMinion } from './minions/SalesmanMinion';
@@ -9,8 +10,9 @@ export enum MinionTypes {
     INTERN = 'INTERN',
     SALESMAN = 'SALESMAN',
     LAWYER = 'LAWYER',
-    HANDYMAN = 'HANDYMAN',
-    CARRIER = 'CARRIER'
+    ENGINEER = 'ENGINEER',
+    CARRIER = 'CARRIER',
+    GUARD = 'GUARD'
 }
 
 export class MinionRequest {
@@ -58,8 +60,11 @@ export class MinionRequest {
                 case MinionTypes.LAWYER:
                     minion = new LawyerMinion();
                     break;
-                case MinionTypes.HANDYMAN:
-                    minion = new HandymanMinion();
+                case MinionTypes.ENGINEER:
+                    minion = new EngineerMinion();
+                    break;
+                case MinionTypes.GUARD:
+                    minion = new GuardMinion();
                     break;
             }
             if (minion.scaleMinion(spawn.room.energyAvailable).length === minion.scaleMinion(energyToUse).length) {

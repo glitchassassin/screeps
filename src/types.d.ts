@@ -52,7 +52,7 @@ interface Memory {
             my?: boolean,
           },
           sources: {[id: string]: RoomPosition},
-          scanned: boolean,
+          scanned: number,
           lastHostileActivity?: number
         }
       }

@@ -199,7 +199,7 @@ export class Office {
                     my?: boolean,
                 },
                 sources: {[id: string]: RoomPosition},
-                scanned: boolean,
+                scanned: number,
                 lastHostileActivity?: number
             }
         })
@@ -229,23 +229,23 @@ export class Office {
             singleLine: true
         });
 
-        const territoryTable = [
-            ['Territory', 'Status', 'Sources', 'Controller', 'Last Hostile Activity']
+        const territoryTable: any[][] = [
+            ['Territory', 'Scanned', 'Sources', 'Controller', 'Last Hostile Activity']
         ];
         this.territories.forEach(territory => {
             let controllerStatus = 'None';
             if (territory.controller.my) {
                 controllerStatus = 'Owned';
             } else if (territory.controller.owner) {
-                controllerStatus = 'Hostile';
+                controllerStatus = `Hostile (${territory.controller.owner})`;
             } else if (territory.controller.reservation?.username && territory.controller.reservation?.username !== 'LordGreywether') {
-                controllerStatus = `Hostile [${territory.controller.reservation?.ticksToEnd} ticks]`;
+                controllerStatus = `Hostile (${territory.controller.reservation.username}) [${territory.controller.reservation?.ticksToEnd} ticks]`;
             } else if (territory.controller.reservation?.username && territory.controller.reservation?.username === 'LordGreywether') {
                 controllerStatus = `Reserved [${territory.controller.reservation?.ticksToEnd} ticks]`
             }
             territoryTable.push([
                 territory.name,
-                territory.scanned ? 'SCANNED' : 'UNKNOWN',
+                territory.scanned,
                 `${territory.sources.size}`,
                 controllerStatus,
                 territory.lastHostileActivity?.toFixed(0) || ''
