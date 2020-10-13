@@ -1,4 +1,5 @@
 import { Office } from "Office/Office";
+import profiler from "screeps-profiler";
 import { BoardroomManager } from "./BoardroomManager";
 import { ControllerAnalyst } from "./BoardroomManagers/ControllerAnalyst";
 import { DefenseAnalyst } from "./BoardroomManagers/DefenseAnalyst";
@@ -93,3 +94,5 @@ export class Boardroom {
         return closest;
     }
 }
+
+profiler.registerClass(Boardroom, 'Boardroom');

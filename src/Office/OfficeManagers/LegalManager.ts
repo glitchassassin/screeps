@@ -103,6 +103,7 @@ export class LegalManager extends OfficeTaskManager {
         if (global.v.legal.state) { this.report(); }
     }
     report() {
+        super.report();
         let controllers = [this.office.center, ...this.office.territories].map(t => [
             t.name,
             t.controller.owner || t.controller.reservation?.username || '',

@@ -1,7 +1,8 @@
+import { LogisticsAnalyst, RealLogisticsSources } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
+import profiler from "screeps-profiler";
+import { Memoize } from "typescript-memoize";
 import { getCapacity } from "utils/gameObjectSelectors";
-
-type LogisticsSources = Resource<RESOURCE_ENERGY>|StructureStorage|StructureContainer;
 
 /**
  * A cached representation of a Source
@@ -9,6 +10,8 @@ type LogisticsSources = Resource<RESOURCE_ENERGY>|StructureStorage|StructureCont
  * or just a loose pile of Energy
  */
 export class LogisticsSource {
+    // Dependencies
+    private logisticsAnalyst: LogisticsAnalyst;
     /**
      *
      * @param pos Center of the source (adjacent squares will also be included)
@@ -17,12 +20,15 @@ export class LogisticsSource {
     constructor(
         public pos: RoomPosition,
         public primary = true
-    ) {}
+    ) {
+        this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+    }
 
-    private _sources: LogisticsSources[] = [];
+    private _sources: RealLogisticsSources[] = [];
 
     public reservedCapacity = 0;
 
+    @Memoize(() => (`${Game.time}`))
     public get capacity() : number {
         return this.sources.reduce((sum, source) => sum + getCapacity(source), 0) - this.reservedCapacity;
     }
@@ -31,16 +37,9 @@ export class LogisticsSource {
      * Gets list of surrounding "real" sources,
      * ordered by quantity
      */
-    public get sources() : LogisticsSources[] {
+    public get sources() : RealLogisticsSources[] {
         if (!Game.rooms[this.pos.roomName]) return this._sources; // No visibility, use cached
-
-        this._sources = [
-            ...this.pos.findInRange(FIND_DROPPED_RESOURCES, 1)
-                .filter(r => r.resourceType === RESOURCE_ENERGY) as Resource<RESOURCE_ENERGY>[],
-            ...this.pos.findInRange(FIND_STRUCTURES, 1)
-                .filter(s => s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE) as (StructureContainer|StructureStorage)[]
-        ].sort((a, b) => getCapacity(b) - getCapacity(a))
-
+        this._sources = this.logisticsAnalyst.getRealLogisticsSources(this.pos);
         return this._sources;
     }
 
@@ -76,3 +75,5 @@ export class LogisticsSource {
         this.reservedCapacity -= amount;
     }
 }
+
+profiler.registerClass(LogisticsSource, 'LogisticsSource');

@@ -7,6 +7,7 @@ import { LogisticsRoute } from "Logistics/LogisticsRoute";
 import { LogisticsSource } from "Logistics/LogisticsSource";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import profiler from "screeps-profiler";
 import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 import { Bar, Meters } from "Visualizations/Meters";
 import { Table } from "Visualizations/Table";
@@ -100,19 +101,20 @@ export class LogisticsManager extends OfficeManager {
 
             // Get requests for highest priority level
             let priority = Math.max(...priorities.keys());
-            let level = priorities.get(priority);
-            if (!level || level.length === 0) {
+            let level = priorities.get(priority) ?? [];
+            if (level.length === 0) {
                 priorities.delete(priority);
                 continue;
             }
 
             // Set up route for initial request
-            let request = level.shift() as LogisticsRequest;
-            let route = new LogisticsRoute(carrier, request, [...this.sources.values()]);
+            let lastRequest = level.shift() as LogisticsRequest;
+            let route = new LogisticsRoute(carrier, lastRequest, [...this.sources.values()]);
 
             // Fulfill other close requests, by priority order
-            level.sort(sortByDistanceTo(request.pos));
             while (priorities.size > 0) {
+                // Among the same priority, fulfill the closest requests first
+                level.sort(sortByDistanceTo(lastRequest.pos));
                 // Get next request
                 let request = level?.shift();
                 // If no more requests for this priority, skip to next
@@ -120,13 +122,14 @@ export class LogisticsManager extends OfficeManager {
                     // End of level
                     priorities.delete(priority);
                     priority = Math.max(...priorities.keys());
-                    level = priorities.get(priority);
-                    if (!level || level.length === 0) {
+                    level = priorities.get(priority) ?? [];
+                    if (level.length === 0) {
                         priorities.delete(priority);
                     }
                     continue;
                 }
                 if (!route.extend(request)) break; // No more requests for route
+                lastRequest = request;
             }
 
             if (route.commit()) {
@@ -223,3 +226,6 @@ export class LogisticsManager extends OfficeManager {
         depots?.forEach(c => new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'}))
     }
 }
+
+profiler.registerClass(LogisticsManager, 'LogisticsManager');
+profiler.registerFN(LogisticsManager.constructor, 'new LogisticsManager()')

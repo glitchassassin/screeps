@@ -2,6 +2,7 @@ import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst
 import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
 import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
+import profiler from "screeps-profiler";
 import { table } from "table";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
@@ -155,7 +156,9 @@ export class Office {
             security?.setStatus(OfficeManagerStatus.OFFLINE);
         }
 
-        this.managers.forEach(m => m.plan());
+        this.managers.forEach(m => {
+            m.plan()
+        });
     }
 
     /**
@@ -164,7 +167,6 @@ export class Office {
     run() {
         this.managers.forEach(m => {
             m.run();
-            // global.reportCPU(`Office ${m.constructor.name} Run`);
         });
     }
 
@@ -172,7 +174,6 @@ export class Office {
      * Execute run phase for all OfficeManagers
      */
     cleanup() {
-        global.reportCPU(`Office Cleanup Start`);
         if (!Memory.offices[this.name]) Memory.offices[this.name] = {
             employees: [],
             franchiseLocations: {},
@@ -202,7 +203,6 @@ export class Office {
                 lastHostileActivity?: number
             }
         })
-        global.reportCPU(`Office Cleanup Managers Start`);
         this.managers.forEach(m => {
             m.cleanup()
         });
@@ -267,3 +267,5 @@ ${territoryTableRendered}`
 global.officeReport = () => {
     global.boardroom.offices.forEach(office => office.report())
 }
+
+profiler.registerClass(Office, 'Office');

@@ -46,9 +46,19 @@ export class ResupplyRequest extends TransferRequest {
 }
 
 export class DepotRequest extends LogisticsRequest {
+    private logisticsAnalyst: LogisticsAnalyst;
+
+    constructor(
+        public pos: RoomPosition,
+        public priority: number,
+        public capacity: number = -1,
+    ) {
+        super(pos, priority, capacity);
+        this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+    }
+
     action(creep: Creep) {
         // Wait for minions to request resources
-        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         if (!creep.pos.isNearTo(this.pos)) {
             return travel(creep, this.pos)
         }
@@ -56,7 +66,7 @@ export class DepotRequest extends LogisticsRequest {
             this.completed = true;
             return OK;
         }
-        logisticsAnalyst.reportDepot(creep);
+        this.logisticsAnalyst.reportDepot(creep);
         return OK;
     }
 }

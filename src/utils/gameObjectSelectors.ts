@@ -1,4 +1,5 @@
 import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 
 export interface WithPos {
@@ -19,12 +20,8 @@ export function getCreepHomeOffice(creep: Creep) {
     return global.boardroom.offices.get(creep.memory.office);
 }
 export function countEnergyInContainersOrGround(pos: RoomPosition) {
-    if (!Game.rooms[pos.roomName]) return 0;
-    let resources = pos.findInRange(FIND_DROPPED_RESOURCES, 1).reduce((sum, resource) => (sum + resource.amount), 0)
-    let containers = pos.findInRange(FIND_STRUCTURES, 1)
-        .filter(s => s.structureType === STRUCTURE_CONTAINER)
-        .reduce((sum, container) => (sum + (container as StructureContainer).store.getUsedCapacity(RESOURCE_ENERGY)), 0)
-    return resources + containers;
+    let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+    return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + getCapacity(resource)), 0)
 }
 export function getCapacity(gameObj: Resource<RESOURCE_ENERGY>|AnyStoreStructure|Creep): number {
     if (gameObj instanceof Resource) {

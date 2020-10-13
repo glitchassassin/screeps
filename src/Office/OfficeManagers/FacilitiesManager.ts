@@ -4,6 +4,7 @@ import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManagerStatus } from "Office/OfficeManager";
 import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
 import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
+import profiler from "screeps-profiler";
 import { HRManager } from "./HRManager";
 import { LogisticsManager } from "./LogisticsManager";
 import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
@@ -94,6 +95,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 this.depotRequests.set(request, depotReq);
             }
         }
+
     }
     submitOrders(max = 5) {
         if (this.requests.size >= max) return this.requests.size;
@@ -150,3 +152,6 @@ export class FacilitiesManager extends OfficeTaskManager {
         }
     }
 }
+
+
+profiler.registerClass(FacilitiesManager, 'FacilitiesManager');

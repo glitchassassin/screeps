@@ -1,9 +1,11 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { LogisticsSource } from "Logistics/LogisticsSource";
 import { Office } from "Office/Office";
 import { Memoize } from "typescript-memoize";
+import { getCapacity } from "utils/gameObjectSelectors";
 import { MapAnalyst } from "./MapAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
+
+export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|StructureStorage|StructureContainer;
 
 export class LogisticsAnalyst extends BoardroomManager {
     depots = new Map<string, Creep[]>();
@@ -31,6 +33,19 @@ export class LogisticsAnalyst extends BoardroomManager {
     @Memoize((room: Room) => ('' + room.name + Game.time))
     getFreeEnergy(room: Room) {
         return room.find(FIND_DROPPED_RESOURCES).filter(r => r.resourceType === RESOURCE_ENERGY) as Resource<RESOURCE_ENERGY>[];
+    }
+    @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
+    getRealLogisticsSources(pos: RoomPosition): RealLogisticsSources[] {
+        let items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
+        let results: RealLogisticsSources[] = [];
+        for (let item of items) {
+            if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
+                results.push(item.resource as Resource<RESOURCE_ENERGY>);
+            } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage) {
+                results.push(item.structure);
+            }
+        }
+        return results.sort((a, b) => getCapacity(b) - getCapacity(a))
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
     getClosestAllSources(pos: RoomPosition): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|undefined) {

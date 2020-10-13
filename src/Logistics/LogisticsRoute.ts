@@ -1,5 +1,6 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
-import { DepotRequest, LogisticsRequest } from "./LogisticsRequest";
+import profiler from "screeps-profiler";
+import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 import { LogisticsSource } from "./LogisticsSource";
 
 enum RouteState {
@@ -11,6 +12,9 @@ enum RouteState {
 }
 
 export class LogisticsRoute {
+    // Dependencies
+    private mapAnalyst: MapAnalyst
+
     public length = Infinity;
     public state = RouteState.PENDING;
     source?: LogisticsSource;
@@ -29,33 +33,53 @@ export class LogisticsRoute {
         return this.state === RouteState.COMPLETED || this.state === RouteState.CANCELLED;
     }
 
-
     constructor(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-
+        // Set up dependencies
+        this.mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+        // Resupply requests can only be fulfilled by a primary source
         this.requests = [request];
         this._creep = creep.id;
-
+        this.init(creep, request, sources);
+    }
+    init(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
         // Get shortest route to source and then request
-        let creepCapacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
-        // Prefer sources that can fill the creep
-        let prioritySources = sources.filter(s => s.capacity > creepCapacity);
-        // Failing that, prefer sources that can fill the request
-        if (prioritySources.length === 0)
-            prioritySources = sources.filter(s => s.capacity > request.capacity);
-        // Otherwise, take any available source
-        if (prioritySources.length === 0)
-            prioritySources = sources;
+        let prioritySources = this.calcPrioritySources(creep, request, sources);
+        this.calcInitialPath(creep, request, prioritySources);
+        this.calcInitialCapacity(creep, request);
+    }
 
+    calcPrioritySources(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
+        let creepCapacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+        let fullCreepSources: LogisticsSource[] = [];
+        let fullRequestSources: LogisticsSource[] = [];
+        let validSources: LogisticsSource[] = [];
+        for (let source of sources) {
+            // Resupply requests can only be fulfilled by a primary source
+            if (request instanceof ResupplyRequest && !source.primary) continue;
+
+            if (source.capacity > creepCapacity) {
+                fullCreepSources.push(source);
+            } else if (source.capacity > request.capacity) {
+                fullRequestSources.push(source);
+            } else {
+                validSources.push(source);
+            }
+        }
+
+        let prioritySources = (fullCreepSources.length > 0) ? fullCreepSources : (fullRequestSources.length > 0) ? fullRequestSources : validSources;
+        return prioritySources;
+    }
+    calcInitialPath(creep: Creep, request: LogisticsRequest, prioritySources: LogisticsSource[]) {
         // Find shortest path from creep -> source -> request
         prioritySources.forEach(source => {
-            let distance = mapAnalyst.getRangeTo(creep.pos, source.pos) + mapAnalyst.getRangeTo(source.pos, request.pos);
+            let distance = this.mapAnalyst.getRangeTo(creep.pos, source.pos) + this.mapAnalyst.getRangeTo(source.pos, request.pos);
             if (distance < this.length) {
                 this.source = source;
                 this.length = distance;
             }
         })
-
+    }
+    calcInitialCapacity(creep: Creep, request: LogisticsRequest) {
         if (this.source) {
             this.maxCapacity = Math.min(creep.store.getCapacity(), creep.store.getUsedCapacity() + this.source.capacity);
             this.assignedCapacity.set(request, Math.min(this.maxCapacity, request.capacity));
@@ -69,6 +93,10 @@ export class LogisticsRoute {
 
     extend(request: LogisticsRequest) {
         if (this.capacity > 0) {
+            if (request instanceof ResupplyRequest && !this.source?.primary) {
+                // Resupply requests can only be handled by primary sources
+                return false;
+            }
             this.requests.push(request);
             if (request instanceof DepotRequest) {
                 // Don't try to assign other requests after a DepotRequest
@@ -161,3 +189,5 @@ export class LogisticsRoute {
         }
     }
 }
+
+profiler.registerClass(LogisticsRoute, 'LogisticsRoute');
