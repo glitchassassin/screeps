@@ -37,7 +37,7 @@ export class TerritoryIntelligence {
         this.hostileMinions = this.room.find(FIND_HOSTILE_CREEPS).length;
         this.controller = {
             pos: this.room.controller?.pos,
-            my: this.room.controller?.my,
+            my: this.room.controller?.my || this.room.controller?.reservation?.username === 'LordGreywether',
             owner: this.room.controller?.owner?.username || this.room.controller?.reservation?.username,
             level: this.room.controller?.level,
             blocked: this.room.controller?.upgradeBlocked

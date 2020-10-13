@@ -66,9 +66,9 @@ export class SecurityManager extends OfficeTaskManager {
             }
         })
 
-        // Scout surrounding Territories, if needed
+        // Scout surrounding Territories every 100 ticks, if needed
         let territory = this.office.territories.sort((a, b) => a.scanned - b.scanned)[0];
-        if (territory) {
+        if (Game.time - territory.scanned > 100) {
             this.submit(territory.name, new ExploreTask(territory.name, priority - 1))
         }
 

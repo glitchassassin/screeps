@@ -41,16 +41,25 @@ export class ReserveTask extends TaskAction {
 
         if (
             creep.room.controller?.owner?.username !== undefined ||
-            creep.room.controller?.reservation?.username !== undefined
+            (
+                creep.room.controller?.reservation?.username !== undefined &&
+                creep.room.controller?.reservation?.username !== 'LordGreywether'
+            )
         ) {
             // Must attack the controller before we can claim it
             let result = creep.attackController(creep.room.controller);
+            if (creep.room.controller.sign?.username !== 'LordGreywether') {
+                result = creep.signController(creep.room.controller, 'This sector property of the Grey Company')
+            }
             if (result === ERR_NOT_IN_RANGE) {
                 travel(creep, creep.room.controller.pos);
             }
             return TaskActionResult.INPROGRESS;
         } else {
             let result = creep.reserveController(creep.room.controller);
+            if (creep.room.controller.sign?.username !== 'LordGreywether') {
+                result = creep.signController(creep.room.controller, 'This sector property of the Grey Company')
+            }
             if (result === ERR_NOT_IN_RANGE) {
                 travel(creep, creep.room.controller.pos);
             }
