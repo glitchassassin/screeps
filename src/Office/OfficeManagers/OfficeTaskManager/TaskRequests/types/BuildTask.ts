@@ -6,6 +6,7 @@ import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 export class BuildTask extends GetEnergyAndWorkTask {
     message = "🔨";
     pos: RoomPosition;
+    capacity = 1000;
 
     constructor(
         public destination: CachedConstructionSite,

@@ -4,14 +4,18 @@ import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManagerStatus } from "Office/OfficeManager";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Table } from "Visualizations/Table";
-import { HRManager } from "./HRManager";
-import { LogisticsManager } from "./LogisticsManager";
-import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
-import { ExploreTask } from "./OfficeTaskManager/TaskRequests/types/ExploreTask";
+import { HRManager } from "../HRManager";
+import { LogisticsManager } from "../LogisticsManager";
+import { OfficeTaskManager } from "../OfficeTaskManager/OfficeTaskManager";
+import { DefenseTask } from "../OfficeTaskManager/TaskRequests/types/DefenseTask";
+import { ExploreTask } from "../OfficeTaskManager/TaskRequests/types/ExploreTask";
+import { IdleTask } from "../OfficeTaskManager/TaskRequests/types/IdleTask";
+import { ShouldDefendRoom } from "./Strategists/ShouldDefendRoom";
 
 export class SecurityManager extends OfficeTaskManager {
     towers: StructureTower[] = [];
     interns: Creep[] = [];
+    guards: Creep[] = [];
 
     plan() {
         super.plan();
@@ -22,12 +26,7 @@ export class SecurityManager extends OfficeTaskManager {
         this.towers = defenseAnalyst.getTowers(this.office);
 
         this.interns = defenseAnalyst.getInterns(this.office);
-
-        // Scout surrounding Territories, if needed
-        let territory = this.office.territories.sort((a, b) => a.scanned - b.scanned)[0];
-        if (territory) {
-            this.submit(territory.name, new ExploreTask(territory.name, 5))
-        }
+        this.guards = defenseAnalyst.getGuards(this.office);
 
         let priority = 3;
         switch (this.status) {
@@ -44,10 +43,8 @@ export class SecurityManager extends OfficeTaskManager {
                 break;
             }
         }
-        // Maintain one Intern to handle scouting tasks
-        if (this.interns.length === 0) {
-            hrManager.submit(new MinionRequest(`${this.office.name}_Security`, priority, MinionTypes.INTERN, {manager: this.constructor.name}))
-        }
+
+        // Maintain tower upkeep
         this.towers.forEach(t => {
             // Request energy, if needed
             let e = getTransferEnergyRemaining(t);
@@ -61,6 +58,34 @@ export class SecurityManager extends OfficeTaskManager {
                 logisticsManager.submit(t.id, new TransferRequest(t, adjustedPriority));
             }
         })
+
+        // Plan defensive operations
+        this.office.territories.forEach(t => {
+            if (t.isHostile && ShouldDefendRoom(t)) {
+                this.submit(`${t.name}_Defense`, new DefenseTask(t, priority));
+            }
+        })
+
+        // Scout surrounding Territories, if needed
+        let territory = this.office.territories.sort((a, b) => a.scanned - b.scanned)[0];
+        if (territory) {
+            this.submit(territory.name, new ExploreTask(territory.name, priority - 1))
+        }
+
+
+        // Maintain one Intern to handle scouting tasks
+        if (this.interns.length === 0) {
+            hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Int`, priority - 1, MinionTypes.INTERN, {manager: this.constructor.name}))
+        }
+        // If we have Defense tasks, spawn Guards indefinitely
+        for (let [,request] of this.requests) {
+            if (request instanceof DefenseTask) {
+                hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Ops`, priority + 1, MinionTypes.GUARD, {manager: this.constructor.name}))
+                break;
+            }
+        }
+        // Set a recall post for guards
+        this.submit(`${this.office.name}_Sec_Idle`, new IdleTask(new RoomPosition(25, 25, this.office.name), 1))
     }
     run() {
         super.run();

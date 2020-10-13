@@ -2,7 +2,8 @@ type ControllerIntelligence = {
     pos?: RoomPosition,
     my?: boolean,
     owner?: string,
-    reservation?: ReservationDefinition
+    reservation?: ReservationDefinition,
+    level?: number
 }
 
 export class TerritoryIntelligence {
@@ -10,6 +11,8 @@ export class TerritoryIntelligence {
     controller: ControllerIntelligence = {};
     scanned = 0;
     lastHostileActivity?: number;
+    hostileSpawns = 0;
+    hostileMinions = 0;
 
     constructor(
         public name: string
@@ -21,7 +24,7 @@ export class TerritoryIntelligence {
 
 
     public get isHostile() : boolean {
-        return (!!this.lastHostileActivity)
+        return (this.lastHostileActivity !== undefined)
     }
 
 
@@ -29,10 +32,13 @@ export class TerritoryIntelligence {
         if (!this.room) return;
 
         this.room.find(FIND_SOURCES).forEach(s => this.sources.set(s.id, s.pos));
+        this.hostileSpawns = this.room.find(FIND_HOSTILE_SPAWNS).length;
+        this.hostileMinions = this.room.find(FIND_HOSTILE_CREEPS).length;
         this.controller = {
             pos: this.room.controller?.pos,
             my: this.room.controller?.my,
             owner: this.room.controller?.owner?.username || this.room.controller?.reservation?.username,
+            level: this.room.controller?.level
         }
         this.scanned = Game.time;
         let events = this.room.getEventLog();

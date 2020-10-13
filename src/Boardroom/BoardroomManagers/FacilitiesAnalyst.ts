@@ -63,12 +63,12 @@ type FacilitiesAnalystMemory = {
 
 export class FacilitiesAnalyst extends BoardroomManager {
     init() {
-        Memory.boardroom.FacilitiesAnalyst ||= {
+        Memory.boardroom.FacilitiesAnalyst ??= {
             constructionSites: {},
             structures: {}
         } as FacilitiesAnalystMemory;
-        Memory.boardroom.FacilitiesAnalyst.constructionSites ||= {};
-        Memory.boardroom.FacilitiesAnalyst.structures ||= {};
+        Memory.boardroom.FacilitiesAnalyst.constructionSites ??= {};
+        Memory.boardroom.FacilitiesAnalyst.structures ??= {};
     }
     memory = {
         constructionSites: sitesProxy<CachedConstructionSite>(Memory.boardroom.FacilitiesAnalyst.constructionSites),
@@ -77,11 +77,12 @@ export class FacilitiesAnalyst extends BoardroomManager {
 
     plan() {
         let ownedSites = Object.values(Game.constructionSites);
-        let visibleSites = Object.values(Game.rooms).map(room => room.find(FIND_CONSTRUCTION_SITES) || []).reduce((a, b) => a.concat(b), []);
-        let visibleStructures = Object.values(Game.rooms).map(room => room.find(FIND_STRUCTURES) || []).reduce((a, b) => a.concat(b), []);
+        // let visibleSites = Object.values(Game.rooms).map(room => room.find(FIND_MY_CONSTRUCTION_SITES) || []).reduce((a, b) => a.concat(b), []);
+        let visibleStructures = Object.values(Game.rooms).map(room => room.find(FIND_STRUCTURES).filter(s => s.structureType === STRUCTURE_CONTAINER) || []).reduce((a, b) => a.concat(b), []);
+        visibleStructures.push(...Object.values(Game.rooms).map(room => room.find(FIND_MY_STRUCTURES) || []).reduce((a, b) => a.concat(b), []));
 
         // Refresh construction sites
-        [...ownedSites, ...visibleSites].forEach(site => {
+        [...ownedSites].forEach(site => {
             this.memory.constructionSites[site.id] = unwrapConstructionSite(site);
         })
 

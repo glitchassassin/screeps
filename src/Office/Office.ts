@@ -10,7 +10,7 @@ import { HRManager } from "./OfficeManagers/HRManager";
 import { LegalManager } from "./OfficeManagers/LegalManager";
 import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
 import { SalesManager } from "./OfficeManagers/SalesManager";
-import { SecurityManager } from "./OfficeManagers/SecurityManager";
+import { SecurityManager } from "./OfficeManagers/SecurityManager/SecurityManager";
 import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
 
 export class Office {

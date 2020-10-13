@@ -35,11 +35,19 @@ export class OfficeTaskManager extends OfficeManager {
             let requests = priorities.get(priority) as TaskAction[];
             if (creeps.length > 0 && requests.length > 0) {
                 for (let request of requests) {
+                    // Only assign creeps up to the capacity limit
+                    let capacity = request.capacity;
+                    capacity -= Array.from(this.assignments.values()).filter(r => r === request).length;
+                    if (capacity <= 0) continue;
+
                     for (let creep of creeps) {
                         if (request.canBeFulfilledBy(creep)) {
                             this.assignments.set(creep.id, request);
+                            capacity -= 1;
+                            if (capacity <= 0) break;
                         }
                     }
+                    creeps = this.getAvailableCreeps();
                 }
             }
         });

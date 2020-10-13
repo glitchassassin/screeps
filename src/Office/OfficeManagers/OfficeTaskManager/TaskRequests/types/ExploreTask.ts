@@ -22,6 +22,7 @@ export class ExploreTask extends TaskAction {
         let result = travel(creep, new RoomPosition(25, 25, this.destination))
 
         if (result !== OK) {
+            console.log('explore failed', result);
             return TaskActionResult.FAILED;
         }
         return TaskActionResult.INPROGRESS;

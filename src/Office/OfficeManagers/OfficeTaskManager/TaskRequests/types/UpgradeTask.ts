@@ -4,6 +4,7 @@ import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 
 export class UpgradeTask extends GetEnergyAndWorkTask {
     message = "⏫";
+    capacity = 1000;
 
     constructor(
         public destination: StructureController,

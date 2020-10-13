@@ -23,5 +23,9 @@ export class DefenseAnalyst extends BoardroomManager {
     getInterns(office: Office) {
         return office.employees.filter(c => c.memory.type === 'INTERN');
     }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getGuards(office: Office) {
+        return office.employees.filter(c => c.memory.type === 'GUARD');
+    }
 
 }
