@@ -16,6 +16,9 @@ if (!global.IS_JEST_TEST) {
 // If respawning, wipe memory clean
 resetMemoryOnRespawn();
 
+// Set up defensive profiling
+let defensiveProfilingRun = true;
+
 // Initialize control switches
 global.v = new VisualizationController()
 
@@ -39,6 +42,9 @@ global.purge = () => {
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
   MemHack.pretick();
+  if (Game.cpu.bucket < 200 && Game.time % 2 === 0) {
+    return; // If the bucket gets really low, skip every other tick to let it rebuild
+  }
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {
     for (const name in Memory.creeps) {
@@ -68,10 +74,19 @@ function mainLoop() {
   }
 
 
-  if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
-    console.log("Pixel unlocked");
-    Game.cpu.generatePixel();
+  if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
+    // CPU bucket dropping below 50%, send a CPU profile
+    defensiveProfilingRun = true;
+    Game.profiler.email(100);
+  } else if (Game.cpu.bucket > 6000 && defensiveProfilingRun) {
+    // CPU climbing back up, reset the trigger
+    defensiveProfilingRun = false;
   }
+
+  // if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
+  //   console.log("Pixel unlocked");
+  //   Game.cpu.generatePixel();
+  // }
 }
 
 profiler.enable()

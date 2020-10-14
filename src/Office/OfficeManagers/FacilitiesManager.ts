@@ -5,6 +5,7 @@ import { OfficeManagerStatus } from "Office/OfficeManager";
 import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
 import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
 import profiler from "screeps-profiler";
+import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { Table } from "Visualizations/Table";
 import { HRManager } from "./HRManager";
 import { LogisticsManager } from "./LogisticsManager";
@@ -42,9 +43,10 @@ export class FacilitiesManager extends OfficeTaskManager {
     workExpectancy: number = 0;
     totalWork: number = 0;
 
-    depotRequests = new Map<TaskAction, DepotRequest>();
+    depotRequests = new Map<TaskAction, DepotRequest|null>();
 
     plan() {
+        resetDebugCPU();
         super.plan();
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
@@ -95,9 +97,11 @@ export class FacilitiesManager extends OfficeTaskManager {
         if (shouldSpawnEngineer) {
             hrManager.submit(new MinionRequest(`${this.office.name}_Facilities`, spawnPriority, MinionTypes.ENGINEER, {manager: this.constructor.name}))
         }
+        debugCPU('everything else');
 
         // Request depots for active assignments
         for (const [creepId, request] of this.assignments) {
+            if (this.depotRequests.has(request)) continue;
             let pos = (request as BuildTask|RepairTask).pos;
             let needsDepot = true;
             for (let [sourcePos] of logisticsManager.sources) {
@@ -105,11 +109,16 @@ export class FacilitiesManager extends OfficeTaskManager {
                     needsDepot = false;
                 }
             }
-            if (needsDepot && !this.depotRequests.has(request)) {
+            debugCPU(`evaluating depot need (${needsDepot})`);
+            if (needsDepot) {
                 let depotReq = new DepotRequest(pos, request.priority, request.capacity);
                 logisticsManager.submit(creepId, depotReq);
                 this.depotRequests.set(request, depotReq);
+            } else {
+                // No depot request needed
+                this.depotRequests.set(request, null);
             }
+            debugCPU('requesting depot');
         }
 
     }
@@ -166,6 +175,12 @@ export class FacilitiesManager extends OfficeTaskManager {
         super.cleanup();
         let activeAssignments = Array.from(this.assignments.values());
         for (const [req, depot] of this.depotRequests) {
+            if (depot === null) {
+                if (!activeAssignments.includes(req)) {
+                    this.depotRequests.delete(req);
+                }
+                continue;
+            }
             if (!activeAssignments.includes(req)) {
                 depot.completed = true;
             }
