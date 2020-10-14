@@ -2,6 +2,7 @@ import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
 import { TransferRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManagerStatus } from "Office/OfficeManager";
+import profiler from "screeps-profiler";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { Table } from "Visualizations/Table";
 import { HRManager } from "../HRManager";
@@ -116,3 +117,5 @@ export class SecurityManager extends OfficeTaskManager {
         Table(new RoomPosition(2, 2, this.office.center.name), statusTable);
     }
 }
+
+profiler.registerClass(SecurityManager, 'SecurityManager');

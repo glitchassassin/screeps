@@ -1,4 +1,5 @@
 import { OfficeManager } from 'Office/OfficeManager';
+import profiler from 'screeps-profiler';
 
 class ExtensionBlock {
     center: RoomPosition
@@ -48,3 +49,4 @@ export class ExtensionArchitect extends OfficeManager {
         }
     }
 }
+profiler.registerClass(ExtensionArchitect, 'ExtensionArchitect');

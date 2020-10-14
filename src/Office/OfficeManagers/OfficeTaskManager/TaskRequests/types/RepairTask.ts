@@ -13,7 +13,7 @@ export class RepairTask extends GetEnergyAndWorkTask {
     message = "🛠";
     pos: RoomPosition;
     id: Id<Structure>;
-    capacity = 1000;
+    capacity = 4;
 
     public get destination() : Structure|null {
         if ((!this.pos || !this.id) || this.pos && !Game.rooms[this.pos.roomName]) {

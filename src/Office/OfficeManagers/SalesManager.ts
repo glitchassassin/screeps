@@ -2,6 +2,7 @@ import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalys
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManagerStatus } from "Office/OfficeManager";
 import { HarvestTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/HarvestTask";
+import profiler from "screeps-profiler";
 import { Bar, Meters } from "Visualizations/Meters";
 import { Table } from "Visualizations/Table";
 import { HRManager } from "./HRManager";
@@ -97,3 +98,4 @@ export class SalesManager extends OfficeTaskManager {
         chart.render(new RoomPosition(2, 2, this.office.center.name), false)
     }
 }
+profiler.registerClass(SalesManager, 'SalesManager');

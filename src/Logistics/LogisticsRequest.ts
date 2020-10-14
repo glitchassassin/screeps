@@ -1,5 +1,6 @@
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
+import profiler from "screeps-profiler";
 import { getFreeCapacity } from "utils/gameObjectSelectors";
 
 export class LogisticsRequest {
@@ -70,3 +71,6 @@ export class DepotRequest extends LogisticsRequest {
         return OK;
     }
 }
+
+profiler.registerClass(DepotRequest, 'DepotRequest');
+profiler.registerClass(TransferRequest, 'TransferRequest');

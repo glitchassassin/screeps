@@ -1,5 +1,6 @@
 import { Franchise, SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
 import { OfficeManager } from 'Office/OfficeManager';
+import profiler from 'screeps-profiler';
 
 export class SourceArchitect extends OfficeManager {
     franchises: Franchise[] = [];
@@ -31,3 +32,4 @@ export class SourceArchitect extends OfficeManager {
         }
     }
 }
+profiler.registerClass(SourceArchitect, 'SourceArchitect');

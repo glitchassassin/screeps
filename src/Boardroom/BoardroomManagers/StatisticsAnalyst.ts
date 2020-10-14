@@ -99,35 +99,35 @@ export class StatisticsAnalyst extends BoardroomManager {
                     new NonNegativeDeltaMetric( // mineRate
                         salesAnalyst.getFranchiseLocations(office)
                             .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
-                        50
+                        100
                     ),
                     new Metric( // mineContainerLevels
                         salesAnalyst.getFranchiseLocations(office).length * CONTAINER_CAPACITY,
-                        50
+                        100
                     ),
                     new Metric( // roomEnergyLevels
                         office.center.room.energyCapacityAvailable,
-                        50
+                        100
                     ),
                     new Metric( // storageLevels
                         logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0),
-                        50
+                        100
                     ),
                     new Metric( // fleetLevels
                         logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0),
-                        50
+                        100
                     ),
                     new Metric( // mobileDepotLevels
                         logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getCapacity()), 0) ?? 0,
-                        50
+                        100
                     ),
                     new Metric( // controllerDepotLevels
                         controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
-                        50
+                        100
                     ),
                     new DeltaMetric( // controllerDepotFillRate
                         controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
-                        50
+                        100
                     )
                 ));
             } else {

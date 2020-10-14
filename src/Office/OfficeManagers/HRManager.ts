@@ -2,6 +2,7 @@ import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { TransferRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
+import profiler from "screeps-profiler";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 import { Table } from "Visualizations/Table";
@@ -136,3 +137,4 @@ export class HRManager extends OfficeManager {
         return undefined;
     }
 }
+profiler.registerClass(HRManager, 'HRManager');

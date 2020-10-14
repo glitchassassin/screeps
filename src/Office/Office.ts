@@ -18,7 +18,7 @@ export class Office {
     center: RoomIntelligence;
     territories: TerritoryIntelligence[] = [];
     franchiseLocations: {[sourceId: string]: {franchise: RoomPosition, source: RoomPosition}} = {};
-    private employeeIds: Set<Id<Creep>> = new Set();
+    private employeeNames: Set<string> = new Set();
     managers: Map<string, OfficeManager> = new Map();
 
     constructor(roomName: string) {
@@ -35,7 +35,7 @@ export class Office {
         }
 
         // Load saved employees
-        this.employeeIds = new Set(Memory.offices[roomName].employees as Id<Creep>[])
+        this.employeeNames = new Set(Memory.offices[roomName].employees)
 
         // Load saved franchise locations
         this.franchiseLocations = Object.entries(Memory.offices[roomName].franchiseLocations).reduce((obj, [sourceId, pos]) => {
@@ -83,10 +83,15 @@ export class Office {
 
     public get employees() : Creep[] {
         let employees: Creep[] = [];
-        this.employeeIds.forEach(id => {
-            let e = Game.getObjectById(id);
+        this.employeeNames.forEach(id => {
+            let e: Creep|null = Game.creeps[id]
             if (!e) {
-                this.employeeIds.delete(id);
+                this.employeeNames.delete(id);
+                e = Game.getObjectById(id as Id<Creep>);
+                if (e) {
+                    this.employeeNames.add(e.name);
+                    employees.push(e);
+                }
             } else {
                 employees.push(e);
             }
@@ -95,7 +100,7 @@ export class Office {
     }
 
     enrollEmployee(creep: Creep) {
-        this.employeeIds.add(creep.id);
+        this.employeeNames.add(creep.name);
     }
 
     register(manager: OfficeManager) {
@@ -179,7 +184,7 @@ export class Office {
             franchiseLocations: {},
             territories: {}
         }
-        Memory.offices[this.name].employees = Array.from(this.employeeIds);
+        Memory.offices[this.name].employees = Array.from(this.employeeNames);
         Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
         Memory.offices[this.name].territories = this.territories.reduce((obj, territory) => {
             obj[territory.name] = {

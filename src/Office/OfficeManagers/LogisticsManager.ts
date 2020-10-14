@@ -20,7 +20,7 @@ export class LogisticsManager extends OfficeManager {
     carriers: Creep[] = [];
     lastMinionRequest = 0;
 
-    sources = new Map<RoomPosition, LogisticsSource>();
+    sources = new Map<string, LogisticsSource>();
     requests = new Map<string, LogisticsRequest>();
     routes = new Map<Id<Creep>, LogisticsRoute>();
 
@@ -47,12 +47,12 @@ export class LogisticsManager extends OfficeManager {
 
         // Update LogisticsSources
         salesAnalyst.getFranchiseLocations(this.office).forEach(f => {
-            if (!this.sources.has(f.sourcePos)) {
-                this.sources.set(f.sourcePos, new LogisticsSource(f.sourcePos))
+            if (!this.sources.has(f.sourcePos.toString())) {
+                this.sources.set(f.sourcePos.toString(), new LogisticsSource(f.sourcePos))
             }
         });
-        if (this.storage && !this.sources.has(this.storage.pos)) {
-            this.sources.set(this.storage.pos, new LogisticsSource(this.storage.pos, false))
+        if (this.storage && !this.sources.has(this.storage.pos.toString())) {
+            this.sources.set(this.storage.pos.toString(), new LogisticsSource(this.storage.pos, false))
         }
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 

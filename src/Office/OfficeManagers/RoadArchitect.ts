@@ -1,6 +1,7 @@
 import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
 import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
 import { OfficeManager } from 'Office/OfficeManager';
+import profiler from 'screeps-profiler';
 
 export class Road {
     path: RoomPosition[] = [];
@@ -115,3 +116,4 @@ export class RoadArchitect extends OfficeManager {
         }
     }
 }
+profiler.registerClass(RoadArchitect, 'RoadArchitect');

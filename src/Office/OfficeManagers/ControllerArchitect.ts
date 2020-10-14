@@ -1,4 +1,5 @@
 import { OfficeManager } from 'Office/OfficeManager';
+import profiler from 'screeps-profiler';
 import { ControllerAnalyst, Depot } from '../../Boardroom/BoardroomManagers/ControllerAnalyst';
 
 export class ControllerArchitect extends OfficeManager {
@@ -41,3 +42,4 @@ export class ControllerArchitect extends OfficeManager {
         }
     }
 }
+profiler.registerClass(ControllerArchitect, 'ControllerArchitect');

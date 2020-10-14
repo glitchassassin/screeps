@@ -1,5 +1,6 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import profiler from "screeps-profiler";
+import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 import { LogisticsSource } from "./LogisticsSource";
 
@@ -53,6 +54,7 @@ export class LogisticsRoute {
         let fullCreepSources: LogisticsSource[] = [];
         let fullRequestSources: LogisticsSource[] = [];
         let validSources: LogisticsSource[] = [];
+        resetDebugCPU()
         for (let source of sources) {
             // Resupply requests can only be fulfilled by a primary source
             if (request instanceof ResupplyRequest && !source.primary) continue;
@@ -64,7 +66,9 @@ export class LogisticsRoute {
             } else {
                 validSources.push(source);
             }
+            debugCPU('calcPrioritySources loop');
         }
+        console.log(sources.length);
 
         let prioritySources = (fullCreepSources.length > 0) ? fullCreepSources : (fullRequestSources.length > 0) ? fullRequestSources : validSources;
         return prioritySources;

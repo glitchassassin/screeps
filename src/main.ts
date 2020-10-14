@@ -77,7 +77,7 @@ function mainLoop() {
   if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
     // CPU bucket dropping below 50%, send a CPU profile
     defensiveProfilingRun = true;
-    Game.profiler.email(100);
+    Game.profiler.email(10);
   } else if (Game.cpu.bucket > 6000 && defensiveProfilingRun) {
     // CPU climbing back up, reset the trigger
     defensiveProfilingRun = false;
