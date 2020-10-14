@@ -73,13 +73,12 @@ export class SecurityManager extends OfficeTaskManager {
             this.submit(territory.name, new ExploreTask(territory.name, priority - 1))
         }
 
-
         // Maintain one Intern to handle scouting tasks
-        if (this.interns.length === 0) {
-            hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Int`, priority - 1, MinionTypes.INTERN, {manager: this.constructor.name}))
-        }
-        // If we have Defense tasks, spawn Guards indefinitely
         for (let [,request] of this.requests) {
+            if (request instanceof ExploreTask && this.interns.length === 0) {
+                hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Int`, priority - 1, MinionTypes.INTERN, {manager: this.constructor.name}))
+            }
+            // If we have Defense tasks, spawn Guards indefinitely
             if (request instanceof DefenseTask) {
                 hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Ops`, priority + 1, MinionTypes.GUARD, {manager: this.constructor.name}))
                 break;

@@ -1,6 +1,5 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import profiler from "screeps-profiler";
-import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 import { LogisticsSource } from "./LogisticsSource";
 
@@ -44,8 +43,11 @@ export class LogisticsRoute {
     }
     init(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
         // Get shortest route to source and then request
-        let prioritySources = this.calcPrioritySources(creep, request, sources);
-        this.calcInitialPath(creep, request, prioritySources);
+        if (creep.store.getUsedCapacity() / creep.store.getCapacity() < 0.8) {
+            let prioritySources = this.calcPrioritySources(creep, request, sources);
+            this.calcInitialPath(creep, request, prioritySources);
+        }
+
         this.calcInitialCapacity(creep, request);
     }
 
@@ -54,7 +56,6 @@ export class LogisticsRoute {
         let fullCreepSources: LogisticsSource[] = [];
         let fullRequestSources: LogisticsSource[] = [];
         let validSources: LogisticsSource[] = [];
-        resetDebugCPU()
         for (let source of sources) {
             // Resupply requests can only be fulfilled by a primary source
             if (request instanceof ResupplyRequest && !source.primary) continue;
@@ -66,9 +67,7 @@ export class LogisticsRoute {
             } else {
                 validSources.push(source);
             }
-            debugCPU('calcPrioritySources loop');
         }
-        console.log(sources.length);
 
         let prioritySources = (fullCreepSources.length > 0) ? fullCreepSources : (fullRequestSources.length > 0) ? fullRequestSources : validSources;
         return prioritySources;
@@ -115,18 +114,22 @@ export class LogisticsRoute {
     }
 
     commit() {
-        if (!this.source) return false;
         if (!this.creep) return false;
         if (!this.requests || this.requests.length === 0) return false;
 
-        // Reserve capacity at the source
-        this.source.reserve(this.maxCapacity);
+        if (this.source) {
+            // Reserve capacity at the source
+            this.source.reserve(this.maxCapacity);
+            this.state = RouteState.GETTING_ENERGY;
+        } else {
+            // We have 80% capacity already, go straight to filling orders
+            this.state = RouteState.FULFILLING;
+        }
         // Assign requests
         this.requests.forEach(r => {
             r.assigned = true;
             r.assignedCapacity += this.assignedCapacity.get(r) ?? 0
         });
-        this.state = RouteState.GETTING_ENERGY;
         return true;
     }
 

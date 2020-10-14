@@ -15,6 +15,16 @@ export class ReserveTask extends TaskAction {
         return `[UpgradeTask: ${this.destination.controller.pos?.roomName}{${this.destination.controller.pos?.x},${this.destination.controller.pos?.y}}]`
     }
 
+    valid() {
+        // If we can see the controller and it's blocked for more than 200 ticks,
+        // abort this task
+        return !(
+            this.destination.room?.controller &&
+            this.destination.room.controller.upgradeBlocked !== undefined &&
+            this.destination.room.controller.upgradeBlocked > 200
+        )
+    }
+
     canBeFulfilledBy(creep: Creep) {
         return creep.getActiveBodyparts(CLAIM) > 0;
     }
@@ -23,7 +33,7 @@ export class ReserveTask extends TaskAction {
         if (!this.destination.scanned) {
             travel(creep, new RoomPosition(25, 25, this.destination.name));
             return TaskActionResult.INPROGRESS;
-        } else if (!this.destination.controller.pos || this.destination.controller.my) {
+        } else if (!this.destination.controller.pos) {
             // Room scanned, no controller
             return TaskActionResult.FAILED;
         } else if (creep.pos.roomName !== this.destination.name) {

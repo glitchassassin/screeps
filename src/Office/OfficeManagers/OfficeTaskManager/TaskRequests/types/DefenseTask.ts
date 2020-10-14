@@ -60,6 +60,7 @@ export class DefenseTask extends TaskAction {
             return TaskActionResult.INPROGRESS;
         }
         // Otherwise, action complete
+        this.done = true;
         return TaskActionResult.SUCCESS;
     }
 }
