@@ -198,14 +198,26 @@ export class LogisticsManager extends OfficeManager {
         const taskTable: any[][] = [['Source', 'Type', 'Priority', 'Capacity', 'Assigned']];
         for (let [, req] of this.requests) {
             taskTable.push([
-                req.pos,
+                JSON.stringify(req.pos),
                 req.constructor.name,
                 req.priority,
                 req.capacity,
                 req.assignedCapacity
             ])
         }
-        Table(new RoomPosition(0, 20, this.office.center.name), taskTable);
+        Table(new RoomPosition(0, 23, this.office.center.name), taskTable);
+
+        // Sources
+        const sourceTable: any[][] = [['Source', 'Primary', 'Capacity', 'Reserved']];
+        for (let [, source] of this.sources) {
+            sourceTable.push([
+                JSON.stringify(source.pos),
+                source.primary,
+                source.capacity,
+                source.reservedCapacity
+            ])
+        }
+        Table(new RoomPosition(0, 15, this.office.center.name), sourceTable);
 
         // Routes
         const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Utilized Capacity']];

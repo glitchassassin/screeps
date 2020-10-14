@@ -64,7 +64,7 @@ export class LogisticsRoute {
                 fullCreepSources.push(source);
             } else if (source.capacity > request.capacity) {
                 fullRequestSources.push(source);
-            } else {
+            } else if (source.capacity > 0) {
                 validSources.push(source);
             }
         }

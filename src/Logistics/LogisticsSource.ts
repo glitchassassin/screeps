@@ -53,6 +53,9 @@ export class LogisticsSource {
     transfer(creep: Creep) {
         let source = this.sources[0];
         if (!source) return ERR_NOT_FOUND;
+        if (source.pos.roomName !== creep.pos.roomName) {
+            return travel(creep, source.pos);
+        }
         if (getCapacity(source) === 0) return ERR_NOT_ENOUGH_ENERGY;
 
         let result;

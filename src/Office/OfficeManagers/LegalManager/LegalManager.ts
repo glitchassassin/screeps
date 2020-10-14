@@ -76,7 +76,7 @@ export class LegalManager extends OfficeTaskManager {
             }
             // Place standing order for surplus energy to container
             let e = getTransferEnergyRemaining(legalFund.container);
-            if (e && e > 0) {
+            if (e && e > (CONTAINER_CAPACITY / 2)) {
                 logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, transferPriority));
             }
         } else {
