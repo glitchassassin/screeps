@@ -72,12 +72,17 @@ export class PipelineMetrics {
         public mineRate: NonNegativeDeltaMetric,
         public mineContainerLevels: Metric,
         public roomEnergyLevels: Metric,
+        public spawnEnergyRate: NonNegativeDeltaMetric,
         public storageLevels: Metric,
+        public storageFillRate: DeltaMetric,
         public fleetLevels: Metric,
         public mobileDepotLevels: Metric,
         public controllerDepotLevels: Metric,
         public controllerDepotFillRate: DeltaMetric,
         public logisticsThroughput: Metric,
+        public buildRate: Metric,
+        public repairRate: Metric,
+        public upgradeRate: Metric,
     ) { }
 }
 
@@ -110,8 +115,16 @@ export class StatisticsAnalyst extends BoardroomManager {
                         office.center.room.energyCapacityAvailable,
                         100
                     ),
+                    new NonNegativeDeltaMetric( // spawnEnergyRate
+                        100,
+                        100
+                    ),
                     new Metric( // storageLevels
                         logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0),
+                        100
+                    ),
+                    new DeltaMetric( // storageFillRate
+                        100,
                         100
                     ),
                     new Metric( // fleetLevels
@@ -134,6 +147,18 @@ export class StatisticsAnalyst extends BoardroomManager {
                         100,
                         100
                     ),
+                    new Metric( // buildRate
+                        100,
+                        100
+                    ),
+                    new Metric( // repairRate
+                        100,
+                        100
+                    ),
+                    new Metric( // upgradeRate
+                        100,
+                        100
+                    ),
                 ));
             } else {
                 let metrics = this.metrics.get(office.name) as PipelineMetrics;
@@ -152,9 +177,14 @@ export class StatisticsAnalyst extends BoardroomManager {
 
                 metrics.roomEnergyLevels.maxValue = office.center.room.energyCapacityAvailable;
                 metrics.roomEnergyLevels.update(office.center.room.energyAvailable);
+                metrics.spawnEnergyRate.update(office.center.room.energyAvailable);
 
                 metrics.storageLevels.maxValue = logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0);
                 metrics.storageLevels.update(
+                    logisticsAnalyst.getStorage(office)
+                        .reduce((sum, storage) => (sum + storage.store.getUsedCapacity()), 0)
+                );
+                metrics.storageFillRate.update(
                     logisticsAnalyst.getStorage(office)
                         .reduce((sum, storage) => (sum + storage.store.getUsedCapacity()), 0)
                 );
@@ -179,6 +209,31 @@ export class StatisticsAnalyst extends BoardroomManager {
                 metrics.controllerDepotFillRate.update(
                     controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0
                 );
+
+                let building = 0;
+                let repairing = 0;
+                let upgrading = 0;
+                [office.center, ...office.territories]
+                    .map(t => t.room)
+                    .forEach(room => {
+                        if (!room) return;
+                        room.getEventLog().forEach(event => {
+                            switch (event.event) {
+                                case EVENT_BUILD:
+                                    building += event.data.energySpent;
+                                    break;
+                                case EVENT_REPAIR:
+                                    repairing += event.data.energySpent;
+                                    break;
+                                case EVENT_UPGRADE_CONTROLLER:
+                                    upgrading += event.data.energySpent;
+                                    break;
+                            }
+                        })
+                    })
+                metrics.buildRate.update(building);
+                metrics.repairRate.update(repairing);
+                metrics.upgradeRate.update(upgrading);
             }
         })
     }

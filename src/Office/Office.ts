@@ -3,6 +3,7 @@ import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
 import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
 import profiler from "screeps-profiler";
+import { Bar, Meters } from "Visualizations/Meters";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
@@ -228,7 +229,16 @@ export class Office {
 
     report() {
         Minimap(new RoomPosition(18, 18, this.center.name), this);
-        (this.managers.get('HRManager') as HRManager)?.miniReport(new RoomPosition(1, 32, this.center.name));
+        (this.managers.get('HRManager') as HRManager)?.miniReport(new RoomPosition(2, 40, this.center.name));
+        (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport(new RoomPosition(4, 3, this.center.name));
+        let controller = this.center.room.controller;
+        let chart = new Meters([
+            new Bar(`GCL ${Game.gcl.level}`, {fill: 'green', stroke: 'green'}, Game.gcl.progress, Game.gcl.progressTotal),
+            new Bar(`RCL ${controller?.level ?? '-'}`, {fill: 'yellow', stroke: 'yellow'}, controller?.progress ?? 0, controller?.progressTotal ?? 0),
+            new Bar('Bucket', {fill: 'blue', stroke: 'blue'}, Game.cpu.bucket, 10000),
+        ])
+
+        chart.render(new RoomPosition(3, 18, this.center.name));
     }
 }
 

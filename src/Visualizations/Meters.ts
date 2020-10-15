@@ -8,13 +8,13 @@ export class Bar {
         public value: number,
         max: number|null = null
     ) {
-        this.max = max || this.value;
+        this.max = max ?? this.value ?? 0;
     }
     render(pos: RoomPosition, width: number, height: number, chartMaxValue: number|null = null) {
         let vis = new RoomVisual(pos.roomName);
 
         let maxHeight = height - 2.5;
-        let effectiveMax = Math.max(chartMaxValue || this.max, this.value);
+        let effectiveMax = Math.max(chartMaxValue ?? this.max, this.value);
         let valueHeight = (this.value / effectiveMax) * maxHeight;
         let maxValueHeight = (this.max / effectiveMax) * maxHeight;
 

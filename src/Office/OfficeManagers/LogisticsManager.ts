@@ -201,7 +201,7 @@ export class LogisticsManager extends OfficeManager {
         chart.render(new RoomPosition(2, 2, this.office.center.name));
 
         // Requests
-        const taskTable: any[][] = [['Source', 'Type', 'Priority', 'Capacity', 'Assigned']];
+        const taskTable: any[][] = [['Requester', 'Type', 'Priority', 'Capacity', 'Assigned']];
         for (let [, req] of this.requests) {
             taskTable.push([
                 JSON.stringify(req.pos),
@@ -211,7 +211,7 @@ export class LogisticsManager extends OfficeManager {
                 req.assignedCapacity
             ])
         }
-        Table(new RoomPosition(0, 23, this.office.center.name), taskTable);
+        Table(new RoomPosition(0, 35, this.office.center.name), taskTable);
 
         // Sources
         const sourceTable: any[][] = [['Source', 'Primary', 'Capacity', 'Reserved']];
@@ -228,20 +228,40 @@ export class LogisticsManager extends OfficeManager {
         // Routes
         const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Utilized Capacity']];
         for (let [, route] of this.routes) {
+            let source = 'SURPLUS';
+            if (route.source) source = route.source?.pos.toString() + `(${route.source?.primary ? 'Primary': 'Secondary'})`
             routeTable.push([
-                route.source?.pos.toString() + `(${route.source?.primary ? 'Primary': 'Secondary'})`,
-                route.requests.map(r => r.constructor.name).join('->'),
+                source,
+                route.requests.map(r => r.toString()).join('->'),
                 route.creep?.name,
                 `${Math.min(route.maxCapacity, route.maxCapacity - route.capacity)}/${route.maxCapacity}`,
             ])
         }
-        Table(new RoomPosition(0, 40, this.office.center.name), routeTable);
+        Table(new RoomPosition(0, 23, this.office.center.name), routeTable);
     }
     map() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let depots = logisticsAnalyst.depots.get(this.office.name)
 
         depots?.forEach(c => new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'}))
+    }
+    miniReport = (pos: RoomPosition) => {
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let metrics = statisticsAnalyst.metrics.get(this.office.name);
+        if (!metrics) return;
+
+        let chart = new Meters([
+            new Bar('Income', {fill: 'yellow', stroke: 'yellow'}, metrics.mineRate.mean()),
+            new Bar('Throughput', {fill: 'magenta', stroke: 'magenta'}, metrics.logisticsThroughput.mean()),
+            new Bar('Build', {fill: 'blue', stroke: 'blue'}, metrics.buildRate.mean()),
+            new Bar('Repair', {fill: 'blue', stroke: 'blue'}, metrics.repairRate.mean()),
+            new Bar('Upgrade', {fill: 'blue', stroke: 'blue'}, metrics.upgradeRate.mean()),
+            new Bar('Spawn', {fill: 'blue', stroke: 'blue'}, metrics.spawnEnergyRate.mean()),
+            new Bar('Total', {fill: 'blue', stroke: 'blue'}, metrics.buildRate.mean() + metrics.repairRate.mean() + metrics.upgradeRate.mean() + metrics.spawnEnergyRate.mean()),
+            new Bar('Storage', {fill: 'green', stroke: 'green'}, metrics.storageFillRate.mean())
+        ])
+
+        chart.render(pos, false);
     }
 }
 

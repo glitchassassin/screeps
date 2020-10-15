@@ -101,7 +101,7 @@ export class LogisticsRoute {
 
     extend(request: LogisticsRequest) {
         if (this.capacity > 0) {
-            if (request instanceof ResupplyRequest && !this.source?.primary) {
+            if (request instanceof ResupplyRequest && this.source && !this.source.primary) {
                 // Resupply requests can only be handled by primary sources
                 return false;
             }

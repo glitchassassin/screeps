@@ -73,7 +73,6 @@ export const Icon = (icon: string, center: RoomPosition, color: string, label?: 
 
 export const Minimap = (topLeft: RoomPosition, o: Office) => {
     let vis = new RoomVisual(topLeft.roomName);
-    console.log(topLeft);
 
     // Draw background
     vis.rect(topLeft.x, topLeft.y, 31, 31, {fill: 'rgba(0,0,0,1)'})

@@ -9,6 +9,10 @@ export class LogisticsRequest {
     public assigned = false;
     public resupply = false;
 
+    toString() {
+        return `[${this.constructor.name} ${this.pos.roomName}{${this.pos.x}, ${this.pos.y}}`;
+    }
+
     constructor(
         public pos: RoomPosition,
         public priority: number,
