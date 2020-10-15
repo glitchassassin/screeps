@@ -1,7 +1,15 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
+import { TerritoryIntelligence } from "Office/RoomIntelligence";
 import { Memoize } from "typescript-memoize";
 import { HRAnalyst } from "./HRAnalyst";
+
+export enum TerritoryIntent {
+    AVOID = 'AVOID',
+    ACQUIRE = 'ACQUIRE',
+    DEFEND = 'DEFEND',
+    EXPLOIT = 'EXPLOIT'
+}
 
 export class DefenseAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -27,5 +35,28 @@ export class DefenseAnalyst extends BoardroomManager {
     getGuards(office: Office) {
         return office.employees.filter(c => c.memory.type === 'GUARD');
     }
-
+    @Memoize((territory: TerritoryIntelligence) => ('' + territory.name + Game.time))
+    getTerritoryIntent(territory: TerritoryIntelligence) {
+        if (
+            (territory.controller.owner && !territory.controller.my) ||
+            (territory.controller.reserver && !territory.controller.myReserved)
+        ) {
+            if (territory.controller.level && territory.controller.level < 3) {
+                return TerritoryIntent.ACQUIRE;
+            } else {
+                return TerritoryIntent.AVOID;
+            }
+        } else {
+            if (
+                // Hostile activity in the last 100 ticks, and
+                (territory.lastHostileActivity && territory.lastHostileActivity < 100) &&
+                // We cannot see the room, or we can and there are confirmed hostile minions
+                !(Game.rooms[territory.name] && territory.hostileMinions === 0)
+            ) {
+                return TerritoryIntent.DEFEND;
+            } else {
+                return TerritoryIntent.EXPLOIT;
+            }
+        }
+    }
 }

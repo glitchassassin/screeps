@@ -4,6 +4,7 @@ import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
 import profiler from "screeps-profiler";
 import { table } from "table";
+import { Minimap } from "Visualizations/Territory";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
 import { HRManager } from "./OfficeManagers/HRManager";
@@ -173,6 +174,7 @@ export class Office {
         this.managers.forEach(m => {
             m.run();
         });
+        Minimap(new RoomPosition(9, 9, this.center.name), this);
     }
 
     /**
@@ -270,7 +272,9 @@ ${territoryTableRendered}`
 }
 
 global.officeReport = () => {
-    global.boardroom.offices.forEach(office => office.report())
+    global.boardroom.offices.forEach(office => {
+        office.report();
+    })
 }
 
 profiler.registerClass(Office, 'Office');
