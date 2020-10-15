@@ -228,6 +228,7 @@ export class Office {
 
     report() {
         Minimap(new RoomPosition(18, 18, this.center.name), this);
+        (this.managers.get('HRManager') as HRManager)?.miniReport(new RoomPosition(1, 32, this.center.name));
     }
 }
 

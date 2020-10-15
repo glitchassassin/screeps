@@ -127,6 +127,32 @@ export class HRManager extends OfficeManager {
         Table(new RoomPosition(15, 2, this.office.center.name), [headers, ...rows]);
     }
 
+    miniReport(pos: RoomPosition) {
+        let employeeTypes = new Set<string>();
+        let employeeCounts = new Map<string, number>();
+        let spawnStatus = new Map<string, string>();
+        this.office.employees.forEach(e => {
+            let t = e.memory.type || 'NONE'
+            employeeTypes.add(t);
+            employeeCounts.set(t, (employeeCounts.get(t) || 0) + 1);
+        })
+        for (let req in this.requests) {
+            let t = this.requests[req].type ?? 'NONE';
+            let assignment = [...this.assignments.entries()].find(([id, request]) => request === this.requests[req])
+            employeeTypes.add(t);
+            if (assignment) {
+                spawnStatus.set(t, 'SPAWNING');
+            } else if (!spawnStatus.has(t)) {
+                spawnStatus.set(t, 'QUEUED');
+            }
+        }
+        let employeeTable = [
+            ['Role', 'Count', 'Queue'],
+            ...[...employeeTypes.values()].map(t => [t, employeeCounts.get(t) ?? 0, spawnStatus.get(t) ?? ''])
+        ]
+        Table(new RoomPosition(pos.x, pos.y, this.office.center.name), employeeTable);
+    }
+
     getIdleSpawn = (priority: number) => {
         for (let spawn in this.spawns) {
             let request = this.assignments.get(this.spawns[spawn].id)
