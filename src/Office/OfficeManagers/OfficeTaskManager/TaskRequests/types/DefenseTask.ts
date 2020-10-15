@@ -59,6 +59,15 @@ export class DefenseTask extends TaskAction {
             }
             return TaskActionResult.INPROGRESS;
         }
+        // Then destroy enemy invader cores
+        let hostileCore = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, {filter: {structureType: STRUCTURE_INVADER_CORE}});
+        if (hostileCore) {
+            let result = creep.attack(hostileCore);
+            if (result === ERR_NOT_IN_RANGE) {
+                travel(creep, hostileCore.pos, 1);
+            }
+            return TaskActionResult.INPROGRESS;
+        }
         // Otherwise, action complete
         this.done = true;
         return TaskActionResult.SUCCESS;

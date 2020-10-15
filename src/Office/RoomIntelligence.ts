@@ -14,7 +14,7 @@ export class TerritoryIntelligence {
     controller: ControllerIntelligence = {};
     scanned = 0;
     lastHostileActivity?: number;
-    hostileSpawns = 0;
+    hostileStructures = 0;
     hostileMinions = 0;
 
     constructor(
@@ -35,7 +35,10 @@ export class TerritoryIntelligence {
         if (!this.room) return;
 
         this.room.find(FIND_SOURCES).forEach(s => this.sources.set(s.id, s.pos));
-        this.hostileSpawns = this.room.find(FIND_HOSTILE_SPAWNS).length;
+        this.hostileStructures = (
+            this.room.find(FIND_HOSTILE_SPAWNS).length +
+            this.room.find(FIND_HOSTILE_STRUCTURES).filter(s => s.structureType === STRUCTURE_INVADER_CORE).length
+        );
         this.hostileMinions = this.room.find(FIND_HOSTILE_CREEPS).length;
         this.controller = {
             pos: this.room.controller?.pos,

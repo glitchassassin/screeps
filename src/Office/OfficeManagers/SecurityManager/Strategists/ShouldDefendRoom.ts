@@ -1,7 +1,7 @@
 import { TerritoryIntelligence } from "Office/RoomIntelligence";
 
 export const ShouldDefendRoom = (territory: TerritoryIntelligence) => {
-    let hostile = territory.hostileMinions > 0 || territory.hostileSpawns > 0
+    let hostile = territory.hostileMinions > 0 || territory.hostileStructures > 0
     if (!hostile) return false;
     if (territory.controller.my) return true;
     if (territory.controller.owner === undefined) return true;
