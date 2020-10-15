@@ -77,6 +77,7 @@ export class PipelineMetrics {
         public mobileDepotLevels: Metric,
         public controllerDepotLevels: Metric,
         public controllerDepotFillRate: DeltaMetric,
+        public logisticsThroughput: Metric,
     ) { }
 }
 
@@ -128,7 +129,11 @@ export class StatisticsAnalyst extends BoardroomManager {
                     new DeltaMetric( // controllerDepotFillRate
                         controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
                         100
-                    )
+                    ),
+                    new Metric( // logisticsThroughput
+                        100,
+                        100
+                    ),
                 ));
             } else {
                 let metrics = this.metrics.get(office.name) as PipelineMetrics;
@@ -188,6 +193,7 @@ export class StatisticsAnalyst extends BoardroomManager {
     Storage Levels: ${metrics.storageLevels.mean().toFixed(2)} (${(metrics.storageLevels.asPercentMean()*100).toFixed(2)}%)
     Controller Depot Levels: ${metrics.controllerDepotLevels.mean().toFixed(2)} (${(metrics.controllerDepotLevels.asPercentMean()*100).toFixed(2)}%)
     Controller Depot Fill Rate: ${metrics.controllerDepotFillRate.mean().toFixed(2)} units/tick
+    Logistics Throughput: ${metrics.logisticsThroughput.mean().toFixed(2)} units/tick
             `)
         })
     }

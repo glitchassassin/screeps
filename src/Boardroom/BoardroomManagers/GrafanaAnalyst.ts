@@ -3,6 +3,7 @@ import { Office } from "Office/Office";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
+import { StatisticsAnalyst } from "./StatisticsAnalyst";
 
 
 export class GrafanaAnalyst extends BoardroomManager {
@@ -40,6 +41,7 @@ export class GrafanaAnalyst extends BoardroomManager {
         let controllerAnalyst = this.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
         let logisticsAnalyst = this.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+        let statisticsAnalyst = this.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
 
         let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container
         let storage = logisticsAnalyst.getStorage(office);
@@ -66,6 +68,7 @@ export class GrafanaAnalyst extends BoardroomManager {
             roomEnergyMax: office.center.room.energyCapacityAvailable,
             buildDelta: this.deltas[office.name].building,
             repairDelta: this.deltas[office.name].repairing,
+            pipelineThroughput: statisticsAnalyst.metrics.get(office.name)?.logisticsThroughput.mean() ?? 0
         }
     }
     cleanup() {

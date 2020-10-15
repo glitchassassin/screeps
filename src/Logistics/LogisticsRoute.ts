@@ -1,4 +1,6 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { PipelineMetrics, StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { Office } from "Office/Office";
 import profiler from "screeps-profiler";
 import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 import { LogisticsSource } from "./LogisticsSource";
@@ -13,7 +15,8 @@ enum RouteState {
 
 export class LogisticsRoute {
     // Dependencies
-    private mapAnalyst: MapAnalyst
+    private mapAnalyst: MapAnalyst;
+    private statisticsAnalyst: StatisticsAnalyst;
 
     public length = Infinity;
     public state = RouteState.PENDING;
@@ -23,6 +26,8 @@ export class LogisticsRoute {
     public maxCapacity: number = 0;
     public capacity: number = 0;
     public assignedCapacity = new Map<LogisticsRequest, number>();
+    public began: number = -1;
+    public office: Office;
 
 
     public get creep() {
@@ -33,12 +38,14 @@ export class LogisticsRoute {
         return this.state === RouteState.COMPLETED || this.state === RouteState.CANCELLED;
     }
 
-    constructor(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
+    constructor(office: Office, creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
         // Set up dependencies
         this.mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+        this.statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
         // Resupply requests can only be fulfilled by a primary source
         this.requests = [request];
         this._creep = creep.id;
+        this.office = office;
         this.init(creep, request, sources);
     }
     init(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
@@ -83,14 +90,12 @@ export class LogisticsRoute {
         })
     }
     calcInitialCapacity(creep: Creep, request: LogisticsRequest) {
-        if (this.source) {
-            this.maxCapacity = Math.min(creep.store.getCapacity(), creep.store.getUsedCapacity() + this.source.capacity);
-            this.assignedCapacity.set(request, Math.min(this.maxCapacity, request.capacity));
-            if (request instanceof DepotRequest) {
-                this.capacity = 0;
-            } else {
-                this.capacity = this.maxCapacity - request.capacity;
-            }
+        this.maxCapacity = Math.min(creep.store.getCapacity(), creep.store.getUsedCapacity() + (this.source?.capacity ?? 0));
+        this.assignedCapacity.set(request, Math.min(this.maxCapacity, request.capacity));
+        if (request instanceof DepotRequest) {
+            this.capacity = 0;
+        } else {
+            this.capacity = this.maxCapacity - request.capacity;
         }
     }
 
@@ -100,14 +105,18 @@ export class LogisticsRoute {
                 // Resupply requests can only be handled by primary sources
                 return false;
             }
+            if (request.completed) {
+                return false;
+            }
             this.requests.push(request);
+            this.assignedCapacity.set(request, Math.min(this.capacity, request.capacity));
             if (request instanceof DepotRequest) {
                 // Don't try to assign other requests after a DepotRequest
                 this.capacity = 0;
                 return true;
+            } else {
+                this.capacity -= request.capacity;
             }
-            this.assignedCapacity.set(request, Math.min(this.capacity, request.capacity));
-            this.capacity -= request.capacity;
             return true;
         }
         return false;
@@ -120,17 +129,42 @@ export class LogisticsRoute {
         if (this.source) {
             // Reserve capacity at the source
             this.source.reserve(this.maxCapacity);
-            this.state = RouteState.GETTING_ENERGY;
+            this.setState(RouteState.GETTING_ENERGY);
         } else {
             // We have 80% capacity already, go straight to filling orders
-            this.state = RouteState.FULFILLING;
+            this.setState(RouteState.FULFILLING);
         }
         // Assign requests
         this.requests.forEach(r => {
             r.assigned = true;
             r.assignedCapacity += this.assignedCapacity.get(r) ?? 0
         });
+
+        // console.log(`${this.requests.length}-request Route began with ${this.assignedCapacity.size} assigned capacities totaling ${[...this.assignedCapacity.values()].reduce((a, b) => a + b, 0)}`)
+        this.began = Game.time;
+
         return true;
+    }
+
+    setState(s: RouteState) {
+        this.state = s;
+        if (s === RouteState.CANCELLED || s === RouteState.COMPLETED) {
+            // Calculate throughput
+            let t = Game.time - this.began;
+            let fulfilled = 0;
+            for (let [req, capacity] of this.assignedCapacity) {
+                if (req.completed) fulfilled += capacity;
+            }
+            let throughput = fulfilled / t;
+            if (isNaN(throughput)) return;
+            if (throughput === Infinity) {
+                console.log('Infinite throughput error');
+                return;
+            }
+            let metrics = this.statisticsAnalyst.metrics.get(this.office.name) as PipelineMetrics;
+            metrics.logisticsThroughput.update(throughput); // throughput per tick
+            console.log(`Route ${s}, fulfilled ${fulfilled} capacity in ${t} ticks (${throughput} e/t)`);
+        }
     }
 
     run() {
@@ -145,7 +179,7 @@ export class LogisticsRoute {
             if (this.state === RouteState.GETTING_ENERGY) {
                 this.source?.unreserve(this.requests.reduce((sum, req) => sum + req.capacity, 0))
             }
-            this.state = RouteState.CANCELLED;
+            this.setState(RouteState.CANCELLED);
             return;
         }
         // Change state, if appropriate
@@ -154,7 +188,7 @@ export class LogisticsRoute {
                 if (!(this.creep.store.getFreeCapacity() === 0 || this.source?.capacity === 0)) {
                     break;
                 }
-                this.state = RouteState.FULFILLING;
+                this.setState(RouteState.FULFILLING);
                 // This step done - falls through to the next
             }
             case RouteState.FULFILLING: {
@@ -164,7 +198,7 @@ export class LogisticsRoute {
                 }
                 // If the queue is empty, we're done
                 if (this.requests.length === 0) {
-                    this.state = RouteState.COMPLETED;
+                    this.setState(RouteState.COMPLETED);
                 }
             }
         }
@@ -177,19 +211,19 @@ export class LogisticsRoute {
             }
             case RouteState.GETTING_ENERGY: {
                 if (!this.source) {
-                    this.state = RouteState.CANCELLED;
+                    this.setState(RouteState.CANCELLED);
                     return;
                 }
                 let result = this.source.transfer(this.creep);
                 if (result !== OK) {
-                    this.state = RouteState.CANCELLED;
+                    this.setState(RouteState.CANCELLED);
                 }
                 break;
             }
             case RouteState.FULFILLING: {
                 let result = this.requests[0].action(this.creep);
                 if (result !== OK) {
-                    this.state = RouteState.CANCELLED;
+                    this.setState(RouteState.CANCELLED);
                 }
                 break;
             }

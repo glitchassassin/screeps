@@ -92,7 +92,7 @@ export class LogisticsManager extends OfficeManager {
         // Prioritize requests
         let priorities = new Map<number, LogisticsRequest[]>();
         for (let [,req] of this.requests) {
-            if (req.assigned && req.assignedCapacity >= req.capacity) continue;
+            if (req.completed || (req.assigned && req.assignedCapacity >= req.capacity)) continue;
             let level = priorities.get(req.priority);
             if (!level) {
                 level = [];
@@ -115,7 +115,7 @@ export class LogisticsManager extends OfficeManager {
 
             // Set up route for initial request
             let lastRequest = level.shift() as LogisticsRequest;
-            let route = new LogisticsRoute(carrier, lastRequest, [...this.sources.values()]);
+            let route = new LogisticsRoute(this.office, carrier, lastRequest, [...this.sources.values()]);
 
             // Fulfill other close requests, by priority order
             while (priorities.size > 0) {
