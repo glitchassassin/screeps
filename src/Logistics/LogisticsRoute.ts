@@ -177,7 +177,7 @@ export class LogisticsRoute {
             });
             // If creep has not withdrawn, cancel reservation
             if (this.state === RouteState.GETTING_ENERGY) {
-                this.source?.unreserve(this.requests.reduce((sum, req) => sum + req.capacity, 0))
+                this.source?.unreserve(this.maxCapacity)
             }
             this.setState(RouteState.CANCELLED);
             return;
