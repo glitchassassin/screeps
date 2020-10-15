@@ -3,7 +3,6 @@ import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
 import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
 import profiler from "screeps-profiler";
-import { table } from "table";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
@@ -174,7 +173,9 @@ export class Office {
         this.managers.forEach(m => {
             m.run();
         });
-        Minimap(new RoomPosition(9, 9, this.center.name), this);
+        if (global.v.office.state) {
+            this.report();
+        }
     }
 
     /**
@@ -226,55 +227,8 @@ export class Office {
     }
 
     report() {
-        const statusTable = [
-            ['Manager', 'Status']
-        ];
-        this.managers.forEach(manager => {
-            statusTable.push([manager.constructor.name, manager.status]);
-        })
-        const statusTableRendered = table(statusTable, {
-            singleLine: true
-        });
-
-        const territoryTable: any[][] = [
-            ['Territory', 'Scanned', 'Sources', 'Controller', 'Last Hostile Activity']
-        ];
-        this.territories.forEach(territory => {
-            let controllerStatus = 'None';
-            if (territory.controller.my) {
-                controllerStatus = 'Owned';
-            } else if (territory.controller.owner) {
-                controllerStatus = `Hostile (${territory.controller.owner})`;
-            } else if (territory.controller.reservation?.username && territory.controller.reservation?.username !== 'LordGreywether') {
-                controllerStatus = `Hostile (${territory.controller.reservation.username}) [${territory.controller.reservation?.ticksToEnd} ticks]`;
-            } else if (territory.controller.myReserved) {
-                controllerStatus = `Reserved [${territory.controller.reservation?.ticksToEnd} ticks]`
-            }
-            territoryTable.push([
-                territory.name,
-                territory.scanned,
-                `${territory.sources.size}`,
-                controllerStatus,
-                territory.lastHostileActivity?.toFixed(0) || ''
-            ]);
-        })
-        const territoryTableRendered = table(territoryTable, {
-            singleLine: true
-        });
-
-        console.log(`[Office ${this.name}] Status Report:
-    <strong>Managers</strong>
-${statusTableRendered}
-    <strong>Territories</strong>
-${territoryTableRendered}`
-        )
+        Minimap(new RoomPosition(18, 18, this.center.name), this);
     }
-}
-
-global.officeReport = () => {
-    global.boardroom.offices.forEach(office => {
-        office.report();
-    })
 }
 
 profiler.registerClass(Office, 'Office');

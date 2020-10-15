@@ -8,7 +8,7 @@ export class Switch {
 const mapSwitches = ['roads', 'franchises', 'controller', 'construction'] as const;
 type mapSwitchTypes = ('none'|'all'|typeof mapSwitches[number]);
 
-const reportsSwitches = ['sales', 'hr', 'task', 'legal', 'logistics', 'facilities', 'security'] as const;
+const reportsSwitches = ['sales', 'hr', 'task', 'legal', 'logistics', 'facilities', 'security', 'office'] as const;
 type reportsSwitchTypes = ('none'|typeof reportsSwitches[number]);
 
 export class VisualizationController {
@@ -24,8 +24,9 @@ export class VisualizationController {
     logistics = new Switch();
     facilities = new Switch();
     security = new Switch();
+    office = new Switch();
 
-    map = new Proxy({}, {
+    m = new Proxy({}, {
         get: (target, name: mapSwitchTypes, receiver) => {
             if (name === 'none') {
                 mapSwitches.forEach(m => this[m].off());
@@ -40,7 +41,7 @@ export class VisualizationController {
             return;
         }
     })
-    reports = new Proxy({}, {
+    r = new Proxy({}, {
         get: (target, name: reportsSwitchTypes, receiver) => {
             if (name === 'none') {
                 reportsSwitches.forEach(m => this[m].off());

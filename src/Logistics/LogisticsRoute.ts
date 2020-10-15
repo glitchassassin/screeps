@@ -140,7 +140,6 @@ export class LogisticsRoute {
             r.assignedCapacity += this.assignedCapacity.get(r) ?? 0
         });
 
-        // console.log(`${this.requests.length}-request Route began with ${this.assignedCapacity.size} assigned capacities totaling ${[...this.assignedCapacity.values()].reduce((a, b) => a + b, 0)}`)
         this.began = Game.time;
 
         return true;
@@ -158,12 +157,10 @@ export class LogisticsRoute {
             let throughput = fulfilled / t;
             if (isNaN(throughput)) return;
             if (throughput === Infinity) {
-                console.log('Infinite throughput error');
                 return;
             }
             let metrics = this.statisticsAnalyst.metrics.get(this.office.name) as PipelineMetrics;
             metrics.logisticsThroughput.update(throughput); // throughput per tick
-            console.log(`Route ${s}, fulfilled ${fulfilled} capacity in ${t} ticks (${throughput} e/t)`);
         }
     }
 
