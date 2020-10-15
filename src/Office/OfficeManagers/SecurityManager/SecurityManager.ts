@@ -79,7 +79,7 @@ export class SecurityManager extends OfficeTaskManager {
                 hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Int`, priority - 1, MinionTypes.INTERN, {manager: this.constructor.name}))
             }
             // If we have Defense tasks, spawn Guards indefinitely
-            if (request instanceof DefenseTask) {
+            if (request instanceof DefenseTask && this.guards.length < 3) {
                 hrManager.submit(new MinionRequest(`${this.office.name}_Sec_Ops`, priority + 1, MinionTypes.GUARD, {manager: this.constructor.name}))
                 break;
             }
