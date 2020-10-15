@@ -54,6 +54,11 @@ export class LogisticsManager extends OfficeManager {
         if (this.storage && !this.sources.has(this.storage.pos.toString())) {
             this.sources.set(this.storage.pos.toString(), new LogisticsSource(this.storage.pos, false))
         }
+        this.spawns.forEach(spawn => {
+            if (!this.sources.has(spawn.pos.toString())) {
+                this.sources.set(spawn.pos.toString(), new LogisticsSource(spawn.pos))
+            }
+        })
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 
         switch (this.status) {
@@ -81,6 +86,7 @@ export class LogisticsManager extends OfficeManager {
         if (this.storage && getFreeCapacity(this.storage) > 0) {
             this.submit(this.storage.id, new ResupplyRequest(this.storage, 1))
         }
+        // Create a request to recycle old creeps
 
         // Try to route requests
         // Prioritize requests

@@ -245,7 +245,7 @@ export class Office {
                 controllerStatus = `Hostile (${territory.controller.owner})`;
             } else if (territory.controller.reservation?.username && territory.controller.reservation?.username !== 'LordGreywether') {
                 controllerStatus = `Hostile (${territory.controller.reservation.username}) [${territory.controller.reservation?.ticksToEnd} ticks]`;
-            } else if (territory.controller.reservation?.username && territory.controller.reservation?.username === 'LordGreywether') {
+            } else if (territory.controller.myReserved) {
                 controllerStatus = `Reserved [${territory.controller.reservation?.ticksToEnd} ticks]`
             }
             territoryTable.push([

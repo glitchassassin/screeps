@@ -1,12 +1,13 @@
+import { ControllerAnalyst } from 'Boardroom/BoardroomManagers/ControllerAnalyst';
 import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
 import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
 import { OfficeManager } from 'Office/OfficeManager';
 import profiler from 'screeps-profiler';
+import { FacilitiesManager } from './FacilitiesManager';
+import { RepairTask } from './OfficeTaskManager/TaskRequests/types/RepairTask';
 
 export class Road {
     path: RoomPosition[] = [];
-
-    status: "PENDING"|"INPROGRESS"|"DONE" = "PENDING";
 
     constructor(path: RoomPosition[]) {
         this.path = path.filter(pos => !(
@@ -17,9 +18,8 @@ export class Road {
         ));
     }
 
-    checkIfBuilt() {
-        let done = 0;
-        let inprogress = 0;
+    checkRoad(facilitiesManager: FacilitiesManager, doConstruction: boolean) {
+        let requestedConstruction = false;
         this.path.forEach(pos => {
             if (!Game.rooms[pos.roomName]) return;
             pos.look().forEach(lookItem => {
@@ -27,26 +27,20 @@ export class Road {
                     lookItem.structure?.structureType === STRUCTURE_ROAD ||
                     lookItem.structure?.structureType === STRUCTURE_CONTAINER
                 ) {
-                    done += 1;
+                    if (lookItem.structure.structureType === STRUCTURE_ROAD && lookItem.structure.hits < (lookItem.structure.hitsMax * 0.5)) {
+                        // Request repair
+                        facilitiesManager.submit(lookItem.structure.id, new RepairTask(lookItem.structure, 3));
+                    }
                     return;
                 } else if (lookItem.constructionSite?.structureType === STRUCTURE_ROAD) {
-                    inprogress += 1
                     return;
+                } else if (doConstruction) {
+                    pos.createConstructionSite(STRUCTURE_ROAD)
+                    requestedConstruction = true;
                 }
             })
         })
-        if (done >= this.path.length) {
-            this.status = "DONE";
-        } else if (done + inprogress >= this.path.length) {
-            this.status = "INPROGRESS";
-        } else {
-            this.status = "PENDING";
-        }
-        return (this.status === "DONE")
-    }
-    build() {
-        this.path.forEach(pos => Game.rooms[pos.roomName] && pos.createConstructionSite(STRUCTURE_ROAD));
-        this.status = "INPROGRESS";
+        return requestedConstruction;
     }
 }
 
@@ -71,31 +65,42 @@ export class RoadArchitect extends OfficeManager {
 
     plan() {
         // Only re-check infrastructure every `n` ticks (saves CPU)
-        if (this.roads.length !== 0 && Game.time % 50 !== 0) return;
+        if (this.roads.length !== 0 && Game.time % 200 !== 0) return;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+        let controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
+        let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
 
-        if (this.roads.length === 0) {
-            // Draw roads between spawn and sources
-            let spawn = hrAnalyst.getSpawns(this.office)[0];
-            salesAnalyst.getFranchiseLocations(this.office).forEach(franchise => {
-                this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
-                    swampCost: 1,
-                    maxOps: 3000,
-                    roomCallback: roadPlannerCallback
-                }).path))
-            })
-            this.roads.sort((a, b) => a.path.length - b.path.length);
-        }
-        let inprogress = 0;
+        // Draw roads between spawn, sources, and controllers
+        let spawn = hrAnalyst.getSpawns(this.office)[0];
+        salesAnalyst.getFranchiseLocations(this.office).forEach(franchise => {
+            this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
+                plainCost: 2,
+                swampCost: 2,
+                maxOps: 3000,
+                roomCallback: roadPlannerCallback
+            }).path))
+        })
+        controllerAnalyst.getReservingControllers(this.office).forEach(controller => {
+            if (!controller.pos) return;
+            this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos, {
+                plainCost: 2,
+                swampCost: 2,
+                maxOps: 3000,
+                roomCallback: roadPlannerCallback
+            }).path))
+        })
+        this.roads.push(new Road(PathFinder.search(spawn.pos, spawn.room.controller?.pos as RoomPosition, {
+            plainCost: 2,
+            swampCost: 2,
+            maxOps: 3000,
+            roomCallback: roadPlannerCallback
+        }).path))
+        this.roads.sort((a, b) => a.path.length - b.path.length);
+
+        let roadUnderConstruction = false;
         this.roads.forEach(road => {
-            if (road.status === 'DONE') return;
-            road?.checkIfBuilt();
-            if (road.status === 'INPROGRESS') inprogress += 1;
-            if (road?.status === 'PENDING' && inprogress === 0) {
-                road.build();
-                inprogress += 1;
-            }
+            roadUnderConstruction = road.checkRoad(facilitiesManager, !roadUnderConstruction);
         })
     }
 
@@ -103,8 +108,7 @@ export class RoadArchitect extends OfficeManager {
         // Architect only renders if enabled and roads are not built
         if (global.v.roads.state) {
             this.roads.forEach(road => {
-                if (road.status === 'DONE') return;
-                let strokeWidth = (road.status === 'INPROGRESS' ? 0.2 : 0.05)
+                let strokeWidth = 0.05
                 let rooms = road.path.reduce((r, pos) => (r.includes(pos.roomName) ? r : [...r, pos.roomName]), [] as string[])
                 rooms.forEach(room => {
                     // Technically this could cause weirdness if the road loops out of a room

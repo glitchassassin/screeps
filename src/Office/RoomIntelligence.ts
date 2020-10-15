@@ -1,10 +1,12 @@
-type ControllerIntelligence = {
+export type ControllerIntelligence = {
     pos?: RoomPosition,
     my?: boolean,
+    myReserved?: boolean,
     owner?: string,
     reservation?: ReservationDefinition,
     level?: number,
     blocked?: number,
+    scanned?: number
 }
 
 export class TerritoryIntelligence {
@@ -37,15 +39,17 @@ export class TerritoryIntelligence {
         this.hostileMinions = this.room.find(FIND_HOSTILE_CREEPS).length;
         this.controller = {
             pos: this.room.controller?.pos,
-            my: this.room.controller?.my || this.room.controller?.reservation?.username === 'LordGreywether',
+            my: this.room.controller?.my,
+            myReserved: this.room.controller?.reservation?.username === 'LordGreywether',
             owner: this.room.controller?.owner?.username || this.room.controller?.reservation?.username,
             level: this.room.controller?.level,
-            blocked: this.room.controller?.upgradeBlocked
+            blocked: this.room.controller?.upgradeBlocked,
+            scanned: Game.time,
         }
         this.scanned = Game.time;
         let events = this.room.getEventLog();
         if (
-            (this.controller.owner && !this.controller.my) ||
+            (this.controller.owner && !this.controller.my && !this.controller.myReserved) ||
             (this.room.find(FIND_STRUCTURES).some(s => s.structureType === STRUCTURE_KEEPER_LAIR)) //||
             // (events.some(e => e.event === EVENT_ATTACK || e.event === EVENT_ATTACK_CONTROLLER))
         ) {

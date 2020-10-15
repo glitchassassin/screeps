@@ -1,5 +1,7 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Office } from "Office/Office";
+import { ShouldReserveTerritory } from "Office/OfficeManagers/LegalManager/Strategies/ShouldReserveTerritory";
+import { ControllerIntelligence } from "Office/RoomIntelligence";
 import { Memoize } from "typescript-memoize";
 import { MapAnalyst } from "./MapAnalyst";
 
@@ -51,7 +53,7 @@ export class ControllerAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getReservingControllers(office: Office) {
         return office.territories
-            .filter(t => t.room?.controller)
-            .map(t => t.room?.controller) as StructureController[]
+            .filter(t => ShouldReserveTerritory(t))
+            .map(t => t.controller) as ControllerIntelligence[]
     }
 }

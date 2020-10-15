@@ -45,7 +45,8 @@ export class LegalManager extends OfficeTaskManager {
 
         // Evaluate territories to reserve
         this.office.territories.forEach(t => {
-            if (ShouldReserveTerritory(t)) {
+            let blocked = t.controller.blocked ?? 0 - (Game.time - (t.controller.scanned ?? 0))
+            if (ShouldReserveTerritory(t) && blocked < 200) {
                 this.submit(t.name, new ReserveTask(t, 5));
             }
         })
