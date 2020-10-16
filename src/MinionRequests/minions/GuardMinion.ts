@@ -23,7 +23,7 @@ export class GuardMinion {
         return {
             favoredTasks: ['BuildTask', 'RepairTask'],
             ...memory,
-            type: 'ENGINEER'
+            type: 'GUARD'
         };
     }
 }
