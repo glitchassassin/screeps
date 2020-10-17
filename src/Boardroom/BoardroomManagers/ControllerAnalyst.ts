@@ -24,7 +24,7 @@ export class ControllerAnalyst extends BoardroomManager {
         mapAnalyst
             .calculateNearbyPositions(room.controller.pos, 3)
             .forEach((pos) => {
-                if (mapAnalyst.isPositionWalkable(pos)) {
+                if (mapAnalyst.isPositionWalkable(pos) && !pos.isNearTo(target)) {
                     let range = PathFinder.search(pos, target).cost;
                     if (!candidate || candidate.range > range) {
                         candidate = {pos, range};

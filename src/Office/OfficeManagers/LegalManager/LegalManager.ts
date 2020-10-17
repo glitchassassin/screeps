@@ -80,11 +80,11 @@ export class LegalManager extends OfficeTaskManager {
             if (e && e > (CONTAINER_CAPACITY / 2)) {
                 logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, transferPriority));
             }
-        } else {
+        } else if (legalFund) {
             // Place standing order for upgrade energy
             if (this.office.center.room.controller) {
                 if (!this.depotRequest || this.depotRequest.completed) {
-                    this.depotRequest = new DepotRequest(this.office.center.room.controller.pos, 5, 100);
+                    this.depotRequest = new DepotRequest(legalFund.pos, 5, 100);
                 }
                 logisticsManager.submit(this.office.center.name, this.depotRequest);
             }

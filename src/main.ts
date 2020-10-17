@@ -83,10 +83,10 @@ function mainLoop() {
     defensiveProfilingRun = false;
   }
 
-  // if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
-  //   console.log("Pixel unlocked");
-  //   Game.cpu.generatePixel();
-  // }
+  if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
+    console.log("Pixel unlocked");
+    Game.cpu.generatePixel();
+  }
 }
 
 profiler.enable()

@@ -9,6 +9,8 @@ export class Bar {
         max: number|null = null
     ) {
         this.max = max ?? this.value ?? 0;
+        if (isNaN(this.max)) this.max = 0;
+        if (isNaN(this.value)) this.value = 0;
     }
     render(pos: RoomPosition, width: number, height: number, chartMaxValue: number|null = null) {
         let vis = new RoomVisual(pos.roomName);

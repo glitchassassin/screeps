@@ -187,6 +187,9 @@ export class Office {
      * Execute run phase for all OfficeManagers
      */
     cleanup() {
+        Game.map.visual.text(this.city, new RoomPosition(25,42,this.name), {color: '#FFFFFF', fontFamily: 'Courier New', fontSize: 7});
+
+        Memory.offices[this.name].city = this.city;
         Memory.offices[this.name].employees = Array.from(this.employeeNames);
         Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
         Memory.offices[this.name].territories = this.territories.reduce((obj, territory) => {
@@ -217,7 +220,7 @@ export class Office {
     }
 
     report() {
-        (new RoomVisual(this.name)).text(`[ grey company ~/${this.city}]$`, 3, 3, {font: '2.5 Courier New', align: 'left', opacity: 0.5})
+        (new RoomVisual(this.name)).text(`[greycompany ~/${this.city}]$`, 3, 3, {font: '2.5 Courier New', align: 'left', opacity: 0.5})
         Minimap(new RoomPosition(18, 18, this.center.name), this);
         (this.managers.get('HRManager') as HRManager)?.miniReport(new RoomPosition(2, 40, this.center.name));
         (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport(new RoomPosition(3, 5, this.center.name));
