@@ -41,7 +41,7 @@ export class DefenseAnalyst extends BoardroomManager {
             (territory.controller.owner && !territory.controller.my) ||
             (territory.controller.reserver && !territory.controller.myReserved)
         ) {
-            if (territory.controller.level && territory.controller.level < 3) {
+            if (!territory.controller.level || territory.controller.level < 3) {
                 return TerritoryIntent.ACQUIRE;
             } else {
                 return TerritoryIntent.AVOID;

@@ -61,7 +61,7 @@ export class SecurityManager extends OfficeTaskManager {
 
         // Plan defensive operations
         this.office.territories.forEach(t => {
-            if (t.intent === 'DEFEND') {
+            if (t.intent === 'DEFEND' || t.intent === 'ACQUIRE') {
                 this.submit(`${t.name}_Defense`, new DefenseTask(t, priority));
             }
         })
