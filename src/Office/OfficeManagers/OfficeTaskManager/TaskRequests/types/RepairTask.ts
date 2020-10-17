@@ -4,7 +4,7 @@ import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 
 const repairToMax = (structure: Structure) => {
     if (structure instanceof StructureWall || structure instanceof StructureRampart) {
-        return Math.max(structure.hitsMax, 100000)
+        return Math.min(structure.hitsMax, 100000)
     }
     return structure.hitsMax;
 }
