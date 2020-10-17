@@ -1,7 +1,7 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
 
-class Route {
+export class Route {
     lastPos?: RoomPosition;
     path?: RoomPosition[];
     stuckForTicks: number = 0;
@@ -17,7 +17,9 @@ class Route {
 
     calculatePath(creep: Creep, avoidCreeps = false) {
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-        let route = PathFinder.search(creep.pos, {pos: this.pos, range: this.range}, {
+        let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range)
+                                         .filter(pos => mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
+        let route = PathFinder.search(creep.pos, positionsInRange, {
             roomCallback: (room) => mapAnalyst.getCostMatrix(room, avoidCreeps)
         })
         this.path = route.path;
