@@ -1,6 +1,7 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { ControllerAnalyst } from "./ControllerAnalyst";
+import { HRAnalyst } from "./HRAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { SalesAnalyst } from "./SalesAnalyst";
 
@@ -84,6 +85,7 @@ export class PipelineMetrics {
         public repairRate: Metric,
         public upgradeRate: Metric,
         public deathLossesRate: Metric,
+        public spawnUtilization: Metric,
     ) { }
 }
 
@@ -97,6 +99,7 @@ export class StatisticsAnalyst extends BoardroomManager {
 
     plan() {
         let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let logisticsAnalyst = this.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let controllerAnalyst = this.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
 
@@ -106,7 +109,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     new NonNegativeDeltaMetric( // mineRate
                         salesAnalyst.getFranchiseLocations(office)
                             .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
-                        100
+                        500
                     ),
                     new Metric( // mineContainerLevels
                         salesAnalyst.getFranchiseLocations(office).length * CONTAINER_CAPACITY,
@@ -118,7 +121,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new NonNegativeDeltaMetric( // spawnEnergyRate
                         100,
-                        100
+                        500
                     ),
                     new Metric( // storageLevels
                         logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0),
@@ -126,7 +129,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new DeltaMetric( // storageFillRate
                         100,
-                        100
+                        500
                     ),
                     new Metric( // fleetLevels
                         logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0),
@@ -146,23 +149,27 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new NonNegativeDeltaMetric( // logisticsThroughput
                         100,
-                        100
+                        500
                     ),
                     new Metric( // buildRate
                         100,
-                        100
+                        500
                     ),
                     new Metric( // repairRate
                         100,
-                        100
+                        500
                     ),
                     new Metric( // upgradeRate
                         100,
-                        100
+                        500
                     ),
                     new Metric( // deathLossesRate
                         100,
-                        100
+                        500
+                    ),
+                    new Metric( // spawnUtilization
+                        1,
+                        500
                     ),
                 ));
             } else {
@@ -214,6 +221,9 @@ export class StatisticsAnalyst extends BoardroomManager {
                 metrics.controllerDepotFillRate.update(
                     controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0
                 );
+
+                metrics.spawnUtilization.maxValue = hrAnalyst.getSpawns(office).length;
+                metrics.spawnUtilization.update(hrAnalyst.getSpawns(office).filter(s => s.spawning).length);
 
                 let building = 0;
                 let repairing = 0;

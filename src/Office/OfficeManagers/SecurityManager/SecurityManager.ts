@@ -11,7 +11,6 @@ import { OfficeTaskManager } from "../OfficeTaskManager/OfficeTaskManager";
 import { DefenseTask } from "../OfficeTaskManager/TaskRequests/types/DefenseTask";
 import { ExploreTask } from "../OfficeTaskManager/TaskRequests/types/ExploreTask";
 import { IdleTask } from "../OfficeTaskManager/TaskRequests/types/IdleTask";
-import { ShouldDefendRoom } from "./Strategists/ShouldDefendRoom";
 
 export class SecurityManager extends OfficeTaskManager {
     towers: StructureTower[] = [];
@@ -62,14 +61,24 @@ export class SecurityManager extends OfficeTaskManager {
 
         // Plan defensive operations
         this.office.territories.forEach(t => {
-            if (ShouldDefendRoom(t)) {
+            if (t.intent === 'DEFEND') {
                 this.submit(`${t.name}_Defense`, new DefenseTask(t, priority));
             }
         })
 
         // Scout surrounding Territories every 100 ticks, if needed
-        let territory = this.office.territories.sort((a, b) => a.scanned - b.scanned)[0];
-        if (Game.time - territory.scanned > 100) {
+        let territory;
+        for (let t of this.office.territories) {
+            let period = (t.intent === 'AVOID') ? 1000 : 100;
+            if (
+                Game.time - t.scanned > period &&
+                (!territory || t.scanned < territory.scanned)
+            ) {
+                territory = t;
+            }
+        }
+
+        if (territory) {
             this.submit(territory.name, new ExploreTask(territory.name, priority - 1))
         }
 
