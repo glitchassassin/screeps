@@ -40,7 +40,7 @@ export class Office {
         // Load saved employees
         this.employeeNames = new Set(Memory.offices[roomName].employees)
 
-        this.city = Memory.offices[roomName].city;
+        this.city = Memory.offices[roomName].city ?? Memory.cities.shift();
 
         // Load saved franchise locations
         this.franchiseLocations = Object.entries(Memory.offices[roomName].franchiseLocations).reduce((obj, [sourceId, pos]) => {
