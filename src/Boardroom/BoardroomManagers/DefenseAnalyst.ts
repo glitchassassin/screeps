@@ -47,7 +47,9 @@ export class DefenseAnalyst extends BoardroomManager {
                 return TerritoryIntent.AVOID;
             }
         } else {
-            if (
+            if (territory.hostileStructures > 0) {
+                return TerritoryIntent.DEFEND;
+            } else if (
                 // Hostile activity in the last 100 ticks, and
                 (territory.lastHostileActivity && territory.lastHostileActivity < 100) &&
                 // We cannot see the room, or we can and there are confirmed hostile minions
