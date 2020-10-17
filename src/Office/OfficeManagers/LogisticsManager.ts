@@ -257,7 +257,8 @@ export class LogisticsManager extends OfficeManager {
             new Bar('Repair', {fill: 'blue', stroke: 'blue'}, metrics.repairRate.mean()),
             new Bar('Upgrade', {fill: 'blue', stroke: 'blue'}, metrics.upgradeRate.mean()),
             new Bar('Spawn', {fill: 'blue', stroke: 'blue'}, metrics.spawnEnergyRate.mean()),
-            new Bar('Total', {fill: 'blue', stroke: 'blue'}, metrics.buildRate.mean() + metrics.repairRate.mean() + metrics.upgradeRate.mean() + metrics.spawnEnergyRate.mean()),
+            new Bar('Waste', {fill: 'red', stroke: 'red'}, metrics.deathLossesRate.mean()),
+            new Bar('Total', {fill: 'blue', stroke: 'blue'}, metrics.buildRate.mean() + metrics.repairRate.mean() + metrics.upgradeRate.mean() + metrics.spawnEnergyRate.mean() + metrics.deathLossesRate.mean()),
             new Bar('Storage', {fill: 'green', stroke: 'green'}, metrics.storageFillRate.mean())
         ])
 

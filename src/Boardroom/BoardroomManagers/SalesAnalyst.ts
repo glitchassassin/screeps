@@ -1,11 +1,12 @@
 
-import { Office } from "Office/Office";
-import { SalesmanMinion } from "MinionRequests/minions/SalesmanMinion";
-import { Memoize } from "typescript-memoize";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { SalesmanMinion } from "MinionRequests/minions/SalesmanMinion";
+import { Office } from "Office/Office";
+import { Memoize } from "typescript-memoize";
+import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
+import { TerritoryIntent } from "./DefenseAnalyst";
 import { HRAnalyst } from "./HRAnalyst";
 import { MapAnalyst } from "./MapAnalyst";
-import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 
 export interface Franchise {
     pos: RoomPosition,
@@ -95,11 +96,7 @@ export class SalesAnalyst extends BoardroomManager {
             // If necessary, add franchise locations for territory
             territories.forEach(t => {
                 t.sources.forEach((s, id) => {
-                    if (t.isHostile && this.memory.franchises[id]) {
-                        delete this.memory.franchises[id];
-                        return;
-                    }
-                    if (!t.isHostile && !this.memory.franchises[id]) {
+                    if (!this.memory.franchises[id]) {
                         this.memory.franchises[id] = unwrapFranchise(office, id, s, this.calculateBestMiningLocation(office, s));
                     }
                 })
@@ -118,7 +115,7 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFranchiseLocations(office: Office) {
-        let territories = [office.center, ...office.territories.filter(t => !t.isHostile)].map(t => t.name)
+        let territories = [office.center, ...office.territories.filter(t => t.intent === TerritoryIntent.EXPLOIT)].map(t => t.name)
         return Object.values(this.memory.franchises).filter(f => territories.includes(f.pos.roomName))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

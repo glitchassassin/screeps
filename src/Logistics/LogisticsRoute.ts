@@ -1,5 +1,5 @@
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
-import { PipelineMetrics, StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { Office } from "Office/Office";
 import profiler from "screeps-profiler";
 import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
@@ -146,22 +146,12 @@ export class LogisticsRoute {
     }
 
     setState(s: RouteState) {
-        this.state = s;
-        if (s === RouteState.CANCELLED || s === RouteState.COMPLETED) {
-            // Calculate throughput
-            let t = Game.time - this.began;
-            let fulfilled = 0;
-            for (let [req, capacity] of this.assignedCapacity) {
-                if (req.completed) fulfilled += capacity;
-            }
-            let throughput = fulfilled / t;
-            if (isNaN(throughput)) return;
-            if (throughput === Infinity) {
-                return;
-            }
-            let metrics = this.statisticsAnalyst.metrics.get(this.office.name) as PipelineMetrics;
-            metrics.logisticsThroughput.update(throughput); // throughput per tick
+        if (this.state === s) return;
+        // If creep has not withdrawn, cancel reservation
+        if (this.state === RouteState.GETTING_ENERGY) {
+            this.source?.unreserve(this.maxCapacity)
         }
+        this.state = s;
     }
 
     run() {
@@ -172,10 +162,6 @@ export class LogisticsRoute {
                 r.assigned = false;
                 r.assignedCapacity -= this.assignedCapacity.get(r) ?? 0
             });
-            // If creep has not withdrawn, cancel reservation
-            if (this.state === RouteState.GETTING_ENERGY) {
-                this.source?.unreserve(this.maxCapacity)
-            }
             this.setState(RouteState.CANCELLED);
             return;
         }

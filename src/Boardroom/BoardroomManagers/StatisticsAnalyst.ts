@@ -83,6 +83,7 @@ export class PipelineMetrics {
         public buildRate: Metric,
         public repairRate: Metric,
         public upgradeRate: Metric,
+        public deathLossesRate: Metric,
     ) { }
 }
 
@@ -143,7 +144,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                         controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
                         100
                     ),
-                    new Metric( // logisticsThroughput
+                    new NonNegativeDeltaMetric( // logisticsThroughput
                         100,
                         100
                     ),
@@ -156,6 +157,10 @@ export class StatisticsAnalyst extends BoardroomManager {
                         100
                     ),
                     new Metric( // upgradeRate
+                        100,
+                        100
+                    ),
+                    new Metric( // deathLossesRate
                         100,
                         100
                     ),
@@ -190,10 +195,10 @@ export class StatisticsAnalyst extends BoardroomManager {
                 );
 
                 metrics.fleetLevels.maxValue = logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0);
-                metrics.fleetLevels.update(
-                    logisticsAnalyst.getCarriers(office)
-                        .reduce((sum, creep) => (sum + creep.store.getUsedCapacity()), 0)
-                );
+                let fleetLevel = logisticsAnalyst.getCarriers(office)
+                    .reduce((sum, creep) => (sum + creep.store.getUsedCapacity()), 0)
+                metrics.fleetLevels.update(fleetLevel);
+                metrics.logisticsThroughput.update(fleetLevel);
 
                 metrics.mobileDepotLevels.maxValue = logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getCapacity()), 0) ?? 0;
                 metrics.mobileDepotLevels.update(
@@ -213,6 +218,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                 let building = 0;
                 let repairing = 0;
                 let upgrading = 0;
+                let deathLosses = 0;
                 [office.center, ...office.territories]
                     .map(t => t.room)
                     .forEach(room => {
@@ -230,10 +236,14 @@ export class StatisticsAnalyst extends BoardroomManager {
                                     break;
                             }
                         })
+                        deathLosses += logisticsAnalyst.getTombstones(room)
+                                                       .filter(t => t.creep.my && t.deathTime === Game.time - 1)
+                                                       .reduce((sum, t) => sum + t.store.getUsedCapacity(RESOURCE_ENERGY), 0)
                     })
                 metrics.buildRate.update(building);
                 metrics.repairRate.update(repairing);
                 metrics.upgradeRate.update(upgrading);
+                metrics.deathLossesRate.update(deathLosses);
             }
         })
     }

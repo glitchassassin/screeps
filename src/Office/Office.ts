@@ -230,7 +230,7 @@ export class Office {
     report() {
         Minimap(new RoomPosition(18, 18, this.center.name), this);
         (this.managers.get('HRManager') as HRManager)?.miniReport(new RoomPosition(2, 40, this.center.name));
-        (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport(new RoomPosition(4, 3, this.center.name));
+        (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport(new RoomPosition(3, 5, this.center.name));
         let controller = this.center.room.controller;
         let chart = new Meters([
             new Bar(`GCL ${Game.gcl.level}`, {fill: 'green', stroke: 'green'}, Game.gcl.progress, Game.gcl.progressTotal),
