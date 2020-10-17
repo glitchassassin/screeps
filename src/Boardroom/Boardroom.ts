@@ -10,6 +10,7 @@ import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
 import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
+import { cityNames } from "./CityNames";
 
 export class Boardroom {
     offices: Map<string, Office> = new Map();
@@ -20,14 +21,15 @@ export class Boardroom {
      */
     constructor() {
         // Initialize Memory
-        if (!Memory.flags) Memory.flags = {};
-        if (!Memory.rooms) Memory.rooms = {};
-        if (!Memory.creeps) Memory.creeps = {};
-        if (!Memory.metrics) Memory.metrics = {};
-        if (!Memory.offices) Memory.offices = {};
-        if (!Memory.hr) Memory.hr = {};
-        if (!Memory.tasks) Memory.tasks = {};
-        if (!Memory.boardroom) Memory.boardroom = {};
+        Memory.flags ??= {};
+        Memory.rooms ??= {};
+        Memory.creeps ??= {};
+        Memory.metrics ??= {};
+        Memory.offices ??= {};
+        Memory.hr ??= {};
+        Memory.tasks ??= {};
+        Memory.boardroom ??= {};
+        Memory.cities ??= cityNames;
 
         // Initialize Offices
         Object.values(Game.spawns).forEach(spawn => {

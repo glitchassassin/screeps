@@ -30,6 +30,7 @@ interface Memory {
   uuid: number;
   log: any;
   respawnTick: number;
+  cities: string[];
   boardroom: {
     [managerName: string]: any
   }
@@ -38,6 +39,7 @@ interface Memory {
   };
   offices: {
     [name: string]: {
+      city: string,
       employees: string[],
       franchiseLocations: {
         [sourceId: string]: {

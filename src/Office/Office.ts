@@ -16,6 +16,7 @@ import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
 
 export class Office {
     name: string;
+    city: string;
     center: RoomIntelligence;
     territories: TerritoryIntelligence[] = [];
     franchiseLocations: {[sourceId: string]: {franchise: RoomPosition, source: RoomPosition}} = {};
@@ -29,6 +30,7 @@ export class Office {
         // Initialize Memory
         if (!Memory.offices[roomName]) {
             Memory.offices[roomName] = {
+                city: Memory.cities.shift() ?? roomName,
                 employees: [],
                 franchiseLocations: {},
                 territories: {}
@@ -37,6 +39,8 @@ export class Office {
 
         // Load saved employees
         this.employeeNames = new Set(Memory.offices[roomName].employees)
+
+        this.city = Memory.offices[roomName].city;
 
         // Load saved franchise locations
         this.franchiseLocations = Object.entries(Memory.offices[roomName].franchiseLocations).reduce((obj, [sourceId, pos]) => {
@@ -183,11 +187,6 @@ export class Office {
      * Execute run phase for all OfficeManagers
      */
     cleanup() {
-        if (!Memory.offices[this.name]) Memory.offices[this.name] = {
-            employees: [],
-            franchiseLocations: {},
-            territories: {}
-        }
         Memory.offices[this.name].employees = Array.from(this.employeeNames);
         Memory.offices[this.name].franchiseLocations = this.franchiseLocations;
         Memory.offices[this.name].territories = this.territories.reduce((obj, territory) => {
@@ -217,17 +216,8 @@ export class Office {
         });
     }
 
-    purge() {
-        this.franchiseLocations = {};
-        this.territories = [];
-        Memory.offices[this.name] = {
-            employees: [],
-            franchiseLocations: {},
-            territories: {}
-        }
-    }
-
     report() {
+        (new RoomVisual(this.name)).text(`[ grey company ~/${this.city}]$`, 3, 3, {font: '2.5 Courier New', align: 'left', opacity: 0.5})
         Minimap(new RoomPosition(18, 18, this.center.name), this);
         (this.managers.get('HRManager') as HRManager)?.miniReport(new RoomPosition(2, 40, this.center.name));
         (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport(new RoomPosition(3, 5, this.center.name));
