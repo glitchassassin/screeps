@@ -71,10 +71,12 @@ export class LogisticsManager extends OfficeManager {
                 // franchises drained
                 let metrics = statisticsAnalyst.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
-                let unassignedRequests = Array.from(this.requests.values()).filter(r => !r.assigned).length;
+                let unassignedRequests = Array.from(this.requests.values()).filter(r => r.assignedCapacity >= r.capacity).length;
                 let requestCapacity = unassignedRequests / this.requests.size;
-                if (Game.time - this.lastMinionRequest > 50 && inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unassigned, spawning carrier`);
+                if (Game.time - this.lastMinionRequest > 50 &&
+                    ((inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5) ||
+                    (inputAverageMean > 0.5 && idleCarriers.length === 0))) {
+                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unfilled, spawning carrier`);
                     hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
                     this.lastMinionRequest = Game.time;
                 }
