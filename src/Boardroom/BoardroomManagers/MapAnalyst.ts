@@ -17,11 +17,19 @@ export class MapAnalyst extends BoardroomManager {
         return this.calculateNearbyPositions(pos, 1);
     }
     @Memoize((pos: RoomPosition, proximity: number) => (`[${pos.x}, ${pos.y}]x${proximity}`))
-    calculateNearbyPositions(pos: RoomPosition, proximity: number) {
+    calculateNearbyPositions(pos: RoomPosition, proximity: number, includeCenter = false) {
         let adjacent: RoomPosition[] = [];
         adjacent = this.calculateAdjacencyMatrix(proximity)
-            .map(offset => new RoomPosition(pos.x + offset.x, pos.y + offset.y, pos.roomName))
-            .filter(roomPos => roomPos !== null)
+            .map(offset => {
+                try {
+                    return new RoomPosition(pos.x + offset.x, pos.y + offset.y, pos.roomName)
+                }
+                catch {
+                    return null;
+                }
+            })
+            .filter(roomPos => roomPos !== null) as RoomPosition[]
+        if (includeCenter) adjacent.push(pos);
         return adjacent;
     }
     @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))

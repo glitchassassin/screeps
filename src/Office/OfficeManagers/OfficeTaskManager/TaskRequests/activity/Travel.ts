@@ -17,7 +17,7 @@ export class Route {
 
     calculatePath(creep: Creep, avoidCreeps = false) {
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-        let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range)
+        let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
                                          .filter(pos => mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
         let route = PathFinder.search(creep.pos, positionsInRange, {
             roomCallback: (room) => mapAnalyst.getCostMatrix(room, avoidCreeps)
