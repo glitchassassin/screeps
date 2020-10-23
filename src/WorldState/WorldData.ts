@@ -1,29 +1,24 @@
-export abstract class WorldData {
-    public interval = 1;
-    public fetched = new Map<string, number>();
+import { keyByName, memoryCache } from "screeps-cache";
 
-    constructor() {
-        // On reload, get fresh data,
-        // or cached if not available
-        for (let roomName in Game.rooms) {
-            if (!this.update(roomName)) {
-                this.getCached(roomName);
-            }
+export abstract class WorldData {
+    public get name() : string {
+        return this.constructor.name;
+    }
+
+    // Store linked IDs in memory, to reload data from
+    @memoryCache(keyByName)
+    public ids: string[] = []
+
+    abstract update(roomName: string): boolean
+
+    public run() {
+        for (let room in Game.rooms) {
+            this.update(room);
         }
     }
 
-    abstract update(roomName: string): boolean;
-    abstract cache(roomName: string): boolean;
-    abstract getCached(roomName: string): boolean;
-
-    public run() {
-        for (let roomName in Game.rooms) {
-            if (Game.time - (this.fetched.get(roomName) ?? 0) >= this.interval) {
-                if (this.update(roomName)) {
-                    this.fetched.set(roomName, Game.time);
-                    this.cache(roomName);
-                }
-            }
-        }
+    delete(id: string) {
+        this.ids = this.ids.filter(i => i !== id);
+        delete Memory.cache[id];
     }
 }

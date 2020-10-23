@@ -1,9 +1,11 @@
-import { Boardroom } from 'Boardroom/Boardroom';
 import 'reflect-metadata';
-import profiler from 'screeps-profiler';
+
+import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
-import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 import { VisualizationController } from 'utils/VisualizationController';
+import { WorldState } from 'WorldState/WorldState';
+import profiler from 'screeps-profiler';
+import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -23,7 +25,7 @@ let defensiveProfilingRun = true;
 global.v = new VisualizationController()
 
 // Initialize Boardroom
-global.boardroom = new Boardroom();
+// global.boardroom = new Boardroom();
 
 global.purge = () => {
   Memory.flags = {};
@@ -38,6 +40,8 @@ global.purge = () => {
   global.boardroom = new Boardroom();
 }
 
+global.WorldState = new WorldState();
+
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
@@ -45,34 +49,35 @@ function mainLoop() {
   if (Game.cpu.bucket < 200 && Game.time % 2 === 0) {
     return; // If the bucket gets really low, skip every other tick to let it rebuild
   }
-  // Automatically delete memory of missing creeps
-  if(Game.time%1500 === 0) {
-    for (const name in Memory.creeps) {
-      if (!(name in Game.creeps)) {
-        delete Memory.creeps[name];
-      }
-    }
-  }
-  try {
-    // Execute Boardroom plan phase
+  // // Automatically delete memory of missing creeps
+  // if(Game.time%1500 === 0) {
+  //   for (const name in Memory.creeps) {
+  //     if (!(name in Game.creeps)) {
+  //       delete Memory.creeps[name];
+  //     }
+  //   }
+  // }
+  // try {
+  //   // Execute Boardroom plan phase
 
-    global.boardroom.plan()
+  //   global.boardroom.plan()
 
-    global.boardroom.offices.forEach(office => {
-      // Execute Office plan phase
-      office.plan();
-      // Execute Office run phase
-      office.run();
-      // Execute Office cleanup phase
-      office.cleanup();
-    });
+  //   global.boardroom.offices.forEach(office => {
+  //     // Execute Office plan phase
+  //     office.plan();
+  //     // Execute Office run phase
+  //     office.run();
+  //     // Execute Office cleanup phase
+  //     office.cleanup();
+  //   });
 
-    // Execute Boardroom cleanup phase
-    global.boardroom.cleanup();
-  } catch(e) {
-    console.log(e, e.stack)
-  }
+  //   // Execute Boardroom cleanup phase
+  //   global.boardroom.cleanup();
+  // } catch(e) {
+  //   console.log(e, e.stack)
+  // }
 
+  global.WorldState.run();
 
   if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
     // CPU bucket dropping below 50%, send a CPU profile

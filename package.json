@@ -73,6 +73,7 @@
     "@types/table": "^6.0.0",
     "jest": "^26.4.2",
     "reflect-metadata": "^0.1.13",
+    "screeps-cache": "^1.0.4",
     "screeps-profiler": "^2.0.1",
     "source-map": "~0.6.1",
     "table": "^6.0.3",

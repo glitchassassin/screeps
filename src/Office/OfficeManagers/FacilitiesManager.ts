@@ -1,20 +1,23 @@
-import { CachedConstructionSite, CachedStructure, FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { DepotRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManagerStatus } from "Office/OfficeManager";
+
 import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
-import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
-import profiler from "screeps-profiler";
-import { Table } from "Visualizations/Table";
+import { CachedConstructionSite } from "WorldState/WorldConstructionSites";
+import { CachedStructure } from "WorldState/WorldStructures";
+import { DepotRequest } from "Logistics/LogisticsRequest";
+import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { HRManager } from "./HRManager";
 import { LogisticsManager } from "./LogisticsManager";
+import { OfficeManagerStatus } from "Office/OfficeManager";
 import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
+import { Table } from "Visualizations/Table";
 import { TaskAction } from "./OfficeTaskManager/TaskRequests/TaskAction";
+import profiler from "screeps-profiler";
 
 const buildPriority = (site: CachedConstructionSite) => {
     // Adds a fractional component to sub-prioritize the most
     // complete construction sites
-    let completion = site.progress / site.progressTotal;
+    let completion = (site.progress ?? 0) / (site.progressTotal ?? 0);
     switch(site.structureType) {
         case STRUCTURE_ROAD:
             return 1 + completion;
@@ -29,7 +32,7 @@ const buildPriority = (site: CachedConstructionSite) => {
 const repairRemaining = (structure: CachedStructure) => {
     let hitsMax = (structure.hitsMax ?? 0);
     if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) {
-        hitsMax = Math.min(structure.hitsMax, 100000);
+        hitsMax = Math.min(hitsMax, 100000);
     }
     return hitsMax - (structure.hits ?? 0)
 }
@@ -62,7 +65,7 @@ export class FacilitiesManager extends OfficeTaskManager {
         0);
         // Calculate construction energy
         this.totalWork = this.sites.reduce((sum, site) =>
-            sum + (site.progressTotal - site.progress),
+            sum + ((site.progressTotal ?? 0) - (site.progress ?? 0)),
         0);
         // Calculate repair energy (and scale by 5, to match construction output rate)
         this.totalWork += this.structures.reduce((sum, structure) => {

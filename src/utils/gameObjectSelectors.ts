@@ -1,4 +1,5 @@
-import { CachedConstructionSite } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { CachedConstructionSite } from "WorldState/WorldConstructionSites";
+import { CachedStructure } from "WorldState/WorldStructures";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 
@@ -7,10 +8,10 @@ export interface WithPos {
 }
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite|ConstructionSite) {
-    return target.progressTotal - target.progress;
+    return (target.progressTotal ?? 0) - (target.progress ?? 0);
 }
-export function getRepairEnergyRemaining(target: Structure) {
-    return (target.hitsMax - target.hits)/100;
+export function getRepairEnergyRemaining(target: CachedStructure|Structure) {
+    return ((target.hitsMax ?? 0) - (target.hits ?? 0))/100;
 }
 export function getTransferEnergyRemaining(target: AnyStoreStructure) {
     return (target.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY);

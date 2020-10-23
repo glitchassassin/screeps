@@ -1,3 +1,4 @@
+import { WorldConstructionSites } from "./WorldConstructionSites";
 import { WorldData } from "./WorldData";
 import { WorldStructures } from "./WorldStructures";
 
@@ -8,12 +9,15 @@ export class WorldState {
         WorldState.instance = this;
     }
     run() {
-        for (let prop of Object.values(this)) {
-            if (prop instanceof WorldData) {
-                prop.run();
+        console.log('WorldState')
+        for (let prop in this) {
+            let property = this[prop];
+            if (property instanceof WorldData) {
+                property.run();
             }
         }
     }
 
-    structures = new WorldStructures();
+    public structures = new WorldStructures();
+    public constructionSites = new WorldConstructionSites();
 }
