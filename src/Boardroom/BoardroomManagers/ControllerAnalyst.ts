@@ -1,9 +1,10 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { CachedController } from "WorldState";
+import { ControllerIntelligence } from "Office/RoomIntelligence";
+import { MapAnalyst } from "./MapAnalyst";
+import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
 import { ShouldReserveTerritory } from "Office/OfficeManagers/LegalManager/Strategies/ShouldReserveTerritory";
-import { ControllerIntelligence } from "Office/RoomIntelligence";
-import { Memoize } from "typescript-memoize";
-import { MapAnalyst } from "./MapAnalyst";
 
 export type Depot = {
     pos: RoomPosition,
@@ -15,14 +16,15 @@ export class ControllerAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     calculateBestContainerLocation(office: Office) {
         let room = office.center.room;
-        if (!room.controller) return null;
+        let controller = this.worldState.controllers.byRoom.get(room.name);
+        if (!controller) return null;
         let spawn = Object.values(Game.spawns).find(s => s.room === room);
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
-        let candidate: {pos: RoomPosition, range: number}|null = (null as {pos: RoomPosition, range: number}|null);
+        let candidate: {pos: RoomPosition, range: number}|null = null as {pos: RoomPosition, range: number}|null;
         mapAnalyst
-            .calculateNearbyPositions(room.controller.pos, 3)
+            .calculateNearbyPositions(controller.pos, 3)
             .forEach((pos) => {
                 if (mapAnalyst.isPositionWalkable(pos) && !pos.isNearTo(target)) {
                     let range = PathFinder.search(pos, target).cost;
@@ -31,23 +33,36 @@ export class ControllerAnalyst extends BoardroomManager {
                     }
                 }
             });
+        controller.containerPos = candidate?.pos;
         return candidate?.pos;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getDesignatedUpgradingLocations(office: Office) {
-        let upgradeDepotFlag = office.center.room.find(FIND_FLAGS)
-            .find(flag => flag.name === 'upgradeDepot');
-        if (!upgradeDepotFlag) return null;
+        let room = office.center.room;
+        let controller = this.worldState.controllers.byRoom.get(room.name);
+        if (!controller?.containerPos) return null;
         let depot: Depot = {
-            pos: upgradeDepotFlag.pos
+            pos: controller.containerPos
         }
-        upgradeDepotFlag.pos.look().forEach(obj => {
-            if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
-                depot.container = obj.structure as StructureContainer
-            } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
-                depot.constructionSite = obj.constructionSite as ConstructionSite
-            }
-        });
+
+        // If we don't have a container/construction site cached, look for one
+        if (!controller.containerId && !controller.containerConstructionSiteId) {
+            controller.containerPos.look().forEach(obj => {
+                if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
+                    (controller as CachedController).containerId = obj.structure.id as Id<StructureContainer>;
+                } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
+                    (controller as CachedController).containerConstructionSiteId = obj.constructionSite.id as Id<ConstructionSite>;
+                }
+            });
+        }
+
+        if (controller.containerId) {
+            depot.container = Game.getObjectById(controller.containerId) ?? undefined;
+        }
+        if (controller.containerConstructionSiteId) {
+            depot.constructionSite = Game.getObjectById(controller.containerConstructionSiteId) ?? undefined;
+        }
+
         return depot;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

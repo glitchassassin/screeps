@@ -1,6 +1,7 @@
-import { WorldConstructionSites } from "./WorldConstructionSites";
+import { WorldConstructionSites } from "./branches/WorldConstructionSites";
+import { WorldControllers } from "./branches/WorldControllers";
 import { WorldData } from "./WorldData";
-import { WorldStructures } from "./WorldStructures";
+import { WorldStructures } from "./branches/WorldStructures";
 
 export class WorldState {
     private static instance = new WorldState();
@@ -20,4 +21,5 @@ export class WorldState {
 
     public structures = new WorldStructures();
     public constructionSites = new WorldConstructionSites();
+    public controllers = new WorldControllers();
 }

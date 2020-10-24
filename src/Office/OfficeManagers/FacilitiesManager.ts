@@ -1,8 +1,7 @@
+import { CachedConstructionSite, CachedStructure } from "WorldState";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 
 import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
-import { CachedConstructionSite } from "WorldState/WorldConstructionSites";
-import { CachedStructure } from "WorldState/WorldStructures";
 import { DepotRequest } from "Logistics/LogisticsRequest";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { HRManager } from "./HRManager";

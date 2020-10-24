@@ -1,16 +1,16 @@
-import { heapCacheGetter, keyById, memoryCacheGetter } from "screeps-cache";
+import { asRoomPosition, heapCacheGetter, keyById, memoryCacheGetter } from "screeps-cache";
 
-import { WorldData } from "./WorldData";
+import { WorldData } from "../WorldData";
 
-export class WorldConstructionSites extends WorldData {
+export class WorldStructures extends WorldData {
     constructor() {
         super();
         // Reload cached structures
         for (let id of this.ids) {
-            let s = new CachedConstructionSite(id as Id<ConstructionSite>)
-            this.byId.set(id as Id<ConstructionSite>, s);
+            let s = new CachedStructure(id as Id<Structure>)
+            this.byId.set(id as Id<Structure>, s);
             if (s.pos) {
-                let room = this.byRoom.get(s.pos.roomName) ?? new Set<CachedConstructionSite>();
+                let room = this.byRoom.get(s.pos.roomName) ?? new Set<CachedStructure>();
                 room.add(s);
                 this.byRoom.set(s.pos.roomName, room);
             }
@@ -22,8 +22,8 @@ export class WorldConstructionSites extends WorldData {
     public refreshed = new Map<string, number>();
 
     // Lookup indexes
-    public byId = new Map<Id<ConstructionSite>, CachedConstructionSite>();
-    public byRoom = new Map<string, Set<CachedConstructionSite>>();
+    public byId = new Map<Id<Structure>, CachedStructure>();
+    public byRoom = new Map<string, Set<CachedStructure>>();
 
     public update(roomName: string) {
         // If no vision in this room, cancel the update
@@ -33,20 +33,20 @@ export class WorldConstructionSites extends WorldData {
         if (lastRefreshed && lastRefreshed < this.interval) return false;
         this.refreshed.set(roomName, Game.time);
 
-        let foundIDs = new Set<Id<ConstructionSite>>();
-        let room = this.byRoom.get(roomName) ?? new Set<CachedConstructionSite>();
+        let foundIDs = new Set<Id<Structure>>();
+        let room = this.byRoom.get(roomName) ?? new Set<CachedStructure>();
         this.byRoom.set(roomName, room);
 
         // Refresh existing structures in the room
-        Game.rooms[roomName].find(FIND_CONSTRUCTION_SITES).forEach(structure => {
+        Game.rooms[roomName].find(FIND_STRUCTURES).forEach(structure => {
             console.log(structure);
             // Found ID (so we won't clean it up later)
             foundIDs.add(structure.id)
 
-            // Create a new CachedConstructionSite if needed
+            // Create a new CachedStructure if needed
             if (!this.byId.has(structure.id)) {
                 // New structure
-                let s = new CachedConstructionSite(structure.id);
+                let s = new CachedStructure(structure.id);
                 // Add structure ID to memory
                 this.ids.push(structure.id);
                 // Update indices
@@ -72,23 +72,20 @@ export class WorldConstructionSites extends WorldData {
     }
 }
 
-export class CachedConstructionSite {
-    constructor(public id: Id<ConstructionSite>) {
-        if (!this.gameObj) throw new Error(`No construction site found for ${this.id}`);
-        for (let i in this) {}
-    }
+export class CachedStructure {
+    constructor(public id: Id<Structure>) { }
 
-    @memoryCacheGetter(keyById, (i: CachedConstructionSite) => Game.getObjectById(i.id)?.pos)
-    public pos!: RoomPosition;
+    @memoryCacheGetter(keyById, (i: CachedStructure) => Game.getObjectById(i.id)?.pos, asRoomPosition)
+    public pos?: RoomPosition;
 
-    @memoryCacheGetter(keyById, (i: CachedConstructionSite) => Game.getObjectById(i.id)?.structureType)
-    public structureType!: StructureConstant;
+    @memoryCacheGetter(keyById, (i: CachedStructure) => Game.getObjectById(i.id)?.structureType)
+    public structureType?: StructureConstant;
 
-    @heapCacheGetter((i: CachedConstructionSite) => Game.getObjectById(i.id)?.progress)
-    public progress?: number;
+    @heapCacheGetter((i: CachedStructure) => Game.getObjectById(i.id)?.hits)
+    public hits?: number;
 
-    @heapCacheGetter((i: CachedConstructionSite) => Game.getObjectById(i.id)?.progressTotal)
-    public progressTotal?: number;
+    @heapCacheGetter((i: CachedStructure) => Game.getObjectById(i.id)?.hitsMax)
+    public hitsMax?: number;
 
     public get gameObj() { return Game.getObjectById(this.id); }
 }

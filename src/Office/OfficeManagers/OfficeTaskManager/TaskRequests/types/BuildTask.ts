@@ -1,4 +1,4 @@
-import { CachedConstructionSite } from "WorldState/WorldConstructionSites";
+import { CachedConstructionSite } from "WorldState/branches/WorldConstructionSites";
 import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 import { TaskActionResult } from "../TaskAction";
 import { doWork } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/DoWork";

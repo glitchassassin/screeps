@@ -1,5 +1,5 @@
-import { CachedConstructionSite } from "WorldState/WorldConstructionSites";
-import { CachedStructure } from "WorldState/WorldStructures";
+import { CachedConstructionSite, CachedStructure } from "WorldState";
+
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 
@@ -48,4 +48,8 @@ export function sortByDistanceTo<T extends WithPos>(pos: RoomPosition) {
         if (!distance.has(b)) distance.set(b, mapAnalyst.getRangeTo(pos, b.pos))
         return (distance.get(a) as number) - (distance.get(b) as number)
     }
+}
+
+export function RoomPos(pos: {x: number, y: number, roomName: string}) {
+    return new RoomPosition(pos.x, pos.y, pos.roomName);
 }
