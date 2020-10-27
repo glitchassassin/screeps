@@ -39,7 +39,6 @@ export class WorldConstructionSites extends WorldData {
 
         // Refresh existing structures in the room
         Game.rooms[roomName].find(FIND_CONSTRUCTION_SITES).forEach(structure => {
-            console.log(structure);
             // Found ID (so we won't clean it up later)
             foundIDs.add(structure.id)
 

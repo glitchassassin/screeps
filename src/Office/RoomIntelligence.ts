@@ -38,7 +38,7 @@ export class TerritoryIntelligence {
 
     public get intent(): TerritoryIntent {
         let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
-        return defenseAnalyst.getTerritoryIntent(this);
+        return defenseAnalyst.getTerritoryIntent(this.name);
     }
 
     scan() {
@@ -51,29 +51,6 @@ export class TerritoryIntelligence {
         if (!this.scannedMinerals) {
             this.room.find(FIND_MINERALS).forEach(m => this.mineral = m.mineralType);
             this.scannedMinerals = true;
-        }
-        this.hostileStructures = (
-            this.room.find(FIND_HOSTILE_SPAWNS).length +
-            this.room.find(FIND_HOSTILE_STRUCTURES).filter(s => s.structureType === STRUCTURE_INVADER_CORE).length
-        );
-        this.hostileMinions = this.room.find(FIND_HOSTILE_CREEPS).length;
-        if (this.hostileMinions > 0) {
-            for (let e of this.room.getEventLog()) {
-                if (e.event === EVENT_ATTACK && e.data.attackType !== EVENT_ATTACK_TYPE_NUKE) {
-                    let actor = Game.getObjectById(e.objectId as Id<Creep|StructureTower>)
-                    if (actor && !actor.my) {
-                        // Hostiles attacking
-                        this.lastHostileActivity = Game.time;
-                        break;
-                    }
-                } else if (e.event === EVENT_ATTACK_CONTROLLER) {
-                    let actor = Game.getObjectById(e.objectId as Id<Creep>)
-                    if (actor && !actor.my) {
-                        this.lastHostileActivity = Game.time;
-                        break;
-                    }
-                }
-            }
         }
         this.controller = {
             pos: this.room.controller?.pos,

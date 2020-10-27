@@ -50,7 +50,6 @@ export class WorldControllers extends WorldData {
 
 export class CachedController {
     constructor(public id: Id<StructureController>) {
-        if (!this.gameObj) throw new Error(`No controller found for ${this.id}`);
         for (let i in this) {}
     }
 
@@ -86,6 +85,10 @@ export class CachedController {
 
     @memoryCache(keyById)
     public containerConstructionSiteId?: Id<ConstructionSite>;
+
+    public get my() { return this.owner === 'LordGreywether'; }
+
+    public get myReserved() { return this.reservationOwner === 'LordGreywether'; }
 
     public get gameObj() { return Game.getObjectById(this.id); }
 }

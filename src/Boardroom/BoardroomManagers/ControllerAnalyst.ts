@@ -18,7 +18,8 @@ export class ControllerAnalyst extends BoardroomManager {
         let room = office.center.room;
         let controller = this.worldState.controllers.byRoom.get(room.name);
         if (!controller) return null;
-        let spawn = Object.values(Game.spawns).find(s => s.room === room);
+        // Pick the first spawn in the room
+        let spawn = this.worldState.mySpawns.byRoom.get(room.name)?.values().next().value;
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
