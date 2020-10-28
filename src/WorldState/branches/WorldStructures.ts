@@ -1,90 +1,36 @@
-import { asRoomPosition, heapCacheGetter, keyById, memoryCacheGetter } from "screeps-cache";
+import { CachedIDItem, WorldDataRoomItemsById } from "WorldState/WorldDataRoomItemsById";
+import { heapCacheGetter, keyById, memoryCacheGetter } from "screeps-cache";
 
-import { WorldData } from "../WorldData";
+export class WorldStructures extends WorldDataRoomItemsById<Structure, CachedStructure> {
+    createCachedObject(id: Id<Structure>) {
+        return new CachedStructure(id);
+    }
 
-export class WorldStructures extends WorldData {
-    constructor() {
-        super();
-        // Reload cached structures
-        for (let id of this.ids) {
-            let s = new CachedStructure(id as Id<Structure>)
-            this.byId.set(id as Id<Structure>, s);
-            if (s.pos) {
-                let room = this.byRoom.get(s.pos.roomName) ?? new Set<CachedStructure>();
-                room.add(s);
-                this.byRoom.set(s.pos.roomName, room);
-            }
-        }
+    objectFinder(roomName: string) {
+        return Game.rooms[roomName].find(FIND_STRUCTURES);
     }
 
     // Set up refresh intervals per room
     public interval = 100;
     public refreshed = new Map<string, number>();
-
-    // Lookup indexes
-    public byId = new Map<Id<Structure>, CachedStructure>();
-    public byRoom = new Map<string, Set<CachedStructure>>();
-
-    public update(roomName: string) {
-        // If no vision in this room, cancel the update
-        if (!Game.rooms[roomName]) return false;
+    shouldRefresh(roomName: string) {
         // If room has been refreshed in the last `interval`, skip it
         let lastRefreshed = this.refreshed.get(roomName);
         if (lastRefreshed && lastRefreshed < this.interval) return false;
         this.refreshed.set(roomName, Game.time);
-
-        let foundIDs = new Set<Id<Structure>>();
-        let room = this.byRoom.get(roomName) ?? new Set<CachedStructure>();
-        this.byRoom.set(roomName, room);
-
-        // Refresh existing structures in the room
-        Game.rooms[roomName].find(FIND_STRUCTURES).forEach(structure => {
-            // Found ID (so we won't clean it up later)
-            foundIDs.add(structure.id)
-
-            // Create a new CachedStructure if needed
-            if (!this.byId.has(structure.id)) {
-                // New structure
-                let s = new CachedStructure(structure.id as Id<Structure>);
-                // Add structure ID to memory
-                this.ids.push(structure.id);
-                // Update indices
-                this.byId.set(structure.id, s);
-                room.add(s);
-            }
-
-            // Trigger getters to refresh caches
-            for (let i in this.byId.get(structure.id) ?? {}) {}
-        })
-        // Clean up structures that weren't found
-        for (let structure of room) {
-            if (!foundIDs.has(structure.id)) {
-                // Room is visible, but structure does not exist.
-                // Remove from indexes
-                this.delete(structure.id);
-                this.byId.delete(structure.id);
-                // Remove cached data for structure
-                room.delete(structure);
-            }
-        }
         return true;
     }
 }
 
-export class CachedStructure<T extends Structure = Structure> {
-    constructor(public id: Id<T>) { }
-
-    @memoryCacheGetter(keyById, (i: CachedStructure<T>) => Game.getObjectById(i.id)?.pos, asRoomPosition)
-    public pos?: RoomPosition;
-
+export class CachedStructure<T extends Structure = Structure> extends CachedIDItem<T> {
     @memoryCacheGetter(keyById, (i: CachedStructure<T>) => Game.getObjectById(i.id)?.structureType)
-    public structureType?: StructureConstant;
+    public structureType!: StructureConstant;
 
     @memoryCacheGetter(keyById, (i: CachedStructure<T>) => {
         let o = Game.getObjectById(i.id)
         return (o instanceof OwnedStructure) ? o.my : false
     })
-    public my?: boolean;
+    public my!: boolean;
 
     @heapCacheGetter((i: CachedStructure<T>) => Game.getObjectById(i.id)?.hits)
     public hits?: number;
@@ -92,5 +38,12 @@ export class CachedStructure<T extends Structure = Structure> {
     @heapCacheGetter((i: CachedStructure<T>) => Game.getObjectById(i.id)?.hitsMax)
     public hitsMax?: number;
 
-    public get gameObj() { return Game.getObjectById(this.id); }
+    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getCapacity() ?? 0)
+    public capacity: number = 0;
+
+    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getUsedCapacity() ?? 0)
+    public capacityUsed: number = 0;
+
+    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getFreeCapacity() ?? 0)
+    public capacityFree: number = 0;
 }

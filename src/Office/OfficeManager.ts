@@ -1,4 +1,5 @@
 import { Office } from "./Office";
+import { WorldState } from "WorldState/WorldState";
 
 export enum OfficeManagerStatus {
     OFFLINE = 'OFFLINE',
@@ -9,6 +10,7 @@ export enum OfficeManagerStatus {
 
 export abstract class OfficeManager {
     status = OfficeManagerStatus.NORMAL;
+    public worldState = new WorldState();
 
     constructor(
         public office: Office

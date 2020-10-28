@@ -1,8 +1,11 @@
 import { LogisticsAnalyst, RealLogisticsSources } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
-import profiler from "screeps-profiler";
+
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedResource } from "WorldState/branches/WorldResources";
 import { Memoize } from "typescript-memoize";
-import { getCapacity } from "utils/gameObjectSelectors";
+import { getUsedCapacity } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
+import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 
 /**
  * A cached representation of a Source
@@ -30,7 +33,7 @@ export class LogisticsSource {
 
     @Memoize(() => (`${Game.time}`))
     public get capacity() : number {
-        return this.sources.reduce((sum, source) => sum + getCapacity(source), 0) - this.reservedCapacity;
+        return this.sources.reduce((sum, source) => sum + getUsedCapacity(source), 0) - this.reservedCapacity;
     }
 
     /**
@@ -50,19 +53,19 @@ export class LogisticsSource {
      *
      * @param creep Creep to transfer resources into
      */
-    transfer(creep: Creep) {
+    transfer(creep: CachedCreep) {
         let source = this.sources[0];
         if (!source) return ERR_NOT_FOUND;
         if (source.pos.roomName !== creep.pos.roomName) {
             return travel(creep, source.pos);
         }
-        if (getCapacity(source) === 0) return ERR_NOT_ENOUGH_ENERGY;
+        if (getUsedCapacity(source) === 0) return ERR_NOT_ENOUGH_ENERGY;
 
         let result;
-        if (source instanceof Resource) {
-            result = creep.pickup(source);
+        if (source instanceof CachedResource) {
+            result = source.gameObj ? creep.gameObj.pickup(source.gameObj) : ERR_NOT_FOUND;
         } else {
-            result = creep.withdraw(source, RESOURCE_ENERGY);
+            result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY) : ERR_NOT_FOUND;
         }
 
         if (result === ERR_NOT_IN_RANGE) {

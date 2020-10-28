@@ -6,6 +6,7 @@ import { DepotRequest } from "Logistics/LogisticsRequest";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { HRManager } from "./HRManager";
 import { LogisticsManager } from "./LogisticsManager";
+import { Office } from "Office/Office";
 import { OfficeManagerStatus } from "Office/OfficeManager";
 import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
 import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
@@ -37,42 +38,42 @@ const repairRemaining = (structure: CachedStructure) => {
 }
 
 export class FacilitiesManager extends OfficeTaskManager {
-    structures: CachedStructure[] = [];
-    sites: CachedConstructionSite[] = [];
-    engineers: Creep[] = [];
+    facilitiesAnalyst: FacilitiesAnalyst;
+    constructor(office: Office) {
+        super(office);
+        this.facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
+    }
 
-    workExpectancy: number = 0;
-    totalWork: number = 0;
+    workExpectancy = 0;
+    totalWork = 0;
 
     depotRequests = new Map<TaskAction, DepotRequest|null>();
 
     plan() {
         super.plan();
-        let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
+
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let hrManager = this.office.managers.get('HRManager') as HRManager;
-        // TODO - Update these with callbacks. Until then, load each tick
-        this.sites = facilitiesAnalyst.getConstructionSites(this.office);
-        this.sites.sort((a, b) => (buildPriority(b) - buildPriority(a)));
-        this.structures = facilitiesAnalyst.getStructures(this.office);
-        this.engineers = facilitiesAnalyst.getEngineers(this.office);
 
         // (WORK * 5) * ttl = max construction output
         // 0.5 = expected efficiency
-        this.workExpectancy = this.engineers.reduce((sum, creep) =>
-            sum + (creep.getActiveBodyparts(WORK) * (creep.ticksToLive ?? 1500) * 2.5),
-        0);
+        this.workExpectancy = 0;
+        for (let creep of this.facilitiesAnalyst.getEngineers(this.office)) {
+            this.workExpectancy += (creep.gameObj.getActiveBodyparts(WORK) * (creep.gameObj.ticksToLive ?? 1500) * 2.5)
+        }
         // Calculate construction energy
-        this.totalWork = this.sites.reduce((sum, site) =>
-            sum + ((site.progressTotal ?? 0) - (site.progress ?? 0)),
-        0);
+        this.totalWork = 0;
+        for (let site of this.facilitiesAnalyst.getConstructionSites(this.office)) {
+            this.totalWork += ((site.progressTotal ?? 0) - (site.progress ?? 0))
+        }
         // Calculate repair energy (and scale by 5, to match construction output rate)
-        this.totalWork += this.structures.reduce((sum, structure) => {
-            if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) return sum;
-            return sum + ((repairRemaining(structure) / 100) * 5)
-        }, 0);
+        for (let structure of this.facilitiesAnalyst.getStructures(this.office)) {
+            if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) continue;
+            this.totalWork += ((repairRemaining(structure) / 100) * 5)
+        }
 
-
+        let engineers = 0;
+        for (let i of this.facilitiesAnalyst.getEngineers(this.office)) { engineers += 1 }
         let shouldSpawnEngineer = false;
         let spawnPriority = 5;
         switch (this.status) {
@@ -82,11 +83,11 @@ export class FacilitiesManager extends OfficeTaskManager {
             }
             case OfficeManagerStatus.MINIMAL: // falls through
             case OfficeManagerStatus.NORMAL: {
-                shouldSpawnEngineer = (this.workExpectancy < this.totalWork) && this.engineers.length < 8;
+                shouldSpawnEngineer = (this.workExpectancy < this.totalWork) && engineers < 8;
                 break;
             }
             case OfficeManagerStatus.PRIORITY: {
-                shouldSpawnEngineer = (this.workExpectancy < (this.totalWork * 1.5)) && this.engineers.length < 8;
+                shouldSpawnEngineer = (this.workExpectancy < (this.totalWork * 1.5)) && engineers < 8;
                 spawnPriority = 6;
                 break;
             }
@@ -101,7 +102,7 @@ export class FacilitiesManager extends OfficeTaskManager {
         // Request depots for active assignments
         for (const [creepId, request] of this.assignments) {
             if (this.depotRequests.has(request)) continue;
-            let pos = (request as BuildTask|RepairTask).pos;
+            let pos = (request as BuildTask|RepairTask).destination.pos;
             let needsDepot = true;
             for (let [,source] of logisticsManager.sources) {
                 if (pos.inRangeTo(source.pos, 5)) {
@@ -122,28 +123,34 @@ export class FacilitiesManager extends OfficeTaskManager {
     submitOrders(max = 5) {
         if (this.requests.size >= max) return this.requests.size;
 
-        let repairable = (this.structures.map(s => s.gameObj).filter(structure => {
-            if (!structure) return false;
+        let repairable = [] as CachedStructure[];
+        for (let structure of this.facilitiesAnalyst.getStructures(this.office)) {
+            if (!structure || !structure.hits || !structure.hitsMax) return false;
             switch (structure.structureType) {
                 case STRUCTURE_WALL:
                     return false;
                     // return (structure.hits < Math.min(100000, structure.hitsMax));
                 case STRUCTURE_RAMPART:
-                    return ((structure as StructureRampart).my && structure.hits < Math.min(100000, structure.hitsMax));
+                    if (structure.my && structure.hits < Math.min(100000, structure.hitsMax)) repairable.push(structure);
                 default:
                     if (this.status === OfficeManagerStatus.NORMAL || this.status === OfficeManagerStatus.PRIORITY)
-                        return structure.hits < (structure.hitsMax * 0.8);
-                    return structure.hits < (structure.hitsMax * 0.5); // In MINIMAL mode, repair structures below half health
+                        if (structure.hits < (structure.hitsMax * 0.8)) repairable.push(structure);
+                    if (structure.hits < (structure.hitsMax * 0.5)) repairable.push(structure); // In MINIMAL mode, repair structures below half health
             }
-        }) as Structure[]).sort((a, b) => a.hits - b.hits);
+        }
+        repairable.sort((a, b) => (a.hits ?? 0) - (b.hits ?? 0));
 
-        [...repairable, ...this.sites].slice(0, max - this.requests.size).forEach((site) => {
-            if (site instanceof Structure) {
-                this.submit(`${site.id}`, new RepairTask(site, 5))
-            } else {
-                this.submit(`${site.id}`, new BuildTask(site, Math.floor(buildPriority(site))))
-            }
-        })
+        let jobs = 0;
+        for (let site of repairable) {
+            if (jobs >= (max - this.requests.size)) break;
+            this.submit(`${site.id}`, new RepairTask(site, 5));
+            jobs += 1;
+        }
+        for (let site of this.facilitiesAnalyst.getConstructionSites(this.office)) {
+            if (jobs >= (max - this.requests.size)) break;
+            this.submit(`${site.id}`, new BuildTask(site, Math.floor(buildPriority(site))))
+            jobs += 1;
+        }
         return this.requests.size;
     }
 
@@ -162,7 +169,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                 if (task instanceof BuildTask) {
                     new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
                 } else if (task instanceof RepairTask) {
-                    new RoomVisual(task.pos.roomName).rect(task.pos.x-1, task.pos.y-1, 2, 2, {stroke: 'yellow', fill: 'transparent', lineStyle: 'dotted'});
+                    new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: 'yellow', fill: 'transparent', lineStyle: 'dotted'});
                 }
             })
         }

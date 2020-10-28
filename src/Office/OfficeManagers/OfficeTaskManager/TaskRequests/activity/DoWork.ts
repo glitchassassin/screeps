@@ -1,7 +1,8 @@
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
 import { TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 import { travel } from "./Travel";
 
-export const doWork = (creep: Creep, destination: RoomPosition, callback: (creep: Creep) => ScreepsReturnCode) => {
+export const doWork = (creep: CachedCreep, destination: RoomPosition, callback: (creep: CachedCreep) => ScreepsReturnCode) => {
     // If out of the room, travel there
     if (creep.pos.roomName !== destination.roomName) {
         return (travel(creep, destination, 3) === OK) ? TaskActionResult.INPROGRESS : TaskActionResult.FAILED

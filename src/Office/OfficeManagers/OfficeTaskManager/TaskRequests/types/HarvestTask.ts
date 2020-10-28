@@ -1,43 +1,45 @@
-import { Franchise } from "Boardroom/BoardroomManagers/SalesAnalyst";
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
+
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedSource } from "WorldState/branches/WorldSources";
+import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 
 export class HarvestTask extends TaskAction {
     message = "⚡";
 
     constructor(
-        public franchise: Franchise,
+        public source: CachedSource,
         public priority: number
     ) {
         super(priority);
     }
     toString() {
-        return `[HarvestTask: ${this.franchise.pos?.roomName}{${this.franchise.pos?.x},${this.franchise.pos?.y}}]`
+        return `[HarvestTask: ${this.source.pos?.roomName}{${this.source.pos?.x},${this.source.pos?.y}}]`
     }
 
-    action(creep: Creep) {
+    action(creep: CachedCreep) {
         // If unable to get the creep or source, task is completed
-        if (!this.franchise) return TaskActionResult.FAILED;
-        if (creep.pos.roomName !== this.franchise.pos.roomName) {
-            travel(creep, this.franchise.pos);
+        if (!this.source || !this.source.franchisePos) return TaskActionResult.FAILED;
+        if (creep.pos.roomName !== this.source.pos.roomName) {
+            travel(creep, this.source.franchisePos);
             return TaskActionResult.INPROGRESS;
         }
 
-        if (!creep.pos.isEqualTo(this.franchise.pos) && this.franchise.pos.lookFor(LOOK_CREEPS).length === 0) {
+        if (!creep.pos.isEqualTo(this.source.franchisePos) && this.source.pos.lookFor(LOOK_CREEPS).length === 0) {
             // Prefer the main franchise location
-            travel(creep, this.franchise.pos, 0);
+            travel(creep, this.source.franchisePos, 0);
             return TaskActionResult.INPROGRESS;
-        } else if (!creep.pos.isNearTo(this.franchise.sourcePos)) {
-            travel(creep, this.franchise.sourcePos, 1);
+        } else if (!creep.pos.isNearTo(this.source.pos)) {
+            travel(creep, this.source.pos, 1);
         }
 
-        if (!this.franchise.source) return TaskActionResult.FAILED;
-        creep.harvest(this.franchise.source);
+        if (!this.source.gameObj) return TaskActionResult.FAILED;
+        creep.gameObj.harvest(this.source.gameObj);
 
         return TaskActionResult.INPROGRESS;
     }
 
-    canBeFulfilledBy(creep: Creep) {
-        return creep.getActiveBodyparts(WORK) > 0 && creep.getActiveBodyparts(MOVE) > 0 && creep.memory.source === this.franchise.id;
+    canBeFulfilledBy(creep: CachedCreep) {
+        return creep.gameObj.getActiveBodyparts(WORK) > 0 && creep.gameObj.getActiveBodyparts(MOVE) > 0 && creep.memory.source === this.source.id;
     }
 }

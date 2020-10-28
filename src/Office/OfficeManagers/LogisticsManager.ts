@@ -1,28 +1,37 @@
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
-import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { Bar, Meters } from "Visualizations/Meters";
 import { LogisticsRequest, ResupplyRequest } from "Logistics/LogisticsRequest";
-import { LogisticsRoute } from "Logistics/LogisticsRoute";
-import { LogisticsSource } from "Logistics/LogisticsSource";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import profiler from "screeps-profiler";
 import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
-import { Bar, Meters } from "Visualizations/Meters";
-import { Table } from "Visualizations/Table";
+
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { HRManager } from "./HRManager";
+import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LogisticsRoute } from "Logistics/LogisticsRoute";
+import { LogisticsSource } from "Logistics/LogisticsSource";
+import { Office } from "Office/Office";
+import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { Table } from "Visualizations/Table";
+import { lazyFilter } from "utils/lazyIterators";
+import profiler from "screeps-profiler";
 
 export class LogisticsManager extends OfficeManager {
-    storage?: StructureStorage;
-    extensions: StructureExtension[] = [];
-    spawns: StructureSpawn[] = [];
-    carriers: Creep[] = [];
+    constructor(
+        office: Office,
+        private logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
+        private salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
+        private hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst,
+        private statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
+        private hrManager = office.managers.get('HRManager') as HRManager,
+    ) {
+        super(office);
+    }
     lastMinionRequest = 0;
 
     sources = new Map<string, LogisticsSource>();
     requests = new Map<string, LogisticsRequest>();
-    routes = new Map<Id<Creep>, LogisticsRoute>();
+    routes = new Map<string, LogisticsRoute>();
 
     submit(requestId: string, request: LogisticsRequest) {
         let req = this.requests.get(requestId);
@@ -33,28 +42,23 @@ export class LogisticsManager extends OfficeManager {
     }
 
     plan() {
-        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let hrManager = this.office.managers.get('HRManager') as HRManager;
-
-        this.storage = logisticsAnalyst.getStorage(this.office)[0];
-        this.extensions = hrAnalyst.getExtensions(this.office)
-        this.carriers = logisticsAnalyst.getCarriers(this.office)
-        let idleCarriers = this.carriers.filter(c => !this.routes.has(c.id));
-        this.spawns = hrAnalyst.getSpawns(this.office)
+        let idleCarriers = Array.from(lazyFilter(
+            this.logisticsAnalyst.getCarriers(this.office),
+            c => !this.routes.has(c.name)
+        ));
+        let storage = this.logisticsAnalyst.getStorage(this.office);
+        let spawns = this.hrAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
-        salesAnalyst.getFranchiseLocations(this.office).forEach(f => {
-            if (!this.sources.has(f.sourcePos.toString())) {
-                this.sources.set(f.sourcePos.toString(), new LogisticsSource(f.sourcePos))
+        this.salesAnalyst.getUsableSourceLocations(this.office).forEach(f => {
+            if (!this.sources.has(f.pos.toString())) {
+                this.sources.set(f.pos.toString(), new LogisticsSource(f.pos))
             }
         });
-        if (this.storage && !this.sources.has(this.storage.pos.toString())) {
-            this.sources.set(this.storage.pos.toString(), new LogisticsSource(this.storage.pos, false))
+        if (storage && !this.sources.has(storage.pos.toString())) {
+            this.sources.set(storage.pos.toString(), new LogisticsSource(storage.pos, false))
         }
-        this.spawns.forEach(spawn => {
+        spawns.forEach(spawn => {
             if (!this.sources.has(spawn.pos.toString())) {
                 this.sources.set(spawn.pos.toString(), new LogisticsSource(spawn.pos))
             }
@@ -69,19 +73,19 @@ export class LogisticsManager extends OfficeManager {
             default: {
                 // Maintain enough carriers to keep
                 // franchises drained
-                let metrics = statisticsAnalyst.metrics.get(this.office.name);
+                let metrics = this.statisticsAnalyst.metrics.get(this.office.name);
                 let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
                 let unassignedRequests = Array.from(this.requests.values()).filter(r => r.assignedCapacity >= r.capacity).length;
                 let requestCapacity = unassignedRequests / this.requests.size;
                 if (Game.time - this.lastMinionRequest > 50 &&
                     (inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5)) {
                     console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unfilled, spawning carrier`);
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
+                    this.hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
                     this.lastMinionRequest = Game.time;
                 } else if (Game.time - this.lastMinionRequest > 50 &&
                     (inputAverageMean > 0.5 && idleCarriers.length === 0)) {
                     console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}%, spawning carrier`);
-                    hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 4, MinionTypes.CARRIER, {manager: this.constructor.name}));
+                    this.hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 4, MinionTypes.CARRIER, {manager: this.constructor.name}));
                     this.lastMinionRequest = Game.time;
                 }
                 break;
@@ -89,8 +93,8 @@ export class LogisticsManager extends OfficeManager {
         }
 
         // Make sure we have a standing request for storage
-        if (this.storage && getFreeCapacity(this.storage) > 0) {
-            this.submit(this.storage.id, new ResupplyRequest(this.storage, 1))
+        if (storage && getFreeCapacity(storage) > 0) {
+            this.submit(storage.id, new ResupplyRequest(storage, 1))
         }
         // Create a request to recycle old creeps
 
@@ -145,7 +149,7 @@ export class LogisticsManager extends OfficeManager {
             }
 
             if (route.commit()) {
-                this.routes.set(carrier.id, route);
+                this.routes.set(carrier.name, route);
             } else {
                 throw new Error('Failed to commit route');
             }
@@ -185,8 +189,7 @@ export class LogisticsManager extends OfficeManager {
         // Franchise energy level (current and average)
         // Storage level (current)
         // Room energy level (current and average)
-        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let metrics = statisticsAnalyst.metrics.get(this.office.name);
+        let metrics = this.statisticsAnalyst.metrics.get(this.office.name);
 
         let lastMineContainerLevel = metrics?.mineContainerLevels.values[metrics?.mineContainerLevels.values.length - 1] || 0
         let lastRoomEnergyLevel = metrics?.roomEnergyLevels.values[metrics?.roomEnergyLevels.values.length - 1] || 0

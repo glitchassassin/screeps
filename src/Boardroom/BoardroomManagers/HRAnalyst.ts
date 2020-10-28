@@ -1,15 +1,24 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { Office } from "Office/Office";
+import { CachedStructure } from "WorldState";
 import { Memoize } from "typescript-memoize";
+import { Office } from "Office/Office";
+import { lazyFilter } from "utils/lazyIterators";
 
 export class HRAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getExtensions(office: Office) {
-        return office.center.room.find(FIND_STRUCTURES)
-            .filter(s => s.structureType === STRUCTURE_EXTENSION) as StructureExtension[];
+        let structures = this.worldState.structures.byRoom.get(office.center.name) ?? [];
+        return Array.from(lazyFilter(structures, s => s.structureType === STRUCTURE_EXTENSION)) as CachedStructure<StructureExtension>[];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSpawns(office: Office) {
-        return office.center.room.find(FIND_MY_SPAWNS);
+        return Array.from(this.worldState.mySpawns.byRoom.get(office.center.name) ?? []) as CachedStructure<StructureSpawn>[];
+    }
+    @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
+    getEmployees(office: Office, type?: string) {
+        return Array.from(lazyFilter(
+            this.worldState.creeps.byOffice.get(office.name) ?? [],
+            creep => !type || creep.memory.type === type
+        ))
     }
 }

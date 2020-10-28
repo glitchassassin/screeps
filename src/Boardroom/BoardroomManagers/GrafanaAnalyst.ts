@@ -1,10 +1,9 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { Office } from "Office/Office";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
+import { Office } from "Office/Office";
 import { SalesAnalyst } from "./SalesAnalyst";
 import { StatisticsAnalyst } from "./StatisticsAnalyst";
-
 
 export class GrafanaAnalyst extends BoardroomManager {
     deltas: {
@@ -50,20 +49,20 @@ export class GrafanaAnalyst extends BoardroomManager {
         let mobileDepots = logisticsAnalyst.depots.get(office.name) ?? [];
 
         return {
-            sourcesLevel: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energy || 0)), 0),
-            sourcesMax: salesAnalyst.getFranchiseLocations(office).reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
-            mineContainersLevel: salesAnalyst.getFranchiseLocations(office)
-                .reduce((sum, mine) => (sum + (mine.surplus || 0)), 0),
-            mineContainersMax: salesAnalyst.getFranchiseLocations(office)
-                .reduce((sum, mine) => (sum + (mine.container?.store.getCapacity() || 0)), 0),
-            storageLevel: storage.reduce((sum, container) => (sum + (container.store.energy || 0)), 0),
-            storageMax: storage.reduce((sum, container) => (sum + (container.store.getCapacity() || 0)), 0),
-            upgradeDepotLevel: upgradeDepot?.store.energy || 0,
-            upgradeDepotMax: upgradeDepot?.store.getCapacity() || 0,
-            carrierFleetLevel: fleet.reduce((sum, creep) => sum + creep.store.getUsedCapacity(RESOURCE_ENERGY), 0),
-            carrierFleetMax: fleet.reduce((sum, creep) => sum + creep.store.getCapacity(RESOURCE_ENERGY), 0),
-            mobileDepotsLevel: mobileDepots.reduce((sum, creep) => sum + creep.store.getUsedCapacity(RESOURCE_ENERGY), 0),
-            mobileDepotsMax: mobileDepots.reduce((sum, creep) => sum + creep.store.getCapacity(RESOURCE_ENERGY), 0),
+            sourcesLevel: salesAnalyst.getUsableSourceLocations(office).reduce((sum, source) => (sum + (source.energy ?? 0)), 0),
+            sourcesMax: salesAnalyst.getUsableSourceLocations(office).reduce((sum, source) => (sum + (source.energyCapacity ?? 0)), 0),
+            mineContainersLevel: salesAnalyst.getUsableSourceLocations(office)
+                .reduce((sum, source) => (sum + (source.surplus || 0)), 0),
+            mineContainersMax: salesAnalyst.getUsableSourceLocations(office)
+                .reduce((sum, source) => (sum + (source.container?.capacity || 0)), 0),
+            storageLevel: storage?.capacityUsed ?? 0,
+            storageMax: storage?.capacity ?? 0,
+            upgradeDepotLevel: upgradeDepot?.capacityUsed ?? 0,
+            upgradeDepotMax: upgradeDepot?.capacity ?? 0,
+            carrierFleetLevel: fleet.reduce((sum, creep) => sum + creep.capacityUsed, 0),
+            carrierFleetMax: fleet.reduce((sum, creep) => sum + creep.capacity, 0),
+            mobileDepotsLevel: mobileDepots.reduce((sum, creep) => sum + creep.capacityUsed, 0),
+            mobileDepotsMax: mobileDepots.reduce((sum, creep) => sum + creep.capacity, 0),
             roomEnergyLevel: office.center.room.energyAvailable,
             roomEnergyMax: office.center.room.energyCapacityAvailable,
             buildDelta: this.deltas[office.name].building,

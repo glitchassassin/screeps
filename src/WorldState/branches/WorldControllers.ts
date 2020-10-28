@@ -1,6 +1,9 @@
 import { asRoomPosition, heapCacheGetter, keyById, memoryCache, memoryCacheGetter } from "screeps-cache";
 
+import { CachedIDItem } from "WorldState/WorldDataRoomItemsById";
+import { CachedStructure } from "./WorldStructures";
 import { WorldData } from "../WorldData";
+import { WorldState } from "WorldState/WorldState";
 
 export class WorldControllers extends WorldData {
     constructor() {
@@ -48,14 +51,7 @@ export class WorldControllers extends WorldData {
     }
 }
 
-export class CachedController {
-    constructor(public id: Id<StructureController>) {
-        for (let i in this) {}
-    }
-
-    @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.pos, asRoomPosition)
-    public pos!: RoomPosition;
-
+export class CachedController extends CachedIDItem<StructureController> {
     @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.level)
     public level!: number;
 
@@ -80,15 +76,15 @@ export class CachedController {
     @memoryCache(keyById, asRoomPosition)
     public containerPos?: RoomPosition;
 
-    @memoryCache(keyById)
+    @memoryCacheGetter(keyById, (i: CachedController) => i.containerPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined)
     public containerId?: Id<StructureContainer>;
+    public get container() { return this.containerId ? new WorldState().structures.byId.get(this.containerId) as CachedStructure<StructureContainer> : undefined }
 
-    @memoryCache(keyById)
-    public containerConstructionSiteId?: Id<ConstructionSite>;
+    @memoryCacheGetter(keyById, (i: CachedController) => i.containerPos?.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<ConstructionSite>|undefined)
+    public constructionSiteId?: Id<ConstructionSite>;
+    public get constructionSite() { return this.constructionSiteId ? new WorldState().constructionSites.byId.get(this.constructionSiteId) : undefined }
 
     public get my() { return this.owner === 'LordGreywether'; }
 
     public get myReserved() { return this.reservationOwner === 'LordGreywether'; }
-
-    public get gameObj() { return Game.getObjectById(this.id); }
 }

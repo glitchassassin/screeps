@@ -91,5 +91,9 @@ export class CachedCreep {
     public get hitsMax() { return Game.creeps[this.name]?.hitsMax; }
     public get memory() { return Game.creeps[this.name]?.memory; }
 
+    public get capacity() {return Game.creeps[this.name]?.store.getCapacity()}
+    public get capacityUsed() {return Game.creeps[this.name]?.store.getUsedCapacity()}
+    public get capacityFree() {return Game.creeps[this.name]?.store.getFreeCapacity()}
+
     public get gameObj() { return Game.creeps[this.name]; }
 }

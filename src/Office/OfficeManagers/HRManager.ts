@@ -1,16 +1,15 @@
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { TransferRequest } from "Logistics/LogisticsRequest";
-import { MinionRequest } from "MinionRequests/MinionRequest";
 import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import profiler from "screeps-profiler";
+
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { LogisticsManager } from "./LogisticsManager";
+import { MinionRequest } from "MinionRequests/MinionRequest";
+import { Table } from "Visualizations/Table";
+import { TransferRequest } from "Logistics/LogisticsRequest";
 import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
-import { Table } from "Visualizations/Table";
-import { LogisticsManager } from "./LogisticsManager";
+import profiler from "screeps-profiler";
 
 export class HRManager extends OfficeManager {
-    spawns: StructureSpawn[] = [];
-    extensions: StructureExtension[] = [];
     requests: {[id: string]: MinionRequest} = {};
     assignments: Map<Id<StructureSpawn>, MinionRequest> = new Map();
 
@@ -26,8 +25,6 @@ export class HRManager extends OfficeManager {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         // Enroll any newly hired creeps, if they are not already on the list
-        this.spawns = hrAnalyst.getSpawns(this.office);
-        this.extensions = hrAnalyst.getExtensions(this.office)
 
         let priority = 5;
 
@@ -46,19 +43,19 @@ export class HRManager extends OfficeManager {
         // Scale priority of spawn energy based on requests in queue
         priority += Object.keys(this.requests).length / 2
 
-        this.extensions.forEach(e => {
+        for (let e of hrAnalyst.getExtensions(this.office)) {
             let energy = getTransferEnergyRemaining(e);
             if (energy && energy > 0) {
                 logisticsManager.submit(e.id, new TransferRequest(e, priority));
             }
-        })
-        this.spawns.forEach((spawn) => {
+        }
+        for (let spawn of hrAnalyst.getSpawns(this.office)) {
             let spawnCapacity = getTransferEnergyRemaining(spawn);
             if (!spawnCapacity) return;
             if (spawnCapacity > 0) {
                 logisticsManager.submit(spawn.id, new TransferRequest(spawn, priority));
             }
-        })
+        }
     }
     run() {
         // Spawn Requests
@@ -154,10 +151,10 @@ export class HRManager extends OfficeManager {
     }
 
     getIdleSpawn = (priority: number) => {
-        for (let spawn in this.spawns) {
-            let request = this.assignments.get(this.spawns[spawn].id)
+        for (let spawn of this.worldState.mySpawns.byRoom.get(this.office.center.name) ?? []) {
+            let request = this.assignments.get(spawn.id)
             if (!request || request.priority < priority) {
-                return this.spawns[spawn];
+                return spawn;
             }
         }
         return undefined;

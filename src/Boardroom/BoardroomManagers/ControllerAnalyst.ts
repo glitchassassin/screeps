@@ -6,24 +6,32 @@ import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
 import { ShouldReserveTerritory } from "Office/OfficeManagers/LegalManager/Strategies/ShouldReserveTerritory";
 
-export type Depot = {
-    pos: RoomPosition,
-    container?: StructureContainer,
-    constructionSite?: ConstructionSite
-}
-
 export class ControllerAnalyst extends BoardroomManager {
+    plan() {
+        this.boardroom.offices.forEach(office => {
+            let territories = [office.center, ...office.territories]
+            // If necessary, add franchise locations for territory
+            for (let t of territories) {
+                let controller = this.worldState.controllers.byRoom.get(t.name)
+                if (!controller) continue;
+                // Initialize properties
+                if (!controller.containerPos) {
+                    controller.containerPos = this.calculateBestContainerLocation(office)
+                }
+            }
+        })
+    }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     calculateBestContainerLocation(office: Office) {
         let room = office.center.room;
         let controller = this.worldState.controllers.byRoom.get(room.name);
-        if (!controller) return null;
+        if (!controller) return undefined;
         // Pick the first spawn in the room
         let spawn = this.worldState.mySpawns.byRoom.get(room.name)?.values().next().value;
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
-        let candidate: {pos: RoomPosition, range: number}|null = null as {pos: RoomPosition, range: number}|null;
+        let candidate: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
         mapAnalyst
             .calculateNearbyPositions(controller.pos, 3)
             .forEach((pos) => {
@@ -34,7 +42,6 @@ export class ControllerAnalyst extends BoardroomManager {
                     }
                 }
             });
-        controller.containerPos = candidate?.pos;
         return candidate?.pos;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -42,29 +49,19 @@ export class ControllerAnalyst extends BoardroomManager {
         let room = office.center.room;
         let controller = this.worldState.controllers.byRoom.get(room.name);
         if (!controller?.containerPos) return null;
-        let depot: Depot = {
-            pos: controller.containerPos
-        }
 
         // If we don't have a container/construction site cached, look for one
-        if (!controller.containerId && !controller.containerConstructionSiteId) {
+        if (!controller.containerId && !controller.constructionSiteId) {
             controller.containerPos.look().forEach(obj => {
                 if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
                     (controller as CachedController).containerId = obj.structure.id as Id<StructureContainer>;
                 } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
-                    (controller as CachedController).containerConstructionSiteId = obj.constructionSite.id as Id<ConstructionSite>;
+                    (controller as CachedController).constructionSiteId = obj.constructionSite.id as Id<ConstructionSite>;
                 }
             });
         }
 
-        if (controller.containerId) {
-            depot.container = Game.getObjectById(controller.containerId) ?? undefined;
-        }
-        if (controller.containerConstructionSiteId) {
-            depot.constructionSite = Game.getObjectById(controller.containerConstructionSiteId) ?? undefined;
-        }
-
-        return depot;
+        return controller;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getReservingControllers(office: Office) {

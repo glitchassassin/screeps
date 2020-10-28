@@ -1,3 +1,4 @@
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
 
 export enum TaskActionResult {
     SUCCESS = 'SUCCESS',
@@ -11,7 +12,7 @@ export class TaskAction {
     public done = false;
     constructor(public priority: number) {}
     message = "☑";
-    action(creep: Creep) { return TaskActionResult.SUCCESS; }
+    action(creep: CachedCreep) { return TaskActionResult.SUCCESS; }
     valid() { return !this.done; }
-    canBeFulfilledBy(creep: Creep) { return false; }
+    canBeFulfilledBy(creep: CachedCreep) { return false; }
 }

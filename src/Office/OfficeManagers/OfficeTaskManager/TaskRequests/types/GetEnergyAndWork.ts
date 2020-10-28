@@ -1,5 +1,7 @@
-import { getEnergy } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/GetEnergy";
 import { TaskAction, TaskActionResult } from "../TaskAction";
+
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { getEnergy } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/GetEnergy";
 
 enum WorkStates {
     GETTING_ENERGY = 'GETTING_ENERGY',
@@ -9,14 +11,14 @@ enum WorkStates {
 export class GetEnergyAndWorkTask extends TaskAction {
     state: WorkStates = WorkStates.WORKING;
 
-    work(creep: Creep): TaskActionResult { return TaskActionResult.FAILED; }
+    work(creep: CachedCreep): TaskActionResult { return TaskActionResult.FAILED; }
 
-    action(creep: Creep): TaskActionResult {
+    action(creep: CachedCreep): TaskActionResult {
         if (!this.valid()) return TaskActionResult.FAILED;
 
         switch (this.state) {
             case WorkStates.WORKING: {
-                if (creep.store.getUsedCapacity() === 0) {
+                if (creep.capacityUsed === 0) {
                     this.state = WorkStates.GETTING_ENERGY;
                     return this.action(creep); // Switch to getting energy
                 }
@@ -24,7 +26,7 @@ export class GetEnergyAndWorkTask extends TaskAction {
                 return this.work(creep);
             }
             case WorkStates.GETTING_ENERGY: {
-                if (creep.store.getUsedCapacity() > 0) {
+                if (creep.capacityUsed > 0) {
                     this.state = WorkStates.WORKING;
                     return this.action(creep); // Switch to building
                 }
@@ -33,7 +35,7 @@ export class GetEnergyAndWorkTask extends TaskAction {
         }
     }
 
-    canBeFulfilledBy(creep: Creep) {
-        return creep.getActiveBodyparts(WORK) > 0 && creep.getActiveBodyparts(CARRY) > 0 && creep.getActiveBodyparts(MOVE) > 0
+    canBeFulfilledBy(creep: CachedCreep) {
+        return creep.gameObj.getActiveBodyparts(WORK) > 0 && creep.gameObj.getActiveBodyparts(CARRY) > 0 && creep.gameObj.getActiveBodyparts(MOVE) > 0
     }
 }

@@ -46,7 +46,7 @@ export class SecurityManager extends OfficeTaskManager {
         for (let t of defenseAnalyst.getTowers(this.office)) {
             if (!t.gameObj) continue;
             // Request energy, if needed
-            let e = getTransferEnergyRemaining(t.gameObj);
+            let e = getTransferEnergyRemaining(t);
             if (e) {
                 let adjustedPriority = priority;
                 if (e > 700) {
@@ -54,7 +54,7 @@ export class SecurityManager extends OfficeTaskManager {
                 } else if (e > 150) {
                     adjustedPriority += 1;
                 }
-                logisticsManager.submit(t.id, new TransferRequest(t.gameObj, adjustedPriority));
+                logisticsManager.submit(t.id, new TransferRequest(t, adjustedPriority));
             }
         }
 

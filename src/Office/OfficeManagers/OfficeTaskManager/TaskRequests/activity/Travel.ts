@@ -1,3 +1,4 @@
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
 
@@ -8,25 +9,25 @@ export class Route {
     recalculatedPath: number = 0;
 
     constructor(
-        creep: Creep,
+        creep: CachedCreep,
         public pos: RoomPosition,
-        public range: number = 1
+        public range: number = 1,
+        private mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
     ) {
         this.calculatePath(creep);
     }
 
-    calculatePath(creep: Creep, avoidCreeps = false) {
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-        let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
-                                         .filter(pos => mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
+    calculatePath(creep: CachedCreep, avoidCreeps = false) {
+        let positionsInRange = this.mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
+                                         .filter(pos => this.mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
         let route = PathFinder.search(creep.pos, positionsInRange, {
-            roomCallback: (room) => mapAnalyst.getCostMatrix(room, avoidCreeps)
+            roomCallback: (room) => this.mapAnalyst.getCostMatrix(room, avoidCreeps)
         })
         this.path = route.path;
         this.lastPos = creep.pos;
     }
 
-    run(creep: Creep) {
+    run(creep: CachedCreep) {
         if (this.recalculatedPath > 2 || !this.path) {
             return ERR_NO_PATH;
         }
@@ -36,7 +37,7 @@ export class Route {
             this.calculatePath(creep, true);
         }
         this.lastPos = creep.pos;
-        let result = creep.moveByPath(this.path);
+        let result = creep.gameObj.moveByPath(this.path);
         return (result === ERR_TIRED) ? OK : result;
     }
     visualize() {
@@ -52,10 +53,10 @@ export class Route {
     }
 }
 
-let routeCache = new Map<Id<Creep>, Route>()
+let routeCache = new Map<string, Route>()
 
-export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
-    let routeKey = creep.id;
+export const travel = (creep: CachedCreep, pos: RoomPosition, range: number = 1) => {
+    let routeKey = creep.name;
 
     let route = routeCache.get(routeKey);
     if (!route || !pos.isEqualTo(route.pos)) {
@@ -69,13 +70,13 @@ export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
     let result = route.run(creep);
     if (result === ERR_NOT_FOUND) {
         if (creep.pos.x === 0) {
-            creep.move(RIGHT);
+            creep.gameObj.move(RIGHT);
         } else if (creep.pos.x === 49) {
-            creep.move(LEFT);
+            creep.gameObj.move(LEFT);
         } else if (creep.pos.y === 0) {
-            creep.move(BOTTOM);
+            creep.gameObj.move(BOTTOM);
         } else if (creep.pos.y === 49) {
-            creep.move(TOP);
+            creep.gameObj.move(TOP);
         } else {
             return result;
         }

@@ -1,7 +1,9 @@
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedStructure } from "WorldState";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
-import profiler from "screeps-profiler";
 import { getFreeCapacity } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
+import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 
 export class LogisticsRequest {
     public assignedCapacity = 0;
@@ -19,12 +21,12 @@ export class LogisticsRequest {
         public capacity: number = -1,
     ) { }
 
-    action(creep: Creep): ScreepsReturnCode { return OK; }
+    action(creep: CachedCreep): ScreepsReturnCode { return OK; }
 }
 
 export class TransferRequest extends LogisticsRequest {
     constructor(
-        public target: AnyStoreStructure,
+        public target: CachedStructure<AnyStoreStructure>,
         public priority: number,
         public capacity: number = -1,
     ) {
@@ -34,8 +36,9 @@ export class TransferRequest extends LogisticsRequest {
         }
     }
 
-    action(creep: Creep) {
-        let result = creep.transfer(this.target, RESOURCE_ENERGY);
+    action(creep: CachedCreep) {
+        if (!this.target.gameObj) return ERR_NOT_FOUND;
+        let result = creep.gameObj.transfer(this.target.gameObj, RESOURCE_ENERGY);
         if (result === OK) {
             this.completed = true;
         } else if (result === ERR_NOT_IN_RANGE) {
@@ -62,12 +65,12 @@ export class DepotRequest extends LogisticsRequest {
         this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
     }
 
-    action(creep: Creep) {
+    action(creep: CachedCreep) {
         // Wait for minions to request resources
         if (!creep.pos.isNearTo(this.pos)) {
             return travel(creep, this.pos)
         }
-        if (creep.store.getUsedCapacity() === 0) {
+        if (creep.capacityUsed === 0) {
             this.completed = true;
             return OK;
         }

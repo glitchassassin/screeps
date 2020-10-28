@@ -1,38 +1,60 @@
-import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { Office } from "Office/Office";
-import { Memoize } from "typescript-memoize";
-import { getCapacity } from "utils/gameObjectSelectors";
-import { MapAnalyst } from "./MapAnalyst";
-import { SalesAnalyst } from "./SalesAnalyst";
+import { getUsedCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 
-export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|StructureStorage|StructureContainer;
+import { Boardroom } from "Boardroom/Boardroom";
+import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedResource } from "WorldState/branches/WorldResources";
+import { CachedStructure } from "WorldState";
+import { CachedTombstone } from "WorldState/branches/WorldTombstones";
+import { MapAnalyst } from "./MapAnalyst";
+import { Memoize } from "typescript-memoize";
+import { Office } from "Office/Office";
+import { SalesAnalyst } from "./SalesAnalyst";
+import { lazyFilter } from "utils/lazyIterators";
+
+export type RealLogisticsSources = CachedResource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer>;
 
 export class LogisticsAnalyst extends BoardroomManager {
-    depots = new Map<string, Creep[]>();
-    newDepots = new Map<string, Creep[]>();
+    constructor(
+        boardroom: Boardroom,
+        private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
+        private mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
+    ) {
+        super(boardroom);
+    }
+    depots = new Map<string, CachedCreep[]>();
+    newDepots = new Map<string, CachedCreep[]>();
 
     cleanup() {
         this.depots = this.newDepots;
-        this.newDepots = new Map<string, Creep[]>();
+        this.newDepots = new Map<string, CachedCreep[]>();
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStorage(office: Office) {
-        return office.center.room.find(FIND_MY_STRUCTURES)
-            .filter(s => s.structureType === STRUCTURE_STORAGE) as StructureStorage[];
+        let storage = this.worldState.rooms.byRoom.get(office.center.name)?.gameObj.storage;
+        return storage && this.worldState.structures.byId.get(storage.id) as CachedStructure<StructureStorage> | undefined;
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getTombstones(room: Room) {
-        return room.find(FIND_TOMBSTONES).filter(t => t.store.getUsedCapacity() > 0);
+    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    getTombstones(roomName: string) {
+        return Array.from(lazyFilter(
+            this.worldState.tombstones.byRoom.get(roomName) ?? [],
+            t => t.capacityUsed ?? 0
+        )) as CachedTombstone[];
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getContainers(room: Room) {
-        return room.find(FIND_STRUCTURES)
-            .filter(s => s.structureType === STRUCTURE_CONTAINER && s.store.getUsedCapacity() > 0) as StructureContainer[];
+    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    getContainers(roomName: string) {
+        return Array.from(lazyFilter(
+            this.worldState.structures.byRoom.get(roomName) ?? [],
+            s => s.structureType === STRUCTURE_CONTAINER && s.capacityUsed && s.capacityUsed > 0
+        )) as CachedStructure<StructureContainer>[];
     }
-    @Memoize((room: Room) => ('' + room.name + Game.time))
-    getFreeEnergy(room: Room) {
-        return room.find(FIND_DROPPED_RESOURCES).filter(r => r.resourceType === RESOURCE_ENERGY) as Resource<RESOURCE_ENERGY>[];
+    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    getFreeEnergy(roomName: string) {
+        return Array.from(lazyFilter(
+            this.worldState.resources.byRoom.get(roomName) ?? [],
+            t => t.resourceType === RESOURCE_ENERGY
+        )) as CachedResource<RESOURCE_ENERGY>[];
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
     getRealLogisticsSources(pos: RoomPosition): RealLogisticsSources[] {
@@ -41,72 +63,67 @@ export class LogisticsAnalyst extends BoardroomManager {
         let results: RealLogisticsSources[] = [];
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
-                results.push(item.resource as Resource<RESOURCE_ENERGY>);
+                let resource = this.worldState.resources.byId.get(item.resource.id) as CachedResource<RESOURCE_ENERGY>;
+                if (resource) results.push(resource);
             } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage) {
-                results.push(item.structure);
+                let structure = this.worldState.structures.byId.get(item.structure.id) as CachedStructure<StructureStorage>;
+                if (structure) results.push(structure);
             }
         }
-        return results.sort((a, b) => getCapacity(b) - getCapacity(a))
+        return results.sort((a, b) => getUsedCapacity(b) - getUsedCapacity(a))
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
-    getClosestAllSources(pos: RoomPosition, resource = RESOURCE_ENERGY): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>|undefined) {
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
+    getClosestAllSources(pos: RoomPosition, resource = RESOURCE_ENERGY) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
-        let distance = new Map<string, number>();
-        let sorted = this.getAllSources(office).filter(s => getCapacity(s) > 0).sort((a, b) => {
-            if (!distance.has(a.id)){
-                distance.set(a.id, mapAnalyst.getRangeTo(pos, a.pos))
-            }
-            if (!distance.has(b.id)) distance.set(b.id, mapAnalyst.getRangeTo(pos, b.pos))
-            return (distance.get(a.id) as number) - (distance.get(b.id) as number)
-        })
+        let sorted = this.getAllSources(office).filter(s => getUsedCapacity(s) > 0).sort(sortByDistanceTo(pos))
         return sorted[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getAllSources(office: Office): (AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
+    getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedCreep|CachedResource<RESOURCE_ENERGY>)[] {
         let territories = [office.center, ...office.territories];
         let depots = this.depots.get(office.name) ?? [];
         return [
             ...this.getFreeSources(office),
             ...depots,
-            ...territories
-                .filter(t => t.room)
-                .map(territory => this.getContainers(territory.room as Room))
-                .reduce((a, b) => a.concat(b), []),
+            ...territories.flatMap(territory => this.getContainers(territory.name))
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getFreeSources(office: Office): (AnyStoreStructure|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+    getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] {
         let territories = [office.center, ...office.territories];
-        return [
-            ...territories.filter(t => t.room).map(territory => this.getFreeEnergy(territory.room as Room)).reduce((a, b) => a.concat(b), []),
-            ...territories.filter(t => t.room).map(territory => this.getTombstones(territory.room as Room)).reduce((a, b) => a.concat(b), []),
-            ...this.getStorage(office).filter(s => s.store.getUsedCapacity() > 0),
+        let freeSources: (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] = [
+            ...territories.filter(t => t.room).flatMap(territory => this.getFreeEnergy(territory.name)),
+            ...territories.filter(t => t.room).flatMap(territory => this.getTombstones(territory.name)),
         ];
+        let storage = this.getStorage(office);
+        let storageCapacity = storage?.capacityUsed ?? 0;
+        if (storage && storageCapacity > 0)
+            freeSources.push(storage);
+        return freeSources;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getUnallocatedSources(office: Office): (AnyStoreStructure|Tombstone|Resource<RESOURCE_ENERGY>)[] {
-        let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+    getUnallocatedSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] {
         return [
             ...this.getFreeSources(office),
-            ...salesAnalyst.getFranchiseLocations(office)
-                .map(franchise => franchise.container)
-                .filter(c => c && c.store.getUsedCapacity() > 0) as StructureContainer[],
+            ...this.salesAnalyst.getUsableSourceLocations(office)
+                .map(source => source.container)
+                .filter(c => c && c.capacityUsed > 0) as CachedStructure<StructureContainer>[],
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getCarriers(office: Office): (Creep)[] {
-        return office.employees.filter(c => c.memory.type === 'CARRIER');
+    getCarriers(office: Office) {
+        return Array.from(lazyFilter(
+            this.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            c => c.memory.type === 'CARRIER'
+        ))
     }
-    reportDepot(creep: Creep) {
+    reportDepot(creep: CachedCreep) {
         if (!creep.memory.office) return;
-        let office = global.boardroom.offices.get(creep.memory.office)
-        if (!office) return;
-        let depots = this.newDepots.get(office.name);
+        let depots = this.newDepots.get(creep.memory.office);
 
         if (!depots) {
-            this.newDepots.set(office.name, [creep]);
+            this.newDepots.set(creep.memory.office, [creep]);
         } else {
             depots.push(creep);
         }

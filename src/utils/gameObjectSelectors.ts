@@ -1,5 +1,8 @@
 import { CachedConstructionSite, CachedStructure } from "WorldState";
 
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedResource } from "WorldState/branches/WorldResources";
+import { CachedTombstone } from "WorldState/branches/WorldTombstones";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 
@@ -13,8 +16,8 @@ export function getBuildEnergyRemaining(target: CachedConstructionSite|Construct
 export function getRepairEnergyRemaining(target: CachedStructure|Structure) {
     return ((target.hitsMax ?? 0) - (target.hits ?? 0))/100;
 }
-export function getTransferEnergyRemaining(target: AnyStoreStructure) {
-    return (target.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY);
+export function getTransferEnergyRemaining(target: CachedStructure<AnyStoreStructure>) {
+    return (target.gameObj?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY);
 }
 export function getCreepHomeOffice(creep: Creep) {
     if (!creep.memory.office) return;
@@ -22,20 +25,20 @@ export function getCreepHomeOffice(creep: Creep) {
 }
 export function countEnergyInContainersOrGround(pos: RoomPosition) {
     let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-    return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + getCapacity(resource)), 0)
+    return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + getUsedCapacity(resource)), 0)
 }
-export function getCapacity(gameObj: Resource<RESOURCE_ENERGY>|AnyStoreStructure|Creep|Tombstone): number {
-    if (gameObj instanceof Resource) {
+export function getUsedCapacity(gameObj: CachedResource<RESOURCE_ENERGY>|CachedStructure<AnyStoreStructure>|CachedCreep|CachedTombstone): number {
+    if (gameObj instanceof CachedResource) {
         return gameObj.amount;
     } else {
-        return (gameObj.store as GenericStore).getUsedCapacity(RESOURCE_ENERGY) ?? 0;
+        return gameObj.capacityUsed ?? 0;
     }
 }
-export function getFreeCapacity(gameObj: AnyStoreStructure|Creep): number {
-    return (gameObj.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) ?? 0;
+export function getFreeCapacity(cached: CachedStructure<AnyStoreStructure>|CachedCreep): number {
+    return (cached.gameObj?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) ?? 0;
 }
-export function getMaxCapacity(gameObj: AnyStoreStructure|Creep): number {
-    return (gameObj.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
+export function getCapacity(cached: CachedStructure<AnyStoreStructure>|CachedCreep): number {
+    return (cached.gameObj?.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
 }
 
 export function sortByDistanceTo<T extends WithPos>(pos: RoomPosition) {

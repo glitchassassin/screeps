@@ -1,11 +1,15 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
+import { lazyFilter } from "utils/lazyIterators";
 
 export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getEngineers(office: Office) {
-        return office.employees.filter(e => e.memory.type === 'ENGINEER')
+        return Array.from(lazyFilter(
+            this.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            c => c.memory.type === 'ENGINEER'
+        ))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {
