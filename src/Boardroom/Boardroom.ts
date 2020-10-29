@@ -1,5 +1,3 @@
-import { Office } from "Office/Office";
-import profiler from "screeps-profiler";
 import { BoardroomManager } from "./BoardroomManager";
 import { ControllerAnalyst } from "./BoardroomManagers/ControllerAnalyst";
 import { DefenseAnalyst } from "./BoardroomManagers/DefenseAnalyst";
@@ -8,9 +6,11 @@ import { GrafanaAnalyst } from "./BoardroomManagers/GrafanaAnalyst";
 import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
+import { Office } from "Office/Office";
 import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
 import { cityNames } from "./CityNames";
+import profiler from "screeps-profiler";
 
 export class Boardroom {
     offices: Map<string, Office> = new Map();
@@ -31,13 +31,6 @@ export class Boardroom {
         Memory.boardroom ??= {};
         Memory.cities ??= cityNames;
 
-        // Initialize Offices
-        Object.values(Game.spawns).forEach(spawn => {
-            if (!this.offices.get(spawn.room.name)) {
-                this.offices.set(spawn.room.name, new Office(spawn.room.name));
-            }
-        })
-
         // Create BoardroomManagers
         new MapAnalyst(this);
         new ControllerAnalyst(this);
@@ -51,6 +44,13 @@ export class Boardroom {
 
         // Initialize BoardroomManagers
         this.managers.forEach(m => m.init());
+
+        // Initialize Offices
+        Object.values(Game.spawns).forEach(spawn => {
+            if (!this.offices.get(spawn.room.name)) {
+                this.offices.set(spawn.room.name, new Office(this, spawn.room.name));
+            }
+        })
     }
 
     /**

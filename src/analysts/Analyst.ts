@@ -1,4 +1,4 @@
-import { Boardroom } from "Boardroom/Boardroom"
+import { Boardroom } from "Boardroom/Boardroom";
 
 export class Analyst {
     constructor(

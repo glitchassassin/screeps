@@ -1,21 +1,27 @@
-import { Franchise, SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
-import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManagerStatus } from "Office/OfficeManager";
-import { HarvestTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/HarvestTask";
-import profiler from "screeps-profiler";
 import { Bar, Meters } from "Visualizations/Meters";
-import { Table } from "Visualizations/Table";
+import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
+
 import { HRManager } from "./HRManager";
+import { HarvestTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/HarvestTask";
+import { Office } from "Office/Office";
+import { OfficeManagerStatus } from "Office/OfficeManager";
 import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { Table } from "Visualizations/Table";
+import { lazyMap } from "utils/lazyIterators";
+import profiler from "screeps-profiler";
 
 export class SalesManager extends OfficeTaskManager {
-    franchises: Franchise[] = [];
-
+    constructor(
+        office: Office,
+        private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
+        private hrManager = office.managers.get('HRManager') as HRManager
+    ) {
+        super(office);
+    }
     plan() {
         super.plan();
         if (this.status === OfficeManagerStatus.OFFLINE) return;
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-        this.franchises = salesAnalyst.getFranchiseLocations(this.office);
 
         let priority = 5;
         switch(this.status) {
@@ -31,36 +37,39 @@ export class SalesManager extends OfficeTaskManager {
             priority += 2;
         }
         // Bump priority down if we currently have a franchise surplus
-        if (this.franchises.reduce((surplus, franchise) => surplus + (franchise.surplus ?? 0), 0) > this.franchises.length * CONTAINER_CAPACITY) {
+        let surplus = 0;
+        let maxCapacity = 0;
+        for (let source of this.salesAnalyst.getUsableSourceLocations(this.office)) {
+            surplus += source.surplus ?? 0
+            maxCapacity += CONTAINER_CAPACITY;
+        }
+        if (surplus > maxCapacity) {
             priority -= 2;
         }
         // Maintains one Salesman per source,
         // respawning with a little lead time
         // to minimize downtime
-        this.franchises.forEach(franchise => {
-            if (
-                (franchise.salesmen.length === 0) || // No salesmen, OR salesmen have fewer than 5 WORK parts
-                (
-                    franchise.salesmen.length < franchise.maxSalesmen &&
-                    franchise.salesmen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0) < 5
-                )
-            ) {
+        for (let source of this.salesAnalyst.getUsableSourceLocations(this.office)) {
+            let salesmenCount = 0;
+            let salesmenWork = 0;
+            for (let salesman of source.salesmen) {
+                if (this.isIdle(salesman)) {
+                    // Keep mining ad infinitum.
+                    this.submit(salesman.name, new HarvestTask(source, 10))
+                }
+                salesmenCount += 1;
+                salesmenWork += salesman.gameObj.getActiveBodyparts(WORK);
+            }
+            if (salesmenCount < source.maxSalesmen && salesmenWork < 5) {
                 // No salesmen at the franchise: spawn one
                 // Scale priority by distance
-                let distance = Game.map.getRoomLinearDistance(this.office.center.name, franchise.pos.roomName);
-                let hrManager = this.office.managers.get('HRManager') as HRManager;
-                hrManager.submit(new MinionRequest(franchise.id, priority - distance, MinionTypes.SALESMAN, {
-                    source: franchise.id,
+                let distance = Game.map.getRoomLinearDistance(this.office.center.name, source.pos.roomName);
+                this.hrManager.submit(new MinionRequest(source.id, priority - distance, MinionTypes.SALESMAN, {
+                    source: source.id,
                     manager: this.constructor.name
                 }))
             }
-            franchise.salesmen.forEach(salesman => {
-                if (this.isIdle(salesman)) {
-                    // Keep mining ad infinitum.
-                    this.submit(salesman.id, new HarvestTask(franchise, 10))
-                }
-            })
-        })
+        }
     }
     run() {
         super.run();
@@ -70,30 +79,30 @@ export class SalesManager extends OfficeTaskManager {
     }
     report() {
         let headers = ['Franchise', 'Salesmen', 'Effective', 'Surplus']
-        let rows = this.franchises.map(franchise => {
+        let rows = lazyMap(this.salesAnalyst.getUsableSourceLocations(this.office), source => {
             return [
-                `${franchise.sourcePos.roomName}[${franchise.sourcePos.x}, ${franchise.sourcePos.y}]`,
-                `${franchise.salesmen.length}/${franchise.maxSalesmen}`,
-                `${(franchise.salesmen.reduce((sum, salesman) =>
-                    sum + salesman.getActiveBodyparts(WORK)
+                `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                `${source.salesmen.length}/${source.maxSalesmen}`,
+                `${(source.salesmen.reduce((sum, salesman) =>
+                    sum + salesman.gameObj.getActiveBodyparts(WORK)
                 , 0) / 5 * 100).toFixed(0)}%`,
-                franchise.surplus ?? 0
+                source.surplus ?? 0
             ]
         })
 
         Table(new RoomPosition(2, 15, this.office.center.name), [headers, ...rows]);
 
         let chart = new Meters(
-            this.franchises.map(franchise => new Bar(
-                `${franchise.sourcePos.roomName}[${franchise.sourcePos.x}, ${franchise.sourcePos.y}]`,
+            Array.from(lazyMap(this.salesAnalyst.getUsableSourceLocations(this.office), source => new Bar(
+                `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
                 {
                     fill: 'yellow',
                     stroke: 'yellow',
-                    lineStyle: franchise.container ? 'solid' : 'dashed'
+                    lineStyle: source.container ? 'solid' : 'dashed'
                 },
-                franchise.surplus ?? 0,
+                source.surplus ?? 0,
                 2000
-            ))
+            )))
         )
         chart.render(new RoomPosition(2, 2, this.office.center.name), false)
     }

@@ -1,5 +1,5 @@
+import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { HRAnalyst } from "./HRAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
@@ -90,6 +90,15 @@ export class PipelineMetrics {
 }
 
 export class StatisticsAnalyst extends BoardroomManager {
+    constructor(
+        boardroom: Boardroom,
+        private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
+        private hrAnalyst = boardroom.managers.get('HRAnalyst') as HRAnalyst,
+        private logisticsAnalyst = boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
+        private controllerAnalyst = boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst
+    ) {
+        super(boardroom);
+    }
     metrics: Map<string, PipelineMetrics> = new Map();
 
     reset() {
@@ -98,21 +107,16 @@ export class StatisticsAnalyst extends BoardroomManager {
     }
 
     plan() {
-        let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let logisticsAnalyst = this.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-        let controllerAnalyst = this.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
-
         this.boardroom.offices.forEach(office => {
             if (!this.metrics.has(office.name)) {
                 this.metrics.set(office.name,  new PipelineMetrics(
                     new NonNegativeDeltaMetric( // mineRate
-                        salesAnalyst.getFranchiseLocations(office)
-                            .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0),
+                        this.salesAnalyst.getUsableSourceLocations(office)
+                            .reduce((sum, source) => (sum + (source.energyCapacity ?? 0)), 0),
                         500
                     ),
                     new Metric( // mineContainerLevels
-                        salesAnalyst.getFranchiseLocations(office).length * CONTAINER_CAPACITY,
+                        this.salesAnalyst.getUsableSourceLocations(office).length * CONTAINER_CAPACITY,
                         100
                     ),
                     new Metric( // roomEnergyLevels
@@ -124,7 +128,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                         500
                     ),
                     new Metric( // storageLevels
-                        logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0),
+                        this.logisticsAnalyst.getStorage(office)?.capacity ?? 0,
                         100
                     ),
                     new DeltaMetric( // storageFillRate
@@ -132,19 +136,19 @@ export class StatisticsAnalyst extends BoardroomManager {
                         500
                     ),
                     new Metric( // fleetLevels
-                        logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0),
+                        this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.capacity), 0),
                         100
                     ),
                     new Metric( // mobileDepotLevels
-                        logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getCapacity()), 0) ?? 0,
+                        this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacity), 0) ?? 0,
                         100
                     ),
                     new Metric( // controllerDepotLevels
-                        controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
+                        this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
                         100
                     ),
                     new DeltaMetric( // controllerDepotFillRate
-                        controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0,
+                        this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
                         100
                     ),
                     new NonNegativeDeltaMetric( // logisticsThroughput
@@ -174,56 +178,54 @@ export class StatisticsAnalyst extends BoardroomManager {
                 ));
             } else {
                 let metrics = this.metrics.get(office.name) as PipelineMetrics;
-                metrics.mineRate.maxValue = salesAnalyst.getFranchiseLocations(office)
-                    .reduce((sum, source) => (sum + (source.source?.energyCapacity || 0)), 0)
+                metrics.mineRate.maxValue = this.salesAnalyst.getUsableSourceLocations(office)
+                    .reduce((sum, source) => (sum + (source.energyCapacity ?? 0)), 0)
                 metrics.mineRate.update(
-                    salesAnalyst.getFranchiseLocations(office)
-                        .reduce((sum, source) => (sum + (source.source?.energy || 0)), 0)
+                    this.salesAnalyst.getUsableSourceLocations(office)
+                        .reduce((sum, source) => (sum + (source.energy ?? 0)), 0)
                 );
 
-                metrics.mineContainerLevels.maxValue = salesAnalyst.getFranchiseLocations(office).length * CONTAINER_CAPACITY;
+                metrics.mineContainerLevels.maxValue = this.salesAnalyst.getUsableSourceLocations(office).length * CONTAINER_CAPACITY;
                 metrics.mineContainerLevels.update(
-                    salesAnalyst.getFranchiseLocations(office)
-                        .reduce((sum, mine) => (sum + countEnergyInContainersOrGround(mine.sourcePos)), 0)
+                    this.salesAnalyst.getUsableSourceLocations(office)
+                        .reduce((sum, source) => (sum + (source.surplus ?? 0)), 0)
                 );
 
                 metrics.roomEnergyLevels.maxValue = office.center.room.energyCapacityAvailable;
                 metrics.roomEnergyLevels.update(office.center.room.energyAvailable);
                 metrics.spawnEnergyRate.update(office.center.room.energyAvailable);
 
-                metrics.storageLevels.maxValue = logisticsAnalyst.getStorage(office).reduce((sum, storage) => (sum + storage.store.getCapacity()), 0);
+                metrics.storageLevels.maxValue = this.logisticsAnalyst.getStorage(office)?.capacity ?? 0;
                 metrics.storageLevels.update(
-                    logisticsAnalyst.getStorage(office)
-                        .reduce((sum, storage) => (sum + storage.store.getUsedCapacity()), 0)
+                    this.logisticsAnalyst.getStorage(office)?.capacityUsed ?? 0
                 );
                 metrics.storageFillRate.update(
-                    logisticsAnalyst.getStorage(office)
-                        .reduce((sum, storage) => (sum + storage.store.getUsedCapacity()), 0)
+                    this.logisticsAnalyst.getStorage(office)?.capacityUsed ?? 0
                 );
 
-                metrics.fleetLevels.maxValue = logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.store.getCapacity()), 0);
-                let fleetLevel = logisticsAnalyst.getCarriers(office)
-                    .reduce((sum, creep) => (sum + creep.store.getUsedCapacity()), 0)
+                metrics.fleetLevels.maxValue = this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.capacity), 0);
+                let fleetLevel = this.logisticsAnalyst.getCarriers(office)
+                    .reduce((sum, creep) => (sum + creep.capacityUsed), 0)
                 metrics.fleetLevels.update(fleetLevel);
                 metrics.logisticsThroughput.update(fleetLevel);
 
-                metrics.mobileDepotLevels.maxValue = logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getCapacity()), 0) ?? 0;
+                metrics.mobileDepotLevels.maxValue = this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacity), 0) ?? 0;
                 metrics.mobileDepotLevels.update(
-                    logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.store.getUsedCapacity()), 0) ?? 0
+                    this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacityUsed), 0) ?? 0
                 );
 
-                metrics.controllerDepotLevels.maxValue = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0;
+                metrics.controllerDepotLevels.maxValue = this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0;
                 metrics.controllerDepotLevels.update(
-                    controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0
+                    this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacityUsed || 0
                 );
 
-                metrics.controllerDepotFillRate.maxValue = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getCapacity() || 0;
+                metrics.controllerDepotFillRate.maxValue = this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0;
                 metrics.controllerDepotFillRate.update(
-                    controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.store.getUsedCapacity() || 0
+                    this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacityUsed || 0
                 );
 
-                metrics.spawnUtilization.maxValue = hrAnalyst.getSpawns(office).length;
-                metrics.spawnUtilization.update(hrAnalyst.getSpawns(office).filter(s => s.spawning).length);
+                metrics.spawnUtilization.maxValue = this.hrAnalyst.getSpawns(office).length;
+                metrics.spawnUtilization.update(this.hrAnalyst.getSpawns(office).filter(s => s.gameObj?.spawning).length);
 
                 let building = 0;
                 let repairing = 0;
@@ -246,9 +248,9 @@ export class StatisticsAnalyst extends BoardroomManager {
                                     break;
                             }
                         })
-                        deathLosses += logisticsAnalyst.getTombstones(room)
-                                                       .filter(t => t.creep.my && t.deathTime === Game.time - 1)
-                                                       .reduce((sum, t) => sum + t.store.getUsedCapacity(RESOURCE_ENERGY), 0)
+                        deathLosses += this.logisticsAnalyst.getTombstones(room.name)
+                                                       .filter(t => t.gameObj?.creep.my && t.gameObj?.deathTime === Game.time - 1)
+                                                       .reduce((sum, t) => sum + t.capacityUsed, 0)
                     })
                 metrics.buildRate.update(building);
                 metrics.repairRate.update(repairing);

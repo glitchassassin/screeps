@@ -1,109 +1,45 @@
-
+import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { SalesmanMinion } from "MinionRequests/minions/SalesmanMinion";
-import { Office } from "Office/Office";
-import { Memoize } from "typescript-memoize";
-import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
-import { TerritoryIntent } from "./DefenseAnalyst";
+import { CachedSource } from "WorldState/branches/WorldSources";
 import { HRAnalyst } from "./HRAnalyst";
 import { MapAnalyst } from "./MapAnalyst";
-
-export interface Franchise {
-    pos: RoomPosition,
-    sourcePos: RoomPosition;
-    id: Id<Source>;
-    officeId: string;
-    maxSalesmen: number;
-    source?: Source;
-    container?: StructureContainer;
-    constructionSite?: ConstructionSite;
-    office?: Office;
-    salesmen: Creep[];
-    surplus?: number;
-}
-
-const franchiseProxy = (franchise: Franchise): Franchise => {
-    return new Proxy(franchise, {
-        get: (target, prop: keyof Franchise) => {
-            if (!target) {
-                return undefined;
-            } else if (prop === 'pos' && target.pos) {
-                return new RoomPosition(target.pos.x, target.pos.y, target.pos.roomName);
-            } else if (prop === 'sourcePos' && target.sourcePos) {
-                return new RoomPosition(target.sourcePos.x, target.sourcePos.y, target.sourcePos.roomName);
-            } else if (prop === 'source') {
-                return Game.getObjectById(target.id) ?? undefined;
-            } else if (prop === 'container') {
-                if (!Game.rooms[target.pos.roomName]) return undefined;
-                let pos = new RoomPosition(target.pos.x, target.pos.y, target.pos.roomName);
-                return (pos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER) as StructureContainer|undefined);
-            } else if (prop === 'constructionSite') {
-                if (!Game.rooms[target.pos.roomName]) return undefined;
-                let pos = new RoomPosition(target.pos.x, target.pos.y, target.pos.roomName);
-                return (pos.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER) as ConstructionSite|undefined);
-            } else if (prop === 'office') {
-                return global.boardroom.offices.get(target.officeId);
-            } else if (prop === 'salesmen') {
-                return global.boardroom.offices.get(target.officeId)?.employees.filter(c => c.memory.source === target.id) || [];
-            } else if (prop === 'surplus') {
-                if (Game.rooms[target.pos.roomName]) target.surplus = countEnergyInContainersOrGround(new RoomPosition(target.sourcePos.x, target.sourcePos.y, target.sourcePos.roomName));
-                return target.surplus;
-            } else {
-                return target[prop];
-            }
-        }
-    })
-}
-
-const franchisesProxy = (franchises: {[id: string]: Franchise}): {[id: string]: Franchise} => {
-    return new Proxy(franchises, {
-        get: (target, prop: string) => {
-            if (target[prop]) {
-                return franchiseProxy(target[prop]);
-            }
-            return undefined;
-        }
-    })
-}
-
-const unwrapFranchise = (office: Office, id: string, sourcePos: RoomPosition, franchisePos: RoomPosition) => {
-    let mapAnalyst = global.boardroom?.managers.get('MapAnalyst') as MapAnalyst;
-    return {
-        pos: franchisePos,
-        sourcePos: sourcePos,
-        id: id as Id<Source>,
-        officeId: office?.name,
-        salesmen: [],
-        maxSalesmen: mapAnalyst?.calculateAdjacentPositions(sourcePos)
-                                        .filter(pos => mapAnalyst.isPositionWalkable(pos, true)).length
-    }
-}
+import { Memoize } from "typescript-memoize";
+import { Office } from "Office/Office";
+import { SalesmanMinion } from "MinionRequests/minions/SalesmanMinion";
+import { TerritoryIntent } from "./DefenseAnalyst";
+import { lazyFilter } from "utils/lazyIterators";
 
 export class SalesAnalyst extends BoardroomManager {
-    init() {
-        Memory.boardroom.SalesAnalyst ||= {
-            franchises: {}
-        }
-        Memory.boardroom.SalesAnalyst.franchises ||= {};
-    }
-    memory = {
-        franchises: franchisesProxy(Memory.boardroom.SalesAnalyst.franchises),
+    constructor(
+        boardroom: Boardroom,
+        public mapAnalyst = boardroom.managers.get('MapAnalyst') as MapAnalyst
+    ) {
+        super(boardroom);
     }
 
     plan() {
         this.boardroom.offices.forEach(office => {
             let territories = [office.center, ...office.territories]
             // If necessary, add franchise locations for territory
-            territories.forEach(t => {
-                t.sources.forEach((s, id) => {
-                    if (!this.memory.franchises[id]) {
-                        this.memory.franchises[id] = unwrapFranchise(office, id, s, this.calculateBestMiningLocation(office, s));
+            for (let t of territories) {
+                for (let s of global.worldState.sources.byRoom.get(t.name) ?? []) {
+                    // Initialize properties
+                    if (!s.maxSalesmen) {
+                        s.maxSalesmen = 0;
+                        for (let pos of this.mapAnalyst?.calculateAdjacentPositions(s.pos)) {
+                            if (this.mapAnalyst.isPositionWalkable(pos, true)) s.maxSalesmen += 1;
+                        }
                     }
-                })
-            })
+                    if (!s.officeId) {
+                        s.officeId = office.name;
+                    }
+                    if (!s.franchisePos) {
+                        s.franchisePos = this.calculateBestMiningLocation(office, s.pos);
+                    }
+                }
+            }
         })
     }
-    reset() { Memory.boardroom.SalesAnalyst.franchises = {}; }
 
     @Memoize((office: Office, sourcePos: RoomPosition) => ('' + office.name + sourcePos.toString() + Game.time))
     calculateBestMiningLocation(office: Office, sourcePos: RoomPosition) {
@@ -114,27 +50,32 @@ export class SalesAnalyst extends BoardroomManager {
         return route.path[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getFranchiseLocations(office: Office) {
-        let territories = [office.center, ...office.territories.filter(t => t.intent === TerritoryIntent.EXPLOIT)].map(t => t.name)
-        return Object.values(this.memory.franchises).filter(f => territories.includes(f.pos.roomName))
+    getUsableSourceLocations(office: Office) {
+        let territories = [office.center, ...office.territories.filter(t => t.intent === TerritoryIntent.EXPLOIT)];
+        return territories.flatMap(t => Array.from(global.worldState.sources.byRoom.get(t.name) ?? []))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSources (office: Office) {
-        let territories = [office.center, ...office.territories].map(t => t.name)
-        return Object.values(this.memory.franchises).filter(f => territories.includes(f.pos.roomName)).map(f => f.sourcePos);
+        let territories = [office.center, ...office.territories];
+        return territories.flatMap(t => Array.from(global.worldState.sources.byRoom.get(t.name) ?? []));
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUntappedSources(office: Office) {
-        return this.getFranchiseLocations(office).filter(franchise => !this.isFranchiseTapped(franchise))
+        return this.getUsableSourceLocations(office).filter(source => !this.isSourceTapped(source))
     }
-    @Memoize((source: RoomPosition) => ('' + source.toString() + Game.time))
-    isFranchiseTapped(franchise: Franchise) {
-        if (franchise.salesmen.reduce((a, b) => (a + b.getActiveBodyparts(WORK)), 0) >= 5) {
-            // Assigned creeps have enough WORK parts to tap the source
-            return true;
-        } else if (franchise.salesmen.length >= franchise.maxSalesmen) {
-            // Assigned creeps have allocated all spaces around the source
-            return true;
+    @Memoize((source) => ('' + source.toString() + Game.time))
+    isSourceTapped(source: CachedSource) {
+        let count = 0;
+        let workParts = 0;
+        for (let salesman of lazyFilter(
+            global.worldState.myCreeps.byOffice.get(source.officeId as string) ?? [],
+            c => c.memory?.source === source.id
+        )) {
+            count += 1;
+            workParts += salesman.gameObj.getActiveBodyparts(WORK);
+            if (workParts >= 5 || (source.maxSalesmen && count >= source.maxSalesmen)) {
+                return true;
+            }
         }
         return false;
     }
@@ -144,8 +85,8 @@ export class SalesAnalyst extends BoardroomManager {
                                                .filter(p => p === WORK).length;
 
         // Max energy output per tick
-        return 2 * this.getFranchiseLocations(office).reduce((sum, franchise) => (
-            sum + Math.max(5, minionWorkParts * franchise.maxSalesmen)
+        return 2 * this.getUsableSourceLocations(office).reduce((sum, source) => (
+            sum + Math.max(5, minionWorkParts * source.maxSalesmen)
         ), 0)
     }
 }

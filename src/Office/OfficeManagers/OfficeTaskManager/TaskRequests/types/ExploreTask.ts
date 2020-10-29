@@ -1,5 +1,7 @@
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
+
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
+import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 
 export class ExploreTask extends TaskAction {
     message = "🕵";
@@ -14,7 +16,7 @@ export class ExploreTask extends TaskAction {
         return `[ExploreTask: ${this.destination}]`
     }
 
-    action(creep: Creep) {
+    action(creep: CachedCreep) {
         // If unable to get the creep or destination, task is completed
         if (!this.destination) return TaskActionResult.FAILED;
         if (creep.pos.roomName === this.destination) {
@@ -29,7 +31,7 @@ export class ExploreTask extends TaskAction {
         return TaskActionResult.INPROGRESS;
     }
 
-    canBeFulfilledBy(creep: Creep) {
-        return creep.getActiveBodyparts(MOVE) > 0
+    canBeFulfilledBy(creep: CachedCreep) {
+        return creep.gameObj.getActiveBodyparts(MOVE) > 0
     }
 }

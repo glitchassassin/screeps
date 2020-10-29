@@ -1,10 +1,11 @@
 import { ControllerAnalyst } from 'Boardroom/BoardroomManagers/ControllerAnalyst';
-import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
-import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
-import { OfficeManager } from 'Office/OfficeManager';
-import profiler from 'screeps-profiler';
 import { FacilitiesManager } from './FacilitiesManager';
+import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
+import { OfficeManager } from 'Office/OfficeManager';
 import { RepairTask } from './OfficeTaskManager/TaskRequests/types/RepairTask';
+import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
+import { WorldState } from 'WorldState/WorldState';
+import profiler from 'screeps-profiler';
 
 export class Road {
     path: RoomPosition[] = [];
@@ -18,7 +19,7 @@ export class Road {
         ));
     }
 
-    checkRoad(facilitiesManager: FacilitiesManager, doConstruction: boolean) {
+    checkRoad(worldState: WorldState, facilitiesManager: FacilitiesManager, doConstruction: boolean) {
         let requestedConstruction = false;
         this.path.forEach(pos => {
             if (!Game.rooms[pos.roomName]) return;
@@ -29,7 +30,8 @@ export class Road {
                 ) {
                     if (lookItem.structure.structureType === STRUCTURE_ROAD && lookItem.structure.hits < (lookItem.structure.hitsMax * 0.5)) {
                         // Request repair
-                        facilitiesManager.submit(lookItem.structure.id, new RepairTask(lookItem.structure, 3));
+                        let structure = worldState.structures.byId.get(lookItem.structure.id);
+                        if (structure) facilitiesManager.submit(lookItem.structure.id, new RepairTask(structure, 3));
                     }
                     return;
                 } else if (lookItem.constructionSite?.structureType === STRUCTURE_ROAD) {
@@ -73,7 +75,9 @@ export class RoadArchitect extends OfficeManager {
 
         // Draw roads between spawn, sources, and controllers
         let spawn = hrAnalyst.getSpawns(this.office)[0];
-        salesAnalyst.getFranchiseLocations(this.office).forEach(franchise => {
+        let controller = global.worldState.controllers.byRoom.get(this.office.name);
+        if (!spawn || !controller) return;
+        salesAnalyst.getUsableSourceLocations(this.office).forEach(franchise => {
             this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
                 plainCost: 2,
                 swampCost: 2,
@@ -81,16 +85,16 @@ export class RoadArchitect extends OfficeManager {
                 roomCallback: roadPlannerCallback
             }).path))
         })
-        controllerAnalyst.getReservingControllers(this.office).forEach(controller => {
-            if (!controller.pos) return;
-            this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos, {
+        controllerAnalyst.getReservingControllers(this.office).forEach(c => {
+            if (!c.pos) return;
+            this.roads.push(new Road(PathFinder.search(spawn.pos, c.pos, {
                 plainCost: 2,
                 swampCost: 2,
                 maxOps: 3000,
                 roomCallback: roadPlannerCallback
             }).path))
         })
-        this.roads.push(new Road(PathFinder.search(spawn.pos, spawn.room.controller?.pos as RoomPosition, {
+        this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos as RoomPosition, {
             plainCost: 2,
             swampCost: 2,
             maxOps: 3000,
@@ -100,7 +104,7 @@ export class RoadArchitect extends OfficeManager {
 
         let roadUnderConstruction = false;
         this.roads.forEach(road => {
-            roadUnderConstruction = road.checkRoad(facilitiesManager, !roadUnderConstruction);
+            roadUnderConstruction = road.checkRoad(global.worldState, facilitiesManager, !roadUnderConstruction);
         })
     }
 

@@ -1,31 +1,39 @@
-import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
-import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { DepotRequest, TransferRequest } from "Logistics/LogisticsRequest";
 import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManagerStatus } from "Office/OfficeManager";
-import { UpgradeTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/UpgradeTask";
-import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
-import { Table } from "Visualizations/Table";
+
+import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { HRManager } from "../HRManager";
 import { LogisticsManager } from "../LogisticsManager";
+import { Office } from "Office/Office";
+import { OfficeManagerStatus } from "Office/OfficeManager";
 import { OfficeTaskManager } from "../OfficeTaskManager/OfficeTaskManager";
 import { ReserveTask } from "../OfficeTaskManager/TaskRequests/types/ReserveTask";
 import { ShouldReserveTerritory } from "./Strategies/ShouldReserveTerritory";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { Table } from "Visualizations/Table";
+import { UpgradeTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/UpgradeTask";
+import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 
 export class LegalManager extends OfficeTaskManager {
-    paralegals: Creep[] = [];
-    lawyers: Creep[] = [];
+    constructor(
+        office: Office,
+        private controllerAnalyst = office.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
+        private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
+        private logisticsManager = office.managers.get('LogisticsManager') as LogisticsManager,
+        private hrManager = office.managers.get('HRManager') as HRManager,
+    ) {
+        super(office);
+    }
     depotRequest?: DepotRequest;
 
     plan() {
         super.plan();
-        let controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
-        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
-        let hrManager = this.office.managers.get('HRManager') as HRManager;
-        let legalFund = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
-        this.paralegals = this.office.employees.filter(c => c.memory.type === 'PARALEGAL');
-        this.lawyers = this.office.employees.filter(c => c.memory.type === 'LAWYER');
+
+        let controller = this.controllerAnalyst.getDesignatedUpgradingLocations(this.office);
+        let paralegals = Array.from(this.hrAnalyst.getEmployees(this.office, 'PARALEGAL'))
+        let lawyers = Array.from(this.hrAnalyst.getEmployees(this.office, 'LAWYER'))
 
         let transferPriority = 1;
         switch (this.status) {
@@ -45,52 +53,55 @@ export class LegalManager extends OfficeTaskManager {
 
         // Evaluate territories to reserve
         this.office.territories.forEach(t => {
-            let blocked = t.controller.blocked ?? 0 - (Game.time - (t.controller.scanned ?? 0))
+            let controller = global.worldState.controllers.byRoom.get(t.name);
+            if (!controller) return;
+            let blocked = controller.upgradeBlocked - (Game.time - controller.scanned)
             if (ShouldReserveTerritory(t) && blocked < 200) {
-                this.submit(t.name, new ReserveTask(t, 5));
+                this.submit(t.name, new ReserveTask(controller, 5));
             }
         })
 
         // Spawn one dedicated upgrader
         if (
-            this.paralegals.length === 0 ||
-            (Game.time % 100 === 0 && (statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5)
+            paralegals.length === 0 ||
+            (Game.time % 100 === 0 && (this.statisticsAnalyst.metrics.get(this.office.name)?.controllerDepotLevels.asPercentMean() || 0) > 0.5)
         ) {
             // More input than output: spawn more upgraders
-            hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.PARALEGAL, {
+            this.hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.PARALEGAL, {
                 manager: this.constructor.name
             }))
         }
         // Spawn lawyers to handle ReserveTask requests
-        if (Array.from(this.requests.values()).filter(r => r instanceof ReserveTask).length > this.lawyers.length) {
-            hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
+        if (Array.from(this.requests.values()).filter(r => r instanceof ReserveTask).length > lawyers.length) {
+            this.hrManager.submit(new MinionRequest(`${this.office.name}_Legal`, 5, MinionTypes.LAWYER, {
                 manager: this.constructor.name
             }))
         }
 
 
-        if (legalFund?.container) {
+        if (controller?.container) {
             // Just in case we have any pending depots once container is built
             if (this.depotRequest) {
                 this.depotRequest.completed = true;
                 this.depotRequest = undefined;
             }
             // Place standing order for surplus energy to container
-            let e = getTransferEnergyRemaining(legalFund.container);
+            let e = controller.container ? getTransferEnergyRemaining(controller.container) : 0;
             if (e && e > (CONTAINER_CAPACITY / 2)) {
-                logisticsManager.submit(legalFund.container.id, new TransferRequest(legalFund.container, transferPriority));
+                this.logisticsManager.submit(controller.container.id, new TransferRequest(controller.container, transferPriority));
             }
-        } else if (legalFund) {
+        } else if (controller) {
             // Place standing order for upgrade energy
             if (this.office.center.room.controller) {
                 if (!this.depotRequest || this.depotRequest.completed) {
-                    this.depotRequest = new DepotRequest(legalFund.pos, 5, 100);
+                    this.depotRequest = new DepotRequest(controller.pos, 5, 100);
                 }
-                logisticsManager.submit(this.office.center.name, this.depotRequest);
+                this.logisticsManager.submit(this.office.center.name, this.depotRequest);
             }
         }
-
-        this.submit(this.office.name, new UpgradeTask(this.office.center.room.controller as StructureController, 5));
+        if (controller) {
+            this.submit(this.office.name, new UpgradeTask(controller, 5));
+        }
     }
     run() {
         super.run()

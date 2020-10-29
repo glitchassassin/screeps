@@ -1,8 +1,10 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { Office } from "Office/Office";
-import { TerritoryIntelligence } from "Office/RoomIntelligence";
-import { Memoize } from "typescript-memoize";
+import { CachedStructure } from "WorldState";
 import { HRAnalyst } from "./HRAnalyst";
+import { Memoize } from "typescript-memoize";
+import { Office } from "Office/Office";
+import { lazyFilter } from "utils/lazyIterators";
+import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export enum TerritoryIntent {
     AVOID = 'AVOID',
@@ -14,46 +16,72 @@ export enum TerritoryIntent {
 export class DefenseAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getTowers(office: Office) {
-        return (office.center.room.find(FIND_MY_STRUCTURES).filter(s => s.structureType === STRUCTURE_TOWER) as StructureTower[]);
+        let structures = global.worldState.structures.byRoom.get(office.center.name) ?? [];
+        return Array.from(lazyFilter(structures, s => s.structureType === STRUCTURE_TOWER)) as CachedStructure<StructureTower>[];
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getPrioritizedAttackTargets(office: Office) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let spawn = hrAnalyst.getSpawns(office)[0]
-        return office.center.room.find(FIND_HOSTILE_CREEPS).sort((a, b) => b.pos.getRangeTo(spawn) - a.pos.getRangeTo(spawn));
+        let [spawn] = hrAnalyst.getSpawns(office);
+        if (!spawn) return [];
+        let hostileCreeps = Array.from(global.worldState.hostileCreeps.byRoom.get(office.center.name) ?? []);
+        return hostileCreeps.sort(sortByDistanceTo(spawn.pos));
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getPrioritizedHealTargets(office: Office) {
-        return office.center.room.find(FIND_MY_CREEPS).filter(c => c.hits < c.hitsMax).sort((a, b) => b.hits - a.hits);
+        let myCreeps = Array.from(lazyFilter(
+            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
+            c => {
+                if (!c.pos) console.log(JSON.stringify(c));
+                return c.pos.roomName === office.center.name && (c.hits < c.hitsMax)
+            }
+        ))
+        return myCreeps.sort((a, b) => b.hits - a.hits);
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getInterns(office: Office) {
-        return office.employees.filter(c => c.memory.type === 'INTERN');
+        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
+        return hrAnalyst.getEmployees(office, 'INTERN');
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getGuards(office: Office) {
-        return office.employees.filter(c => c.memory.type === 'GUARD');
+        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
+        return hrAnalyst.getEmployees(office, 'GUARD');
     }
-    @Memoize((territory: TerritoryIntelligence) => ('' + territory.name + Game.time))
-    getTerritoryIntent(territory: TerritoryIntelligence) {
+    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    getTerritoryScanned(roomName: string) {
+        return global.worldState.rooms.byRoom.get(roomName)?.scanned
+    }
+    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    getTerritoryIntent(roomName: string) {
+        let controller = global.worldState.controllers.byRoom.get(roomName);
+        let room = global.worldState.rooms.byRoom.get(roomName);
+        let [hostileStructure] = lazyFilter(
+            global.worldState.structures.byRoom.get(roomName) ?? [],
+            s => ((
+                s.structureType === STRUCTURE_SPAWN ||
+                s.structureType === STRUCTURE_INVADER_CORE
+            ) && !s.my)
+        )
+        let [hostileMinion] = global.worldState.hostileCreeps.byRoom.get(roomName) ?? [];
         if (
-            (territory.controller.owner && !territory.controller.my) ||
-            (territory.controller.reserver && !territory.controller.myReserved)
+            (controller?.owner && !controller?.my) ||
+            (controller?.reservationOwner && !controller?.myReserved)
         ) {
-            if (!territory.controller.level || territory.controller.level < 3) {
+            if (!controller?.level || controller?.level < 3) {
                 return TerritoryIntent.ACQUIRE;
             } else {
                 return TerritoryIntent.AVOID;
             }
         } else {
-            if (territory.hostileStructures > 0) {
+            if (hostileStructure) {
                 return TerritoryIntent.DEFEND;
             } else if (
                 // Hostile activity in the last 100 ticks, and
-                (territory.lastHostileActivity && territory.lastHostileActivity < 100) &&
+                (room?.lastHostileActivity && room.lastHostileActivity < 100) &&
                 // We cannot see the room, or we can and there are confirmed hostile minions
-                !(Game.rooms[territory.name] && territory.hostileMinions === 0)
+                !(Game.rooms[roomName] && hostileMinion)
             ) {
                 return TerritoryIntent.DEFEND;
             } else {

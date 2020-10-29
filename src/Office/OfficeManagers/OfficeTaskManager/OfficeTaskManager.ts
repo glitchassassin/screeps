@@ -1,19 +1,22 @@
-import { OfficeManager } from "Office/OfficeManager";
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
+
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
+import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
+import { lazyFilter } from "utils/lazyIterators";
 
 export class OfficeTaskManager extends OfficeManager {
     requests = new Map<string, TaskAction>();
-    assignments = new Map<Id<Creep>, TaskAction>();
+    assignments = new Map<string, TaskAction>();
 
     submit = (sourceId: string, request: TaskAction) => {
         let key = request.constructor.name + '_' + sourceId;
         let existingRequest = this.requests.get(key);
         if (!existingRequest || request.priority > existingRequest.priority) {
             this.requests.set(key, request);
-            for (let [creepId, task] of this.assignments) {
+            for (let [creepName, task] of this.assignments) {
                 if (task === existingRequest) {
-                    this.assignments.delete(creepId);
+                    this.assignments.delete(creepName);
                 }
             }
         }
@@ -42,7 +45,7 @@ export class OfficeTaskManager extends OfficeManager {
 
                     for (let creep of creeps) {
                         if (request.canBeFulfilledBy(creep)) {
-                            this.assignments.set(creep.id, request);
+                            this.assignments.set(creep.name, request);
                             capacity -= 1;
                             if (capacity <= 0) break;
                         }
@@ -53,37 +56,40 @@ export class OfficeTaskManager extends OfficeManager {
         });
 
         // Run assigned tasks
-        for (let [creepId, task] of this.assignments) {
-            let creep = Game.getObjectById(creepId)
+        for (let [creepName, task] of this.assignments) {
+            let creep = global.worldState.myCreeps.byName.get(creepName);
             if (!creep || !task.valid()) {
-                this.assignments.delete(creepId);
+                this.assignments.delete(creepName);
                 continue;
             }
 
             let result = task.action(creep);
             if (result !== TaskActionResult.INPROGRESS) {
-                this.assignments.delete(creepId);
+                this.assignments.delete(creepName);
             }
         }
     }
 
     cleanup() {
-        for (let [creepId,task] of this.assignments) {
-            if (!task.valid() || !Game.getObjectById(creepId)) this.assignments.delete(creepId);
+        for (let [creepName,task] of this.assignments) {
+            if (!task.valid() || !Game.creeps[creepName]) this.assignments.delete(creepName);
         }
         for (let [sourceId,task] of this.requests) {
             if (!task.valid()) this.requests.delete(sourceId);
         }
     }
 
-    isIdle = (creep: Creep) => {
+    isIdle = (creep: CachedCreep) => {
         for (let [c] of this.assignments) {
-            if (c === creep.id) return false;
+            if (c === creep.name) return false;
         }
         return true;
     }
     getAvailableCreeps = () => {
-        return this.office.employees.filter(c => c.memory.manager === this.constructor.name && this.isIdle(c))
+        return Array.from(lazyFilter(
+            global.worldState.myCreeps.byOffice.get(this.office.name) ?? [],
+            c => c.memory?.manager === this.constructor.name && this.isIdle(c)
+        ))
     }
     report() {
         const taskTable: any[][] = [['Source', 'Task', 'Priority', 'Capacity', 'Assigned Minions']];

@@ -1,9 +1,13 @@
-import { Boardroom } from 'Boardroom/Boardroom';
 import 'reflect-metadata';
-import profiler from 'screeps-profiler';
+import 'ts-polyfill/lib/es2019-array';
+
+import { Boardroom } from 'Boardroom/Boardroom';
+import { ErrorMapper } from 'utils/ErrorMapper';
 import MemHack from 'utils/memhack';
-import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 import { VisualizationController } from 'utils/VisualizationController';
+import { WorldState } from 'WorldState/WorldState';
+import profiler from 'screeps-profiler';
+import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -38,6 +42,8 @@ global.purge = () => {
   global.boardroom = new Boardroom();
 }
 
+global.worldState = new WorldState();
+
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
@@ -53,8 +59,11 @@ function mainLoop() {
       }
     }
   }
+
   try {
     // Execute Boardroom plan phase
+
+    global.worldState.run();
 
     global.boardroom.plan()
 
@@ -72,7 +81,6 @@ function mainLoop() {
   } catch(e) {
     console.log(e, e.stack)
   }
-
 
   if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
     // CPU bucket dropping below 50%, send a CPU profile
