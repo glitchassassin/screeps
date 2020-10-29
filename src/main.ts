@@ -59,8 +59,11 @@ function mainLoop() {
       }
     }
   }
+
   try {
     // Execute Boardroom plan phase
+
+    global.worldState.run();
 
     global.boardroom.plan()
 
@@ -78,8 +81,6 @@ function mainLoop() {
   } catch(e) {
     console.log(e, e.stack)
   }
-
-  global.worldState.run();
 
   if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
     // CPU bucket dropping below 50%, send a CPU profile

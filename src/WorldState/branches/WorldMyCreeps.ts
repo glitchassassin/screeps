@@ -51,11 +51,12 @@ export class WorldMyCreeps extends WorldData {
             // Trigger getters to refresh caches
             for (let i in this.byName.get(creep.name) ?? {}) {}
         }
-        if (Game.time % 50 === 0) {
-            // Clean up no-longer-visible creeps
-            for (let [name] of this.byName) {
-                if (!Game.creeps[name]) {
-                    this.byName.delete(name);
+        // Clean up no-longer-visible creeps
+        for (let [name, creep] of this.byName) {
+            if (!creep.gameObj) {
+                this.byName.delete(name);
+                for (let [,office] of this.byOffice) {
+                    office.delete(creep)
                 }
             }
         }

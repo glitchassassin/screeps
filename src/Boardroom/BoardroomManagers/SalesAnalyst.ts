@@ -69,7 +69,7 @@ export class SalesAnalyst extends BoardroomManager {
         let workParts = 0;
         for (let salesman of lazyFilter(
             global.worldState.myCreeps.byOffice.get(source.officeId as string) ?? [],
-            c => c.memory.source === source.id
+            c => c.memory?.source === source.id
         )) {
             count += 1;
             workParts += salesman.gameObj.getActiveBodyparts(WORK);

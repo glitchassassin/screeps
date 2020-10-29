@@ -43,7 +43,7 @@ export class CachedSource extends CachedIDItem<Source> {
         if (!this.officeId) return [];
         return Array.from(lazyFilter(
             global.worldState.myCreeps.byOffice.get(this.officeId) ?? [],
-            creep => creep.memory.source === this.id
+            creep => creep.memory?.source === this.id
         ))
     }
     public maxSalesmen: number = 1;

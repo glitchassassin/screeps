@@ -32,23 +32,22 @@ export class DefenseAnalyst extends BoardroomManager {
     getPrioritizedHealTargets(office: Office) {
         let myCreeps = Array.from(lazyFilter(
             global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
-            c => c.pos.roomName === office.center.name && (c.hits < c.hitsMax)
+            c => {
+                if (!c.pos) console.log(JSON.stringify(c));
+                return c.pos.roomName === office.center.name && (c.hits < c.hitsMax)
+            }
         ))
         return myCreeps.sort((a, b) => b.hits - a.hits);
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getInterns(office: Office) {
-        return Array.from(lazyFilter(
-            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
-            c => c.memory.type === 'INTERN'
-        ))
+        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
+        return hrAnalyst.getEmployees(office, 'INTERN');
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getGuards(office: Office) {
-        return Array.from(lazyFilter(
-            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
-            c => c.memory.type === 'GUARD'
-        ))
+        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
+        return hrAnalyst.getEmployees(office, 'GUARD');
     }
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getTerritoryScanned(roomName: string) {

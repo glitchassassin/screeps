@@ -88,7 +88,7 @@ export class OfficeTaskManager extends OfficeManager {
     getAvailableCreeps = () => {
         return Array.from(lazyFilter(
             global.worldState.myCreeps.byOffice.get(this.office.name) ?? [],
-            c => c.memory.manager === this.constructor.name && this.isIdle(c)
+            c => c.memory?.manager === this.constructor.name && this.isIdle(c)
         ))
     }
     report() {
