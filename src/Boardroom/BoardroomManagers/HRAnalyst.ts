@@ -18,7 +18,7 @@ export class HRAnalyst extends BoardroomManager {
     getEmployees(office: Office, type?: string) {
         return Array.from(lazyFilter(
             global.worldState.myCreeps.byOffice.get(office.name) ?? [],
-            creep => !type || creep.memory.type === type
+            creep => !type || creep.memory?.type === type
         ))
     }
 }
