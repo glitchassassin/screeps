@@ -97,5 +97,5 @@ function mainLoop() {
 }
 
 profiler.enable()
-export const loop = ErrorMapper.wrapLoop(mainLoop);
-// export const loop = () => profiler.wrap(mainLoop);
+// export const loop = ErrorMapper.wrapLoop(mainLoop);
+export const loop = () => profiler.wrap(mainLoop);
