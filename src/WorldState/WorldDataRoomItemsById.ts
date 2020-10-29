@@ -11,6 +11,13 @@ export class CachedIDItem<T extends RoomObject & _HasId & _HasRoomPosition> {
     @memoryCacheGetter(keyById, (i: CachedIDItem<T>) => Game.getObjectById(i.id)?.pos, asRoomPosition)
     public pos!: RoomPosition;
 
+    public _scanned: number = Game.time;
+    @memoryCacheGetter(keyById, (i: CachedIDItem<T>) => {
+        if (i.gameObj) { i._scanned = Game.time; }
+        return i._scanned;
+    })
+    public scanned!: number
+
     public get gameObj() { return Game.getObjectById(this.id); }
 }
 

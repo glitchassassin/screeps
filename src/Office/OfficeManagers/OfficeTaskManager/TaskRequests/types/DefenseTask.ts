@@ -1,7 +1,9 @@
+import { TaskAction, TaskActionResult } from "../TaskAction";
+
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
 import { ShouldDefendRoom } from "Office/OfficeManagers/SecurityManager/Strategists/ShouldDefendRoom";
 import { TerritoryIntelligence } from "Office/RoomIntelligence";
 import { travel } from "../activity/Travel";
-import { TaskAction, TaskActionResult } from "../TaskAction";
 
 export class DefenseTask extends TaskAction {
     message = "⚔";
@@ -22,11 +24,11 @@ export class DefenseTask extends TaskAction {
         return ShouldDefendRoom(this.territory);
     }
 
-    canBeFulfilledBy(creep: Creep) {
-        return creep.getActiveBodyparts(ATTACK) > 0;
+    canBeFulfilledBy(creep: CachedCreep) {
+        return creep.gameObj.getActiveBodyparts(ATTACK) > 0;
     }
 
-    action(creep: Creep): TaskActionResult {
+    action(creep: CachedCreep): TaskActionResult {
         if (creep.pos.roomName !== this.territory.name) {
             travel(creep, new RoomPosition(25, 25, this.territory.name));
             return TaskActionResult.INPROGRESS;
@@ -35,7 +37,7 @@ export class DefenseTask extends TaskAction {
         // Hunt enemy minions first
         let hostile = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
         if (hostile) {
-            let result = creep.attack(hostile);
+            let result = creep.gameObj.attack(hostile);
             if (result === ERR_NOT_IN_RANGE) {
                 travel(creep, hostile.pos, 1);
             }
@@ -44,7 +46,7 @@ export class DefenseTask extends TaskAction {
         // Then power creeps
         let hostilePC = creep.pos.findClosestByRange(FIND_HOSTILE_POWER_CREEPS);
         if (hostilePC) {
-            let result = creep.attack(hostilePC);
+            let result = creep.gameObj.attack(hostilePC);
             if (result === ERR_NOT_IN_RANGE) {
                 travel(creep, hostilePC.pos, 1);
             }
@@ -53,7 +55,7 @@ export class DefenseTask extends TaskAction {
         // Then destroy enemy spawns
         let hostileSpawn = creep.pos.findClosestByRange(FIND_HOSTILE_SPAWNS);
         if (hostileSpawn) {
-            let result = creep.attack(hostileSpawn);
+            let result = creep.gameObj.attack(hostileSpawn);
             if (result === ERR_NOT_IN_RANGE) {
                 travel(creep, hostileSpawn.pos, 1);
             }
@@ -62,7 +64,7 @@ export class DefenseTask extends TaskAction {
         // Then destroy enemy invader cores
         let hostileCore = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, {filter: {structureType: STRUCTURE_INVADER_CORE}});
         if (hostileCore) {
-            let result = creep.attack(hostileCore);
+            let result = creep.gameObj.attack(hostileCore);
             if (result === ERR_NOT_IN_RANGE) {
                 travel(creep, hostileCore.pos, 1);
             }

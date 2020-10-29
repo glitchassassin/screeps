@@ -1,7 +1,6 @@
 import { CachedIDItem, WorldDataRoomItemsById } from "WorldState/WorldDataRoomItemsById";
 import { asRoomPosition, heapCacheGetter, keyById, memoryCache, memoryCacheGetter } from "screeps-cache";
 
-import { WorldState } from "WorldState/WorldState";
 import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { lazyFilter } from "utils/lazyIterators";
 
@@ -32,10 +31,10 @@ export class CachedSource extends CachedIDItem<Source> {
     public officeId?: string;
     @memoryCacheGetter(keyById, (i: CachedSource) => i.franchisePos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined)
     public containerId?: Id<StructureContainer>;
-    public get container() { return this.containerId ? new WorldState().structures.byId.get(this.containerId) : undefined }
+    public get container() { return this.containerId ? global.worldState.structures.byId.get(this.containerId) : undefined }
     @memoryCacheGetter(keyById, (i: CachedSource) => i.franchisePos?.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<ConstructionSite>|undefined)
     public constructionSiteId?: Id<ConstructionSite>;
-    public get constructionSite() { return this.constructionSiteId ? new WorldState().constructionSites.byId.get(this.constructionSiteId) : undefined }
+    public get constructionSite() { return this.constructionSiteId ? global.worldState.constructionSites.byId.get(this.constructionSiteId) : undefined }
 
     @heapCacheGetter((i: CachedSource) => countEnergyInContainersOrGround(i.pos))
     public surplus?: number;
@@ -43,7 +42,7 @@ export class CachedSource extends CachedIDItem<Source> {
     public get salesmen() {
         if (!this.officeId) return [];
         return Array.from(lazyFilter(
-            new WorldState().creeps.byOffice.get(this.officeId) ?? [],
+            global.worldState.creeps.byOffice.get(this.officeId) ?? [],
             creep => creep.memory.source === this.id
         ))
     }

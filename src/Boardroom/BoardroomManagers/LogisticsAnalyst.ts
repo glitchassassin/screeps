@@ -32,27 +32,27 @@ export class LogisticsAnalyst extends BoardroomManager {
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStorage(office: Office) {
-        let storage = this.worldState.rooms.byRoom.get(office.center.name)?.gameObj.storage;
-        return storage && this.worldState.structures.byId.get(storage.id) as CachedStructure<StructureStorage> | undefined;
+        let storage = global.worldState.rooms.byRoom.get(office.center.name)?.gameObj.storage;
+        return storage && global.worldState.structures.byId.get(storage.id) as CachedStructure<StructureStorage> | undefined;
     }
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getTombstones(roomName: string) {
         return Array.from(lazyFilter(
-            this.worldState.tombstones.byRoom.get(roomName) ?? [],
+            global.worldState.tombstones.byRoom.get(roomName) ?? [],
             t => t.capacityUsed ?? 0
         )) as CachedTombstone[];
     }
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getContainers(roomName: string) {
         return Array.from(lazyFilter(
-            this.worldState.structures.byRoom.get(roomName) ?? [],
+            global.worldState.structures.byRoom.get(roomName) ?? [],
             s => s.structureType === STRUCTURE_CONTAINER && s.capacityUsed && s.capacityUsed > 0
         )) as CachedStructure<StructureContainer>[];
     }
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getFreeEnergy(roomName: string) {
         return Array.from(lazyFilter(
-            this.worldState.resources.byRoom.get(roomName) ?? [],
+            global.worldState.resources.byRoom.get(roomName) ?? [],
             t => t.resourceType === RESOURCE_ENERGY
         )) as CachedResource<RESOURCE_ENERGY>[];
     }
@@ -63,10 +63,10 @@ export class LogisticsAnalyst extends BoardroomManager {
         let results: RealLogisticsSources[] = [];
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
-                let resource = this.worldState.resources.byId.get(item.resource.id) as CachedResource<RESOURCE_ENERGY>;
+                let resource = global.worldState.resources.byId.get(item.resource.id) as CachedResource<RESOURCE_ENERGY>;
                 if (resource) results.push(resource);
             } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage) {
-                let structure = this.worldState.structures.byId.get(item.structure.id) as CachedStructure<StructureStorage>;
+                let structure = global.worldState.structures.byId.get(item.structure.id) as CachedStructure<StructureStorage>;
                 if (structure) results.push(structure);
             }
         }
@@ -114,7 +114,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getCarriers(office: Office) {
         return Array.from(lazyFilter(
-            this.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'CARRIER'
         ))
     }

@@ -53,9 +53,11 @@ export class LegalManager extends OfficeTaskManager {
 
         // Evaluate territories to reserve
         this.office.territories.forEach(t => {
-            let blocked = t.controller.blocked ?? 0 - (Game.time - (t.controller.scanned ?? 0))
+            let controller = global.worldState.controllers.byRoom.get(t.name);
+            if (!controller) return;
+            let blocked = controller.upgradeBlocked - (Game.time - controller.scanned)
             if (ShouldReserveTerritory(t) && blocked < 200) {
-                this.submit(t.name, new ReserveTask(t, 5));
+                this.submit(t.name, new ReserveTask(controller, 5));
             }
         })
 
@@ -97,8 +99,9 @@ export class LegalManager extends OfficeTaskManager {
                 this.logisticsManager.submit(this.office.center.name, this.depotRequest);
             }
         }
-
-        this.submit(this.office.name, new UpgradeTask(this.office.center.room.controller as StructureController, 5));
+        if (controller) {
+            this.submit(this.office.name, new UpgradeTask(controller, 5));
+        }
     }
     run() {
         super.run()

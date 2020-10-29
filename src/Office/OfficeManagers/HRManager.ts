@@ -151,7 +151,7 @@ export class HRManager extends OfficeManager {
     }
 
     getIdleSpawn = (priority: number) => {
-        for (let spawn of this.worldState.mySpawns.byRoom.get(this.office.center.name) ?? []) {
+        for (let spawn of global.worldState.mySpawns.byRoom.get(this.office.center.name) ?? []) {
             let request = this.assignments.get(spawn.id)
             if (!request || request.priority < priority) {
                 return spawn;

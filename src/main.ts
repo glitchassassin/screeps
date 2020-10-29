@@ -40,7 +40,7 @@ global.purge = () => {
   global.boardroom = new Boardroom();
 }
 
-global.WorldState = new WorldState();
+global.worldState = new WorldState();
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -77,7 +77,7 @@ function mainLoop() {
   //   console.log(e, e.stack)
   // }
 
-  global.WorldState.run();
+  global.worldState.run();
 
   if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
     // CPU bucket dropping below 50%, send a CPU profile

@@ -1,8 +1,6 @@
 import { Boardroom } from "./Boardroom";
-import { WorldState } from "WorldState/WorldState";
 
 export abstract class BoardroomManager {
-    public worldState = new WorldState();
     constructor(
         public boardroom: Boardroom
     ) {

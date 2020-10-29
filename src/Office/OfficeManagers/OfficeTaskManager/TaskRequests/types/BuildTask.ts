@@ -1,4 +1,5 @@
 import { CachedConstructionSite } from "WorldState/branches/WorldConstructionSites";
+import { CachedCreep } from "WorldState/branches/WorldCreeps";
 import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 import { TaskActionResult } from "../TaskAction";
 import { doWork } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/DoWork";
@@ -25,10 +26,10 @@ export class BuildTask extends GetEnergyAndWorkTask {
         return !(Game.rooms[this.destination.pos.roomName] && (!this.destination.gameObj || !(this.destination.gameObj instanceof ConstructionSite)))
     }
 
-    work(creep: Creep): TaskActionResult {
+    work(creep: CachedCreep): TaskActionResult {
         return doWork(creep, this.destination.pos, (creep) => {
             if (!this.destination?.gameObj) return ERR_NOT_FOUND;
-            return creep.build(this.destination.gameObj);
+            return creep.gameObj.build(this.destination.gameObj);
         })
     }
 }

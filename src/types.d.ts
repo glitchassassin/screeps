@@ -108,6 +108,6 @@ declare namespace NodeJS {
     reportCPU: Function;
     debug: {[id: string]: boolean}
     Memory?: Memory
-    WorldState: import('./WorldState/WorldState').WorldState
+    worldState: import('./WorldState/WorldState').WorldState
   }
 }

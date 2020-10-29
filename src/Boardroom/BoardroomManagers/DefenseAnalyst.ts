@@ -16,7 +16,7 @@ export enum TerritoryIntent {
 export class DefenseAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getTowers(office: Office) {
-        let structures = this.worldState.structures.byRoom.get(office.center.name) ?? [];
+        let structures = global.worldState.structures.byRoom.get(office.center.name) ?? [];
         return Array.from(lazyFilter(structures, s => s.structureType === STRUCTURE_TOWER)) as CachedStructure<StructureTower>[];
     }
 
@@ -25,7 +25,7 @@ export class DefenseAnalyst extends BoardroomManager {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let [spawn] = hrAnalyst.getSpawns(office);
         let hostileCreeps = Array.from(lazyFilter(
-            this.worldState.creeps.byRoom.get(office.center.name) ?? [],
+            global.worldState.creeps.byRoom.get(office.center.name) ?? [],
             c => !c.my
         ));
         return hostileCreeps.sort(sortByDistanceTo(spawn.pos));
@@ -33,7 +33,7 @@ export class DefenseAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getPrioritizedHealTargets(office: Office) {
         let myCreeps = Array.from(lazyFilter(
-            this.worldState.creeps.byRoom.get(office.center.name) ?? [],
+            global.worldState.creeps.byRoom.get(office.center.name) ?? [],
             c => c.my && (c.hits < c.hitsMax)
         ))
         return myCreeps.sort((a, b) => b.hits - a.hits);
@@ -41,34 +41,34 @@ export class DefenseAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getInterns(office: Office) {
         return Array.from(lazyFilter(
-            this.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'INTERN'
         ))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getGuards(office: Office) {
         return Array.from(lazyFilter(
-            this.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'GUARD'
         ))
     }
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getTerritoryScanned(roomName: string) {
-        return this.worldState.rooms.byRoom.get(roomName)?.scanned
+        return global.worldState.rooms.byRoom.get(roomName)?.scanned
     }
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getTerritoryIntent(roomName: string) {
-        let controller = this.worldState.controllers.byRoom.get(roomName);
-        let room = this.worldState.rooms.byRoom.get(roomName);
+        let controller = global.worldState.controllers.byRoom.get(roomName);
+        let room = global.worldState.rooms.byRoom.get(roomName);
         let [hostileStructure] = lazyFilter(
-            this.worldState.structures.byRoom.get(roomName) ?? [],
+            global.worldState.structures.byRoom.get(roomName) ?? [],
             s => ((
                 s.structureType === STRUCTURE_SPAWN ||
                 s.structureType === STRUCTURE_INVADER_CORE
             ) && !s.my)
         )
         let [hostileMinion] = lazyFilter(
-            this.worldState.creeps.byRoom.get(roomName) ?? [],
+            global.worldState.creeps.byRoom.get(roomName) ?? [],
             s => !s.my
         )
         if (

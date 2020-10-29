@@ -1,9 +1,7 @@
 import { asRoomPosition, heapCacheGetter, keyById, memoryCache, memoryCacheGetter } from "screeps-cache";
 
-import { CachedIDItem } from "WorldState/WorldDataRoomItemsById";
 import { CachedStructure } from "./WorldStructures";
 import { WorldData } from "../WorldData";
-import { WorldState } from "WorldState/WorldState";
 
 export class WorldControllers extends WorldData {
     constructor() {
@@ -51,7 +49,7 @@ export class WorldControllers extends WorldData {
     }
 }
 
-export class CachedController extends CachedIDItem<StructureController> {
+export class CachedController extends CachedStructure<StructureController> {
     @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.level)
     public level!: number;
 
@@ -70,7 +68,7 @@ export class CachedController extends CachedIDItem<StructureController> {
     @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.reservation?.ticksToEnd)
     public reservationDuration!: number;
 
-    @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.upgradeBlocked)
+    @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.upgradeBlocked ?? 0)
     public upgradeBlocked!: number;
 
     @memoryCache(keyById, asRoomPosition)
@@ -78,13 +76,11 @@ export class CachedController extends CachedIDItem<StructureController> {
 
     @memoryCacheGetter(keyById, (i: CachedController) => i.containerPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined)
     public containerId?: Id<StructureContainer>;
-    public get container() { return this.containerId ? new WorldState().structures.byId.get(this.containerId) as CachedStructure<StructureContainer> : undefined }
+    public get container() { return this.containerId ? global.worldState.structures.byId.get(this.containerId) as CachedStructure<StructureContainer> : undefined }
 
     @memoryCacheGetter(keyById, (i: CachedController) => i.containerPos?.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<ConstructionSite>|undefined)
     public constructionSiteId?: Id<ConstructionSite>;
-    public get constructionSite() { return this.constructionSiteId ? new WorldState().constructionSites.byId.get(this.constructionSiteId) : undefined }
-
-    public get my() { return this.owner === 'LordGreywether'; }
+    public get constructionSite() { return this.constructionSiteId ? global.worldState.constructionSites.byId.get(this.constructionSiteId) : undefined }
 
     public get myReserved() { return this.reservationOwner === 'LordGreywether'; }
 }

@@ -12,7 +12,7 @@ export class ControllerAnalyst extends BoardroomManager {
             let territories = [office.center, ...office.territories]
             // If necessary, add franchise locations for territory
             for (let t of territories) {
-                let controller = this.worldState.controllers.byRoom.get(t.name)
+                let controller = global.worldState.controllers.byRoom.get(t.name)
                 if (!controller) continue;
                 // Initialize properties
                 if (!controller.containerPos) {
@@ -24,10 +24,10 @@ export class ControllerAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     calculateBestContainerLocation(office: Office) {
         let room = office.center.room;
-        let controller = this.worldState.controllers.byRoom.get(room.name);
+        let controller = global.worldState.controllers.byRoom.get(room.name);
         if (!controller) return undefined;
         // Pick the first spawn in the room
-        let spawn = this.worldState.mySpawns.byRoom.get(room.name)?.values().next().value;
+        let spawn = global.worldState.mySpawns.byRoom.get(room.name)?.values().next().value;
         let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
@@ -47,7 +47,7 @@ export class ControllerAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getDesignatedUpgradingLocations(office: Office) {
         let room = office.center.room;
-        let controller = this.worldState.controllers.byRoom.get(room.name);
+        let controller = global.worldState.controllers.byRoom.get(room.name);
         if (!controller?.containerPos) return null;
 
         // If we don't have a container/construction site cached, look for one

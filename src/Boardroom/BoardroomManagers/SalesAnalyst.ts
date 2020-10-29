@@ -22,7 +22,7 @@ export class SalesAnalyst extends BoardroomManager {
             let territories = [office.center, ...office.territories]
             // If necessary, add franchise locations for territory
             for (let t of territories) {
-                for (let s of this.worldState.sources.byRoom.get(t.name) ?? []) {
+                for (let s of global.worldState.sources.byRoom.get(t.name) ?? []) {
                     // Initialize properties
                     if (!s.maxSalesmen) {
                         s.maxSalesmen = 0;
@@ -52,12 +52,12 @@ export class SalesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUsableSourceLocations(office: Office) {
         let territories = [office.center, ...office.territories.filter(t => t.intent === TerritoryIntent.EXPLOIT)];
-        return territories.flatMap(t => Array.from(this.worldState.sources.byRoom.get(t.name) ?? []))
+        return territories.flatMap(t => Array.from(global.worldState.sources.byRoom.get(t.name) ?? []))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSources (office: Office) {
         let territories = [office.center, ...office.territories];
-        return territories.flatMap(t => Array.from(this.worldState.sources.byRoom.get(t.name) ?? []));
+        return territories.flatMap(t => Array.from(global.worldState.sources.byRoom.get(t.name) ?? []));
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUntappedSources(office: Office) {
@@ -68,7 +68,7 @@ export class SalesAnalyst extends BoardroomManager {
         let count = 0;
         let workParts = 0;
         for (let salesman of lazyFilter(
-            this.worldState.creeps.byOffice.get(source.officeId as string) ?? [],
+            global.worldState.creeps.byOffice.get(source.officeId as string) ?? [],
             c => c.memory.source === source.id
         )) {
             count += 1;

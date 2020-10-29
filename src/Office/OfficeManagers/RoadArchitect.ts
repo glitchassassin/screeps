@@ -102,7 +102,7 @@ export class RoadArchitect extends OfficeManager {
 
         let roadUnderConstruction = false;
         this.roads.forEach(road => {
-            roadUnderConstruction = road.checkRoad(this.worldState, facilitiesManager, !roadUnderConstruction);
+            roadUnderConstruction = road.checkRoad(global.worldState, facilitiesManager, !roadUnderConstruction);
         })
     }
 

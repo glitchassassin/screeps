@@ -57,7 +57,7 @@ export class OfficeTaskManager extends OfficeManager {
 
         // Run assigned tasks
         for (let [creepName, task] of this.assignments) {
-            let creep = Game.creeps[creepName]
+            let creep = global.worldState.creeps.byName.get(creepName);
             if (!creep || !task.valid()) {
                 this.assignments.delete(creepName);
                 continue;
@@ -87,7 +87,7 @@ export class OfficeTaskManager extends OfficeManager {
     }
     getAvailableCreeps = () => {
         return Array.from(lazyFilter(
-            this.worldState.creeps.byOffice.get(this.office.name) ?? [],
+            global.worldState.creeps.byOffice.get(this.office.name) ?? [],
             c => c.memory.manager === this.constructor.name && this.isIdle(c)
         ))
     }

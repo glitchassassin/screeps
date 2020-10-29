@@ -7,19 +7,19 @@ export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getEngineers(office: Office) {
         return Array.from(lazyFilter(
-            this.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'ENGINEER'
         ))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {
         let territories = [office.center, ...office.territories].map(t => t.name)
-        return territories.flatMap(t => Array.from(this.worldState.constructionSites.byRoom.get(t) ?? []))
+        return territories.flatMap(t => Array.from(global.worldState.constructionSites.byRoom.get(t) ?? []))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStructures(office: Office) {
         let territories = [office.center, ...office.territories].map(t => t.name)
-        return territories.flatMap(t => Array.from(this.worldState.structures.byRoom.get(t) ?? []))
+        return territories.flatMap(t => Array.from(global.worldState.structures.byRoom.get(t) ?? []))
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
