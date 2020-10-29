@@ -1,6 +1,8 @@
 import 'reflect-metadata';
+import 'ts-polyfill/lib/es2019-array';
 
 import { Boardroom } from 'Boardroom/Boardroom';
+import { ErrorMapper } from 'utils/ErrorMapper';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
 import { WorldState } from 'WorldState/WorldState';
@@ -25,7 +27,7 @@ let defensiveProfilingRun = true;
 global.v = new VisualizationController()
 
 // Initialize Boardroom
-// global.boardroom = new Boardroom();
+global.boardroom = new Boardroom();
 
 global.purge = () => {
   Memory.flags = {};
@@ -49,33 +51,33 @@ function mainLoop() {
   if (Game.cpu.bucket < 200 && Game.time % 2 === 0) {
     return; // If the bucket gets really low, skip every other tick to let it rebuild
   }
-  // // Automatically delete memory of missing creeps
-  // if(Game.time%1500 === 0) {
-  //   for (const name in Memory.creeps) {
-  //     if (!(name in Game.creeps)) {
-  //       delete Memory.creeps[name];
-  //     }
-  //   }
-  // }
-  // try {
-  //   // Execute Boardroom plan phase
+  // Automatically delete memory of missing creeps
+  if(Game.time%1500 === 0) {
+    for (const name in Memory.creeps) {
+      if (!(name in Game.creeps)) {
+        delete Memory.creeps[name];
+      }
+    }
+  }
+  try {
+    // Execute Boardroom plan phase
 
-  //   global.boardroom.plan()
+    global.boardroom.plan()
 
-  //   global.boardroom.offices.forEach(office => {
-  //     // Execute Office plan phase
-  //     office.plan();
-  //     // Execute Office run phase
-  //     office.run();
-  //     // Execute Office cleanup phase
-  //     office.cleanup();
-  //   });
+    global.boardroom.offices.forEach(office => {
+      // Execute Office plan phase
+      office.plan();
+      // Execute Office run phase
+      office.run();
+      // Execute Office cleanup phase
+      office.cleanup();
+    });
 
-  //   // Execute Boardroom cleanup phase
-  //   global.boardroom.cleanup();
-  // } catch(e) {
-  //   console.log(e, e.stack)
-  // }
+    // Execute Boardroom cleanup phase
+    global.boardroom.cleanup();
+  } catch(e) {
+    console.log(e, e.stack)
+  }
 
   global.worldState.run();
 
@@ -95,5 +97,5 @@ function mainLoop() {
 }
 
 profiler.enable()
-// export const loop = ErrorMapper.wrapLoop(mainLoop);
-export const loop = () => profiler.wrap(mainLoop);
+export const loop = ErrorMapper.wrapLoop(mainLoop);
+// export const loop = () => profiler.wrap(mainLoop);

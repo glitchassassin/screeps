@@ -68,7 +68,7 @@ export class SalesAnalyst extends BoardroomManager {
         let count = 0;
         let workParts = 0;
         for (let salesman of lazyFilter(
-            global.worldState.creeps.byOffice.get(source.officeId as string) ?? [],
+            global.worldState.myCreeps.byOffice.get(source.officeId as string) ?? [],
             c => c.memory.source === source.id
         )) {
             count += 1;

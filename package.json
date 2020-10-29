@@ -73,10 +73,11 @@
     "@types/table": "^6.0.0",
     "jest": "^26.4.2",
     "reflect-metadata": "^0.1.13",
-    "screeps-cache": "^1.0.5",
+    "screeps-cache": "^1.0.6",
     "screeps-profiler": "^2.0.1",
     "source-map": "~0.6.1",
     "table": "^6.0.3",
+    "ts-polyfill": "^3.8.2",
     "typescript-memoize": "^1.0.0-alpha.3"
   }
 }

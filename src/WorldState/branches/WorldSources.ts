@@ -42,7 +42,7 @@ export class CachedSource extends CachedIDItem<Source> {
     public get salesmen() {
         if (!this.officeId) return [];
         return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(this.officeId) ?? [],
+            global.worldState.myCreeps.byOffice.get(this.officeId) ?? [],
             creep => creep.memory.source === this.id
         ))
     }

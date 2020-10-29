@@ -1,4 +1,4 @@
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
 

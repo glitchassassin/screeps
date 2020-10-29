@@ -1,6 +1,6 @@
 import { LogisticsAnalyst, RealLogisticsSources } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedResource } from "WorldState/branches/WorldResources";
 import { Memoize } from "typescript-memoize";
 import { getUsedCapacity } from "utils/gameObjectSelectors";

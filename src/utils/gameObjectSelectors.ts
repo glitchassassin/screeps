@@ -1,6 +1,6 @@
 import { CachedConstructionSite, CachedStructure } from "WorldState";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedResource } from "WorldState/branches/WorldResources";
 import { CachedTombstone } from "WorldState/branches/WorldTombstones";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";

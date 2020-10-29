@@ -14,7 +14,7 @@ import profiler from "screeps-profiler";
 export class SalesManager extends OfficeTaskManager {
     constructor(
         office: Office,
-        private salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
+        private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
         private hrManager = office.managers.get('HRManager') as HRManager
     ) {
         super(office);

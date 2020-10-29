@@ -1,4 +1,4 @@
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedStructure } from "WorldState";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { getFreeCapacity } from "utils/gameObjectSelectors";

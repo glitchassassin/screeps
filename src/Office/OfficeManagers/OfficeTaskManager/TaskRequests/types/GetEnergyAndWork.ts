@@ -1,6 +1,6 @@
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { getEnergy } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/GetEnergy";
 
 enum WorkStates {

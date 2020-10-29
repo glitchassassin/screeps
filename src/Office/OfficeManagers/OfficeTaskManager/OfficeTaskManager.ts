@@ -1,6 +1,6 @@
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
 import { lazyFilter } from "utils/lazyIterators";
@@ -57,7 +57,7 @@ export class OfficeTaskManager extends OfficeManager {
 
         // Run assigned tasks
         for (let [creepName, task] of this.assignments) {
-            let creep = global.worldState.creeps.byName.get(creepName);
+            let creep = global.worldState.myCreeps.byName.get(creepName);
             if (!creep || !task.valid()) {
                 this.assignments.delete(creepName);
                 continue;
@@ -87,7 +87,7 @@ export class OfficeTaskManager extends OfficeManager {
     }
     getAvailableCreeps = () => {
         return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(this.office.name) ?? [],
+            global.worldState.myCreeps.byOffice.get(this.office.name) ?? [],
             c => c.memory.manager === this.constructor.name && this.isIdle(c)
         ))
     }

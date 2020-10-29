@@ -1,7 +1,8 @@
 import { WorldConstructionSites } from "./branches/WorldConstructionSites";
 import { WorldControllers } from "./branches/WorldControllers";
-import { WorldCreeps } from "./branches/WorldCreeps";
 import { WorldData } from "./WorldData";
+import { WorldHostileCreeps } from "./branches/WorldHostileCreeps";
+import { WorldMyCreeps } from "./branches/WorldMyCreeps";
 import { WorldResources } from "./branches/WorldResources";
 import { WorldRooms } from "./branches/WorldRooms";
 import { WorldSources } from "./branches/WorldSources";
@@ -28,7 +29,8 @@ export class WorldState {
     public constructionSites = new WorldConstructionSites();
     public controllers = new WorldControllers();
     public mySpawns = new WorldSpawns();
-    public creeps = new WorldCreeps();
+    public myCreeps = new WorldMyCreeps();
+    public hostileCreeps = new WorldHostileCreeps();
     public rooms = new WorldRooms();
     public tombstones = new WorldTombstones();
     public resources = new WorldResources();

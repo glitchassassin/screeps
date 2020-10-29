@@ -106,7 +106,7 @@ export class SecurityManager extends OfficeTaskManager {
         if (target || healTarget)
         for (let t of defenseAnalyst.getTowers(this.office)) {
             // Simple priorities
-            if (target) {
+            if (target.gameObj) {
                 t.gameObj?.attack(target.gameObj)
             } else if (healTarget) {
                 t.gameObj?.heal(healTarget.gameObj)

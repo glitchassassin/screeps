@@ -75,6 +75,8 @@ export class RoadArchitect extends OfficeManager {
 
         // Draw roads between spawn, sources, and controllers
         let spawn = hrAnalyst.getSpawns(this.office)[0];
+        let controller = global.worldState.controllers.byRoom.get(this.office.name);
+        if (!spawn || !controller) return;
         salesAnalyst.getUsableSourceLocations(this.office).forEach(franchise => {
             this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
                 plainCost: 2,
@@ -83,16 +85,16 @@ export class RoadArchitect extends OfficeManager {
                 roomCallback: roadPlannerCallback
             }).path))
         })
-        controllerAnalyst.getReservingControllers(this.office).forEach(controller => {
-            if (!controller.pos) return;
-            this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos, {
+        controllerAnalyst.getReservingControllers(this.office).forEach(c => {
+            if (!c.pos) return;
+            this.roads.push(new Road(PathFinder.search(spawn.pos, c.pos, {
                 plainCost: 2,
                 swampCost: 2,
                 maxOps: 3000,
                 roomCallback: roadPlannerCallback
             }).path))
         })
-        this.roads.push(new Road(PathFinder.search(spawn.pos, spawn.gameObj?.room.controller?.pos as RoomPosition, {
+        this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos as RoomPosition, {
             plainCost: 2,
             swampCost: 2,
             maxOps: 3000,

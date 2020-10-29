@@ -7,7 +7,7 @@ export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getEngineers(office: Office) {
         return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'ENGINEER'
         ))
     }

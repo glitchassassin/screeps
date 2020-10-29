@@ -1,7 +1,7 @@
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
 import { CachedController } from "WorldState";
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { travel } from "../activity/Travel";
 
 export class ReserveTask extends TaskAction {

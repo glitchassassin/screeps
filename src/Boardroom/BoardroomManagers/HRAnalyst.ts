@@ -17,7 +17,7 @@ export class HRAnalyst extends BoardroomManager {
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
     getEmployees(office: Office, type?: string) {
         return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(office.name) ?? [],
+            global.worldState.myCreeps.byOffice.get(office.name) ?? [],
             creep => !type || creep.memory.type === type
         ))
     }

@@ -24,31 +24,29 @@ export class DefenseAnalyst extends BoardroomManager {
     getPrioritizedAttackTargets(office: Office) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let [spawn] = hrAnalyst.getSpawns(office);
-        let hostileCreeps = Array.from(lazyFilter(
-            global.worldState.creeps.byRoom.get(office.center.name) ?? [],
-            c => !c.my
-        ));
+        if (!spawn) return [];
+        let hostileCreeps = Array.from(global.worldState.hostileCreeps.byRoom.get(office.center.name) ?? []);
         return hostileCreeps.sort(sortByDistanceTo(spawn.pos));
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getPrioritizedHealTargets(office: Office) {
         let myCreeps = Array.from(lazyFilter(
-            global.worldState.creeps.byRoom.get(office.center.name) ?? [],
-            c => c.my && (c.hits < c.hitsMax)
+            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
+            c => c.pos.roomName === office.center.name && (c.hits < c.hitsMax)
         ))
         return myCreeps.sort((a, b) => b.hits - a.hits);
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getInterns(office: Office) {
         return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'INTERN'
         ))
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getGuards(office: Office) {
         return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
+            global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
             c => c.memory.type === 'GUARD'
         ))
     }
@@ -67,10 +65,7 @@ export class DefenseAnalyst extends BoardroomManager {
                 s.structureType === STRUCTURE_INVADER_CORE
             ) && !s.my)
         )
-        let [hostileMinion] = lazyFilter(
-            global.worldState.creeps.byRoom.get(roomName) ?? [],
-            s => !s.my
-        )
+        let [hostileMinion] = global.worldState.hostileCreeps.byRoom.get(roomName) ?? [];
         if (
             (controller?.owner && !controller?.my) ||
             (controller?.reservationOwner && !controller?.myReserved)

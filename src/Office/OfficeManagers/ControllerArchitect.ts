@@ -6,7 +6,7 @@ import profiler from 'screeps-profiler';
 export class ControllerArchitect extends OfficeManager {
     constructor(
         office: Office,
-        private controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst
+        private controllerAnalyst = office.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst
     ) {
         super(office);
     }

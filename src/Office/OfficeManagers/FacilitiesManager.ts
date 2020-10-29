@@ -38,10 +38,11 @@ const repairRemaining = (structure: CachedStructure) => {
 }
 
 export class FacilitiesManager extends OfficeTaskManager {
-    facilitiesAnalyst: FacilitiesAnalyst;
-    constructor(office: Office) {
+    constructor(
+        office: Office,
+        private facilitiesAnalyst = office.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
+    ) {
         super(office);
-        this.facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
     }
 
     workExpectancy = 0;

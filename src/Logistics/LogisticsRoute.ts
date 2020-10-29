@@ -1,6 +1,6 @@
 import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { LogisticsSource } from "./LogisticsSource";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";

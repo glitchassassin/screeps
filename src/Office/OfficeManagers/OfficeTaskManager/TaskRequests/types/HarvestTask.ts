@@ -1,6 +1,6 @@
 import { TaskAction, TaskActionResult } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/TaskAction";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedSource } from "WorldState/branches/WorldSources";
 import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
 

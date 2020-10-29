@@ -6,7 +6,7 @@ import profiler from 'screeps-profiler';
 export class SourceArchitect extends OfficeManager {
     constructor(
         office: Office,
-        private salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst
+        private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst
     ) {
         super(office)
     }

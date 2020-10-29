@@ -1,4 +1,4 @@
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedResource } from "WorldState/branches/WorldResources";
 import { CachedStructure } from "WorldState";
 import { CachedTombstone } from "WorldState/branches/WorldTombstones";

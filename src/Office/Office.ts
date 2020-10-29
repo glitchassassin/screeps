@@ -1,18 +1,20 @@
-import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
-import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
-import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
-import profiler from "screeps-profiler";
 import { Bar, Meters } from "Visualizations/Meters";
-import { Minimap } from "Visualizations/Territory";
 import { OfficeManager, OfficeManagerStatus } from "./OfficeManager";
+import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
+
+import { Boardroom } from "Boardroom/Boardroom";
+import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
+import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
 import { HRManager } from "./OfficeManagers/HRManager";
 import { LegalManager } from "./OfficeManagers/LegalManager/LegalManager";
 import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
+import { Minimap } from "Visualizations/Territory";
+import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
 import { SalesManager } from "./OfficeManagers/SalesManager";
 import { SecurityManager } from "./OfficeManagers/SecurityManager/SecurityManager";
-import { RoomIntelligence, TerritoryIntelligence } from "./RoomIntelligence";
+import { SourceArchitect } from "Office/OfficeManagers/SourceArchitect";
+import profiler from "screeps-profiler";
 
 export class Office {
     name: string;
@@ -23,7 +25,7 @@ export class Office {
     private employeeNames: Set<string> = new Set();
     managers: Map<string, OfficeManager> = new Map();
 
-    constructor(roomName: string) {
+    constructor(public boardroom: Boardroom, roomName: string) {
         this.name = roomName;
         this.center = new RoomIntelligence(roomName);
 
@@ -71,18 +73,19 @@ export class Office {
                 return territory;
             })
 
+        // Create Managers
+        new HRManager(this);
+        new LogisticsManager(this);
+
+        new FacilitiesManager(this);
+        new LegalManager(this);
+        new SalesManager(this);
+        new SecurityManager(this);
+
         // Create Architects
         new ControllerArchitect(this);
         new RoadArchitect(this);
         new SourceArchitect(this);
-
-        // Create Managers
-        new FacilitiesManager(this);
-        new HRManager(this);
-        new LegalManager(this);
-        new LogisticsManager(this);
-        new SalesManager(this);
-        new SecurityManager(this);
 
     }
 

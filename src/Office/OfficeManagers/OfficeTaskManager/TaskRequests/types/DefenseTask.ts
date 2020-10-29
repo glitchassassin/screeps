@@ -1,6 +1,6 @@
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { ShouldDefendRoom } from "Office/OfficeManagers/SecurityManager/Strategists/ShouldDefendRoom";
 import { TerritoryIntelligence } from "Office/RoomIntelligence";
 import { travel } from "../activity/Travel";

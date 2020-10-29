@@ -18,9 +18,9 @@ import { getTransferEnergyRemaining } from "utils/gameObjectSelectors";
 export class LegalManager extends OfficeTaskManager {
     constructor(
         office: Office,
-        private controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
-        private statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
-        private hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst,
+        private controllerAnalyst = office.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
+        private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
         private logisticsManager = office.managers.get('LogisticsManager') as LogisticsManager,
         private hrManager = office.managers.get('HRManager') as HRManager,
     ) {

@@ -1,5 +1,5 @@
 import { CachedConstructionSite } from "WorldState/branches/WorldConstructionSites";
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { GetEnergyAndWorkTask } from "./GetEnergyAndWork";
 import { TaskActionResult } from "../TaskAction";
 import { doWork } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/DoWork";

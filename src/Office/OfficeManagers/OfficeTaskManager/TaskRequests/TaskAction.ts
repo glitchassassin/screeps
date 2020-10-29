@@ -1,4 +1,4 @@
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 
 export enum TaskActionResult {
     SUCCESS = 'SUCCESS',

@@ -1,37 +1,34 @@
 import { WorldData } from "../WorldData";
 
-export class WorldCreeps extends WorldData {
+export class WorldMyCreeps extends WorldData {
     constructor() {
         super();
-        // Reload cached structures
+        // Reload cached creeps
         for (let name of this.ids) {
             let s = new CachedCreep(name)
             this.byName.set(name, s);
-            if (s.pos) {
-                let room = this.byRoom.get(s.pos.roomName) ?? new Set<CachedCreep>();
+            if (s.memory.office) {
+                let room = this.byOffice.get(s.memory.office) ?? new Set<CachedCreep>();
                 room.add(s);
-                this.byRoom.set(s.pos.roomName, room);
+                this.byOffice.set(s.memory.office, room);
             }
         }
     }
 
     // Lookup indexes
     public byName = new Map<string, CachedCreep>();
-    public byRoom = new Map<string, Set<CachedCreep>>();
     public byOffice = new Map<string, Set<CachedCreep>>();
 
-    public update(roomName: string) {
-        // If no vision in this room, cancel the update
-        if (!Game.rooms[roomName]) return false;
+    public scanned = 0;
 
-        let foundIDs = new Set<string>();
-        let room = this.byRoom.get(roomName) ?? new Set<CachedCreep>();
-        this.byRoom.set(roomName, room);
+    public update(roomName: string) {
+        // Actually updating globally, not room by room
+        if (this.scanned === Game.time) return false;
+        this.scanned = Game.time;
 
         // Refresh existing creeps in the room
-        Game.rooms[roomName].find(FIND_CREEPS).forEach(creep => {
-            // Found ID (so we won't clean it up later)
-            foundIDs.add(creep.name)
+        for (let creepName in Game.creeps) {
+            let creep = Game.creeps[creepName];
 
             // Create a new CachedCreep if needed
             let cachedCreep = this.byName.get(creep.name)
@@ -42,14 +39,6 @@ export class WorldCreeps extends WorldData {
                 this.ids.push(creep.name);
                 // Update indices
                 this.byName.set(creep.name, cachedCreep);
-                room.add(cachedCreep);
-            }
-            // Move creep in room index if needed
-            else if (!this.byRoom.get(roomName)?.has(cachedCreep)) {
-                for (let room of this.byRoom.values()) {
-                    room.delete(cachedCreep);
-                }
-                this.byRoom.get(roomName)?.add(cachedCreep)
             }
 
             // Add creep to office index if needed
@@ -61,21 +50,13 @@ export class WorldCreeps extends WorldData {
 
             // Trigger getters to refresh caches
             for (let i in this.byName.get(creep.name) ?? {}) {}
-        })
-        // Clean up creeps that weren't found
-        for (let creep of room) {
-            if (!foundIDs.has(creep.name)) {
-                // Room is visible, but creep does not exist.
-                // Remove from indexes
-                this.delete(creep.name);
-                // Remove cached data for creep
-                room.delete(creep);
-            }
         }
         if (Game.time % 50 === 0) {
             // Clean up no-longer-visible creeps
             for (let [name] of this.byName) {
-                this.byName.delete(name);
+                if (!Game.creeps[name]) {
+                    this.byName.delete(name);
+                }
             }
         }
         return true;
@@ -83,7 +64,9 @@ export class WorldCreeps extends WorldData {
 }
 
 export class CachedCreep {
-    constructor(public name: string) { }
+    constructor(public name: string) {
+        if (!this.gameObj) throw new Error('Unable to create CachedCreep: no creep with name found')
+    }
 
     public get pos() { return Game.creeps[this.name]?.pos; }
     public get my() { return Game.creeps[this.name]?.my; }

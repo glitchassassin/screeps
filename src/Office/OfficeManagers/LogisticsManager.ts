@@ -19,10 +19,10 @@ import profiler from "screeps-profiler";
 export class LogisticsManager extends OfficeManager {
     constructor(
         office: Office,
-        private logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
-        private salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
-        private hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst,
-        private statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
+        private logisticsAnalyst = office.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
+        private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
+        private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
         private hrManager = office.managers.get('HRManager') as HRManager,
     ) {
         super(office);

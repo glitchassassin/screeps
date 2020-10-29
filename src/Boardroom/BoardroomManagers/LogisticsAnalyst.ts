@@ -2,11 +2,11 @@ import { getUsedCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { CachedCreep } from "WorldState/branches/WorldCreeps";
+import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedResource } from "WorldState/branches/WorldResources";
 import { CachedStructure } from "WorldState";
 import { CachedTombstone } from "WorldState/branches/WorldTombstones";
-import { MapAnalyst } from "./MapAnalyst";
+import { HRAnalyst } from "./HRAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
 import { SalesAnalyst } from "./SalesAnalyst";
@@ -17,8 +17,7 @@ export type RealLogisticsSources = CachedResource<RESOURCE_ENERGY>|CachedStructu
 export class LogisticsAnalyst extends BoardroomManager {
     constructor(
         boardroom: Boardroom,
-        private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
-        private mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
+        private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst
     ) {
         super(boardroom);
     }
@@ -113,10 +112,8 @@ export class LogisticsAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getCarriers(office: Office) {
-        return Array.from(lazyFilter(
-            global.worldState.creeps.byOffice.get(office.center.name) ?? [],
-            c => c.memory.type === 'CARRIER'
-        ))
+        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
+        return hrAnalyst.getEmployees(office, 'CARRIER');
     }
     reportDepot(creep: CachedCreep) {
         if (!creep.memory.office) return;
