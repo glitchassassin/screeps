@@ -2,6 +2,7 @@ import { WorldConstructionSites } from "./branches/WorldConstructionSites";
 import { WorldControllers } from "./branches/WorldControllers";
 import { WorldData } from "./WorldData";
 import { WorldHostileCreeps } from "./branches/WorldHostileCreeps";
+import { WorldMinerals } from "./branches/WorldMinerals";
 import { WorldMyCreeps } from "./branches/WorldMyCreeps";
 import { WorldResources } from "./branches/WorldResources";
 import { WorldRooms } from "./branches/WorldRooms";
@@ -35,4 +36,5 @@ export class WorldState {
     public tombstones = new WorldTombstones();
     public resources = new WorldResources();
     public sources = new WorldSources();
+    public minerals = new WorldMinerals();
 }

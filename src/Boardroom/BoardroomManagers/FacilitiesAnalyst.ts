@@ -2,7 +2,6 @@ import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { HRAnalyst } from "./HRAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
-import { lazyFilter } from "utils/lazyIterators";
 
 export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -11,14 +10,28 @@ export class FacilitiesAnalyst extends BoardroomManager {
         return hrAnalyst.getEmployees(office, 'ENGINEER');
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
+    getWorkExpectancy(office: Office) {
+        let workExpectancy = 0;
+        for (let creep of this.getEngineers(office)) {
+            workExpectancy += (creep.gameObj.getActiveBodyparts(WORK) * (creep.gameObj.ticksToLive ?? 1500) * 2.5)
+        }
+        return workExpectancy
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getExpectedOutput(office: Office) {
+        let expectedOutput = 0;
+        for (let creep of this.getEngineers(office)) {
+            expectedOutput += (creep.gameObj.getActiveBodyparts(WORK) * 2.5)
+        }
+        return expectedOutput
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {
-        let territories = [office.center, ...office.territories].map(t => t.name)
-        return territories.flatMap(t => Array.from(global.worldState.constructionSites.byRoom.get(t) ?? []))
+        return Array.from(global.worldState.constructionSites.byOffice.get(office.name) ?? [])
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStructures(office: Office) {
-        let territories = [office.center, ...office.territories].map(t => t.name)
-        return territories.flatMap(t => Array.from(global.worldState.structures.byRoom.get(t) ?? []))
+        return Array.from(global.worldState.structures.byOffice.get(office.name) ?? [])
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))

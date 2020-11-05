@@ -33,7 +33,6 @@ export class DefenseAnalyst extends BoardroomManager {
         let myCreeps = Array.from(lazyFilter(
             global.worldState.myCreeps.byOffice.get(office.center.name) ?? [],
             c => {
-                if (!c.pos) console.log(JSON.stringify(c));
                 return c.pos.roomName === office.center.name && (c.hits < c.hitsMax)
             }
         ))

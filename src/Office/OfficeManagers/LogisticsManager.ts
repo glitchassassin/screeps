@@ -1,20 +1,18 @@
 import { Bar, Meters } from "Visualizations/Meters";
-import { LogisticsRequest, ResupplyRequest } from "Logistics/LogisticsRequest";
-import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { HRManager } from "./HRManager";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LogisticsRequest } from "Logistics/LogisticsRequest";
 import { LogisticsRoute } from "Logistics/LogisticsRoute";
 import { LogisticsSource } from "Logistics/LogisticsSource";
 import { Office } from "Office/Office";
+import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { Table } from "Visualizations/Table";
 import { lazyFilter } from "utils/lazyIterators";
 import profiler from "screeps-profiler";
+import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class LogisticsManager extends OfficeManager {
     constructor(
@@ -22,8 +20,7 @@ export class LogisticsManager extends OfficeManager {
         private logisticsAnalyst = office.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
         private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
         private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
-        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
-        private hrManager = office.managers.get('HRManager') as HRManager,
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst
     ) {
         super(office);
     }
@@ -64,39 +61,6 @@ export class LogisticsManager extends OfficeManager {
             }
         })
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
-
-        switch (this.status) {
-            case OfficeManagerStatus.OFFLINE: {
-                // Manager is offline, do nothing
-                return;
-            }
-            default: {
-                // Maintain enough carriers to keep
-                // franchises drained
-                let metrics = this.statisticsAnalyst.metrics.get(this.office.name);
-                let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
-                let unassignedRequests = Array.from(this.requests.values()).filter(r => r.assignedCapacity >= r.capacity).length;
-                let requestCapacity = unassignedRequests / this.requests.size;
-                if (Game.time - this.lastMinionRequest > 50 &&
-                    (inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5)) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unfilled, spawning carrier`);
-                    this.hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
-                    this.lastMinionRequest = Game.time;
-                } else if (Game.time - this.lastMinionRequest > 50 &&
-                    (inputAverageMean > 0.5 && idleCarriers.length === 0)) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}%, spawning carrier`);
-                    this.hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 4, MinionTypes.CARRIER, {manager: this.constructor.name}));
-                    this.lastMinionRequest = Game.time;
-                }
-                break;
-            }
-        }
-
-        // Make sure we have a standing request for storage
-        if (storage && getFreeCapacity(storage) > 0) {
-            this.submit(storage.id, new ResupplyRequest(storage, 1))
-        }
-        // Create a request to recycle old creeps
 
         // Try to route requests
         // Prioritize requests

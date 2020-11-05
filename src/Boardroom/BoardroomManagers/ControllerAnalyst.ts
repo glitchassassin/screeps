@@ -1,34 +1,31 @@
+import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
+
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { CachedController } from "WorldState";
-import { ControllerIntelligence } from "Office/RoomIntelligence";
+import { LegalManager } from "Office/OfficeManagers/LegalManager/LegalManager";
 import { MapAnalyst } from "./MapAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
-import { ShouldReserveTerritory } from "Office/OfficeManagers/LegalManager/Strategies/ShouldReserveTerritory";
 
 export class ControllerAnalyst extends BoardroomManager {
     plan() {
         this.boardroom.offices.forEach(office => {
-            let territories = [office.center, ...office.territories]
-            // If necessary, add franchise locations for territory
-            for (let t of territories) {
-                let controller = global.worldState.controllers.byRoom.get(t.name)
-                if (!controller) continue;
-                // Initialize properties
-                if (!controller.containerPos) {
-                    controller.containerPos = this.calculateBestContainerLocation(office)
-                }
+            let controller = global.worldState.controllers.byRoom.get(office.name)
+            if (!controller) return;
+            // Initialize properties
+            if (!controller.containerPos) {
+                controller.containerPos = this.calculateBestContainerLocation(office)
             }
         })
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     calculateBestContainerLocation(office: Office) {
-        let room = office.center.room;
-        let controller = global.worldState.controllers.byRoom.get(room.name);
+        // let room = office.center.room;
+        let controller = global.worldState.controllers.byRoom.get(office.name);
         if (!controller) return undefined;
         // Pick the first spawn in the room
-        let spawn = global.worldState.mySpawns.byRoom.get(room.name)?.values().next().value;
-        let target = (spawn? spawn.pos : room.getPositionAt(25, 25)) as RoomPosition;
+        let spawn = global.worldState.mySpawns.byRoom.get(office.name)?.values().next().value;
+        let target = (spawn? spawn.pos : new RoomPosition(25, 25, office.name)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
         let candidate: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
@@ -46,8 +43,7 @@ export class ControllerAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getDesignatedUpgradingLocations(office: Office) {
-        let room = office.center.room;
-        let controller = global.worldState.controllers.byRoom.get(room.name);
+        let controller = global.worldState.controllers.byRoom.get(office.name);
         if (!controller?.containerPos) return null;
 
         // If we don't have a container/construction site cached, look for one
@@ -65,8 +61,23 @@ export class ControllerAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getReservingControllers(office: Office) {
-        return office.territories
-            .filter(t => ShouldReserveTerritory(t))
-            .map(t => t.controller) as ControllerIntelligence[]
+        let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
+        let defenseAnalyst = this.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
+        let territories = mapAnalyst.calculateNearbyRooms(office.name, 1);
+        let controllers: CachedController[] = [];
+        for (let t of territories) {
+            let intent = defenseAnalyst.getTerritoryIntent(t)
+            if (intent === TerritoryIntent.EXPLOIT) {
+                let controller = global.worldState.controllers.byRoom.get(t);
+                if (controller) {
+                    controllers.push(controller);
+                }
+            }
+        }
+        return controllers;
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    unassignedUpgradeRequests(office: Office) {
+        return (office.managers.get('LegalManager') as LegalManager).requests.filter(r => r.assigned.length === 0);
     }
 }

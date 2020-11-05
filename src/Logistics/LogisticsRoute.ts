@@ -151,7 +151,7 @@ export class LogisticsRoute {
 
     run() {
         // Validate current state
-        if (!this.creep) { // Creep not found
+        if (!this.creep.gameObj) { // Creep not found
             // Unassign remaining requests
             this.requests.forEach(r => {
                 r.assigned = false;

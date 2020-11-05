@@ -4,11 +4,10 @@ import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedResource } from "WorldState/branches/WorldResources";
 import { CachedTombstone } from "WorldState/branches/WorldTombstones";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
-
-export interface WithPos {
-    pos: RoomPosition
-}
+import { Office } from "Office/Office";
+import { lazyFilter } from "./lazyIterators";
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite|ConstructionSite) {
     return (target.progressTotal ?? 0) - (target.progress ?? 0);
@@ -41,7 +40,7 @@ export function getCapacity(cached: CachedStructure<AnyStoreStructure>|CachedCre
     return (cached.gameObj?.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
 }
 
-export function sortByDistanceTo<T extends WithPos>(pos: RoomPosition) {
+export function sortByDistanceTo<T extends _HasRoomPosition>(pos: RoomPosition) {
     let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
     let distance = new Map<T, number>();
     return (a: T, b: T) => {
@@ -55,4 +54,41 @@ export function sortByDistanceTo<T extends WithPos>(pos: RoomPosition) {
 
 export function RoomPos(pos: {x: number, y: number, roomName: string}) {
     return new RoomPosition(pos.x, pos.y, pos.roomName);
+}
+
+export function buildPriority(site: CachedConstructionSite) {
+    // Adds a fractional component to sub-prioritize the most
+    // complete construction sites
+    let completion = (site.progress ?? 0) / (site.progressTotal ?? 0);
+    switch(site.structureType) {
+        case STRUCTURE_ROAD:
+            return 1 + completion;
+        case STRUCTURE_CONTAINER:
+            return 10 + completion;
+        case STRUCTURE_EXTENSION:
+            return 12 + completion;
+        default:
+            return 5 + completion;
+    }
+}
+export function repairRemaining(structure: CachedStructure) {
+    let hitsMax = (structure.hitsMax ?? 0);
+    if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) {
+        hitsMax = Math.min(hitsMax, 100000);
+    }
+    return hitsMax - (structure.hits ?? 0)
+}
+
+export function rclIsGreaterThan(roomName: string, level: number) {
+    let roomLevel = global.worldState.controllers.byRoom.get(roomName)?.level;
+    return (roomLevel && roomLevel > level);
+}
+
+export function unassignedLogisticsRequests(office: Office) {
+    let logisticsManager = office.managers.get('LogisticsManager') as LogisticsManager;
+    return Array.from(lazyFilter(
+        logisticsManager.requests.values(),
+        req => !(req.completed || (req.assigned && req.assignedCapacity >= req.capacity))
+    ))
+
 }

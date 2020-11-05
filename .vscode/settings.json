@@ -9,7 +9,8 @@
         "editor.formatOnSave": false
     },
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true
+        "source.fixAll.eslint": true,
+        "source.organizeImports": true
     },
     "editor.formatOnSave": true,
     "editor.renderWhitespace": "boundary",
@@ -24,5 +25,5 @@
         "typings/**": true
     },
     "typescript.tsdk": "./node_modules/typescript/lib",
-    "eslint.enable": true
+    "eslint.enable": true,
 }

@@ -1,3 +1,5 @@
+import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
+
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { CachedSource } from "WorldState/branches/WorldSources";
@@ -5,8 +7,8 @@ import { HRAnalyst } from "./HRAnalyst";
 import { MapAnalyst } from "./MapAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
-import { SalesmanMinion } from "MinionRequests/minions/SalesmanMinion";
-import { TerritoryIntent } from "./DefenseAnalyst";
+import { SalesManager } from "Office/OfficeManagers/SalesManager";
+import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { lazyFilter } from "utils/lazyIterators";
 
 export class SalesAnalyst extends BoardroomManager {
@@ -19,9 +21,8 @@ export class SalesAnalyst extends BoardroomManager {
 
     plan() {
         this.boardroom.offices.forEach(office => {
-            let territories = [office.center, ...office.territories]
             // If necessary, add franchise locations for territory
-            for (let t of territories) {
+            for (let t of global.worldState.rooms.byOffice.get(office.name) ?? []) {
                 for (let s of global.worldState.sources.byRoom.get(t.name) ?? []) {
                     // Initialize properties
                     if (!s.maxSalesmen) {
@@ -51,17 +52,30 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUsableSourceLocations(office: Office) {
-        let territories = [office.center, ...office.territories.filter(t => t.intent === TerritoryIntent.EXPLOIT)];
-        return territories.flatMap(t => Array.from(global.worldState.sources.byRoom.get(t.name) ?? []))
+        let defenseAnalyst = this.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
+        let usableSources: CachedSource[] = [];
+        for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
+            if (defenseAnalyst.getTerritoryIntent(room.name) === TerritoryIntent.EXPLOIT) {
+                usableSources.push(...(global.worldState.sources.byRoom.get(room.name) ?? []))
+            }
+        };
+        return usableSources;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSources (office: Office) {
-        let territories = [office.center, ...office.territories];
-        return territories.flatMap(t => Array.from(global.worldState.sources.byRoom.get(t.name) ?? []));
+        let usableSources: CachedSource[] = [];
+        for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
+            usableSources.push(...(global.worldState.sources.byRoom.get(room.name) ?? []));
+        };
+        return usableSources;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUntappedSources(office: Office) {
         return this.getUsableSourceLocations(office).filter(source => !this.isSourceTapped(source))
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    unassignedHarvestRequests(office: Office) {
+        return (office.managers.get('SalesManager') as SalesManager).requests.filter(r => r.assigned.length === 0);
     }
     @Memoize((source) => ('' + source.toString() + Game.time))
     isSourceTapped(source: CachedSource) {
@@ -81,12 +95,19 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getMaxEffectiveInput(office: Office) {
-        let minionWorkParts = new SalesmanMinion().scaleMinion(office.center.room.energyCapacityAvailable)
+        let minionWorkParts = new SalesmanMinion().scaleMinion(office.center.gameObj.energyCapacityAvailable)
                                                .filter(p => p === WORK).length;
 
         // Max energy output per tick
         return 2 * this.getUsableSourceLocations(office).reduce((sum, source) => (
             sum + Math.max(5, minionWorkParts * source.maxSalesmen)
         ), 0)
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getFranchiseSurplus(office: Office) {
+        // Sum of surpluses across franchises
+        let franchises = this.getUsableSourceLocations(office)
+        let sum = franchises.reduce((sum, source) => sum + (source.surplus ?? 0), 0);
+        return (sum / (franchises.length * CONTAINER_CAPACITY))
     }
 }

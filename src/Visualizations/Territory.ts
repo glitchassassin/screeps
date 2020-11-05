@@ -1,49 +1,67 @@
+import { lazyCount, lazyFilter } from "utils/lazyIterators";
+
+import { CachedRoom } from "WorldState";
+import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
+import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
-import { TerritoryIntelligence } from "Office/RoomIntelligence";
 import { RES_COLORS } from "utils/resourceColors";
 
-export const Territory = (topLeft: RoomPosition, t: TerritoryIntelligence) => {
+export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
     let vis = new RoomVisual(topLeft.roomName);
+    let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
+
+    let intent = defenseAnalyst.getTerritoryIntent(t.name);
+    let hostileMinions = lazyCount(global.worldState.hostileCreeps.byRoom.get(t.name) ?? []);
+    let hostileStructures = lazyCount(lazyFilter(
+        global.worldState.structures.byRoom.get(t.name) ?? [],
+        structure => (
+            (structure.structureType === STRUCTURE_SPAWN && !structure.my) ||
+            (structure.structureType === STRUCTURE_KEEPER_LAIR)
+        )
+    ));
+    let sources = lazyCount(global.worldState.sources.byRoom.get(t.name) ?? []);
+    let [mineral] = global.worldState.minerals.byRoom.get(t.name);
+    let controller = global.worldState.controllers.byRoom.get(t.name);
 
     // Draw background
     let intention = 'rgba(0,0,0,1)';
-    if (t.intent === 'ACQUIRE') {
+    if (intent === 'ACQUIRE') {
         intention = 'rgba(32,32,64,1)';
-    } else if (t.intent === 'AVOID') {
+    } else if (intent === 'AVOID') {
         intention = 'rgba(64,0,0,1)';
-    } else if (t.intent === 'EXPLOIT') {
+    } else if (intent === 'EXPLOIT') {
         intention = 'rgba(0,64,0,1)';
-    } else if (t.intent === 'DEFEND') {
+    } else if (intent === 'DEFEND') {
         intention = 'rgba(64,64,0,1)';
     }
     vis.rect(topLeft.x, topLeft.y, 9, 9, {fill: intention})
     vis.text(t.name, topLeft.x + 4.5, topLeft.y + 4.5, {font: 2, backgroundColor: 'transparent', opacity: 0.7})
 
     // Draw hostile minions icon
-    if (t.hostileMinions > 0) {
-        Icon('▲', offset(topLeft, 1, 8), 'red', t.hostileMinions.toFixed(0))
+    if (hostileMinions > 0) {
+        Icon('▲', offset(topLeft, 1, 8), 'red', hostileMinions.toFixed(0))
     }
     // Draw hostile structures icon
-    if (t.hostileStructures > 0) {
-        Icon('♜', offset(topLeft, 3, 8), 'red', t.hostileStructures.toFixed(0))
+    if (hostileStructures > 0) {
+        Icon('♜', offset(topLeft, 3, 8), 'red', hostileStructures.toFixed(0))
     }
     // Draw sources
-    if (t.sources.size > 0) {
-        Icon('▢', offset(topLeft, 6, 8), '#ff0', t.sources.size.toFixed(0), '#ff0')
+    if (sources > 0) {
+        Icon('▢', offset(topLeft, 6, 8), '#ff0', sources.toFixed(0), '#ff0')
     }
     // Draw minerals
-    if (t.mineral) {
-        Icon('⭘', offset(topLeft, 8, 8), RES_COLORS[t.mineral], t.mineral, RES_COLORS[t.mineral])
+    if (mineral?.type) {
+        Icon('⭘', offset(topLeft, 8, 8), RES_COLORS[mineral.type], mineral.type, RES_COLORS[mineral.type])
     }
 
     // Draw visibility
-    if (Game.rooms[t.name]) {
+    if (t.gameObj) {
         Icon('👁', offset(topLeft, 7, 6), '#0f0')
     }
 
     // Draw hostile activity
     let hostile = Game.time - (t.lastHostileActivity ?? -100)
-    if ((t.hostileMinions > 0 || t.hostileStructures > 0) && hostile < 100) {
+    if ((hostileMinions > 0 || hostileStructures > 0) && hostile < 100) {
         Icon('⚔', offset(topLeft, 2, 6), 'red', hostile.toFixed(0))
     }
 
@@ -54,13 +72,13 @@ export const Territory = (topLeft: RoomPosition, t: TerritoryIntelligence) => {
     vis.line(offset(topLeft, 6, 1), offset(topLeft, 6, 3), {color: '#0f0', lineStyle: 'dotted'})
     vis.line(offset(topLeft, 8, 1), offset(topLeft, 8, 3), {color: '#0f0', lineStyle: 'solid'})
 
-    if (t.controller.my) {
-        Icon('⚙', offset(topLeft, 8, 2), '#0f0', t.controller.level?.toFixed(0))
-    } else if (t.controller.myReserved) {
+    if (controller?.my) {
+        Icon('⚙', offset(topLeft, 8, 2), '#0f0', controller?.level?.toFixed(0))
+    } else if (controller?.myReserved) {
         Icon('⚙', offset(topLeft, 6, 2), '#0f0')
-    } else if (t.controller.owner) {
-        Icon('⚙', offset(topLeft, 1, 2), 'red', t.controller.level?.toFixed(0))
-    } else if (t.controller.reserver) {
+    } else if (controller?.owner) {
+        Icon('⚙', offset(topLeft, 1, 2), 'red', controller?.level?.toFixed(0))
+    } else if (controller?.reservationOwner) {
         Icon('⚙', offset(topLeft, 3, 2), 'red')
     }
 }
@@ -73,22 +91,24 @@ export const Icon = (icon: string, center: RoomPosition, color: string, label?: 
 
 export const Minimap = (topLeft: RoomPosition, o: Office) => {
     let vis = new RoomVisual(topLeft.roomName);
+    let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
     // Draw background
     vis.rect(topLeft.x, topLeft.y, 31, 31, {fill: 'rgba(0,0,0,1)'})
 
-    let territories: (TerritoryIntelligence|null)[][] = [
+    let territories: (CachedRoom|null)[][] = [
         [null, null, null],
         [null, null, null],
         [null, null, null],
     ];
     territories[1][1] = o.center;
     let [xOffset, yOffset] = getRoomCoords(o.center.name);
-    o.territories.forEach(t => {
-        let [x, y] = getRoomCoords(t.name);
-        x -= xOffset;
-        y -= yOffset;
-        territories[x+1][y+1] = t;
+
+    mapAnalyst.calculateNearbyRooms(o.center.name, 1).forEach(t => {
+        let {wx, wy} = mapAnalyst.roomNameToCoords(t);
+        wx -= xOffset;
+        wy -= yOffset;
+        territories[wx+1][wy+1] = global.worldState.rooms.byRoom.get(t) ?? null;
     })
     territories.forEach((row, x) => {
         let top = topLeft.x + 1 + (10 * x);

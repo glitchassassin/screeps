@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
 
 import { Boardroom } from 'Boardroom/Boardroom';
-import { ErrorMapper } from 'utils/ErrorMapper';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
 import { WorldState } from 'WorldState/WorldState';
@@ -26,6 +25,10 @@ let defensiveProfilingRun = true;
 // Initialize control switches
 global.v = new VisualizationController()
 
+// Initialize world state
+global.worldState = new WorldState();
+global.worldState.run();
+
 // Initialize Boardroom
 global.boardroom = new Boardroom();
 
@@ -41,8 +44,6 @@ global.purge = () => {
 
   global.boardroom = new Boardroom();
 }
-
-global.worldState = new WorldState();
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code

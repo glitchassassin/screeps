@@ -19,21 +19,19 @@ export class GrafanaAnalyst extends BoardroomManager {
                 repairing: 0
             };
 
-            [office.center, ...office.territories]
-                .map(t => t.room)
-                .forEach(room => {
-                    if (!room) return;
-                    room.getEventLog().forEach(event => {
-                        switch (event.event) {
-                            case EVENT_BUILD:
-                                this.deltas[office.name].building += event.data.energySpent;
-                                break;
-                            case EVENT_REPAIR:
-                                this.deltas[office.name].repairing += event.data.energySpent;
-                                break;
-                        }
-                    })
+            for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
+                if (!room.gameObj) return;
+                room.gameObj.getEventLog().forEach(event => {
+                    switch (event.event) {
+                        case EVENT_BUILD:
+                            this.deltas[office.name].building += event.data.energySpent;
+                            break;
+                        case EVENT_REPAIR:
+                            this.deltas[office.name].repairing += event.data.energySpent;
+                            break;
+                    }
                 })
+            }
         });
     }
     pipelineMetrics(office: Office) {
@@ -63,8 +61,8 @@ export class GrafanaAnalyst extends BoardroomManager {
             carrierFleetMax: fleet.reduce((sum, creep) => sum + creep.capacity, 0),
             mobileDepotsLevel: mobileDepots.reduce((sum, creep) => sum + creep.capacityUsed, 0),
             mobileDepotsMax: mobileDepots.reduce((sum, creep) => sum + creep.capacity, 0),
-            roomEnergyLevel: office.center.room.energyAvailable,
-            roomEnergyMax: office.center.room.energyCapacityAvailable,
+            roomEnergyLevel: office.center.gameObj.energyAvailable,
+            roomEnergyMax: office.center.gameObj.energyCapacityAvailable,
             buildDelta: this.deltas[office.name].building,
             repairDelta: this.deltas[office.name].repairing,
             pipelineThroughput: statisticsAnalyst.metrics.get(office.name)?.logisticsThroughput.mean() ?? 0
@@ -81,12 +79,12 @@ export class GrafanaAnalyst extends BoardroomManager {
             controllerLevel: number; }
         } = {};
         this.boardroom.offices.forEach(office => {
-            if (office.center.room.controller?.my) {
+            if (office.center.gameObj.controller?.my) {
                 stats[office.name] = {
                     pipelineMetrics: this.pipelineMetrics(office),
-                    controllerProgress: office.center.room.controller.progress,
-                    controllerProgressTotal: office.center.room.controller.progressTotal,
-                    controllerLevel: office.center.room.controller.level,
+                    controllerProgress: office.center.gameObj.controller.progress,
+                    controllerProgressTotal: office.center.gameObj.controller.progressTotal,
+                    controllerLevel: office.center.gameObj.controller.level,
                 }
             }
         })

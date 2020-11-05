@@ -1,7 +1,6 @@
 import { TaskAction, TaskActionResult } from "../TaskAction";
 
 import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
-import { ShouldDefendRoom } from "Office/OfficeManagers/SecurityManager/Strategists/ShouldDefendRoom";
 import { TerritoryIntelligence } from "Office/RoomIntelligence";
 import { travel } from "../activity/Travel";
 
@@ -21,7 +20,8 @@ export class DefenseTask extends TaskAction {
 
     valid() {
         // Once territory is no longer hostile or no longer worthwhile, abort
-        return ShouldDefendRoom(this.territory);
+
+        return (this.territory.intent === 'DEFEND' || this.territory.intent === 'ACQUIRE')
     }
 
     canBeFulfilledBy(creep: CachedCreep) {

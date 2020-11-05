@@ -2,9 +2,7 @@ import { ControllerAnalyst } from 'Boardroom/BoardroomManagers/ControllerAnalyst
 import { FacilitiesManager } from './FacilitiesManager';
 import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
 import { OfficeManager } from 'Office/OfficeManager';
-import { RepairTask } from './OfficeTaskManager/TaskRequests/types/RepairTask';
 import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
-import { WorldState } from 'WorldState/WorldState';
 import profiler from 'screeps-profiler';
 
 export class Road {
@@ -17,32 +15,6 @@ export class Road {
             pos.y === 0  ||
             pos.y === 49
         ));
-    }
-
-    checkRoad(worldState: WorldState, facilitiesManager: FacilitiesManager, doConstruction: boolean) {
-        let requestedConstruction = false;
-        this.path.forEach(pos => {
-            if (!Game.rooms[pos.roomName]) return;
-            pos.look().forEach(lookItem => {
-                if (
-                    lookItem.structure?.structureType === STRUCTURE_ROAD ||
-                    lookItem.structure?.structureType === STRUCTURE_CONTAINER
-                ) {
-                    if (lookItem.structure.structureType === STRUCTURE_ROAD && lookItem.structure.hits < (lookItem.structure.hitsMax * 0.5)) {
-                        // Request repair
-                        let structure = worldState.structures.byId.get(lookItem.structure.id);
-                        if (structure) facilitiesManager.submit(lookItem.structure.id, new RepairTask(structure, 3));
-                    }
-                    return;
-                } else if (lookItem.constructionSite?.structureType === STRUCTURE_ROAD) {
-                    return;
-                } else if (doConstruction) {
-                    pos.createConstructionSite(STRUCTURE_ROAD)
-                    requestedConstruction = true;
-                }
-            })
-        })
-        return requestedConstruction;
     }
 }
 
@@ -101,11 +73,6 @@ export class RoadArchitect extends OfficeManager {
             roomCallback: roadPlannerCallback
         }).path))
         this.roads.sort((a, b) => a.path.length - b.path.length);
-
-        let roadUnderConstruction = false;
-        this.roads.forEach(road => {
-            roadUnderConstruction = road.checkRoad(global.worldState, facilitiesManager, !roadUnderConstruction);
-        })
     }
 
     run() {
