@@ -38,11 +38,15 @@ export class LogisticsManager extends OfficeManager {
         }
     }
 
-    plan() {
-        let idleCarriers = Array.from(lazyFilter(
+    getIdleCarriers() {
+        return Array.from(lazyFilter(
             this.logisticsAnalyst.getCarriers(this.office),
             c => !this.routes.has(c.name)
         ));
+    }
+
+    plan() {
+        let idleCarriers = this.getIdleCarriers();
         let storage = this.logisticsAnalyst.getStorage(this.office);
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
@@ -240,4 +244,3 @@ export class LogisticsManager extends OfficeManager {
 }
 
 profiler.registerClass(LogisticsManager, 'LogisticsManager');
-profiler.registerFN(LogisticsManager.constructor, 'new LogisticsManager()')

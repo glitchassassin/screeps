@@ -102,12 +102,14 @@ export const Minimap = (topLeft: RoomPosition, o: Office) => {
         [null, null, null],
     ];
     territories[1][1] = o.center;
-    let [xOffset, yOffset] = getRoomCoords(o.center.name);
+    let coords = mapAnalyst.roomNameToCoords(o.center.name);
+    let xOffset = coords.wx;
+    let yOffset = coords.wy;
 
     mapAnalyst.calculateNearbyRooms(o.center.name, 1).forEach(t => {
         let {wx, wy} = mapAnalyst.roomNameToCoords(t);
-        wx -= xOffset;
-        wy -= yOffset;
+        wx = xOffset - wx;
+        wy = yOffset - wy;
         territories[wx+1][wy+1] = global.worldState.rooms.byRoom.get(t) ?? null;
     })
     territories.forEach((row, x) => {

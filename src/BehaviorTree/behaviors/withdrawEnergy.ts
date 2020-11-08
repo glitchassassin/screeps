@@ -13,5 +13,5 @@ export const withdrawEnergy = (amount?: number) => (creep: CachedCreep, bb: Blac
         result = creep.gameObj.withdraw(bb.target.gameObj, RESOURCE_ENERGY, amount);
     }
 
-    return (result === OK) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
+    return (result === OK || result === ERR_FULL) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
 }

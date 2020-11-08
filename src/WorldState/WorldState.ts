@@ -26,13 +26,13 @@ export class WorldState {
         }
     }
 
+    public rooms = new WorldRooms();
     public structures = new WorldStructures();
     public constructionSites = new WorldConstructionSites();
     public controllers = new WorldControllers();
     public mySpawns = new WorldSpawns();
     public myCreeps = new WorldMyCreeps();
     public hostileCreeps = new WorldHostileCreeps();
-    public rooms = new WorldRooms();
     public tombstones = new WorldTombstones();
     public resources = new WorldResources();
     public sources = new WorldSources();

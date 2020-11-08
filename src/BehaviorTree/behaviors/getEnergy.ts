@@ -1,12 +1,16 @@
+import { Selector, Sequence } from "BehaviorTree/Behavior";
 import { moveToTarget, setMoveTargetFromBlackboard } from "./moveTo";
 
-import { Sequence } from "BehaviorTree/Behavior";
+import { energyFull } from "./energyFull";
 import { findEnergySource } from "./findEnergySource";
 import { withdrawEnergy } from "./withdrawEnergy";
 
-export const getEnergy = () => Sequence(
-    findEnergySource(),
-    setMoveTargetFromBlackboard(),
-    moveToTarget(),
-    withdrawEnergy()
+export const getEnergy = () => Selector(
+    energyFull(),
+    Sequence(
+        findEnergySource(),
+        setMoveTargetFromBlackboard(),
+        moveToTarget(),
+        withdrawEnergy()
+    )
 )

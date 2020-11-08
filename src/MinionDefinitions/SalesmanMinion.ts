@@ -9,8 +9,8 @@ export class SalesmanMinion extends Minion {
         if (energy < 200) {
             return [];
         } else {
-            let workParts = Math.min(5, Math.floor((energy * 2/3) / 100))
-            let moveParts = Math.min(5, Math.floor((energy * 1/3) / 50))
+            let workParts = Math.min(5, Math.floor((energy - 50) / 100));
+            let moveParts = 1;
             return [
                 ...Array(workParts).fill(WORK),
                 ...Array(moveParts).fill(MOVE),

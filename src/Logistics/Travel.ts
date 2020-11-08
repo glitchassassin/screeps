@@ -21,7 +21,9 @@ export class Route {
         let positionsInRange = this.mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
                                          .filter(pos => this.mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
         let route = PathFinder.search(creep.pos, positionsInRange, {
-            roomCallback: (room) => this.mapAnalyst.getCostMatrix(room, avoidCreeps)
+            roomCallback: (room) => this.mapAnalyst.getCostMatrix(room, avoidCreeps),
+            plainCost: 2,
+            swampCost: 10
         })
         this.path = route.path;
         this.lastPos = creep.pos;

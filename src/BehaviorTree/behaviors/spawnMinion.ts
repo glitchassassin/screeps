@@ -13,7 +13,7 @@ declare module 'BehaviorTree/Behavior' {
 
 export const spawnMinion = (type: Minion) => (spawn: CachedSpawn, bb: Blackboard) => {
     if (!bb.maxRoomEnergy) return BehaviorResult.FAILURE;
-    if (bb.spawnMinionName && spawn.gameObj?.spawning?.name === bb.spawnMinionName) return BehaviorResult.SUCCESS;
+    if (bb.spawnMinionName && Game.creeps[bb.spawnMinionName] && !Game.creeps[bb.spawnMinionName].spawning) return BehaviorResult.SUCCESS;
 
 
     let {body, name, memory} = type.build({office: spawn.pos.roomName}, bb.maxRoomEnergy);
@@ -35,7 +35,6 @@ export const spawnMinion = (type: Minion) => (spawn: CachedSpawn, bb: Blackboard
     ) {
         return BehaviorResult.INPROGRESS;
     }
-    console.log(`Spawn of ${type.constructor.name} failed`, result, body);
 
     return BehaviorResult.FAILURE;
 }

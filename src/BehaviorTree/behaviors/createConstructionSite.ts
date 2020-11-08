@@ -11,7 +11,7 @@ declare module 'BehaviorTree/Behavior' {
 
 export const createConstructionSite = (pos: RoomPosition, type: BuildableStructureConstant) => (creep: CachedCreep, bb: Blackboard) => {
     // If the site is already in the blackboard, no action needed
-    if (bb.buildSite?.pos.isEqualTo(pos) && bb.buildSite.structureType === type) return BehaviorResult.SUCCESS;
+    if (bb.buildSite?.pos?.isEqualTo(pos) && bb.buildSite.structureType === type) return BehaviorResult.SUCCESS;
 
     let sites = Array.from(lazyFilter(
         global.worldState.constructionSites.byRoom.get(pos.roomName) ?? [],

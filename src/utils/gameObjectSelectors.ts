@@ -7,7 +7,6 @@ import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
-import { lazyFilter } from "./lazyIterators";
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite|ConstructionSite) {
     return (target.progressTotal ?? 0) - (target.progress ?? 0);
@@ -84,11 +83,19 @@ export function rclIsGreaterThan(roomName: string, level: number) {
     return (roomLevel && roomLevel > level);
 }
 
-export function unassignedLogisticsRequests(office: Office) {
-    let logisticsManager = office.managers.get('LogisticsManager') as LogisticsManager;
-    return Array.from(lazyFilter(
-        logisticsManager.requests.values(),
-        req => !(req.completed || (req.assigned && req.assignedCapacity >= req.capacity))
-    ))
+export function getRcl(roomName: string) {
+    return global.worldState.controllers.byRoom.get(roomName)?.level;
+}
 
+export function unassignedLogisticsRequestsPercent(office: Office) {
+    let logisticsManager = office.managers.get('LogisticsManager') as LogisticsManager;
+    let total = 0;
+    let unassigned = 0;
+    for (let [,req] of logisticsManager.requests) {
+        total++;
+        if (!req.assigned) {
+            unassigned++;
+        }
+    }
+    return unassigned / total;
 }

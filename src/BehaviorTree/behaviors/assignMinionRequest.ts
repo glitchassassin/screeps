@@ -1,8 +1,8 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 
-import { CachedCreep } from "WorldState";
+import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { Office } from "Office/Office";
-import { OfficeTaskManager } from "Office/OfficeManagers/OfficeTaskManager/OfficeTaskManager";
+import { OfficeTaskManager } from "Office/OfficeManagers/OfficeTaskManager";
 import { Request } from "BehaviorTree/Request";
 
 declare module 'BehaviorTree/Behavior' {
@@ -11,7 +11,7 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
-export const assignMinionRequest = (managerName: string, request: Request<CachedCreep>) => (office: Office, bb: Blackboard) => {
+export const assignMinionRequest = (managerName: string, request: MinionRequest) => (office: Office, bb: Blackboard) => {
     let manager = office.managers.get(managerName);
     if (!(manager instanceof OfficeTaskManager)) return BehaviorResult.FAILURE;
 

@@ -1,23 +1,31 @@
-import { Behavior, Sequence } from "BehaviorTree/Behavior";
+import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedCreep, CachedSource } from "WorldState";
 
-import { Request } from "BehaviorTree/Request";
+import { MinionRequest } from "./MinionRequest";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 
-export class DropHarvestRequest extends Request<CachedCreep> {
+export class DropHarvestRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
+    public pos: RoomPosition;
 
-    constructor(source: CachedSource) {
+    constructor(public source: CachedSource) {
         super();
+        this.pos = source.pos;
         this.action = Sequence(
-            moveTo(source.pos),
+            Selector(
+                moveTo(source.franchisePos, 0),
+                moveTo(source.pos)
+            ),
             harvestEnergy(source)
         )
     }
 
-    // 5 WORK parts will max out a source
     meetsCapacity(creeps: CachedCreep[]) {
+        // Sources have a limited number of spaces to work from
+        if (creeps.length >= this.source.maxSalesmen) return true;
+
+        // 5 WORK parts will max out a source
         let parts = 0;
         for (let creep of creeps) {
             parts += creep.gameObj.getActiveBodyparts(WORK);

@@ -5,6 +5,7 @@ import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
 import { WorldState } from 'WorldState/WorldState';
+import { calcTickTime } from 'utils/tickTime';
 import profiler from 'screeps-profiler';
 import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 
@@ -41,7 +42,11 @@ global.purge = () => {
   Memory.hr = {};
   Memory.tasks = {};
   Memory.boardroom = {};
+  Memory.cache = {};
 
+
+  global.worldState = new WorldState();
+  global.worldState.run();
   global.boardroom = new Boardroom();
 }
 
@@ -91,6 +96,8 @@ function mainLoop() {
     // CPU climbing back up, reset the trigger
     defensiveProfilingRun = false;
   }
+
+  calcTickTime()
 
   if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
     console.log("Pixel unlocked");

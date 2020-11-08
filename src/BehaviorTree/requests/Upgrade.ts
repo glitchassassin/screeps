@@ -2,16 +2,18 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedController, CachedCreep } from "WorldState";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 
-import { Request } from "BehaviorTree/Request";
+import { MinionRequest } from "./MinionRequest";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import { upgradeController } from "BehaviorTree/behaviors/upgradeController";
 
-export class UpgradeRequest extends Request<CachedCreep> {
+export class UpgradeRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
+    public pos: RoomPosition;
 
     constructor(controller: CachedController) {
         super();
+        this.pos = controller.pos;
         this.action = Selector(
             Sequence(
                 stateIsEmpty(),
@@ -26,14 +28,16 @@ export class UpgradeRequest extends Request<CachedCreep> {
                 stateIs(States.WORKING),
                 moveTo(controller.pos, 3),
                 upgradeController(controller),
+            ),
+            Sequence(
                 setState(States.GET_ENERGY)
             )
         )
     }
 
-    meetsCapacity(creeps: CachedCreep[]) {
-        // Only need one to reserve a controller
-        return (creeps.length > 0)
+    meetsCapacity() {
+        // Use as many upgraders as available
+        return false;
     }
     canBeFulfilledBy(creep: CachedCreep) {
         return (

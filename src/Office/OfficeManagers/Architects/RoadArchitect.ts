@@ -1,12 +1,29 @@
+import { BuildRequest } from 'BehaviorTree/requests/Build';
 import { ControllerAnalyst } from 'Boardroom/BoardroomManagers/ControllerAnalyst';
-import { FacilitiesManager } from './FacilitiesManager';
+import { FacilitiesManager } from '../FacilitiesManager';
 import { HRAnalyst } from 'Boardroom/BoardroomManagers/HRAnalyst';
+import { MinionRequest } from 'BehaviorTree/requests/MinionRequest';
 import { OfficeManager } from 'Office/OfficeManager';
 import { SalesAnalyst } from 'Boardroom/BoardroomManagers/SalesAnalyst';
 import profiler from 'screeps-profiler';
 
 export class Road {
     path: RoomPosition[] = [];
+    requests: MinionRequest[] = [];
+
+    generateRequests() {
+        let newRequests: MinionRequest[] = [];
+        this.path.forEach((pos, i) => {
+            if (pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD)) return;
+
+            if (this.requests[i] && !this.requests[i].result) return; // request in progress
+
+            this.requests[i] = new BuildRequest(pos, STRUCTURE_ROAD);
+            this.requests[i].priority = 1;
+            newRequests.push(this.requests[i]);
+        })
+        return newRequests;
+    }
 
     constructor(path: RoomPosition[]) {
         this.path = path.filter(pos => !(
@@ -49,8 +66,10 @@ export class RoadArchitect extends OfficeManager {
         let spawn = hrAnalyst.getSpawns(this.office)[0];
         let controller = global.worldState.controllers.byRoom.get(this.office.name);
         if (!spawn || !controller) return;
-        salesAnalyst.getUsableSourceLocations(this.office).forEach(franchise => {
-            this.roads.push(new Road(PathFinder.search(spawn.pos, franchise.pos, {
+        this.roads = [];
+        salesAnalyst.getUsableSourceLocations(this.office).forEach(source => {
+            if (!source.franchisePos) return;
+            this.roads.push(new Road(PathFinder.search(spawn.pos, source.franchisePos, {
                 plainCost: 2,
                 swampCost: 2,
                 maxOps: 3000,
@@ -73,6 +92,14 @@ export class RoadArchitect extends OfficeManager {
             roomCallback: roadPlannerCallback
         }).path))
         this.roads.sort((a, b) => a.path.length - b.path.length);
+
+        // Submit requests
+        for (let road of this.roads) {
+            for (let request of road.generateRequests()) {
+                facilitiesManager.submit(request);
+            }
+        }
+
     }
 
     run() {

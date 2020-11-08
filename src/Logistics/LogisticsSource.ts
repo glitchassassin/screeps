@@ -5,7 +5,7 @@ import { CachedResource } from "WorldState/branches/WorldResources";
 import { Memoize } from "typescript-memoize";
 import { getUsedCapacity } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
+import { travel } from "Logistics/Travel";
 
 /**
  * A cached representation of a Source

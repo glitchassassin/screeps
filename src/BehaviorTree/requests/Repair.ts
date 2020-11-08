@@ -1,26 +1,38 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedCreep, CachedStructure } from "WorldState";
-import { States, stateIs } from "BehaviorTree/behaviors/states";
+import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 
-import { Request } from "BehaviorTree/Request";
+import { MinionRequest } from "./MinionRequest";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
+import { ifRepairIsNotFinished } from "BehaviorTree/behaviors/repairIsNotFinished";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
-export class BuildRequest extends Request<CachedCreep> {
+export class RepairRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
+    public pos: RoomPosition;
 
     constructor(structure: CachedStructure) {
         super();
+        this.pos = structure.pos;
         this.action = Selector(
+            Sequence(
+                stateIsEmpty(),
+                setState(States.GET_ENERGY)
+            ),
             Sequence(
                 stateIs(States.GET_ENERGY),
                 getEnergy(),
+                setState(States.WORKING)
             ),
             Sequence(
                 stateIs(States.WORKING),
                 moveTo(structure.pos, 3),
                 repairStructure(structure)
+            ),
+            Sequence(
+                ifRepairIsNotFinished(),
+                setState(States.GET_ENERGY)
             )
         )
     }

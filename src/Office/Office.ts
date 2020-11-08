@@ -2,19 +2,23 @@ import { Bar, Meters } from "Visualizations/Meters";
 import { CachedController, CachedRoom } from "WorldState";
 
 import { Boardroom } from "Boardroom/Boardroom";
-import { ControllerArchitect } from "Office/OfficeManagers/ControllerArchitect";
-import { FacilitiesManager } from "./OfficeManagers/FacilitiesManager";
-import { HRManager } from "./OfficeManagers/HRManager";
-import { LegalManager } from "./OfficeManagers/LegalManager/LegalManager";
-import { LegalStrategist } from "./OfficeManagers/LegalStrategist";
-import { LogisticsManager } from "./OfficeManagers/LogisticsManager";
+import { ControllerArchitect } from "Office/OfficeManagers/Architects/ControllerArchitect";
+import { DefenseStrategist } from "Office/OfficeManagers/Strategists/DefenseStrategist";
+import { ExtensionArchitect } from "Office/OfficeManagers/Architects/ExtensionArchitect";
+import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
+import { HRManager } from "Office/OfficeManagers/HRManager";
+import { LegalManager } from "Office/OfficeManagers/LegalManager";
+import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
+import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
-import { RoadArchitect } from "Office/OfficeManagers/RoadArchitect";
-import { SalesManager } from "./OfficeManagers/SalesManager";
-import { SalesStrategist } from "./OfficeManagers/SalesStrategist";
-import { SecurityManager } from "./OfficeManagers/SecurityManager/SecurityManager";
-import { SpawnStrategist } from "./OfficeManagers/SpawnStrategist";
+import { RepairStrategist } from "Office/OfficeManagers/Strategists/RepairStrategist";
+import { RoadArchitect } from "Office/OfficeManagers/Architects/RoadArchitect";
+import { SalesManager } from "Office/OfficeManagers/SalesManager";
+import { SalesStrategist } from "Office/OfficeManagers/Strategists/SalesStrategist";
+import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
+import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
+import { TowerArchitect } from "Office/OfficeManagers/Architects/TowerArchitect";
 import profiler from "screeps-profiler";
 
 export class Office {
@@ -47,10 +51,14 @@ export class Office {
         // Create Architects
         new ControllerArchitect(this);
         new RoadArchitect(this);
+        new ExtensionArchitect(this);
+        new TowerArchitect(this);
 
         // Create Strategists
         new LegalStrategist(this);
         new SalesStrategist(this);
+        new DefenseStrategist(this);
+        new RepairStrategist(this);
         new SpawnStrategist(this);
 
     }

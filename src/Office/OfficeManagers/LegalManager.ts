@@ -1,4 +1,4 @@
-import { OfficeTaskManager } from "../OfficeTaskManager/OfficeTaskManager";
+import { OfficeTaskManager } from "./OfficeTaskManager";
 import { Table } from "Visualizations/Table";
 import { lazyMap } from "utils/lazyIterators";
 

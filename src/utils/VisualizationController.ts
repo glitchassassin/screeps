@@ -5,7 +5,7 @@ export class Switch {
     toggle() { this.state = !this.state; }
 }
 
-const mapSwitches = ['roads', 'franchises', 'controller', 'construction'] as const;
+const mapSwitches = ['roads', 'extensions', 'franchises', 'controller', 'construction'] as const;
 type mapSwitchTypes = ('none'|'all'|typeof mapSwitches[number]);
 
 const reportsSwitches = ['sales', 'hr', 'task', 'legal', 'logistics', 'facilities', 'security', 'office'] as const;
@@ -13,6 +13,7 @@ type reportsSwitchTypes = ('none'|typeof reportsSwitches[number]);
 
 export class VisualizationController {
     roads = new Switch();
+    extensions = new Switch();
     franchises = new Switch();
     controller = new Switch();
     construction = new Switch();

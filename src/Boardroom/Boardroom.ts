@@ -85,8 +85,7 @@ export class Boardroom {
         let closest: Office|undefined = undefined;
         let distance: number;
         this.offices.forEach(office => {
-            let center = office.center.gameObj.getPositionAt(25, 25)
-            if (!center) return;
+            let center = new RoomPosition(25, 25, office.name);
             let range = mapAnalyst.getRangeTo(pos, center);
             if (!distance || range < distance) {
                 distance = range;

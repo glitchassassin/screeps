@@ -46,5 +46,5 @@ export class CachedSource extends CachedIDItem<Source> {
             creep => creep.memory?.source === this.id
         ))
     }
-    public maxSalesmen: number = 1;
+    public maxSalesmen: number = 0;
 }

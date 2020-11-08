@@ -69,7 +69,7 @@ export class MapAnalyst extends BoardroomManager {
 
         if (!room) return costs;
 
-        room.find(FIND_STRUCTURES).forEach(function(struct) {
+        for (let struct of global.worldState.structures.byRoom.get(roomName) ?? []) {
           if (struct.structureType === STRUCTURE_ROAD) {
             // Favor roads over plain tiles
             costs.set(struct.pos.x, struct.pos.y, 1);
@@ -79,23 +79,22 @@ export class MapAnalyst extends BoardroomManager {
             // Can't walk through non-walkable buildings
             costs.set(struct.pos.x, struct.pos.y, 0xff);
           }
-        });
+        }
 
-        room.find(FIND_CONSTRUCTION_SITES).forEach(function(struct) {
+        for (let struct of global.worldState.constructionSites.byRoom.get(roomName) ?? []) {
             if (struct.structureType !== STRUCTURE_ROAD &&
                 struct.structureType !== STRUCTURE_CONTAINER &&
-                (struct.structureType !== STRUCTURE_RAMPART || !struct.my)
-            ) {
+                struct.structureType !== STRUCTURE_RAMPART) {
               // Can't walk through non-walkable construction sites
               costs.set(struct.pos.x, struct.pos.y, 0xff);
             }
-        });
+        };
 
         // Avoid creeps in the room
         if (avoidCreeps) {
             room.find(FIND_CREEPS).forEach(function(creep) {
                 costs.set(creep.pos.x, creep.pos.y, 0xff);
-              });
+            });
         }
 
         return costs;
@@ -137,6 +136,8 @@ export class MapAnalyst extends BoardroomManager {
     roomNameFromCoords(x: number, y: number) {
         let h = (x < 0) ? 'E' : 'W';
         let v = (y < 0) ? 'N' : 'S';
+        x = (x < 0) ? ~x : x;
+        y = (y < 0) ? ~y : y;
         return `${h}${x}${v}${y}`
     }
 }

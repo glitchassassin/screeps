@@ -43,10 +43,11 @@ export class LogisticsAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getContainers(office: Office) {
-        return Array.from(lazyFilter(
+        let c = Array.from(lazyFilter(
             global.worldState.structures.byOffice.get(office.name) ?? [],
             s => s.structureType === STRUCTURE_CONTAINER && s.capacityUsed && s.capacityUsed > 0
         )) as CachedStructure<StructureContainer>[];
+        return c;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFreeEnergy(office: Office) {
@@ -72,10 +73,13 @@ export class LogisticsAnalyst extends BoardroomManager {
         return results.sort((a, b) => getUsedCapacity(b) - getUsedCapacity(a))
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
-    getClosestAllSources(pos: RoomPosition, resource = RESOURCE_ENERGY) {
+    getClosestAllSources(pos: RoomPosition, amount?: number) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
         let sorted = this.getAllSources(office).filter(s => getUsedCapacity(s) > 0).sort(sortByDistanceTo(pos))
+        if (!amount || amount === 0) return sorted[0];
+        let withAmount = sorted.filter(s => getUsedCapacity(s) > amount)
+        if (withAmount.length > 0) return withAmount[0];
         return sorted[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

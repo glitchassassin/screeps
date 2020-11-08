@@ -38,12 +38,12 @@ export class CachedStructure<T extends Structure = Structure> extends CachedIDIt
     @heapCacheGetter((i: CachedStructure<T>) => Game.getObjectById(i.id)?.hitsMax)
     public hitsMax?: number;
 
-    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getCapacity() ?? 0)
+    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getCapacity(RESOURCE_ENERGY) ?? 0)
     public capacity: number = 0;
 
-    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getUsedCapacity() ?? 0)
+    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getUsedCapacity(RESOURCE_ENERGY) ?? 0)
     public capacityUsed: number = 0;
 
-    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getFreeCapacity() ?? 0)
+    @heapCacheGetter((i: CachedStructure<AnyStoreStructure>) => (Game.getObjectById(i.id)?.store as GenericStore)?.getFreeCapacity(RESOURCE_ENERGY) ?? 0)
     public capacityFree: number = 0;
 }

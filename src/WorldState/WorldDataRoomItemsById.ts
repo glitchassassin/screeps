@@ -66,6 +66,7 @@ export abstract class WorldDataRoomItemsById<T extends RoomObject & _HasId & _Ha
 
         let office = global.worldState.rooms.byRoom.get(roomName)?.territoryOf;
         let officeSet = office ? this.byOffice.get(office) ?? new Set<C>() : undefined;
+        if (office && officeSet) this.byOffice.set(office, officeSet);
 
         // Refresh existing structures in the room
         this.objectFinder(roomName).forEach(obj => {

@@ -42,6 +42,9 @@ export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
         return finalResult;
     }
     public capacityMet() {
+        // Remove missing objects
+        this.assigned = this.assigned.filter(t => t.gameObj);
+
         return this.meetsCapacity(this.assigned);
     }
 
@@ -51,4 +54,5 @@ export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
     abstract meetsCapacity(targets: T[]): boolean;
     abstract canBeFulfilledBy(target: T): boolean;
     abstract action: Behavior<T>;
+    public pos?: RoomPosition;
 }

@@ -1,6 +1,6 @@
 import { Bar, Meters } from "Visualizations/Meters";
 
-import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
+import { OfficeTaskManager } from "./OfficeTaskManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { Table } from "Visualizations/Table";
 import { lazyMap } from "utils/lazyIterators";
@@ -16,10 +16,12 @@ export class SalesManager extends OfficeTaskManager {
     }
     report() {
         super.report();
+
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
         let headers = ['Franchise', 'Salesmen', 'Effective', 'Surplus']
         let rows = lazyMap(salesAnalyst.getUsableSourceLocations(this.office), source => {
+            source.franchisePos && new RoomVisual(source.franchisePos?.roomName).circle(source.franchisePos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
             return [
                 `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
                 `${source.salesmen.length}/${source.maxSalesmen}`,

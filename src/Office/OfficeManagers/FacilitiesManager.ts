@@ -1,7 +1,7 @@
-import { BuildTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/BuildTask";
+import { BuildRequest } from "BehaviorTree/requests/Build";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { OfficeTaskManager } from "./OfficeTaskManager/OfficeTaskManager";
-import { RepairTask } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/types/RepairTask";
+import { OfficeTaskManager } from "./OfficeTaskManager";
+import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { Table } from "Visualizations/Table";
 import profiler from "screeps-profiler";
 import { repairRemaining } from "utils/gameObjectSelectors";
@@ -34,10 +34,10 @@ export class FacilitiesManager extends OfficeTaskManager {
         }
         if (global.v.construction.state) {
             this.requests.forEach(task => {
-                if (task instanceof BuildTask) {
-                    new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
-                } else if (task instanceof RepairTask) {
-                    new RoomVisual(task.destination.pos.roomName).rect(task.destination.pos.x-1, task.destination.pos.y-1, 2, 2, {stroke: 'yellow', fill: 'transparent', lineStyle: 'dotted'});
+                if (task instanceof BuildRequest) {
+                    new RoomVisual(task.pos.roomName).rect(task.pos.x-1, task.pos.y-1, 2, 2, {stroke: '#0f0', fill: 'transparent', lineStyle: 'dotted'});
+                } else if (task instanceof RepairRequest) {
+                    new RoomVisual(task.pos.roomName).rect(task.pos.x-1, task.pos.y-1, 2, 2, {stroke: 'yellow', fill: 'transparent', lineStyle: 'dotted'});
                 }
             })
         }

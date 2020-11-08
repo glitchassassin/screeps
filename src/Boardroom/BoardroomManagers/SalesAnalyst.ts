@@ -25,8 +25,7 @@ export class SalesAnalyst extends BoardroomManager {
             for (let t of global.worldState.rooms.byOffice.get(office.name) ?? []) {
                 for (let s of global.worldState.sources.byRoom.get(t.name) ?? []) {
                     // Initialize properties
-                    if (!s.maxSalesmen) {
-                        s.maxSalesmen = 0;
+                    if (s.maxSalesmen === 0) {
                         for (let pos of this.mapAnalyst?.calculateAdjacentPositions(s.pos)) {
                             if (this.mapAnalyst.isPositionWalkable(pos, true)) s.maxSalesmen += 1;
                         }
@@ -75,7 +74,7 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     unassignedHarvestRequests(office: Office) {
-        return (office.managers.get('SalesManager') as SalesManager).requests.filter(r => r.assigned.length === 0);
+        return (office.managers.get('SalesManager') as SalesManager).requests.filter(r => !r.capacityMet());
     }
     @Memoize((source) => ('' + source.toString() + Game.time))
     isSourceTapped(source: CachedSource) {

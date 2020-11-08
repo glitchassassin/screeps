@@ -2,7 +2,7 @@ import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
 
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { CachedController } from "WorldState";
-import { LegalManager } from "Office/OfficeManagers/LegalManager/LegalManager";
+import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { MapAnalyst } from "./MapAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
@@ -78,6 +78,8 @@ export class ControllerAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     unassignedUpgradeRequests(office: Office) {
-        return (office.managers.get('LegalManager') as LegalManager).requests.filter(r => r.assigned.length === 0);
+        return (office.managers.get('LegalManager') as LegalManager).requests.filter(r => {
+            return r.assigned.length === 0
+        });
     }
 }

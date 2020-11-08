@@ -9,6 +9,7 @@ export const resetMemoryOnRespawn = () => {
         Memory.hr = {};
         Memory.tasks = {};
         Memory.boardroom = {};
+        Memory.cache = {};
     }
 }
 

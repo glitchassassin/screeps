@@ -1,12 +1,12 @@
 import { Behavior } from "BehaviorTree/Behavior";
 import { CachedCreep } from "WorldState";
-import { Request } from "BehaviorTree/Request";
+import { MinionRequest } from "./MinionRequest";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 
-export class IdleRequest extends Request<CachedCreep> {
+export class IdleRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
 
-    constructor(pos: RoomPosition) {
+    constructor(public pos: RoomPosition) {
         super();
         this.action = moveTo(pos, 3);
     }

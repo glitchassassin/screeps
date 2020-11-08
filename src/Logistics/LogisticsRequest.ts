@@ -3,7 +3,7 @@ import { CachedStructure } from "WorldState";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { getFreeCapacity } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
+import { travel } from "Logistics/Travel";
 
 export class LogisticsRequest {
     public assignedCapacity = 0;

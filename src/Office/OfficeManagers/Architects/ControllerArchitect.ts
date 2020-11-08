@@ -1,28 +1,22 @@
-import { ControllerAnalyst } from '../../Boardroom/BoardroomManagers/ControllerAnalyst';
-import { Office } from 'Office/Office';
+import { BuildRequest } from 'BehaviorTree/requests/Build';
+import { ControllerAnalyst } from '../../../Boardroom/BoardroomManagers/ControllerAnalyst';
+import { MinionRequest } from 'BehaviorTree/requests/MinionRequest';
 import { OfficeManager } from 'Office/OfficeManager';
 import profiler from 'screeps-profiler';
 
 export class ControllerArchitect extends OfficeManager {
-    constructor(
-        office: Office,
-    ) {
-        super(office);
-    }
+    buildRequest?: MinionRequest;
 
-    visualization: string = '';
-    setupComplete = false;
     plan() {
         let controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
-        if (this.setupComplete && Game.time % 50 !== 0) return;
+        if (Game.time % 50 !== 0) return;
 
         let controller = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
 
         if (controller?.level && controller.level > 1) {
-            if (controller.containerPos && !controller.container && !controller.constructionSite) {
-                controller.containerPos?.createConstructionSite(STRUCTURE_CONTAINER);
-                this.setupComplete = true;
+            if (controller.containerPos && !controller.container && !controller.constructionSite && !this.buildRequest) {
+                this.buildRequest = new BuildRequest(controller.containerPos, STRUCTURE_CONTAINER);
             }
         }
     }
