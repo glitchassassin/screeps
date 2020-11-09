@@ -57,9 +57,14 @@ export class LogisticsAnalyst extends BoardroomManager {
         )) as CachedResource<RESOURCE_ENERGY>[];
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
-    getRealLogisticsSources(pos: RoomPosition): RealLogisticsSources[] {
+    getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
-        let items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
+        let items;
+        if (includeAdjacent) {
+            items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
+        } else {
+            items = Game.rooms[pos.roomName].lookAt(pos)
+        }
         let results: RealLogisticsSources[] = [];
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {

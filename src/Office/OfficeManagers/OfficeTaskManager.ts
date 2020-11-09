@@ -54,6 +54,27 @@ export class OfficeTaskManager extends OfficeManager {
         ))
     }
 
+    /**
+     * Returns minions that are expiring within `ttl` ticks (optionally, filters
+     * based on whether they are the only minions assigned to the given request.)
+     *
+     * Important for Salesman minions
+     *
+     * @param ttl Ticks to live threshold
+     * @param ifRequestIsNotHandled If true, ignores minions whose request has backup coverage
+     */
+    creepsExpiring = (ttl: number, ifRequestIsNotHandled = true) => {
+        return Array.from(lazyFilter(
+            global.worldState.myCreeps.byOffice.get(this.office.name) ?? [],
+            c => (
+                c.memory?.type &&
+                this.minionTypes.includes(c.memory?.type) &&
+                (c.gameObj.ticksToLive ?? 0) < ttl &&
+                (!ifRequestIsNotHandled || this.requests.find(r => r.assigned.includes(c) && r.assigned.length === 1))
+            )
+        ))
+    }
+
     report() {
         const taskTable: any[][] = [['Request', 'Location', 'Priority', 'Assigned Minions']];
         for (let req of this.requests) {

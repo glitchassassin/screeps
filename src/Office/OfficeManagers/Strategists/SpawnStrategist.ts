@@ -30,27 +30,34 @@ export class SpawnStrategist extends OfficeManager {
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
 
         this.submitLogisticsRequests();
 
         if (this.spawnRequest && !this.spawnRequest.result) return; // Pending request exists
 
         // First priority: Carrier minions.
+        // If we just spawned a Carrier minion, wait 100 ticks before spawning a new one.
         // If we have unassigned requests and all Carriers are busy,
+        // or if all Carriers will be dead in 50 ticks,
         // we need more carriers
         if ( // Carrier minions
-            unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
+            (hrAnalyst.newestEmployee(this.office, 'CARRIER') ?? 0) < 1400 &&
+            ((unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
             logisticsManager.getIdleCarriers().length === 0 &&
-            salesAnalyst.getFranchiseSurplus(this.office) > 0.1
+            salesAnalyst.getFranchiseSurplus(this.office) > 0.1) ||
+            (hrAnalyst.oldestEmployee(this.office, 'CARRIER') ?? 0) <= 50)
         ) {
             this.submitRequest(new CarrierMinion());
             return;
         }
 
         if ( // Salesman minions
-            salesAnalyst.unassignedHarvestRequests(this.office).length > 0 &&
-            salesManager.getAvailableCreeps().length === 0
+            (salesAnalyst.unassignedHarvestRequests(this.office).length > 0 &&
+            salesManager.getAvailableCreeps().length === 0) ||
+            salesManager.creepsExpiring(50).length > 0
         ) {
+            console.log('expiring creeps', salesManager.creepsExpiring(50).map(c => c.gameObj))
             this.submitRequest(new SalesmanMinion());
             return;
         }

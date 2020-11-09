@@ -117,11 +117,11 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new Metric( // mineContainerLevels
                         this.salesAnalyst.getUsableSourceLocations(office).length * CONTAINER_CAPACITY,
-                        100
+                        500
                     ),
                     new Metric( // roomEnergyLevels
                         office.center.gameObj.energyCapacityAvailable,
-                        100
+                        500
                     ),
                     new NonNegativeDeltaMetric( // spawnEnergyRate
                         100,
@@ -129,7 +129,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new Metric( // storageLevels
                         this.logisticsAnalyst.getStorage(office)?.capacity ?? 0,
-                        100
+                        500
                     ),
                     new DeltaMetric( // storageFillRate
                         100,
@@ -137,19 +137,19 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new Metric( // fleetLevels
                         this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.capacity), 0),
-                        100
+                        500
                     ),
                     new Metric( // mobileDepotLevels
                         this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacity), 0) ?? 0,
-                        100
+                        500
                     ),
                     new Metric( // controllerDepotLevels
                         this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
-                        100
+                        500
                     ),
                     new DeltaMetric( // controllerDepotFillRate
                         this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
-                        100
+                        500
                     ),
                     new NonNegativeDeltaMetric( // logisticsThroughput
                         100,

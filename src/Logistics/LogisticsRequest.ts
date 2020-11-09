@@ -34,6 +34,9 @@ export class TransferRequest extends LogisticsRequest {
         if (this.capacity === -1) {
             this.capacity = getFreeCapacity(target);
         }
+        if (this.capacity === 0) {
+            this.completed = true;
+        }
     }
 
     action(creep: CachedCreep) {

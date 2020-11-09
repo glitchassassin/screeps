@@ -31,6 +31,7 @@ export class LogisticsManager extends OfficeManager {
     routes = new Map<string, LogisticsRoute>();
 
     submit(requestId: string, request: LogisticsRequest) {
+        if (request.completed) return;
         let req = this.requests.get(requestId);
         if (!req || req.priority < request.priority) {
             if (req) req.completed = true;
@@ -44,6 +45,16 @@ export class LogisticsManager extends OfficeManager {
             c => !this.routes.has(c.name)
         ));
     }
+    /**
+     * Returns ticks until the fleet is completely despawned
+     */
+    fleetTTL() {
+        let max = 0;
+        for (let c of this.logisticsAnalyst.getCarriers(this.office)) {
+            max = Math.max((c.gameObj.ticksToLive ?? 0), max)
+        }
+        return max;
+    }
 
     plan() {
         let idleCarriers = this.getIdleCarriers();
@@ -51,13 +62,14 @@ export class LogisticsManager extends OfficeManager {
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
+        this.sources = new Map<string, LogisticsSource>();
         this.salesAnalyst.getUsableSourceLocations(this.office).forEach(f => {
             if (!this.sources.has(f.pos.toString())) {
                 this.sources.set(f.pos.toString(), new LogisticsSource(f.pos))
             }
         });
         if (storage && !this.sources.has(storage.pos.toString())) {
-            this.sources.set(storage.pos.toString(), new LogisticsSource(storage.pos, false))
+            this.sources.set(storage.pos.toString(), new LogisticsSource(storage.pos, false, false))
         }
         spawns.forEach(spawn => {
             if (!this.sources.has(spawn.pos.toString())) {
@@ -110,6 +122,9 @@ export class LogisticsManager extends OfficeManager {
                     if (level.length === 0) {
                         priorities.delete(priority);
                     }
+                    continue;
+                }
+                if (request.completed || (request.assignedCapacity >= request.capacity)) {
                     continue;
                 }
                 if (!route.extend(request)) break; // No more requests for route
@@ -178,14 +193,15 @@ export class LogisticsManager extends OfficeManager {
         chart.render(new RoomPosition(2, 2, this.office.center.name));
 
         // Requests
-        const taskTable: any[][] = [['Requester', 'Type', 'Priority', 'Capacity', 'Assigned']];
+        const taskTable: any[][] = [['Requester', 'Type', 'Priority', 'Capacity', 'Assigned', 'Completed']];
         for (let [, req] of this.requests) {
             taskTable.push([
                 JSON.stringify(req.pos),
                 req.constructor.name,
                 req.priority,
                 req.capacity,
-                req.assignedCapacity
+                req.assignedCapacity,
+                req.completed ? 'Y' : ''
             ])
         }
         Table(new RoomPosition(0, 35, this.office.center.name), taskTable);

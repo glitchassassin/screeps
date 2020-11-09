@@ -9,6 +9,7 @@ import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
 import { HRManager } from "Office/OfficeManagers/HRManager";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
+import { LinkArchitect } from "./OfficeManagers/Architects/LinkArchitect";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
@@ -18,6 +19,8 @@ import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesStrategist } from "Office/OfficeManagers/Strategists/SalesStrategist";
 import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
+import { StorageArchitect } from "./OfficeManagers/Architects/StorageArchitect";
+import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
 import { TowerArchitect } from "Office/OfficeManagers/Architects/TowerArchitect";
 import profiler from "screeps-profiler";
 
@@ -53,12 +56,15 @@ export class Office {
         new RoadArchitect(this);
         new ExtensionArchitect(this);
         new TowerArchitect(this);
+        new StorageArchitect(this);
+        new LinkArchitect(this);
 
         // Create Strategists
         new LegalStrategist(this);
         new SalesStrategist(this);
         new DefenseStrategist(this);
         new RepairStrategist(this);
+        new StorageStrategist(this);
         new SpawnStrategist(this);
 
     }
