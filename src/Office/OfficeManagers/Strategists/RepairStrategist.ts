@@ -25,12 +25,14 @@ export class RepairStrategist extends OfficeManager {
         let barrierLevel = BARRIER_LEVEL[(getRcl(this.office.name) ?? 1)] ?? 0
         for (let structure of facilitiesAnalyst.getStructures(this.office)) {
             // Barrier heuristic
-            if ( (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) &&
-                (structure.hits ?? 0) < barrierLevel * 0.5) {
-                this.submitRequest(structure);
-            }
-            // General-purpose heuristic
-            else if ((structure.hits ?? 0) < (structure.hitsMax ?? 0) * 0.5) {
+            if (
+                ( // Is barrier, and should be repaired
+                    (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) &&
+                    (structure.hits ?? 0) < barrierLevel * 0.5
+                ) || ( // Is not barrier, and should be repaired
+                    (structure.hits ?? 0) < (structure.hitsMax ?? 0) * 0.5
+                )
+            ) {
                 this.submitRequest(structure);
             }
         }

@@ -173,8 +173,8 @@ export class LogisticsRoute {
                     break;
                 }
                 this.setState(RouteState.FULFILLING);
-                // This step done - falls through to the next
             }
+            // This step done - falls through to the next
             case RouteState.FULFILLING: {
                 // Discard any completed requests
                 while (this.requests.length > 0 && this.requests[0].completed) {

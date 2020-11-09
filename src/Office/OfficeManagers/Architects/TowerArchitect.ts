@@ -64,20 +64,20 @@ export class TowerArchitect extends OfficeManager {
     }
 
     run() {
-        if (global.v.extensions.state) {
-            this.towers.forEach(extension => {
-                new RoomVisual(extension.center.roomName).line(
-                    extension.center.x + 1,
-                    extension.center.y,
-                    extension.center.x - 1,
-                    extension.center.y,
+        if (global.v.planning.state) {
+            this.towers.forEach(tower => {
+                new RoomVisual(tower.center.roomName).line(
+                    tower.center.x + 1,
+                    tower.center.y,
+                    tower.center.x - 1,
+                    tower.center.y,
                     {lineStyle: 'solid', color: '#f00', width: 0.5}
                 );
-                new RoomVisual(extension.center.roomName).line(
-                    extension.center.x,
-                    extension.center.y + 1,
-                    extension.center.x,
-                    extension.center.y - 1,
+                new RoomVisual(tower.center.roomName).line(
+                    tower.center.x,
+                    tower.center.y + 1,
+                    tower.center.x,
+                    tower.center.y - 1,
                     {lineStyle: 'solid', color: '#f00', width: 0.5}
                 );
             })

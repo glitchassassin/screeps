@@ -46,8 +46,8 @@ export class WorldHostileCreeps extends WorldData {
             }
             // Move creep in room index if needed
             else if (!this.byRoom.get(roomName)?.has(cachedHostileCreep)) {
-                for (let room of this.byRoom.values()) {
-                    room.delete(cachedHostileCreep);
+                for (let r of this.byRoom.values()) {
+                    r.delete(cachedHostileCreep);
                 }
                 this.byRoom.get(roomName)?.add(cachedHostileCreep)
             }

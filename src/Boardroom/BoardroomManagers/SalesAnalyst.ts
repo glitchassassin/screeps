@@ -57,7 +57,7 @@ export class SalesAnalyst extends BoardroomManager {
             if (defenseAnalyst.getTerritoryIntent(room.name) === TerritoryIntent.EXPLOIT) {
                 usableSources.push(...(global.worldState.sources.byRoom.get(room.name) ?? []))
             }
-        };
+        }
         return usableSources;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -65,7 +65,7 @@ export class SalesAnalyst extends BoardroomManager {
         let usableSources: CachedSource[] = [];
         for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
             usableSources.push(...(global.worldState.sources.byRoom.get(room.name) ?? []));
-        };
+        }
         return usableSources;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -106,7 +106,7 @@ export class SalesAnalyst extends BoardroomManager {
     getFranchiseSurplus(office: Office) {
         // Sum of surpluses across franchises
         let franchises = this.getUsableSourceLocations(office)
-        let sum = franchises.reduce((sum, source) => sum + (source.surplus ?? 0), 0);
-        return (sum / (franchises.length * CONTAINER_CAPACITY))
+        let surplus = franchises.reduce((sum, source) => sum + (source.surplus ?? 0), 0);
+        return (surplus / (franchises.length * CONTAINER_CAPACITY))
     }
 }

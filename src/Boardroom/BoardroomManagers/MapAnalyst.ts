@@ -44,7 +44,7 @@ export class MapAnalyst extends BoardroomManager {
                     return null;
                 }
             })
-            .filter(roomName => roomName !== null) as string[];
+            .filter(n => n !== null) as string[];
         if (includeCenter) adjacent.push(roomName);
         return adjacent;
     }
@@ -88,7 +88,7 @@ export class MapAnalyst extends BoardroomManager {
               // Can't walk through non-walkable construction sites
               costs.set(struct.pos.x, struct.pos.y, 0xff);
             }
-        };
+        }
 
         // Avoid creeps in the room
         if (avoidCreeps) {

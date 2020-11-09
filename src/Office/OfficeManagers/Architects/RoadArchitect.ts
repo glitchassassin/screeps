@@ -85,7 +85,7 @@ export class RoadArchitect extends OfficeManager {
                 roomCallback: roadPlannerCallback
             }).path))
         })
-        this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos as RoomPosition, {
+        this.roads.push(new Road(PathFinder.search(spawn.pos, controller.pos, {
             plainCost: 2,
             swampCost: 2,
             maxOps: 3000,

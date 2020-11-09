@@ -15,7 +15,7 @@ export const createConstructionSite = (pos: RoomPosition, type: BuildableStructu
 
     let sites = Array.from(lazyFilter(
         global.worldState.constructionSites.byRoom.get(pos.roomName) ?? [],
-        site => site.pos.isEqualTo(pos)
+        s => s.pos.isEqualTo(pos)
     ));
 
     // Create the construction site, if needed

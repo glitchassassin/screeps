@@ -34,7 +34,7 @@ export class OfficeTaskManager extends OfficeManager {
                 request.assign(creep);
                 if (request.capacityMet()) break;
             }
-        };
+        }
 
         // Run assigned tasks
         this.requests = this.requests.filter(request => {

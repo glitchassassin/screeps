@@ -4,7 +4,7 @@ export enum BehaviorResult {
     INPROGRESS = 'INPROGRESS'
 }
 
-export interface Blackboard {};
+export interface Blackboard {}
 
 export type Behavior<T> = (target: T, blackboard: Blackboard) => BehaviorResult
 export type BehaviorBuilder<T> = (...args: any[]) => Behavior<T>

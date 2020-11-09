@@ -44,8 +44,6 @@ export class StorageArchitect extends OfficeManager {
     storage?: StorageBlock;
     plan() {
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
-        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-        let storage = logisticsAnalyst.getStorage(this.office);
         // Only re-check infrastructure every `n` ticks (saves CPU)
         if (this.storage && Game.time % 200 !== 0) return;
 

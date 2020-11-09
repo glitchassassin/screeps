@@ -26,10 +26,10 @@ export class HRManager extends OfficeManager {
             if (spawns.length === 0) break;
 
             for (let spawn of spawns) {
-                let result = request.assign(spawn);
+                request.assign(spawn);
                 if (request.capacityMet()) break;
             }
-        };
+        }
 
         // Run assigned tasks
         this.requests = this.requests.filter(request => {

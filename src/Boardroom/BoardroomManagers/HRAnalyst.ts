@@ -12,7 +12,7 @@ export class HRAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSpawns(office: Office) {
-        return Array.from(global.worldState.mySpawns.byRoom.get(office.center.name) ?? []) as CachedStructure<StructureSpawn>[];
+        return Array.from(global.worldState.mySpawns.byRoom.get(office.center.name) ?? []);
     }
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
     getEmployees(office: Office, type?: string) {
