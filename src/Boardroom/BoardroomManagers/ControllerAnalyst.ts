@@ -14,32 +14,38 @@ export class ControllerAnalyst extends BoardroomManager {
             if (!controller) return;
             // Initialize properties
             if (!controller.containerPos) {
-                controller.containerPos = this.calculateBestContainerLocation(office)
+                let {container, link} = this.calculateBestUpgradeLocation(office);
+                controller.containerPos = container;
             }
         })
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    calculateBestContainerLocation(office: Office) {
+    calculateBestUpgradeLocation(office: Office) {
         // let room = office.center.room;
         let controller = global.worldState.controllers.byRoom.get(office.name);
-        if (!controller) return undefined;
+        if (!controller) return {};
         // Pick the first spawn in the room
         let spawn = global.worldState.mySpawns.byRoom.get(office.name)?.values().next().value;
         let target = (spawn? spawn.pos : new RoomPosition(25, 25, office.name)) as RoomPosition;
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
-        let candidate: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
+        let containerPos: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
+        let linkPos: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
         mapAnalyst
             .calculateNearbyPositions(controller.pos, 3)
             .forEach((pos) => {
                 if (mapAnalyst.isPositionWalkable(pos) && !pos.isNearTo(target)) {
                     let range = PathFinder.search(pos, target).cost;
-                    if (!candidate || candidate.range > range) {
-                        candidate = {pos, range};
+                    if (!containerPos || containerPos.range > range) {
+                        linkPos = containerPos;
+                        containerPos = {pos, range};
                     }
                 }
             });
-        return candidate?.pos;
+        return {
+            container: containerPos?.pos,
+            link: linkPos?.pos
+        }
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getDesignatedUpgradingLocations(office: Office) {

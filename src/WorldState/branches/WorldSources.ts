@@ -1,6 +1,7 @@
 import { CachedIDItem, WorldDataRoomItemsById } from "WorldState/WorldDataRoomItemsById";
 import { asRoomPosition, heapCacheGetter, keyById, memoryCache, memoryCacheGetter } from "screeps-cache";
 
+import { CachedStructure } from "./WorldStructures";
 import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
 import { lazyFilter } from "utils/lazyIterators";
 
@@ -26,15 +27,18 @@ export class CachedSource extends CachedIDItem<Source> {
 
     @memoryCache(keyById, asRoomPosition)
     public franchisePos?: RoomPosition;
+    @memoryCache(keyById, asRoomPosition)
+    public linkPos?: RoomPosition;
 
     @memoryCache(keyById)
     public officeId?: string;
     @memoryCacheGetter(keyById, (i: CachedSource) => Game.rooms[i.franchisePos?.roomName ?? ''] && i.franchisePos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined)
     public containerId?: Id<StructureContainer>;
-    public get container() { return this.containerId ? global.worldState.structures.byId.get(this.containerId) : undefined }
-    @memoryCacheGetter(keyById, (i: CachedSource) => Game.rooms[i.franchisePos?.roomName ?? ''] && i.franchisePos?.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<ConstructionSite>|undefined)
-    public constructionSiteId?: Id<ConstructionSite>;
-    public get constructionSite() { return this.constructionSiteId ? global.worldState.constructionSites.byId.get(this.constructionSiteId) : undefined }
+    public get container() { return this.containerId ? global.worldState.structures.byId.get(this.containerId) as CachedStructure<StructureContainer> : undefined }
+
+    @memoryCacheGetter(keyById, (i: CachedSource) => Game.rooms[i.linkPos?.roomName ?? ''] && i.linkPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>|undefined)
+    public linkId?: Id<StructureLink>;
+    public get link() { return this.linkId ? global.worldState.structures.byId.get(this.linkId) as CachedStructure<StructureLink> : undefined }
 
     @heapCacheGetter((i: CachedSource) => countEnergyInContainersOrGround(i.pos))
     public surplus?: number;

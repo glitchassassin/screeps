@@ -10,6 +10,7 @@ import { HRManager } from "Office/OfficeManagers/HRManager";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
 import { LinkArchitect } from "./OfficeManagers/Architects/LinkArchitect";
+import { LinkManager } from "./OfficeManagers/LinkManager";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
@@ -50,6 +51,7 @@ export class Office {
         new LegalManager(this);
         new SalesManager(this);
         new SecurityManager(this);
+        new LinkManager(this);
 
         // Create Architects
         new ControllerArchitect(this);

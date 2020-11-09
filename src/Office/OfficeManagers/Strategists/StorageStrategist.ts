@@ -18,6 +18,5 @@ export class StorageStrategist extends OfficeManager {
         } else {
             logisticsManager.submit(storage.id, new ResupplyRequest(storage, 1))
         }
-
     }
 }

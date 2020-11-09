@@ -15,8 +15,10 @@ export class ControllerArchitect extends OfficeManager {
         let controller = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
 
         if (controller?.level && controller.level > 1) {
-            if (controller.containerPos && !controller.container && !controller.constructionSite && !this.buildRequest) {
+            if (controller.containerPos && !controller.container && !this.buildRequest) {
                 this.buildRequest = new BuildRequest(controller.containerPos, STRUCTURE_CONTAINER);
+            } else if (controller.linkPos && !controller.link && !this.buildRequest) {
+                this.buildRequest = new BuildRequest(controller.linkPos, STRUCTURE_LINK);
             }
         }
     }

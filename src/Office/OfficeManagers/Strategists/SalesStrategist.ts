@@ -18,6 +18,9 @@ export class SalesStrategist extends OfficeManager {
             if (rclIsGreaterThan(this.office.name, 1) && !source.container) {
                 this.submitContainerRequest(source)
             }
+            if (rclIsGreaterThan(this.office.name, 4) && !source.link) {
+                this.submitLinkRequest(source)
+            }
             this.submitHarvestRequest(source);
         }
     }
@@ -33,6 +36,21 @@ export class SalesStrategist extends OfficeManager {
 
         // Otherwise, create a new build request
         req = new BuildRequest(source.franchisePos, STRUCTURE_CONTAINER);
+        facilitiesManager.submit(req);
+        this.buildRequests.set(source, req);
+    }
+
+    submitLinkRequest(source: CachedSource) {
+        let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
+
+        // Check if we already have a build request
+        let req = this.buildRequests.get(source);
+        if (req && !req.result)                         return; // Request is pending
+        if (req?.result)                                this.buildRequests.delete(source); // Request completed or failed
+        if (!source.linkPos || source.link)   return; // Link already exists, or no position is allocated
+
+        // Otherwise, create a new build request
+        req = new BuildRequest(source.linkPos, STRUCTURE_LINK);
         facilitiesManager.submit(req);
         this.buildRequests.set(source, req);
     }

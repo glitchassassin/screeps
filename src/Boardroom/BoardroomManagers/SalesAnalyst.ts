@@ -33,8 +33,10 @@ export class SalesAnalyst extends BoardroomManager {
                     if (!s.officeId) {
                         s.officeId = office.name;
                     }
-                    if (!s.franchisePos) {
-                        s.franchisePos = this.calculateBestMiningLocation(office, s.pos);
+                    if (!s.franchisePos || !s.linkPos) {
+                        let {container, link} = this.calculateBestMiningLocation(office, s.pos);
+                        s.franchisePos = container;
+                        s.linkPos = link;
                     }
                 }
             }
@@ -47,7 +49,16 @@ export class SalesAnalyst extends BoardroomManager {
         let spawn = hrAnalyst.getSpawns(office)[0];
         let route = PathFinder.search(sourcePos, spawn.pos);
         if (route.incomplete) throw new Error('Unable to calculate mining location');
-        return route.path[0];
+        let containerPos = route.path[0];
+        // Candidate position: adjacent to franchisePos,
+        let linkCandidates = this.mapAnalyst.calculateAdjacentPositions(containerPos).filter(pos => (
+            this.mapAnalyst.isPositionWalkable(pos) &&
+            !pos.isEqualTo(route.path[1])
+        ))
+        return {
+            link: linkCandidates[0],
+            container: containerPos
+        }
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUsableSourceLocations(office: Office) {

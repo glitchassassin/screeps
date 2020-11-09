@@ -50,6 +50,14 @@ export class LogisticsAnalyst extends BoardroomManager {
         return c;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
+    getLinks(office: Office) {
+        let links = Array.from(lazyFilter(
+            global.worldState.structures.byOffice.get(office.name) ?? [],
+            s => s.structureType === STRUCTURE_LINK
+        )) as CachedStructure<StructureLink>[];
+        return links;
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
     getFreeEnergy(office: Office) {
         return Array.from(lazyFilter(
             global.worldState.resources.byRoom.get(office.name) ?? [],
