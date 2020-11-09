@@ -117,11 +117,11 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new Metric( // mineContainerLevels
                         this.salesAnalyst.getUsableSourceLocations(office).length * CONTAINER_CAPACITY,
-                        100
+                        500
                     ),
                     new Metric( // roomEnergyLevels
-                        office.center.room.energyCapacityAvailable,
-                        100
+                        office.center.gameObj.energyCapacityAvailable,
+                        500
                     ),
                     new NonNegativeDeltaMetric( // spawnEnergyRate
                         100,
@@ -129,7 +129,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new Metric( // storageLevels
                         this.logisticsAnalyst.getStorage(office)?.capacity ?? 0,
-                        100
+                        500
                     ),
                     new DeltaMetric( // storageFillRate
                         100,
@@ -137,19 +137,19 @@ export class StatisticsAnalyst extends BoardroomManager {
                     ),
                     new Metric( // fleetLevels
                         this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.capacity), 0),
-                        100
+                        500
                     ),
                     new Metric( // mobileDepotLevels
                         this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacity), 0) ?? 0,
-                        100
+                        500
                     ),
                     new Metric( // controllerDepotLevels
                         this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
-                        100
+                        500
                     ),
                     new DeltaMetric( // controllerDepotFillRate
                         this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
-                        100
+                        500
                     ),
                     new NonNegativeDeltaMetric( // logisticsThroughput
                         100,
@@ -191,9 +191,9 @@ export class StatisticsAnalyst extends BoardroomManager {
                         .reduce((sum, source) => (sum + (source.surplus ?? 0)), 0)
                 );
 
-                metrics.roomEnergyLevels.maxValue = office.center.room.energyCapacityAvailable;
-                metrics.roomEnergyLevels.update(office.center.room.energyAvailable);
-                metrics.spawnEnergyRate.update(office.center.room.energyAvailable);
+                metrics.roomEnergyLevels.maxValue = office.center.gameObj.energyCapacityAvailable;
+                metrics.roomEnergyLevels.update(office.center.gameObj.energyAvailable);
+                metrics.spawnEnergyRate.update(office.center.gameObj.energyAvailable);
 
                 metrics.storageLevels.maxValue = this.logisticsAnalyst.getStorage(office)?.capacity ?? 0;
                 metrics.storageLevels.update(
@@ -230,28 +230,26 @@ export class StatisticsAnalyst extends BoardroomManager {
                 let building = 0;
                 let repairing = 0;
                 let upgrading = 0;
-                let deathLosses = 0;
-                [office.center, ...office.territories]
-                    .map(t => t.room)
-                    .forEach(room => {
-                        if (!room) return;
-                        room.getEventLog().forEach(event => {
-                            switch (event.event) {
-                                case EVENT_BUILD:
-                                    building += event.data.energySpent;
-                                    break;
-                                case EVENT_REPAIR:
-                                    repairing += event.data.energySpent;
-                                    break;
-                                case EVENT_UPGRADE_CONTROLLER:
-                                    upgrading += event.data.energySpent;
-                                    break;
-                            }
-                        })
-                        deathLosses += this.logisticsAnalyst.getTombstones(room.name)
-                                                       .filter(t => t.gameObj?.creep.my && t.gameObj?.deathTime === Game.time - 1)
-                                                       .reduce((sum, t) => sum + t.capacityUsed, 0)
+                let deathLosses = this.logisticsAnalyst.getTombstones(office)
+                    .filter(t => t.gameObj?.creep.my && t.gameObj?.deathTime === Game.time - 1)
+                    .reduce((sum, t) => sum + t.capacityUsed, 0);
+
+                for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
+                    if (!room.gameObj) return;
+                    room.gameObj.getEventLog().forEach(event => {
+                        switch (event.event) {
+                            case EVENT_BUILD:
+                                building += event.data.energySpent;
+                                break;
+                            case EVENT_REPAIR:
+                                repairing += event.data.energySpent;
+                                break;
+                            case EVENT_UPGRADE_CONTROLLER:
+                                upgrading += event.data.energySpent;
+                                break;
+                        }
                     })
+                }
                 metrics.buildRate.update(building);
                 metrics.repairRate.update(repairing);
                 metrics.upgradeRate.update(upgrading);

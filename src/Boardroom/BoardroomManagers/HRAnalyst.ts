@@ -21,4 +21,30 @@ export class HRAnalyst extends BoardroomManager {
             creep => !type || creep.memory?.type === type
         ))
     }
+    @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
+    newestEmployee(office: Office, type?: string) {
+        let max = undefined;
+        for (let employee of global.worldState.myCreeps.byOffice.get(office.name) ?? []) {
+            if (employee.memory.type !== type) continue;
+            if (max === undefined) {
+                max = employee.gameObj.ticksToLive;
+                continue;
+            }
+            max = Math.max(employee.gameObj.ticksToLive ?? 0, max)
+        }
+        return max;
+    }
+    @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
+    oldestEmployee(office: Office, type?: string) {
+        let min = undefined; // Max actual TTL should be 1500
+        for (let employee of global.worldState.myCreeps.byOffice.get(office.name) ?? []) {
+            if (employee.memory.type !== type) continue;
+            if (min === undefined) {
+                min = employee.gameObj.ticksToLive;
+                continue;
+            }
+            min = Math.min(employee.gameObj.ticksToLive ?? 0, min)
+        }
+        return min;
+    }
 }

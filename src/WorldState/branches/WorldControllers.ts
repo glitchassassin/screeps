@@ -21,6 +21,7 @@ export class WorldControllers extends WorldData {
     // Lookup indexes
     public byId = new Map<Id<StructureController>, CachedController>();
     public byRoom = new Map<string, CachedController>();
+    public byOffice = new Map<string, Set<CachedController>>();
 
     public update(roomName: string) {
         // If no vision in this room, cancel the update
@@ -39,7 +40,14 @@ export class WorldControllers extends WorldData {
             this.ids.push(controller.id);
             // Update indices
             this.byId.set(controller.id, c);
-            this.byRoom.set(roomName, c)
+            this.byRoom.set(roomName, c);
+
+            let office = global.worldState.rooms.byRoom.get(roomName)?.territoryOf;
+            if (office) {
+                let officeSet = this.byOffice.get(office) ?? new Set();
+                this.byOffice.set(office, officeSet);
+                officeSet.add(c);
+            }
         }
 
         // Trigger getters to refresh caches

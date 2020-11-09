@@ -32,6 +32,22 @@ export class MapAnalyst extends BoardroomManager {
         if (includeCenter) adjacent.push(pos);
         return adjacent;
     }
+    @Memoize((roomName: string, proximity: number) => (`${roomName} ${proximity}`))
+    calculateNearbyRooms(roomName: string, proximity: number, includeCenter = false) {
+        let {wx, wy} = this.roomNameToCoords(roomName)
+        let adjacent = this.calculateAdjacencyMatrix(proximity)
+            .map(offset => {
+                try {
+                    return this.roomNameFromCoords(wx + offset.x, wy + offset.y);
+                }
+                catch {
+                    return null;
+                }
+            })
+            .filter(roomName => roomName !== null) as string[];
+        if (includeCenter) adjacent.push(roomName);
+        return adjacent;
+    }
     @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))
     isPositionWalkable(pos: RoomPosition, ignoreCreeps: boolean = false) {
         let terrain = Game.map.getRoomTerrain(pos.roomName);
@@ -53,7 +69,7 @@ export class MapAnalyst extends BoardroomManager {
 
         if (!room) return costs;
 
-        room.find(FIND_STRUCTURES).forEach(function(struct) {
+        for (let struct of global.worldState.structures.byRoom.get(roomName) ?? []) {
           if (struct.structureType === STRUCTURE_ROAD) {
             // Favor roads over plain tiles
             costs.set(struct.pos.x, struct.pos.y, 1);
@@ -63,23 +79,22 @@ export class MapAnalyst extends BoardroomManager {
             // Can't walk through non-walkable buildings
             costs.set(struct.pos.x, struct.pos.y, 0xff);
           }
-        });
+        }
 
-        room.find(FIND_CONSTRUCTION_SITES).forEach(function(struct) {
+        for (let struct of global.worldState.constructionSites.byRoom.get(roomName) ?? []) {
             if (struct.structureType !== STRUCTURE_ROAD &&
                 struct.structureType !== STRUCTURE_CONTAINER &&
-                (struct.structureType !== STRUCTURE_RAMPART || !struct.my)
-            ) {
+                struct.structureType !== STRUCTURE_RAMPART) {
               // Can't walk through non-walkable construction sites
               costs.set(struct.pos.x, struct.pos.y, 0xff);
             }
-        });
+        };
 
         // Avoid creeps in the room
         if (avoidCreeps) {
             room.find(FIND_CREEPS).forEach(function(creep) {
                 costs.set(creep.pos.x, creep.pos.y, 0xff);
-              });
+            });
         }
 
         return costs;
@@ -98,11 +113,7 @@ export class MapAnalyst extends BoardroomManager {
         if(!_.inRange(x, 0, 50)) throw new RangeError('x value ' + x + ' not in range');
         if(!_.inRange(y, 0, 50)) throw new RangeError('y value ' + y + ' not in range');
         if(roomName == 'sim') throw new RangeError('Sim room does not have world position');
-        let match = roomName.match(/^([WE])([0-9]+)([NS])([0-9]+)$/);
-        if (!match) throw new Error('Invalid room name')
-        let [,h,wx,v,wy] = match
-        if(h == 'W') x = ~x;
-        if(v == 'N') y = ~y;
+        let {wx, wy} = this.roomNameToCoords(roomName);
         return {
             x: (50*Number(wx))+x,
             y: (50*Number(wy))+y
@@ -112,5 +123,21 @@ export class MapAnalyst extends BoardroomManager {
         let parsed = roomName.match(/^[WE]([0-9]+)[NS]([0-9]+)$/);
         if (!parsed) throw new Error('Invalid room name')
 		return (Number(parsed[1]) % 10 === 0) || (Number(parsed[2]) % 10 === 0);
-	}
+    }
+    roomNameToCoords(roomName: string) {
+        let match = roomName.match(/^([WE])([0-9]+)([NS])([0-9]+)$/);
+        if (!match) throw new Error('Invalid room name')
+        let [,h,wx,v,wy] = match
+        return {
+            wx: (h == 'W') ? Number(wx) : ~Number(wx),
+            wy: (v == 'S') ? Number(wy) : ~Number(wy)
+        }
+    }
+    roomNameFromCoords(x: number, y: number) {
+        let h = (x < 0) ? 'E' : 'W';
+        let v = (y < 0) ? 'N' : 'S';
+        x = (x < 0) ? ~x : x;
+        y = (y < 0) ? ~y : y;
+        return `${h}${x}${v}${y}`
+    }
 }

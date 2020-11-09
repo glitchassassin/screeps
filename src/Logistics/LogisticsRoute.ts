@@ -27,6 +27,7 @@ export class LogisticsRoute {
     public maxCapacity: number = 0;
     public capacity: number = 0;
     public assignedCapacity = new Map<LogisticsRequest, number>();
+    public reservedCapacity = 0;
     public began: number = -1;
 
     public get completed() {
@@ -52,7 +53,6 @@ export class LogisticsRoute {
 
         this.calcInitialCapacity(creep, request);
     }
-
     calcPrioritySources(creep: CachedCreep, request: LogisticsRequest, sources: LogisticsSource[]) {
         let creepCapacity = creep.capacityFree;
         let fullCreepSources: LogisticsSource[] = [];
@@ -123,7 +123,11 @@ export class LogisticsRoute {
 
         if (this.source) {
             // Reserve capacity at the source
-            this.source.reserve(this.maxCapacity);
+            this.reservedCapacity = 0;
+            for (let v of this.assignedCapacity.values()) {
+                this.reservedCapacity += v;
+            }
+            this.source.reserve(this.reservedCapacity);
             this.setState(RouteState.GETTING_ENERGY);
         } else {
             // We have 80% capacity already, go straight to filling orders
@@ -144,19 +148,21 @@ export class LogisticsRoute {
         if (this.state === s) return;
         // If creep has not withdrawn, cancel reservation
         if (this.state === RouteState.GETTING_ENERGY) {
-            this.source?.unreserve(this.maxCapacity)
+            this.source?.unreserve(this.reservedCapacity)
+        }
+        if (s === RouteState.CANCELLED) {
+            // Unassign remaining requests
+            this.requests.forEach(r => {
+                r.assigned = false;
+                r.assignedCapacity -= this.assignedCapacity.get(r) ?? 0
+            });
         }
         this.state = s;
     }
 
     run() {
         // Validate current state
-        if (!this.creep) { // Creep not found
-            // Unassign remaining requests
-            this.requests.forEach(r => {
-                r.assigned = false;
-                r.assignedCapacity -= this.assignedCapacity.get(r) ?? 0
-            });
+        if (!this.creep.gameObj) { // Creep not found
             this.setState(RouteState.CANCELLED);
             return;
         }
@@ -192,7 +198,7 @@ export class LogisticsRoute {
                     this.setState(RouteState.CANCELLED);
                     return;
                 }
-                let result = this.source.transfer(this.creep);
+                let result = this.source.transfer(this.creep, this.reservedCapacity);
                 if (result !== OK) {
                     this.setState(RouteState.CANCELLED);
                 }

@@ -14,6 +14,7 @@ export class WorldRooms extends WorldData {
 
     // Lookup indexes
     public byRoom = new Map<string, CachedRoom>();
+    public byOffice = new Map<string, Set<CachedRoom>>();
 
     public update(roomName: string) {
         // If no vision in this room, cancel the update
@@ -28,6 +29,23 @@ export class WorldRooms extends WorldData {
             this.ids.push(roomName);
             // Update indices
             this.byRoom.set(roomName, cachedRoom)
+        }
+
+        // Check if room is near an Office
+        if (global.boardroom && !cachedRoom.territoryOf) {
+            let office = global.boardroom.getClosestOffice(new RoomPosition(25, 25, cachedRoom.name));
+            if (office) {
+                let route = Game.map.findRoute(cachedRoom.name, office.name);
+                if (route instanceof Array && route.length <= 2) {
+                    cachedRoom.territoryOf = office.name;
+                }
+            }
+        }
+
+        if (cachedRoom.territoryOf) {
+            let officeSet = this.byOffice.get(cachedRoom.territoryOf) ?? new Set();
+            officeSet.add(cachedRoom);
+            this.byOffice.set(cachedRoom.territoryOf, officeSet);
         }
 
         for (let e of cachedRoom.gameObj.getEventLog()) {
@@ -63,6 +81,12 @@ export class CachedRoom {
     public lastHostileActivity?: number;
     @memoryCache(keyByName)
     public scanned: number;
+    @memoryCache(keyByName)
+    public city?: string;
+    @memoryCache(keyByName)
+    public territoryOf?: string;
+
+    public get isOffice() { return !!this.city; }
 
     public get gameObj() { return Game.rooms[this.name]; }
 }

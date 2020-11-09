@@ -34,31 +34,37 @@ export class LogisticsAnalyst extends BoardroomManager {
         let storage = global.worldState.rooms.byRoom.get(office.center.name)?.gameObj.storage;
         return storage && global.worldState.structures.byId.get(storage.id) as CachedStructure<StructureStorage> | undefined;
     }
-    @Memoize((roomName: string) => ('' + roomName + Game.time))
-    getTombstones(roomName: string) {
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getTombstones(office: Office) {
         return Array.from(lazyFilter(
-            global.worldState.tombstones.byRoom.get(roomName) ?? [],
+            global.worldState.tombstones.byRoom.get(office.name) ?? [],
             t => t.capacityUsed ?? 0
         )) as CachedTombstone[];
     }
-    @Memoize((roomName: string) => ('' + roomName + Game.time))
-    getContainers(roomName: string) {
-        return Array.from(lazyFilter(
-            global.worldState.structures.byRoom.get(roomName) ?? [],
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getContainers(office: Office) {
+        let c = Array.from(lazyFilter(
+            global.worldState.structures.byOffice.get(office.name) ?? [],
             s => s.structureType === STRUCTURE_CONTAINER && s.capacityUsed && s.capacityUsed > 0
         )) as CachedStructure<StructureContainer>[];
+        return c;
     }
-    @Memoize((roomName: string) => ('' + roomName + Game.time))
-    getFreeEnergy(roomName: string) {
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getFreeEnergy(office: Office) {
         return Array.from(lazyFilter(
-            global.worldState.resources.byRoom.get(roomName) ?? [],
+            global.worldState.resources.byRoom.get(office.name) ?? [],
             t => t.resourceType === RESOURCE_ENERGY
         )) as CachedResource<RESOURCE_ENERGY>[];
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
-    getRealLogisticsSources(pos: RoomPosition): RealLogisticsSources[] {
+    getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
-        let items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
+        let items;
+        if (includeAdjacent) {
+            items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
+        } else {
+            items = Game.rooms[pos.roomName].lookAt(pos)
+        }
         let results: RealLogisticsSources[] = [];
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
@@ -72,28 +78,29 @@ export class LogisticsAnalyst extends BoardroomManager {
         return results.sort((a, b) => getUsedCapacity(b) - getUsedCapacity(a))
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
-    getClosestAllSources(pos: RoomPosition, resource = RESOURCE_ENERGY) {
+    getClosestAllSources(pos: RoomPosition, amount?: number) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
         let sorted = this.getAllSources(office).filter(s => getUsedCapacity(s) > 0).sort(sortByDistanceTo(pos))
+        if (!amount || amount === 0) return sorted[0];
+        let withAmount = sorted.filter(s => getUsedCapacity(s) > amount)
+        if (withAmount.length > 0) return withAmount[0];
         return sorted[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedCreep|CachedResource<RESOURCE_ENERGY>)[] {
-        let territories = [office.center, ...office.territories];
         let depots = this.depots.get(office.name) ?? [];
         return [
             ...this.getFreeSources(office),
             ...depots,
-            ...territories.flatMap(territory => this.getContainers(territory.name))
+            ...this.getContainers(office)
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] {
-        let territories = [office.center, ...office.territories];
         let freeSources: (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] = [
-            ...territories.filter(t => t.room).flatMap(territory => this.getFreeEnergy(territory.name)),
-            ...territories.filter(t => t.room).flatMap(territory => this.getTombstones(territory.name)),
+            ...this.getFreeEnergy(office),
+            ...this.getTombstones(office),
         ];
         let storage = this.getStorage(office);
         let storageCapacity = storage?.capacityUsed ?? 0;

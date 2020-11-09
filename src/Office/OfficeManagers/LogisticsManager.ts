@@ -1,20 +1,18 @@
 import { Bar, Meters } from "Visualizations/Meters";
-import { LogisticsRequest, ResupplyRequest } from "Logistics/LogisticsRequest";
-import { MinionRequest, MinionTypes } from "MinionRequests/MinionRequest";
-import { OfficeManager, OfficeManagerStatus } from "Office/OfficeManager";
-import { getFreeCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
-import { HRManager } from "./HRManager";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LogisticsRequest } from "Logistics/LogisticsRequest";
 import { LogisticsRoute } from "Logistics/LogisticsRoute";
 import { LogisticsSource } from "Logistics/LogisticsSource";
 import { Office } from "Office/Office";
+import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { Table } from "Visualizations/Table";
 import { lazyFilter } from "utils/lazyIterators";
 import profiler from "screeps-profiler";
+import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class LogisticsManager extends OfficeManager {
     constructor(
@@ -22,8 +20,7 @@ export class LogisticsManager extends OfficeManager {
         private logisticsAnalyst = office.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
         private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
         private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
-        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
-        private hrManager = office.managers.get('HRManager') as HRManager,
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst
     ) {
         super(office);
     }
@@ -34,6 +31,7 @@ export class LogisticsManager extends OfficeManager {
     routes = new Map<string, LogisticsRoute>();
 
     submit(requestId: string, request: LogisticsRequest) {
+        if (request.completed) return;
         let req = this.requests.get(requestId);
         if (!req || req.priority < request.priority) {
             if (req) req.completed = true;
@@ -41,22 +39,37 @@ export class LogisticsManager extends OfficeManager {
         }
     }
 
-    plan() {
-        let idleCarriers = Array.from(lazyFilter(
+    getIdleCarriers() {
+        return Array.from(lazyFilter(
             this.logisticsAnalyst.getCarriers(this.office),
             c => !this.routes.has(c.name)
         ));
+    }
+    /**
+     * Returns ticks until the fleet is completely despawned
+     */
+    fleetTTL() {
+        let max = 0;
+        for (let c of this.logisticsAnalyst.getCarriers(this.office)) {
+            max = Math.max((c.gameObj.ticksToLive ?? 0), max)
+        }
+        return max;
+    }
+
+    plan() {
+        let idleCarriers = this.getIdleCarriers();
         let storage = this.logisticsAnalyst.getStorage(this.office);
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
+        this.sources = new Map<string, LogisticsSource>();
         this.salesAnalyst.getUsableSourceLocations(this.office).forEach(f => {
             if (!this.sources.has(f.pos.toString())) {
                 this.sources.set(f.pos.toString(), new LogisticsSource(f.pos))
             }
         });
         if (storage && !this.sources.has(storage.pos.toString())) {
-            this.sources.set(storage.pos.toString(), new LogisticsSource(storage.pos, false))
+            this.sources.set(storage.pos.toString(), new LogisticsSource(storage.pos, false, false))
         }
         spawns.forEach(spawn => {
             if (!this.sources.has(spawn.pos.toString())) {
@@ -64,39 +77,6 @@ export class LogisticsManager extends OfficeManager {
             }
         })
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
-
-        switch (this.status) {
-            case OfficeManagerStatus.OFFLINE: {
-                // Manager is offline, do nothing
-                return;
-            }
-            default: {
-                // Maintain enough carriers to keep
-                // franchises drained
-                let metrics = this.statisticsAnalyst.metrics.get(this.office.name);
-                let inputAverageMean = metrics?.mineContainerLevels.asPercentMean() || 0;
-                let unassignedRequests = Array.from(this.requests.values()).filter(r => r.assignedCapacity >= r.capacity).length;
-                let requestCapacity = unassignedRequests / this.requests.size;
-                if (Game.time - this.lastMinionRequest > 50 &&
-                    (inputAverageMean > 0.1 && idleCarriers.length === 0 && requestCapacity >= 0.5)) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}% and ${unassignedRequests}/${this.requests.size} requests unfilled, spawning carrier`);
-                    this.hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 6, MinionTypes.CARRIER, {manager: this.constructor.name}));
-                    this.lastMinionRequest = Game.time;
-                } else if (Game.time - this.lastMinionRequest > 50 &&
-                    (inputAverageMean > 0.5 && idleCarriers.length === 0)) {
-                    console.log(`Franchise surplus of ${(inputAverageMean * 100).toFixed(2)}%, spawning carrier`);
-                    this.hrManager.submit(new MinionRequest(`${this.office.name}_Logistics`, 4, MinionTypes.CARRIER, {manager: this.constructor.name}));
-                    this.lastMinionRequest = Game.time;
-                }
-                break;
-            }
-        }
-
-        // Make sure we have a standing request for storage
-        if (storage && getFreeCapacity(storage) > 0) {
-            this.submit(storage.id, new ResupplyRequest(storage, 1))
-        }
-        // Create a request to recycle old creeps
 
         // Try to route requests
         // Prioritize requests
@@ -142,6 +122,9 @@ export class LogisticsManager extends OfficeManager {
                     if (level.length === 0) {
                         priorities.delete(priority);
                     }
+                    continue;
+                }
+                if (request.completed || (request.assignedCapacity >= request.capacity)) {
                     continue;
                 }
                 if (!route.extend(request)) break; // No more requests for route
@@ -210,14 +193,15 @@ export class LogisticsManager extends OfficeManager {
         chart.render(new RoomPosition(2, 2, this.office.center.name));
 
         // Requests
-        const taskTable: any[][] = [['Requester', 'Type', 'Priority', 'Capacity', 'Assigned']];
+        const taskTable: any[][] = [['Requester', 'Type', 'Priority', 'Capacity', 'Assigned', 'Completed']];
         for (let [, req] of this.requests) {
             taskTable.push([
                 JSON.stringify(req.pos),
                 req.constructor.name,
                 req.priority,
                 req.capacity,
-                req.assignedCapacity
+                req.assignedCapacity,
+                req.completed ? 'Y' : ''
             ])
         }
         Table(new RoomPosition(0, 35, this.office.center.name), taskTable);
@@ -276,4 +260,3 @@ export class LogisticsManager extends OfficeManager {
 }
 
 profiler.registerClass(LogisticsManager, 'LogisticsManager');
-profiler.registerFN(LogisticsManager.constructor, 'new LogisticsManager()')

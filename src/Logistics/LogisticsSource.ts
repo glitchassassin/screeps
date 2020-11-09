@@ -5,7 +5,7 @@ import { CachedResource } from "WorldState/branches/WorldResources";
 import { Memoize } from "typescript-memoize";
 import { getUsedCapacity } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
-import { travel } from "Office/OfficeManagers/OfficeTaskManager/TaskRequests/activity/Travel";
+import { travel } from "Logistics/Travel";
 
 /**
  * A cached representation of a Source
@@ -22,7 +22,8 @@ export class LogisticsSource {
      */
     constructor(
         public pos: RoomPosition,
-        public primary = true
+        public primary = true,
+        public includeAdjacent = true
     ) {
         this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
     }
@@ -53,7 +54,7 @@ export class LogisticsSource {
      *
      * @param creep Creep to transfer resources into
      */
-    transfer(creep: CachedCreep) {
+    transfer(creep: CachedCreep, amount?: number) {
         let source = this.sources[0];
         if (!source) return ERR_NOT_FOUND;
         if (source.pos.roomName !== creep.pos.roomName) {
@@ -65,8 +66,12 @@ export class LogisticsSource {
         if (source instanceof CachedResource) {
             result = source.gameObj ? creep.gameObj.pickup(source.gameObj) : ERR_NOT_FOUND;
         } else {
-            result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY) : ERR_NOT_FOUND;
+            result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY, amount) : ERR_NOT_FOUND;
+            if (result === ERR_NOT_ENOUGH_RESOURCES) {
+                result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY) : ERR_NOT_FOUND;
+            }
         }
+        if (result === ERR_FULL) return OK;
 
         if (result === ERR_NOT_IN_RANGE) {
             return travel(creep, source.pos);

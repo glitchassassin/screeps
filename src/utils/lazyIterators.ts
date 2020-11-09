@@ -11,3 +11,9 @@ export function* lazyFilter<T>(i: Iterable<T>, fn: (i: T) => any) {
         }
     }
 }
+
+export function lazyCount<T>(i: Iterable<T>) {
+    let count = 0;
+    for (let element of i) count++;
+    return count;
+}
