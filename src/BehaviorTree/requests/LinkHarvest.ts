@@ -2,6 +2,7 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedCreep, CachedSource } from "WorldState";
 
 import { MinionRequest } from "./MinionRequest";
+import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { dropEnergy } from "BehaviorTree/behaviors/dropEnergy";
 import { energyNotFull } from "BehaviorTree/behaviors/energyFull";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
@@ -27,8 +28,8 @@ export class LinkHarvestRequest extends MinionRequest {
                 ),
                 transferEnergy(source.link),
                 dropEnergy()
-            )
-
+            ),
+            continueIndefinitely()
         )
     }
 

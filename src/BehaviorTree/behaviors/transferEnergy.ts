@@ -6,5 +6,5 @@ export const transferEnergy = (target?: CachedCreep|CachedStructure<AnyStoreStru
 
     let result = creep.gameObj.transfer(target.gameObj, RESOURCE_ENERGY, amount)
 
-    return (result === OK || result === ERR_FULL) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
+    return (result === OK) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
 }
