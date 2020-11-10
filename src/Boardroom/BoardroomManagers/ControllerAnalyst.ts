@@ -57,17 +57,6 @@ export class ControllerAnalyst extends BoardroomManager {
         let controller = global.worldState.controllers.byRoom.get(office.name);
         if (!controller?.containerPos) return null;
 
-        // If we don't have a container/construction site cached, look for one
-        if (!controller.containerId && !controller.constructionSiteId) {
-            controller.containerPos.look().forEach(obj => {
-                if (obj.type === LOOK_STRUCTURES && obj.structure?.structureType === STRUCTURE_CONTAINER) {
-                    (controller as CachedController).containerId = obj.structure.id as Id<StructureContainer>;
-                } else if (obj.type === LOOK_CONSTRUCTION_SITES && obj.constructionSite?.structureType === STRUCTURE_CONTAINER) {
-                    (controller as CachedController).constructionSiteId = obj.constructionSite.id as Id<ConstructionSite>;
-                }
-            });
-        }
-
         return controller;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

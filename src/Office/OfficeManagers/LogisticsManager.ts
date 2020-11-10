@@ -59,6 +59,7 @@ export class LogisticsManager extends OfficeManager {
     plan() {
         let idleCarriers = this.getIdleCarriers();
         let storage = this.logisticsAnalyst.getStorage(this.office);
+        let links = this.logisticsAnalyst.getLinks(this.office);
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
@@ -74,6 +75,11 @@ export class LogisticsManager extends OfficeManager {
         spawns.forEach(spawn => {
             if (!this.sources.has(spawn.pos.toString())) {
                 this.sources.set(spawn.pos.toString(), new LogisticsSource(spawn.pos))
+            }
+        })
+        links.forEach(link => {
+            if (!this.sources.has(link.pos.toString())) {
+                this.sources.set(link.pos.toString(), new LogisticsSource(link.pos, false, false))
             }
         })
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned

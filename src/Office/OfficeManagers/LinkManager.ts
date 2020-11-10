@@ -12,6 +12,7 @@ export class LinkManager extends OfficeManager {
         let sources = salesAnalyst.getUsableSourceLocations(this.office);
         let controller = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
 
+        // console.log('Controller link', controller?.link?.gameObj)
         if (!controller?.link?.gameObj || controller.link.capacityFree === 0) return;
 
         for (let source of sources) {
