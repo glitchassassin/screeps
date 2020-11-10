@@ -12,7 +12,7 @@ export class RepairRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
     public pos: RoomPosition;
 
-    constructor(structure: CachedStructure) {
+    constructor(structure: CachedStructure, repairToHits?: number) {
         super();
         this.pos = structure.pos;
         this.action = Selector(
@@ -28,7 +28,7 @@ export class RepairRequest extends MinionRequest {
             Sequence(
                 stateIs(States.WORKING),
                 moveTo(structure.pos, 3),
-                repairStructure(structure)
+                repairStructure(structure, repairToHits)
             ),
             Sequence(
                 ifRepairIsNotFinished(),

@@ -44,7 +44,7 @@ export class RepairStrategist extends OfficeManager {
         if (req?.result)            this.repairRequests.delete(structure); // Request completed or failed
 
         // Otherwise, create a new request
-        req = new RepairRequest(structure)
+        req = new RepairRequest(structure, barrierLevel)
         facilitiesManager.submit(req);
         this.repairRequests.set(structure, req);
     }
