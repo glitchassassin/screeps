@@ -26,26 +26,24 @@ export class RepairStrategist extends OfficeManager {
         for (let structure of facilitiesAnalyst.getStructures(this.office)) {
             // Barrier heuristic
             if (
-                ( // Is barrier, and should be repaired
-                    (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) &&
-                    (structure.hits ?? 0) < barrierLevel * 0.5
-                ) || ( // Is not barrier, and should be repaired
-                    (structure.hits ?? 0) < (structure.hitsMax ?? 0) * 0.5
-                )
+                (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) &&
+                (structure.hits ?? 0) < barrierLevel * 0.5
             ) {
+                this.submitRequest(structure, barrierLevel);
+            } else if ((structure.hits ?? 0) < (structure.hitsMax ?? 0) * 0.5) {
                 this.submitRequest(structure);
             }
         }
     }
 
-    submitRequest(structure: CachedStructure) {
+    submitRequest(structure: CachedStructure, barrierLevel?: number) {
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
         // Check if we already have a harvest request
         let req = this.repairRequests.get(structure);
         if (req && !req.result)     return; // Request is pending
         if (req?.result)            this.repairRequests.delete(structure); // Request completed or failed
 
-        // Otherwise, create a new harvest request
+        // Otherwise, create a new request
         req = new RepairRequest(structure)
         facilitiesManager.submit(req);
         this.repairRequests.set(structure, req);

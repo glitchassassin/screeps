@@ -1,5 +1,6 @@
 import { BuildRequest } from 'BehaviorTree/requests/Build';
 import { ControllerAnalyst } from '../../../Boardroom/BoardroomManagers/ControllerAnalyst';
+import { FacilitiesManager } from '../FacilitiesManager';
 import { MinionRequest } from 'BehaviorTree/requests/MinionRequest';
 import { OfficeManager } from 'Office/OfficeManager';
 import profiler from 'screeps-profiler';
@@ -9,6 +10,7 @@ export class ControllerArchitect extends OfficeManager {
 
     plan() {
         let controllerAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst
+        let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
         // Only re-check infrastructure every `n` ticks after setup is complete (saves CPU)
         if (Game.time % 50 !== 0) return;
 
@@ -17,10 +19,15 @@ export class ControllerArchitect extends OfficeManager {
         if (controller?.level && controller.level > 1) {
             if (controller.containerPos && !controller.container && !this.buildRequest) {
                 this.buildRequest = new BuildRequest(controller.containerPos, STRUCTURE_CONTAINER);
+                facilitiesManager.submit(this.buildRequest);
+
             } else if (controller.linkPos && !controller.link && !this.buildRequest) {
                 this.buildRequest = new BuildRequest(controller.linkPos, STRUCTURE_LINK);
+                facilitiesManager.submit(this.buildRequest);
             }
         }
+
+        if (this.buildRequest?.result) this.buildRequest = undefined;
     }
 
     run() {

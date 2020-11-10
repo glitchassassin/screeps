@@ -11,9 +11,11 @@ export class SalesmanMinion extends Minion {
         } else {
             let workParts = Math.min(5, Math.floor((energy - 50) / 100));
             let moveParts = 1;
+            let carryParts = (energy > 550) ? 1 : 0;
             return [
                 ...Array(workParts).fill(WORK),
                 ...Array(moveParts).fill(MOVE),
+                ...Array(carryParts).fill(CARRY),
             ]
         }
     }

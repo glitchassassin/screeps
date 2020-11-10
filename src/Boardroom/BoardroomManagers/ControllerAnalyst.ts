@@ -13,9 +13,10 @@ export class ControllerAnalyst extends BoardroomManager {
             let controller = global.worldState.controllers.byRoom.get(office.name)
             if (!controller) return;
             // Initialize properties
-            if (!controller.containerPos) {
+            if (!controller.containerPos || !controller.linkPos) {
                 let {container, link} = this.calculateBestUpgradeLocation(office);
                 controller.containerPos = container;
+                controller.linkPos = link;
             }
         })
     }
@@ -39,6 +40,10 @@ export class ControllerAnalyst extends BoardroomManager {
                     if (!containerPos || containerPos.range > range) {
                         linkPos = containerPos;
                         containerPos = {pos, range};
+                    } else {
+                        if (!linkPos || linkPos.range > range) {
+                            linkPos = {pos, range};
+                        }
                     }
                 }
             });

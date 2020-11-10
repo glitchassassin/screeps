@@ -2,6 +2,7 @@ import { BuildRequest } from "BehaviorTree/requests/Build";
 import { CachedSource } from "WorldState";
 import { DropHarvestRequest } from "BehaviorTree/requests/DropHarvest";
 import { FacilitiesManager } from "../FacilitiesManager";
+import { LinkHarvestRequest } from "BehaviorTree/requests/LinkHarvest";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
@@ -64,7 +65,12 @@ export class SalesStrategist extends OfficeManager {
         if (source.energy === 0)    return; // Wait for source to replenish
 
         // Otherwise, create a new harvest request
-        req = new DropHarvestRequest(source)
+        if (!source.link) {
+            req = new DropHarvestRequest(source)
+        } else {
+            req = new LinkHarvestRequest(source)
+        }
+
         salesManager.submit(req);
         this.harvestRequests.set(source, req);
     }
