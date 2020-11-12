@@ -4,6 +4,7 @@ import { CachedSpawn } from "WorldState";
 import { Minion } from "MinionDefinitions/Minion";
 import { Request } from "BehaviorTree/Request";
 import { calcMaxRoomEnergy } from "BehaviorTree/behaviors/calcMaxRoomEnergy";
+import profiler from "screeps-profiler";
 import { spawnMinion } from "BehaviorTree/behaviors/spawnMinion";
 
 export class SpawnRequest extends Request<CachedSpawn> {
@@ -26,3 +27,4 @@ export class SpawnRequest extends Request<CachedSpawn> {
     }
 
 }
+profiler.registerClass(SpawnRequest, 'SpawnRequest');

@@ -2,6 +2,7 @@ import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "../LogisticsManager";
 import { OfficeManager } from "Office/OfficeManager";
 import { ResupplyRequest } from "Logistics/LogisticsRequest";
+import profiler from "screeps-profiler";
 
 export class StorageStrategist extends OfficeManager {
     plan() {
@@ -20,3 +21,4 @@ export class StorageStrategist extends OfficeManager {
         }
     }
 }
+profiler.registerClass(StorageStrategist, 'StorageStrategist');

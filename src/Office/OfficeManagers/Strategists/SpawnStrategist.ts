@@ -1,4 +1,6 @@
-import { CachedSpawn } from "WorldState";
+import { CachedSpawn, CachedStructure } from "WorldState";
+import { LogisticsRequest, TransferRequest } from "Logistics/LogisticsRequest";
+
 import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
@@ -16,11 +18,13 @@ import { SalesManager } from "../SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
-import { TransferRequest } from "Logistics/LogisticsRequest";
+import profiler from "screeps-profiler";
 import { unassignedLogisticsRequestsPercent } from "utils/gameObjectSelectors";
 
 export class SpawnStrategist extends OfficeManager {
     spawnRequest?: Request<CachedSpawn>;
+
+    logisticsRequests = new Map<CachedStructure, LogisticsRequest>();
 
     plan() {
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
@@ -53,6 +57,7 @@ export class SpawnStrategist extends OfficeManager {
         }
 
         if ( // Salesman minions
+            (hrAnalyst.newestEmployee(this.office, 'SALESMAN') ?? 0) < 1400 &&
             (salesAnalyst.unassignedHarvestRequests(this.office).length > 0 &&
             salesManager.getAvailableCreeps().length === 0) ||
             salesManager.creepsExpiring(50).length > 0
@@ -63,8 +68,7 @@ export class SpawnStrategist extends OfficeManager {
         }
 
         if ( // Paralegal minions
-            legalAnalyst.unassignedUpgradeRequests(this.office).length > 0 &&
-            legalManager.getAvailableCreeps().length === 0
+            hrAnalyst.getEmployees(this.office, 'PARALEGAL').length === 0
         ) {
             this.submitRequest(new ParalegalMinion());
             return;
@@ -95,16 +99,24 @@ export class SpawnStrategist extends OfficeManager {
     submitLogisticsRequests() {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
-        for (let spawn of hrAnalyst.getSpawns(this.office)) {
-            if (spawn.capacityFree > 0) {
-                logisticsManager.submit(spawn.id, new TransferRequest(spawn, 5));
-            }
-        }
-        for (let extension of hrAnalyst.getExtensions(this.office)) {
-            if (extension.capacityFree > 0) {
-                logisticsManager.submit(extension.id, new TransferRequest(extension, 5));
-            }
-        }
 
+        for (let spawn of hrAnalyst.getSpawns(this.office)) {
+            let req = this.logisticsRequests.get(spawn)
+            if ((!req || req.completed) && spawn.capacityFree > 0) {
+                req = new TransferRequest(spawn, 5)
+                logisticsManager.submit(spawn.id, req);
+                this.logisticsRequests.set(spawn, req);
+            }
+        }
+        let extensions = hrAnalyst.getExtensions(this.office);
+        for (let extension of extensions) {
+            let req = this.logisticsRequests.get(extension)
+            if ((!req || req.completed) && extension.capacityFree > 0) {
+                req = new TransferRequest(extension, 5)
+                logisticsManager.submit(extension.id, req);
+                this.logisticsRequests.set(extension, req);
+            }
+        }
     }
 }
+profiler.registerClass(SpawnStrategist, 'SpawnStrategist');

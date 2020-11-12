@@ -84,16 +84,18 @@ export class CachedController extends CachedStructure<StructureController> {
     @memoryCache(keyById, asRoomPosition)
     public linkPos?: RoomPosition;
 
-    @memoryCacheGetter(keyById, (i: CachedController) => Game.rooms[i.containerPos?.roomName ?? ''] && i.containerPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined)
+    @memoryCacheGetter(keyById, (i: CachedController) => (
+        Game.rooms[i.containerPos?.roomName ?? ''] &&
+        i.containerPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined
+    ), undefined, id => global.worldState.structures.byId.get(id) === undefined)
     public containerId?: Id<StructureContainer>;
     public get container() { return this.containerId ? global.worldState.structures.byId.get(this.containerId) as CachedStructure<StructureContainer> : undefined }
-    @memoryCacheGetter(keyById, (i: CachedController) => Game.rooms[i.linkPos?.roomName ?? ''] && i.linkPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>|undefined)
+    @memoryCacheGetter(keyById, (i: CachedController) => (
+        Game.rooms[i.linkPos?.roomName ?? ''] &&
+        i.linkPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>|undefined
+    ), undefined, id => global.worldState.structures.byId.get(id) === undefined)
     public linkId?: Id<StructureLink>;
     public get link() { return this.linkId ? global.worldState.structures.byId.get(this.linkId) as CachedStructure<StructureLink> : undefined }
-
-    @memoryCacheGetter(keyById, (i: CachedController) => Game.rooms[i.containerPos?.roomName ?? ''] && i.containerPos?.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<ConstructionSite>|undefined)
-    public constructionSiteId?: Id<ConstructionSite>;
-    public get constructionSite() { return this.constructionSiteId ? global.worldState.constructionSites.byId.get(this.constructionSiteId) : undefined }
 
     public get myReserved() { return this.reservationOwner === 'LordGreywether'; }
 }

@@ -2,8 +2,10 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedCreep, CachedSource } from "WorldState";
 
 import { MinionRequest } from "./MinionRequest";
+import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 
 export class DropHarvestRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
@@ -17,7 +19,8 @@ export class DropHarvestRequest extends MinionRequest {
                 moveTo(source.franchisePos, 0),
                 moveTo(source.pos)
             ),
-            harvestEnergy(source)
+            harvestEnergy(source),
+            continueIndefinitely()
         )
     }
 
@@ -40,3 +43,5 @@ export class DropHarvestRequest extends MinionRequest {
     }
 
 }
+
+profiler.registerClass(DropHarvestRequest, 'DropHarvestRequest');

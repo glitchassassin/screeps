@@ -19,7 +19,6 @@ export class Road {
             if (this.requests[i] && !this.requests[i].result) return; // request in progress
 
             this.requests[i] = new BuildRequest(pos, STRUCTURE_ROAD);
-            this.requests[i].priority = 1;
             newRequests.push(this.requests[i]);
         })
         return newRequests;

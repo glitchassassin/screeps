@@ -1,4 +1,4 @@
-export function* lazyMap<T>(i: Iterable<T>, fn: (i: T) => any) {
+export function* lazyMap<T, R>(i: Iterable<T>, fn: (i: T) => R) {
     for (let element of i) {
         yield fn(element);
     }

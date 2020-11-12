@@ -3,6 +3,7 @@ import { ifIsInRoom, moveTo } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedCreep } from "WorldState";
 import { MinionRequest } from "./MinionRequest";
+import profiler from "screeps-profiler";
 
 export class ExploreRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
@@ -26,3 +27,5 @@ export class ExploreRequest extends MinionRequest {
     }
 
 }
+
+profiler.registerClass(ExploreRequest, 'ExploreRequest');

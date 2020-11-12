@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
+import './utils/RoomVisual';
 
 import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';

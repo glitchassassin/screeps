@@ -16,23 +16,26 @@ export class OfficeTaskManager extends OfficeManager {
         // Sort requests by priority descending, then by proximity to spawn
         let spawn = global.worldState.mySpawns.byRoom.get(this.office.name)?.values().next().value;
         let target = (spawn? spawn.pos : new RoomPosition(25, 25, this.office.name)) as RoomPosition;
-        this.requests.sort((a, b) => {
-            let p = b.priority - a.priority;
-            if (p !== 0) return p;
-            return sortByDistanceTo(target)(a, b);
-        });
 
-        // Assign requests
-        for (let request of this.requests) {
-            // Only assign creeps up to the capacity limit
-            if (request.capacityMet()) continue;
+        if (this.getAvailableCreeps().length > 0) {
+            this.requests.sort((a, b) => {
+                let p = b.priority - a.priority;
+                if (p !== 0) return p;
+                return sortByDistanceTo(target)(a, b);
+            });
 
-            let creeps = this.getAvailableCreeps();
-            if (creeps.length === 0) break;
+            // Assign requests
+            for (let request of this.requests) {
+                // Only assign creeps up to the capacity limit
+                if (request.capacityMet()) continue;
 
-            for (let creep of creeps) {
-                request.assign(creep);
-                if (request.capacityMet()) break;
+                let creeps = this.getAvailableCreeps();
+                if (creeps.length === 0) break;
+
+                for (let creep of creeps) {
+                    request.assign(creep);
+                    if (request.capacityMet()) break;
+                }
             }
         }
 

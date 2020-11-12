@@ -79,7 +79,7 @@ export class LogisticsManager extends OfficeManager {
         })
         links.forEach(link => {
             if (!this.sources.has(link.pos.toString())) {
-                this.sources.set(link.pos.toString(), new LogisticsSource(link.pos, false, false))
+                this.sources.set(link.pos.toString(), new LogisticsSource(link.pos, true, false))
             }
         })
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned

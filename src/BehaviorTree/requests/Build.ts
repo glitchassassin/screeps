@@ -8,6 +8,7 @@ import { createConstructionSite } from "BehaviorTree/behaviors/createConstructio
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { ifBuildIsNotFinished } from "BehaviorTree/behaviors/buildIsNotFinished";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 
 const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_CONTAINER]:      5,
@@ -20,7 +21,7 @@ const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_OBSERVER]:       5,
     [STRUCTURE_POWER_SPAWN]:    5,
     [STRUCTURE_RAMPART]:        5,
-    [STRUCTURE_ROAD]:           1,
+    [STRUCTURE_ROAD]:           2,
     [STRUCTURE_SPAWN]:          5,
     [STRUCTURE_STORAGE]:        5,
     [STRUCTURE_TERMINAL]:       5,
@@ -67,3 +68,4 @@ export class BuildRequest extends MinionRequest {
     }
 
 }
+profiler.registerClass(BuildRequest, 'BuildRequest');

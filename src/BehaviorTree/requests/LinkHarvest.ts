@@ -7,6 +7,7 @@ import { dropEnergy } from "BehaviorTree/behaviors/dropEnergy";
 import { energyNotFull } from "BehaviorTree/behaviors/energyFull";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 import { transferEnergy } from "BehaviorTree/behaviors/transferEnergy";
 
 export class LinkHarvestRequest extends MinionRequest {
@@ -52,3 +53,4 @@ export class LinkHarvestRequest extends MinionRequest {
     }
 
 }
+profiler.registerClass(LinkHarvestRequest, 'LinkHarvestRequest');

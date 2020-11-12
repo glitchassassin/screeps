@@ -4,6 +4,7 @@ import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { CachedResource } from "WorldState/branches/WorldResources";
 import { Memoize } from "typescript-memoize";
 import { getUsedCapacity } from "utils/gameObjectSelectors";
+import { log } from "utils/logger";
 import profiler from "screeps-profiler";
 import { travel } from "Logistics/Travel";
 
@@ -43,7 +44,7 @@ export class LogisticsSource {
      */
     public get sources() : RealLogisticsSources[] {
         if (!Game.rooms[this.pos.roomName]) return this._sources; // No visibility, use cached
-        this._sources = this.logisticsAnalyst.getRealLogisticsSources(this.pos);
+        this._sources = this.logisticsAnalyst.getRealLogisticsSources(this.pos, this.includeAdjacent);
         return this._sources;
     }
 
@@ -65,11 +66,14 @@ export class LogisticsSource {
         let result;
         if (source instanceof CachedResource) {
             result = source.gameObj ? creep.gameObj.pickup(source.gameObj) : ERR_NOT_FOUND;
+            log('LogisticsSource', `${creep.name} picking up resource at ${source.pos}: ${result}`)
         } else {
+            if (amount !== undefined) amount = Math.max(amount, creep.capacityFree)
             result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY, amount) : ERR_NOT_FOUND;
-            if (result === ERR_NOT_ENOUGH_RESOURCES) {
+            if (result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_FULL) {
                 result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY) : ERR_NOT_FOUND;
             }
+            log('LogisticsSource', `${creep.name} withdrawing from store at ${source.pos}: ${result}`)
         }
         if (result === ERR_FULL) return OK;
 

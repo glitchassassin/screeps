@@ -6,6 +6,7 @@ import { MinionRequest } from "./MinionRequest";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { ifRepairIsNotFinished } from "BehaviorTree/behaviors/repairIsNotFinished";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
 export class RepairRequest extends MinionRequest {
@@ -48,3 +49,4 @@ export class RepairRequest extends MinionRequest {
     }
 
 }
+profiler.registerClass(RepairRequest, 'RepairRequest');

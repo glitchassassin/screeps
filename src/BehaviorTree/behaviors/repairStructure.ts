@@ -13,7 +13,7 @@ export const repairStructure = (structure: CachedStructure, repairToHits?: numbe
     if (bb.repairToHits === undefined) bb.repairToHits = repairToHits;
 
     if (!structure.gameObj) return BehaviorResult.FAILURE;
-    if (structure.gameObj.hits === (bb.repairToHits !== undefined ? bb.repairToHits : structure.gameObj.hitsMax)) return BehaviorResult.SUCCESS;
+    if (structure.gameObj.hits >= (bb.repairToHits !== undefined ? bb.repairToHits : structure.gameObj.hitsMax)) return BehaviorResult.SUCCESS;
 
     let result = creep.gameObj.repair(structure.gameObj);
     if (result === OK) return BehaviorResult.INPROGRESS;

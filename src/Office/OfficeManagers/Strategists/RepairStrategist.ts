@@ -5,6 +5,7 @@ import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { getRcl } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 const BARRIER_LEVEL: Record<number, number> = {
     1: 3e+3,
@@ -12,9 +13,9 @@ const BARRIER_LEVEL: Record<number, number> = {
     3: 1e+4,
     4: 5e+4,
     5: 1e+5,
-    6: 5e+5,
-    7: 1e+6,
-    8: 2e+7,
+    6: 1e+5,
+    7: 1e+5,
+    8: 1e+5,
 }
 
 export class RepairStrategist extends OfficeManager {
@@ -25,11 +26,10 @@ export class RepairStrategist extends OfficeManager {
         let barrierLevel = BARRIER_LEVEL[(getRcl(this.office.name) ?? 1)] ?? 0
         for (let structure of facilitiesAnalyst.getStructures(this.office)) {
             // Barrier heuristic
-            if (
-                (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) &&
-                (structure.hits ?? 0) < barrierLevel * 0.5
-            ) {
-                this.submitRequest(structure, barrierLevel);
+            if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) {
+                if ((structure.hits ?? 0) < barrierLevel * 0.5) {
+                    this.submitRequest(structure, barrierLevel);
+                }
             } else if ((structure.hits ?? 0) < (structure.hitsMax ?? 0) * 0.5) {
                 this.submitRequest(structure);
             }
@@ -49,3 +49,4 @@ export class RepairStrategist extends OfficeManager {
         this.repairRequests.set(structure, req);
     }
 }
+profiler.registerClass(RepairStrategist, 'RepairStrategist');

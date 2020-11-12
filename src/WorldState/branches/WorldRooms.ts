@@ -85,6 +85,8 @@ export class CachedRoom {
     public city?: string;
     @memoryCache(keyByName)
     public territoryOf?: string;
+    @memoryCache(keyByName)
+    public roomPlan?: string;
 
     public get isOffice() { return !!this.city; }
 

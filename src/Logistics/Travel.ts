@@ -40,7 +40,11 @@ export class Route {
         }
         this.lastPos = creep.pos;
         let result = creep.gameObj.moveByPath(this.path);
-        return (result === ERR_TIRED) ? OK : result;
+        if (result === ERR_TIRED) {
+            this.stuckForTicks = 0;
+            return OK;
+        }
+        return result;
     }
     visualize() {
         if (!this.path) return;
@@ -87,5 +91,6 @@ export const travel = (creep: CachedCreep, pos: RoomPosition, range: number = 1)
     } else if (result !== OK) {
         routeCache.delete(routeKey);
     }
+    log('Travel', `${creep.name} result: ${result}`);
     return result;
 }

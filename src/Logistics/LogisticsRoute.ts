@@ -5,6 +5,7 @@ import { LogisticsSource } from "./LogisticsSource";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { log } from "utils/logger";
 import profiler from "screeps-profiler";
 
 enum RouteState {
@@ -146,6 +147,7 @@ export class LogisticsRoute {
 
     setState(s: RouteState) {
         if (this.state === s) return;
+        log('LogisticsRoute', `${this.creep.name} switching to ${s}`)
         // If creep has not withdrawn, cancel reservation
         if (this.state === RouteState.GETTING_ENERGY) {
             this.source?.unreserve(this.reservedCapacity)
@@ -163,6 +165,7 @@ export class LogisticsRoute {
     run() {
         // Validate current state
         if (!this.creep.gameObj) { // Creep not found
+            log('LogisticsRoute', `Creep ${this.creep.name} not found`)
             this.setState(RouteState.CANCELLED);
             return;
         }
@@ -199,6 +202,7 @@ export class LogisticsRoute {
                     return;
                 }
                 let result = this.source.transfer(this.creep, this.reservedCapacity);
+                log('LogisticsRoute', `${this.creep.name} transferring from source ${this.source.pos}: ${result}`)
                 if (result !== OK) {
                     this.setState(RouteState.CANCELLED);
                 }
@@ -206,6 +210,7 @@ export class LogisticsRoute {
             }
             case RouteState.FULFILLING: {
                 let result = this.requests[0].action(this.creep);
+                log('LogisticsRoute', `${this.creep.name} fulfilling ${this.requests[0].constructor.name} at ${this.requests[0].pos}: ${result}`)
                 if (result !== OK) {
                     this.setState(RouteState.CANCELLED);
                 }

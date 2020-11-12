@@ -7,6 +7,7 @@ import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
+import { RoomArchitect } from "./BoardroomManagers/Architects/RoomArchitect";
 import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
 import { cityNames } from "./CityNames";
@@ -41,6 +42,9 @@ export class Boardroom {
         new LogisticsAnalyst(this);
         new SalesAnalyst(this);
         new StatisticsAnalyst(this);
+
+        // Create Architects
+        new RoomArchitect(this);
 
         // Initialize BoardroomManagers
         this.managers.forEach(m => m.init());

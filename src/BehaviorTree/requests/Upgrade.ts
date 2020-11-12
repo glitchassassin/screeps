@@ -5,6 +5,7 @@ import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/
 import { MinionRequest } from "./MinionRequest";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 import { upgradeController } from "BehaviorTree/behaviors/upgradeController";
 
 export class UpgradeRequest extends MinionRequest {
@@ -48,3 +49,4 @@ export class UpgradeRequest extends MinionRequest {
     }
 
 }
+profiler.registerClass(UpgradeRequest, 'UpgradeRequest');

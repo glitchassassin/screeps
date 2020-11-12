@@ -3,6 +3,7 @@ import { LogisticsManager } from "../LogisticsManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { TransferRequest } from "Logistics/LogisticsRequest";
+import profiler from "screeps-profiler";
 
 export class DefenseStrategist extends OfficeManager {
     public request?: MinionRequest;
@@ -28,3 +29,4 @@ export class DefenseStrategist extends OfficeManager {
         }
     }
 }
+profiler.registerClass(DefenseStrategist, 'DefenseStrategist');

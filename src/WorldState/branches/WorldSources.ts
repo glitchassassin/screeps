@@ -32,15 +32,21 @@ export class CachedSource extends CachedIDItem<Source> {
 
     @memoryCache(keyById)
     public officeId?: string;
-    @memoryCacheGetter(keyById, (i: CachedSource) => Game.rooms[i.franchisePos?.roomName ?? ''] && i.franchisePos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined)
+    @memoryCacheGetter(keyById, (i: CachedSource) => (
+        Game.rooms[i.franchisePos?.roomName ?? ''] &&
+        i.franchisePos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>|undefined
+    ), undefined, id => global.worldState.structures.byId.get(id) === undefined)
     public containerId?: Id<StructureContainer>;
     public get container() { return this.containerId ? global.worldState.structures.byId.get(this.containerId) as CachedStructure<StructureContainer> : undefined }
 
-    @memoryCacheGetter(keyById, (i: CachedSource) => Game.rooms[i.linkPos?.roomName ?? ''] && i.linkPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>|undefined)
+    @memoryCacheGetter(keyById, (i: CachedSource) => (
+        Game.rooms[i.linkPos?.roomName ?? ''] &&
+        i.linkPos?.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>|undefined
+    ), undefined, id => global.worldState.structures.byId.get(id) === undefined)
     public linkId?: Id<StructureLink>;
     public get link() { return this.linkId ? global.worldState.structures.byId.get(this.linkId) as CachedStructure<StructureLink> : undefined }
 
-    @heapCacheGetter((i: CachedSource) => countEnergyInContainersOrGround(i.pos))
+    @heapCacheGetter((i: CachedSource) => countEnergyInContainersOrGround(i.pos) + (i.link?.capacityUsed ?? 0))
     public surplus?: number;
 
     public get salesmen() {

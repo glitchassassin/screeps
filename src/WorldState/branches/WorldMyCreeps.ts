@@ -29,7 +29,7 @@ export class WorldMyCreeps extends WorldData {
         // Refresh existing creeps in the room
         for (let creepName in Game.creeps) {
             let creep = Game.creeps[creepName];
-            if (creep.spawning) continue; // Skip still-spawning creeps
+            // if (creep.spawning) continue; // Skip still-spawning creeps
 
             // Create a new CachedCreep if needed
             let cachedCreep = this.byName.get(creep.name)

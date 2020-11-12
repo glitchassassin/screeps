@@ -7,6 +7,7 @@ import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { SalesManager } from "../SalesManager";
+import profiler from "screeps-profiler";
 import { rclIsGreaterThan } from "utils/gameObjectSelectors";
 
 export class SalesStrategist extends OfficeManager {
@@ -75,3 +76,4 @@ export class SalesStrategist extends OfficeManager {
         this.harvestRequests.set(source, req);
     }
 }
+profiler.registerClass(SalesStrategist, 'SalesStrategist');

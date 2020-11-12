@@ -78,7 +78,7 @@ export class LogisticsAnalyst extends BoardroomManager {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
                 let resource = global.worldState.resources.byId.get(item.resource.id) as CachedResource<RESOURCE_ENERGY>;
                 if (resource) results.push(resource);
-            } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage) {
+            } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage || item.structure instanceof StructureLink) {
                 let structure = global.worldState.structures.byId.get(item.structure.id) as CachedStructure<StructureStorage>;
                 if (structure) results.push(structure);
             }
@@ -99,6 +99,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedCreep|CachedResource<RESOURCE_ENERGY>)[] {
         let depots = this.depots.get(office.name) ?? [];
         return [
+            ...this.getLinks(office),
             ...this.getFreeSources(office),
             ...depots,
             ...this.getContainers(office)

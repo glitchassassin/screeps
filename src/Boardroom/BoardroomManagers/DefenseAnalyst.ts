@@ -13,6 +13,10 @@ export enum TerritoryIntent {
     EXPLOIT = 'EXPLOIT'
 }
 
+export const WHITELIST = [
+    'CrAzYDubC'
+]
+
 export class DefenseAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getTowers(office: Office) {
@@ -25,7 +29,10 @@ export class DefenseAnalyst extends BoardroomManager {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let [spawn] = hrAnalyst.getSpawns(office);
         if (!spawn) return [];
-        let hostileCreeps = Array.from(global.worldState.hostileCreeps.byRoom.get(office.center.name) ?? []);
+        let hostileCreeps = Array.from(lazyFilter(
+            global.worldState.hostileCreeps.byRoom.get(office.center.name) ?? [],
+            c => (c.gameObj && !WHITELIST.includes(c.gameObj?.owner.username))
+        ));
         return hostileCreeps.sort(sortByDistanceTo(spawn.pos));
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))

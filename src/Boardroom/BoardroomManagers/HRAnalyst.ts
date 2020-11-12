@@ -8,17 +8,20 @@ export class HRAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getExtensions(office: Office) {
         let structures = global.worldState.structures.byRoom.get(office.center.name) ?? [];
-        return Array.from(lazyFilter(structures, s => s.structureType === STRUCTURE_EXTENSION)) as CachedStructure<StructureExtension>[];
+        return lazyFilter(structures, s => s.structureType === STRUCTURE_EXTENSION) as Generator<CachedStructure<StructureExtension>>;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSpawns(office: Office) {
         return Array.from(global.worldState.mySpawns.byRoom.get(office.center.name) ?? []);
     }
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
-    getEmployees(office: Office, type?: string) {
+    getEmployees(office: Office, type?: string, excludeSpawning = true) {
         return Array.from(lazyFilter(
             global.worldState.myCreeps.byOffice.get(office.name) ?? [],
-            creep => !type || creep.memory?.type === type
+            creep => (
+                (!type || creep.memory?.type === type) &&
+                (!excludeSpawning || !creep.gameObj.spawning)
+            )
         ))
     }
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))

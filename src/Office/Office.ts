@@ -80,8 +80,10 @@ export class Office {
      * Execute plan phase for all OfficeManagers
      */
     plan() {
+        // resetDebugCPU();
         this.managers.forEach(m => {
             m.plan()
+            // debugCPU(m.constructor.name);
         });
     }
 
