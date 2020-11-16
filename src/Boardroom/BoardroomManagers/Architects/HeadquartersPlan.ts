@@ -1,0 +1,204 @@
+import { BlockPlan } from "./classes/BlockPlan";
+import { CachedController } from "WorldState";
+import { MapAnalyst } from "../MapAnalyst";
+import { PlannedStructure } from "./classes/PlannedStructure";
+import { lazyMap } from "utils/lazyIterators";
+
+const HQ_UPGRADE_LEFT: StructureConstant[][] = [
+    [STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
+    [STRUCTURE_TERMINAL, STRUCTURE_ROAD, STRUCTURE_ROAD],
+    [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_STORAGE],
+    [STRUCTURE_LINK, STRUCTURE_ROAD, STRUCTURE_ROAD],
+    [STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
+]
+
+const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => [...row].reverse());
+
+const HQ_UPGRADE_TOP = HQ_UPGRADE_LEFT[0].map((k, i) => HQ_UPGRADE_LEFT.map(row => row[i]))
+
+const HQ_UPGRADE_BOTTOM = HQ_UPGRADE_RIGHT[0].map((k, i) => HQ_UPGRADE_RIGHT.map(row => row[i]))
+
+export class HeadquartersPlan {
+    spawn!: PlannedStructure;
+    link!: PlannedStructure;
+    container!: PlannedStructure;
+    storage!: PlannedStructure;
+    terminal!: PlannedStructure;
+    towers: PlannedStructure[] = [];
+    roads: PlannedStructure[] = [];
+
+    constructor(roomName: string) {
+        // Calculate from scratch
+        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
+        let controller = global.worldState.controllers.byRoom.get(roomName);
+        if (!controller) throw new Error('No known controller in room, unable to compute plan')
+        let sources = Array.from(global.worldState.sources.byRoom.get(roomName) ?? []);
+        if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
+
+        let result: BlockPlan|undefined = undefined;
+
+        for (let space of this.findSpaces(controller)) {
+            console.log(space.x, space.y);
+            // Orient the space
+            //            X X X
+            // X X O X X  X X X
+            // X X X X X  O X O <-- +2,+2
+            // X X O X X  X X X
+            //     ^      X X X
+            //   +2,+2
+            // There are two valid upgrading locations; range to Controller
+            // will determine which orientation the Headquarters has. We
+            // only need to check one pos for either horizontal or vertical
+
+            // Get the upgrade location closest to Controller
+            let orientation: StructureConstant[][];
+            let inRange = new RoomPosition(space.x + 2, space.y + 2, controller.pos.roomName).inRangeTo(controller, 3);
+            if (space.horizontal) {
+                if (inRange) {
+                    orientation = HQ_UPGRADE_BOTTOM;
+                } else {
+                    orientation = HQ_UPGRADE_TOP;
+                }
+            } else {
+                if (inRange) {
+                    orientation = HQ_UPGRADE_RIGHT;
+                } else {
+                    orientation = HQ_UPGRADE_LEFT;
+                }
+            }
+
+            let costMatrix = new PathFinder.CostMatrix();
+
+
+            for (let y = 0; y < orientation.length; y++) {
+                for (let x = 0; x < orientation[y].length; x++) {
+                    // Container is an "obstacle" because the upgrading creep will stay there
+                    if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
+                        console.log(`obstacle ${orientation[y][x]} at [${x}, ${y}]`, )
+                        costMatrix.set(space.x + x, space.y + y, 255)
+                    }
+                }
+            }
+
+            // Verify paths from spawning squares to both sources
+            let spawnPoints = [
+                new RoomPosition(space.x + 1, space.y + 1, controller.pos.roomName),
+                (space.horizontal ?
+                    new RoomPosition(space.x + 3, space.y + 1, controller.pos.roomName) :
+                    new RoomPosition(space.x + 1, space.y + 3, controller.pos.roomName)
+                )
+            ];
+            let roads = new Set<RoomPosition>();
+            if (sources.some(source =>
+                spawnPoints.some(pos =>
+                    {
+                        console.log('pos', pos)
+                        let path = PathFinder.search(
+                            pos,
+                            {pos: source.pos, range: 1},
+                            {maxRooms: 1, roomCallback: () => costMatrix}
+                        );
+                        new RoomVisual(pos.roomName).poly([pos, ...path.path], {stroke: 'green', lineStyle: 'dashed'})
+                        if (!path.incomplete) {
+                            path.path.forEach(p => roads.add(p));
+                        }
+                        return path.incomplete
+                    }
+
+                )
+            )) continue; // Invalid room plan
+
+            // Valid room plan
+            for (let y = 0; y < orientation.length; y++) {
+                for (let x = 0; x < orientation[y].length; x++) {
+                    let pos = new RoomPosition(space.x + x, space.y + y, controller.pos.roomName);
+                    switch (orientation[y][x]) {
+                        case STRUCTURE_SPAWN:
+                            this.spawn = new PlannedStructure(pos, STRUCTURE_SPAWN);
+                            break;
+                        case STRUCTURE_LINK:
+                            this.link = new PlannedStructure(pos, STRUCTURE_LINK);
+                            break;
+                        case STRUCTURE_CONTAINER:
+                            this.container = new PlannedStructure(pos, STRUCTURE_CONTAINER);
+                            break;
+                        case STRUCTURE_STORAGE:
+                            this.storage = new PlannedStructure(pos, STRUCTURE_STORAGE);
+                            break;
+                        case STRUCTURE_TERMINAL:
+                            this.terminal = new PlannedStructure(pos, STRUCTURE_TERMINAL);
+                            break;
+                        case STRUCTURE_TOWER:
+                            this.towers.push(new PlannedStructure(pos, STRUCTURE_TOWER));
+                            break;
+                        case STRUCTURE_ROAD:
+                            roads.add(pos);
+                            break;
+                    }
+
+                    if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
+                        console.log(`obstacle ${orientation[y][x]} at [${x}, ${y}]`, )
+                        costMatrix.set(space.x + x, space.y + y, 255)
+                    }
+                }
+            }
+
+            this.roads = Array.from(lazyMap(roads, road => new PlannedStructure(road, STRUCTURE_ROAD)));
+            break;
+        }
+        if (!this.container || !this.link || !this.spawn || !this.storage || !this.terminal || this.towers.length !== 6) {
+            throw new Error('No room for a Headquarters block near controller');
+        }
+    }
+
+    *findSpaces(controller: CachedController) {
+        // Lay out the grid, cropping for edges
+        let x = Math.max(1, controller.pos.x - 5);
+        let y = Math.max(1, controller.pos.y - 5);
+        let width = Math.min(48, controller.pos.x + 5) - x + 1;
+        let height = Math.min(48, controller.pos.y + 5) - y + 1;
+
+        let grid: {x: number, y: number}[][] = [];
+        let terrain = Game.map.getRoomTerrain(controller.pos.roomName);
+
+        for (let yGrid = 0; yGrid < height; yGrid++) {
+            grid[yGrid] = [];
+            for (let xGrid = 0; xGrid < width; xGrid++) {
+                // For each cell...
+                let t = terrain.get(x+xGrid, y+yGrid)
+                // If the cell is a wall or adjacent to the controller, reset its value to 0,0
+                let xOffset = Math.abs(controller.pos.x - (x + xGrid))
+                let yOffset = Math.abs(controller.pos.y - (y + yGrid))
+                if (t === TERRAIN_MASK_WALL || (xOffset <= 1 && yOffset <= 1)) {
+                    grid[yGrid][xGrid] = {x: 0, y: 0};
+                    continue;
+                }
+                // Otherwise, increment it based on the value of
+                // its top and left neighbors
+                grid[yGrid][xGrid] = {
+                    x: 1 + (grid[yGrid]?.[xGrid-1]?.x ?? 0),
+                    y: 1 + (grid[yGrid-1]?.[xGrid]?.y ?? 0)
+                };
+
+                // If the values are greater than (3,5), and opposite corners agree, there is room for a vertical HQ
+                if (
+                    grid[yGrid][xGrid].x >= 3 &&
+                    grid[yGrid][xGrid].y >= 5 &&
+                    (grid[yGrid][xGrid - 2]?.y ?? 0) >= 5 &&
+                    (grid[yGrid - 4]?.[xGrid].x ?? 0) >= 3
+                ) {
+                    yield { x: x + xGrid - 2, y: y + yGrid - 4, horizontal: false }
+                }
+                // If the values are greater than (3,5), there is room for a horizontal HQ
+                if (
+                    grid[yGrid][xGrid].x >= 5 &&
+                    grid[yGrid][xGrid].y >= 3 &&
+                    (grid[yGrid][xGrid - 4]?.y ?? 0) >= 3 &&
+                    (grid[yGrid - 2]?.[xGrid].x ?? 0) >= 5
+                ) {
+                    yield { x: x + xGrid - 4, y: y + yGrid - 2, horizontal: true }
+                }
+            }
+        }
+    }
+}

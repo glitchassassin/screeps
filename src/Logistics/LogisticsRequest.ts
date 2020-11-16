@@ -42,7 +42,7 @@ export class TransferRequest extends LogisticsRequest {
     action(creep: CachedCreep) {
         if (!this.target.gameObj) return ERR_NOT_FOUND;
         let result = creep.gameObj.transfer(this.target.gameObj, RESOURCE_ENERGY);
-        if (result === OK) {
+        if (result === OK || result === ERR_NOT_ENOUGH_RESOURCES) {
             this.completed = true;
         } else if (result === ERR_NOT_IN_RANGE) {
             return travel(creep, this.pos)

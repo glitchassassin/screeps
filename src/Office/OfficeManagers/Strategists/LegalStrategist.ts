@@ -47,7 +47,7 @@ export class LegalStrategist extends OfficeManager {
             legalManager.submit(this.request);
         }
 
-        if (!this.fallbackRequest || this.fallbackRequest.result) {
+        if (controller.level < 5 && (!this.fallbackRequest || this.fallbackRequest.result)) {
             // If Engineers are otherwise idle, they can
             // upgrade the controller
             this.fallbackRequest = new UpgradeRequest(controller);

@@ -55,8 +55,9 @@ global.purge = () => {
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
   MemHack.pretick();
-  if (Game.cpu.bucket < 200 && Game.time % 2 === 0) {
-    return; // If the bucket gets really low, skip every other tick to let it rebuild
+  if (Game.cpu.bucket < 200) {
+    console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
+    return; // If the bucket gets really low, let it rebuild
   }
   // Automatically delete memory of missing creeps
   if(Game.time%1500 === 0) {

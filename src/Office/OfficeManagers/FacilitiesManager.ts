@@ -8,6 +8,22 @@ import { repairRemaining } from "utils/gameObjectSelectors";
 
 export class FacilitiesManager extends OfficeTaskManager {
     minionTypes = ['ENGINEER'];
+    workPending() {
+        let pending = 0;
+        for (let req of this.requests) {
+            if (req instanceof BuildRequest) {
+                pending += CONSTRUCTION_COST[req.structureType];
+                let site = req.pos.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === (req as BuildRequest).structureType)
+                if (site) {
+                    pending -= site.progress;
+                }
+            } else if (req instanceof RepairRequest) {
+                let hits = (req.repairToHits ?? req.structure.hitsMax ?? 0) - (req.structure.hits ?? 0);
+                pending += hits / REPAIR_POWER
+            }
+        }
+        return pending;
+    }
     run() {
         super.run();
         if (global.v.facilities.state) {

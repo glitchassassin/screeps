@@ -4,7 +4,6 @@ import { CachedCreep, CachedSource } from "WorldState";
 import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { dropEnergy } from "BehaviorTree/behaviors/dropEnergy";
-import { energyNotFull } from "BehaviorTree/behaviors/energyFull";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import profiler from "screeps-profiler";
@@ -23,13 +22,10 @@ export class LinkHarvestRequest extends MinionRequest {
                 moveTo(source.pos)
             ),
             Selector(
-                Sequence(
-                    energyNotFull(),
-                    harvestEnergy(source)
-                ),
                 transferEnergy(source.link),
-                dropEnergy()
+                dropEnergy(),
             ),
+            harvestEnergy(source),
             continueIndefinitely()
         )
     }

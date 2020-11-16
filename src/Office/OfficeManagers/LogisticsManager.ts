@@ -59,7 +59,7 @@ export class LogisticsManager extends OfficeManager {
     plan() {
         let idleCarriers = this.getIdleCarriers();
         let storage = this.logisticsAnalyst.getStorage(this.office);
-        let links = this.logisticsAnalyst.getLinks(this.office);
+        let controller = global.worldState.controllers.byRoom.get(this.office.name);
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
@@ -77,11 +77,9 @@ export class LogisticsManager extends OfficeManager {
                 this.sources.set(spawn.pos.toString(), new LogisticsSource(spawn.pos))
             }
         })
-        links.forEach(link => {
-            if (!this.sources.has(link.pos.toString())) {
-                this.sources.set(link.pos.toString(), new LogisticsSource(link.pos, true, false))
-            }
-        })
+        if (controller?.link && !this.sources.has(controller.link.pos.toString())) {
+            this.sources.set(controller.link.pos.toString(), new LogisticsSource(controller.link.pos, true, false))
+        }
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 
         // Try to route requests

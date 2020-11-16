@@ -32,6 +32,8 @@ export class OfficeTaskManager extends OfficeManager {
                 let creeps = this.getAvailableCreeps();
                 if (creeps.length === 0) break;
 
+                creeps.sort(sortByDistanceTo(request.pos));
+
                 for (let creep of creeps) {
                     request.assign(creep);
                     if (request.capacityMet()) break;

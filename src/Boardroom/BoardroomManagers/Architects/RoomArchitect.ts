@@ -2,6 +2,8 @@ import { BlockPlan } from './classes/BlockPlan';
 import { BoardroomManager } from 'Boardroom/BoardroomManager';
 import { CachedRoom } from 'WorldState';
 import { FranchisePlan } from './FranchisePlan';
+import { HeadquartersPlan } from './HeadquartersPlan';
+import { fillExtensions } from './ExtensionsPlan';
 import { lazyMap } from 'utils/lazyIterators';
 import profiler from 'screeps-profiler';
 
@@ -9,28 +11,74 @@ export class RoomArchitect extends BoardroomManager {
     roomPlans = new Map<string, BlockPlan>();
     plan() {
         for (let [,room] of global.worldState.rooms.byRoom) {
-            if (this.roomPlans.has(room.name)) continue;
+
+            if (room.roomPlan !== '' && this.roomPlans.has(room.name)) continue;
 
             if (room.roomPlan) {
-                let plan = new BlockPlan();
-                this.roomPlans.set(room.name, plan);
-                // If planning step failed, leave BlockPlan empty
-                if (room.roomPlan.startsWith('FAILED')) continue;
-                // Reconstitute from string
-                plan.deserialize(room.roomPlan);
+                if (room.roomPlan.startsWith('FAILED')) {
+                    // If planning step failed, leave BlockPlan empty
+                    this.roomPlans.set(room.name, new BlockPlan());
+                } else {
+                    this.roomPlans.set(room.name, this.reloadPlan(room.roomPlan));
+                }
             } else {
-                // Calculate from scratch
-                this.planRoom(room);
+                if (this.isEligible(room)) {
+                    // Calculate from scratch
+                    this.roomPlans.set(room.name, this.planRoom(room));
+                } else {
+                    room.roomPlan = 'FAILED - ineligible'
+                    this.roomPlans.set(room.name, new BlockPlan());
+                }
+
             }
         }
     }
 
+    isEligible(room: CachedRoom) {
+        // Room must have a controller and two sources
+        // To avoid edge cases, controller and sources must not be within range 5 of each other
+        let controller = global.worldState.controllers.byRoom.get(room.name);
+        if (!controller) {
+            console.log(`Room planning for ${room.name} - No controller`);
+            return false;
+        }
+        let sources = global.worldState.sources.byRoom.get(room.name);
+        if (!sources || sources.size < 2) {
+            console.log(`Room planning for ${room.name} - Invalid number of sources`);
+            return false;
+        }
+
+        let [source1, source2] = sources;
+        if (controller.pos.getRangeTo(source1.pos) < 5) {
+            console.log(`Room planning for ${room.name} - Source too close to controller`);
+            return false;
+        }
+        if (controller.pos.getRangeTo(source2.pos) < 5) {
+            console.log(`Room planning for ${room.name} - Source too close to controller`);
+            return false;
+        }
+        if (source1.pos.getRangeTo(source2.pos) < 5) {
+            console.log(`Room planning for ${room.name} - Sources too close together`);
+            return false;
+        }
+        return true;
+    }
+
+    reloadPlan(roomPlan: string) {
+        let plan = new BlockPlan();
+        plan.deserialize(roomPlan);
+        return plan;
+    }
+
     planRoom(room: CachedRoom) {
         let start = Game.cpu.getUsed();
+
+        let roomBlock = new BlockPlan();
+
         // Get sources
         let sources = global.worldState.sources.byRoom.get(room.name) ?? [];
         // Calculate FranchisePlans
-        let franchise1, franchise2;
+        let franchise1, franchise2, headquarters;
         try {
             let plans = Array.from(lazyMap(sources, source => new FranchisePlan(source.pos)));
             if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`)
@@ -38,35 +86,59 @@ export class RoomArchitect extends BoardroomManager {
             [franchise1, franchise2] = plans;
         } catch {
             room.roomPlan = 'FAILED generating franchises';
-            return;
+            console.log(room.roomPlan);
+            return roomBlock;
+        }
+        try {
+            headquarters = new HeadquartersPlan(room.name);
+        } catch {
+            room.roomPlan = 'FAILED generating headquarters';
+            console.log(room.roomPlan);
+            return roomBlock;
         }
 
         // Sort structures by build order
-        let roomBlock = new BlockPlan();
-        this.roomPlans.set(room.name, roomBlock);
         // RCL 1
         roomBlock.structures.push(franchise1.spawn);
         roomBlock.structures.push(franchise2.container);
         roomBlock.structures.push(franchise1.container);
+        roomBlock.structures.push(headquarters.container);
         // RCL 2
         roomBlock.structures.push(...franchise2.extensions);
         roomBlock.structures.push(...franchise1.extensions);
+        roomBlock.structures.push(...headquarters.roads);
+        // RCL 3
+        roomBlock.structures.push(headquarters.towers[0]);
+        // RCL 4
+        roomBlock.structures.push(headquarters.storage);
         // RCL 5
+        roomBlock.structures.push(headquarters.towers[1]);
         roomBlock.structures.push(franchise2.link);
+        roomBlock.structures.push(headquarters.link);
         // RCL 6
         roomBlock.structures.push(franchise1.link);
+        roomBlock.structures.push(headquarters.terminal);
         // RCL 7
+        roomBlock.structures.push(headquarters.spawn);
+        roomBlock.structures.push(headquarters.towers[2]);
+        // RCL 8
         roomBlock.structures.push(franchise2.spawn);
+        roomBlock.structures.push(headquarters.towers[3]);
+        roomBlock.structures.push(headquarters.towers[4]);
+        roomBlock.structures.push(headquarters.towers[5]);
+
+        // Fill in remaining extensions
+        fillExtensions(room.name, roomBlock);
 
         room.roomPlan = roomBlock.serialize();
 
         let end = Game.cpu.getUsed();
         console.log(`Planned room ${room.name} with ${end - start} CPU`);
+        return roomBlock;
     }
 
     cleanup() {
         if (global.v.planning.state) {
-            console.log('Visualizing room plan');
             this.roomPlans.forEach(v => v.visualize());
         }
     }

@@ -14,8 +14,18 @@ export class FranchisePlan {
         let controller = global.worldState.controllers.byRoom.get(sourcePos.roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
 
+        // 0. Check if an initial spawn already exists near Source.
+        let [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 2);
+
         // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
-        let route = PathFinder.search(sourcePos, {pos: controller.pos, range: 1});
+        let route = PathFinder.search(
+            sourcePos,
+            {pos: controller.pos, range: 1},
+            {roomCallback: () => {
+                let cm = new PathFinder.CostMatrix();
+                if (spawn) cm.set(spawn.pos.x, spawn.pos.y, 255)
+                return cm;
+            }});
         if (route.incomplete) throw new Error('Unable to calculate path between source and controller');
         this.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
         this.rangeToController = route.cost;
@@ -25,8 +35,15 @@ export class FranchisePlan {
             mapAnalyst.isPositionWalkable(pos) &&
             !pos.isEqualTo(route.path[1])
         ))
-        if (adjacents.length < 2) throw new Error('Not enough space to place a Franchise');
-        this.spawn = new PlannedStructure(adjacents[0], STRUCTURE_SPAWN);
-        this.link = new PlannedStructure(adjacents[1], STRUCTURE_LINK);
+        if (spawn) {
+            this.spawn = new PlannedStructure(spawn.pos, STRUCTURE_SPAWN)
+        } else {
+            let spawnPos = adjacents.shift();
+            if (!spawnPos) throw new Error('Not enough space to place a Franchise');
+            this.spawn = new PlannedStructure(spawnPos, STRUCTURE_SPAWN);
+        }
+        let linkPos = adjacents.shift();
+        if (!linkPos) throw new Error('Not enough space to place a Franchise');
+        this.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
     }
 }

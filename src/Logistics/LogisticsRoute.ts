@@ -211,7 +211,9 @@ export class LogisticsRoute {
             case RouteState.FULFILLING: {
                 let result = this.requests[0].action(this.creep);
                 log('LogisticsRoute', `${this.creep.name} fulfilling ${this.requests[0].constructor.name} at ${this.requests[0].pos}: ${result}`)
-                if (result !== OK) {
+                if (result === ERR_NOT_ENOUGH_RESOURCES) {
+                    this.setState(RouteState.COMPLETED);
+                } else if (result !== OK) {
                     this.setState(RouteState.CANCELLED);
                 }
                 break;

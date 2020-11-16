@@ -13,7 +13,7 @@ export class RepairRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
     public pos: RoomPosition;
 
-    constructor(structure: CachedStructure, repairToHits?: number) {
+    constructor(public structure: CachedStructure, public repairToHits?: number) {
         super();
         this.pos = structure.pos;
         this.action = Selector(

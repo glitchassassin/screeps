@@ -32,7 +32,7 @@ const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
 export class BuildRequest extends MinionRequest {
     public action: Behavior<CachedCreep>;
 
-    constructor(public pos: RoomPosition, structureType: BuildableStructureConstant) {
+    constructor(public pos: RoomPosition, public structureType: BuildableStructureConstant) {
         super(BUILD_PRIORITIES[structureType]);
         this.action = Selector(
             Sequence(

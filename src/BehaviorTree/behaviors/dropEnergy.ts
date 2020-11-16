@@ -6,5 +6,5 @@ export const dropEnergy = (amount?: number) => (creep: CachedCreep, bb: Blackboa
 
     let result = creep.gameObj.drop(RESOURCE_ENERGY, amount)
 
-    return (result === OK) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
+    return (result === OK || result === ERR_NOT_ENOUGH_RESOURCES) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
 }

@@ -1,10 +1,12 @@
 import { CachedSpawn, CachedStructure } from "WorldState";
 import { LogisticsRequest, TransferRequest } from "Logistics/LogisticsRequest";
+import { getRcl, unassignedLogisticsRequestsPercent } from "utils/gameObjectSelectors";
 
 import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { FacilitiesManager } from "../FacilitiesManager";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { HRManager } from "../HRManager";
 import { LegalManager } from "../LegalManager";
@@ -19,7 +21,6 @@ import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import profiler from "screeps-profiler";
-import { unassignedLogisticsRequestsPercent } from "utils/gameObjectSelectors";
 
 export class SpawnStrategist extends OfficeManager {
     spawnRequest?: Request<CachedSpawn>;
@@ -31,10 +32,13 @@ export class SpawnStrategist extends OfficeManager {
         let legalAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let salesManager = this.office.managers.get('SalesManager') as SalesManager;
+        let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
+
+        let rcl = getRcl(this.office.name) ?? 0;
 
         this.submitLogisticsRequests();
 
@@ -47,10 +51,13 @@ export class SpawnStrategist extends OfficeManager {
         // we need more carriers
         if ( // Carrier minions
             (hrAnalyst.newestEmployee(this.office, 'CARRIER') ?? 0) < 1400 &&
-            ((unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
-            logisticsManager.getIdleCarriers().length === 0 &&
-            salesAnalyst.getFranchiseSurplus(this.office) > 0.1) ||
-            (hrAnalyst.oldestEmployee(this.office, 'CARRIER') ?? 0) <= 50)
+            (
+                (
+                    unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
+                    logisticsManager.getIdleCarriers().length === 0 &&
+                    salesAnalyst.getFranchiseSurplus(this.office) > 0.1
+                )
+            )
         ) {
             this.submitRequest(new CarrierMinion());
             return;
@@ -68,7 +75,7 @@ export class SpawnStrategist extends OfficeManager {
         }
 
         if ( // Paralegal minions
-            hrAnalyst.getEmployees(this.office, 'PARALEGAL').length === 0
+            hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0
         ) {
             this.submitRequest(new ParalegalMinion());
             return;
@@ -76,13 +83,23 @@ export class SpawnStrategist extends OfficeManager {
 
         // Engineer minions
         const MAX_ENGINEERS = 10;
-        let metrics = statisticsAnalyst.metrics.get(this.office.name);
-        if (metrics) {
-            let input = metrics.mineRate.mean();
-            let output = metrics.spawnEnergyRate.mean() + metrics.upgradeRate.mean();
+        if (rcl < 5) {
+            let metrics = statisticsAnalyst.metrics.get(this.office.name);
+            if (metrics) {
+                let input = metrics.mineRate.mean();
+                let output = metrics.spawnEnergyRate.mean() + metrics.upgradeRate.mean();
+                if (
+                    (input - output) > facilitiesAnalyst.getExpectedOutput(this.office) &&
+                    MAX_ENGINEERS > facilitiesAnalyst.getEngineers(this.office).length
+                ) {
+                    this.submitRequest(new EngineerMinion());
+                    return;
+                }
+            }
+        } else {
             if (
-                (input - output) > facilitiesAnalyst.getExpectedOutput(this.office) &&
-                MAX_ENGINEERS > facilitiesAnalyst.getEngineers(this.office).length
+                (hrAnalyst.newestEmployee(this.office, 'ENGINEER') ?? 0) < 1400 &&
+                facilitiesManager.workPending() > facilitiesAnalyst.getWorkExpectancy(this.office)
             ) {
                 this.submitRequest(new EngineerMinion());
                 return;
