@@ -10,7 +10,10 @@ import profiler from 'screeps-profiler';
 export class RoomArchitect extends BoardroomManager {
     roomPlans = new Map<string, BlockPlan>();
     plan() {
+        let start = Game.cpu.getUsed();
+        if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
         for (let [,room] of global.worldState.rooms.byRoom) {
+            if (Game.cpu.getUsed() - start > 5) break; // Don't spend more than 5 CPU/tick doing room planning
 
             if (room.roomPlan !== '' && this.roomPlans.has(room.name)) continue;
 

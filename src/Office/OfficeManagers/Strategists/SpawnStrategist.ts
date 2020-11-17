@@ -9,6 +9,7 @@ import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst
 import { FacilitiesManager } from "../FacilitiesManager";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { HRManager } from "../HRManager";
+import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
 import { Minion } from "MinionDefinitions/Minion";
@@ -104,6 +105,14 @@ export class SpawnStrategist extends OfficeManager {
                 this.submitRequest(new EngineerMinion());
                 return;
             }
+        }
+
+        // Scout minions
+        if (
+            rcl > 3 &&
+            (hrAnalyst.newestEmployee(this.office, 'INTERN') ?? 0) < 100
+        ) {
+            this.submitRequest(new InternMinion());
         }
     }
 

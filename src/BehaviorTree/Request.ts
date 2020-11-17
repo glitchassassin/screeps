@@ -1,6 +1,8 @@
 import { Behavior, BehaviorResult, Blackboard } from "./Behavior";
 import { CachedCreep, CachedSpawn } from "WorldState";
 
+import { log } from "utils/logger";
+
 export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
     constructor(public priority = 5) {}
     public result?: BehaviorResult;
@@ -30,6 +32,7 @@ export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
             // If one is finished, the request is finished
             if (result === BehaviorResult.SUCCESS) {
                 this.result = result;
+                log(this.constructor.name, `Result: ${result}`);
                 return result;
             }
             // If one is still running, the task is still running
@@ -39,6 +42,7 @@ export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
         if (finalResult === BehaviorResult.FAILURE) {
             this.result = finalResult;
         }
+        log(this.constructor.name, `Result: ${finalResult}`);
         return finalResult;
     }
     public capacityMet() {

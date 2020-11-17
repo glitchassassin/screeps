@@ -7,7 +7,7 @@ export abstract class WorldData {
 
     // Store linked IDs in memory, to reload data from
     @memoryCache(keyByName)
-    public ids: string[] = []
+    public ids!: string[];
 
     abstract update(roomName: string): boolean
 

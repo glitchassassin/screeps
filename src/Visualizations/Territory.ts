@@ -25,15 +25,17 @@ export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
 
     // Draw background
     let intention = 'rgba(0,0,0,1)';
-    if (intent === 'ACQUIRE') {
-        intention = 'rgba(32,32,64,1)';
-    } else if (intent === 'AVOID') {
-        intention = 'rgba(64,0,0,1)';
-    } else if (intent === 'EXPLOIT') {
+    // if (intent === 'ACQUIRE') {
+    //     intention = 'rgba(32,32,64,1)';
+    // } else if (intent === 'AVOID') {
+    //     intention = 'rgba(64,0,0,1)';
+    // } else
+    if (intent === 'EXPLOIT') {
         intention = 'rgba(0,64,0,1)';
-    } else if (intent === 'DEFEND') {
-        intention = 'rgba(64,64,0,1)';
     }
+    // else if (intent === 'DEFEND') {
+    //     intention = 'rgba(64,64,0,1)';
+    // }
     vis.rect(topLeft.x, topLeft.y, 9, 9, {fill: intention})
     vis.text(t.name, topLeft.x + 4.5, topLeft.y + 4.5, {font: 2, backgroundColor: 'transparent', opacity: 0.7})
 

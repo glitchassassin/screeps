@@ -22,6 +22,7 @@ import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
 import { StorageArchitect } from "./OfficeManagers/Architects/StorageArchitect";
 import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
+import { SurveyStrategist } from "./OfficeManagers/Strategists/SurveyStrategist";
 import { TowerArchitect } from "Office/OfficeManagers/Architects/TowerArchitect";
 import profiler from "screeps-profiler";
 
@@ -67,6 +68,7 @@ export class Office {
         new DefenseStrategist(this);
         new RepairStrategist(this);
         new StorageStrategist(this);
+        new SurveyStrategist(this);
         new SpawnStrategist(this);
 
     }

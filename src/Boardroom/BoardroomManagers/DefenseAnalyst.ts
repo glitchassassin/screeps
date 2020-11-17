@@ -10,7 +10,8 @@ export enum TerritoryIntent {
     AVOID = 'AVOID',
     ACQUIRE = 'ACQUIRE',
     DEFEND = 'DEFEND',
-    EXPLOIT = 'EXPLOIT'
+    EXPLOIT = 'EXPLOIT',
+    IGNORE = 'IGNORE'
 }
 
 export const WHITELIST = [
@@ -62,37 +63,10 @@ export class DefenseAnalyst extends BoardroomManager {
     @Memoize((roomName: string) => ('' + roomName + Game.time))
     getTerritoryIntent(roomName: string) {
         let controller = global.worldState.controllers.byRoom.get(roomName);
-        let room = global.worldState.rooms.byRoom.get(roomName);
-        let [hostileStructure] = lazyFilter(
-            global.worldState.structures.byRoom.get(roomName) ?? [],
-            s => ((
-                s.structureType === STRUCTURE_SPAWN ||
-                s.structureType === STRUCTURE_INVADER_CORE
-            ) && !s.my)
-        )
-        let [hostileMinion] = global.worldState.hostileCreeps.byRoom.get(roomName) ?? [];
-        if (
-            (controller?.owner && !controller?.my) ||
-            (controller?.reservationOwner && !controller?.myReserved)
-        ) {
-            if (!controller?.level || controller?.level < 3) {
-                return TerritoryIntent.ACQUIRE;
-            } else {
-                return TerritoryIntent.AVOID;
-            }
+        if (controller?.my) {
+            return TerritoryIntent.EXPLOIT;
         } else {
-            if (hostileStructure) {
-                return TerritoryIntent.DEFEND;
-            } else if (
-                // Hostile activity in the last 100 ticks, and
-                (room?.lastHostileActivity && room.lastHostileActivity < 100) &&
-                // We cannot see the room, or we can and there are confirmed hostile minions
-                !(Game.rooms[roomName] && hostileMinion)
-            ) {
-                return TerritoryIntent.DEFEND;
-            } else {
-                return TerritoryIntent.EXPLOIT;
-            }
+            return TerritoryIntent.IGNORE;
         }
     }
 }

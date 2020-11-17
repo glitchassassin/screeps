@@ -30,10 +30,10 @@ export class HRAnalyst extends BoardroomManager {
         for (let employee of global.worldState.myCreeps.byOffice.get(office.name) ?? []) {
             if (employee.memory.type !== type) continue;
             if (max === undefined) {
-                max = employee.gameObj.ticksToLive;
+                max = employee.gameObj.ticksToLive ?? 1500;
                 continue;
             }
-            max = Math.max(employee.gameObj.ticksToLive ?? 0, max)
+            max = Math.max(employee.gameObj.ticksToLive ?? 1500, max)
         }
         return max;
     }

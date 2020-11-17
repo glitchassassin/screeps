@@ -39,7 +39,7 @@ export abstract class WorldDataRoomItemsById<T extends RoomObject & _HasId & _Ha
                 room.add(s);
                 this.byRoom.set(s.pos.roomName, room);
 
-                let office = global.worldState.rooms.byRoom.get(s.pos.roomName)?.territoryOf;
+                let office = global.worldState?.rooms.byRoom.get(s.pos.roomName)?.territoryOf;
                 if (office) {
                     let officeSet = this.byOffice.get(s.pos.roomName) ?? new Set<C>();
                     officeSet.add(s);

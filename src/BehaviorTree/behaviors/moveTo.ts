@@ -23,11 +23,39 @@ export class Route {
         let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
                                          .filter(pos => mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
         log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
+        // Calculate path in rooms first
+        let rooms = [creep.pos.roomName];
+        if (creep.pos.roomName !== this.pos.roomName) {
+            let roomsRoute = Game.map.findRoute(
+                creep.pos.roomName,
+                this.pos.roomName,
+                {
+                    routeCallback(roomName, fromRoomName) {
+                        let controller = global.worldState.controllers.byRoom.get(roomName);
+                        if (controller && controller.owner && !controller.my) return Infinity;
+                        return 1;
+                    }
+                }
+            )
+            if (roomsRoute === ERR_NO_PATH) {
+                this.path = [];
+                return;
+            }
+            rooms.push(...roomsRoute.map(r => r.room));
+            console.log('Pathing through rooms', JSON.stringify(roomsRoute));
+        }
+
+
         let route = PathFinder.search(creep.pos, positionsInRange, {
-            roomCallback: (room) => mapAnalyst.getCostMatrix(room, avoidCreeps),
+            roomCallback: (room) => {
+                if (!rooms.includes(room)) return false;
+                return mapAnalyst.getCostMatrix(room, avoidCreeps)
+            },
             plainCost: 2,
-            swampCost: 10
+            swampCost: 10,
+
         })
+        log(creep.name, `calculatePath: ${route.cost} (complete: ${route.incomplete})`);
         this.path = route.path;
         this.lastPos = creep.pos;
     }
@@ -52,6 +80,9 @@ export class Route {
     visualize() {
         if (!this.path) return;
         let rooms = this.path.reduce((r, pos) => (r.includes(pos.roomName) ? r : [...r, pos.roomName]), [] as string[])
+        if (rooms.length > 1) {
+            Game.map.visual.poly(this.path, {lineStyle: 'dotted', stroke: '#fff'});
+        }
         rooms.forEach(room => {
             // Technically this could cause weirdness if the road loops out of a room
             // and then back into it. If that happens, we'll just need to parse this
@@ -134,5 +165,7 @@ export const moveTo = (pos?: RoomPosition, range = 1) => {
 }
 
 export const ifIsInRoom = (roomName: string) => {
-    return (creep: CachedCreep) => (creep.pos.roomName === roomName) ? BehaviorResult.SUCCESS: BehaviorResult.FAILURE
+    return (creep: CachedCreep) => {
+        return (creep.pos.roomName === roomName) ? BehaviorResult.SUCCESS: BehaviorResult.FAILURE
+    }
 }

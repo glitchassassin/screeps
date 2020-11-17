@@ -16,7 +16,7 @@ export class MapAnalyst extends BoardroomManager {
     calculateAdjacentPositions(pos: RoomPosition) {
         return this.calculateNearbyPositions(pos, 1);
     }
-    @Memoize((pos: RoomPosition, proximity: number) => (`[${pos.x}, ${pos.y}]x${proximity}`))
+    @Memoize((pos: RoomPosition, proximity: number) => (`[${pos.x}, ${pos.y}: ${pos.roomName}]x${proximity}`))
     calculateNearbyPositions(pos: RoomPosition, proximity: number, includeCenter = false) {
         let adjacent: RoomPosition[] = [];
         adjacent = this.calculateAdjacencyMatrix(proximity)
