@@ -18,9 +18,8 @@ const MemHack = {
             global.Memory = this.memory
             RawMemory._parsed = this.memory
         }
-    }
+    },
 }
-
 MemHack.register()
 
 export default MemHack

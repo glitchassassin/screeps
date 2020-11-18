@@ -77,13 +77,13 @@ export class WorldRooms extends WorldData {
 
 export class CachedRoom {
     constructor(public name: string) {
-        this.scanned = (this.gameObj) ? Game.time : 0;
+        this.scanned = (this.gameObj) ? Game.time : (this.scanned ?? 0);
     }
 
     @memoryCache(keyByName)
     public lastHostileActivity?: number;
     @memoryCache(keyByName)
-    public scanned: number;
+    public scanned!: number;
     @memoryCache(keyByName)
     public city?: string;
     @memoryCache(keyByName)

@@ -87,16 +87,16 @@ export class RoomArchitect extends BoardroomManager {
             if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`)
             plans.sort((a, b) => a.rangeToController - b.rangeToController);
             [franchise1, franchise2] = plans;
-        } catch {
+        } catch (e) {
             room.roomPlan = 'FAILED generating franchises';
-            console.log(room.roomPlan);
+            console.log(room.roomPlan, e);
             return roomBlock;
         }
         try {
             headquarters = new HeadquartersPlan(room.name);
-        } catch {
+        } catch (e) {
             room.roomPlan = 'FAILED generating headquarters';
-            console.log(room.roomPlan);
+            console.log(room.roomPlan, e);
             return roomBlock;
         }
 
@@ -131,7 +131,8 @@ export class RoomArchitect extends BoardroomManager {
         roomBlock.structures.push(headquarters.towers[5]);
 
         // Fill in remaining extensions
-        fillExtensions(room.name, roomBlock);
+        let count = CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8];
+        fillExtensions(room.name, roomBlock, count);
 
         room.roomPlan = roomBlock.serialize();
 
@@ -142,7 +143,18 @@ export class RoomArchitect extends BoardroomManager {
 
     cleanup() {
         if (global.v.planning.state) {
-            this.roomPlans.forEach(v => v.visualize());
+            for (let [roomName, room] of global.worldState.rooms.byRoom) {
+                if (room.roomPlan) {
+                    if (room.roomPlan.startsWith('FAILED')) {
+                        Game.map.visual.text('Failed', new RoomPosition(10, 5, roomName), {color: '#ff0000', fontSize: 5});
+                    } else {
+                        Game.map.visual.text('Planned', new RoomPosition(10, 5, roomName), {color: '#00ff00', fontSize: 5});
+                    }
+                }
+            }
+            this.roomPlans.forEach((v, roomName) => {
+                v.visualize()
+            });
         }
     }
 }

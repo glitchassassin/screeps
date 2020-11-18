@@ -32,20 +32,26 @@ export abstract class WorldDataRoomItemsById<T extends RoomObject & _HasId & _Ha
         // Reload cached structures
         if (this.cacheListInMemory) {
             for (let id of this.ids) {
-                let s = this.createCachedObject(id as Id<T>);
-                this.byId.set(id as Id<T>, s);
+                try {
+                    let s = this.createCachedObject(id as Id<T>);
+                    this.byId.set(id as Id<T>, s);
 
-                let room = this.byRoom.get(s.pos.roomName) ?? new Set<C>();
-                room.add(s);
-                this.byRoom.set(s.pos.roomName, room);
+                    let room = this.byRoom.get(s.pos.roomName) ?? new Set<C>();
+                    room.add(s);
+                    this.byRoom.set(s.pos.roomName, room);
 
-                let office = global.worldState?.rooms.byRoom.get(s.pos.roomName)?.territoryOf;
-                if (office) {
-                    let officeSet = this.byOffice.get(s.pos.roomName) ?? new Set<C>();
-                    officeSet.add(s);
-                    this.byOffice.set(s.pos.roomName, officeSet);
+                    let office = global.worldState?.rooms.byRoom.get(s.pos.roomName)?.territoryOf;
+                    if (office) {
+                        let officeSet = this.byOffice.get(s.pos.roomName) ?? new Set<C>();
+                        officeSet.add(s);
+                        this.byOffice.set(s.pos.roomName, officeSet);
+                    }
+                } catch (e) {
+                    console.log(`Error parsing data for ${this.constructor.name}['${id}']`);
+                    console.log(e);
                 }
             }
+            this.ids = Array.from(this.byId.keys());
         }
     }
 

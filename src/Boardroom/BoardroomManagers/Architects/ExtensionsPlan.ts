@@ -1,11 +1,12 @@
 import { BlockPlan } from "./classes/BlockPlan";
 import { PlannedStructure } from "./classes/PlannedStructure";
 
-export function fillExtensions(roomName: string, roomBlock: BlockPlan) {
+export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: number) {
+    if (count <= 0) return;
+
     let terrain = Game.map.getRoomTerrain(roomName);
     let cm = new PathFinder.CostMatrix();
     let storagePos: RoomPosition|undefined = undefined;
-    let count = CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8];
 
     for (let struct of roomBlock.structures) {
         if (struct.structureType === STRUCTURE_STORAGE) storagePos = struct.pos;
@@ -18,13 +19,14 @@ export function fillExtensions(roomName: string, roomBlock: BlockPlan) {
     // Begin extensions outside HQ, offset diagonally from storage
     let extensions = fillExtensionsRecursive(terrain, cm, [storagePos], count);
 
+    if (extensions.length < count) throw new Error('Not enough room to fill extensions')
+
     extensions.forEach(pos => roomBlock.structures.push(new PlannedStructure(pos, STRUCTURE_EXTENSION)));
 }
 
 function fillExtensionsRecursive(terrain: RoomTerrain, costMatrix: CostMatrix, startingPositions: RoomPosition[], count: number) {
     let extensions: RoomPosition[] = [];
     let nextIterationCount = count;
-    if (startingPositions.length > 1) extensions = startingPositions;
     for (let startingPosition of startingPositions) {
         let squares = getNeighboringExtensionSquares(startingPosition)
 
@@ -41,8 +43,8 @@ function fillExtensionsRecursive(terrain: RoomTerrain, costMatrix: CostMatrix, s
 
         if (nextIterationCount <= 0) break;
     }
-    if (nextIterationCount > 0) {
-        extensions = fillExtensionsRecursive(terrain, costMatrix, extensions, nextIterationCount)
+    if (nextIterationCount > 0 && extensions.length > 0) {
+        extensions.push(...fillExtensionsRecursive(terrain, costMatrix, extensions, nextIterationCount))
     }
     return extensions;
 }

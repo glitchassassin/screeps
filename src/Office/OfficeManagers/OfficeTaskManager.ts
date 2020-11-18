@@ -3,6 +3,7 @@ import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
 import { lazyFilter } from "utils/lazyIterators";
+import { log } from "utils/logger";
 import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class OfficeTaskManager extends OfficeManager {
@@ -13,10 +14,12 @@ export class OfficeTaskManager extends OfficeManager {
         this.requests.push(request);
     }
     run() {
+        log(this.constructor.name, `.run CPU: ${Game.cpu.getUsed()}`)
         // Sort requests by priority descending, then by proximity to spawn
         let spawn = global.worldState.mySpawns.byRoom.get(this.office.name)?.values().next().value;
         let target = (spawn? spawn.pos : new RoomPosition(25, 25, this.office.name)) as RoomPosition;
 
+        log(this.constructor.name, `.run assigning ${this.getAvailableCreeps().length} minions...`)
         if (this.getAvailableCreeps().length > 0) {
             this.requests.sort((a, b) => {
                 let p = b.priority - a.priority;
@@ -40,8 +43,10 @@ export class OfficeTaskManager extends OfficeManager {
                 }
             }
         }
+        log(this.constructor.name, `.run assigning minions CPU: ${Game.cpu.getUsed()}`)
 
         // Run assigned tasks
+        log(this.constructor.name, `.run executing ${this.requests.length} requests...`)
         this.requests = this.requests.filter(request => {
             if (request.assigned.length === 0) return true; // Unassigned
 
@@ -49,6 +54,7 @@ export class OfficeTaskManager extends OfficeManager {
             if (result !== BehaviorResult.INPROGRESS) return false;
             return true;
         });
+        log(this.constructor.name, `.run executing requests CPU: ${Game.cpu.getUsed()}`)
     }
 
     getAvailableCreeps = () => {

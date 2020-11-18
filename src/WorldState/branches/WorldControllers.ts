@@ -8,10 +8,16 @@ export class WorldControllers extends WorldData {
         super();
         // Reload cached structures
         for (let id of this.ids) {
-            let s = new CachedController(id as Id<StructureController>);
-            this.byId.set(id as Id<StructureController>, s);
-            this.byRoom.set(s.pos.roomName, s);
+            try {
+                let s = new CachedController(id as Id<StructureController>);
+                this.byId.set(id as Id<StructureController>, s);
+                this.byRoom.set(s.pos.roomName, s);
+            } catch (e) {
+                console.log(`Error parsing data for ${this.constructor.name}['${id}']`);
+                console.log(e);
+            }
         }
+        this.ids = Array.from(this.byId.keys());
     }
 
     // Set up refresh intervals per room

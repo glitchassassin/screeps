@@ -32,8 +32,9 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         return this.buildRequest;
     }
     visualize() {
-        if (Game.rooms[this.pos.roomName] && !this.structure) {
-            Game.rooms[this.pos.roomName].visual.structure(this.pos.x, this.pos.y, this.structureType);
+        let vis = new RoomVisual(this.pos.roomName);
+        if (!this.structure) {
+            vis.structure(this.pos.x, this.pos.y, this.structureType);
         }
     }
 }

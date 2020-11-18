@@ -3,6 +3,7 @@ import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
 import { CachedCreep } from "WorldState";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
+import profiler from "screeps-profiler";
 
 export class Route {
     lastPos?: RoomPosition;
@@ -53,7 +54,7 @@ export class Route {
             },
             plainCost: 2,
             swampCost: 10,
-
+            maxOps: 2000 * rooms.length
         })
         log(creep.name, `calculatePath: ${route.cost} (complete: ${route.incomplete})`);
         this.path = route.path;
@@ -93,6 +94,8 @@ export class Route {
     }
 }
 
+profiler.registerClass(Route, 'Route');
+
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
         movePos?: RoomPosition,
@@ -106,6 +109,7 @@ export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
         if (!pos) return BehaviorResult.FAILURE;
         log(creep.name, `setMoveTarget: range ${range} of ${pos}`);
         if (bb.movePos && pos.isEqualTo(bb.movePos)) return BehaviorResult.SUCCESS;
+        log(creep.name, `setMoveTarget: calculating new Route`);
         bb.movePos = pos;
         bb.moveRange = range;
         bb.moveRoute = new Route(creep, pos, range)
@@ -129,7 +133,8 @@ export const moveToTarget = () => {
         if (!creep.gameObj || !bb.movePos || bb.moveRange === undefined || !bb.moveRoute) return BehaviorResult.FAILURE;
         if (creep.pos.inRangeTo(bb.movePos, bb.moveRange)) return BehaviorResult.SUCCESS;
 
-        bb.moveRoute.visualize();
+        if (global.debug[creep.name]) bb.moveRoute.visualize();
+
         let result = bb.moveRoute.run(creep);
         if (result === ERR_NOT_FOUND) {
             if (creep.pos.x === 0) {

@@ -8,6 +8,7 @@ import profiler from "screeps-profiler";
 
 export class SurveyStrategist extends OfficeManager {
     public request?: MinionRequest;
+    public scanDispatched = new Map<string, number>();
 
     plan() {
         let defenseManager = this.office.managers.get('SecurityManager') as SecurityManager;
@@ -16,7 +17,9 @@ export class SurveyStrategist extends OfficeManager {
 
         if (getRcl(this.office.name) !== 8) {
             // Handle scouting with minions
-            this.request = new ExploreRequest(this.getRoomToScout())
+            let room = this.getRoomToScout();
+            this.scanDispatched.set(room, Game.time);
+            this.request = new ExploreRequest(room)
             defenseManager.submit(this.request);
         } else {
             // TODO: Handle scouting with observers
@@ -35,15 +38,23 @@ export class SurveyStrategist extends OfficeManager {
             let match = {
                 distance: mapAnalyst.getRangeTo(new RoomPosition(25, 25, this.office.name), new RoomPosition(25, 25, room)),
                 name: room,
-                lastScanned: global.worldState.rooms.byRoom.get(room)?.scanned ?? 0
+                lastScanned: this.scanDispatched.get(room) ?? global.worldState.rooms.byRoom.get(room)?.scanned ?? 0,
+                hostile: global.worldState.controllers.byRoom.get(room)?.owner && !global.worldState.controllers.byRoom.get(room)?.my,
             }
             // If no existing match, OR
-            // this match is closer AND older than the best match,
+            // this match is older than the best match,
+            // OR this match is as old but closer,
             // then this is the best match
             if (
                 !bestMatch ||
-                (match.distance < bestMatch.distance && match.lastScanned <= bestMatch.lastScanned)
+                ((
+                    match.lastScanned < bestMatch.lastScanned ||
+                    (match.distance < bestMatch.distance && match.lastScanned === bestMatch.lastScanned)
+                ) && (
+                    !match.hostile
+                ))
             ) {
+                console.log('better scout target:', JSON.stringify(match));
                 bestMatch = match;
             }
         }

@@ -15,7 +15,8 @@ export class FranchisePlan {
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
 
         // 0. Check if an initial spawn already exists near Source.
-        let [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 2);
+        let spawn: StructureSpawn|undefined = undefined;
+        try { [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 2); } catch {}
 
         // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
         let route = PathFinder.search(

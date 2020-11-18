@@ -54,7 +54,6 @@ global.purge = () => {
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 function mainLoop() {
-  MemHack.pretick();
   if (Game.cpu.bucket < 200) {
     console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
     return; // If the bucket gets really low, let it rebuild
@@ -109,4 +108,7 @@ function mainLoop() {
 
 profiler.enable()
 // export const loop = ErrorMapper.wrapLoop(mainLoop);
-export const loop = () => profiler.wrap(mainLoop);
+export const loop = () => {
+  MemHack.pretick();
+  profiler.wrap(mainLoop);
+}

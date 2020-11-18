@@ -20,7 +20,7 @@ export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
         )
     ));
     let sources = lazyCount(global.worldState.sources.byRoom.get(t.name) ?? []);
-    let [mineral] = global.worldState.minerals.byRoom.get(t.name);
+    let [mineral] = global.worldState.minerals.byRoom.get(t.name) ?? [];
     let controller = global.worldState.controllers.byRoom.get(t.name);
 
     // Draw background

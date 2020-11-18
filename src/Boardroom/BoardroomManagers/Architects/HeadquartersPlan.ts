@@ -1,4 +1,3 @@
-import { BlockPlan } from "./classes/BlockPlan";
 import { CachedController } from "WorldState";
 import { MapAnalyst } from "../MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
@@ -35,10 +34,9 @@ export class HeadquartersPlan {
         let sources = Array.from(global.worldState.sources.byRoom.get(roomName) ?? []);
         if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
 
-        let result: BlockPlan|undefined = undefined;
+        let bestDistance = Infinity;
 
         for (let space of this.findSpaces(controller)) {
-            console.log(space.x, space.y);
             // Orient the space
             //            X X X
             // X X O X X  X X X
@@ -69,12 +67,10 @@ export class HeadquartersPlan {
 
             let costMatrix = new PathFinder.CostMatrix();
 
-
             for (let y = 0; y < orientation.length; y++) {
                 for (let x = 0; x < orientation[y].length; x++) {
                     // Container is an "obstacle" because the upgrading creep will stay there
                     if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
-                        console.log(`obstacle ${orientation[y][x]} at [${x}, ${y}]`, )
                         costMatrix.set(space.x + x, space.y + y, 255)
                     }
                 }
@@ -89,26 +85,30 @@ export class HeadquartersPlan {
                 )
             ];
             let roads = new Set<RoomPosition>();
+            let distance = 0;
             if (sources.some(source =>
                 spawnPoints.some(pos =>
                     {
-                        console.log('pos', pos)
                         let path = PathFinder.search(
                             pos,
                             {pos: source.pos, range: 1},
                             {maxRooms: 1, roomCallback: () => costMatrix}
                         );
-                        new RoomVisual(pos.roomName).poly([pos, ...path.path], {stroke: 'green', lineStyle: 'dashed'})
                         if (!path.incomplete) {
                             path.path.forEach(p => roads.add(p));
+                            distance += path.cost;
                         }
                         return path.incomplete
                     }
 
                 )
             )) continue; // Invalid room plan
+            if (distance >= bestDistance) continue; // We already have a better layout
+            console.log(`${distance} total vs. ${bestDistance}`)
+            bestDistance = distance;
 
             // Valid room plan
+            this.towers = [];
             for (let y = 0; y < orientation.length; y++) {
                 for (let x = 0; x < orientation[y].length; x++) {
                     let pos = new RoomPosition(space.x + x, space.y + y, controller.pos.roomName);
@@ -144,7 +144,6 @@ export class HeadquartersPlan {
             }
 
             this.roads = Array.from(lazyMap(roads, road => new PlannedStructure(road, STRUCTURE_ROAD)));
-            break;
         }
         if (!this.container || !this.link || !this.spawn || !this.storage || !this.terminal || this.towers.length !== 6) {
             throw new Error('No room for a Headquarters block near controller');

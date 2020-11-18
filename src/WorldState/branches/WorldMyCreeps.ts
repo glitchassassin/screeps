@@ -5,14 +5,20 @@ export class WorldMyCreeps extends WorldData {
         super();
         // Reload cached creeps
         for (let name of this.ids) {
-            let s = new CachedCreep(name)
-            this.byName.set(name, s);
-            if (s.memory.office) {
-                let room = this.byOffice.get(s.memory.office) ?? new Set<CachedCreep>();
-                room.add(s);
-                this.byOffice.set(s.memory.office, room);
+            try {
+                let s = new CachedCreep(name)
+                this.byName.set(name, s);
+                if (s.memory.office) {
+                    let room = this.byOffice.get(s.memory.office) ?? new Set<CachedCreep>();
+                    room.add(s);
+                    this.byOffice.set(s.memory.office, room);
+                }
+            } catch (e) {
+                console.log(`Error parsing data for ${this.constructor.name}['${name}']`);
+                console.log(e);
             }
         }
+        this.ids = Array.from(this.byName.keys());
     }
 
     // Lookup indexes
