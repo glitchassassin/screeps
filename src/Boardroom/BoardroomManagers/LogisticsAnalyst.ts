@@ -45,7 +45,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     getContainers(office: Office) {
         let c = Array.from(lazyFilter(
             global.worldState.structures.byOffice.get(office.name) ?? [],
-            s => s.structureType === STRUCTURE_CONTAINER && s.capacityUsed && s.capacityUsed > 0
+            s => s.structureType === STRUCTURE_CONTAINER
         )) as CachedStructure<StructureContainer>[];
         return c;
     }
@@ -89,7 +89,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     getClosestAllSources(pos: RoomPosition, amount?: number) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
-        let sorted = this.getAllSources(office).filter(s => getUsedCapacity(s) > 0).sort(sortByDistanceTo(pos))
+        let sorted = this.getAllSources(office).filter(s => s.pos).sort(sortByDistanceTo(pos))
         if (!amount || amount === 0) return sorted[0];
         let withAmount = sorted.filter(s => getUsedCapacity(s) > amount)
         if (withAmount.length > 0) return withAmount[0];

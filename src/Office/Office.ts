@@ -2,28 +2,23 @@ import { Bar, Meters } from "Visualizations/Meters";
 import { CachedController, CachedRoom } from "WorldState";
 
 import { Boardroom } from "Boardroom/Boardroom";
-import { ControllerArchitect } from "Office/OfficeManagers/Architects/ControllerArchitect";
+import { BuildStrategist } from "./OfficeManagers/Strategists/BuildStrategist";
 import { DefenseStrategist } from "Office/OfficeManagers/Strategists/DefenseStrategist";
-import { ExtensionArchitect } from "Office/OfficeManagers/Architects/ExtensionArchitect";
 import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
 import { HRManager } from "Office/OfficeManagers/HRManager";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
-import { LinkArchitect } from "./OfficeManagers/Architects/LinkArchitect";
 import { LinkManager } from "./OfficeManagers/LinkManager";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
 import { RepairStrategist } from "Office/OfficeManagers/Strategists/RepairStrategist";
-import { RoadArchitect } from "Office/OfficeManagers/Architects/RoadArchitect";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesStrategist } from "Office/OfficeManagers/Strategists/SalesStrategist";
 import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
-import { StorageArchitect } from "./OfficeManagers/Architects/StorageArchitect";
 import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
 import { SurveyStrategist } from "./OfficeManagers/Strategists/SurveyStrategist";
-import { TowerArchitect } from "Office/OfficeManagers/Architects/TowerArchitect";
 import profiler from "screeps-profiler";
 
 export class Office {
@@ -54,18 +49,11 @@ export class Office {
         new SecurityManager(this);
         new LinkManager(this);
 
-        // Create Architects
-        new ControllerArchitect(this);
-        new RoadArchitect(this);
-        new ExtensionArchitect(this);
-        new TowerArchitect(this);
-        new StorageArchitect(this);
-        new LinkArchitect(this);
-
         // Create Strategists
         new LegalStrategist(this);
         new SalesStrategist(this);
         new DefenseStrategist(this);
+        new BuildStrategist(this);
         new RepairStrategist(this);
         new StorageStrategist(this);
         new SurveyStrategist(this);

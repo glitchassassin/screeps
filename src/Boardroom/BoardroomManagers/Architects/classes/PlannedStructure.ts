@@ -1,3 +1,4 @@
+import { BehaviorResult } from "BehaviorTree/Behavior";
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { CachedStructure } from "WorldState";
 
@@ -26,7 +27,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         return false; // Structure does not exist
     }
     generateBuildRequest() {
-        if (!this.structure) {
+        if (!this.buildRequest || (!this.structure && this.buildRequest.result === BehaviorResult.FAILURE)) {
             this.buildRequest = new BuildRequest(this.pos, this.structureType);
         }
         return this.buildRequest;

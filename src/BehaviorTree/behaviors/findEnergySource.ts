@@ -21,6 +21,6 @@ export const findEnergySource = () => (creep: CachedCreep, bb: Blackboard) => {
         // Prefer sources that can fill the minion, even if they're further away
         bb.target = logisticsAnalyst.getClosestAllSources(creep.pos, creep.capacityFree);
     }
-    log(creep.name, `findEnergySource: ${bb.target?.constructor.name} @ ${bb.target?.pos}`)
+    log(creep.name, `findEnergySource: ${creep.pos} to ${bb.target?.constructor.name} @ ${bb.target?.pos} (range ${bb.target?.pos.getRangeTo(creep.pos)})`)
     return bb.target ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE;
 }

@@ -2,6 +2,7 @@ import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { HRAnalyst } from "./HRAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
+import { RoomArchitect } from "./Architects/RoomArchitect";
 
 export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -32,6 +33,11 @@ export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStructures(office: Office) {
         return Array.from(global.worldState.structures.byOffice.get(office.name) ?? [])
+    }
+    @Memoize((office: Office) => ('' + office.name + Game.time))
+    getPlannedStructures(office: Office) {
+        let roomArchitect = this.boardroom.managers.get('RoomArchitect') as RoomArchitect;
+        return roomArchitect.roomPlans.get(office.name)?.structures ?? []
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))

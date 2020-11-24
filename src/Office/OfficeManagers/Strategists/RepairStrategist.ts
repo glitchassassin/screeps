@@ -24,14 +24,15 @@ export class RepairStrategist extends OfficeManager {
     plan() {
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
         let barrierLevel = BARRIER_LEVEL[(getRcl(this.office.name) ?? 1)] ?? 0
-        for (let structure of facilitiesAnalyst.getStructures(this.office)) {
+        for (let s of facilitiesAnalyst.getPlannedStructures(this.office)) {
+            if (!s.structure) return; // Not built yet, nothing to repair
             // Barrier heuristic
-            if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) {
-                if ((structure.hits ?? 0) < barrierLevel * 0.5) {
-                    this.submitRequest(structure, barrierLevel);
+            if (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART) {
+                if ((s.structure.hits ?? 0) < barrierLevel * 0.5) {
+                    this.submitRequest(s.structure, barrierLevel);
                 }
-            } else if ((structure.hits ?? 0) < (structure.hitsMax ?? 0) * 0.5) {
-                this.submitRequest(structure);
+            } else if ((s.structure.hits ?? 0) < (s.structure.hitsMax ?? 0) * 0.5) {
+                this.submitRequest(s.structure);
             }
         }
     }

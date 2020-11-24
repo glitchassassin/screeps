@@ -3,10 +3,10 @@ import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { CachedSource } from "WorldState/branches/WorldSources";
-import { HRAnalyst } from "./HRAnalyst";
 import { MapAnalyst } from "./MapAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
+import { RoomArchitect } from "./Architects/RoomArchitect";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { lazyFilter } from "utils/lazyIterators";
@@ -20,6 +20,7 @@ export class SalesAnalyst extends BoardroomManager {
     }
 
     plan() {
+        let roomArchitect = this.boardroom.managers.get('RoomArchitect') as RoomArchitect;
         this.boardroom.offices.forEach(office => {
             // If necessary, add franchise locations for territory
             for (let t of global.worldState.rooms.byOffice.get(office.name) ?? []) {
@@ -34,31 +35,13 @@ export class SalesAnalyst extends BoardroomManager {
                         s.officeId = office.name;
                     }
                     if (!s.franchisePos || !s.linkPos) {
-                        let {container, link} = this.calculateBestMiningLocation(office, s.pos);
-                        s.franchisePos = container;
-                        s.linkPos = link;
+                        let {container, link} = roomArchitect.franchises.get(s.id) ?? {};
+                        s.franchisePos = container?.pos;
+                        s.linkPos = link?.pos;
                     }
                 }
             }
         })
-    }
-
-    @Memoize((office: Office, sourcePos: RoomPosition) => ('' + office.name + sourcePos.toString() + Game.time))
-    calculateBestMiningLocation(office: Office, sourcePos: RoomPosition) {
-        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let spawn = hrAnalyst.getSpawns(office)[0];
-        let route = PathFinder.search(sourcePos, spawn.pos);
-        if (route.incomplete) throw new Error('Unable to calculate mining location');
-        let containerPos = route.path[0];
-        // Candidate position: adjacent to franchisePos,
-        let linkCandidates = this.mapAnalyst.calculateAdjacentPositions(containerPos).filter(pos => (
-            this.mapAnalyst.isPositionWalkable(pos) &&
-            !pos.isEqualTo(route.path[1])
-        ))
-        return {
-            link: linkCandidates[0],
-            container: containerPos
-        }
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getUsableSourceLocations(office: Office) {

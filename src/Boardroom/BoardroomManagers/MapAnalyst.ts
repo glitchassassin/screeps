@@ -35,6 +35,7 @@ export class MapAnalyst extends BoardroomManager {
     @Memoize((roomName: string, proximity: number) => (`${roomName} ${proximity}`))
     calculateNearbyRooms(roomName: string, proximity: number, includeCenter = false) {
         let {wx, wy} = this.roomNameToCoords(roomName)
+        let roomStatus = Game.map.getRoomStatus(roomName);
         let adjacent = this.calculateAdjacencyMatrix(proximity)
             .map(offset => {
                 try {
@@ -44,13 +45,30 @@ export class MapAnalyst extends BoardroomManager {
                     return null;
                 }
             })
-            .filter(n => n !== null) as string[];
+            .filter(n => {
+                if (n === null) return false;
+                try {
+                    let status = Game.map.getRoomStatus(n);
+                    if (roomStatus === roomStatus || status.status === 'normal') {
+                        return true;
+                    }
+                    return false;
+                } catch {
+                    return false;
+                }
+            }) as string[];
         if (includeCenter) adjacent.push(roomName);
         return adjacent;
     }
     @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))
     isPositionWalkable(pos: RoomPosition, ignoreCreeps: boolean = false) {
-        let terrain = Game.map.getRoomTerrain(pos.roomName);
+        let terrain;
+        try {
+            terrain = Game.map.getRoomTerrain(pos.roomName);
+        } catch {
+            // Invalid room
+            return false;
+        }
         if (terrain.get(pos.x, pos.y) === TERRAIN_MASK_WALL) {
             return false;
         }

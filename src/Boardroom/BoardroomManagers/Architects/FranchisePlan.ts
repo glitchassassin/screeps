@@ -1,3 +1,4 @@
+import { CachedSource } from "WorldState";
 import { MapAnalyst } from "../MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 
@@ -8,19 +9,19 @@ export class FranchisePlan {
     container: PlannedStructure;
     extensions: PlannedStructure[] = [];
 
-    constructor(sourcePos: RoomPosition) {
+    constructor(public source: CachedSource) {
         // Calculate from scratch
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
-        let controller = global.worldState.controllers.byRoom.get(sourcePos.roomName);
+        let controller = global.worldState.controllers.byRoom.get(source.pos.roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
 
         // 0. Check if an initial spawn already exists near Source.
         let spawn: StructureSpawn|undefined = undefined;
-        try { [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 2); } catch {}
+        try { [spawn] = source.pos.findInRange(FIND_MY_SPAWNS, 2); } catch {}
 
         // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
         let route = PathFinder.search(
-            sourcePos,
+            source.pos,
             {pos: controller.pos, range: 1},
             {roomCallback: () => {
                 let cm = new PathFinder.CostMatrix();
@@ -38,6 +39,7 @@ export class FranchisePlan {
         ))
         if (spawn) {
             this.spawn = new PlannedStructure(spawn.pos, STRUCTURE_SPAWN)
+            adjacents = adjacents.filter(pos => !pos.isEqualTo(this.spawn.pos));
         } else {
             let spawnPos = adjacents.shift();
             if (!spawnPos) throw new Error('Not enough space to place a Franchise');

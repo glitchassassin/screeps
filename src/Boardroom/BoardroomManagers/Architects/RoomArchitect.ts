@@ -1,14 +1,18 @@
-import { BlockPlan } from './classes/BlockPlan';
 import { BoardroomManager } from 'Boardroom/BoardroomManager';
+import profiler from 'screeps-profiler';
+import { lazyMap } from 'utils/lazyIterators';
 import { CachedRoom } from 'WorldState';
+import { BlockPlan } from './classes/BlockPlan';
+import { PlannedStructure } from './classes/PlannedStructure';
+import { fillExtensions } from './ExtensionsPlan';
 import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
-import { fillExtensions } from './ExtensionsPlan';
-import { lazyMap } from 'utils/lazyIterators';
-import profiler from 'screeps-profiler';
 
 export class RoomArchitect extends BoardroomManager {
     roomPlans = new Map<string, BlockPlan>();
+    headquarters = new Map<string, {container: PlannedStructure, link: PlannedStructure}>();
+    franchises = new Map<string, {container: PlannedStructure, link: PlannedStructure}>();
+
     plan() {
         let start = Game.cpu.getUsed();
         if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
@@ -42,26 +46,26 @@ export class RoomArchitect extends BoardroomManager {
         // To avoid edge cases, controller and sources must not be within range 5 of each other
         let controller = global.worldState.controllers.byRoom.get(room.name);
         if (!controller) {
-            console.log(`Room planning for ${room.name} - No controller`);
+            console.log(`Room planning for ${room.name} failed - No controller`);
             return false;
         }
         let sources = global.worldState.sources.byRoom.get(room.name);
         if (!sources || sources.size < 2) {
-            console.log(`Room planning for ${room.name} - Invalid number of sources`);
+            console.log(`Room planning for ${room.name} failed - Invalid number of sources`);
             return false;
         }
 
         let [source1, source2] = sources;
         if (controller.pos.getRangeTo(source1.pos) < 5) {
-            console.log(`Room planning for ${room.name} - Source too close to controller`);
+            console.log(`Room planning for ${room.name} failed - Source too close to controller`);
             return false;
         }
         if (controller.pos.getRangeTo(source2.pos) < 5) {
-            console.log(`Room planning for ${room.name} - Source too close to controller`);
+            console.log(`Room planning for ${room.name} failed - Source too close to controller`);
             return false;
         }
         if (source1.pos.getRangeTo(source2.pos) < 5) {
-            console.log(`Room planning for ${room.name} - Sources too close together`);
+            console.log(`Room planning for ${room.name} failed - Sources too close together`);
             return false;
         }
         return true;
@@ -83,7 +87,7 @@ export class RoomArchitect extends BoardroomManager {
         // Calculate FranchisePlans
         let franchise1, franchise2, headquarters;
         try {
-            let plans = Array.from(lazyMap(sources, source => new FranchisePlan(source.pos)));
+            let plans = Array.from(lazyMap(sources, source => new FranchisePlan(source)));
             if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`)
             plans.sort((a, b) => a.rangeToController - b.rangeToController);
             [franchise1, franchise2] = plans;
@@ -131,10 +135,29 @@ export class RoomArchitect extends BoardroomManager {
         roomBlock.structures.push(headquarters.towers[5]);
 
         // Fill in remaining extensions
-        let count = CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8];
-        fillExtensions(room.name, roomBlock, count);
+
+        try {
+            let count = CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8];
+            fillExtensions(room.name, roomBlock, count);
+        } catch (e) {
+            room.roomPlan = 'FAILED generating extensions';
+            console.log(room.roomPlan, e);
+            return roomBlock;
+        }
 
         room.roomPlan = roomBlock.serialize();
+        this.headquarters.set(room.name, {
+            container: headquarters.container,
+            link: headquarters.link
+        });
+        this.franchises.set(franchise1.source.id, {
+            container: franchise1.container,
+            link: franchise1.link
+        });
+        this.franchises.set(franchise2.source.id, {
+            container: franchise2.container,
+            link: franchise2.link
+        });
 
         let end = Game.cpu.getUsed();
         console.log(`Planned room ${room.name} with ${end - start} CPU`);

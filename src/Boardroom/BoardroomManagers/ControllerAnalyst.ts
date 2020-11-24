@@ -6,51 +6,21 @@ import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { MapAnalyst } from "./MapAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
+import { RoomArchitect } from "./Architects/RoomArchitect";
 
 export class ControllerAnalyst extends BoardroomManager {
     plan() {
+        let roomArchitect = this.boardroom.managers.get('RoomArchitect') as RoomArchitect;
         this.boardroom.offices.forEach(office => {
             let controller = global.worldState.controllers.byRoom.get(office.name)
             if (!controller) return;
             // Initialize properties
             if (!controller.containerPos || !controller.linkPos) {
-                let {container, link} = this.calculateBestUpgradeLocation(office);
-                controller.containerPos = container;
-                controller.linkPos = link;
+                let {container, link} = roomArchitect.headquarters.get(office.name) ?? {}
+                controller.containerPos = container?.pos;
+                controller.linkPos = link?.pos;
             }
         })
-    }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
-    calculateBestUpgradeLocation(office: Office) {
-        // let room = office.center.room;
-        let controller = global.worldState.controllers.byRoom.get(office.name);
-        if (!controller) return {};
-        // Pick the first spawn in the room
-        let spawn = global.worldState.mySpawns.byRoom.get(office.name)?.values().next().value;
-        let target = (spawn? spawn.pos : new RoomPosition(25, 25, office.name)) as RoomPosition;
-        let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-
-        let containerPos: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
-        let linkPos: {pos: RoomPosition, range: number}|undefined = undefined as {pos: RoomPosition, range: number}|undefined;
-        mapAnalyst
-            .calculateNearbyPositions(controller.pos, 3)
-            .forEach((pos) => {
-                if (mapAnalyst.isPositionWalkable(pos) && !pos.isNearTo(target)) {
-                    let range = PathFinder.search(pos, target).cost;
-                    if (!containerPos || containerPos.range > range) {
-                        linkPos = containerPos;
-                        containerPos = {pos, range};
-                    } else {
-                        if (!linkPos || linkPos.range > range) {
-                            linkPos = {pos, range};
-                        }
-                    }
-                }
-            });
-        return {
-            container: containerPos?.pos,
-            link: linkPos?.pos
-        }
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getDesignatedUpgradingLocations(office: Office) {

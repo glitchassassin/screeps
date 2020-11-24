@@ -37,7 +37,7 @@ interface RoomMemory {
 
 interface Memory {
   uuid: number;
-  log: any;
+  logs: {[context: string]: string};
   respawnTick: number;
   cities: string[];
   boardroom: {
@@ -102,6 +102,9 @@ interface Memory {
   }
 }
 
+declare namespace GreyCompany {
+  interface Heap { }
+}
 // `global` extension samples
 declare namespace NodeJS {
   interface Global {
@@ -118,5 +121,7 @@ declare namespace NodeJS {
     debug: {[id: string]: boolean}
     Memory?: Memory
     worldState: import('./WorldState/WorldState').WorldState
+    lastGlobalReset: number
+    Heap: GreyCompany.Heap
   }
 }

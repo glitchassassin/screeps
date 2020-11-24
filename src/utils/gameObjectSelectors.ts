@@ -40,15 +40,17 @@ export function getCapacity(cached: CachedStructure<AnyStoreStructure>|CachedCre
     return (cached.gameObj?.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
 }
 
-export function sortByDistanceTo<T extends _HasRoomPosition>(pos: RoomPosition) {
+export function sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) {
     let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-    let distance = new Map<T, number>();
+    let distance = new Map<RoomPosition, number>();
     return (a: T, b: T) => {
-        if (!distance.has(a)){
-            distance.set(a, mapAnalyst.getRangeTo(pos, a.pos))
+        let aPos = (a instanceof RoomPosition) ? a : (a as _HasRoomPosition).pos
+        let bPos = (b instanceof RoomPosition) ? b : (b as _HasRoomPosition).pos
+        if (!distance.has(aPos)){
+            distance.set(aPos, mapAnalyst.getRangeTo(pos, aPos))
         }
-        if (!distance.has(b)) distance.set(b, mapAnalyst.getRangeTo(pos, b.pos))
-        return (distance.get(a) as number) - (distance.get(b) as number)
+        if (!distance.has(bPos)) distance.set(bPos, mapAnalyst.getRangeTo(pos, bPos))
+        return (distance.get(aPos) as number) - (distance.get(bPos) as number)
     }
 }
 profiler.registerFN(sortByDistanceTo, 'sortByDistanceTo');

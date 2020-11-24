@@ -21,4 +21,8 @@ export abstract class WorldData {
         this.ids = this.ids.filter(i => i !== id);
         delete Memory.cache[id];
     }
+
+    constructor() {
+        if (!this.ids) this.ids = [];
+    }
 }

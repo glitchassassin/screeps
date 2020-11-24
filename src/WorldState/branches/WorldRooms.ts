@@ -6,8 +6,6 @@ export class WorldRooms extends WorldData {
     constructor() {
         super();
         // Reload cached structures
-        console.log('WorldRooms.ids', this.ids);
-        console.log('Memory.cache.WorldRooms.ids', Memory.cache.WorldRooms.ids);
         for (let roomName of this.ids) {
             console.log('Reloading data for', roomName);
             let s = new CachedRoom(roomName);

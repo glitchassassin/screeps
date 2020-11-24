@@ -11,7 +11,6 @@ export class ExploreRequest extends MinionRequest {
 
     constructor(public roomName: string) {
         super();
-        console.log('Exploring', roomName)
         this.pos = new RoomPosition(25, 25, roomName);
         this.action = Selector(
             ifIsInRoom(roomName),

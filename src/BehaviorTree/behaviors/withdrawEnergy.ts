@@ -19,5 +19,9 @@ export const withdrawEnergy = (amount?: number) => (creep: CachedCreep, bb: Blac
         }
     }
 
+    // One way or another, this should not take longer than a single attempt, so clear
+    // the target on the blackboard
+    bb.target = undefined;
+
     return (result === OK || result === ERR_FULL) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
 }

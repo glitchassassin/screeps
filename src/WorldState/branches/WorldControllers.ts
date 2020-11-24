@@ -85,6 +85,9 @@ export class CachedController extends CachedStructure<StructureController> {
     @memoryCacheGetter(keyById, (i: CachedController) => Game.getObjectById(i.id)?.upgradeBlocked ?? 0)
     public upgradeBlocked!: number;
 
+    @memoryCache(keyById)
+    public rclMilestones?: Record<number, string>;
+
     @memoryCache(keyById, asRoomPosition)
     public containerPos?: RoomPosition;
     @memoryCache(keyById, asRoomPosition)

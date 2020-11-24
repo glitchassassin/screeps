@@ -4,7 +4,6 @@ import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { Table } from "Visualizations/Table";
 import profiler from "screeps-profiler";
-import { repairRemaining } from "utils/gameObjectSelectors";
 
 export class FacilitiesManager extends OfficeTaskManager {
     minionTypes = ['ENGINEER'];
@@ -24,6 +23,7 @@ export class FacilitiesManager extends OfficeTaskManager {
         }
         return pending;
     }
+
     run() {
         super.run();
         if (global.v.facilities.state) {
@@ -33,15 +33,7 @@ export class FacilitiesManager extends OfficeTaskManager {
             // 0.5 = expected efficiency
             let workExpectancy = facilitiesAnalyst.getWorkExpectancy(this.office);
             // Calculate construction energy
-            let totalWork = 0;
-            for (let site of facilitiesAnalyst.getConstructionSites(this.office)) {
-                totalWork += ((site.progressTotal ?? 0) - (site.progress ?? 0))
-            }
-            // Calculate repair energy (and scale by 5, to match construction output rate)
-            for (let structure of facilitiesAnalyst.getStructures(this.office)) {
-                if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) continue;
-                totalWork += ((repairRemaining(structure) / 100) * 5)
-            }
+            let totalWork = this.workPending();
             let statusTable = [
                 ['Work Expectancy', 'Work Pending'],
                 [workExpectancy, totalWork]

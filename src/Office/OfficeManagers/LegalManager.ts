@@ -6,6 +6,11 @@ export class LegalManager extends OfficeTaskManager {
     minionTypes = ['PARALEGAL', 'LAWYER'];
     run() {
         super.run()
+        let controller = global.worldState.controllers.byRoom.get(this.office.name);
+        if (controller) {
+            controller.rclMilestones ??= {};
+            controller.rclMilestones[controller.level] ??= `${Game.time}`;
+        }
         if (global.v.legal.state) { this.report(); }
     }
     report() {

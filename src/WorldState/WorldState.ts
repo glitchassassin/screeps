@@ -12,11 +12,6 @@ import { WorldStructures } from "./branches/WorldStructures";
 import { WorldTombstones } from "./branches/WorldTombstones";
 
 export class WorldState {
-    private static instance = new WorldState();
-    constructor() {
-        if (WorldState.instance) return WorldState.instance;
-        WorldState.instance = this;
-    }
     run() {
         for (let prop in this) {
             let property = this[prop];

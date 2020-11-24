@@ -11,6 +11,7 @@ import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { HRManager } from "../HRManager";
 import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LegalManager } from "../LegalManager";
+import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "../LogisticsManager";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
@@ -23,12 +24,25 @@ import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import profiler from "screeps-profiler";
 
+const STORAGE_GOALS: Record<number, number> = {
+    0:       0,
+    1:       0,
+    2:       0,
+    3:       0,
+    4:   50000,
+    5:  100000,
+    6:  200000,
+    7:  500000,
+    8: 1000000
+}
+
 export class SpawnStrategist extends OfficeManager {
     spawnRequest?: Request<CachedSpawn>;
 
     logisticsRequests = new Map<CachedStructure, LogisticsRequest>();
 
     plan() {
+        if (Game.time - global.lastGlobalReset < 5) return; // Give time for data to catch up to prevent mis-spawns
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let legalAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
@@ -36,6 +50,7 @@ export class SpawnStrategist extends OfficeManager {
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
+        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
 
@@ -66,17 +81,28 @@ export class SpawnStrategist extends OfficeManager {
 
         if ( // Salesman minions
             (hrAnalyst.newestEmployee(this.office, 'SALESMAN') ?? 0) < 1400 &&
-            (salesAnalyst.unassignedHarvestRequests(this.office).length > 0 &&
-            salesManager.getAvailableCreeps().length === 0) ||
-            salesManager.creepsExpiring(50).length > 0
+            (
+                salesAnalyst.unassignedHarvestRequests(this.office).length > 0 ||
+                salesManager.creepsExpiring(50).length > 0
+            ) &&
+            salesManager.getAvailableCreeps().length === 0
         ) {
-            console.log('expiring creeps', salesManager.creepsExpiring(50).map(c => c.gameObj))
             this.submitRequest(new SalesmanMinion());
             return;
         }
 
+        let legalDepotCapacity = legalAnalyst.getDesignatedUpgradingLocations(this.office)?.container?.capacity ?? 1;
+        let legalDepotFreeCapacity = legalAnalyst.getDesignatedUpgradingLocations(this.office)?.container?.capacityFree ?? 1;
+        let storageCapacity = logisticsAnalyst.getStorage(this.office)?.capacityUsed ?? 0
+        // If there is no container, 1/1 === 1 (acts as if container is empty)
+        // Otherwise, if capacity is 90% full, and storage goals are met, spawn a new Paralegal
         if ( // Paralegal minions
-            hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0
+            hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0 ||
+            (
+                (hrAnalyst.newestEmployee(this.office, 'PARALEGAL') ?? 0) < 1400 &&
+                (legalDepotFreeCapacity / legalDepotCapacity) < 0.1 &&
+                (storageCapacity >= STORAGE_GOALS[rcl])
+            )
         ) {
             this.submitRequest(new ParalegalMinion());
             return;

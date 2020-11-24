@@ -54,7 +54,6 @@ export class SurveyStrategist extends OfficeManager {
                     !match.hostile
                 ))
             ) {
-                console.log('better scout target:', JSON.stringify(match));
                 bestMatch = match;
             }
         }

@@ -87,9 +87,9 @@ export abstract class WorldDataRoomItemsById<T extends RoomObject & _HasId & _Ha
                 this.ids.push(obj.id);
                 // Update indices
                 this.byId.set(obj.id, s);
-                room.add(s);
-                officeSet?.add(s);
             }
+            room.add(this.byId.get(obj.id)!);
+            officeSet?.add(this.byId.get(obj.id)!);
 
             // Trigger getters to refresh caches
             for (let i in this.byId.get(obj.id) ?? {}) {}
