@@ -1,7 +1,6 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 
-import { CachedCreep } from "WorldState";
 import { MinionRequest } from "./MinionRequest";
 import { buildSite } from "BehaviorTree/behaviors/buildSite";
 import { createConstructionSite } from "BehaviorTree/behaviors/createConstructionSite";
@@ -30,7 +29,7 @@ const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
 }
 
 export class BuildRequest extends MinionRequest {
-    public action: Behavior<CachedCreep>;
+    public action: Behavior<Creep>;
 
     constructor(public pos: RoomPosition, public structureType: BuildableStructureConstant) {
         super(BUILD_PRIORITIES[structureType]);
@@ -59,11 +58,11 @@ export class BuildRequest extends MinionRequest {
 
     // Assign any available minions to each build request
     meetsCapacity() { return false; }
-    canBeFulfilledBy(creep: CachedCreep) {
+    canBeFulfilledBy(creep: Creep) {
         return (
-            creep.gameObj.getActiveBodyparts(WORK) > 0 &&
-            creep.gameObj.getActiveBodyparts(CARRY) > 0 &&
-            creep.gameObj.getActiveBodyparts(MOVE) > 0
+            creep.getActiveBodyparts(WORK) > 0 &&
+            creep.getActiveBodyparts(CARRY) > 0 &&
+            creep.getActiveBodyparts(MOVE) > 0
         )
     }
 

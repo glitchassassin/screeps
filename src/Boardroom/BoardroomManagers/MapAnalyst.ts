@@ -1,5 +1,7 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { ConstructionSites } from "WorldState/ConstructionSites";
 import { Memoize } from "typescript-memoize";
+import { Structures } from "WorldState/Structures";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
     return [].concat(...arr.map(f))
@@ -87,7 +89,7 @@ export class MapAnalyst extends BoardroomManager {
 
         if (!room) return costs;
 
-        for (let struct of global.worldState.structures.byRoom.get(roomName) ?? []) {
+        for (let struct of Structures.byRoom(roomName)) {
           if (struct.structureType === STRUCTURE_ROAD) {
             // Favor roads over plain tiles
             costs.set(struct.pos.x, struct.pos.y, 1);
@@ -99,7 +101,7 @@ export class MapAnalyst extends BoardroomManager {
           }
         }
 
-        for (let struct of global.worldState.constructionSites.byRoom.get(roomName) ?? []) {
+        for (let struct of ConstructionSites.byRoom(roomName)) {
             if (struct.structureType !== STRUCTURE_ROAD &&
                 struct.structureType !== STRUCTURE_CONTAINER &&
                 struct.structureType !== STRUCTURE_RAMPART) {

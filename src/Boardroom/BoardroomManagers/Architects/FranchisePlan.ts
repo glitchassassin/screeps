@@ -1,4 +1,6 @@
-import { CachedSource } from "WorldState";
+import { CachedSource } from "WorldState/Sources";
+import { Controllers } from "WorldState/Controllers";
+import { FranchiseData } from "WorldState/FranchiseData";
 import { MapAnalyst } from "../MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 
@@ -12,7 +14,7 @@ export class FranchisePlan {
     constructor(public source: CachedSource) {
         // Calculate from scratch
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
-        let controller = global.worldState.controllers.byRoom.get(source.pos.roomName);
+        let controller = Controllers.byRoom(source.pos.roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
 
         // 0. Check if an initial spawn already exists near Source.
@@ -48,5 +50,12 @@ export class FranchisePlan {
         let linkPos = adjacents.shift();
         if (!linkPos) throw new Error('Not enough space to place a Franchise');
         this.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
+
+        // Update franchise with data
+        FranchiseData.set(source.id, {
+            id: source.id,
+            linkPos: this.link.pos,
+            containerPos: this.container.pos,
+        })
     }
 }

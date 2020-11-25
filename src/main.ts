@@ -5,7 +5,6 @@ import './utils/RoomVisual';
 import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
-import { WorldState } from 'WorldState/WorldState';
 import { calcTickTime } from 'utils/tickTime';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import profiler from 'screeps-profiler';
@@ -30,11 +29,7 @@ global.purge = () => {
   Memory.hr = {};
   Memory.tasks = {};
   Memory.boardroom = {};
-  Memory.cache = {};
 
-
-  global.worldState = new WorldState();
-  global.worldState.run();
   global.boardroom = new Boardroom();
 }
 
@@ -46,10 +41,6 @@ let defensiveProfilingRun = true;
 
 // Initialize control switches
 global.v = new VisualizationController()
-
-// Initialize world state
-global.worldState = new WorldState();
-global.worldState.run();
 
 // Initialize Boardroom
 global.boardroom = new Boardroom();
@@ -73,9 +64,7 @@ function mainLoop() {
   try {
     // Execute Boardroom plan phase
 
-    global.Heap.CacheRefreshers.forEach(fn => fn());
-
-    global.worldState.run();
+    global.Heap?.CacheRefreshers.forEach(fn => fn());
 
     global.boardroom.plan()
 

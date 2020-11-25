@@ -1,10 +1,12 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
-import { CachedCreep, CachedSource } from "WorldState/";
 
-export const harvestEnergy = (source: CachedSource) => (creep: CachedCreep, bb: Blackboard) => {
-    if (!source.gameObj) return BehaviorResult.FAILURE;
+import { byId } from "utils/gameObjectSelectors";
 
-    let result = creep.gameObj.harvest(source.gameObj);
+export const harvestEnergy = (sourceId: Id<Source>) => (creep: Creep, bb: Blackboard) => {
+    let source = byId(sourceId);
+    if (!source) return BehaviorResult.FAILURE;
+
+    let result = creep.harvest(source);
 
     if (result === OK) return BehaviorResult.INPROGRESS;
     if (result === ERR_TIRED) return BehaviorResult.SUCCESS;

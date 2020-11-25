@@ -1,12 +1,14 @@
-import { BoardroomManager } from 'Boardroom/BoardroomManager';
-import profiler from 'screeps-profiler';
-import { lazyMap } from 'utils/lazyIterators';
-import { CachedRoom } from 'WorldState';
+import { CachedRoom, RoomData } from 'WorldState/Rooms';
+
 import { BlockPlan } from './classes/BlockPlan';
-import { PlannedStructure } from './classes/PlannedStructure';
-import { fillExtensions } from './ExtensionsPlan';
+import { BoardroomManager } from 'Boardroom/BoardroomManager';
+import { Controllers } from 'WorldState/Controllers';
 import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
+import { PlannedStructure } from './classes/PlannedStructure';
+import { Sources } from 'WorldState/Sources';
+import { fillExtensions } from './ExtensionsPlan';
+import profiler from 'screeps-profiler';
 
 export class RoomArchitect extends BoardroomManager {
     roomPlans = new Map<string, BlockPlan>();
@@ -16,7 +18,7 @@ export class RoomArchitect extends BoardroomManager {
     plan() {
         let start = Game.cpu.getUsed();
         if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
-        for (let [,room] of global.worldState.rooms.byRoom) {
+        for (let room of RoomData.all()) {
             if (Game.cpu.getUsed() - start > 5) break; // Don't spend more than 5 CPU/tick doing room planning
 
             if (room.roomPlan !== '' && this.roomPlans.has(room.name)) continue;
@@ -44,13 +46,13 @@ export class RoomArchitect extends BoardroomManager {
     isEligible(room: CachedRoom) {
         // Room must have a controller and two sources
         // To avoid edge cases, controller and sources must not be within range 5 of each other
-        let controller = global.worldState.controllers.byRoom.get(room.name);
+        let controller = Controllers.byRoom(room.name);
         if (!controller) {
             console.log(`Room planning for ${room.name} failed - No controller`);
             return false;
         }
-        let sources = global.worldState.sources.byRoom.get(room.name);
-        if (!sources || sources.size < 2) {
+        let sources = Sources.byRoom(room.name);
+        if (!sources || sources.length < 2) {
             console.log(`Room planning for ${room.name} failed - Invalid number of sources`);
             return false;
         }
@@ -83,11 +85,11 @@ export class RoomArchitect extends BoardroomManager {
         let roomBlock = new BlockPlan();
 
         // Get sources
-        let sources = global.worldState.sources.byRoom.get(room.name) ?? [];
+        let sources = Sources.byRoom(room.name);
         // Calculate FranchisePlans
         let franchise1, franchise2, headquarters;
         try {
-            let plans = Array.from(lazyMap(sources, source => new FranchisePlan(source)));
+            let plans = sources.map(source => new FranchisePlan(source));
             if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`)
             plans.sort((a, b) => a.rangeToController - b.rangeToController);
             [franchise1, franchise2] = plans;
@@ -166,12 +168,12 @@ export class RoomArchitect extends BoardroomManager {
 
     cleanup() {
         if (global.v.planning.state) {
-            for (let [roomName, room] of global.worldState.rooms.byRoom) {
+            for (let room of RoomData.all()) {
                 if (room.roomPlan) {
                     if (room.roomPlan.startsWith('FAILED')) {
-                        Game.map.visual.text('Failed', new RoomPosition(10, 5, roomName), {color: '#ff0000', fontSize: 5});
+                        Game.map.visual.text('Failed', new RoomPosition(10, 5, room.name), {color: '#ff0000', fontSize: 5});
                     } else {
-                        Game.map.visual.text('Planned', new RoomPosition(10, 5, roomName), {color: '#00ff00', fontSize: 5});
+                        Game.map.visual.text('Planned', new RoomPosition(10, 5, room.name), {color: '#00ff00', fontSize: 5});
                     }
                 }
             }

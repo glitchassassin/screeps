@@ -1,23 +1,39 @@
-declare namespace GreyCompany {
-    type CapacityCache = {
-        capacity?: number,
-        used?: number,
-        free?: number
-    }
-    interface Heap {
-        CacheRefreshers: Function[];
-        Capacity?: {
-            idByRoom: Record<string, Set<string>>;
-            data: Record<string, Partial<Record<ResourceConstant, CapacityCache>>>;
+declare global {
+    namespace GreyCompany {
+        export type CapacityCache = {
+            capacity?: number,
+            used?: number,
+            free?: number
+        }
+        export interface Heap {
+            CacheRefreshers: Function[];
+            Capacity?: {
+                idByRoom: Record<string, Set<string>>;
+                data: Record<string, Partial<Record<ResourceConstant, CapacityCache>>>;
+            }
         }
     }
 }
 
-class Capacity {
-    static byId(id: Id<Creep|AnyStoreStructure>, resource: ResourceConstant = RESOURCE_ENERGY) {
-        let store = Game.getObjectById(id)?.store as GenericStore
+/**
+ * Fetches data about store capacity.
+ * Only caches data for:
+ * - [Heap] Containers in a room not owned by me
+ */
+export class Capacity {
+    static byId(id: Id<Creep|Tombstone|Ruin|AnyStoreStructure|Resource>|undefined, resource: ResourceConstant = RESOURCE_ENERGY) {
+        if (id === undefined) return undefined;
+        let obj = Game.getObjectById(id);
+        if (obj instanceof Resource) {
+            return {
+                capacity: obj.amount,
+                used: obj.amount,
+                free: 0,
+            }
+        }
+        let store = obj?.store as GenericStore
         if (!store) {
-            return global.Heap?.Capacity?.data[id][resource] ?? {};
+            return global.Heap?.Capacity?.data[id][resource];
         }
         return {
             capacity: store?.getCapacity(resource) ?? undefined,
@@ -63,4 +79,4 @@ class Capacity {
 }
 
 // Register the cache refresh
-global.Heap.CacheRefreshers.push(Capacity.refreshCache);
+global.Heap?.CacheRefreshers.push(Capacity.refreshCache);

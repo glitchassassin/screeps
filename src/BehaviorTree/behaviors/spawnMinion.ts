@@ -1,6 +1,5 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 
-import { CachedSpawn } from "WorldState";
 import { Minion } from "MinionDefinitions/Minion";
 
 declare module 'BehaviorTree/Behavior' {
@@ -11,7 +10,7 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
-export const spawnMinion = (type: Minion) => (spawn: CachedSpawn, bb: Blackboard) => {
+export const spawnMinion = (type: Minion) => (spawn: StructureSpawn, bb: Blackboard) => {
     if (!bb.maxRoomEnergy) return BehaviorResult.FAILURE;
     if (bb.spawnMinionName && Game.creeps[bb.spawnMinionName] && !Game.creeps[bb.spawnMinionName].spawning) return BehaviorResult.SUCCESS;
 
@@ -26,7 +25,7 @@ export const spawnMinion = (type: Minion) => (spawn: CachedSpawn, bb: Blackboard
         bb.spawnMinionName = name;
     }
 
-    let result = spawn.gameObj?.spawnCreep(body, bb.spawnMinionName, {memory});
+    let result = spawn.spawnCreep(body, bb.spawnMinionName, {memory});
 
     if (
         result === OK ||

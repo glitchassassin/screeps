@@ -2,6 +2,7 @@ import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { Office } from "Office/Office";
+import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
 import { StatisticsAnalyst } from "./StatisticsAnalyst";
 
@@ -19,9 +20,9 @@ export class GrafanaAnalyst extends BoardroomManager {
                 repairing: 0
             };
 
-            for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
-                if (!room.gameObj) return;
-                room.gameObj.getEventLog().forEach(event => {
+            for (let room of RoomData.byOffice(office)) {
+                if (!Game.rooms[room.name]) return;
+                Game.rooms[room.name].getEventLog().forEach(event => {
                     switch (event.event) {
                         case EVENT_BUILD:
                             this.deltas[office.name].building += event.data.energySpent;
@@ -40,7 +41,7 @@ export class GrafanaAnalyst extends BoardroomManager {
         let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let statisticsAnalyst = this.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
 
-        let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container
+        let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId
         let storage = logisticsAnalyst.getStorage(office);
 
         let fleet = logisticsAnalyst.getCarriers(office);

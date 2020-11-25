@@ -1,27 +1,28 @@
-import { lazyCount, lazyFilter } from "utils/lazyIterators";
+import { CachedRoom, RoomData } from "WorldState/Rooms";
 
-import { CachedRoom } from "WorldState";
+import { Controllers } from "WorldState/Controllers";
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { Minerals } from "WorldState/Minerals";
 import { Office } from "Office/Office";
 import { RES_COLORS } from "utils/resourceColors";
+import { Sources } from "WorldState/Sources";
+import { Structures } from "WorldState/Structures";
 
 export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
     let vis = new RoomVisual(topLeft.roomName);
     let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
 
     let intent = defenseAnalyst.getTerritoryIntent(t.name);
-    let hostileMinions = lazyCount(global.worldState.hostileCreeps.byRoom.get(t.name) ?? []);
-    let hostileStructures = lazyCount(lazyFilter(
-        global.worldState.structures.byRoom.get(t.name) ?? [],
-        structure => (
-            (structure.structureType === STRUCTURE_SPAWN && !structure.my) ||
+    let hostileMinions = Game.rooms[t.name]?.find(FIND_HOSTILE_CREEPS).length ?? 0
+    let hostileStructures = Structures.byRoom(t.name).filter(structure => (
+            (structure.structureType === STRUCTURE_SPAWN && !(structure as StructureSpawn).my) ||
             (structure.structureType === STRUCTURE_KEEPER_LAIR)
         )
-    ));
-    let sources = lazyCount(global.worldState.sources.byRoom.get(t.name) ?? []);
-    let [mineral] = global.worldState.minerals.byRoom.get(t.name) ?? [];
-    let controller = global.worldState.controllers.byRoom.get(t.name);
+    );
+    let sources = Sources.byRoom(t.name).length;
+    let mineral = Minerals.byRoom(t.name);
+    let controller = Controllers.byRoom(t.name);
 
     // Draw background
     let intention = 'rgba(0,0,0,1)';
@@ -44,26 +45,26 @@ export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
         Icon('▲', offset(topLeft, 1, 8), 'red', hostileMinions.toFixed(0))
     }
     // Draw hostile structures icon
-    if (hostileStructures > 0) {
-        Icon('♜', offset(topLeft, 3, 8), 'red', hostileStructures.toFixed(0))
+    if (hostileStructures.length > 0) {
+        Icon('♜', offset(topLeft, 3, 8), 'red', hostileStructures.length.toFixed(0))
     }
     // Draw sources
     if (sources > 0) {
         Icon('▢', offset(topLeft, 6, 8), '#ff0', sources.toFixed(0), '#ff0')
     }
     // Draw minerals
-    if (mineral?.type) {
-        Icon('⭘', offset(topLeft, 8, 8), RES_COLORS[mineral.type], mineral.type, RES_COLORS[mineral.type])
+    if (mineral?.mineralType) {
+        Icon('⭘', offset(topLeft, 8, 8), RES_COLORS[mineral.mineralType], mineral.mineralType, RES_COLORS[mineral.mineralType])
     }
 
     // Draw visibility
-    if (t.gameObj) {
+    if (Game.rooms[t.name]) {
         Icon('👁', offset(topLeft, 7, 6), '#0f0')
     }
 
     // Draw hostile activity
     let hostile = Game.time - (t.lastHostileActivity ?? -100)
-    if ((hostileMinions > 0 || hostileStructures > 0) && hostile < 100) {
+    if ((hostileMinions > 0 || hostileStructures.length > 0) && hostile < 100) {
         Icon('⚔', offset(topLeft, 2, 6), 'red', hostile.toFixed(0))
     }
 
@@ -76,11 +77,11 @@ export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
 
     if (controller?.my) {
         Icon('⚙', offset(topLeft, 8, 2), '#0f0', controller?.level?.toFixed(0))
-    } else if (controller?.myReserved) {
+    } else if (controller?.reservation?.username === 'LordGreywether') {
         Icon('⚙', offset(topLeft, 6, 2), '#0f0')
     } else if (controller?.owner) {
         Icon('⚙', offset(topLeft, 1, 2), 'red', controller?.level?.toFixed(0))
-    } else if (controller?.reservationOwner) {
+    } else if (controller?.reservation?.username) {
         Icon('⚙', offset(topLeft, 3, 2), 'red')
     }
 }
@@ -112,7 +113,7 @@ export const Minimap = (topLeft: RoomPosition, o: Office) => {
         let {wx, wy} = mapAnalyst.roomNameToCoords(t);
         wx = xOffset - wx;
         wy = yOffset - wy;
-        territories[wx+1][wy+1] = global.worldState.rooms.byRoom.get(t) ?? null;
+        territories[wx+1][wy+1] = RoomData.byRoom(t) ?? null;
     })
     territories.forEach((row, x) => {
         let top = topLeft.x + 1 + (10 * x);

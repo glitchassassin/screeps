@@ -1,5 +1,6 @@
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { Table } from "Visualizations/Table";
@@ -17,7 +18,8 @@ export class FacilitiesManager extends OfficeTaskManager {
                     pending -= site.progress;
                 }
             } else if (req instanceof RepairRequest) {
-                let hits = (req.repairToHits ?? req.structure.hitsMax ?? 0) - (req.structure.hits ?? 0);
+                let health = Health.byId(req.structureId)
+                let hits = (req.repairToHits ?? health?.hitsMax ?? 0) - (health?.hits ?? 0);
                 pending += hits / REPAIR_POWER
             }
         }

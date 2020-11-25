@@ -1,21 +1,21 @@
 import { Behavior, BehaviorResult, Blackboard } from "./Behavior";
-import { CachedCreep, CachedSpawn } from "WorldState";
 
+import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 
-export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
+export abstract class Request<T extends Creep|StructureSpawn> {
     constructor(public priority = 5) {}
     public result?: BehaviorResult;
-    public blackboards = new Map<T, Blackboard>();
+    public blackboards = new Map<Id<T>, Blackboard>();
 
-    public assigned: T[] = [];
+    public assigned: Id<T>[] = [];
     public assign(target: T) {
-        if (!this.canBeFulfilledBy(target) || this.assigned.includes(target)) {
+        if (!this.canBeFulfilledBy(target) || this.assigned.includes(target.id as Id<T>)) {
             return false;
         }
 
-        this.assigned.push(target);
-        this.blackboards.set(target, {});
+        this.assigned.push(target.id as Id<T>);
+        this.blackboards.set(target.id as Id<T>, {});
         return true;
     }
 
@@ -23,10 +23,11 @@ export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
         let finalResult = BehaviorResult.FAILURE;
 
         // Remove missing objects
-        this.assigned = this.assigned.filter(t => t.gameObj);
+        this.assigned = this.assigned.filter(t => !Game.getObjectById(t));
 
-        for (let target of this.assigned) {
-            let blackboard = this.blackboards.get(target);
+        for (let target of this.assigned.map(byId)) {
+            if (!target) continue;
+            let blackboard = this.blackboards.get(target.id as Id<T>);
             if (!blackboard) throw new Error('Blackboard not created for target')
             let result = this.action(target, blackboard);
             // If one is finished, the request is finished
@@ -47,9 +48,9 @@ export abstract class Request<T extends (CachedCreep|CachedSpawn)> {
     }
     public capacityMet() {
         // Remove missing objects
-        this.assigned = this.assigned.filter(t => t.gameObj);
+        this.assigned = this.assigned.filter(t => !Game.getObjectById(t));
 
-        return this.meetsCapacity(this.assigned);
+        return this.meetsCapacity(this.assigned.map(byId) as T[]);
     }
 
     /**

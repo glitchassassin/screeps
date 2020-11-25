@@ -1,5 +1,8 @@
 import { Bar, Meters } from "Visualizations/Meters";
+import { byId, calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
+import { CachedSource } from "WorldState/Sources";
+import { FranchiseData } from "WorldState/FranchiseData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { Table } from "Visualizations/Table";
@@ -14,6 +17,25 @@ export class SalesManager extends OfficeTaskManager {
             this.report();
         }
     }
+    isSourceTapped(source: CachedSource) {
+        let count = 0;
+        let workParts = 0;
+
+        let maxSalesmen = FranchiseData.byId(source.id)?.maxSalesmen
+
+        for (let request of this.requests) {
+            if (request.pos.isEqualTo(source.pos)) {
+                for (let salesman of request.assigned) {
+                    count += 1;
+                    workParts += byId(salesman)?.getActiveBodyparts(WORK) ?? 0;
+                    if (workParts >= 5 || (maxSalesmen && count >= maxSalesmen)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
     report() {
         super.report();
 
@@ -21,14 +43,16 @@ export class SalesManager extends OfficeTaskManager {
 
         let headers = ['Franchise', 'Salesmen', 'Effective', 'Surplus']
         let rows = lazyMap(salesAnalyst.getUsableSourceLocations(this.office), source => {
-            source.franchisePos && new RoomVisual(source.franchisePos?.roomName).circle(source.franchisePos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
+            let franchise = FranchiseData.byId(source.id);
+            let salesmen = this.requests.find(r => r.pos.isEqualTo(source.pos))?.assigned ?? []
+            franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
             return [
                 `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
-                `${source.salesmen.length}/${source.maxSalesmen}`,
-                `${(source.salesmen.reduce((sum, salesman) =>
-                    sum + salesman.gameObj.getActiveBodyparts(WORK)
+                `${salesmen.length}/${franchise?.maxSalesmen}`,
+                `${(salesmen.reduce((sum, salesman) =>
+                    sum + (byId(salesman)?.getActiveBodyparts(WORK) ?? 0)
                 , 0) / 5 * 100).toFixed(0)}%`,
-                source.surplus ?? 0
+                calculateFranchiseSurplus(source)
             ]
         })
 
@@ -40,9 +64,9 @@ export class SalesManager extends OfficeTaskManager {
                 {
                     fill: 'yellow',
                     stroke: 'yellow',
-                    lineStyle: source.container ? 'solid' : 'dashed'
+                    lineStyle: FranchiseData.byId(source.id)?.containerId ? 'solid' : 'dashed'
                 },
-                source.surplus ?? 0,
+                calculateFranchiseSurplus(source),
                 2000
             )))
         )

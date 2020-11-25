@@ -1,18 +1,18 @@
-import { getUsedCapacity, sortByDistanceTo } from "utils/gameObjectSelectors";
+import { CachedStructure, Structures } from "WorldState/Structures";
+import { getCreepsById, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
-import { CachedResource } from "WorldState/branches/WorldResources";
-import { CachedStructure } from "WorldState";
-import { CachedTombstone } from "WorldState/branches/WorldTombstones";
+import { Capacity } from "WorldState/Capacity";
+import { FranchiseData } from "WorldState/FranchiseData";
 import { HRAnalyst } from "./HRAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
+import { Resources } from "WorldState/Resources";
+import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
-import { lazyFilter } from "utils/lazyIterators";
 
-export type RealLogisticsSources = CachedResource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer>;
+export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer|StructureLink>;
 
 export class LogisticsAnalyst extends BoardroomManager {
     constructor(
@@ -21,48 +21,40 @@ export class LogisticsAnalyst extends BoardroomManager {
     ) {
         super(boardroom);
     }
-    depots = new Map<string, CachedCreep[]>();
-    newDepots = new Map<string, CachedCreep[]>();
+    depots = new Map<string, Id<Creep>[]>();
+    newDepots = new Map<string, Id<Creep>[]>();
 
     cleanup() {
         this.depots = this.newDepots;
-        this.newDepots = new Map<string, CachedCreep[]>();
+        this.newDepots = new Map();
     }
 
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStorage(office: Office) {
-        let storage = global.worldState.rooms.byRoom.get(office.center.name)?.gameObj.storage;
-        return storage && global.worldState.structures.byId.get(storage.id) as CachedStructure<StructureStorage> | undefined;
+        let storage = Game.rooms[office.center.name]?.storage;
+        return storage && Structures.byId(storage.id)
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getTombstones(office: Office) {
-        return Array.from(lazyFilter(
-            global.worldState.tombstones.byRoom.get(office.name) ?? [],
-            t => t.capacityUsed ?? 0
-        )) as CachedTombstone[];
+        let tombstones = [];
+        for (let r of RoomData.byOffice(office)) {
+            if (Game.rooms[r.name]) {
+                tombstones.push(...Game.rooms[r.name].find(FIND_TOMBSTONES).filter(t => t.store.getUsedCapacity() > 0))
+            }
+        }
+        return tombstones;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getContainers(office: Office) {
-        let c = Array.from(lazyFilter(
-            global.worldState.structures.byOffice.get(office.name) ?? [],
-            s => s.structureType === STRUCTURE_CONTAINER
-        )) as CachedStructure<StructureContainer>[];
-        return c;
+        return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer>[];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getLinks(office: Office) {
-        let links = Array.from(lazyFilter(
-            global.worldState.structures.byOffice.get(office.name) ?? [],
-            s => s.structureType === STRUCTURE_LINK
-        )) as CachedStructure<StructureLink>[];
-        return links;
+        return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink>[];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFreeEnergy(office: Office) {
-        return Array.from(lazyFilter(
-            global.worldState.resources.byRoom.get(office.name) ?? [],
-            t => t.resourceType === RESOURCE_ENERGY
-        )) as CachedResource<RESOURCE_ENERGY>[];
+        return Resources.byOffice(office, RESOURCE_ENERGY);
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
     getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true): RealLogisticsSources[] {
@@ -76,14 +68,12 @@ export class LogisticsAnalyst extends BoardroomManager {
         let results: RealLogisticsSources[] = [];
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
-                let resource = global.worldState.resources.byId.get(item.resource.id) as CachedResource<RESOURCE_ENERGY>;
-                if (resource) results.push(resource);
+                results.push(item.resource as Resource<RESOURCE_ENERGY>);
             } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage || item.structure instanceof StructureLink) {
-                let structure = global.worldState.structures.byId.get(item.structure.id) as CachedStructure<StructureStorage>;
-                if (structure) results.push(structure);
+                results.push(item.structure);
             }
         }
-        return results.sort((a, b) => getUsedCapacity(b) - getUsedCapacity(a))
+        return results.sort((a, b) => (Capacity.byId(b.id)?.used ?? 0) - (Capacity.byId(a.id)?.used ?? 0))
     }
     @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
     getClosestAllSources(pos: RoomPosition, amount?: number) {
@@ -91,39 +81,39 @@ export class LogisticsAnalyst extends BoardroomManager {
         if (!office) return undefined;
         let sorted = this.getAllSources(office).filter(s => s.pos).sort(sortByDistanceTo(pos))
         if (!amount || amount === 0) return sorted[0];
-        let withAmount = sorted.filter(s => getUsedCapacity(s) > amount)
+        let withAmount = sorted.filter(s => (Capacity.byId(s.id)?.used ?? 0) > amount)
         if (withAmount.length > 0) return withAmount[0];
         return sorted[0];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedCreep|CachedResource<RESOURCE_ENERGY>)[] {
+    getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let depots = this.depots.get(office.name) ?? [];
         return [
             ...this.getLinks(office),
             ...this.getFreeSources(office),
-            ...depots,
+            ...getCreepsById(...depots),
             ...this.getContainers(office)
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] {
-        let freeSources: (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] = [
+    getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+        let freeSources: (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] = [
             ...this.getFreeEnergy(office),
             ...this.getTombstones(office),
         ];
         let storage = this.getStorage(office);
-        let storageCapacity = storage?.capacityUsed ?? 0;
+        let storageCapacity = storage ? Capacity.byId(storage.id)?.used ?? 0 : 0;
         if (storage && storageCapacity > 0)
             freeSources.push(storage);
         return freeSources;
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getUnallocatedSources(office: Office): (CachedStructure<AnyStoreStructure>|CachedTombstone|CachedResource<RESOURCE_ENERGY>)[] {
+    getUnallocatedSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         return [
             ...this.getFreeSources(office),
             ...this.salesAnalyst.getUsableSourceLocations(office)
-                .map(source => source.container)
-                .filter(c => c && c.capacityUsed > 0) as CachedStructure<StructureContainer>[],
+                .map(source => Structures.byId(FranchiseData.byId(source.id)?.containerId))
+                .filter(c => c && (Capacity.byId(c.id)?.used ?? 0) > 0) as CachedStructure<StructureContainer>[],
         ];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -131,14 +121,14 @@ export class LogisticsAnalyst extends BoardroomManager {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
         return hrAnalyst.getEmployees(office, 'CARRIER');
     }
-    reportDepot(creep: CachedCreep) {
+    reportDepot(creep: Creep) {
         if (!creep.memory.office) return;
         let depots = this.newDepots.get(creep.memory.office);
 
         if (!depots) {
-            this.newDepots.set(creep.memory.office, [creep]);
+            this.newDepots.set(creep.memory.office, [creep.id]);
         } else {
-            depots.push(creep);
+            depots.push(creep.id);
         }
     }
 }

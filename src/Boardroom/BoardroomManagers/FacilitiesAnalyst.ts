@@ -1,8 +1,10 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { ConstructionSites } from "WorldState/ConstructionSites";
 import { HRAnalyst } from "./HRAnalyst";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
 import { RoomArchitect } from "./Architects/RoomArchitect";
+import { Structures } from "WorldState/Structures";
 
 export class FacilitiesAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
@@ -14,7 +16,7 @@ export class FacilitiesAnalyst extends BoardroomManager {
     getWorkExpectancy(office: Office) {
         let workExpectancy = 0;
         for (let creep of this.getEngineers(office)) {
-            workExpectancy += (creep.gameObj.getActiveBodyparts(WORK) * (creep.gameObj.ticksToLive ?? 1500) * 2.5)
+            workExpectancy += (creep.getActiveBodyparts(WORK) * (creep.ticksToLive ?? 1500) * 2.5)
         }
         return workExpectancy
     }
@@ -22,17 +24,17 @@ export class FacilitiesAnalyst extends BoardroomManager {
     getExpectedOutput(office: Office) {
         let expectedOutput = 0;
         for (let creep of this.getEngineers(office)) {
-            expectedOutput += (creep.gameObj.getActiveBodyparts(WORK) * 2.5)
+            expectedOutput += (creep.getActiveBodyparts(WORK) * 2.5)
         }
         return expectedOutput
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getConstructionSites(office: Office) {
-        return Array.from(global.worldState.constructionSites.byOffice.get(office.name) ?? [])
+        return ConstructionSites.byOffice(office);
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getStructures(office: Office) {
-        return Array.from(global.worldState.structures.byOffice.get(office.name) ?? [])
+        return Structures.byOffice(office);
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getPlannedStructures(office: Office) {

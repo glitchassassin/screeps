@@ -1,52 +1,50 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { CachedStructure } from "WorldState";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
-import { lazyFilter } from "utils/lazyIterators";
+import { Structures } from "WorldState/Structures";
 
 export class HRAnalyst extends BoardroomManager {
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getExtensions(office: Office) {
-        let structures = global.worldState.structures.byRoom.get(office.center.name) ?? [];
-        return lazyFilter(structures, s => s.structureType === STRUCTURE_EXTENSION) as Generator<CachedStructure<StructureExtension>>;
+        return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_EXTENSION) as StructureExtension[];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getSpawns(office: Office) {
-        return Array.from(global.worldState.mySpawns.byRoom.get(office.center.name) ?? []);
+        return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_SPAWN) as StructureSpawn[];
     }
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
     getEmployees(office: Office, type?: string, excludeSpawning = true) {
-        return Array.from(lazyFilter(
-            global.worldState.myCreeps.byOffice.get(office.name) ?? [],
+        return Object.values(Game.creeps).filter(
             creep => (
-                (!type || creep.memory?.type === type) &&
-                (!excludeSpawning || !creep.gameObj.spawning)
+                creep.memory.office === office.name &&
+                (!type || creep.memory.type === type) &&
+                (!excludeSpawning || !creep.spawning)
             )
-        ))
+        )
     }
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
     newestEmployee(office: Office, type?: string) {
         let max = undefined;
-        for (let employee of global.worldState.myCreeps.byOffice.get(office.name) ?? []) {
+        for (let employee of this.getEmployees(office, type)) {
             if (employee.memory.type !== type) continue;
             if (max === undefined) {
-                max = employee.gameObj.ticksToLive ?? 1500;
+                max = employee.ticksToLive ?? 1500;
                 continue;
             }
-            max = Math.max(employee.gameObj.ticksToLive ?? 1500, max)
+            max = Math.max(employee.ticksToLive ?? 1500, max)
         }
         return max;
     }
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
     oldestEmployee(office: Office, type?: string) {
         let min = undefined; // Max actual TTL should be 1500
-        for (let employee of global.worldState.myCreeps.byOffice.get(office.name) ?? []) {
+        for (let employee of this.getEmployees(office, type)) {
             if (employee.memory.type !== type) continue;
             if (min === undefined) {
-                min = employee.gameObj.ticksToLive;
+                min = employee.ticksToLive;
                 continue;
             }
-            min = Math.min(employee.gameObj.ticksToLive ?? 0, min)
+            min = Math.min(employee.ticksToLive ?? 0, min)
         }
         return min;
     }

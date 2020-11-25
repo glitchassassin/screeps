@@ -1,7 +1,8 @@
+import { CachedController, Controllers } from "WorldState/Controllers";
 import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
 
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { CachedController } from "WorldState";
+import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { MapAnalyst } from "./MapAnalyst";
 import { Memoize } from "typescript-memoize";
@@ -12,7 +13,7 @@ export class ControllerAnalyst extends BoardroomManager {
     plan() {
         let roomArchitect = this.boardroom.managers.get('RoomArchitect') as RoomArchitect;
         this.boardroom.offices.forEach(office => {
-            let controller = global.worldState.controllers.byRoom.get(office.name)
+            let controller = LegalData.byRoom(office.name);
             if (!controller) return;
             // Initialize properties
             if (!controller.containerPos || !controller.linkPos) {
@@ -24,7 +25,7 @@ export class ControllerAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getDesignatedUpgradingLocations(office: Office) {
-        let controller = global.worldState.controllers.byRoom.get(office.name);
+        let controller = LegalData.byRoom(office.name);
         if (!controller?.containerPos) return null;
 
         return controller;
@@ -38,7 +39,7 @@ export class ControllerAnalyst extends BoardroomManager {
         for (let t of territories) {
             let intent = defenseAnalyst.getTerritoryIntent(t)
             if (intent === TerritoryIntent.EXPLOIT) {
-                let controller = global.worldState.controllers.byRoom.get(t);
+                let controller = Controllers.byRoom(t);
                 if (controller) {
                     controllers.push(controller);
                 }

@@ -1,7 +1,5 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
-import { CachedConstructionSite, CachedCreep } from "WorldState/";
-
-import { lazyFilter } from "utils/lazyIterators";
+import { CachedConstructionSite, ConstructionSites } from "WorldState/ConstructionSites";
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
@@ -9,23 +7,19 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
-export const createConstructionSite = (pos: RoomPosition, type: BuildableStructureConstant) => (creep: CachedCreep, bb: Blackboard) => {
+export const createConstructionSite = (pos: RoomPosition, type: BuildableStructureConstant) => (creep: Creep, bb: Blackboard) => {
     // If the site is already in the blackboard, no action needed
     if (bb.buildSite?.pos?.isEqualTo(pos) && bb.buildSite.structureType === type) return BehaviorResult.SUCCESS;
 
-    let sites = Array.from(lazyFilter(
-        global.worldState.constructionSites.byRoom.get(pos.roomName) ?? [],
-        s => s.pos.isEqualTo(pos)
-    ));
+    let site = ConstructionSites.byPos(pos)
 
     // Create the construction site, if needed
-    if (sites.length === 0) {
+    if (!site) {
         let result = pos.createConstructionSite(type);
         return (result === OK) ? BehaviorResult.INPROGRESS : BehaviorResult.FAILURE
     }
 
     // Otherwise, add it to the Blackboard
-    let [site] = sites;
     if (site.structureType === type) {
         bb.buildSite = site;
         return BehaviorResult.SUCCESS;

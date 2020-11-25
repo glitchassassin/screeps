@@ -1,5 +1,7 @@
-import { CachedController, CachedSource } from "WorldState";
+import { CachedController, Controllers } from "WorldState/Controllers";
+import { CachedSource, Sources } from "WorldState/Sources";
 
+import { LegalData } from "WorldState/LegalData";
 import { MapAnalyst } from "../MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 import { lazyMap } from "utils/lazyIterators";
@@ -30,9 +32,9 @@ export class HeadquartersPlan {
     constructor(roomName: string) {
         // Calculate from scratch
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
-        let controller = global.worldState.controllers.byRoom.get(roomName);
+        let controller = Controllers.byRoom(roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
-        let sources = Array.from(global.worldState.sources.byRoom.get(roomName) ?? []);
+        let sources = Sources.byRoom(roomName);
         if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
 
         let bestDistance = Infinity;
@@ -152,6 +154,15 @@ export class HeadquartersPlan {
         if (!this.container || !this.link || !this.spawn || !this.storage || !this.terminal || this.towers.length !== 6) {
             throw new Error('No room for a Headquarters block near controller');
         }
+
+        let legalData = LegalData.byRoom(roomName) ?? {
+            id: controller.id,
+        }
+        LegalData.set(controller.id, {
+            ...legalData,
+            containerPos: this.container.pos,
+            linkPos: this.link.pos,
+        })
     }
 
     *findSpaces(controller: CachedController, sources: CachedSource[]) {

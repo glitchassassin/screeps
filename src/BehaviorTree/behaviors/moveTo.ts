@@ -1,6 +1,6 @@
 import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
 
-import { CachedCreep } from "WorldState";
+import { Controllers } from "WorldState/Controllers";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
 import profiler from "screeps-profiler";
@@ -12,14 +12,14 @@ export class Route {
     recalculatedPath: number = 0;
 
     constructor(
-        creep: CachedCreep,
+        creep: Creep,
         public pos: RoomPosition,
         public range: number = 1
     ) {
         this.calculatePath(creep);
     }
 
-    calculatePath(creep: CachedCreep, avoidCreeps = false) {
+    calculatePath(creep: Creep, avoidCreeps = false) {
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
         let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
                                          .filter(pos => mapAnalyst.isPositionWalkable(pos, false));
@@ -32,7 +32,7 @@ export class Route {
                 this.pos.roomName,
                 {
                     routeCallback(roomName, fromRoomName) {
-                        let controller = global.worldState.controllers.byRoom.get(roomName);
+                        let controller = Controllers.byRoom(roomName);
                         if (controller && controller.owner && !controller.my) return Infinity;
                         return 1;
                     }
@@ -60,7 +60,7 @@ export class Route {
         this.lastPos = creep.pos;
     }
 
-    run(creep: CachedCreep) {
+    run(creep: Creep) {
         if (this.recalculatedPath > 2 || !this.path) {
             return ERR_NO_PATH;
         }
@@ -70,7 +70,7 @@ export class Route {
             this.calculatePath(creep, true);
         }
         this.lastPos = creep.pos;
-        let result = creep.gameObj.moveByPath(this.path);
+        let result = creep.moveByPath(this.path);
         if (result === ERR_TIRED) {
             this.stuckForTicks = 0;
             return OK;
@@ -104,7 +104,7 @@ declare module 'BehaviorTree/Behavior' {
 }
 
 export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
-    return (creep: CachedCreep, bb: Blackboard) => {
+    return (creep: Creep, bb: Blackboard) => {
         if (!pos) return BehaviorResult.FAILURE;
         log(creep.name, `setMoveTarget: range ${range} of ${pos}`);
         if (bb.movePos) return BehaviorResult.SUCCESS;
@@ -117,19 +117,19 @@ export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
 }
 
 export const setMoveTargetFromBlackboard = (range = 1) => {
-    return (creep: CachedCreep, bb: Blackboard) => {
-        if (!bb.target?.pos) return BehaviorResult.FAILURE;
-        if (bb.movePos && bb.target.pos.isEqualTo(bb.movePos) && bb.moveRange === range) return BehaviorResult.SUCCESS;
-        bb.movePos = bb.target.pos;
+    return (creep: Creep, bb: Blackboard) => {
+        if (!bb.targetPos) return BehaviorResult.FAILURE;
+        if (bb.movePos && bb.targetPos.isEqualTo(bb.movePos) && bb.moveRange === range) return BehaviorResult.SUCCESS;
+        bb.movePos = bb.targetPos;
         bb.moveRange = range;
-        bb.moveRoute = new Route(creep, bb.target.pos, range)
+        bb.moveRoute = new Route(creep, bb.targetPos, range)
         return BehaviorResult.SUCCESS;
     }
 }
 
 export const moveToTarget = () => {
-    return (creep: CachedCreep, bb: Blackboard) => {
-        if (!creep.gameObj || !bb.movePos || bb.moveRange === undefined || !bb.moveRoute) return BehaviorResult.FAILURE;
+    return (creep: Creep, bb: Blackboard) => {
+        if (!bb.movePos || bb.moveRange === undefined || !bb.moveRoute) return BehaviorResult.FAILURE;
         if (creep.pos.inRangeTo(bb.movePos, bb.moveRange)) {
             bb.movePos = undefined;
             bb.moveRange = undefined;
@@ -142,13 +142,13 @@ export const moveToTarget = () => {
         let result = bb.moveRoute.run(creep);
         if (result === ERR_NOT_FOUND) {
             if (creep.pos.x === 0) {
-                creep.gameObj.move(RIGHT);
+                creep.move(RIGHT);
             } else if (creep.pos.x === 49) {
-                creep.gameObj.move(LEFT);
+                creep.move(LEFT);
             } else if (creep.pos.y === 0) {
-                creep.gameObj.move(BOTTOM);
+                creep.move(BOTTOM);
             } else if (creep.pos.y === 49) {
-                creep.gameObj.move(TOP);
+                creep.move(TOP);
             } else {
                 bb.movePos = undefined;
                 bb.moveRange = undefined;
@@ -177,7 +177,7 @@ export const moveTo = (pos?: RoomPosition, range = 1) => {
 }
 
 export const ifIsInRoom = (roomName: string) => {
-    return (creep: CachedCreep) => {
+    return (creep: Creep) => {
         return (creep.pos.roomName === roomName) ? BehaviorResult.SUCCESS: BehaviorResult.FAILURE
     }
 }

@@ -1,8 +1,9 @@
 import { Bar, Meters } from "Visualizations/Meters";
-import { CachedController, CachedRoom } from "WorldState";
+import { CachedRoom, RoomData } from "WorldState/Rooms";
 
 import { Boardroom } from "Boardroom/Boardroom";
 import { BuildStrategist } from "./OfficeManagers/Strategists/BuildStrategist";
+import { Controllers } from "WorldState/Controllers";
 import { DefenseStrategist } from "Office/OfficeManagers/Strategists/DefenseStrategist";
 import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
 import { HRManager } from "Office/OfficeManagers/HRManager";
@@ -24,17 +25,20 @@ import profiler from "screeps-profiler";
 export class Office {
     name: string;
     center: CachedRoom;
-    controller: CachedController;
     managers: Map<string, OfficeManager> = new Map();
+
+    public get controller() {
+        let controller = Controllers.byRoom(this.center.name);
+        if (!controller || !(controller instanceof StructureController)) throw new Error(`Could not find controller for office ${this.center.name}`);
+        return controller
+    }
 
     constructor(public boardroom: Boardroom, roomName: string) {
         this.name = roomName;
-        let room = global.worldState.rooms.byRoom.get(roomName);
+        let room = RoomData.byRoom(roomName);
         if (!room) throw new Error(`Could not find central room for office ${roomName}`);
         this.center = room;
-        let controller = global.worldState.controllers.byRoom.get(roomName);
-        if (!controller) throw new Error(`Could not find controller for office ${roomName}`);
-        this.controller = controller;
+
 
         // Name the office, if needed
         this.center.city ??= Memory.cities.shift();

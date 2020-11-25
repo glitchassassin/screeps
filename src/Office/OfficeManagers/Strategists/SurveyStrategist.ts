@@ -1,7 +1,9 @@
+import { Controllers } from "WorldState/Controllers";
 import { ExploreRequest } from "BehaviorTree/requests/Explore";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
+import { RoomData } from "WorldState/Rooms";
 import { SecurityManager } from "../SecurityManager";
 import { getRcl } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
@@ -38,8 +40,8 @@ export class SurveyStrategist extends OfficeManager {
             let match = {
                 distance: mapAnalyst.getRangeTo(new RoomPosition(25, 25, this.office.name), new RoomPosition(25, 25, room)),
                 name: room,
-                lastScanned: this.scanDispatched.get(room) ?? global.worldState.rooms.byRoom.get(room)?.scanned ?? 0,
-                hostile: global.worldState.controllers.byRoom.get(room)?.owner && !global.worldState.controllers.byRoom.get(room)?.my,
+                lastScanned: this.scanDispatched.get(room) ?? RoomData.byRoom(room)?.scanned ?? 0,
+                hostile: Controllers.byRoom(room)?.owner && !Controllers.byRoom(room)?.my,
             }
             // If no existing match, OR
             // this match is older than the best match,

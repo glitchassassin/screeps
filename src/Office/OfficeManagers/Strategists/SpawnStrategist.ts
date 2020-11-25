@@ -1,7 +1,7 @@
-import { CachedSpawn, CachedStructure } from "WorldState";
 import { LogisticsRequest, TransferRequest } from "Logistics/LogisticsRequest";
 import { getRcl, unassignedLogisticsRequestsPercent } from "utils/gameObjectSelectors";
 
+import { Capacity } from "WorldState/Capacity";
 import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
@@ -37,9 +37,9 @@ const STORAGE_GOALS: Record<number, number> = {
 }
 
 export class SpawnStrategist extends OfficeManager {
-    spawnRequest?: Request<CachedSpawn>;
+    spawnRequest?: Request<StructureSpawn>;
 
-    logisticsRequests = new Map<CachedStructure, LogisticsRequest>();
+    logisticsRequests = new Map<Id<Structure>, LogisticsRequest>();
 
     plan() {
         if (Game.time - global.lastGlobalReset < 5) return; // Give time for data to catch up to prevent mis-spawns
@@ -91,9 +91,10 @@ export class SpawnStrategist extends OfficeManager {
             return;
         }
 
-        let legalDepotCapacity = legalAnalyst.getDesignatedUpgradingLocations(this.office)?.container?.capacity ?? 1;
-        let legalDepotFreeCapacity = legalAnalyst.getDesignatedUpgradingLocations(this.office)?.container?.capacityFree ?? 1;
-        let storageCapacity = logisticsAnalyst.getStorage(this.office)?.capacityUsed ?? 0
+        let legalDepotId = legalAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId
+        let legalDepotCapacity = Capacity.byId(legalDepotId)?.capacity ?? 1;
+        let legalDepotFreeCapacity = Capacity.byId(legalDepotId)?.free ?? 1;
+        let storageCapacity = Capacity.byId(logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0
         // If there is no container, 1/1 === 1 (acts as if container is empty)
         // Otherwise, if capacity is 90% full, and storage goals are met, spawn a new Paralegal
         if ( // Paralegal minions
@@ -153,20 +154,20 @@ export class SpawnStrategist extends OfficeManager {
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
 
         for (let spawn of hrAnalyst.getSpawns(this.office)) {
-            let req = this.logisticsRequests.get(spawn)
-            if ((!req || req.completed) && spawn.capacityFree > 0) {
+            let req = this.logisticsRequests.get(spawn.id)
+            if ((!req || req.completed) && (Capacity.byId(spawn.id)?.free ?? 0) > 0) {
                 req = new TransferRequest(spawn, 5)
                 logisticsManager.submit(spawn.id, req);
-                this.logisticsRequests.set(spawn, req);
+                this.logisticsRequests.set(spawn.id, req);
             }
         }
         let extensions = hrAnalyst.getExtensions(this.office);
         for (let extension of extensions) {
-            let req = this.logisticsRequests.get(extension)
-            if ((!req || req.completed) && extension.capacityFree > 0) {
+            let req = this.logisticsRequests.get(extension.id)
+            if ((!req || req.completed) && (Capacity.byId(extension.id)?.free ?? 0) > 0) {
                 req = new TransferRequest(extension, 5)
                 logisticsManager.submit(extension.id, req);
-                this.logisticsRequests.set(extension, req);
+                this.logisticsRequests.set(extension.id, req);
             }
         }
     }

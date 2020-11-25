@@ -2,6 +2,7 @@ import { BuildRequest } from "BehaviorTree/requests/Build";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { OfficeManager } from "Office/OfficeManager";
 import { RoomArchitect } from "Boardroom/BoardroomManagers/Architects/RoomArchitect";
+import { Structures } from "WorldState/Structures";
 import { getRcl } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
 
@@ -12,7 +13,7 @@ export class BuildStrategist extends OfficeManager {
         // Select valid structures
         let rcl = getRcl(this.office.name) ?? 0;
         let structureCounts: Record<string, number> = {};
-        for (let s of global.worldState.structures.byRoom.get(this.office.name) ?? []) {
+        for (let s of Structures.byRoom(this.office.name)) {
             structureCounts[s.structureType] ??= 0;
             structureCounts[s.structureType]++;
         }

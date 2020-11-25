@@ -1,9 +1,12 @@
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "./ControllerAnalyst";
 import { HRAnalyst } from "./HRAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
+import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
+import { calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
 export class Metric {
     values: number[] = [];
@@ -112,7 +115,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                 this.metrics.set(office.name,  new PipelineMetrics(
                     new NonNegativeDeltaMetric( // mineRate
                         this.salesAnalyst.getUsableSourceLocations(office)
-                            .reduce((sum, source) => (sum + (source.energyCapacity ?? 0)), 0),
+                            .reduce((sum, source) => (sum + (source instanceof Source ? source.energyCapacity : 0)), 0),
                         500
                     ),
                     new Metric( // mineContainerLevels
@@ -120,7 +123,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                         500
                     ),
                     new Metric( // roomEnergyLevels
-                        office.center.gameObj.energyCapacityAvailable,
+                        Game.rooms[office.center.name].energyCapacityAvailable,
                         500
                     ),
                     new NonNegativeDeltaMetric( // spawnEnergyRate
@@ -128,7 +131,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                         500
                     ),
                     new Metric( // storageLevels
-                        this.logisticsAnalyst.getStorage(office)?.capacity ?? 0,
+                        Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.capacity ?? 0,
                         500
                     ),
                     new DeltaMetric( // storageFillRate
@@ -136,19 +139,19 @@ export class StatisticsAnalyst extends BoardroomManager {
                         500
                     ),
                     new Metric( // fleetLevels
-                        this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.capacity), 0),
+                        this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
                         500
                     ),
                     new Metric( // mobileDepotLevels
-                        this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacity), 0) ?? 0,
+                        this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0,
                         500
                     ),
                     new Metric( // controllerDepotLevels
-                        this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
+                        Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.capacity || 0,
                         500
                     ),
                     new DeltaMetric( // controllerDepotFillRate
-                        this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0,
+                        Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.capacity || 0,
                         500
                     ),
                     new NonNegativeDeltaMetric( // logisticsThroughput
@@ -179,64 +182,64 @@ export class StatisticsAnalyst extends BoardroomManager {
             } else {
                 let metrics = this.metrics.get(office.name) as PipelineMetrics;
                 metrics.mineRate.maxValue = this.salesAnalyst.getUsableSourceLocations(office)
-                    .reduce((sum, source) => (sum + (source.energyCapacity ?? 0)), 0)
+                    .reduce((sum, source) => (sum + (source instanceof Source ? source.energyCapacity : 0)), 0)
                 metrics.mineRate.update(
                     this.salesAnalyst.getUsableSourceLocations(office)
-                        .reduce((sum, source) => (sum + (source.energy ?? 0)), 0)
+                        .reduce((sum, source) => (sum + (source instanceof Source ? source.energy : 0)), 0)
                 );
 
                 metrics.mineContainerLevels.maxValue = this.salesAnalyst.getUsableSourceLocations(office).length * CONTAINER_CAPACITY;
                 metrics.mineContainerLevels.update(
                     this.salesAnalyst.getUsableSourceLocations(office)
-                        .reduce((sum, source) => (sum + (source.surplus ?? 0)), 0)
+                        .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0)
                 );
 
-                metrics.roomEnergyLevels.maxValue = office.center.gameObj.energyCapacityAvailable;
-                metrics.roomEnergyLevels.update(office.center.gameObj.energyAvailable);
-                metrics.spawnEnergyRate.update(office.center.gameObj.energyAvailable);
+                metrics.roomEnergyLevels.maxValue = Game.rooms[office.name]?.energyCapacityAvailable ?? 0;
+                metrics.roomEnergyLevels.update(Game.rooms[office.name]?.energyAvailable ?? 0);
+                metrics.spawnEnergyRate.update(Game.rooms[office.name]?.energyAvailable ?? 0);
 
-                metrics.storageLevels.maxValue = this.logisticsAnalyst.getStorage(office)?.capacity ?? 0;
+                metrics.storageLevels.maxValue = Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.capacity ?? 0;
                 metrics.storageLevels.update(
-                    this.logisticsAnalyst.getStorage(office)?.capacityUsed ?? 0
+                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0
                 );
                 metrics.storageFillRate.update(
-                    this.logisticsAnalyst.getStorage(office)?.capacityUsed ?? 0
+                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0
                 );
 
-                metrics.fleetLevels.maxValue = this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + creep.capacity), 0);
+                metrics.fleetLevels.maxValue = this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0);
                 let fleetLevel = this.logisticsAnalyst.getCarriers(office)
-                    .reduce((sum, creep) => (sum + creep.capacityUsed), 0)
+                    .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
                 metrics.fleetLevels.update(fleetLevel);
                 metrics.logisticsThroughput.update(fleetLevel);
 
-                metrics.mobileDepotLevels.maxValue = this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacity), 0) ?? 0;
+                metrics.mobileDepotLevels.maxValue = this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0;
                 metrics.mobileDepotLevels.update(
-                    this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + creep.capacityUsed), 0) ?? 0
+                    this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.used ?? 0)), 0) ?? 0
                 );
 
-                metrics.controllerDepotLevels.maxValue = this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0;
+                metrics.controllerDepotLevels.maxValue = Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.capacity || 0;
                 metrics.controllerDepotLevels.update(
-                    this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacityUsed || 0
+                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0
                 );
 
-                metrics.controllerDepotFillRate.maxValue = this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacity || 0;
+                metrics.controllerDepotFillRate.maxValue = Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.capacity || 0;
                 metrics.controllerDepotFillRate.update(
-                    this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.container?.capacityUsed || 0
+                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0
                 );
 
                 metrics.spawnUtilization.maxValue = this.hrAnalyst.getSpawns(office).length;
-                metrics.spawnUtilization.update(this.hrAnalyst.getSpawns(office).filter(s => s.gameObj?.spawning).length);
+                metrics.spawnUtilization.update(this.hrAnalyst.getSpawns(office).filter(s => s.spawning).length);
 
                 let building = 0;
                 let repairing = 0;
                 let upgrading = 0;
                 let deathLosses = this.logisticsAnalyst.getTombstones(office)
-                    .filter(t => t.gameObj?.creep.my && t.gameObj?.deathTime === Game.time - 1)
-                    .reduce((sum, t) => sum + t.capacityUsed, 0);
+                    .filter(t => t.creep.my && t.deathTime === Game.time - 1)
+                    .reduce((sum, t) => sum + (Capacity.byId(t.id)?.used ?? 0), 0);
 
-                for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
-                    if (!room.gameObj) return;
-                    room.gameObj.getEventLog().forEach(event => {
+                for (let room of RoomData.byOffice(office) ?? []) {
+                    if (!Game.rooms[room.name]) return;
+                    Game.rooms[room.name].getEventLog().forEach(event => {
                         switch (event.event) {
                             case EVENT_BUILD:
                                 building += event.data.energySpent;

@@ -1,3 +1,5 @@
+import { Controllers } from "WorldState/Controllers";
+import { LegalData } from "WorldState/LegalData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { Table } from "Visualizations/Table";
 import { lazyMap } from "utils/lazyIterators";
@@ -6,21 +8,25 @@ export class LegalManager extends OfficeTaskManager {
     minionTypes = ['PARALEGAL', 'LAWYER'];
     run() {
         super.run()
-        let controller = global.worldState.controllers.byRoom.get(this.office.name);
+        let controller = Controllers.byRoom(this.office.name);
         if (controller) {
-            controller.rclMilestones ??= {};
-            controller.rclMilestones[controller.level] ??= `${Game.time}`;
+            let legalData = LegalData.byRoom(this.office.name) ?? {id: controller.id};
+            if (!legalData.rclMilestones || !legalData.rclMilestones[controller.level]) {
+                legalData.rclMilestones ??= {};
+                legalData.rclMilestones[controller.level] ??= `${Game.time}`;
+                LegalData.set(legalData.id, legalData);
+            }
         }
         if (global.v.legal.state) { this.report(); }
     }
     report() {
         super.report();
         let controllers = lazyMap(
-            global.worldState.controllers.byOffice.get(this.office.name) ?? [],
+            Controllers.byOffice(this.office) ?? [],
             controller => [
                 controller.pos.roomName,
-                controller.owner ?? controller.reservationOwner ?? '',
-                controller.reservationDuration ?? ''
+                controller.owner ?? controller.reservation?.username ?? '',
+                controller.reservation?.ticksToEnd ?? ''
             ])
         let controllerTable = [
             ['Controller', 'Owner', 'Reserved'],

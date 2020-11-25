@@ -120,8 +120,7 @@ declare namespace NodeJS {
     reportCPU: Function;
     debug: {[id: string]: boolean}
     Memory?: Memory
-    worldState: import('./WorldState/WorldState').WorldState
     lastGlobalReset: number
-    Heap: GreyCompany.Heap
+    Heap?: GreyCompany.Heap
   }
 }

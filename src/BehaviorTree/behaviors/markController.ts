@@ -1,11 +1,11 @@
-import { CachedController, CachedCreep } from "WorldState";
-
 import { BehaviorResult } from "BehaviorTree/Behavior";
+import { byId } from "utils/gameObjectSelectors";
 
-export const markController = (controller: CachedController, text: string) => {
-    return (creep: CachedCreep) => {
-        if (!creep.gameObj || !controller.gameObj) return BehaviorResult.FAILURE;
-        let result = creep.gameObj.signController(controller.gameObj, text);
+export const markController = (controllerId: Id<StructureController>, text: string) => {
+    return (creep: Creep) => {
+        let controller = byId(controllerId);
+        if (!controller) return BehaviorResult.FAILURE;
+        let result = creep.signController(controller, text);
         return (result === OK) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE;
     }
 }

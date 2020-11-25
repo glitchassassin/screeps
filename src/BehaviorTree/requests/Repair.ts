@@ -1,7 +1,7 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
-import { CachedCreep, CachedStructure } from "WorldState";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 
+import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { ifRepairIsNotFinished } from "BehaviorTree/behaviors/repairIsNotFinished";
@@ -10,12 +10,14 @@ import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
 export class RepairRequest extends MinionRequest {
-    public action: Behavior<CachedCreep>;
+    public action: Behavior<Creep>;
     public pos: RoomPosition;
+    public structureId: Id<Structure>
 
-    constructor(public structure: CachedStructure, public repairToHits?: number) {
+    constructor(structure: CachedStructure, public repairToHits?: number) {
         super();
         this.pos = structure.pos;
+        this.structureId = structure.id;
         this.action = Selector(
             Sequence(
                 stateIsEmpty(),
@@ -40,11 +42,11 @@ export class RepairRequest extends MinionRequest {
 
     // Assign any available minions to each build request
     meetsCapacity() { return false; }
-    canBeFulfilledBy(creep: CachedCreep) {
+    canBeFulfilledBy(creep: Creep) {
         return (
-            creep.gameObj.getActiveBodyparts(WORK) > 0 &&
-            creep.gameObj.getActiveBodyparts(CARRY) > 0 &&
-            creep.gameObj.getActiveBodyparts(MOVE) > 0
+            creep.getActiveBodyparts(WORK) > 0 &&
+            creep.getActiveBodyparts(CARRY) > 0 &&
+            creep.getActiveBodyparts(MOVE) > 0
         )
     }
 
