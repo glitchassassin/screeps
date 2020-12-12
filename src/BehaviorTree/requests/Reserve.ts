@@ -1,4 +1,4 @@
-import { Behavior, Sequence } from "BehaviorTree/Behavior";
+import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 
 import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
@@ -16,10 +16,12 @@ export class ReserveRequest extends MinionRequest {
         super();
         this.pos = controller.pos;
         this.controllerId = controller.id;
-        this.action = Sequence(
+        this.action = Selector(
+            Sequence(
+                markController(controller.id, 'This sector property of the Grey Company'),
+                reserveController(controller.id)
+            ),
             moveTo(controller.pos),
-            markController(controller.id, 'This sector property of the Grey Company'),
-            reserveController(controller.id)
         )
     }
 

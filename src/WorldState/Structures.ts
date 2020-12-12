@@ -27,6 +27,15 @@ export type CachedStructure<T extends Structure = Structure> = T | {
     my: boolean
 }
 
+export function unwrapStructure(structure: CachedStructure): CachedStructure {
+    return {
+        pos: structure.pos,
+        id: structure.id,
+        structureType: structure.structureType,
+        my: ('my' in structure) ? structure.my : false
+    }
+}
+
 export class Structures {
     static byId<T extends Structure = Structure>(id: Id<T>|undefined): CachedStructure<T>|undefined {
         if (id === undefined) return undefined;

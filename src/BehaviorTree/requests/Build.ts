@@ -1,12 +1,12 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
+import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { MinionRequest } from "./MinionRequest";
 import { buildSite } from "BehaviorTree/behaviors/buildSite";
 import { createConstructionSite } from "BehaviorTree/behaviors/createConstructionSite";
+import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
-import { ifBuildIsNotFinished } from "BehaviorTree/behaviors/buildIsNotFinished";
-import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import profiler from "screeps-profiler";
 
 const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
@@ -35,24 +35,28 @@ export class BuildRequest extends MinionRequest {
         super(BUILD_PRIORITIES[structureType]);
         this.action = Selector(
             Sequence(
-                stateIsEmpty(),
-                setState(States.GET_ENERGY)
-            ),
-            Sequence(
                 stateIs(States.GET_ENERGY),
                 getEnergy(),
-                setState(States.WORKING)
+                setState(States.WORKING),
+                resetMoveTarget()
             ),
             Sequence(
                 stateIs(States.WORKING),
-                moveTo(pos, 3),
-                createConstructionSite(pos, structureType),
-                buildSite()
+                Selector(
+                    Sequence(
+                        createConstructionSite(pos, structureType),
+                        buildSite(),
+                    ),
+                    moveTo(pos, 3),
+                )
             ),
             Sequence(
-                ifBuildIsNotFinished(),
+                Selector(
+                    stateIsEmpty(),
+                    energyEmpty()
+                ),
                 setState(States.GET_ENERGY)
-            )
+            ),
         )
     }
 

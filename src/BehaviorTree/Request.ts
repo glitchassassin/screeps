@@ -23,12 +23,13 @@ export abstract class Request<T extends Creep|StructureSpawn> {
         let finalResult = BehaviorResult.FAILURE;
 
         // Remove missing objects
-        this.assigned = this.assigned.filter(t => !Game.getObjectById(t));
+        this.assigned = this.assigned.filter(t => Game.getObjectById(t));
 
         for (let target of this.assigned.map(byId)) {
             if (!target) continue;
             let blackboard = this.blackboards.get(target.id as Id<T>);
             if (!blackboard) throw new Error('Blackboard not created for target')
+            log(target.name, 'Blackboard: ' + JSON.stringify(blackboard));
             let result = this.action(target, blackboard);
             // If one is finished, the request is finished
             if (result === BehaviorResult.SUCCESS) {
@@ -48,7 +49,7 @@ export abstract class Request<T extends Creep|StructureSpawn> {
     }
     public capacityMet() {
         // Remove missing objects
-        this.assigned = this.assigned.filter(t => !Game.getObjectById(t));
+        this.assigned = this.assigned.filter(t => Game.getObjectById(t));
 
         return this.meetsCapacity(this.assigned.map(byId) as T[]);
     }

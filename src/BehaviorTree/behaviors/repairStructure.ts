@@ -1,6 +1,6 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
+import { CachedStructure, unwrapStructure } from "WorldState/Structures";
 
-import { CachedStructure } from "WorldState/Structures";
 import { Health } from "WorldState/Health";
 import { byId } from "utils/gameObjectSelectors";
 
@@ -12,7 +12,7 @@ declare module 'BehaviorTree/Behavior' {
 }
 
 export const repairStructure = (structure: CachedStructure, repairToHits?: number) => (creep: Creep, bb: Blackboard) => {
-    if (!bb.repairSite) bb.repairSite = structure;
+    if (!bb.repairSite) bb.repairSite = unwrapStructure(structure);
     if (bb.repairToHits === undefined) bb.repairToHits = repairToHits;
 
     let health = Health.byId(bb.repairSite.id);

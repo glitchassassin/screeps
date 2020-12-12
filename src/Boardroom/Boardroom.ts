@@ -7,6 +7,7 @@ import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
+import { RoomAnalyst } from "./BoardroomManagers/RoomAnalyst";
 import { RoomArchitect } from "./BoardroomManagers/Architects/RoomArchitect";
 import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
@@ -42,6 +43,7 @@ export class Boardroom {
         new LogisticsAnalyst(this);
         new SalesAnalyst(this);
         new StatisticsAnalyst(this);
+        new RoomAnalyst(this);
 
         // Create Architects
         new RoomArchitect(this);

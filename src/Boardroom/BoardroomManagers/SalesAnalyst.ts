@@ -40,6 +40,8 @@ export class SalesAnalyst extends BoardroomManager {
                         franchise.containerPos = container?.pos;
                         franchise.linkPos = link?.pos;
                     }
+
+                    FranchiseData.set(s.id, franchise);
                 }
             }
         })
@@ -74,7 +76,7 @@ export class SalesAnalyst extends BoardroomManager {
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getMaxEffectiveInput(office: Office) {
-        let minionWorkParts = new SalesmanMinion().scaleMinion(office.center.gameObj.energyCapacityAvailable)
+        let minionWorkParts = new SalesmanMinion().scaleMinion(Game.rooms[office.name].energyCapacityAvailable)
                                                .filter(p => p === WORK).length;
 
         // Max energy output per tick

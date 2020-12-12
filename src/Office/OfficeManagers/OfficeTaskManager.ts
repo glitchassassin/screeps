@@ -62,7 +62,7 @@ export class OfficeTaskManager extends OfficeManager {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let busyCreeps = this.requests.flatMap(r => r.assigned);
         return hrAnalyst.getEmployees(this.office).filter(
-            c => c.memory?.type && this.minionTypes.includes(c.memory?.type) && !busyCreeps.includes(c)
+            c => c.memory?.type && this.minionTypes.includes(c.memory?.type) && !busyCreeps.includes(c.id)
         )
     }
 
@@ -82,7 +82,7 @@ export class OfficeTaskManager extends OfficeManager {
                 c.memory?.type &&
                 this.minionTypes.includes(c.memory?.type) &&
                 (c.ticksToLive ?? 0) < ttl &&
-                (!ifRequestIsNotHandled || this.requests.find(r => r.assigned.includes(c) && r.assigned.length === 1))
+                (!ifRequestIsNotHandled || this.requests.find(r => r.assigned.includes(c.id) && r.assigned.length === 1))
             )
         )
     }

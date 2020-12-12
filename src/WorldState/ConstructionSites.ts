@@ -28,6 +28,16 @@ export type CachedConstructionSite = ConstructionSite | {
     progressTotal: number
 }
 
+export function unwrapConstructionSite(site: CachedConstructionSite): CachedConstructionSite {
+    return {
+        pos: site.pos,
+        id: site.id,
+        structureType: site.structureType,
+        progress: site.progress,
+        progressTotal: site.progressTotal,
+    }
+}
+
 export class ConstructionSites {
     static byId(id: Id<ConstructionSite>|undefined): CachedConstructionSite|undefined {
         if (id === undefined) return undefined;

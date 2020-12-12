@@ -1,6 +1,6 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
-
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {

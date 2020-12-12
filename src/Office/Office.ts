@@ -35,10 +35,11 @@ export class Office {
 
     constructor(public boardroom: Boardroom, roomName: string) {
         this.name = roomName;
-        let room = RoomData.byRoom(roomName);
-        if (!room) throw new Error(`Could not find central room for office ${roomName}`);
+        if (!Game.rooms[roomName]) throw new Error(`Could not find central room for office ${roomName}`);
+        let room = RoomData.byRoom(roomName) ?? {name: roomName, scanned: Game.time};
+        room.territoryOf = roomName;
+        RoomData.set(roomName, room);
         this.center = room;
-
 
         // Name the office, if needed
         this.center.city ??= Memory.cities.shift();

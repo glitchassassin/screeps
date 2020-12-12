@@ -9,3 +9,8 @@ export const energyFull = () => (creep: Creep, bb: Blackboard) => {
 export const energyNotFull = () => (creep: Creep, bb: Blackboard) => {
     return (Capacity.byId(creep.id)?.free !== 0) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE;
 }
+
+export const energyEmpty = () => (creep: Creep, bb: Blackboard) => {
+    return (Capacity.byId(creep.id)?.used === 0) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE;
+}
+

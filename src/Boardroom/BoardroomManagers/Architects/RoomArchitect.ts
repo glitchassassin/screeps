@@ -38,8 +38,9 @@ export class RoomArchitect extends BoardroomManager {
                     room.roomPlan = 'FAILED - ineligible'
                     this.roomPlans.set(room.name, new BlockPlan());
                 }
-
             }
+            // update room data
+            RoomData.set(room.name, room);
         }
     }
 

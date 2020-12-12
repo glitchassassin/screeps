@@ -95,7 +95,7 @@ export class MapAnalyst extends BoardroomManager {
             costs.set(struct.pos.x, struct.pos.y, 1);
           } else if (struct.structureType !== STRUCTURE_CONTAINER &&
                      (struct.structureType !== STRUCTURE_RAMPART ||
-                      !struct.my)) {
+                      !("my" in struct && struct.my))) {
             // Can't walk through non-walkable buildings
             costs.set(struct.pos.x, struct.pos.y, 0xff);
           }

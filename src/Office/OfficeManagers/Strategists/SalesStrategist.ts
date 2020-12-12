@@ -13,6 +13,7 @@ export class SalesStrategist extends OfficeManager {
 
     plan() {
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+
         for (let source of salesAnalyst.getUntappedSources(this.office)) {
             this.submitHarvestRequest(source);
         }

@@ -1,11 +1,11 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
+import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
+import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
-import { ifRepairIsNotFinished } from "BehaviorTree/behaviors/repairIsNotFinished";
-import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
@@ -20,23 +20,25 @@ export class RepairRequest extends MinionRequest {
         this.structureId = structure.id;
         this.action = Selector(
             Sequence(
-                stateIsEmpty(),
-                setState(States.GET_ENERGY)
-            ),
-            Sequence(
                 stateIs(States.GET_ENERGY),
                 getEnergy(),
-                setState(States.WORKING)
+                setState(States.WORKING),
+                resetMoveTarget()
             ),
             Sequence(
                 stateIs(States.WORKING),
-                moveTo(structure.pos, 3),
-                repairStructure(structure, repairToHits)
+                Selector(
+                    repairStructure(structure, repairToHits),
+                    moveTo(structure.pos, 3),
+                )
             ),
             Sequence(
-                ifRepairIsNotFinished(),
+                Selector(
+                    stateIsEmpty(),
+                    energyEmpty()
+                ),
                 setState(States.GET_ENERGY)
-            )
+            ),
         )
     }
 

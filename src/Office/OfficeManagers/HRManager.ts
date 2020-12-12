@@ -25,7 +25,7 @@ export class HRManager extends OfficeManager {
             if (spawns.length === 0) break;
 
             for (let spawn of spawns) {
-                request.assign(spawn);
+                let result = request.assign(spawn);
                 if (request.capacityMet()) break;
             }
         }
@@ -33,6 +33,7 @@ export class HRManager extends OfficeManager {
         // Run assigned tasks
         this.requests = this.requests.filter(request => {
             if (request.assigned.length === 0) return true; // Unassigned
+
 
             let result = request.run();
             if (result !== BehaviorResult.INPROGRESS) return false;
@@ -68,7 +69,7 @@ export class HRManager extends OfficeManager {
         const taskTable: any[][] = [['Request', 'Priority', 'Assigned Spawns']];
         for (let req of this.requests) {
             taskTable.push([
-                req.constructor.name,
+                (req as SpawnRequest).type,
                 req.priority,
                 req.assigned.length
             ])

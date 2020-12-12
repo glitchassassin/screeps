@@ -2,8 +2,6 @@ import { CachedStructure, Structures } from "./Structures"
 import { packPos, unpackPos } from "utils/packrat"
 
 import { Office } from "Office/Office"
-import { Sources } from "./Sources"
-import { countEnergyInContainersOrGround } from "utils/gameObjectSelectors"
 
 declare global {
     namespace GreyCompany {
@@ -29,7 +27,6 @@ export type CachedFranchise = {
     containerId?: Id<StructureContainer>,
     linkPos?: RoomPosition,
     linkId?: Id<StructureLink>,
-    surplus?: number,
     maxSalesmen?: number,
 }
 
@@ -38,7 +35,6 @@ export class FranchiseData {
         if (id === undefined) return undefined;
         let cached = Memory.Franchises?.data[id]
         if (!cached) return;
-        let sourcePos = Sources.byId(id)?.pos
         let containerPos = cached.containerPosPacked ? unpackPos(cached.containerPosPacked) : undefined;
         let container = containerPos ? Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> : undefined;
         let linkPos = cached.linkPosPacked ? unpackPos(cached.linkPosPacked) : undefined;
@@ -49,7 +45,7 @@ export class FranchiseData {
             containerId: container?.id,
             linkPos,
             linkId: link?.id,
-            surplus: sourcePos ? countEnergyInContainersOrGround(sourcePos) : 0
+            maxSalesmen: cached.maxSalesmen
         }
     }
     static byRoom(roomName: string): CachedFranchise[] {
