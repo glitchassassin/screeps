@@ -6,6 +6,7 @@ import { Office } from "Office/Office"
 declare global {
     namespace GreyCompany {
         type FranchiseCache = {
+            posPacked: string,
             containerPosPacked?: string,
             linkPosPacked?: string,
             maxSalesmen?: number
@@ -23,6 +24,7 @@ declare global {
 }
 export type CachedFranchise = {
     id: Id<Source>,
+    pos: RoomPosition,
     containerPos?: RoomPosition,
     containerId?: Id<StructureContainer>,
     linkPos?: RoomPosition,
@@ -35,12 +37,14 @@ export class FranchiseData {
         if (id === undefined) return undefined;
         let cached = Memory.Franchises?.data[id]
         if (!cached) return;
+        let pos = unpackPos(cached.posPacked);
         let containerPos = cached.containerPosPacked ? unpackPos(cached.containerPosPacked) : undefined;
         let container = containerPos ? Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> : undefined;
         let linkPos = cached.linkPosPacked ? unpackPos(cached.linkPosPacked) : undefined;
         let link = linkPos ? Structures.byPos(linkPos).find(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink> : undefined;
         return {
             id,
+            pos,
             containerPos,
             containerId: container?.id,
             linkPos,
@@ -63,9 +67,12 @@ export class FranchiseData {
     static set(id: Id<Source>, franchise: CachedFranchise) {
         Memory.Franchises ??= {idByRoom: {}, data: {}}
         Memory.Franchises.data[id] = {
+            pos: packPos(franchise.pos),
             containerPosPacked: franchise.containerPos ? packPos(franchise.containerPos) : undefined,
             linkPosPacked: franchise.linkPos ? packPos(franchise.linkPos) : undefined,
             maxSalesmen: franchise.maxSalesmen
         }
+        Memory.Franchises.idByRoom[franchise.pos.roomName] ??= [];
+        Memory.Franchises.idByRoom[franchise.pos.roomName].push(id);
     }
 }
