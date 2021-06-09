@@ -3,6 +3,10 @@ import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 
+/**
+ * Returns SUCCESS if transfer is successful or creep is full
+ * Returns FAILURE if no target or any other error
+ */
 export const withdrawEnergy = (amount?: number) => (creep: Creep, bb: Blackboard) => {
     let target = byId(bb.target);
     log(creep.name, `withdrawEnergy: ${target}`);

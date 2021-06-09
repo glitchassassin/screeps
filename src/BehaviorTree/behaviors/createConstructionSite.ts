@@ -12,7 +12,7 @@ declare module 'BehaviorTree/Behavior' {
 }
 
 /**
- * Returns SUCCESS if the site exists and in the blackboard
+ * Returns SUCCESS if the site exists and in the blackboard, or if structure is completed
  * Returns INPROGRESS after attempting to create the construction site (waits a tick to confirm success)
  * Returns FAILURE if there is an error creating the construction site, or there is an existing construction site for a different structure
  * @param pos Position of construction site
