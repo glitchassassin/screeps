@@ -157,6 +157,7 @@ export class HeadquartersPlan {
 
         let legalData = LegalData.byRoom(roomName) ?? {
             id: controller.id,
+            pos: controller.pos,
         }
         LegalData.set(controller.id, {
             ...legalData,

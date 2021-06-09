@@ -1,4 +1,5 @@
 import { Office } from "Office/Office";
+import { registerCachePurger } from "./registerCachePurger";
 
 declare global {
     namespace GreyCompany {
@@ -45,9 +46,14 @@ export class RoomData {
         }
         return rooms;
     }
+    static purge() {
+        Memory.Rooms = {data: {}}
+    }
     static set(roomName: string, room: CachedRoom) {
         Memory.Rooms ??= {data: {}}
         let {name, ...roomCache} = room;
         Memory.Rooms.data[roomName] = roomCache;
     }
 }
+
+registerCachePurger(RoomData.purge);

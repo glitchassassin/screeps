@@ -1,6 +1,7 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
+import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
 declare global {
@@ -70,9 +71,11 @@ export class Minerals {
             return s;
         }
     }
+    static purge() {
+        Memory.Minerals = {idByRoom: {}, data: {}};
+    }
     static refreshCache() {
         // Initialize the Heap branch, if necessary
-        global.Heap ??= {CacheRefreshers: []}
         Memory.Minerals ??= {idByRoom: {}, data: {}};
 
         for (let roomName in Game.rooms) {
@@ -96,3 +99,4 @@ export class Minerals {
 
 // Register the cache refresh
 registerCacheRefresher(Minerals.refreshCache);
+registerCachePurger(Minerals.purge);

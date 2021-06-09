@@ -1,3 +1,4 @@
+import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
 declare global {
@@ -9,6 +10,7 @@ declare global {
         }
         export interface Heap {
             CacheRefreshers: Function[];
+            CachePurgers: Function[];
             Capacity?: {
                 idByRoom: Record<string, Set<string>>;
                 data: Record<string, Partial<Record<ResourceConstant, CapacityCache>>>;
@@ -42,6 +44,9 @@ export class Capacity {
             used: store?.getUsedCapacity(resource) ?? undefined,
             free: store?.getFreeCapacity(resource) ?? undefined,
         }
+    }
+    static purge() {
+        global.Heap.Capacity = {idByRoom: {}, data: {}};
     }
     static refreshCache() {
         // Initialize the Heap branch, if necessary
@@ -81,3 +86,4 @@ export class Capacity {
 
 // Register the cache refresh
 registerCacheRefresher(Capacity.refreshCache);
+registerCachePurger(Capacity.purge);

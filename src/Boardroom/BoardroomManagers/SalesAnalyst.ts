@@ -27,7 +27,7 @@ export class SalesAnalyst extends BoardroomManager {
             // If necessary, add franchise locations for territory
             for (let t of RoomData.byOffice(office)) {
                 for (let s of Sources.byRoom(t.name)) {
-                    let franchise = FranchiseData.byId(s.id) ?? {id: s.id}
+                    let franchise = FranchiseData.byId(s.id) ?? {id: s.id, pos: s.pos}
                     // Initialize properties
                     if (!franchise.maxSalesmen) {
                         franchise.maxSalesmen = 0;

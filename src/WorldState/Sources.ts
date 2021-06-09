@@ -1,6 +1,7 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
+import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
 declare global {
@@ -68,14 +69,16 @@ export class Sources {
             return s;
         }
     }
+    static purge() {
+        Memory.Sources = {idByRoom: {}, data: {}};
+    }
     static refreshCache() {
         // Initialize the Heap branch, if necessary
-        global.Heap ??= {CacheRefreshers: []}
         Memory.Sources ??= {idByRoom: {}, data: {}};
 
         for (let roomName in Game.rooms) {
             // Initialize
-            Memory.Sources.idByRoom[roomName] ??= [];
+            Memory.Sources.idByRoom[roomName] = [];
 
             // We only need to cache if controller is unowned
             if (!Game.rooms[roomName].controller?.my) {
@@ -92,6 +95,7 @@ export class Sources {
                 for (let id of Memory.Sources.idByRoom[roomName]) {
                     delete Memory.Sources.data[id];
                 }
+                delete Memory.Sources.idByRoom[roomName];
             }
         }
     }
@@ -99,3 +103,4 @@ export class Sources {
 
 // Register the cache refresh
 registerCacheRefresher(Sources.refreshCache);
+registerCachePurger(Sources.purge);

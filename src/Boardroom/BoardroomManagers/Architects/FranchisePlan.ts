@@ -54,6 +54,7 @@ export class FranchisePlan {
         // Update franchise with data
         FranchiseData.set(source.id, {
             id: source.id,
+            pos: source.pos,
             linkPos: this.link.pos,
             containerPos: this.container.pos,
         }, source.pos.roomName)

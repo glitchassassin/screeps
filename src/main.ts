@@ -9,10 +9,6 @@ import { calcTickTime } from 'utils/tickTime';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import profiler from 'screeps-profiler';
 
-// Initialize Heap
-global.Heap = {CacheRefreshers: []};
-
-
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
     // Built less than 15 seconds ago - fresh code push
@@ -33,6 +29,8 @@ global.purge = () => {
   Memory.hr = {};
   Memory.tasks = {};
   Memory.boardroom = {};
+
+  global.Heap.CachePurgers.forEach(fn => fn());
 
   global.boardroom = new Boardroom();
 }

@@ -17,7 +17,10 @@ export class ControllerAnalyst extends BoardroomManager {
         this.boardroom.offices.forEach(office => {
             let controller = LegalData.byRoom(office.name)
             if (!controller && Game.rooms[office.name].controller) {
-                controller = { id: Game.rooms[office.name].controller!.id }
+                controller = {
+                    id: Game.rooms[office.name].controller!.id,
+                    pos: Game.rooms[office.name].controller!.pos
+                }
             };
             if (!controller) return;
             // Initialize properties

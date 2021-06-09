@@ -1,3 +1,4 @@
+import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
 declare global {
@@ -8,6 +9,7 @@ declare global {
         }
         export interface Heap {
             CacheRefreshers: Function[];
+            CachePurgers: Function[];
             Health?: {
                 idByRoom: Record<string, Set<string>>;
                 data: Record<string, HealthCache>;
@@ -33,9 +35,11 @@ export class Health {
             hitsMax: obj?.hitsMax
         }
     }
+    static purge() {
+        global.Heap.Health = {idByRoom: {}, data: {}};
+    }
     static refreshCache() {
         // Initialize the Heap branch, if necessary
-        global.Heap ??= {CacheRefreshers: []}
         global.Heap.Health ??= {idByRoom: {}, data: {}};
 
         for (let roomName in Game.rooms) {
@@ -68,3 +72,4 @@ export class Health {
 
 // Register the cache refresh
 registerCacheRefresher(Health.refreshCache);
+registerCachePurger(Health.purge);
