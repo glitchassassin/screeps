@@ -22,8 +22,8 @@ export class LinkHarvestRequest extends MinionRequest {
         let franchise = FranchiseData.byId(source.id)
         this.action = Sequence(
             Selector(
-                harvestEnergy(source.id),
                 moveTo(franchise?.containerPos, 0),
+                harvestEnergy(source.id),
                 moveTo(source.pos)
             ),
             Selector(
