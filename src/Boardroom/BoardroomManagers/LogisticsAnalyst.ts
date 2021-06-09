@@ -6,6 +6,7 @@ import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Capacity } from "WorldState/Capacity";
 import { FranchiseData } from "WorldState/FranchiseData";
 import { HRAnalyst } from "./HRAnalyst";
+import { LegalData } from "WorldState/LegalData";
 import { Memoize } from "typescript-memoize";
 import { Office } from "Office/Office";
 import { Resources } from "WorldState/Resources";
@@ -49,8 +50,12 @@ export class LogisticsAnalyst extends BoardroomManager {
         return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer>[];
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
-    getLinks(office: Office) {
-        return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink>[];
+    getLinks(office: Office, outputsOnly = false) {
+        if (outputsOnly) {
+            return Structures.byOffice(office).filter(s => s.id === LegalData.byRoom(office.name)?.linkId) as CachedStructure<StructureLink>[];
+        } else {
+            return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink>[];
+        }
     }
     @Memoize((office: Office) => ('' + office.name + Game.time))
     getFreeEnergy(office: Office) {
@@ -89,7 +94,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let depots = this.depots.get(office.name) ?? [];
         return [
-            ...this.getLinks(office),
+            ...this.getLinks(office, true),
             ...this.getFreeSources(office),
             ...getCreepsById(...depots),
             ...this.getContainers(office)
