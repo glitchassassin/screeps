@@ -13,6 +13,9 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
+/**
+ * Returns SUCCESS if state matches, FAILURE otherwise
+ */
 export const stateIs = (state: States) => {
     return (target: any, bb: Blackboard) => {
         if (target instanceof Creep) {
@@ -23,6 +26,9 @@ export const stateIs = (state: States) => {
     }
 }
 
+/**
+ * Returns SUCCESS if state is empty, FAILURE otherwise
+ */
 export const stateIsEmpty = () => {
     return (target: any, bb: Blackboard) => {
         if (bb.state === undefined) return BehaviorResult.SUCCESS;
@@ -30,6 +36,9 @@ export const stateIsEmpty = () => {
     }
 }
 
+/**
+ * Returns INPROGRESS and sets state in blackboard
+ */
 export const setState = (state: States) => {
     return (target: any, bb: Blackboard) => {
         if (target instanceof Creep) {

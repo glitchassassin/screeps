@@ -11,6 +11,11 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
+/**
+ * Returns FAILURE if health is unavailable, target is unavailable, or there is another error
+ * Returns SUCCESS if health is greater than or equal to the target level, or creep is out of energy
+ * Returns INPROGRESS if repair command is successful
+ */
 export const repairStructure = (structure: CachedStructure, repairToHits?: number) => (creep: Creep, bb: Blackboard) => {
     if (!bb.repairSite) bb.repairSite = unwrapStructure(structure);
     if (bb.repairToHits === undefined) bb.repairToHits = repairToHits;

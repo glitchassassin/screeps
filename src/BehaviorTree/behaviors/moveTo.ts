@@ -107,6 +107,9 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
+/**
+ * Resets blackboard variables. Always returns SUCCESS.
+ */
 export const resetMoveTarget = () => {
     return (creep: Creep, bb: Blackboard) => {
         bb.movePos = undefined;
@@ -117,6 +120,12 @@ export const resetMoveTarget = () => {
     }
 }
 
+/**
+ * Returns FAILURE if no pos is specified.
+ * Returns SUCCESS if move is done or creep is in range.
+ * Returns FAILURE if unable to calculate route.
+ * Otherwise, route is calculated and added to blackboard, and returns SUCCESS.
+ */
 export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
     return (creep: Creep, bb: Blackboard) => {
         if (!pos) return BehaviorResult.FAILURE;
@@ -146,6 +155,9 @@ export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
     }
 }
 
+/**
+ * Returns FAILURE if targetPos isn't set on blackboard, otherwise returns the result of moveToTarget
+ */
 export const setMoveTargetFromBlackboard = (range = 1) => {
     return (creep: Creep, bb: Blackboard) => {
         log(creep.name, `setMoveTargetFromBlackboard: ${bb.targetPos}`);
@@ -154,6 +166,12 @@ export const setMoveTargetFromBlackboard = (range = 1) => {
     }
 }
 
+/**
+ * Returns FAILURE if blackboard variables aren't set
+ * Returns SUCCESS if the move is done
+ * Returns INPROGRESS if creep is following the route
+ * Returns FAILURE if there is an error following the route
+ */
 export const moveToTarget = () => {
     return (creep: Creep, bb: Blackboard) => {
         if (!bb.movePos || bb.moveRange === undefined) return BehaviorResult.FAILURE;
@@ -211,6 +229,9 @@ export const moveTo = (pos?: RoomPosition, range = 1) => {
     )
 }
 
+/**
+ * Returns SUCCESS if creep is in room, FAILURE otherwise
+ */
 export const ifIsInRoom = (roomName: string) => {
     return (creep: Creep) => {
         return (creep.pos.roomName === roomName) ? BehaviorResult.SUCCESS: BehaviorResult.FAILURE

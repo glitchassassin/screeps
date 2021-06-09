@@ -10,6 +10,12 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
+/**
+ * Returns FAILURE if variables are not set
+ * Returns SUCCESS if minion has spawned
+ * Returns INPROGRESS if spawnCreep returns OK, Busy, or Not Enough Energy (to keep trying)
+ * Returns FAILURE for any other error
+ */
 export const spawnMinion = (type: Minion) => (spawn: StructureSpawn, bb: Blackboard) => {
     if (!bb.maxRoomEnergy) return BehaviorResult.FAILURE;
     if (bb.spawnMinionName && Game.creeps[bb.spawnMinionName] && !Game.creeps[bb.spawnMinionName].spawning) return BehaviorResult.SUCCESS;

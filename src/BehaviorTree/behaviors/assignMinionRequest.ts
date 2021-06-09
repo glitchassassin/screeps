@@ -11,6 +11,11 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
+/**
+ * Returns FAILURE if manager is invalid
+ * If a minion request is pending, returns its status
+ * Otherwise, submits the request and returns INPROGRESS
+ */
 export const assignMinionRequest = (managerName: string, request: MinionRequest) => (office: Office, bb: Blackboard) => {
     let manager = office.managers.get(managerName);
     if (!(manager instanceof OfficeTaskManager)) return BehaviorResult.FAILURE;

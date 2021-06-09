@@ -1,6 +1,6 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
-import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
@@ -8,6 +8,9 @@ declare module 'BehaviorTree/Behavior' {
     }
 }
 
+/**
+ * Writes to blackboard and always returns SUCCESS.
+ */
 export const calcMaxRoomEnergy = () => (spawn: StructureSpawn, bb: Blackboard) => {
     let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
 
