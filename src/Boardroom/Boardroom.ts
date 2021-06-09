@@ -34,19 +34,19 @@ export class Boardroom {
         Memory.cities ??= cityNames;
 
         // Create BoardroomManagers
-        new MapAnalyst(this);
-        new ControllerAnalyst(this);
-        new DefenseAnalyst(this);
-        new FacilitiesAnalyst(this);
-        new GrafanaAnalyst(this);
-        new HRAnalyst(this);
-        new LogisticsAnalyst(this);
-        new SalesAnalyst(this);
-        new StatisticsAnalyst(this);
-        new RoomAnalyst(this);
+        MapAnalyst.register(this);
+        ControllerAnalyst.register(this);
+        DefenseAnalyst.register(this);
+        FacilitiesAnalyst.register(this);
+        GrafanaAnalyst.register(this);
+        HRAnalyst.register(this);
+        LogisticsAnalyst.register(this);
+        SalesAnalyst.register(this);
+        StatisticsAnalyst.register(this);
+        RoomAnalyst.register(this);
 
         // Create Architects
-        new RoomArchitect(this);
+        RoomArchitect.register(this);
 
         // Initialize BoardroomManagers
         this.managers.forEach(m => m.init());

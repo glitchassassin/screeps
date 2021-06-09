@@ -19,7 +19,7 @@ export class DefenseStrategist extends OfficeManager {
 
         for (let tower of defenseAnalyst.getTowers(this.office)) {
             // Auxiliary orders
-            if (Capacity.byId(tower.id)?.free ?? 0 > 0) {
+            if ((Capacity.byId(tower.id)?.free ?? 0) > 0) {
                 logisticsManager.submit(tower.pos.roomName, new TransferRequest(tower, 4))
             }
 
