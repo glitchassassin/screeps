@@ -1,14 +1,13 @@
 import { Behavior, Sequence } from "BehaviorTree/Behavior";
 
-import { CachedSpawn } from "WorldState";
 import { Minion } from "MinionDefinitions/Minion";
 import { Request } from "BehaviorTree/Request";
 import { calcMaxRoomEnergy } from "BehaviorTree/behaviors/calcMaxRoomEnergy";
 import profiler from "screeps-profiler";
 import { spawnMinion } from "BehaviorTree/behaviors/spawnMinion";
 
-export class SpawnRequest extends Request<CachedSpawn> {
-    public action: Behavior<CachedSpawn>;
+export class SpawnRequest extends Request<StructureSpawn> {
+    public action: Behavior<StructureSpawn>;
     public type: string;
 
     constructor(minion: Minion) {
@@ -21,9 +20,9 @@ export class SpawnRequest extends Request<CachedSpawn> {
     }
 
     // Assign one spawn to the request
-    meetsCapacity(assigned: CachedSpawn[]) { return assigned.length > 0; }
-    canBeFulfilledBy(spawn: CachedSpawn) {
-        return ( !spawn.gameObj?.spawning );
+    meetsCapacity(assigned: StructureSpawn[]) { return assigned.length > 0; }
+    canBeFulfilledBy(spawn: StructureSpawn) {
+        return ( !spawn.spawning );
     }
 
 }

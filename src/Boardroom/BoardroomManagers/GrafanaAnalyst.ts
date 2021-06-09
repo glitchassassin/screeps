@@ -1,9 +1,13 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "./ControllerAnalyst";
+import { FranchiseData } from "WorldState/FranchiseData";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { Office } from "Office/Office";
+import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
 import { StatisticsAnalyst } from "./StatisticsAnalyst";
+import { calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
 export class GrafanaAnalyst extends BoardroomManager {
     deltas: {
@@ -19,9 +23,9 @@ export class GrafanaAnalyst extends BoardroomManager {
                 repairing: 0
             };
 
-            for (let room of global.worldState.rooms.byOffice.get(office.name) ?? []) {
-                if (!room.gameObj) return;
-                room.gameObj.getEventLog().forEach(event => {
+            for (let room of RoomData.byOffice(office)) {
+                if (!Game.rooms[room.name]) return;
+                Game.rooms[room.name].getEventLog().forEach(event => {
                     switch (event.event) {
                         case EVENT_BUILD:
                             this.deltas[office.name].building += event.data.energySpent;
@@ -40,29 +44,29 @@ export class GrafanaAnalyst extends BoardroomManager {
         let salesAnalyst = this.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let statisticsAnalyst = this.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
 
-        let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.container
+        let upgradeDepot = controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId
         let storage = logisticsAnalyst.getStorage(office);
 
         let fleet = logisticsAnalyst.getCarriers(office);
         let mobileDepots = logisticsAnalyst.depots.get(office.name) ?? [];
 
         return {
-            sourcesLevel: salesAnalyst.getUsableSourceLocations(office).reduce((sum, source) => (sum + (source.energy ?? 0)), 0),
-            sourcesMax: salesAnalyst.getUsableSourceLocations(office).reduce((sum, source) => (sum + (source.energyCapacity ?? 0)), 0),
+            sourcesLevel: salesAnalyst.getUsableSourceLocations(office).reduce((sum, source) => (sum + ("energy" in source ? source.energy : 0)), 0),
+            sourcesMax: salesAnalyst.getUsableSourceLocations(office).reduce((sum, source) => (sum + ("energyCapacity" in source ? source.energyCapacity : 0)), 0),
             mineContainersLevel: salesAnalyst.getUsableSourceLocations(office)
-                .reduce((sum, source) => (sum + (source.surplus || 0)), 0),
+                .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0),
             mineContainersMax: salesAnalyst.getUsableSourceLocations(office)
-                .reduce((sum, source) => (sum + (source.container?.capacity || 0)), 0),
-            storageLevel: storage?.capacityUsed ?? 0,
-            storageMax: storage?.capacity ?? 0,
-            upgradeDepotLevel: upgradeDepot?.capacityUsed ?? 0,
-            upgradeDepotMax: upgradeDepot?.capacity ?? 0,
-            carrierFleetLevel: fleet.reduce((sum, creep) => sum + creep.capacityUsed, 0),
-            carrierFleetMax: fleet.reduce((sum, creep) => sum + creep.capacity, 0),
-            mobileDepotsLevel: mobileDepots.reduce((sum, creep) => sum + creep.capacityUsed, 0),
-            mobileDepotsMax: mobileDepots.reduce((sum, creep) => sum + creep.capacity, 0),
-            roomEnergyLevel: office.center.gameObj.energyAvailable,
-            roomEnergyMax: office.center.gameObj.energyCapacityAvailable,
+                .reduce((sum, source) => (sum + (Capacity.byId(FranchiseData.byId(source.id)?.containerId)?.capacity || 0)), 0),
+            storageLevel: Capacity.byId(storage?.id)?.used ?? 0,
+            storageMax: Capacity.byId(storage?.id)?.capacity ?? 0,
+            upgradeDepotLevel: Capacity.byId(upgradeDepot)?.used ?? 0,
+            upgradeDepotMax: Capacity.byId(upgradeDepot)?.capacity ?? 0,
+            carrierFleetLevel: fleet.reduce((sum, creep) => sum + (Capacity.byId(creep.id)?.used ?? 0), 0),
+            carrierFleetMax: fleet.reduce((sum, creep) => sum + (Capacity.byId(creep.id)?.capacity ?? 0), 0),
+            mobileDepotsLevel: mobileDepots.reduce((sum, creep) => sum + (Capacity.byId(creep)?.used ?? 0), 0),
+            mobileDepotsMax: mobileDepots.reduce((sum, creep) => sum + (Capacity.byId(creep)?.capacity ?? 0), 0),
+            roomEnergyLevel: Game.rooms[office.name].energyAvailable,
+            roomEnergyMax: Game.rooms[office.name].energyCapacityAvailable,
             buildDelta: this.deltas[office.name].building,
             repairDelta: this.deltas[office.name].repairing,
             pipelineThroughput: statisticsAnalyst.metrics.get(office.name)?.logisticsThroughput.mean() ?? 0
@@ -79,12 +83,13 @@ export class GrafanaAnalyst extends BoardroomManager {
             controllerLevel: number; }
         } = {};
         this.boardroom.offices.forEach(office => {
-            if (office.center.gameObj.controller?.my) {
+            let controller = Game.rooms[office.name].controller;
+            if (controller?.my) {
                 stats[office.name] = {
                     pipelineMetrics: this.pipelineMetrics(office),
-                    controllerProgress: office.center.gameObj.controller.progress,
-                    controllerProgressTotal: office.center.gameObj.controller.progressTotal,
-                    controllerLevel: office.center.gameObj.controller.level,
+                    controllerProgress: controller.progress,
+                    controllerProgressTotal: controller.progressTotal,
+                    controllerLevel: controller.level,
                 }
             }
         })

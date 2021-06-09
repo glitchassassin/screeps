@@ -5,10 +5,9 @@ import './utils/RoomVisual';
 import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
-import { WorldState } from 'WorldState/WorldState';
 import { calcTickTime } from 'utils/tickTime';
+import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import profiler from 'screeps-profiler';
-import { resetMemoryOnRespawn } from 'utils/ResetMemoryOnRespawn';
 
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -18,21 +17,8 @@ if (!global.IS_JEST_TEST) {
     console.log('Global reset detected');
   }
 }
-// If respawning, wipe memory clean
-resetMemoryOnRespawn();
 
-// Set up defensive profiling
-let defensiveProfilingRun = true;
-
-// Initialize control switches
-global.v = new VisualizationController()
-
-// Initialize world state
-global.worldState = new WorldState();
-global.worldState.run();
-
-// Initialize Boardroom
-global.boardroom = new Boardroom();
+global.lastGlobalReset = Game.time;
 
 global.purge = () => {
   Memory.flags = {};
@@ -43,13 +29,23 @@ global.purge = () => {
   Memory.hr = {};
   Memory.tasks = {};
   Memory.boardroom = {};
-  Memory.cache = {};
 
+  global.Heap.CachePurgers.forEach(fn => fn());
 
-  global.worldState = new WorldState();
-  global.worldState.run();
   global.boardroom = new Boardroom();
 }
+
+// If respawning, wipe memory clean
+onRespawn(global.purge);
+
+// Set up defensive profiling
+let defensiveProfilingRun = true;
+
+// Initialize control switches
+global.v = new VisualizationController();
+
+// Initialize Boardroom
+global.boardroom = new Boardroom();
 
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -70,7 +66,7 @@ function mainLoop() {
   try {
     // Execute Boardroom plan phase
 
-    global.worldState.run();
+    global.Heap.CacheRefreshers.forEach(fn => fn());
 
     global.boardroom.plan()
 

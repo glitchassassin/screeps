@@ -1,6 +1,9 @@
+import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
+import { FranchiseData } from "WorldState/FranchiseData";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { byId } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
 
 export class LinkManager extends OfficeManager {
@@ -11,13 +14,14 @@ export class LinkManager extends OfficeManager {
 
         let sources = salesAnalyst.getUsableSourceLocations(this.office);
         let controller = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
+        let controllerLink = byId(controller?.linkId)
 
-        // console.log('Controller link', controller?.link?.gameObj)
-        if (!controller?.link?.gameObj || controller.link.capacityFree === 0) return;
+        if (!controllerLink || Capacity.byId(controllerLink.id)?.free === 0) return;
 
         for (let source of sources) {
-            if (source.link?.gameObj?.cooldown === 0) {
-                source.link.gameObj.transferEnergy(controller.link.gameObj);
+            let link = byId(FranchiseData.byId(source.id)?.linkId)
+            if (link?.cooldown === 0) {
+                link.transferEnergy(controllerLink);
             }
         }
     }

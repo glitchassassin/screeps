@@ -1,75 +1,68 @@
 import { Bar, Meters } from "Visualizations/Meters";
-import { CachedController, CachedRoom } from "WorldState";
+import { CachedRoom, RoomData } from "WorldState/Rooms";
 
 import { Boardroom } from "Boardroom/Boardroom";
-import { ControllerArchitect } from "Office/OfficeManagers/Architects/ControllerArchitect";
+import { BuildStrategist } from "./OfficeManagers/Strategists/BuildStrategist";
+import { Controllers } from "WorldState/Controllers";
 import { DefenseStrategist } from "Office/OfficeManagers/Strategists/DefenseStrategist";
-import { ExtensionArchitect } from "Office/OfficeManagers/Architects/ExtensionArchitect";
 import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
 import { HRManager } from "Office/OfficeManagers/HRManager";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
-import { LinkArchitect } from "./OfficeManagers/Architects/LinkArchitect";
 import { LinkManager } from "./OfficeManagers/LinkManager";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
 import { RepairStrategist } from "Office/OfficeManagers/Strategists/RepairStrategist";
-import { RoadArchitect } from "Office/OfficeManagers/Architects/RoadArchitect";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesStrategist } from "Office/OfficeManagers/Strategists/SalesStrategist";
 import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
-import { StorageArchitect } from "./OfficeManagers/Architects/StorageArchitect";
 import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
 import { SurveyStrategist } from "./OfficeManagers/Strategists/SurveyStrategist";
-import { TowerArchitect } from "Office/OfficeManagers/Architects/TowerArchitect";
 import profiler from "screeps-profiler";
 
 export class Office {
     name: string;
     center: CachedRoom;
-    controller: CachedController;
     managers: Map<string, OfficeManager> = new Map();
+
+    public get controller() {
+        let controller = Controllers.byRoom(this.center.name);
+        if (!controller || !(controller instanceof StructureController)) throw new Error(`Could not find controller for office ${this.center.name}`);
+        return controller
+    }
 
     constructor(public boardroom: Boardroom, roomName: string) {
         this.name = roomName;
-        let room = global.worldState.rooms.byRoom.get(roomName);
-        if (!room) throw new Error(`Could not find central room for office ${roomName}`);
+        if (!Game.rooms[roomName]) throw new Error(`Could not find central room for office ${roomName}`);
+        let room = RoomData.byRoom(roomName) ?? {name: roomName, scanned: Game.time};
+        room.territoryOf = roomName;
+        RoomData.set(roomName, room);
         this.center = room;
-        let controller = global.worldState.controllers.byRoom.get(roomName);
-        if (!controller) throw new Error(`Could not find controller for office ${roomName}`);
-        this.controller = controller;
 
         // Name the office, if needed
         this.center.city ??= Memory.cities.shift();
 
         // Create Managers
-        new HRManager(this);
-        new LogisticsManager(this);
+        HRManager.register(this);
+        LogisticsManager.register(this);
 
-        new FacilitiesManager(this);
-        new LegalManager(this);
-        new SalesManager(this);
-        new SecurityManager(this);
-        new LinkManager(this);
-
-        // Create Architects
-        new ControllerArchitect(this);
-        new RoadArchitect(this);
-        new ExtensionArchitect(this);
-        new TowerArchitect(this);
-        new StorageArchitect(this);
-        new LinkArchitect(this);
+        FacilitiesManager.register(this);
+        LegalManager.register(this);
+        SalesManager.register(this);
+        SecurityManager.register(this);
+        LinkManager.register(this);
 
         // Create Strategists
-        new LegalStrategist(this);
-        new SalesStrategist(this);
-        new DefenseStrategist(this);
-        new RepairStrategist(this);
-        new StorageStrategist(this);
-        new SurveyStrategist(this);
-        new SpawnStrategist(this);
+        LegalStrategist.register(this);
+        SalesStrategist.register(this);
+        DefenseStrategist.register(this);
+        BuildStrategist.register(this);
+        RepairStrategist.register(this);
+        StorageStrategist.register(this);
+        SurveyStrategist.register(this);
+        SpawnStrategist.register(this);
 
     }
 

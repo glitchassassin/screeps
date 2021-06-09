@@ -1,3 +1,4 @@
+import { Capacity } from "WorldState/Capacity";
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
 import { LogisticsManager } from "../LogisticsManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
@@ -18,13 +19,13 @@ export class DefenseStrategist extends OfficeManager {
 
         for (let tower of defenseAnalyst.getTowers(this.office)) {
             // Auxiliary orders
-            if (tower.capacityFree > 0) {
+            if ((Capacity.byId(tower.id)?.free ?? 0) > 0) {
                 logisticsManager.submit(tower.pos.roomName, new TransferRequest(tower, 4))
             }
 
             // Primary orders
-            if (target?.gameObj) {
-                tower.gameObj?.attack(target.gameObj);
+            if (target) {
+                tower.attack(target);
             }
         }
     }

@@ -1,11 +1,14 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 
-import { CachedCreep } from "WorldState/";
+import { Health } from "WorldState/Health";
 
 /**
  * Relies on Blackboard.buildSite to be populated by createConstructionSite
  */
-export const ifRepairIsNotFinished = () => (creep: CachedCreep, bb: Blackboard) => {
-    if (bb.repairSite && (bb.repairSite.hits ?? 0) <= (bb.repairToHits !== undefined ? bb.repairToHits : bb.repairSite.hitsMax ?? 0)) return BehaviorResult.SUCCESS;
+export const ifRepairIsNotFinished = () => (creep: Creep, bb: Blackboard) => {
+    if (!bb.repairSite) return BehaviorResult.FAILURE;
+    let health = Health.byId(bb.repairSite.id);
+    if (!health) return BehaviorResult.FAILURE;
+    if ((health.hits ?? 0) <= (bb.repairToHits !== undefined ? bb.repairToHits : health.hitsMax ?? 0)) return BehaviorResult.SUCCESS;
     return BehaviorResult.FAILURE;
 }

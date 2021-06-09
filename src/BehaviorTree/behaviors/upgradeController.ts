@@ -1,11 +1,12 @@
-import { CachedController, CachedCreep } from "WorldState/";
-
 import { BehaviorResult } from "BehaviorTree/Behavior";
+import { byId } from "utils/gameObjectSelectors";
 
-export const upgradeController = (controller: CachedController) => (creep: CachedCreep) => {
-    if (!controller.gameObj) return BehaviorResult.FAILURE;
+export const upgradeController = (controllerId: Id<StructureController>) => (creep: Creep) => {
+    let controller = byId(controllerId);
 
-    let result = creep.gameObj.upgradeController(controller.gameObj);
+    if (!controller) return BehaviorResult.FAILURE;
+
+    let result = creep.upgradeController(controller);
 
     return (result === OK) ? BehaviorResult.INPROGRESS : BehaviorResult.FAILURE
 }

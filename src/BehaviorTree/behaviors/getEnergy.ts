@@ -7,10 +7,10 @@ import { withdrawEnergy } from "./withdrawEnergy";
 
 export const getEnergy = () => Selector(
     energyFull(),
+    withdrawEnergy(),
     Sequence(
         findEnergySource(),
         setMoveTargetFromBlackboard(),
         moveToTarget(),
-        withdrawEnergy()
     )
 )

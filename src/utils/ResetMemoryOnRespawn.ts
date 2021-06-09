@@ -1,15 +1,7 @@
-export const resetMemoryOnRespawn = () => {
+export const onRespawn = (callback: Function) => {
     if (hasRespawned()) {
-        console.log('Respawn detected, wiping memory');
-        Memory.flags = {};
-        Memory.rooms = {};
-        Memory.creeps = {};
-        Memory.metrics = {};
-        Memory.offices = {};
-        Memory.hr = {};
-        Memory.tasks = {};
-        Memory.boardroom = {};
-        Memory.cache = {};
+        console.log('Respawn detected');
+        callback();
     }
 }
 

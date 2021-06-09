@@ -1,11 +1,13 @@
 import { DepotRequest, TransferRequest } from "Logistics/LogisticsRequest";
 
-import { BuildRequest } from "BehaviorTree/requests/Build";
+import { Controllers } from "WorldState/Controllers";
 import { FacilitiesManager } from "../FacilitiesManager";
+import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
+import { Structures } from "WorldState/Structures";
 import { UpgradeRequest } from "BehaviorTree/requests/Upgrade";
 import profiler from "screeps-profiler";
 
@@ -18,22 +20,19 @@ export class LegalStrategist extends OfficeManager {
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
-        let controller = global.worldState.controllers.byRoom.get(this.office.name);
+        let controller = Controllers.byRoom(this.office.name);
+        let legalData = LegalData.byRoom(this.office.name);
 
         if (!controller) return;
 
         // Auxiliary orders
         // Logistics and infrastructure
         if (controller?.level && controller.level > 1) {
-            if (controller.container) {
-                logisticsManager.submit(controller.pos.roomName, new TransferRequest(controller.container, 2))
-            } else if (controller.containerPos) {
-                logisticsManager.submit(controller.pos.roomName, new DepotRequest(controller.containerPos, 2))
-
-                if (!this.buildRequest) {
-                    this.buildRequest = new BuildRequest(controller.containerPos, STRUCTURE_CONTAINER);
-                    facilitiesManager.submit(this.buildRequest);
-                }
+            let container = Structures.byId(legalData?.containerId)
+            if (container) {
+                logisticsManager.submit(controller.pos.roomName, new TransferRequest(container, 2))
+            } else if (legalData?.containerPos) {
+                logisticsManager.submit(controller.pos.roomName, new DepotRequest(legalData.containerPos, 2))
             }
         }
 

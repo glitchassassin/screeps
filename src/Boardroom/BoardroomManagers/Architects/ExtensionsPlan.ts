@@ -1,5 +1,6 @@
 import { BlockPlan } from "./classes/BlockPlan";
 import { PlannedStructure } from "./classes/PlannedStructure";
+import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: number) {
     if (count <= 0) return;
@@ -21,6 +22,8 @@ export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: nu
 
     if (extensions.length < count) throw new Error('Not enough room to fill extensions')
 
+    extensions.sort(sortByDistanceTo(storagePos));
+
     extensions.forEach(pos => roomBlock.structures.push(new PlannedStructure(pos, STRUCTURE_EXTENSION)));
 }
 
@@ -34,7 +37,6 @@ function fillExtensionsRecursive(terrain: RoomTerrain, costMatrix: CostMatrix, s
         for (let square of squares) {
             if (nextIterationCount === 0) break;
             if (squareIsValid(terrain, costMatrix, square)) {
-                console.log('Placing extension at', square, nextIterationCount - 1, 'remaining');
                 extensions.unshift(square);
                 costMatrix.set(square.x, square.y, 255);
                 nextIterationCount -= 1;

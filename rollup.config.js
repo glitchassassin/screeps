@@ -1,11 +1,11 @@
 "use strict";
 
 import clear from 'rollup-plugin-clear';
-import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
-import typescript from 'rollup-plugin-typescript2';
+import resolve from '@rollup/plugin-node-resolve';
 import screeps from 'rollup-plugin-screeps';
+import typescript from 'rollup-plugin-typescript2';
 
 let cfg;
 const dest = process.env.DEST;
@@ -45,6 +45,7 @@ export default {
     typescript({tsconfig: "./tsconfig.json"}),
     screeps({config: cfg, dryRun: cfg == null}),
     replace({
+      preventAssignment: true,
       __buildDate__: () => JSON.stringify(Date.now()),
     })
   ]

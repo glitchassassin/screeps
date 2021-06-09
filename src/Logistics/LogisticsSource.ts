@@ -1,9 +1,8 @@
 import { LogisticsAnalyst, RealLogisticsSources } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
-import { CachedResource } from "WorldState/branches/WorldResources";
+import { Capacity } from "WorldState/Capacity";
 import { Memoize } from "typescript-memoize";
-import { getUsedCapacity } from "utils/gameObjectSelectors";
+import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 import profiler from "screeps-profiler";
 import { travel } from "Logistics/Travel";
@@ -35,7 +34,7 @@ export class LogisticsSource {
 
     @Memoize(() => (`${Game.time}`))
     public get capacity() : number {
-        return this.sources.reduce((sum, source) => sum + getUsedCapacity(source), 0) - this.reservedCapacity;
+        return this.sources.reduce((sum, source) => sum + (Capacity.byId(source.id)?.used ?? 0), 0) - this.reservedCapacity;
     }
 
     /**
@@ -55,30 +54,32 @@ export class LogisticsSource {
      *
      * @param creep Creep to transfer resources into
      */
-    transfer(creep: CachedCreep, amount?: number) {
-        let source = this.sources[0];
-        if (!source) return ERR_NOT_FOUND;
-        if (source.pos.roomName !== creep.pos.roomName) {
-            return travel(creep, source.pos);
+    transfer(creep: Creep, amount?: number) {
+        let cachedSource = this.sources[0];
+        if (!cachedSource) return ERR_NOT_FOUND;
+        if (cachedSource.pos.roomName !== creep.pos.roomName) {
+            return travel(creep, cachedSource.pos);
         }
-        if (getUsedCapacity(source) === 0) return ERR_NOT_ENOUGH_ENERGY;
+        if ((Capacity.byId(cachedSource.id)?.used ?? 0) === 0) return ERR_NOT_ENOUGH_ENERGY;
 
         let result;
-        if (source instanceof CachedResource) {
-            result = source.gameObj ? creep.gameObj.pickup(source.gameObj) : ERR_NOT_FOUND;
-            log('LogisticsSource', `${creep.name} picking up resource at ${source.pos}: ${result}`)
+        if (cachedSource instanceof Resource) {
+            result = cachedSource ? creep.pickup(cachedSource) : ERR_NOT_FOUND;
+            log('LogisticsSource', `${creep.name} picking up resource at ${cachedSource.pos}: ${result}`)
         } else {
-            if (amount !== undefined) amount = Math.max(amount, creep.capacityFree)
-            result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY, amount) : ERR_NOT_FOUND;
+            let source = byId(cachedSource.id);
+            if (!source) return ERR_NOT_FOUND;
+            if (amount !== undefined) amount = Math.max(amount, (Capacity.byId(creep.id)?.free ?? 0))
+            result = source ? creep.withdraw(source, RESOURCE_ENERGY, amount) : ERR_NOT_FOUND;
             if (result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_FULL) {
-                result = source.gameObj ? creep.gameObj.withdraw(source.gameObj, RESOURCE_ENERGY) : ERR_NOT_FOUND;
+                result = source ? creep.withdraw(source, RESOURCE_ENERGY) : ERR_NOT_FOUND;
             }
             log('LogisticsSource', `${creep.name} withdrawing from store at ${source.pos}: ${result}`)
         }
         if (result === ERR_FULL) return OK;
 
         if (result === ERR_NOT_IN_RANGE) {
-            return travel(creep, source.pos);
+            return travel(creep, cachedSource.pos);
         }
         return result;
     }

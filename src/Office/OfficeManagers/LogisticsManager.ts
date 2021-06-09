@@ -1,6 +1,7 @@
 import { Bar, Meters } from "Visualizations/Meters";
 
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { LegalData } from "WorldState/LegalData";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsRequest } from "Logistics/LogisticsRequest";
 import { LogisticsRoute } from "Logistics/LogisticsRoute";
@@ -51,7 +52,7 @@ export class LogisticsManager extends OfficeManager {
     fleetTTL() {
         let max = 0;
         for (let c of this.logisticsAnalyst.getCarriers(this.office)) {
-            max = Math.max((c.gameObj.ticksToLive ?? 0), max)
+            max = Math.max((c.ticksToLive ?? 0), max)
         }
         return max;
     }
@@ -59,7 +60,7 @@ export class LogisticsManager extends OfficeManager {
     plan() {
         let idleCarriers = this.getIdleCarriers();
         let storage = this.logisticsAnalyst.getStorage(this.office);
-        let controller = global.worldState.controllers.byRoom.get(this.office.name);
+        let legalData = LegalData.byRoom(this.office.name);
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
@@ -77,8 +78,8 @@ export class LogisticsManager extends OfficeManager {
                 this.sources.set(spawn.pos.toString(), new LogisticsSource(spawn.pos))
             }
         })
-        if (controller?.link && !this.sources.has(controller.link.pos.toString())) {
-            this.sources.set(controller.link.pos.toString(), new LogisticsSource(controller.link.pos, true, false))
+        if (legalData?.linkPos && legalData?.linkId && !this.sources.has(legalData.linkPos.toString())) {
+            this.sources.set(legalData.linkPos.toString(), new LogisticsSource(legalData.linkPos, true, false))
         }
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 
@@ -240,7 +241,10 @@ export class LogisticsManager extends OfficeManager {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let depots = logisticsAnalyst.depots.get(this.office.name)
 
-        depots?.forEach(c => new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'}))
+        depots?.forEach(id => {
+            let c = Game.getObjectById(id);
+            if (c) new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'})
+        })
     }
     miniReport = (pos: RoomPosition) => {
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;

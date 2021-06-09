@@ -1,23 +1,34 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
-import { CachedCreep, CachedResource } from "WorldState/";
 
-export const withdrawEnergy = (amount?: number) => (creep: CachedCreep, bb: Blackboard) => {
-    if (!bb.target || !bb.target.gameObj) return BehaviorResult.FAILURE;
+import { byId } from "utils/gameObjectSelectors";
+import { log } from "utils/logger";
+
+export const withdrawEnergy = (amount?: number) => (creep: Creep, bb: Blackboard) => {
+    let target = byId(bb.target);
+    log(creep.name, `withdrawEnergy: ${target}`);
+    if (!target) return BehaviorResult.FAILURE;
 
     let result: ScreepsReturnCode;
-    if (bb.target instanceof CachedResource) {
-        result = creep.gameObj.pickup(bb.target.gameObj);
-    } else if (bb.target instanceof CachedCreep) {
-        result = bb.target.gameObj.transfer(creep.gameObj, RESOURCE_ENERGY, amount);
+    if (target instanceof Resource) {
+        result = creep.pickup(target);
+        log(creep.name, `withdrawEnergy from Resource: ${target} (${result})`);
+    } else if (target instanceof Creep) {
+        result = target.transfer(creep, RESOURCE_ENERGY, amount);
         if (result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_FULL) {
-            result = bb.target.gameObj.transfer(creep.gameObj, RESOURCE_ENERGY);
+            result = target.transfer(creep, RESOURCE_ENERGY);
         }
+        log(creep.name, `withdrawEnergy from Creep: ${target} (${result})`);
     } else {
-        result = creep.gameObj.withdraw(bb.target.gameObj, RESOURCE_ENERGY, amount);
+        result = creep.withdraw(target, RESOURCE_ENERGY, amount);
         if (result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_FULL) {
-            result = creep.gameObj.withdraw(bb.target.gameObj, RESOURCE_ENERGY);
+            result = creep.withdraw(target, RESOURCE_ENERGY);
         }
+        log(creep.name, `withdrawEnergy from Structure: ${target} (${result})`);
     }
+
+    // One way or another, this should not take longer than a single attempt, so clear
+    // the target on the blackboard
+    bb.target = undefined;
 
     return (result === OK || result === ERR_FULL) ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE
 }

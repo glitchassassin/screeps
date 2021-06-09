@@ -1,4 +1,3 @@
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
 
@@ -9,7 +8,7 @@ export class Route {
     recalculatedPath: number = 0;
 
     constructor(
-        creep: CachedCreep,
+        creep: Creep,
         public pos: RoomPosition,
         public range: number = 1,
         private mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
@@ -17,7 +16,7 @@ export class Route {
         this.calculatePath(creep);
     }
 
-    calculatePath(creep: CachedCreep, avoidCreeps = false) {
+    calculatePath(creep: Creep, avoidCreeps = false) {
         let positionsInRange = this.mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
                                          .filter(pos => this.mapAnalyst.isPositionWalkable(pos, !avoidCreeps));
         let route = PathFinder.search(creep.pos, positionsInRange, {
@@ -29,7 +28,7 @@ export class Route {
         this.lastPos = creep.pos;
     }
 
-    run(creep: CachedCreep) {
+    run(creep: Creep) {
         if (this.recalculatedPath > 2 || !this.path) {
             return ERR_NO_PATH;
         }
@@ -39,7 +38,7 @@ export class Route {
             this.calculatePath(creep, true);
         }
         this.lastPos = creep.pos;
-        let result = creep.gameObj.moveByPath(this.path);
+        let result = creep.moveByPath(this.path);
         if (result === ERR_TIRED) {
             this.stuckForTicks = 0;
             return OK;
@@ -61,7 +60,7 @@ export class Route {
 
 let routeCache = new Map<string, Route>()
 
-export const travel = (creep: CachedCreep, pos: RoomPosition, range: number = 1) => {
+export const travel = (creep: Creep, pos: RoomPosition, range: number = 1) => {
     let routeKey = creep.name;
 
     let route = routeCache.get(routeKey);
@@ -76,13 +75,13 @@ export const travel = (creep: CachedCreep, pos: RoomPosition, range: number = 1)
     let result = route.run(creep);
     if (result === ERR_NOT_FOUND) {
         if (creep.pos.x === 0) {
-            creep.gameObj.move(RIGHT);
+            creep.move(RIGHT);
         } else if (creep.pos.x === 49) {
-            creep.gameObj.move(LEFT);
+            creep.move(LEFT);
         } else if (creep.pos.y === 0) {
-            creep.gameObj.move(BOTTOM);
+            creep.move(BOTTOM);
         } else if (creep.pos.y === 49) {
-            creep.gameObj.move(TOP);
+            creep.move(TOP);
         } else {
             return result;
         }

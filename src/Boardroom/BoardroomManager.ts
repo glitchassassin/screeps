@@ -1,11 +1,15 @@
 import { Boardroom } from "./Boardroom";
 
-export abstract class BoardroomManager {
+export class BoardroomManager {
     constructor(
         public boardroom: Boardroom
     ) {
         boardroom.register(this);
         this.init();
+    }
+
+    static register(boardroom: Boardroom) {
+        return new this(boardroom);
     }
 
     /**

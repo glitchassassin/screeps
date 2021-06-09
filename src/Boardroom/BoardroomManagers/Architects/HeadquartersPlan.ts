@@ -1,4 +1,7 @@
-import { CachedController } from "WorldState";
+import { CachedController, Controllers } from "WorldState/Controllers";
+import { CachedSource, Sources } from "WorldState/Sources";
+
+import { LegalData } from "WorldState/LegalData";
 import { MapAnalyst } from "../MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 import { lazyMap } from "utils/lazyIterators";
@@ -29,14 +32,14 @@ export class HeadquartersPlan {
     constructor(roomName: string) {
         // Calculate from scratch
         let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
-        let controller = global.worldState.controllers.byRoom.get(roomName);
+        let controller = Controllers.byRoom(roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
-        let sources = Array.from(global.worldState.sources.byRoom.get(roomName) ?? []);
+        let sources = Sources.byRoom(roomName);
         if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
 
         let bestDistance = Infinity;
 
-        for (let space of this.findSpaces(controller)) {
+        for (let space of this.findSpaces(controller, sources)) {
             // Orient the space
             //            X X X
             // X X O X X  X X X
@@ -71,7 +74,9 @@ export class HeadquartersPlan {
                 for (let x = 0; x < orientation[y].length; x++) {
                     // Container is an "obstacle" because the upgrading creep will stay there
                     if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
-                        costMatrix.set(space.x + x, space.y + y, 255)
+                        costMatrix.set(space.x + x, space.y + y, 255);
+                    } else if (orientation[y][x] === STRUCTURE_ROAD) {
+                        costMatrix.set(space.x + x, space.y + y, 1);
                     }
                 }
             }
@@ -92,10 +97,13 @@ export class HeadquartersPlan {
                         let path = PathFinder.search(
                             pos,
                             {pos: source.pos, range: 1},
-                            {maxRooms: 1, roomCallback: () => costMatrix}
+                            {maxRooms: 1, roomCallback: () => costMatrix, plainCost: 2, swampCost: 10}
                         );
                         if (!path.incomplete) {
-                            path.path.forEach(p => roads.add(p));
+                            path.path.forEach(p => {
+                                roads.add(p);
+                                costMatrix.set(p.x, p.y, 1);
+                            });
                             distance += path.cost;
                         }
                         return path.incomplete
@@ -104,7 +112,6 @@ export class HeadquartersPlan {
                 )
             )) continue; // Invalid room plan
             if (distance >= bestDistance) continue; // We already have a better layout
-            console.log(`${distance} total vs. ${bestDistance}`)
             bestDistance = distance;
 
             // Valid room plan
@@ -137,7 +144,6 @@ export class HeadquartersPlan {
                     }
 
                     if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
-                        console.log(`obstacle ${orientation[y][x]} at [${x}, ${y}]`, )
                         costMatrix.set(space.x + x, space.y + y, 255)
                     }
                 }
@@ -148,9 +154,19 @@ export class HeadquartersPlan {
         if (!this.container || !this.link || !this.spawn || !this.storage || !this.terminal || this.towers.length !== 6) {
             throw new Error('No room for a Headquarters block near controller');
         }
+
+        let legalData = LegalData.byRoom(roomName) ?? {
+            id: controller.id,
+            pos: controller.pos,
+        }
+        LegalData.set(controller.id, {
+            ...legalData,
+            containerPos: this.container.pos,
+            linkPos: this.link.pos,
+        }, roomName)
     }
 
-    *findSpaces(controller: CachedController) {
+    *findSpaces(controller: CachedController, sources: CachedSource[]) {
         // Lay out the grid, cropping for edges
         let x = Math.max(1, controller.pos.x - 5);
         let y = Math.max(1, controller.pos.y - 5);
@@ -165,10 +181,12 @@ export class HeadquartersPlan {
             for (let xGrid = 0; xGrid < width; xGrid++) {
                 // For each cell...
                 let t = terrain.get(x+xGrid, y+yGrid)
-                // If the cell is a wall or adjacent to the controller, reset its value to 0,0
-                let xOffset = Math.abs(controller.pos.x - (x + xGrid))
-                let yOffset = Math.abs(controller.pos.y - (y + yGrid))
-                if (t === TERRAIN_MASK_WALL || (xOffset <= 1 && yOffset <= 1)) {
+                // If the cell is a wall, adjacent to the controller, or within 3 squares of a source, reset its value to 0,0
+                if (
+                    t === TERRAIN_MASK_WALL ||
+                    controller.pos.inRangeTo(x, y, 1) ||
+                    sources.some(s => s.pos.inRangeTo(x, y, 3))
+                ) {
                     grid[yGrid][xGrid] = {x: 0, y: 0};
                     continue;
                 }

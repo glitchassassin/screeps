@@ -1,5 +1,7 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { ConstructionSites } from "WorldState/ConstructionSites";
 import { Memoize } from "typescript-memoize";
+import { Structures } from "WorldState/Structures";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
     return [].concat(...arr.map(f))
@@ -35,6 +37,7 @@ export class MapAnalyst extends BoardroomManager {
     @Memoize((roomName: string, proximity: number) => (`${roomName} ${proximity}`))
     calculateNearbyRooms(roomName: string, proximity: number, includeCenter = false) {
         let {wx, wy} = this.roomNameToCoords(roomName)
+        let roomStatus = Game.map.getRoomStatus(roomName);
         let adjacent = this.calculateAdjacencyMatrix(proximity)
             .map(offset => {
                 try {
@@ -44,13 +47,30 @@ export class MapAnalyst extends BoardroomManager {
                     return null;
                 }
             })
-            .filter(n => n !== null) as string[];
+            .filter(n => {
+                if (n === null) return false;
+                try {
+                    let status = Game.map.getRoomStatus(n);
+                    if (roomStatus === roomStatus || status.status === 'normal') {
+                        return true;
+                    }
+                    return false;
+                } catch {
+                    return false;
+                }
+            }) as string[];
         if (includeCenter) adjacent.push(roomName);
         return adjacent;
     }
     @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))
     isPositionWalkable(pos: RoomPosition, ignoreCreeps: boolean = false) {
-        let terrain = Game.map.getRoomTerrain(pos.roomName);
+        let terrain;
+        try {
+            terrain = Game.map.getRoomTerrain(pos.roomName);
+        } catch {
+            // Invalid room
+            return false;
+        }
         if (terrain.get(pos.x, pos.y) === TERRAIN_MASK_WALL) {
             return false;
         }
@@ -69,19 +89,19 @@ export class MapAnalyst extends BoardroomManager {
 
         if (!room) return costs;
 
-        for (let struct of global.worldState.structures.byRoom.get(roomName) ?? []) {
+        for (let struct of Structures.byRoom(roomName)) {
           if (struct.structureType === STRUCTURE_ROAD) {
             // Favor roads over plain tiles
             costs.set(struct.pos.x, struct.pos.y, 1);
           } else if (struct.structureType !== STRUCTURE_CONTAINER &&
                      (struct.structureType !== STRUCTURE_RAMPART ||
-                      !struct.my)) {
+                      !("my" in struct && struct.my))) {
             // Can't walk through non-walkable buildings
             costs.set(struct.pos.x, struct.pos.y, 0xff);
           }
         }
 
-        for (let struct of global.worldState.constructionSites.byRoom.get(roomName) ?? []) {
+        for (let struct of ConstructionSites.byRoom(roomName)) {
             if (struct.structureType !== STRUCTURE_ROAD &&
                 struct.structureType !== STRUCTURE_CONTAINER &&
                 struct.structureType !== STRUCTURE_RAMPART) {

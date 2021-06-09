@@ -1,26 +1,29 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
-import { CachedResource, CachedStructure, CachedTombstone } from "WorldState";
 
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
+import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
-        target?: CachedStructure<AnyStoreStructure>|CachedTombstone|CachedCreep|CachedResource<RESOURCE_ENERGY>
+        target?: Id<AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>>
+        targetPos?: RoomPosition
     }
 }
 
-export const findEnergySource = () => (creep: CachedCreep, bb: Blackboard) => {
+export const findEnergySource = () => (creep: Creep, bb: Blackboard) => {
     // This needs to reference a cached source, but there is no generic WorldState "get by ID" function.
-    if (!bb.target?.pos) {
+    if (!bb.target || !byId(bb.target) || !bb.targetPos) {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let office = global.boardroom.offices.get(creep.memory.office || '');
         if (!office) return BehaviorResult.FAILURE;
 
         // Prefer sources that can fill the minion, even if they're further away
-        bb.target = logisticsAnalyst.getClosestAllSources(creep.pos, creep.capacityFree);
+        let target = logisticsAnalyst.getClosestAllSources(creep.pos, Capacity.byId(creep.id)?.free);
+        bb.target = target?.id;
+        bb.targetPos = target?.pos;
+        log(creep.name, `findEnergySource: ${creep.pos} to ${byId(bb.target)} @ ${bb.targetPos} (range ${bb.targetPos?.getRangeTo(creep.pos)})`)
     }
-    log(creep.name, `findEnergySource: ${bb.target?.constructor.name} @ ${bb.target?.pos}`)
     return bb.target ? BehaviorResult.SUCCESS : BehaviorResult.FAILURE;
 }

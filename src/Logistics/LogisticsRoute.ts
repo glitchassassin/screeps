@@ -1,10 +1,11 @@
 import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
+import { Capacity } from "WorldState/Capacity";
 import { LogisticsSource } from "./LogisticsSource";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 import profiler from "screeps-profiler";
 
@@ -31,31 +32,36 @@ export class LogisticsRoute {
     public reservedCapacity = 0;
     public began: number = -1;
 
+    public creepId: Id<Creep>;
+
+    public get creep() { return byId(this.creepId) }
+
     public get completed() {
         return this.state === RouteState.COMPLETED || this.state === RouteState.CANCELLED;
     }
 
-    constructor(public office: Office, public creep: CachedCreep, request: LogisticsRequest, sources: LogisticsSource[]) {
+    constructor(public office: Office, creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
         // Set up dependencies
         this.mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         this.statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
         // Resupply requests can only be fulfilled by a primary source
         this.requests = [request];
-        this.creep = creep;
+        this.creepId = creep.id;
         this.office = office;
         this.init(creep, request, sources);
     }
-    init(creep: CachedCreep, request: LogisticsRequest, sources: LogisticsSource[]) {
+    init(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
         // Get shortest route to source and then request
-        if (creep.capacityUsed / creep.capacity < 0.8) {
+        let capacity = Capacity.byId(creep.id)
+        if ((capacity?.used ?? 1) / (capacity?.capacity ?? 1) < 0.8) {
             let prioritySources = this.calcPrioritySources(creep, request, sources);
             this.calcInitialPath(creep, request, prioritySources);
         }
 
         this.calcInitialCapacity(creep, request);
     }
-    calcPrioritySources(creep: CachedCreep, request: LogisticsRequest, sources: LogisticsSource[]) {
-        let creepCapacity = creep.capacityFree;
+    calcPrioritySources(creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
+        let creepCapacity = Capacity.byId(creep.id)?.free ?? 0;
         let fullCreepSources: LogisticsSource[] = [];
         let fullRequestSources: LogisticsSource[] = [];
         let validSources: LogisticsSource[] = [];
@@ -75,7 +81,7 @@ export class LogisticsRoute {
         let prioritySources = (fullCreepSources.length > 0) ? fullCreepSources : (fullRequestSources.length > 0) ? fullRequestSources : validSources;
         return prioritySources;
     }
-    calcInitialPath(creep: CachedCreep, request: LogisticsRequest, prioritySources: LogisticsSource[]) {
+    calcInitialPath(creep: Creep, request: LogisticsRequest, prioritySources: LogisticsSource[]) {
         // Find shortest path from creep -> source -> request
         prioritySources.forEach(source => {
             let distance = this.mapAnalyst.getRangeTo(creep.pos, source.pos) + this.mapAnalyst.getRangeTo(source.pos, request.pos);
@@ -85,8 +91,9 @@ export class LogisticsRoute {
             }
         })
     }
-    calcInitialCapacity(creep: CachedCreep, request: LogisticsRequest) {
-        this.maxCapacity = Math.min(creep.capacity, creep.capacityUsed + (this.source?.capacity ?? 0));
+    calcInitialCapacity(creep: Creep, request: LogisticsRequest) {
+        let capacity = Capacity.byId(creep.id)
+        this.maxCapacity = Math.min(capacity?.capacity ?? 0, (capacity?.used ?? 0) + (this.source?.capacity ?? 0));
         this.assignedCapacity.set(request, Math.min(this.maxCapacity, request.capacity));
         if (request instanceof DepotRequest) {
             this.capacity = 0;
@@ -147,7 +154,7 @@ export class LogisticsRoute {
 
     setState(s: RouteState) {
         if (this.state === s) return;
-        log('LogisticsRoute', `${this.creep.name} switching to ${s}`)
+        log('LogisticsRoute', `${this.creep?.name} switching to ${s}`)
         // If creep has not withdrawn, cancel reservation
         if (this.state === RouteState.GETTING_ENERGY) {
             this.source?.unreserve(this.reservedCapacity)
@@ -164,15 +171,15 @@ export class LogisticsRoute {
 
     run() {
         // Validate current state
-        if (!this.creep.gameObj) { // Creep not found
-            log('LogisticsRoute', `Creep ${this.creep.name} not found`)
+        if (!this.creep) { // Creep not found
+            log('LogisticsRoute', `Creep not found, canceling route`)
             this.setState(RouteState.CANCELLED);
             return;
         }
         // Change state, if appropriate
         switch(this.state) {
             case RouteState.GETTING_ENERGY: {
-                if (!(this.creep.capacityFree === 0 || this.source?.capacity === 0)) {
+                if (!(Capacity.byId(this.creepId)?.free === 0 || this.source?.capacity === 0)) {
                     break;
                 }
                 this.setState(RouteState.FULFILLING);

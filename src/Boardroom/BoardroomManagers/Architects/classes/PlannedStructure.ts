@@ -1,5 +1,7 @@
+import { CachedStructure, Structures } from "WorldState/Structures";
+
+import { BehaviorResult } from "BehaviorTree/Behavior";
 import { BuildRequest } from "BehaviorTree/requests/Build";
-import { CachedStructure } from "WorldState";
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
@@ -10,23 +12,27 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     buildRequest?: BuildRequest;
 
     survey() {
-        if (this.structure?.gameObj) return true; // Structure exists
-        if ((this.buildRequest && !this.buildRequest.result) || !Game.rooms[this.pos.roomName]) {
-            // Structure is being built, or we cannot see the room
+        if (this.structure) return true; // Structure exists
+        if (!Game.rooms[this.pos.roomName]) {
+            // We cannot see the room
             return false;
         }
+
         // Look for structure at position
-        let structure = this.pos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === this.structureType);
-        if (structure) {
-            // Structure exists; get the cached version
-            this.structure = global.worldState.structures.byId.get(structure.id) as CachedStructure<Structure<T>>|undefined;
+        this.structure = Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
+        if (this.structure) {
+            // Structure exists
+            return true;
         }
 
-        if (this.structure?.gameObj) return true; // Structure exists
+        if (this.buildRequest && !this.buildRequest.result) {
+            // Structure is being built
+            return false;
+        }
         return false; // Structure does not exist
     }
     generateBuildRequest() {
-        if (!this.structure) {
+        if (!this.buildRequest || (!this.structure && this.buildRequest.result === BehaviorResult.FAILURE)) {
             this.buildRequest = new BuildRequest(this.pos, this.structureType);
         }
         return this.buildRequest;

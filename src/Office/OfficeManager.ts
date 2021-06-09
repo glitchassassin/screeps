@@ -7,7 +7,7 @@ export enum OfficeManagerStatus {
     PRIORITY = 'PRIORITY',
 }
 
-export abstract class OfficeManager {
+export class OfficeManager {
     status = OfficeManagerStatus.NORMAL;
 
     constructor(
@@ -15,6 +15,10 @@ export abstract class OfficeManager {
     ) {
         office.register(this);
         this.init()
+    }
+
+    static register(office: Office) {
+        return new this(office);
     }
 
     setStatus(status: OfficeManagerStatus) {

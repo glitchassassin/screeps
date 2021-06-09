@@ -1,8 +1,8 @@
 import { BehaviorResult } from "BehaviorTree/Behavior";
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "Visualizations/Table";
-import { lazyFilter } from "utils/lazyIterators";
 import { log } from "utils/logger";
 import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
@@ -14,9 +14,10 @@ export class OfficeTaskManager extends OfficeManager {
         this.requests.push(request);
     }
     run() {
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         log(this.constructor.name, `.run CPU: ${Game.cpu.getUsed()}`)
         // Sort requests by priority descending, then by proximity to spawn
-        let spawn = global.worldState.mySpawns.byRoom.get(this.office.name)?.values().next().value;
+        let [spawn] = hrAnalyst.getSpawns(this.office);
         let target = (spawn? spawn.pos : new RoomPosition(25, 25, this.office.name)) as RoomPosition;
 
         log(this.constructor.name, `.run assigning ${this.getAvailableCreeps().length} minions...`)
@@ -58,11 +59,11 @@ export class OfficeTaskManager extends OfficeManager {
     }
 
     getAvailableCreeps = () => {
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let busyCreeps = this.requests.flatMap(r => r.assigned);
-        return Array.from(lazyFilter(
-            global.worldState.myCreeps.byOffice.get(this.office.name) ?? [],
-            c => c.memory?.type && this.minionTypes.includes(c.memory?.type) && !busyCreeps.includes(c)
-        ))
+        return hrAnalyst.getEmployees(this.office).filter(
+            c => c.memory?.type && this.minionTypes.includes(c.memory?.type) && !busyCreeps.includes(c.id)
+        )
     }
 
     /**
@@ -75,15 +76,15 @@ export class OfficeTaskManager extends OfficeManager {
      * @param ifRequestIsNotHandled If true, ignores minions whose request has backup coverage
      */
     creepsExpiring = (ttl: number, ifRequestIsNotHandled = true) => {
-        return Array.from(lazyFilter(
-            global.worldState.myCreeps.byOffice.get(this.office.name) ?? [],
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
+        return hrAnalyst.getEmployees(this.office).filter(
             c => (
                 c.memory?.type &&
                 this.minionTypes.includes(c.memory?.type) &&
-                (c.gameObj.ticksToLive ?? 0) < ttl &&
-                (!ifRequestIsNotHandled || this.requests.find(r => r.assigned.includes(c) && r.assigned.length === 1))
+                (c.ticksToLive ?? 0) < ttl &&
+                (!ifRequestIsNotHandled || this.requests.find(r => r.assigned.includes(c.id) && r.assigned.length === 1))
             )
-        ))
+        )
     }
 
     report() {

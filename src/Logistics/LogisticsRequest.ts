@@ -1,7 +1,7 @@
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
-import { CachedStructure } from "WorldState";
+import { CachedStructure } from "WorldState/Structures";
+import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { getFreeCapacity } from "utils/gameObjectSelectors";
+import { byId } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
 import { travel } from "Logistics/Travel";
 
@@ -21,27 +21,30 @@ export class LogisticsRequest {
         public capacity: number = -1,
     ) { }
 
-    action(creep: CachedCreep): ScreepsReturnCode { return OK; }
+    action(creep: Creep): ScreepsReturnCode { return OK; }
 }
 
 export class TransferRequest extends LogisticsRequest {
+    public targetId: Id<AnyStoreStructure>
     constructor(
-        public target: CachedStructure<AnyStoreStructure>,
+        target: CachedStructure<AnyStoreStructure>,
         public priority: number,
         public capacity: number = -1,
     ) {
         super(target.pos, priority, capacity);
+        this.targetId = target.id;
         if (this.capacity === -1) {
-            this.capacity = getFreeCapacity(target);
+            this.capacity = Capacity.byId(this.targetId)?.free ?? 0
         }
         if (this.capacity === 0) {
             this.completed = true;
         }
     }
 
-    action(creep: CachedCreep) {
-        if (!this.target.gameObj) return ERR_NOT_FOUND;
-        let result = creep.gameObj.transfer(this.target.gameObj, RESOURCE_ENERGY);
+    action(creep: Creep) {
+        let target = byId(this.targetId)
+        if (!target) return ERR_NOT_FOUND;
+        let result = creep.transfer(target, RESOURCE_ENERGY);
         if (result === OK || result === ERR_NOT_ENOUGH_RESOURCES) {
             this.completed = true;
         } else if (result === ERR_NOT_IN_RANGE) {
@@ -68,12 +71,12 @@ export class DepotRequest extends LogisticsRequest {
         this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
     }
 
-    action(creep: CachedCreep) {
+    action(creep: Creep) {
         // Wait for minions to request resources
         if (!creep.pos.isNearTo(this.pos)) {
             return travel(creep, this.pos)
         }
-        if (creep.capacityUsed === 0) {
+        if (!Capacity.byId(creep.id)?.used) {
             this.completed = true;
             return OK;
         }

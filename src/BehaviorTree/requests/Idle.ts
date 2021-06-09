@@ -1,23 +1,22 @@
 import { Behavior } from "BehaviorTree/Behavior";
-import { CachedCreep } from "WorldState";
 import { MinionRequest } from "./MinionRequest";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import profiler from "screeps-profiler";
 
 export class IdleRequest extends MinionRequest {
-    public action: Behavior<CachedCreep>;
+    public action: Behavior<Creep>;
 
     constructor(public pos: RoomPosition) {
         super();
         this.action = moveTo(pos, 3);
     }
 
-    meetsCapacity(creeps: CachedCreep[]) {
+    meetsCapacity(creeps: Creep[]) {
         // Only need one to reserve a controller
         return (creeps.length > 0)
     }
-    canBeFulfilledBy(creep: CachedCreep) {
-        return (creep.gameObj.getActiveBodyparts(MOVE) > 0)
+    canBeFulfilledBy(creep: Creep) {
+        return (creep.getActiveBodyparts(MOVE) > 0)
     }
 
 }

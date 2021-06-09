@@ -1,22 +1,25 @@
-import { CachedConstructionSite, CachedStructure } from "WorldState";
-
-import { CachedCreep } from "WorldState/branches/WorldMyCreeps";
-import { CachedResource } from "WorldState/branches/WorldResources";
-import { CachedTombstone } from "WorldState/branches/WorldTombstones";
+import { CachedConstructionSite } from "WorldState/ConstructionSites";
+import { CachedSource } from "WorldState/Sources";
+import { Capacity } from "WorldState/Capacity";
+import { Controllers } from "WorldState/Controllers";
+import { FranchiseData } from "WorldState/FranchiseData";
+import { Health } from "WorldState/Health";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
 import profiler from "screeps-profiler";
 
-export function getBuildEnergyRemaining(target: CachedConstructionSite|ConstructionSite) {
+export function getBuildEnergyRemaining(target: CachedConstructionSite) {
     return (target.progressTotal ?? 0) - (target.progress ?? 0);
 }
-export function getRepairEnergyRemaining(target: CachedStructure|Structure) {
-    return ((target.hitsMax ?? 0) - (target.hits ?? 0))/100;
+export function getRepairEnergyRemaining(target: Id<Structure>) {
+    let health = Health.byId(target);
+    return ((health?.hitsMax ?? 0) - (health?.hits ?? 0))/100;
 }
-export function getTransferEnergyRemaining(target: CachedStructure<AnyStoreStructure>) {
-    return (target.gameObj?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY);
+export function getTransferEnergyRemaining(target: Id<AnyStoreStructure>) {
+    let capacity = Capacity.byId(target, RESOURCE_ENERGY);
+    return capacity?.free
 }
 export function getCreepHomeOffice(creep: Creep) {
     if (!creep.memory.office) return;
@@ -24,31 +27,24 @@ export function getCreepHomeOffice(creep: Creep) {
 }
 export function countEnergyInContainersOrGround(pos: RoomPosition) {
     let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-    return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + getUsedCapacity(resource)), 0)
+    return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
 }
-export function getUsedCapacity(gameObj: CachedResource<RESOURCE_ENERGY>|CachedStructure<AnyStoreStructure>|CachedCreep|CachedTombstone): number {
-    if (gameObj instanceof CachedResource) {
-        return gameObj.amount;
-    } else {
-        return gameObj.capacityUsed ?? 0;
-    }
-}
-export function getFreeCapacity(cached: CachedStructure<AnyStoreStructure>|CachedCreep): number {
-    return (cached.gameObj?.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) ?? 0;
-}
-export function getCapacity(cached: CachedStructure<AnyStoreStructure>|CachedCreep): number {
-    return (cached.gameObj?.store as GenericStore).getCapacity(RESOURCE_ENERGY) ?? 0;
+export function calculateFranchiseSurplus(source: CachedSource) {
+    let linkCapacity = Capacity.byId(FranchiseData.byId(source.id)?.linkId)?.used ?? 0;
+    return countEnergyInContainersOrGround(source.pos) + linkCapacity;
 }
 
-export function sortByDistanceTo<T extends _HasRoomPosition>(pos: RoomPosition) {
+export function sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) {
     let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
-    let distance = new Map<T, number>();
+    let distance = new Map<RoomPosition, number>();
     return (a: T, b: T) => {
-        if (!distance.has(a)){
-            distance.set(a, mapAnalyst.getRangeTo(pos, a.pos))
+        let aPos = (a instanceof RoomPosition) ? a : (a as _HasRoomPosition).pos
+        let bPos = (b instanceof RoomPosition) ? b : (b as _HasRoomPosition).pos
+        if (!distance.has(aPos)){
+            distance.set(aPos, mapAnalyst.getRangeTo(pos, aPos))
         }
-        if (!distance.has(b)) distance.set(b, mapAnalyst.getRangeTo(pos, b.pos))
-        return (distance.get(a) as number) - (distance.get(b) as number)
+        if (!distance.has(bPos)) distance.set(bPos, mapAnalyst.getRangeTo(pos, bPos))
+        return (distance.get(aPos) as number) - (distance.get(bPos) as number)
     }
 }
 profiler.registerFN(sortByDistanceTo, 'sortByDistanceTo');
@@ -73,21 +69,14 @@ export function buildPriority(site: CachedConstructionSite) {
             return 5 + completion;
     }
 }
-export function repairRemaining(structure: CachedStructure) {
-    let hitsMax = (structure.hitsMax ?? 0);
-    if (structure.structureType === STRUCTURE_WALL || structure.structureType === STRUCTURE_RAMPART) {
-        hitsMax = Math.min(hitsMax, 100000);
-    }
-    return hitsMax - (structure.hits ?? 0)
-}
 
 export function rclIsGreaterThan(roomName: string, level: number) {
-    let roomLevel = global.worldState.controllers.byRoom.get(roomName)?.level;
+    let roomLevel = Controllers.byRoom(roomName)?.level;
     return (roomLevel && roomLevel > level);
 }
 
 export function getRcl(roomName: string) {
-    return global.worldState.controllers.byRoom.get(roomName)?.level;
+    return Controllers.byRoom(roomName)?.level;
 }
 
 export function unassignedLogisticsRequestsPercent(office: Office) {
@@ -101,4 +90,12 @@ export function unassignedLogisticsRequestsPercent(office: Office) {
         }
     }
     return unassigned / total;
+}
+
+export function getCreepsById(...args: Id<Creep>[]) {
+    return args.map(id => Game.getObjectById(id)).filter(c => c !== null) as Creep[];
+}
+
+export function byId<T>(id: Id<T>|undefined) {
+    return id ? Game.getObjectById(id) ?? undefined : undefined
 }

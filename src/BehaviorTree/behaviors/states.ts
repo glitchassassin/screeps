@@ -1,6 +1,5 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 
-import { CachedCreep } from "WorldState";
 import { log } from "utils/logger";
 
 export enum States {
@@ -16,7 +15,7 @@ declare module 'BehaviorTree/Behavior' {
 
 export const stateIs = (state: States) => {
     return (target: any, bb: Blackboard) => {
-        if (target instanceof CachedCreep) {
+        if (target instanceof Creep) {
             log(target.name, `stateIs ${state} ? ${bb.state === state}`)
         }
         if (bb.state === state) return BehaviorResult.SUCCESS;
@@ -33,7 +32,7 @@ export const stateIsEmpty = () => {
 
 export const setState = (state: States) => {
     return (target: any, bb: Blackboard) => {
-        if (target instanceof CachedCreep) {
+        if (target instanceof Creep) {
             log(target.name, `setState: ${state}`)
         }
         bb.state = state;
