@@ -45,24 +45,24 @@ export class Office {
         this.center.city ??= Memory.cities.shift();
 
         // Create Managers
-        new HRManager(this);
-        new LogisticsManager(this);
+        HRManager.register(this);
+        LogisticsManager.register(this);
 
-        new FacilitiesManager(this);
-        new LegalManager(this);
-        new SalesManager(this);
-        new SecurityManager(this);
-        new LinkManager(this);
+        FacilitiesManager.register(this);
+        LegalManager.register(this);
+        SalesManager.register(this);
+        SecurityManager.register(this);
+        LinkManager.register(this);
 
         // Create Strategists
-        new LegalStrategist(this);
-        new SalesStrategist(this);
-        new DefenseStrategist(this);
-        new BuildStrategist(this);
-        new RepairStrategist(this);
-        new StorageStrategist(this);
-        new SurveyStrategist(this);
-        new SpawnStrategist(this);
+        LegalStrategist.register(this);
+        SalesStrategist.register(this);
+        DefenseStrategist.register(this);
+        BuildStrategist.register(this);
+        RepairStrategist.register(this);
+        StorageStrategist.register(this);
+        SurveyStrategist.register(this);
+        SpawnStrategist.register(this);
 
     }
 
