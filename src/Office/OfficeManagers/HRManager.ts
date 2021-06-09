@@ -1,8 +1,11 @@
+import { Bar, Meters } from "Visualizations/Meters";
+
 import { BehaviorResult } from "BehaviorTree/Behavior";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
 import { Request } from "BehaviorTree/Request";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { Table } from "Visualizations/Table";
 import profiler from "screeps-profiler";
 
@@ -54,6 +57,7 @@ export class HRManager extends OfficeManager {
 
     report() {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst
         let employeeData = new Map<string, number>();
 
         for (let e of hrAnalyst.getEmployees(this.office)) {
@@ -75,6 +79,16 @@ export class HRManager extends OfficeManager {
             ])
         }
         Table(new RoomPosition(0, 40, this.office.center.name), taskTable);
+
+        let metrics = statisticsAnalyst.metrics.get(this.office.name);
+
+        let lastRoomEnergyLevel = metrics?.roomEnergyLevels.values[metrics?.roomEnergyLevels.values.length - 1] || 0
+
+        let chart = new Meters([
+            new Bar('HR', {fill: 'magenta', stroke: 'magenta'}, lastRoomEnergyLevel, metrics?.roomEnergyLevels.max()),
+        ])
+
+        chart.render(new RoomPosition(2, 10, this.office.center.name));
     }
 
     miniReport(pos: RoomPosition) {
