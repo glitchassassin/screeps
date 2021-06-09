@@ -9,13 +9,15 @@ import { calcTickTime } from 'utils/tickTime';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import profiler from 'screeps-profiler';
 
-if (process.env.JEST_WORKER_ID === undefined) {
+try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
     // Built less than 15 seconds ago - fresh code push
     console.log('New code successfully deployed, build time', new Date(JSON.parse('__buildDate__')));
   } else {
     console.log('Global reset detected');
   }
+} catch {
+  // Ignore
 }
 
 global.lastGlobalReset = Game.time;
