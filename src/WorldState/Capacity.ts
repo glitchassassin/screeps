@@ -1,3 +1,5 @@
+import { registerCacheRefresher } from "./registerCacheRefresher";
+
 declare global {
     namespace GreyCompany {
         export type CapacityCache = {
@@ -33,7 +35,7 @@ export class Capacity {
         }
         let store = obj?.store as GenericStore
         if (!store) {
-            return global.Heap?.Capacity?.data[id][resource];
+            return global.Heap.Capacity?.data[id][resource];
         }
         return {
             capacity: store?.getCapacity(resource) ?? undefined,
@@ -43,7 +45,6 @@ export class Capacity {
     }
     static refreshCache() {
         // Initialize the Heap branch, if necessary
-        global.Heap ??= {CacheRefreshers: []}
         global.Heap.Capacity ??= {idByRoom: {}, data: {}};
 
         for (let roomName in Game.rooms) {
@@ -79,4 +80,4 @@ export class Capacity {
 }
 
 // Register the cache refresh
-global.Heap?.CacheRefreshers.push(Capacity.refreshCache);
+registerCacheRefresher(Capacity.refreshCache);

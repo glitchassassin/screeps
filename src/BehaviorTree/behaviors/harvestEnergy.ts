@@ -9,6 +9,6 @@ export const harvestEnergy = (sourceId: Id<Source>) => (creep: Creep, bb: Blackb
     let result = creep.harvest(source);
 
     if (result === OK) return BehaviorResult.INPROGRESS;
-    if (result === ERR_TIRED) return BehaviorResult.SUCCESS;
+    if (result === ERR_TIRED) return BehaviorResult.INPROGRESS;
     return BehaviorResult.FAILURE;
 }

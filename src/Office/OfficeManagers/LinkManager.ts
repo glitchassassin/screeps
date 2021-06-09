@@ -16,7 +16,6 @@ export class LinkManager extends OfficeManager {
         let controller = controllerAnalyst.getDesignatedUpgradingLocations(this.office);
         let controllerLink = byId(controller?.linkId)
 
-        // console.log('Controller link', controller?.link?.gameObj)
         if (!controllerLink || Capacity.byId(controllerLink.id)?.free === 0) return;
 
         for (let source of sources) {

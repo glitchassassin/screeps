@@ -56,12 +56,13 @@ export class LegalData {
         let center = this.byRoom(office.name);
         return center ? [center] : []
     }
-    static set(id: Id<StructureController>, legal: CachedLegal) {
+    static set(id: Id<StructureController>, legal: CachedLegal, roomName: string) {
         Memory.Legal ??= {idByRoom: {}, data: {}}
         Memory.Legal.data[id] = {
             containerPosPacked: legal.containerPos ? packPos(legal.containerPos) : undefined,
             linkPosPacked: legal.linkPos ? packPos(legal.linkPos) : undefined,
             rclMilestones: legal.rclMilestones
         }
+        Memory.Legal.idByRoom[roomName] = id;
     }
 }

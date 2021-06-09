@@ -13,14 +13,22 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
 
     survey() {
         if (this.structure) return true; // Structure exists
-        if ((this.buildRequest && !this.buildRequest.result) || !Game.rooms[this.pos.roomName]) {
-            // Structure is being built, or we cannot see the room
+        if (!Game.rooms[this.pos.roomName]) {
+            // We cannot see the room
             return false;
         }
+
         // Look for structure at position
         this.structure = Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
+        if (this.structure) {
+            // Structure exists
+            return true;
+        }
 
-        if (this.structure) return true; // Structure exists
+        if (this.buildRequest && !this.buildRequest.result) {
+            // Structure is being built
+            return false;
+        }
         return false; // Structure does not exist
     }
     generateBuildRequest() {

@@ -41,7 +41,7 @@ export class SalesAnalyst extends BoardroomManager {
                         franchise.linkPos = link?.pos;
                     }
 
-                    FranchiseData.set(s.id, franchise);
+                    FranchiseData.set(s.id, franchise, office.name);
                 }
             }
         })

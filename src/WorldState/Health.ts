@@ -1,3 +1,5 @@
+import { registerCacheRefresher } from "./registerCacheRefresher";
+
 declare global {
     namespace GreyCompany {
         export type HealthCache = {
@@ -24,7 +26,7 @@ export class Health {
         if (id === undefined) return undefined;
         let obj = Game.getObjectById(id);
         if (!obj) {
-            return global.Heap?.Health?.data[id];
+            return global.Heap.Health?.data[id];
         }
         return {
             hits: obj?.hits,
@@ -65,4 +67,4 @@ export class Health {
 }
 
 // Register the cache refresh
-global.Heap?.CacheRefreshers.push(Health.refreshCache);
+registerCacheRefresher(Health.refreshCache);

@@ -121,6 +121,6 @@ declare namespace NodeJS {
     debug: {[id: string]: boolean}
     Memory?: Memory
     lastGlobalReset: number
-    Heap?: GreyCompany.Heap
+    Heap: GreyCompany.Heap
   }
 }

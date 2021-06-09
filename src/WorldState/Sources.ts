@@ -1,6 +1,7 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
+import { registerCacheRefresher } from "./registerCacheRefresher";
 
 declare global {
     namespace GreyCompany {
@@ -97,4 +98,4 @@ export class Sources {
 }
 
 // Register the cache refresh
-global.Heap?.CacheRefreshers.push(Sources.refreshCache);
+registerCacheRefresher(Sources.refreshCache);

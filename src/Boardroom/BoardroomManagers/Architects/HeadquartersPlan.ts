@@ -162,7 +162,7 @@ export class HeadquartersPlan {
             ...legalData,
             containerPos: this.container.pos,
             linkPos: this.link.pos,
-        })
+        }, roomName)
     }
 
     *findSpaces(controller: CachedController, sources: CachedSource[]) {

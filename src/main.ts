@@ -9,6 +9,10 @@ import { calcTickTime } from 'utils/tickTime';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import profiler from 'screeps-profiler';
 
+// Initialize Heap
+global.Heap = {CacheRefreshers: []};
+
+
 if (!global.IS_JEST_TEST) {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
     // Built less than 15 seconds ago - fresh code push
@@ -40,7 +44,7 @@ onRespawn(global.purge);
 let defensiveProfilingRun = true;
 
 // Initialize control switches
-global.v = new VisualizationController()
+global.v = new VisualizationController();
 
 // Initialize Boardroom
 global.boardroom = new Boardroom();
@@ -64,7 +68,7 @@ function mainLoop() {
   try {
     // Execute Boardroom plan phase
 
-    global.Heap?.CacheRefreshers.forEach(fn => fn());
+    global.Heap.CacheRefreshers.forEach(fn => fn());
 
     global.boardroom.plan()
 

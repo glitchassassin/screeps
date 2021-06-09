@@ -14,7 +14,7 @@ export class LegalManager extends OfficeTaskManager {
             if (!legalData.rclMilestones || !legalData.rclMilestones[controller.level]) {
                 legalData.rclMilestones ??= {};
                 legalData.rclMilestones[controller.level] ??= `${Game.time}`;
-                LegalData.set(legalData.id, legalData);
+                LegalData.set(legalData.id, legalData, this.office.name);
             }
         }
         if (global.v.legal.state) { this.report(); }

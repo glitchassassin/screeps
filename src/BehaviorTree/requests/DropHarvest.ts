@@ -20,9 +20,9 @@ export class DropHarvestRequest extends MinionRequest {
         let franchisePos = FranchiseData.byId(source.id)?.containerPos
         this.action = Sequence(
             Selector(
-                harvestEnergy(source.id),
                 moveTo(franchisePos, 0),
-                moveTo(source.pos)
+                harvestEnergy(source.id),
+                moveTo(source.pos),
             ),
             continueIndefinitely()
         )

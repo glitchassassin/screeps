@@ -60,12 +60,16 @@ export class FranchiseData {
     static byOffice(office: Office): CachedFranchise[] {
         return this.byRoom(office.name);
     }
-    static set(id: Id<Source>, franchise: CachedFranchise) {
+    static set(id: Id<Source>, franchise: CachedFranchise, roomName: string) {
         Memory.Franchises ??= {idByRoom: {}, data: {}}
         Memory.Franchises.data[id] = {
             containerPosPacked: franchise.containerPos ? packPos(franchise.containerPos) : undefined,
             linkPosPacked: franchise.linkPos ? packPos(franchise.linkPos) : undefined,
             maxSalesmen: franchise.maxSalesmen
+        }
+        Memory.Franchises.idByRoom[roomName] ??= [];
+        if (!Memory.Franchises.idByRoom[roomName].includes(id)) {
+            Memory.Franchises.idByRoom[roomName].push(id);
         }
     }
 }

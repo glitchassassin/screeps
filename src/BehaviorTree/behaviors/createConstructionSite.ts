@@ -1,6 +1,7 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 import { CachedConstructionSite, ConstructionSites, unwrapConstructionSite } from "WorldState/ConstructionSites";
 
+import { Structures } from "WorldState/Structures";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 
@@ -21,6 +22,13 @@ export const createConstructionSite = (pos: RoomPosition, type: BuildableStructu
     log(creep.id, `createConstructionSite ${pos} ${type}`);
     // If the site is already in the blackboard, no action needed
     if (bb.buildSite?.pos?.isEqualTo(pos) && bb.buildSite.structureType === type && byId(bb.buildSite.id)) return BehaviorResult.SUCCESS;
+
+    let structures = Structures.byPos(pos);
+
+    if (structures.some(structure => structure.structureType === type)) {
+        // Structure already exists, no need to create site
+        return BehaviorResult.SUCCESS;
+    }
 
     let site = ConstructionSites.byPos(pos)
 

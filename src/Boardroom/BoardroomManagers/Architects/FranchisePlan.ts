@@ -56,6 +56,6 @@ export class FranchisePlan {
             id: source.id,
             linkPos: this.link.pos,
             containerPos: this.container.pos,
-        })
+        }, source.pos.roomName)
     }
 }

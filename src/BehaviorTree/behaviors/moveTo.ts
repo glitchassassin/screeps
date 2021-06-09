@@ -124,8 +124,8 @@ export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
             // Move in progress and locked in
             return BehaviorResult.SUCCESS
         }
-        if (bb.movePos?.isEqualTo(pos)) {
-            bb.moveDone ||= creep.pos.inRangeTo(pos, range);
+        if (creep.pos.inRangeTo(pos, range)) {
+            bb.moveDone = true;
             return BehaviorResult.SUCCESS;
         }
 
