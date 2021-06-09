@@ -86,7 +86,10 @@ export class LogisticsAnalyst extends BoardroomManager {
         if (!office) return undefined;
         let sorted = this.getAllSources(office).filter(s => s.pos).sort(sortByDistanceTo(pos))
         if (!amount || amount === 0) return sorted[0];
-        let withAmount = sorted.filter(s => (Capacity.byId(s.id)?.used ?? 0) > amount)
+        // Prioritize Depots, then dropped Resources, then sources that can provide the full amount
+        let withAmount = sorted.filter(s => {
+            return s instanceof Creep || s instanceof Resource || (Capacity.byId(s.id)?.used ?? 0) > amount
+        })
         if (withAmount.length > 0) return withAmount[0];
         return sorted[0];
     }

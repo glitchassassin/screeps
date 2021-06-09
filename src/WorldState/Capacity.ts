@@ -28,6 +28,9 @@ export class Capacity {
     static byId(id: Id<Creep|Tombstone|Ruin|AnyStoreStructure|Resource>|undefined, resource: ResourceConstant = RESOURCE_ENERGY) {
         if (id === undefined) return undefined;
         let obj = Game.getObjectById(id);
+        if (obj === null) {
+            return {}
+        }
         if (obj instanceof Resource) {
             return {
                 capacity: obj.amount,
