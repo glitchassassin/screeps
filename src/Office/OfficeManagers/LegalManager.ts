@@ -13,7 +13,7 @@ export class LegalManager extends OfficeTaskManager {
             let legalData = LegalData.byRoom(this.office.name) ?? {id: controller.id, pos: controller.pos};
             if (!legalData.rclMilestones || !legalData.rclMilestones[controller.level]) {
                 legalData.rclMilestones ??= {};
-                legalData.rclMilestones[controller.level] ??= `${Game.time}`;
+                legalData.rclMilestones[controller.level] ??= Game.time;
                 LegalData.set(legalData.id, legalData, this.office.name);
             }
         }
