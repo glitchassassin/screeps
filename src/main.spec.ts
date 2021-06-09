@@ -1,12 +1,10 @@
-import {assert} from "chai";
-import {Game, Memory} from "../test/unit/mock"
+import { Game, Memory } from "../test/unit/mock";
+import { describe, expect } from '@jest/globals';
+
+import { loop } from "./main";
 import { mockGlobal } from "screeps-jest";
 
-mockGlobal<Game>('Game', Game, true);
-mockGlobal<Memory>('Memory', Memory, true);
 global.IS_JEST_TEST = true;
-
-import {loop} from "./main";
 
 describe("main", () => {
   beforeEach(() => {
@@ -18,10 +16,10 @@ describe("main", () => {
   });
 
   it("should export a loop function", () => {
-    assert.isTrue(typeof loop === "function");
+    expect(typeof loop === "function").toBeTruthy();
   });
 
   it("should return void when called with no context", () => {
-    assert.isUndefined(loop());
+    expect(loop()).toBeUndefined();
   });
 });
