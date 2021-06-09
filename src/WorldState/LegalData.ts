@@ -10,7 +10,7 @@ declare global {
             posPacked: string,
             containerPosPacked?: string,
             linkPosPacked?: string,
-            rclMilestones?: Record<number, string>,
+            rclMilestones?: Record<number, number>,
         }
     }
     interface Memory {
@@ -27,7 +27,7 @@ export type CachedLegal = {
     containerId?: Id<StructureContainer>,
     linkPos?: RoomPosition,
     linkId?: Id<StructureLink>,
-    rclMilestones?: Record<number, string>;
+    rclMilestones?: Record<number, number>;
 }
 
 export class LegalData {

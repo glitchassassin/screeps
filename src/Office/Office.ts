@@ -7,6 +7,7 @@ import { Controllers } from "WorldState/Controllers";
 import { DefenseStrategist } from "Office/OfficeManagers/Strategists/DefenseStrategist";
 import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
 import { HRManager } from "Office/OfficeManagers/HRManager";
+import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
 import { LinkManager } from "./OfficeManagers/LinkManager";
@@ -20,6 +21,7 @@ import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
 import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
 import { SurveyStrategist } from "./OfficeManagers/Strategists/SurveyStrategist";
+import { Table } from "Visualizations/Table";
 import profiler from "screeps-profiler";
 
 export class Office {
@@ -92,6 +94,9 @@ export class Office {
         if (global.v.office.state) {
             this.report();
         }
+        if (global.v.milestones.state) {
+            this.milestones();
+        }
     }
 
     /**
@@ -117,6 +122,33 @@ export class Office {
         ])
 
         chart.render(new RoomPosition(3, 18, this.center.name));
+    }
+
+    milestones() {
+        let chart = new Meters([
+            new Bar(`GCL ${Game.gcl.level}`, {fill: 'green', stroke: 'green'}, Game.gcl.progress, Game.gcl.progressTotal),
+            new Bar(`RCL ${this.controller.level ?? '-'}`, {fill: 'yellow', stroke: 'yellow'}, this.controller.progress ?? 0, this.controller.progressTotal ?? 0),
+        ])
+
+        chart.render(new RoomPosition(2, 2, this.center.name));
+
+        const rclMilestones = LegalData.byRoom(this.name)?.rclMilestones ?? {1: Game.time}
+
+        const milestones = Object.entries(rclMilestones).map(
+            ([rcl, tick]) => {
+                return [
+                    rcl,
+                    tick - rclMilestones[1],
+                    tick - rclMilestones[Math.max(1, parseInt(rcl) - 1)]
+                ]
+            }
+        )
+
+        const milestoneTable = [
+            ['RCL', 'Ticks', 'Total'],
+            ...milestones
+        ]
+        Table(new RoomPosition(10, 2, this.name), milestoneTable);
     }
 }
 
