@@ -5,6 +5,8 @@ name: CI
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
+  push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -29,5 +31,5 @@ jobs:
         run: npm run build
 
       # Runs a set of commands using the runners shell
-      # - name: Run tests
-      #   run: npm run test
+      - name: Run tests
+        run: npm run test
