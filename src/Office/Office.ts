@@ -144,6 +144,17 @@ export class Office {
             }
         )
 
+        if (!(8 in rclMilestones)) {
+            const lastMilestone = Math.max(...(Object.keys(rclMilestones).map(e => parseInt(e)) as number[]));
+            const timeSinceLastMilestone = Game.time - rclMilestones[lastMilestone];
+
+            const progress = this.controller.progressTotal / this.controller.progress;
+
+            const timeToNextMilestone = (progress === 0) ? '---' : Math.round(timeSinceLastMilestone - (timeSinceLastMilestone / progress));
+
+            milestones.push([lastMilestone + 1, '(est:)', timeToNextMilestone]);
+        }
+
         const milestoneTable = [
             ['RCL', 'Ticks', 'Total'],
             ...milestones

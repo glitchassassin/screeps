@@ -5,7 +5,7 @@ import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
 import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
-import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
+import { getEnergyNearby } from "BehaviorTree/behaviors/getEnergyNearby";
 import profiler from "screeps-profiler";
 import { upgradeController } from "BehaviorTree/behaviors/upgradeController";
 
@@ -21,7 +21,7 @@ export class UpgradeRequest extends MinionRequest {
         this.action = Selector(
             Sequence(
                 stateIs(States.GET_ENERGY),
-                getEnergy(),
+                getEnergyNearby(),
                 setState(States.WORKING),
                 resetMoveTarget()
             ),

@@ -5,10 +5,10 @@ import { energyFull } from "./energyFull";
 import { findEnergySource } from "./findEnergySource";
 import { withdrawEnergy } from "./withdrawEnergy";
 
-export const getEnergy = () => Selector(
+export const getEnergyNearby = (radius = 5) => Selector(
     energyFull(),
     Sequence(
-        findEnergySource(),
+        findEnergySource(radius),
         setMoveTargetFromBlackboard(),
         moveToTarget(),
     ),
