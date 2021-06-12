@@ -138,8 +138,8 @@ export class Office {
             ([rcl, tick]) => {
                 return [
                     rcl,
+                    tick - rclMilestones[Math.max(1, parseInt(rcl) - 1)],
                     tick - rclMilestones[1],
-                    tick - rclMilestones[Math.max(1, parseInt(rcl) - 1)]
                 ]
             }
         )
@@ -148,11 +148,12 @@ export class Office {
             const lastMilestone = Math.max(...(Object.keys(rclMilestones).map(e => parseInt(e)) as number[]));
             const timeSinceLastMilestone = Game.time - rclMilestones[lastMilestone];
 
-            const progress = this.controller.progressTotal / this.controller.progress;
+            const progress = this.controller.progress / this.controller.progressTotal;
 
-            const timeToNextMilestone = (progress === 0) ? '---' : Math.round(timeSinceLastMilestone - (timeSinceLastMilestone / progress));
+            const timeToNextMilestone = (progress === 0) ? '---' : Math.round((timeSinceLastMilestone / progress) - timeSinceLastMilestone);
+            const eta = (timeToNextMilestone === '---') ? '---' : Game.time + timeToNextMilestone;
 
-            milestones.push([lastMilestone + 1, '(est:)', timeToNextMilestone]);
+            milestones.push([`${lastMilestone + 1} (est:)`, `+${timeToNextMilestone}`, eta]);
         }
 
         const milestoneTable = [

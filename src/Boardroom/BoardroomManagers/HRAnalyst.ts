@@ -25,7 +25,7 @@ export class HRAnalyst extends BoardroomManager {
     @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
     newestEmployee(office: Office, type?: string) {
         let max = undefined;
-        for (let employee of this.getEmployees(office, type)) {
+        for (let employee of this.getEmployees(office, type, false)) {
             if (employee.memory.type !== type) continue;
             if (max === undefined) {
                 max = employee.ticksToLive ?? 1500;

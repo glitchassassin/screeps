@@ -21,7 +21,7 @@ export class UpgradeRequest extends MinionRequest {
         this.action = Selector(
             Sequence(
                 stateIs(States.GET_ENERGY),
-                getEnergyNearby(),
+                getEnergyNearby(7),
                 setState(States.WORKING),
                 resetMoveTarget()
             ),

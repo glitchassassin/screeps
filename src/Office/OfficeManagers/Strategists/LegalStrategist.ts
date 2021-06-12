@@ -2,6 +2,7 @@ import { DepotRequest, TransferRequest } from "Logistics/LogisticsRequest";
 
 import { Controllers } from "WorldState/Controllers";
 import { FacilitiesManager } from "../FacilitiesManager";
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
@@ -20,6 +21,7 @@ export class LegalStrategist extends OfficeManager {
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let controller = Controllers.byRoom(this.office.name);
         let legalData = LegalData.byRoom(this.office.name);
 
@@ -27,12 +29,16 @@ export class LegalStrategist extends OfficeManager {
 
         // Auxiliary orders
         // Logistics and infrastructure
-        if (controller?.level && controller.level > 1) {
+        if (controller?.level && controller.level > 0) {
             let container = Structures.byId(legalData?.containerId)
-            if (container) {
-                logisticsManager.submit(controller.pos.roomName, new TransferRequest(container, 2))
-            } else if (legalData?.containerPos) {
-                logisticsManager.submit(controller.pos.roomName, new DepotRequest(legalData.containerPos, 2))
+            if (hrAnalyst.getEmployees(this.office).some(
+                c => c.memory?.type === 'PARALEGAL'
+            )) {
+                if (container) {
+                    logisticsManager.submit(controller.pos.roomName, new TransferRequest(container, 2))
+                } else if (legalData?.containerPos) {
+                    logisticsManager.submit(controller.pos.roomName, new DepotRequest(legalData.containerPos, 2))
+                }
             }
         }
 

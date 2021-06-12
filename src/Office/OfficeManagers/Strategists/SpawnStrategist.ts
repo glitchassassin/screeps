@@ -71,7 +71,8 @@ export class SpawnStrategist extends OfficeManager {
                 (
                     unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
                     logisticsManager.getIdleCarriers().length === 0 &&
-                    salesAnalyst.getFranchiseSurplus(this.office) > 0.1
+                    hrAnalyst.newestEmployee(this.office, 'SALESMAN') !== undefined
+                    // salesAnalyst.getFranchiseSurplus(this.office) > 0.5
                 )
             )
         ) {
@@ -96,13 +97,12 @@ export class SpawnStrategist extends OfficeManager {
         let legalDepotFreeCapacity = Capacity.byId(legalDepotId)?.free ?? 1;
         let storageCapacity = Capacity.byId(logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0
         // If there is no container, 1/1 === 1 (acts as if container is empty)
-        // Otherwise, if capacity is 90% full, and storage goals are met, spawn a new Paralegal
+        // Otherwise, if capacity is more than 50% full, spawn a new Paralegal
         if ( // Paralegal minions
             hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0 ||
             (
                 (hrAnalyst.newestEmployee(this.office, 'PARALEGAL') ?? 0) < 1400 &&
-                (legalDepotFreeCapacity / legalDepotCapacity) < 0.1 &&
-                (storageCapacity >= STORAGE_GOALS[rcl])
+                (legalDepotFreeCapacity / legalDepotCapacity) < 0.5
             )
         ) {
             this.submitRequest(new ParalegalMinion());

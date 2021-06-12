@@ -116,7 +116,7 @@ export class RoomArchitect extends BoardroomManager {
         // RCL 2
         roomBlock.structures.push(...franchise2.extensions);
         roomBlock.structures.push(...franchise1.extensions);
-        roomBlock.structures.push(...headquarters.roads);
+        // roomBlock.structures.push(...headquarters.roads);
         // RCL 3
         roomBlock.structures.push(headquarters.towers[0]);
         // RCL 4
