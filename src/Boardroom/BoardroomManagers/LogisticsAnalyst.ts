@@ -7,7 +7,7 @@ import { Capacity } from "WorldState/Capacity";
 import { FranchiseData } from "WorldState/FranchiseData";
 import { HRAnalyst } from "./HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
-import { Memoize } from "typescript-memoize";
+import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { Resources } from "WorldState/Resources";
 import { RoomData } from "WorldState/Rooms";
@@ -30,12 +30,12 @@ export class LogisticsAnalyst extends BoardroomManager {
         this.newDepots = new Map();
     }
 
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getStorage(office: Office) {
         let storage = Game.rooms[office.center.name]?.storage;
         return storage && Structures.byId(storage.id)
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getTombstones(office: Office) {
         let tombstones = [];
         for (let r of RoomData.byOffice(office)) {
@@ -45,11 +45,11 @@ export class LogisticsAnalyst extends BoardroomManager {
         }
         return tombstones;
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getContainers(office: Office) {
         return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer>[];
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getLinks(office: Office, outputsOnly = false) {
         if (outputsOnly) {
             return Structures.byOffice(office).filter(s => s.id === LegalData.byRoom(office.name)?.linkId) as CachedStructure<StructureLink>[];
@@ -57,11 +57,11 @@ export class LogisticsAnalyst extends BoardroomManager {
             return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink>[];
         }
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getFreeEnergy(office: Office) {
         return Resources.byOffice(office, RESOURCE_ENERGY);
     }
-    @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
+    @MemoizeByTick((pos: RoomPosition) => `${pos}`)
     getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
         let items;
@@ -80,7 +80,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         }
         return results.sort((a, b) => (Capacity.byId(b.id)?.used ?? 0) - (Capacity.byId(a.id)?.used ?? 0))
     }
-    @Memoize((pos: RoomPosition) => ('' + pos + Game.time))
+    @MemoizeByTick((pos: RoomPosition) => `${pos}`)
     getClosestAllSources(pos: RoomPosition, amount?: number) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
@@ -93,7 +93,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         if (withAmount.length > 0) return withAmount[0];
         return sorted[0];
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let depots = this.depots.get(office.name) ?? [];
         return [
@@ -103,7 +103,7 @@ export class LogisticsAnalyst extends BoardroomManager {
             ...this.getContainers(office)
         ];
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         let freeSources: (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] = [
             ...this.getFreeEnergy(office),
@@ -115,7 +115,7 @@ export class LogisticsAnalyst extends BoardroomManager {
             freeSources.push(storage);
         return freeSources;
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getUnallocatedSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         return [
             ...this.getFreeSources(office),
@@ -124,7 +124,7 @@ export class LogisticsAnalyst extends BoardroomManager {
                 .filter(c => c && (Capacity.byId(c.id)?.used ?? 0) > 0) as CachedStructure<StructureContainer>[],
         ];
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getCarriers(office: Office) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
         return hrAnalyst.getEmployees(office, 'CARRIER');

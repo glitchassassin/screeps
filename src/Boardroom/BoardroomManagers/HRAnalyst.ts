@@ -1,18 +1,18 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
-import { Memoize } from "typescript-memoize";
+import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { Structures } from "WorldState/Structures";
 
 export class HRAnalyst extends BoardroomManager {
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getExtensions(office: Office) {
         return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_EXTENSION) as StructureExtension[];
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getSpawns(office: Office) {
         return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_SPAWN) as StructureSpawn[];
     }
-    @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
+    @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
     getEmployees(office: Office, type?: string, excludeSpawning = true) {
         return Object.values(Game.creeps).filter(
             creep => (
@@ -22,7 +22,7 @@ export class HRAnalyst extends BoardroomManager {
             )
         )
     }
-    @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
+    @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
     newestEmployee(office: Office, type?: string) {
         let max = undefined;
         for (let employee of this.getEmployees(office, type, false)) {
@@ -35,7 +35,7 @@ export class HRAnalyst extends BoardroomManager {
         }
         return max;
     }
-    @Memoize((office: Office, type?: string) => ('' + office.name + type + Game.time))
+    @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
     oldestEmployee(office: Office, type?: string) {
         let min = undefined; // Max actual TTL should be 1500
         for (let employee of this.getEmployees(office, type)) {

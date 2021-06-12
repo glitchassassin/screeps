@@ -1,7 +1,7 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Controllers } from "WorldState/Controllers";
 import { HRAnalyst } from "./HRAnalyst";
-import { Memoize } from "typescript-memoize";
+import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { RoomData } from "WorldState/Rooms";
 import { Structures } from "WorldState/Structures";
@@ -20,12 +20,12 @@ export const WHITELIST = [
 ]
 
 export class DefenseAnalyst extends BoardroomManager {
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getTowers(office: Office) {
         return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_TOWER) as StructureTower[];
     }
 
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getPrioritizedAttackTargets(office: Office) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let [spawn] = hrAnalyst.getSpawns(office);
@@ -35,7 +35,7 @@ export class DefenseAnalyst extends BoardroomManager {
         );
         return hostileCreeps.sort(sortByDistanceTo(spawn.pos));
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getPrioritizedHealTargets(office: Office) {
         let myCreeps = Game.rooms[office.center.name].find(FIND_MY_CREEPS).filter(
             c => {
@@ -44,21 +44,21 @@ export class DefenseAnalyst extends BoardroomManager {
         )
         return myCreeps.sort((a, b) => b.hits - a.hits);
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getInterns(office: Office) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
         return hrAnalyst.getEmployees(office, 'INTERN');
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getGuards(office: Office) {
         let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
         return hrAnalyst.getEmployees(office, 'GUARD');
     }
-    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    @MemoizeByTick((roomName: string) => roomName)
     getTerritoryScanned(roomName: string) {
         return RoomData.byRoom(roomName)?.scanned
     }
-    @Memoize((roomName: string) => ('' + roomName + Game.time))
+    @MemoizeByTick((roomName: string) => roomName)
     getTerritoryIntent(roomName: string) {
         let controller = Controllers.byRoom(roomName);
         if (controller?.my) {

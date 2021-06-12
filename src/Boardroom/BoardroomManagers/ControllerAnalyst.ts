@@ -5,7 +5,7 @@ import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { MapAnalyst } from "./MapAnalyst";
-import { Memoize } from "typescript-memoize";
+import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { RoomArchitect } from "./Architects/RoomArchitect";
 import { Structures } from "WorldState/Structures";
@@ -38,14 +38,14 @@ export class ControllerAnalyst extends BoardroomManager {
             LegalData.set(controller.id, controller, office.name);
         })
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getDesignatedUpgradingLocations(office: Office) {
         let controller = LegalData.byRoom(office.name);
         if (!controller?.containerPos) return null;
 
         return controller;
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     getReservingControllers(office: Office) {
         let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         let defenseAnalyst = this.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
@@ -62,7 +62,7 @@ export class ControllerAnalyst extends BoardroomManager {
         }
         return controllers;
     }
-    @Memoize((office: Office) => ('' + office.name + Game.time))
+    @MemoizeByTick((office: Office) => office.name)
     unassignedUpgradeRequests(office: Office) {
         return (office.managers.get('LegalManager') as LegalManager).requests.filter(r => {
             return r.assigned.length === 0

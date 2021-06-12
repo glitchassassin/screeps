@@ -1,6 +1,7 @@
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { ConstructionSites } from "WorldState/ConstructionSites";
 import { Memoize } from "typescript-memoize";
+import { MemoizeByTick } from "utils/memoize";
 import { Structures } from "WorldState/Structures";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
@@ -62,7 +63,7 @@ export class MapAnalyst extends BoardroomManager {
         if (includeCenter) adjacent.push(roomName);
         return adjacent;
     }
-    @Memoize((pos: RoomPosition) => (`${pos.roomName}[${pos.x}, ${pos.y}]${Game.time}`))
+    @MemoizeByTick((pos: RoomPosition) => `${pos}`)
     isPositionWalkable(pos: RoomPosition, ignoreCreeps: boolean = false) {
         let terrain;
         try {
@@ -82,7 +83,7 @@ export class MapAnalyst extends BoardroomManager {
         }
         return true;
     }
-    @Memoize((roomName: string, avoidCreeps: boolean = false) => (`${roomName} ${avoidCreeps ? 'Y' : 'N'} ${Game.time}`))
+    @MemoizeByTick((roomName: string, avoidCreeps: boolean = false) => `${roomName} ${avoidCreeps ? 'Y' : 'N'}`)
     getCostMatrix(roomName: string, avoidCreeps: boolean = false) {
         let room = Game.rooms[roomName];
         let costs = new PathFinder.CostMatrix;
@@ -119,6 +120,7 @@ export class MapAnalyst extends BoardroomManager {
 
         return costs;
     }
+    @Memoize((from: RoomPosition, to: RoomPosition) => (`${from} ${to}`))
     getRangeTo(from: RoomPosition, to: RoomPosition) {
         if (from.roomName === to.roomName) return from.getRangeTo(to);
 

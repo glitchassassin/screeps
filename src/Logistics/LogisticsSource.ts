@@ -1,7 +1,7 @@
 import { LogisticsAnalyst, RealLogisticsSources } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 
 import { Capacity } from "WorldState/Capacity";
-import { Memoize } from "typescript-memoize";
+import { MemoizeByTick } from "utils/memoize";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 import profiler from "screeps-profiler";
@@ -32,7 +32,7 @@ export class LogisticsSource {
 
     public reservedCapacity = 0;
 
-    @Memoize(() => (`${Game.time}`))
+    @MemoizeByTick(() => ``)
     public get capacity() : number {
         return this.sources.reduce((sum, source) => sum + (Capacity.byId(source.id)?.used ?? 0), 0) - this.reservedCapacity;
     }
