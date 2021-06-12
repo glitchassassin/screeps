@@ -4,6 +4,7 @@ import { getCreepsById, sortByDistanceTo } from "utils/gameObjectSelectors";
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Capacity } from "WorldState/Capacity";
+import { Controllers } from "WorldState/Controllers";
 import { FranchiseData } from "WorldState/FranchiseData";
 import { HRAnalyst } from "./HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
@@ -14,6 +15,18 @@ import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
 
 export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer|StructureLink>;
+
+const STORAGE_GOALS: Record<number, number> = {
+    0:       0,
+    1:       0,
+    2:       0,
+    3:       0,
+    4:   50000,
+    5:  100000,
+    6:  200000,
+    7:  500000,
+    8: 1000000
+}
 
 export class LogisticsAnalyst extends BoardroomManager {
     constructor(
@@ -62,7 +75,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         return Resources.byOffice(office, RESOURCE_ENERGY);
     }
     @MemoizeByTick((pos: RoomPosition) => `${pos}`)
-    getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true): RealLogisticsSources[] {
+    getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, emergency = false): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
         let items;
         if (includeAdjacent) {
@@ -74,7 +87,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
                 results.push(item.resource as Resource<RESOURCE_ENERGY>);
-            } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage || item.structure instanceof StructureLink) {
+            } else if (item.structure instanceof StructureContainer || (item.structure instanceof StructureStorage && emergency) || item.structure instanceof StructureLink) {
                 results.push(item.structure);
             }
         }
@@ -94,14 +107,24 @@ export class LogisticsAnalyst extends BoardroomManager {
         return sorted[0];
     }
     @MemoizeByTick((office: Office) => office.name)
-    getAllSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
+    getAllSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         let depots = this.depots.get(office.name) ?? [];
         return [
             ...this.getLinks(office, true),
             ...this.getFreeSources(office),
             ...getCreepsById(...depots),
-            ...this.getContainers(office)
+            ...this.getContainers(office),
+            ...this.getStorageSources(office, emergency),
         ];
+    }
+    @MemoizeByTick((office: Office) => office.name)
+    getStorageSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+        let rcl = Controllers.byRoom(office.name)?.level;
+        let storage = this.getStorage(office);
+        let storageCapacity = storage ? Capacity.byId(storage.id)?.used ?? 0 : 0;
+        if (rcl && storage && (emergency || storageCapacity > STORAGE_GOALS[rcl]))
+            return [storage];
+        return [];
     }
     @MemoizeByTick((office: Office) => office.name)
     getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
@@ -109,10 +132,6 @@ export class LogisticsAnalyst extends BoardroomManager {
             ...this.getFreeEnergy(office),
             ...this.getTombstones(office),
         ];
-        let storage = this.getStorage(office);
-        let storageCapacity = storage ? Capacity.byId(storage.id)?.used ?? 0 : 0;
-        if (storage && storageCapacity > 0)
-            freeSources.push(storage);
         return freeSources;
     }
     @MemoizeByTick((office: Office) => office.name)

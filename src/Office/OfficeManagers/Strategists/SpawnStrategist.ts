@@ -24,18 +24,6 @@ import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import profiler from "screeps-profiler";
 
-const STORAGE_GOALS: Record<number, number> = {
-    0:       0,
-    1:       0,
-    2:       0,
-    3:       0,
-    4:   50000,
-    5:  100000,
-    6:  200000,
-    7:  500000,
-    8: 1000000
-}
-
 export class SpawnStrategist extends OfficeManager {
     spawnRequest?: Request<StructureSpawn>;
 
