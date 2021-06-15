@@ -7,7 +7,6 @@ import { OfficeTaskManager } from "./OfficeTaskManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { Table } from "Visualizations/Table";
 import { lazyMap } from "utils/lazyIterators";
-import profiler from "screeps-profiler";
 
 export class SalesManager extends OfficeTaskManager {
     minionTypes = ['SALESMAN'];
@@ -73,4 +72,4 @@ export class SalesManager extends OfficeTaskManager {
         chart.render(new RoomPosition(2, 2, this.office.center.name), false)
     }
 }
-profiler.registerClass(SalesManager, 'SalesManager');
+// profiler.registerClass(SalesManager, 'SalesManager');

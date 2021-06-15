@@ -7,7 +7,6 @@ import { buildSite } from "BehaviorTree/behaviors/buildSite";
 import { createConstructionSite } from "BehaviorTree/behaviors/createConstructionSite";
 import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
-import profiler from "screeps-profiler";
 
 const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_CONTAINER]:      5,
@@ -71,4 +70,4 @@ export class BuildRequest extends MinionRequest {
     }
 
 }
-profiler.registerClass(BuildRequest, 'BuildRequest');
+// profiler.registerClass(BuildRequest, 'BuildRequest');

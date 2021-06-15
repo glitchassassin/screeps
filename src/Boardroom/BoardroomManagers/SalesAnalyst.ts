@@ -35,10 +35,12 @@ export class SalesAnalyst extends BoardroomManager {
                             if (this.mapAnalyst.isPositionWalkable(pos, true)) franchise.maxSalesmen += 1;
                         }
                     }
-                    if (!franchise.containerPos || !franchise.linkPos) {
+                    if (!franchise.containerPos) {
                         let {container, link} = roomArchitect.franchises.get(s.id) ?? {};
                         franchise.containerPos = container?.pos;
-                        franchise.linkPos = link?.pos;
+                        if (office.name === t.name) {
+                            franchise.linkPos = link?.pos;
+                        }
                     }
 
                     FranchiseData.set(s.id, franchise, office.name);

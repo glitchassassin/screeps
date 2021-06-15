@@ -22,7 +22,6 @@ import { SalesManager } from "../SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
-import profiler from "screeps-profiler";
 
 export class SpawnStrategist extends OfficeManager {
     spawnRequest?: Request<StructureSpawn>;
@@ -160,4 +159,4 @@ export class SpawnStrategist extends OfficeManager {
         }
     }
 }
-profiler.registerClass(SpawnStrategist, 'SpawnStrategist');
+// profiler.registerClass(SpawnStrategist, 'SpawnStrategist');

@@ -1,7 +1,6 @@
 import { Behavior } from "BehaviorTree/Behavior";
 import { MinionRequest } from "./MinionRequest";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
-import profiler from "screeps-profiler";
 
 export class IdleRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -21,4 +20,4 @@ export class IdleRequest extends MinionRequest {
 
 }
 
-profiler.registerClass(IdleRequest, 'IdleRequest');
+// profiler.registerClass(IdleRequest, 'IdleRequest');

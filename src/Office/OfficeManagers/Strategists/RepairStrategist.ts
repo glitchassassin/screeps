@@ -6,7 +6,6 @@ import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { getRcl } from "utils/gameObjectSelectors";
-import profiler from "screeps-profiler";
 
 const BARRIER_LEVEL: Record<number, number> = {
     1: 3e+3,
@@ -52,4 +51,4 @@ export class RepairStrategist extends OfficeManager {
         this.repairRequests.set(structure.id, req);
     }
 }
-profiler.registerClass(RepairStrategist, 'RepairStrategist');
+// profiler.registerClass(RepairStrategist, 'RepairStrategist');

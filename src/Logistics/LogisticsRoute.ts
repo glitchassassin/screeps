@@ -229,4 +229,4 @@ export class LogisticsRoute {
     }
 }
 
-profiler.registerClass(LogisticsRoute, 'LogisticsRoute');
+// profiler.registerClass(LogisticsRoute, 'LogisticsRoute');

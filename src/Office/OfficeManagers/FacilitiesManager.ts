@@ -4,7 +4,6 @@ import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { Table } from "Visualizations/Table";
-import profiler from "screeps-profiler";
 
 export class FacilitiesManager extends OfficeTaskManager {
     minionTypes = ['ENGINEER'];
@@ -55,4 +54,4 @@ export class FacilitiesManager extends OfficeTaskManager {
 }
 
 
-profiler.registerClass(FacilitiesManager, 'FacilitiesManager');
+// profiler.registerClass(FacilitiesManager, 'FacilitiesManager');

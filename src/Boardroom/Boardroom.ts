@@ -12,7 +12,6 @@ import { RoomArchitect } from "./BoardroomManagers/Architects/RoomArchitect";
 import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
 import { cityNames } from "./CityNames";
-import profiler from "screeps-profiler";
 
 export class Boardroom {
     offices: Map<string, Office> = new Map();
@@ -102,4 +101,4 @@ export class Boardroom {
     }
 }
 
-profiler.registerClass(Boardroom, 'Boardroom');
+// profiler.registerClass(Boardroom, 'Boardroom');

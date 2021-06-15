@@ -6,7 +6,6 @@ import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
 import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergyNearby } from "BehaviorTree/behaviors/getEnergyNearby";
-import profiler from "screeps-profiler";
 import { upgradeController } from "BehaviorTree/behaviors/upgradeController";
 
 export class UpgradeRequest extends MinionRequest {
@@ -55,4 +54,4 @@ export class UpgradeRequest extends MinionRequest {
     }
 
 }
-profiler.registerClass(UpgradeRequest, 'UpgradeRequest');
+// profiler.registerClass(UpgradeRequest, 'UpgradeRequest');

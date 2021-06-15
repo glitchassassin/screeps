@@ -3,7 +3,6 @@ import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RoomData } from "WorldState/Rooms";
 import { Table } from "Visualizations/Table";
 import { byId } from "utils/gameObjectSelectors";
-import profiler from "screeps-profiler";
 
 export class SecurityManager extends OfficeTaskManager {
     run() {
@@ -36,4 +35,4 @@ export class SecurityManager extends OfficeTaskManager {
     }
 }
 
-profiler.registerClass(SecurityManager, 'SecurityManager');
+// profiler.registerClass(SecurityManager, 'SecurityManager');

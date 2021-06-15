@@ -4,7 +4,6 @@ import { OfficeManager } from "Office/OfficeManager";
 import { RoomArchitect } from "Boardroom/BoardroomManagers/Architects/RoomArchitect";
 import { Structures } from "WorldState/Structures";
 import { getRcl } from "utils/gameObjectSelectors";
-import profiler from "screeps-profiler";
 
 export class BuildStrategist extends OfficeManager {
     plan() {
@@ -44,4 +43,4 @@ export class BuildStrategist extends OfficeManager {
         }
     }
 }
-profiler.registerClass(BuildStrategist, 'BuildStrategist');
+// profiler.registerClass(BuildStrategist, 'BuildStrategist');

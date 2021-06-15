@@ -7,7 +7,6 @@ import { Request } from "BehaviorTree/Request";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { Table } from "Visualizations/Table";
-import profiler from "screeps-profiler";
 
 export class HRManager extends OfficeManager {
     requests: Request<StructureSpawn>[] = [];
@@ -118,4 +117,4 @@ export class HRManager extends OfficeManager {
         Table(new RoomPosition(pos.x, pos.y, this.office.center.name), employeeTable);
     }
 }
-profiler.registerClass(HRManager, 'HRManager');
+// profiler.registerClass(HRManager, 'HRManager');

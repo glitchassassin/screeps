@@ -12,7 +12,6 @@ import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { Table } from "Visualizations/Table";
 import { lazyFilter } from "utils/lazyIterators";
-import profiler from "screeps-profiler";
 import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class LogisticsManager extends OfficeManager {
@@ -267,4 +266,4 @@ export class LogisticsManager extends OfficeManager {
     }
 }
 
-profiler.registerClass(LogisticsManager, 'LogisticsManager');
+// profiler.registerClass(LogisticsManager, 'LogisticsManager');

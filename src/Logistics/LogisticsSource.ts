@@ -92,4 +92,4 @@ export class LogisticsSource {
     }
 }
 
-profiler.registerClass(LogisticsSource, 'LogisticsSource');
+// profiler.registerClass(LogisticsSource, 'LogisticsSource');

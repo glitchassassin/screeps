@@ -4,7 +4,6 @@ import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
 import { markController } from "BehaviorTree/behaviors/markController";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
-import profiler from "screeps-profiler";
 import { reserveController } from "BehaviorTree/behaviors/reserveController";
 
 export class ReserveRequest extends MinionRequest {
@@ -37,4 +36,4 @@ export class ReserveRequest extends MinionRequest {
     }
 
 }
-profiler.registerClass(ReserveRequest, 'ReserveRequest');
+// profiler.registerClass(ReserveRequest, 'ReserveRequest');

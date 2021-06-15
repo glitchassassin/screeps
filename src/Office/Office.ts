@@ -22,7 +22,6 @@ import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategi
 import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
 import { SurveyStrategist } from "./OfficeManagers/Strategists/SurveyStrategist";
 import { Table } from "Visualizations/Table";
-import profiler from "screeps-profiler";
 
 export class Office {
     name: string;
@@ -164,4 +163,4 @@ export class Office {
     }
 }
 
-profiler.registerClass(Office, 'Office');
+// profiler.registerClass(Office, 'Office');

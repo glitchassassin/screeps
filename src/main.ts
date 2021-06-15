@@ -1,13 +1,13 @@
+import { Boardroom } from 'Boardroom/Boardroom';
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
+import MemHack from 'utils/memhack';
+import { onRespawn } from 'utils/ResetMemoryOnRespawn';
+import { calcTickTime } from 'utils/tickTime';
+import { VisualizationController } from 'utils/VisualizationController';
 import './utils/RoomVisual';
 
-import { Boardroom } from 'Boardroom/Boardroom';
-import MemHack from 'utils/memhack';
-import { VisualizationController } from 'utils/VisualizationController';
-import { calcTickTime } from 'utils/tickTime';
-import { onRespawn } from 'utils/ResetMemoryOnRespawn';
-import profiler from 'screeps-profiler';
+// import profiler from 'screeps-profiler';
 
 try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -87,14 +87,14 @@ function mainLoop() {
     console.log(e, e.stack)
   }
 
-  if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
-    // CPU bucket dropping below 50%, send a CPU profile
-    defensiveProfilingRun = true;
-    Game.profiler.email(10);
-  } else if (Game.cpu.bucket > 6000 && defensiveProfilingRun) {
-    // CPU climbing back up, reset the trigger
-    defensiveProfilingRun = false;
-  }
+  // if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
+  //   // CPU bucket dropping below 50%, send a CPU profile
+  //   defensiveProfilingRun = true;
+  //   Game.profiler.email(10);
+  // } else if (Game.cpu.bucket > 6000 && defensiveProfilingRun) {
+  //   // CPU climbing back up, reset the trigger
+  //   defensiveProfilingRun = false;
+  // }
 
   calcTickTime()
 
@@ -104,9 +104,10 @@ function mainLoop() {
   }
 }
 
-profiler.enable()
+// profiler.enable()
 // export const loop = ErrorMapper.wrapLoop(mainLoop);
 export const loop = () => {
   MemHack.pretick();
-  profiler.wrap(mainLoop);
+  mainLoop();
+  // profiler.wrap(mainLoop);
 }

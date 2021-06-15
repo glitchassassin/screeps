@@ -6,7 +6,6 @@ import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
 import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
-import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
 export class RepairRequest extends MinionRequest {
@@ -53,4 +52,4 @@ export class RepairRequest extends MinionRequest {
     }
 
 }
-profiler.registerClass(RepairRequest, 'RepairRequest');
+// profiler.registerClass(RepairRequest, 'RepairRequest');

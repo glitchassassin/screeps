@@ -3,7 +3,6 @@ import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
 import { Controllers } from "WorldState/Controllers";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { log } from "utils/logger";
-import profiler from "screeps-profiler";
 
 export class Route {
     lastPos?: RoomPosition;
@@ -96,7 +95,7 @@ export class Route {
     }
 }
 
-profiler.registerClass(Route, 'Route');
+// profiler.registerClass(Route, 'Route');
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {

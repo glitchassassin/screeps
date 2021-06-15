@@ -2,7 +2,6 @@ import { Behavior, Selector } from "BehaviorTree/Behavior";
 import { ifIsInRoom, moveTo } from "BehaviorTree/behaviors/moveTo";
 
 import { MinionRequest } from "./MinionRequest";
-import profiler from "screeps-profiler";
 
 export class ExploreRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -27,4 +26,4 @@ export class ExploreRequest extends MinionRequest {
 
 }
 
-profiler.registerClass(ExploreRequest, 'ExploreRequest');
+// profiler.registerClass(ExploreRequest, 'ExploreRequest');

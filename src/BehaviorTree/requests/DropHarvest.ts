@@ -6,7 +6,6 @@ import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
-import profiler from "screeps-profiler";
 
 export class DropHarvestRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -48,4 +47,4 @@ export class DropHarvestRequest extends MinionRequest {
 
 }
 
-profiler.registerClass(DropHarvestRequest, 'DropHarvestRequest');
+// profiler.registerClass(DropHarvestRequest, 'DropHarvestRequest');

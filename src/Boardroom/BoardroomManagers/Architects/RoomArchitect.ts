@@ -5,15 +5,17 @@ import { BoardroomManager } from 'Boardroom/BoardroomManager';
 import { Controllers } from 'WorldState/Controllers';
 import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
+import { Office } from 'Office/Office';
 import { PlannedStructure } from './classes/PlannedStructure';
 import { Sources } from 'WorldState/Sources';
+import { TerritoryFranchisePlan } from './TerritoryFranchise';
 import { fillExtensions } from './ExtensionsPlan';
 import profiler from 'screeps-profiler';
 
 export class RoomArchitect extends BoardroomManager {
     roomPlans = new Map<string, BlockPlan>();
     headquarters = new Map<string, {container: PlannedStructure, link: PlannedStructure}>();
-    franchises = new Map<string, {container: PlannedStructure, link: PlannedStructure}>();
+    franchises = new Map<string, {container: PlannedStructure, link?: PlannedStructure}>();
 
     plan() {
         let start = Game.cpu.getUsed();
@@ -31,9 +33,17 @@ export class RoomArchitect extends BoardroomManager {
                     this.roomPlans.set(room.name, this.reloadPlan(room.roomPlan));
                 }
             } else {
-                if (this.isEligible(room)) {
+                if (room.territoryOf) {
+                    const office = this.boardroom.offices.get(room.territoryOf);
+                    if (office) {
+                        this.roomPlans.set(room.name, this.planTerritory(room, office));
+                    } else {
+                        room.roomPlan = 'FAILED Territory - No Office'
+                        this.roomPlans.set(room.name, new BlockPlan());
+                    }
+                } else if (this.isEligible(room)) {
                     // Calculate from scratch
-                    this.roomPlans.set(room.name, this.planRoom(room));
+                    this.roomPlans.set(room.name, this.planOffice(room));
                 } else {
                     room.roomPlan = 'FAILED - ineligible'
                     this.roomPlans.set(room.name, new BlockPlan());
@@ -80,7 +90,39 @@ export class RoomArchitect extends BoardroomManager {
         return plan;
     }
 
-    planRoom(room: CachedRoom) {
+    planTerritory(room: CachedRoom, office: Office) {
+        let start = Game.cpu.getUsed();
+
+        let roomBlock = new BlockPlan();
+
+        // Get sources
+        let sources = Sources.byRoom(room.name);
+
+        // Calculate FranchisePlans
+        try {
+            let franchises = sources.map(source => new TerritoryFranchisePlan(source, office));
+            franchises.sort((a, b) => a.rangeToController - b.rangeToController);
+
+            roomBlock.structures.push(...franchises.map(f => f.container));
+            roomBlock.structures.push(...franchises.flatMap(f => f.roads));
+
+            room.roomPlan = roomBlock.serialize();
+
+            franchises.forEach(f => this.franchises.set(f.source.id, {
+                container: f.container
+            }));
+        } catch (e) {
+            room.roomPlan = 'FAILED generating franchises';
+            console.log(room.roomPlan, e);
+            return roomBlock;
+        }
+
+        let end = Game.cpu.getUsed();
+        console.log(`Planned Territory room ${room.name} with ${end - start} CPU`);
+        return roomBlock;
+    }
+
+    planOffice(room: CachedRoom) {
         let start = Game.cpu.getUsed();
 
         let roomBlock = new BlockPlan();
@@ -163,7 +205,7 @@ export class RoomArchitect extends BoardroomManager {
         });
 
         let end = Game.cpu.getUsed();
-        console.log(`Planned room ${room.name} with ${end - start} CPU`);
+        console.log(`Planned Office room ${room.name} with ${end - start} CPU`);
         return roomBlock;
     }
 
@@ -184,4 +226,4 @@ export class RoomArchitect extends BoardroomManager {
         }
     }
 }
-profiler.registerClass(RoomArchitect, 'RoomArchitect');
+// profiler.registerClass(RoomArchitect, 'RoomArchitect');

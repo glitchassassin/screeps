@@ -2,7 +2,6 @@ import { CachedStructure } from "WorldState/Structures";
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { byId } from "utils/gameObjectSelectors";
-import profiler from "screeps-profiler";
 import { travel } from "Logistics/Travel";
 
 export class LogisticsRequest {
@@ -85,5 +84,5 @@ export class DepotRequest extends LogisticsRequest {
     }
 }
 
-profiler.registerClass(DepotRequest, 'DepotRequest');
-profiler.registerClass(TransferRequest, 'TransferRequest');
+// profiler.registerClass(DepotRequest, 'DepotRequest');
+// profiler.registerClass(TransferRequest, 'TransferRequest');

@@ -6,7 +6,6 @@ import { OfficeManager } from "Office/OfficeManager";
 import { RoomData } from "WorldState/Rooms";
 import { SecurityManager } from "../SecurityManager";
 import { getRcl } from "utils/gameObjectSelectors";
-import profiler from "screeps-profiler";
 
 export class SurveyStrategist extends OfficeManager {
     public request?: MinionRequest;
@@ -63,4 +62,4 @@ export class SurveyStrategist extends OfficeManager {
         return bestMatch.name;
     }
 }
-profiler.registerClass(SurveyStrategist, 'SurveyStrategist');
+// profiler.registerClass(SurveyStrategist, 'SurveyStrategist');

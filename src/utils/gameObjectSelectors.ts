@@ -8,7 +8,6 @@ import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
 import { Office } from "Office/Office";
-import profiler from "screeps-profiler";
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite) {
     return (target.progressTotal ?? 0) - (target.progress ?? 0);
@@ -47,7 +46,7 @@ export function sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos:
         return (distance.get(aPos) as number) - (distance.get(bPos) as number)
     }
 }
-profiler.registerFN(sortByDistanceTo, 'sortByDistanceTo');
+// profiler.registerFN(sortByDistanceTo, 'sortByDistanceTo');
 
 
 export function RoomPos(pos: {x: number, y: number, roomName: string}) {

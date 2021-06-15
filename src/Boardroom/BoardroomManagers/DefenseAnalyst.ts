@@ -61,7 +61,7 @@ export class DefenseAnalyst extends BoardroomManager {
     @MemoizeByTick((roomName: string) => roomName)
     getTerritoryIntent(roomName: string) {
         let controller = Controllers.byRoom(roomName);
-        if (controller?.my) {
+        if (controller && controller?.my || controller?.owner === undefined) {
             return TerritoryIntent.EXPLOIT;
         } else {
             return TerritoryIntent.IGNORE;

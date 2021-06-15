@@ -4,7 +4,6 @@ import { FranchiseData } from "WorldState/FranchiseData";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { byId } from "utils/gameObjectSelectors";
-import profiler from "screeps-profiler";
 
 export class LinkManager extends OfficeManager {
     run() {
@@ -26,4 +25,4 @@ export class LinkManager extends OfficeManager {
         }
     }
 }
-profiler.registerClass(LinkManager, 'LinkManager');
+// profiler.registerClass(LinkManager, 'LinkManager');
