@@ -47,20 +47,22 @@ export class SpawnStrategist extends OfficeManager {
 
         if (this.spawnRequest && !this.spawnRequest.result) return; // Pending request exists
 
+        if ((hrAnalyst.newestEmployee(this.office) ?? 0) > 1490) return; // Wait 10 ticks after previous spawn before considering new requests
+
+        // We probably need a roughly even balance of carriers and salesmen, up to a certain point.
+
+        // If there are more salesmen than carriers, and there are a) no idle carriers and b) unassigned logistics requests,
+
         // First priority: Carrier minions.
-        // If we just spawned a Carrier minion, wait 100 ticks before spawning a new one.
         // If we have unassigned requests and all Carriers are busy,
         // or if all Carriers will be dead in 50 ticks,
         // we need more carriers
         if ( // Carrier minions
-            (hrAnalyst.newestEmployee(this.office, 'CARRIER') ?? 0) < 1400 &&
+            unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
+            logisticsManager.getIdleCarriers().length === 0 &&
             (
-                (
-                    unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
-                    logisticsManager.getIdleCarriers().length === 0 &&
-                    hrAnalyst.newestEmployee(this.office, 'SALESMAN') !== undefined
-                    // salesAnalyst.getFranchiseSurplus(this.office) > 0.5
-                )
+                hrAnalyst.getEmployees(this.office, 'SALESMAN', false).length > hrAnalyst.getEmployees(this.office, 'CARRIER', false).length ||
+                salesAnalyst.unassignedHarvestRequests(this.office).length === 0
             )
         ) {
             this.submitRequest(new CarrierMinion());
@@ -68,7 +70,6 @@ export class SpawnStrategist extends OfficeManager {
         }
 
         if ( // Salesman minions
-            (hrAnalyst.newestEmployee(this.office, 'SALESMAN') ?? 0) < 1400 &&
             (
                 salesAnalyst.unassignedHarvestRequests(this.office).length > 0 ||
                 salesManager.creepsExpiring(50).length > 0
@@ -86,10 +87,11 @@ export class SpawnStrategist extends OfficeManager {
         // If there is no container, 1/1 === 1 (acts as if container is empty)
         // Otherwise, if capacity is more than 50% full, spawn a new Paralegal
         if ( // Paralegal minions
-            hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0 ||
-            (
-                (hrAnalyst.newestEmployee(this.office, 'PARALEGAL') ?? 0) < 1400 &&
-                (legalDepotFreeCapacity / legalDepotCapacity) < 0.5
+            (hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0 ||
+                (
+                    (hrAnalyst.newestEmployee(this.office, 'PARALEGAL') ?? 0) < 1400 &&
+                    (legalDepotFreeCapacity / legalDepotCapacity) < 0.5
+                )
             )
         ) {
             this.submitRequest(new ParalegalMinion());
@@ -113,7 +115,6 @@ export class SpawnStrategist extends OfficeManager {
             }
         } else {
             if (
-                (hrAnalyst.newestEmployee(this.office, 'ENGINEER') ?? 0) < 1400 &&
                 facilitiesManager.workPending() > facilitiesAnalyst.getWorkExpectancy(this.office)
             ) {
                 this.submitRequest(new EngineerMinion());
@@ -123,7 +124,7 @@ export class SpawnStrategist extends OfficeManager {
 
         // Scout minions
         if (
-            rcl > 3 &&
+            rcl > 1 &&
             (hrAnalyst.newestEmployee(this.office, 'INTERN') ?? 0) < 100
         ) {
             this.submitRequest(new InternMinion());

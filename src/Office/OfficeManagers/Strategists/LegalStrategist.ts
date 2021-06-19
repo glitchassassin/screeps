@@ -36,7 +36,7 @@ export class LegalStrategist extends OfficeManager {
                 if (container) {
                     logisticsManager.submit(controller.pos.roomName, new TransferRequest(container, 2))
                 } else if (legalData?.containerPos) {
-                    logisticsManager.submit(controller.pos.roomName, new DepotRequest(legalData.containerPos, 2))
+                    logisticsManager.submit(controller.pos.roomName, new DepotRequest(legalData.containerPos, 2, CONTAINER_CAPACITY))
                 }
             }
         }

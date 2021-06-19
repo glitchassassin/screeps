@@ -1,8 +1,9 @@
-import { CachedStructure, Structures } from "./Structures"
-import { packPos, unpackPos } from "utils/packrat"
-
 import { Office } from "Office/Office"
+import { packPos, unpackPos } from "utils/packrat"
 import { registerCachePurger } from "./registerCachePurger"
+import { RoomData } from "./Rooms"
+import { CachedStructure, Structures } from "./Structures"
+
 
 declare global {
     namespace GreyCompany {
@@ -10,7 +11,8 @@ declare global {
             posPacked: string,
             containerPosPacked?: string,
             linkPosPacked?: string,
-            maxSalesmen?: number
+            maxSalesmen?: number,
+            distance?: number
         }
         interface Heap {
             CacheRefreshers: Function[];
@@ -26,6 +28,7 @@ declare global {
 export type CachedFranchise = {
     id: Id<Source>,
     pos: RoomPosition,
+    distance?: number,
     containerPos?: RoomPosition,
     containerId?: Id<StructureContainer>,
     linkPos?: RoomPosition,
@@ -63,7 +66,7 @@ export class FranchiseData {
         }
     }
     static byOffice(office: Office): CachedFranchise[] {
-        return this.byRoom(office.name);
+        return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
     }
     static purge() {
         Memory.Franchises = {idByRoom: {}, data: {}}

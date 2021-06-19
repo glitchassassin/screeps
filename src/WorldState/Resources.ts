@@ -1,4 +1,5 @@
 import { Office } from "Office/Office";
+import { RoomData } from "./Rooms";
 
 export class Resources {
     static byId(id: Id<Resource>|undefined): Resource|undefined {
@@ -14,7 +15,7 @@ export class Resources {
         return resources;
     }
     static byOffice<T extends ResourceConstant = ResourceConstant>(office: Office, resource?: T): Resource<T>[] {
-        return this.byRoom(office.name, resource);
+        return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name, resource));
     }
     static byPos<T extends ResourceConstant = ResourceConstant>(pos: RoomPosition, resource?: T): Resource<T>[] {
         let resources: Resource[] = [];

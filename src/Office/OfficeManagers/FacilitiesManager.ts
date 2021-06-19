@@ -1,4 +1,5 @@
 import { BuildRequest } from "BehaviorTree/requests/Build";
+import { ConstructionSites } from "WorldState/ConstructionSites";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
@@ -12,8 +13,9 @@ export class FacilitiesManager extends OfficeTaskManager {
         for (let req of this.requests) {
             if (req instanceof BuildRequest) {
                 pending += CONSTRUCTION_COST[req.structureType];
-                let site = req.pos.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === (req as BuildRequest).structureType)
-                if (site) {
+
+                let site = ConstructionSites.byPos(req.pos);
+                if (site && req.structureType === site.structureType) {
                     pending -= site.progress;
                 }
             } else if (req instanceof RepairRequest) {

@@ -1,11 +1,12 @@
-import { Boardroom } from 'Boardroom/Boardroom';
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
-import MemHack from 'utils/memhack';
-import { onRespawn } from 'utils/ResetMemoryOnRespawn';
-import { calcTickTime } from 'utils/tickTime';
-import { VisualizationController } from 'utils/VisualizationController';
 import './utils/RoomVisual';
+
+import { Boardroom } from 'Boardroom/Boardroom';
+import MemHack from 'utils/memhack';
+import { VisualizationController } from 'utils/VisualizationController';
+import { calcTickTime } from 'utils/tickTime';
+import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 
 // import profiler from 'screeps-profiler';
 

@@ -38,7 +38,6 @@ export class Office {
         this.name = roomName;
         if (!Game.rooms[roomName]) throw new Error(`Could not find central room for office ${roomName}`);
         let room = RoomData.byRoom(roomName) ?? {name: roomName, scanned: Game.time};
-        room.territoryOf = roomName;
         RoomData.set(roomName, room);
         this.center = room;
 

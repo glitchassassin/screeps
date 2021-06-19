@@ -20,6 +20,10 @@ declare module 'BehaviorTree/Behavior' {
  */
 export const createConstructionSite = (pos: RoomPosition, type: BuildableStructureConstant) => (creep: Creep, bb: Blackboard) => {
     log(creep.id, `createConstructionSite ${pos} ${type}`);
+
+    // If the room is not visible, fail
+    if (!Game.rooms[pos.roomName]) return BehaviorResult.FAILURE;
+
     // If the site is already in the blackboard, no action needed
     if (bb.buildSite?.pos?.isEqualTo(pos) && bb.buildSite.structureType === type && byId(bb.buildSite.id)) return BehaviorResult.SUCCESS;
 

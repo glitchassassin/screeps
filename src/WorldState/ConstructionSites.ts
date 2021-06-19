@@ -1,6 +1,7 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
+import { RoomData } from "./Rooms";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -70,7 +71,7 @@ export class ConstructionSites {
         }
     }
     static byOffice(office: Office): CachedConstructionSite[] {
-        return this.byRoom(office.name);
+        return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
     }
     static byPos(pos: RoomPosition): CachedConstructionSite|undefined {
         if (Game.rooms[pos.roomName]) {

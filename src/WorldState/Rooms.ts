@@ -39,7 +39,7 @@ export class RoomData {
     static byOffice(office: Office): CachedRoom[] {
         let rooms = [];
         for (let room in (Memory.Rooms?.data ?? {})) {
-            if (Memory.Rooms?.data[room].territoryOf === office.name) {
+            if (room === office.name || Memory.Rooms?.data[room].territoryOf === office.name) {
                 let r = this.byRoom(room);
                 if (r) rooms.push(r);
             }

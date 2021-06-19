@@ -2,29 +2,35 @@ import { BuildRequest } from "BehaviorTree/requests/Build";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { OfficeManager } from "Office/OfficeManager";
 import { RoomArchitect } from "Boardroom/BoardroomManagers/Architects/RoomArchitect";
+import { RoomData } from "WorldState/Rooms";
 import { Structures } from "WorldState/Structures";
 import { getRcl } from "utils/gameObjectSelectors";
 
 export class BuildStrategist extends OfficeManager {
     plan() {
+        for (let r of RoomData.byOffice(this.office)) {
+            this.planRoom(r.name);
+        }
+    }
+    planRoom(roomName: string) {
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
         let roomArchitect = global.boardroom.managers.get('RoomArchitect') as RoomArchitect;
         // Select valid structures
-        let rcl = getRcl(this.office.name) ?? 0;
+        let rcl = getRcl(roomName) ?? 0;
         let structureCounts: Record<string, number> = {};
-        for (let s of Structures.byRoom(this.office.name)) {
+        for (let s of Structures.byRoom(roomName)) {
             structureCounts[s.structureType] ??= 0;
             structureCounts[s.structureType]++;
         }
         for (let r of facilitiesManager.requests) {
-            if (r instanceof BuildRequest) {
+            if (r instanceof BuildRequest && r.pos.roomName === roomName) {
                 structureCounts[r.structureType] ??= 0;
                 structureCounts[r.structureType]++;
             }
         }
 
         // Submit requests, up to the quota, from the build plan
-        let plan = roomArchitect.roomPlans.get(this.office.name);
+        let plan = roomArchitect.roomPlans.get(roomName);
         if (!plan) return;
         for (let c of plan.structures) {
             c.survey();

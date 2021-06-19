@@ -42,6 +42,9 @@ export class SalesAnalyst extends BoardroomManager {
                             franchise.linkPos = link?.pos;
                         }
                     }
+                    if (!franchise.distance) {
+                        franchise.distance = PathFinder.search(office.controller.pos, { pos: franchise.pos, range: 1 }).cost;
+                    }
 
                     FranchiseData.set(s.id, franchise, office.name);
                 }

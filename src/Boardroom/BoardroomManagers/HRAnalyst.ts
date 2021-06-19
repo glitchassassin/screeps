@@ -26,7 +26,7 @@ export class HRAnalyst extends BoardroomManager {
     newestEmployee(office: Office, type?: string) {
         let max = undefined;
         for (let employee of this.getEmployees(office, type, false)) {
-            if (employee.memory.type !== type) continue;
+            if (type && employee.memory.type !== type) continue;
             if (max === undefined) {
                 max = employee.ticksToLive ?? 1500;
                 continue;

@@ -1,6 +1,7 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
+import { RoomData } from "./Rooms";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -53,8 +54,7 @@ export class Minerals {
         }
     }
     static byOffice(office: Office): CachedMineral[] {
-        let mineral = this.byRoom(office.name);
-        return mineral ? [mineral] : [];
+        return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name)).filter(m => m !== undefined) as CachedMineral[];
     }
     static byPos(pos: RoomPosition): CachedMineral[] {
         if (Game.rooms[pos.roomName]) {

@@ -11,7 +11,7 @@ export class LogisticsRequest {
     public resupply = false;
 
     toString() {
-        return `[${this.constructor.name} ${this.pos.roomName}{${this.pos.x}, ${this.pos.y}}`;
+        return `[${this.constructor.name} ${this.pos.roomName}{${this.pos.x}, ${this.pos.y}} ${this.completed ? 'completed' : 'pending'}]`;
     }
 
     constructor(

@@ -1,5 +1,5 @@
 import { Bar, Meters } from "Visualizations/Meters";
-import { byId, calculateFranchiseSurplus } from "utils/gameObjectSelectors";
+import { byId, calculateFranchiseSurplus, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { CachedSource } from "WorldState/Sources";
 import { FranchiseData } from "WorldState/FranchiseData";
@@ -22,7 +22,7 @@ export class SalesManager extends OfficeTaskManager {
 
         let maxSalesmen = FranchiseData.byId(source.id)?.maxSalesmen
 
-        for (let request of this.requests) {
+        for (let request of this.requests.sort(sortByDistanceTo(this.office.controller.pos))) {
             if (request.pos.isEqualTo(source.pos)) {
                 for (let salesman of request.assigned) {
                     count += 1;
