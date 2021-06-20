@@ -18,7 +18,11 @@ export class LogisticsRequest {
         public pos: RoomPosition,
         public priority: number,
         public capacity: number = -1,
-    ) { }
+    ) {
+        if (this.capacity === 0) {
+            this.completed = true;
+        }
+    }
 
     action(creep: Creep): ScreepsReturnCode { return OK; }
 }
@@ -68,6 +72,9 @@ export class DepotRequest extends LogisticsRequest {
     ) {
         super(pos, priority, capacity);
         this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
+        if (this.capacity === -1) {
+            this.capacity = STORAGE_CAPACITY
+        }
     }
 
     action(creep: Creep) {
@@ -81,6 +88,29 @@ export class DepotRequest extends LogisticsRequest {
         }
         this.logisticsAnalyst.reportDepot(creep);
         return OK;
+    }
+}
+
+export class DropRequest extends LogisticsRequest {
+    constructor(
+        public pos: RoomPosition,
+        public priority: number,
+        public capacity: number = -1,
+    ) {
+        super(pos, priority, capacity);
+        if (this.capacity === -1) {
+            this.capacity = STORAGE_CAPACITY
+        }
+    }
+
+    action(creep: Creep) {
+        // Wait for minions to request resources
+        if (!creep.pos.isNearTo(this.pos)) {
+            return travel(creep, this.pos)
+        }
+        const result = creep.drop(RESOURCE_ENERGY)
+        this.completed = (result === OK);
+        return result;
     }
 }
 

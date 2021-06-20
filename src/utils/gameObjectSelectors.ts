@@ -24,7 +24,8 @@ export function getCreepHomeOffice(creep: Creep) {
     if (!creep.memory.office) return;
     return global.boardroom.offices.get(creep.memory.office);
 }
-export function countEnergyInContainersOrGround(pos: RoomPosition) {
+export function countEnergyInContainersOrGround(pos?: RoomPosition) {
+    if (!pos) return 0;
     let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
     return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
 }

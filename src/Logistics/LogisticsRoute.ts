@@ -1,4 +1,4 @@
-import { DepotRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
+import { DepotRequest, DropRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
 
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsSource } from "./LogisticsSource";
@@ -7,7 +7,6 @@ import { Office } from "Office/Office";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
-import profiler from "screeps-profiler";
 
 enum RouteState {
     PENDING = 'PENDING',
@@ -67,7 +66,7 @@ export class LogisticsRoute {
         let validSources: LogisticsSource[] = [];
         for (let source of sources) {
             // Resupply requests can only be fulfilled by a primary source
-            if (request instanceof ResupplyRequest && !source.primary) continue;
+            if ((request instanceof ResupplyRequest || request instanceof DropRequest) && !source.primary) continue;
 
             if (source.capacity > creepCapacity) {
                 fullCreepSources.push(source);
@@ -104,7 +103,7 @@ export class LogisticsRoute {
 
     extend(request: LogisticsRequest) {
         if (this.capacity > 0) {
-            if (request instanceof ResupplyRequest && this.source && !this.source.primary) {
+            if ((request instanceof ResupplyRequest || request instanceof DropRequest) && this.source && !this.source.primary) {
                 // Resupply requests can only be handled by primary sources
                 return false;
             }

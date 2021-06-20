@@ -1,12 +1,14 @@
+import { calculateFranchiseSurplus, countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
+
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "./ControllerAnalyst";
+import { FacilitiesAnalyst } from "./FacilitiesAnalyst";
 import { HRAnalyst } from "./HRAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
-import { calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
 export class Metric {
     values: number[] = [];
@@ -98,7 +100,8 @@ export class StatisticsAnalyst extends BoardroomManager {
         private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
         private hrAnalyst = boardroom.managers.get('HRAnalyst') as HRAnalyst,
         private logisticsAnalyst = boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
-        private controllerAnalyst = boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst
+        private controllerAnalyst = boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
+        private facilitiesAnalyst = boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
     ) {
         super(boardroom);
     }
@@ -200,7 +203,8 @@ export class StatisticsAnalyst extends BoardroomManager {
 
                 metrics.storageLevels.maxValue = Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.capacity ?? 0;
                 metrics.storageLevels.update(
-                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0
+                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
+                    countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos)
                 );
                 metrics.storageFillRate.update(
                     Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0

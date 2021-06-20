@@ -1,5 +1,6 @@
 import { Bar, Meters } from "Visualizations/Meters";
 
+import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
@@ -20,7 +21,8 @@ export class LogisticsManager extends OfficeManager {
         private logisticsAnalyst = office.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
         private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
         private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
-        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
+        private facilitiesAnalyst = office.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
     ) {
         super(office);
     }
@@ -59,6 +61,7 @@ export class LogisticsManager extends OfficeManager {
     plan() {
         let idleCarriers = this.getIdleCarriers();
         let storage = this.logisticsAnalyst.getStorage(this.office);
+        let storagePos = storage?.pos ?? this.facilitiesAnalyst.getPlannedStructures(this.office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos
         let legalData = LegalData.byRoom(this.office.name);
         let spawns = this.hrAnalyst.getSpawns(this.office);
 
@@ -69,8 +72,8 @@ export class LogisticsManager extends OfficeManager {
                 this.sources.set(f.pos.toString(), new LogisticsSource(f.pos))
             }
         });
-        if (storage && !this.sources.has(storage.pos.toString())) {
-            this.sources.set(storage.pos.toString(), new LogisticsSource(storage.pos, false, false))
+        if (storagePos && !this.sources.has(storagePos.toString())) {
+            this.sources.set(storagePos.toString(), new LogisticsSource(storagePos, false, false))
         }
         spawns.forEach(spawn => {
             if (!this.sources.has(spawn.pos.toString())) {
@@ -235,6 +238,12 @@ export class LogisticsManager extends OfficeManager {
             ])
         }
         Table(new RoomPosition(0, 23, this.office.center.name), routeTable);
+
+        const idleMinions = [
+            ['Minion'],
+            ...this.getIdleCarriers().map(creep => [creep.name])
+        ];
+        Table(new RoomPosition(40, 40, this.office.center.name), idleMinions);
     }
     map() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
