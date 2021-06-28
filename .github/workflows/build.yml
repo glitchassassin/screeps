@@ -29,7 +29,3 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run build process
         run: npm run build
-
-      # Runs a set of commands using the runners shell
-      - name: Run tests
-        run: npm run test
