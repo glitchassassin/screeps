@@ -29,9 +29,10 @@ export class BuildStrategist extends OfficeManager {
             }
         }
 
-        // Submit requests, up to the quota, from the build plan
+        // Submit requests, up to the quota, from the build plan,
+        // once every 50 ticks
         let plan = roomArchitect.roomPlans.get(roomName);
-        if (!plan) return;
+        if (!plan || Game.time % 100 !== 0) return;
         for (let c of plan.structures) {
             c.survey();
             if (!c.structure) {

@@ -13,6 +13,7 @@ import { Office } from "Office/Office";
 import { Resources } from "WorldState/Resources";
 import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
+import { packPos } from "utils/packrat";
 
 export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer|StructureLink>;
 
@@ -74,7 +75,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     getFreeEnergy(office: Office) {
         return Resources.byOffice(office, RESOURCE_ENERGY);
     }
-    @MemoizeByTick((pos: RoomPosition) => `${pos}`)
+    @MemoizeByTick((pos: RoomPosition) => packPos(pos))
     getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, emergency = false): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
         let items;
@@ -93,7 +94,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         }
         return results.sort((a, b) => (Capacity.byId(b.id)?.used ?? 0) - (Capacity.byId(a.id)?.used ?? 0))
     }
-    @MemoizeByTick((pos: RoomPosition) => `${pos}`)
+    @MemoizeByTick((pos: RoomPosition) => packPos(pos))
     getClosestAllSources(pos: RoomPosition, amount?: number) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;

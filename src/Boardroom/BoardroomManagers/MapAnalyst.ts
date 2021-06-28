@@ -3,6 +3,7 @@ import { ConstructionSites } from "WorldState/ConstructionSites";
 import { Memoize } from "typescript-memoize";
 import { MemoizeByTick } from "utils/memoize";
 import { Structures } from "WorldState/Structures";
+import { packPos } from "utils/packrat";
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
     return [].concat(...arr.map(f))
@@ -63,7 +64,7 @@ export class MapAnalyst extends BoardroomManager {
         if (includeCenter) adjacent.push(roomName);
         return adjacent;
     }
-    @MemoizeByTick((pos: RoomPosition) => `${pos}`)
+    @MemoizeByTick((pos: RoomPosition) => packPos(pos))
     isPositionWalkable(pos: RoomPosition, ignoreCreeps: boolean = false) {
         let terrain;
         try {

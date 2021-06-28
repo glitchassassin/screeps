@@ -13,6 +13,9 @@ declare global {
             mineralType: MineralConstant
         }
         interface Heap {
+            Minerals?: {
+                idByPos: Record<string, Id<Mineral>>;
+            }
             CacheRefreshers: Function[];
         }
     }
@@ -57,20 +60,9 @@ export class Minerals {
     static byOffice(office: Office): CachedMineral[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name)).filter(m => m !== undefined) as CachedMineral[];
     }
-    static byPos(pos: RoomPosition): CachedMineral[] {
-        if (Game.rooms[pos.roomName]) {
-            // We have vision here
-            return pos.lookFor(LOOK_MINERALS)
-        } else if (!Memory.Minerals) {
-            return [];
-        } else {
-            let s = [];
-            for (let id in Memory.Minerals.data) {
-                let site = this.byId(id as Id<Mineral>)
-                if (site?.pos.isEqualTo(pos)) s.push(site);
-            }
-            return s;
-        }
+    static byPos(pos: RoomPosition): CachedMineral|undefined {
+        // Can only be one mineral in a room
+        return this.byRoom(pos.roomName);
     }
     static purge() {
         Memory.Minerals = {idByRoom: {}, data: {}};

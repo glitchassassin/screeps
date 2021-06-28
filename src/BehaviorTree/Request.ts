@@ -29,7 +29,7 @@ export abstract class Request<T extends Creep|StructureSpawn> {
             if (!target) continue;
             let blackboard = this.blackboards.get(target.id as Id<T>);
             if (!blackboard) throw new Error('Blackboard not created for target')
-            log(target.name, 'Blackboard: ' + JSON.stringify(blackboard));
+            // log(target.name, 'Blackboard: ' + JSON.stringify(blackboard));
             let result = this.action(target, blackboard);
             // If one is finished, the request is finished
             if (result === BehaviorResult.SUCCESS) {

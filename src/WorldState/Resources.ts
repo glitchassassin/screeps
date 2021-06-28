@@ -1,5 +1,7 @@
+import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
+import { packPos } from "utils/packrat";
 import profiler from "screeps-profiler";
 
 export class Resources {
@@ -18,6 +20,7 @@ export class Resources {
     static byOffice<T extends ResourceConstant = ResourceConstant>(office: Office, resource?: T): Resource<T>[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name, resource));
     }
+    @MemoizeByTick((pos: RoomPosition, resource: ResourceConstant) => resource + packPos(pos))
     static byPos<T extends ResourceConstant = ResourceConstant>(pos: RoomPosition, resource?: T): Resource<T>[] {
         let resources: Resource[] = [];
         if (Game.rooms[pos.roomName]) {

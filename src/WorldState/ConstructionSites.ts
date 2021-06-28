@@ -42,24 +42,33 @@ export function unwrapConstructionSite(site: CachedConstructionSite): CachedCons
     }
 }
 
-export class ConstructionSites {
-    static byId(id: Id<ConstructionSite>|undefined): CachedConstructionSite|undefined {
+export const ConstructionSites = {
+    byId(id: Id<ConstructionSite>|undefined): CachedConstructionSite|undefined {
         if (id === undefined) return undefined;
         let site = Game.getObjectById(id)
         if (!site) {
             let cached = Memory.ConstructionSites?.data[id]
             if (!cached) return;
-            return {
+            const cachedSite = {
                 id: id,
                 structureType: cached.structureType,
                 pos: unpackPos(cached.posPacked),
                 progress: cached.progress,
                 progressTotal: CONSTRUCTION_COST[cached.structureType]
             }
+
+            // Check if cache is stale
+            if (Game.rooms[cachedSite.pos.roomName]) {
+                // Site should have been visible, must be gone
+                delete Memory.ConstructionSites?.data[id]
+                return undefined;
+            } else {
+                return cachedSite
+            }
         }
         return site;
-    }
-    static byRoom(roomName: string): CachedConstructionSite[] {
+    },
+    byRoom(roomName: string): CachedConstructionSite[] {
         if (Game.rooms[roomName]) {
             // We have vision here
             return Game.rooms[roomName].find(FIND_MY_CONSTRUCTION_SITES)
@@ -70,28 +79,17 @@ export class ConstructionSites {
                 ?.map(id => ConstructionSites.byId(id))
                 .filter(site => site !== undefined) as CachedConstructionSite[] ?? []
         }
-    }
-    static byOffice(office: Office): CachedConstructionSite[] {
+    },
+    byOffice(office: Office): CachedConstructionSite[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    }
-    static byPos(pos: RoomPosition): CachedConstructionSite|undefined {
-        if (Game.rooms[pos.roomName]) {
-            // We have vision here
-            return pos.lookFor(LOOK_CONSTRUCTION_SITES).find(c => c.my)
-        } else if (!Memory.ConstructionSites) {
-            return;
-        } else {
-            for (let id in Memory.ConstructionSites.data) {
-                let site = ConstructionSites.byId(id as Id<ConstructionSite>)
-                if (site?.pos.isEqualTo(pos)) return site;
-            }
-            return;
-        }
-    }
-    static purge() {
+    },
+    byPos(pos: RoomPosition): CachedConstructionSite|undefined {
+        return ConstructionSites.byRoom(pos.roomName).find(site => site?.pos.isEqualTo(pos));
+    },
+    purge() {
         Memory.ConstructionSites = {idByRoom: {}, data: {}};
-    }
-    static refreshCache() {
+    },
+    refreshCache() {
         // Initialize the Heap branch, if necessary
         Memory.ConstructionSites ??= {idByRoom: {}, data: {}};
 
@@ -128,4 +126,4 @@ export class ConstructionSites {
 registerCacheRefresher(ConstructionSites.refreshCache);
 registerCachePurger(ConstructionSites.purge);
 
-profiler.registerClass(ConstructionSites, 'ConstructionSites');
+profiler.registerObject(ConstructionSites, 'ConstructionSites');

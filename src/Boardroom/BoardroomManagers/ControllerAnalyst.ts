@@ -10,6 +10,7 @@ import { Office } from "Office/Office";
 import { RoomArchitect } from "./Architects/RoomArchitect";
 import { Structures } from "WorldState/Structures";
 import { byId } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 export class ControllerAnalyst extends BoardroomManager {
     plan() {
@@ -69,3 +70,5 @@ export class ControllerAnalyst extends BoardroomManager {
         });
     }
 }
+
+profiler.registerClass(ControllerAnalyst, 'ControllerAnalyst')

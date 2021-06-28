@@ -1,16 +1,19 @@
-import { Office } from "Office/Office"
-import { packPos, unpackPos } from "utils/packrat"
-import { registerCachePurger } from "./registerCachePurger"
-import { RoomData } from "./Rooms"
 import { CachedStructure, Structures } from "./Structures"
+import { packPos, unpackPos } from "utils/packrat"
 
+import { Office } from "Office/Office"
+import { RoomData } from "./Rooms"
+import profiler from "screeps-profiler"
+import { registerCachePurger } from "./registerCachePurger"
 
 declare global {
     namespace GreyCompany {
         type FranchiseCache = {
             posPacked: string,
             containerPosPacked?: string,
+            containerId?: Id<StructureContainer>,
             linkPosPacked?: string,
+            linkId?: Id<StructureLink>,
             maxSalesmen?: number,
             distance?: number
         }
@@ -36,16 +39,23 @@ export type CachedFranchise = {
     maxSalesmen?: number,
 }
 
-export class FranchiseData {
-    static byId(id: Id<Source>|undefined): CachedFranchise|undefined {
+export const FranchiseData = {
+    byId(id: Id<Source>|undefined): CachedFranchise|undefined {
         if (id === undefined) return undefined;
         let cached = Memory.Franchises?.data[id]
         if (!cached) return;
         let pos = unpackPos(cached.posPacked);
         let containerPos = cached.containerPosPacked ? unpackPos(cached.containerPosPacked) : undefined;
-        let container = containerPos ? Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> : undefined;
+        let container = Structures.byId(cached.containerId) ?? (
+            containerPos ?
+                Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> :
+                undefined
+        );
         let linkPos = cached.linkPosPacked ? unpackPos(cached.linkPosPacked) : undefined;
-        let link = linkPos ? Structures.byPos(linkPos).find(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink> : undefined;
+        let link = Structures.byId(cached.linkId) ?? (
+            linkPos ? Structures.byPos(linkPos).find(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink> :
+            undefined
+        );
         return {
             id,
             pos,
@@ -55,8 +65,8 @@ export class FranchiseData {
             linkId: link?.id,
             maxSalesmen: cached.maxSalesmen
         }
-    }
-    static byRoom(roomName: string): CachedFranchise[] {
+    },
+    byRoom(roomName: string): CachedFranchise[] {
         if (!Memory.Franchises) {
             return [];
         } else {
@@ -64,18 +74,20 @@ export class FranchiseData {
                 ?.map(id => this.byId(id))
                 .filter(site => site !== undefined) as CachedFranchise[] ?? []
         }
-    }
-    static byOffice(office: Office): CachedFranchise[] {
+    },
+    byOffice(office: Office): CachedFranchise[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    }
-    static purge() {
+    },
+    purge() {
         Memory.Franchises = {idByRoom: {}, data: {}}
-    }
-    static set(id: Id<Source>, franchise: CachedFranchise, roomName: string) {
+    },
+    set(id: Id<Source>, franchise: CachedFranchise, roomName: string) {
         Memory.Franchises ??= {idByRoom: {}, data: {}}
         Memory.Franchises.data[id] = {
             posPacked: packPos(franchise.pos),
+            containerId: franchise.containerId,
             containerPosPacked: franchise.containerPos ? packPos(franchise.containerPos) : undefined,
+            linkId: franchise.linkId,
             linkPosPacked: franchise.linkPos ? packPos(franchise.linkPos) : undefined,
             maxSalesmen: franchise.maxSalesmen
         }
@@ -87,3 +99,5 @@ export class FranchiseData {
 }
 
 registerCachePurger(FranchiseData.purge);
+
+profiler.registerObject(FranchiseData, 'FranchiseData')

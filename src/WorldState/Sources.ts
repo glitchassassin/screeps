@@ -57,19 +57,7 @@ export class Sources {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
     }
     static byPos(pos: RoomPosition): CachedSource[] {
-        if (Game.rooms[pos.roomName]) {
-            // We have vision here
-            return pos.lookFor(LOOK_SOURCES)
-        } else if (!Memory.Sources) {
-            return [];
-        } else {
-            let s = [];
-            for (let id in Memory.Sources.data) {
-                let site = this.byId(id as Id<Source>)
-                if (site?.pos.isEqualTo(pos)) s.push(site);
-            }
-            return s;
-        }
+        return Sources.byRoom(pos.roomName).filter(site => site?.pos.isEqualTo(pos));
     }
     static purge() {
         Memory.Sources = {idByRoom: {}, data: {}};

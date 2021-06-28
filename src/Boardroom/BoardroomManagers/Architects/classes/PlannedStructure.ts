@@ -2,6 +2,7 @@ import { CachedStructure, Structures } from "WorldState/Structures";
 
 import { BehaviorResult } from "BehaviorTree/Behavior";
 import { BuildRequest } from "BehaviorTree/requests/Build";
+import profiler from "screeps-profiler";
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
@@ -44,3 +45,5 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         }
     }
 }
+
+profiler.registerClass(PlannedStructure, 'PlannedStructure')

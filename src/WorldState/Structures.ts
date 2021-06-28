@@ -40,8 +40,8 @@ export function unwrapStructure(structure: CachedStructure): CachedStructure {
     }
 }
 
-export class Structures {
-    static byId<T extends Structure = Structure>(id: Id<T>|undefined): CachedStructure<T>|undefined {
+export const Structures = {
+    byId<T extends Structure = Structure>(id: Id<T>|undefined): CachedStructure<T>|undefined {
         if (id === undefined) return undefined;
         let site = Game.getObjectById(id)
         if (!site) {
@@ -55,8 +55,8 @@ export class Structures {
             }
         }
         return site;
-    }
-    static byRoom(roomName: string): CachedStructure[] {
+    },
+    byRoom(roomName: string): CachedStructure[] {
         if (Game.rooms[roomName]) {
             // We have vision here
             return Game.rooms[roomName].find(FIND_STRUCTURES)
@@ -67,29 +67,17 @@ export class Structures {
                 ?.map(id => Structures.byId(id))
                 .filter(site => site !== undefined) as CachedStructure[] ?? []
         }
-    }
-    static byOffice(office: Office): CachedStructure[] {
+    },
+    byOffice(office: Office): CachedStructure[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    }
-    static byPos(pos: RoomPosition): CachedStructure[] {
-        if (Game.rooms[pos.roomName]) {
-            // We have vision here
-            return pos.lookFor(LOOK_STRUCTURES)
-        } else if (!Memory.Structures) {
-            return [];
-        } else {
-            let s = [];
-            for (let id in Memory.Structures.data) {
-                let site = Structures.byId(id as Id<Structure>)
-                if (site?.pos.isEqualTo(pos)) s.push(site);
-            }
-            return s;
-        }
-    }
-    static purge() {
+    },
+    byPos(pos: RoomPosition): CachedStructure[] {
+        return Structures.byRoom(pos.roomName).filter(site => site?.pos.isEqualTo(pos));
+    },
+    purge() {
         Memory.Structures = {idByRoom: {}, data: {}};
-    }
-    static refreshCache() {
+    },
+    refreshCache() {
         // Initialize the Heap branch, if necessary
         Memory.Structures ??= {idByRoom: {}, data: {}};
 
@@ -126,4 +114,4 @@ export class Structures {
 registerCacheRefresher(Structures.refreshCache);
 registerCachePurger(Structures.purge);
 
-profiler.registerClass(Structures, 'Structures');
+profiler.registerObject(Structures, 'Structures');

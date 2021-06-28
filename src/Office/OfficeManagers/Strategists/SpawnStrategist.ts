@@ -13,7 +13,7 @@ import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LegalManager } from "../LegalManager";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "../LogisticsManager";
-import { Metrics } from "../screeps-viz";
+import { Metrics } from "screeps-viz";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
