@@ -2,6 +2,7 @@ import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -126,3 +127,5 @@ export class ConstructionSites {
 // Register the cache refresh
 registerCacheRefresher(ConstructionSites.refreshCache);
 registerCachePurger(ConstructionSites.purge);
+
+profiler.registerClass(ConstructionSites, 'ConstructionSites');

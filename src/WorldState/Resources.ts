@@ -1,5 +1,6 @@
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
+import profiler from "screeps-profiler";
 
 export class Resources {
     static byId(id: Id<Resource>|undefined): Resource|undefined {
@@ -31,3 +32,5 @@ export class Resources {
         }
     }
 }
+
+profiler.registerClass(Resources, 'Resources');

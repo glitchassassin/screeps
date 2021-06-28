@@ -1,19 +1,92 @@
-import { Bar, Meters } from "Visualizations/Meters";
+import { Bar, Dashboard, Grid, Label, Rectangle, Table } from "screeps-viz";
 import { byId, calculateFranchiseSurplus, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { CachedSource } from "WorldState/Sources";
 import { FranchiseData } from "WorldState/FranchiseData";
+import { Office } from "Office/Office";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
-import { Table } from "Visualizations/Table";
-import { lazyMap } from "utils/lazyIterators";
 
 export class SalesManager extends OfficeTaskManager {
     minionTypes = ['SALESMAN'];
+
+    dashboard = Dashboard({});
+
+    constructor(office: Office) {
+        super(office);
+        let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+
+        this.dashboard = Dashboard({ room: this.office.name, widgets: [
+            {
+                pos: { x: 1, y: 1 },
+                width: 47,
+                height: 2,
+                widget: Rectangle(Label(() => 'Sales Manager Report'))
+            },
+            {
+                pos: { x: 41, y: 4 },
+                width: 7,
+                height: 10,
+                widget: Rectangle(this.idleMinionsTable)
+            },
+            {
+                pos: { x: 1, y: 25 },
+                width: 26,
+                height: 20,
+                widget: Rectangle(this.requestsTable)
+            },
+            {
+                pos: { x: 28, y: 25 },
+                width: 20,
+                height: 20,
+                widget: Rectangle(Table(() => {
+                    return salesAnalyst.getUsableSourceLocations(this.office).map(source => {
+                        let franchise = FranchiseData.byId(source.id);
+                        let salesmen = this.requests.find(r => r.pos.isEqualTo(source.pos))?.assigned ?? []
+                        franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
+                        return [
+                            `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                            `${salesmen.length}/${franchise?.maxSalesmen}`,
+                            `${(salesmen.reduce((sum, salesman) =>
+                                sum + (byId(salesman)?.getActiveBodyparts(WORK) ?? 0)
+                            , 0) / 5 * 100).toFixed(0)}%`,
+                            calculateFranchiseSurplus(source)
+                        ]
+                    })
+                }, {
+                    headers: ['Franchise', 'Salesmen', 'Effective', 'Surplus']
+                }))
+            },
+            {
+                pos: { x: 1, y: 4 },
+                width: 39,
+                height: 20,
+                widget: Rectangle(Grid(
+                    salesAnalyst.getUsableSourceLocations(this.office).map(source => Bar(
+                        () => ({
+                            value: calculateFranchiseSurplus(source),
+                            maxValue: CONTAINER_CAPACITY
+                        }),
+                        {
+                            label: `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                            style: {
+                                fill: 'yellow',
+                                stroke: 'yellow',
+                                lineStyle: FranchiseData.byId(source.id)?.containerId ? 'solid' : 'dashed'
+                            }
+                        }
+                    )), {
+                        columns: 7,
+                        rows: 2
+                    }
+                ))
+            },
+        ]})
+    }
     run() {
         super.run();
         if (global.v.sales.state) {
-            this.report();
+            this.dashboard();
         }
     }
     isSourceTapped(source: CachedSource) {
@@ -34,42 +107,6 @@ export class SalesManager extends OfficeTaskManager {
             }
         }
         return false;
-    }
-    report() {
-        super.report();
-
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-
-        let headers = ['Franchise', 'Salesmen', 'Effective', 'Surplus']
-        let rows = lazyMap(salesAnalyst.getUsableSourceLocations(this.office), source => {
-            let franchise = FranchiseData.byId(source.id);
-            let salesmen = this.requests.find(r => r.pos.isEqualTo(source.pos))?.assigned ?? []
-            franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
-            return [
-                `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
-                `${salesmen.length}/${franchise?.maxSalesmen}`,
-                `${(salesmen.reduce((sum, salesman) =>
-                    sum + (byId(salesman)?.getActiveBodyparts(WORK) ?? 0)
-                , 0) / 5 * 100).toFixed(0)}%`,
-                calculateFranchiseSurplus(source)
-            ]
-        })
-
-        Table(new RoomPosition(2, 15, this.office.center.name), [headers, ...rows]);
-
-        let chart = new Meters(
-            Array.from(lazyMap(salesAnalyst.getUsableSourceLocations(this.office), source => new Bar(
-                `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
-                {
-                    fill: 'yellow',
-                    stroke: 'yellow',
-                    lineStyle: FranchiseData.byId(source.id)?.containerId ? 'solid' : 'dashed'
-                },
-                calculateFranchiseSurplus(source),
-                2000
-            )))
-        )
-        chart.render(new RoomPosition(2, 2, this.office.center.name), false)
     }
 }
 // profiler.registerClass(SalesManager, 'SalesManager');

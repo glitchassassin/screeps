@@ -2,7 +2,6 @@ import { BoardroomManager } from "./BoardroomManager";
 import { ControllerAnalyst } from "./BoardroomManagers/ControllerAnalyst";
 import { DefenseAnalyst } from "./BoardroomManagers/DefenseAnalyst";
 import { FacilitiesAnalyst } from "./BoardroomManagers/FacilitiesAnalyst";
-import { GrafanaAnalyst } from "./BoardroomManagers/GrafanaAnalyst";
 import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
 import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
@@ -37,7 +36,6 @@ export class Boardroom {
         ControllerAnalyst.register(this);
         DefenseAnalyst.register(this);
         FacilitiesAnalyst.register(this);
-        GrafanaAnalyst.register(this);
         HRAnalyst.register(this);
         LogisticsAnalyst.register(this);
         SalesAnalyst.register(this);

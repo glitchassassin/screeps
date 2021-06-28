@@ -8,6 +8,7 @@ export class RoomAnalyst extends BoardroomManager {
     plan() {
         for (let roomName in Game.rooms) {
             let data = RoomData.byRoom(roomName) ?? { name: roomName, scanned: Game.time }
+            data.scanned = Game.time;
             if (this.boardroom.offices.get(roomName) === undefined && !RoomData.byRoom(roomName)?.territoryOf) {
                 let center = new RoomPosition(25, 25, roomName)
                 let office = global.boardroom.getClosestOffice(center);

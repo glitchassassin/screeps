@@ -2,6 +2,7 @@ import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -100,3 +101,5 @@ export class Minerals {
 // Register the cache refresh
 registerCacheRefresher(Minerals.refreshCache);
 registerCachePurger(Minerals.purge);
+
+profiler.registerClass(Minerals, 'Minerals');

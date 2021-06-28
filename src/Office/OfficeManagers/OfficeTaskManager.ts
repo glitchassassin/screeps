@@ -1,14 +1,31 @@
 import { BehaviorResult } from "BehaviorTree/Behavior";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
+import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
-import { Table } from "Visualizations/Table";
-import { log } from "utils/logger";
+import { Table } from "screeps-viz";
 import { sortByDistanceTo } from "utils/gameObjectSelectors";
+import { log } from "utils/logger";
 
 export class OfficeTaskManager extends OfficeManager {
     requests: MinionRequest[] = [];
     minionTypes = ['INTERN'];
+
+    requestsTable = Table(() => {
+        return this.requests.map(req => [
+            req.constructor.name,
+            req.pos.toString(),
+            req.priority,
+            req.assigned.length
+        ])
+    }, {
+        headers: ['Request', 'Location', 'Priority', 'Assigned Minions'],
+    })
+
+    idleMinionsTable = Table(() => {
+        return this.getAvailableCreeps().map(creep => [creep.name])
+    }, {
+        headers: ['Minion'],
+    })
 
     submit = (request: MinionRequest) => {
         this.requests.push(request);
@@ -85,24 +102,5 @@ export class OfficeTaskManager extends OfficeManager {
                 (!ifRequestIsNotHandled || this.requests.find(r => r.assigned.includes(c.id) && r.assigned.length === 1))
             )
         )
-    }
-
-    report() {
-        const taskTable: any[][] = [['Request', 'Location', 'Priority', 'Assigned Minions']];
-        for (let req of this.requests) {
-            taskTable.push([
-                req.constructor.name,
-                req.pos.toString(),
-                req.priority,
-                req.assigned.length
-            ])
-        }
-        Table(new RoomPosition(0, 40, this.office.center.name), taskTable);
-
-        const idleMinions = [
-            ['Minion'],
-            ...this.getAvailableCreeps().map(creep => [creep.name])
-        ];
-        Table(new RoomPosition(40, 40, this.office.center.name), idleMinions);
     }
 }

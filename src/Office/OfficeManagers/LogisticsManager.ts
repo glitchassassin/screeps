@@ -1,5 +1,7 @@
-import { Bar, Meters } from "Visualizations/Meters";
+import { Bar, Dashboard, Grid, Label, LineChart, Metrics, Rectangle, Table } from "screeps-viz";
 
+import { Capacity } from "WorldState/Capacity";
+import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
@@ -11,7 +13,6 @@ import { Office } from "Office/Office";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
-import { Table } from "Visualizations/Table";
 import { lazyFilter } from "utils/lazyIterators";
 import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
@@ -19,6 +20,7 @@ export class LogisticsManager extends OfficeManager {
     constructor(
         office: Office,
         private logisticsAnalyst = office.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
+        private controllerAnalyst = office.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
         private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
         private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
         private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
@@ -26,6 +28,171 @@ export class LogisticsManager extends OfficeManager {
     ) {
         super(office);
     }
+
+    dashboard = Dashboard({ room: this.office.name, widgets: [
+        {
+            pos: { x: 1, y: 1 },
+            width: 47,
+            height: 3,
+            widget: Rectangle(Label(() => 'Logistics Manager Report', { style: { font: 1.4 } }))
+        },
+        {
+            pos: { x: 1, y: 5 },
+            width: 16,
+            height: 10,
+            widget: Rectangle(Table(() => {
+                return [...this.sources.values()].map(source => [
+                    `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                    source.primary,
+                    source.capacity,
+                    source.reservedCapacity
+                ])
+            }, {
+                headers: ['Source', 'Primary', 'Capacity', 'Reserved']
+            }))
+        },
+        {
+            pos: { x: 18, y: 5 },
+            width: 30,
+            height: 10,
+            widget: Rectangle(Grid([
+                Bar(() => ({
+                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mineContainerLevels)[1],
+                    maxValue: this.salesAnalyst.getUsableSourceLocations(this.office).length * CONTAINER_CAPACITY,
+                }), {
+                    label: 'Franchises',
+                    style: {fill: 'yellow', stroke: 'yellow'}
+                }),
+                Bar(() => ({
+                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.roomEnergyLevels)[1],
+                    maxValue: Game.rooms[this.office.center.name].energyCapacityAvailable
+                }), {
+                    label: 'HR',
+                    style: {fill: 'magenta', stroke: 'magenta'}
+                }),
+                Bar(() => ({
+                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.fleetLevels)[1],
+                    maxValue: this.logisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
+                }), {
+                    label: 'Fleet',
+                    style: {fill: 'purple', stroke: 'purple'}
+                }),
+                Bar(() => ({
+                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mobileDepotLevels)[1],
+                    maxValue: this.logisticsAnalyst.depots.get(this.office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0,
+                }), {
+                    label: 'Depots',
+                    style: {fill: 'brown', stroke: 'brown'}
+                }),
+                Bar(() => ({
+                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.storageLevels)[1],
+                    maxValue: Capacity.byId(this.logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0,
+                }), {
+                    label: 'Storage',
+                    style: {fill: 'green', stroke: 'green'}
+                }),
+                Bar(() => ({
+                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.controllerDepotLevels)[1],
+                    maxValue: Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId)?.capacity || 0,
+                }), {
+                    label: 'Legal',
+                    style: {fill: 'blue', stroke: 'blue'}
+                }),
+            ], {
+                columns: 6,
+                rows: 1
+            }))
+        },
+        {
+            pos: { x: 1, y: 16 },
+            width: 36,
+            height: 10,
+            widget: Rectangle(Table(() => {
+                return [...this.requests.values()].map(req => [
+                    `${req.pos.roomName}[${req.pos.x}, ${req.pos.y}]`,
+                    req.constructor.name,
+                    req.priority,
+                    req.capacity,
+                    req.assignedCapacity,
+                    req.completed ? 'Y' : ''
+                ])
+            }, {
+                headers: ['Requester', 'Type', 'Priority', 'Capacity', 'Assigned', 'Completed']
+            }))
+        },
+        {
+            pos: { x: 38, y: 16 },
+            width: 10,
+            height: 10,
+            widget: Rectangle(Table(
+                () => this.getIdleCarriers().map(creep => [creep.name]),
+                {
+                    headers: ['Minion']
+                }
+            ))
+        },
+        {
+            pos: { x: 1, y: 27 },
+            width: 47,
+            height: 10,
+            widget: Rectangle(Table(() => {
+                return [...this.routes.values()].map(route => {
+                    let source = 'SURPLUS';
+                    if (route.source) source = `${route.source.pos.roomName}[${route.source.pos.x}, ${route.source.pos.y}]` + `(${route.source?.primary ? 'Primary': 'Secondary'})`
+                    return [
+                        source,
+                        route.requests.map(r => `${r.pos.roomName}[${r.pos.x}, ${r.pos.y}]`).join('->').slice(0, 42),
+                        route.creep?.name,
+                        `${Math.min(route.maxCapacity, route.maxCapacity - route.capacity)}/${route.maxCapacity}`,
+                    ]
+                })
+            }, {
+                headers: ['Source', 'Requests', 'Minion', 'Utilized Capacity']
+            }))
+        },
+    ]})
+
+    // TODO - Implement Metrics
+    miniReport = Rectangle(LineChart(() => {
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let stats = statisticsAnalyst.metrics.get(this.office.name);
+        return {
+            income: Metrics.granularity(stats!.mineRate, 20),
+            throughput: Metrics.granularity(stats!.logisticsThroughput, 20),
+            upgrade: Metrics.granularity(stats!.upgradeRate, 20),
+            spawn: Metrics.granularity(stats!.spawnEnergyRate, 20),
+            waste: Metrics.granularity(stats!.deathLossesRate, 20),
+            storage: Metrics.granularity(stats!.storageFillRate, 20)
+        }
+    }, {
+        series: {
+            income: {
+                label: 'Income',
+                color: 'yellow'
+            },
+            throughput: {
+                label: 'Throughput',
+                color: 'magenta'
+            },
+            upgrade: {
+                label: 'Upgrade',
+                color: 'cyan'
+            },
+            spawn: {
+                label: 'Spawn',
+                color: 'blueviolet'
+            },
+            waste: {
+                label: 'Waste',
+                color: 'red'
+            },
+            storage: {
+                label: 'Storage',
+                color: 'green'
+            },
+        }
+    }))
+
     lastMinionRequest = 0;
 
     sources = new Map<string, LogisticsSource>();
@@ -156,7 +323,7 @@ export class LogisticsManager extends OfficeManager {
 
         // Display visuals
         if (global.v.logistics.state) {
-            this.report();
+            this.dashboard();
             this.map();
         }
     }
@@ -175,76 +342,7 @@ export class LogisticsManager extends OfficeManager {
             }
         }
     }
-    report() {
-        // Franchise energy level (current and average)
-        // Storage level (current)
-        // Room energy level (current and average)
-        let metrics = this.statisticsAnalyst.metrics.get(this.office.name);
 
-        let lastMineContainerLevel = metrics?.mineContainerLevels.values[metrics?.mineContainerLevels.values.length - 1] || 0
-        let lastRoomEnergyLevel = metrics?.roomEnergyLevels.values[metrics?.roomEnergyLevels.values.length - 1] || 0
-        let lastFleetLevel = metrics?.fleetLevels.values[metrics?.fleetLevels.values.length - 1] || 0
-        let lastMobileDepotLevel = metrics?.mobileDepotLevels.values[metrics?.mobileDepotLevels.values.length - 1] || 0
-        let lastStorageLevel = metrics?.storageLevels.values[metrics?.storageLevels.values.length - 1] || 0
-        let lastControllerDepotLevel = metrics?.controllerDepotLevels.values[metrics?.controllerDepotLevels.values.length - 1] || 0
-
-        let chart = new Meters([
-            new Bar('Franchises', {fill: 'yellow', stroke: 'yellow'}, lastMineContainerLevel, metrics?.mineContainerLevels.maxValue),
-            new Bar('HR', {fill: 'magenta', stroke: 'magenta'}, lastRoomEnergyLevel, metrics?.roomEnergyLevels.maxValue),
-            new Bar('Fleet', {fill: 'purple', stroke: 'purple'}, lastFleetLevel, metrics?.fleetLevels.maxValue),
-            new Bar('Depots', {fill: 'brown', stroke: 'brown'}, lastMobileDepotLevel, metrics?.mobileDepotLevels.maxValue),
-            new Bar('Storage', {fill: 'green', stroke: 'green'}, lastStorageLevel, metrics?.storageLevels.maxValue),
-            new Bar('Legal', {fill: 'blue', stroke: 'blue'}, lastControllerDepotLevel, metrics?.controllerDepotLevels.maxValue),
-        ])
-
-        chart.render(new RoomPosition(2, 2, this.office.center.name));
-
-        // Requests
-        const taskTable: any[][] = [['Requester', 'Type', 'Priority', 'Capacity', 'Assigned', 'Completed']];
-        for (let [, req] of this.requests) {
-            taskTable.push([
-                JSON.stringify(req.pos),
-                req.constructor.name,
-                req.priority,
-                req.capacity,
-                req.assignedCapacity,
-                req.completed ? 'Y' : ''
-            ])
-        }
-        Table(new RoomPosition(0, 35, this.office.center.name), taskTable);
-
-        // Sources
-        const sourceTable: any[][] = [['Source', 'Primary', 'Capacity', 'Reserved']];
-        for (let [, source] of this.sources) {
-            sourceTable.push([
-                JSON.stringify(source.pos),
-                source.primary,
-                source.capacity,
-                source.reservedCapacity
-            ])
-        }
-        Table(new RoomPosition(0, 15, this.office.center.name), sourceTable);
-
-        // Routes
-        const routeTable: any[][] = [['Source', 'Requests', 'Minion', 'Utilized Capacity']];
-        for (let [, route] of this.routes) {
-            let source = 'SURPLUS';
-            if (route.source) source = route.source?.pos.toString() + `(${route.source?.primary ? 'Primary': 'Secondary'})`
-            routeTable.push([
-                source,
-                route.requests.map(r => r.toString()).join('->'),
-                route.creep?.name,
-                `${Math.min(route.maxCapacity, route.maxCapacity - route.capacity)}/${route.maxCapacity}`,
-            ])
-        }
-        Table(new RoomPosition(0, 23, this.office.center.name), routeTable);
-
-        const idleMinions = [
-            ['Minion'],
-            ...this.getIdleCarriers().map(creep => [creep.name])
-        ];
-        Table(new RoomPosition(40, 40, this.office.center.name), idleMinions);
-    }
     map() {
         let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         let depots = logisticsAnalyst.depots.get(this.office.name)
@@ -253,25 +351,6 @@ export class LogisticsManager extends OfficeManager {
             let c = Game.getObjectById(id);
             if (c) new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'})
         })
-    }
-    miniReport = (pos: RoomPosition) => {
-        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let metrics = statisticsAnalyst.metrics.get(this.office.name);
-        if (!metrics) return;
-
-        let chart = new Meters([
-            new Bar('Income', {fill: 'yellow', stroke: 'yellow'}, metrics.mineRate.mean()),
-            new Bar('Throughput', {fill: 'magenta', stroke: 'magenta'}, metrics.logisticsThroughput.mean()),
-            new Bar('Build', {fill: 'blue', stroke: 'blue'}, metrics.buildRate.mean()),
-            new Bar('Repair', {fill: 'blue', stroke: 'blue'}, metrics.repairRate.mean()),
-            new Bar('Upgrade', {fill: 'blue', stroke: 'blue'}, metrics.upgradeRate.mean()),
-            new Bar('Spawn', {fill: 'blue', stroke: 'blue'}, metrics.spawnEnergyRate.mean()),
-            new Bar('Waste', {fill: 'red', stroke: 'red'}, metrics.deathLossesRate.mean()),
-            new Bar('Total', {fill: 'blue', stroke: 'blue'}, metrics.buildRate.mean() + metrics.repairRate.mean() + metrics.upgradeRate.mean() + metrics.spawnEnergyRate.mean() + metrics.deathLossesRate.mean()),
-            new Bar('Storage', {fill: 'green', stroke: 'green'}, metrics.storageFillRate.mean())
-        ])
-
-        chart.render(pos, false);
     }
 }
 

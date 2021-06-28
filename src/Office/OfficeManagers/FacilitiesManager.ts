@@ -1,13 +1,52 @@
+import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
+
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { ConstructionSites } from "WorldState/ConstructionSites";
 import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
-import { Table } from "Visualizations/Table";
 
 export class FacilitiesManager extends OfficeTaskManager {
     minionTypes = ['ENGINEER'];
+
+    dashboard = Dashboard({ room: this.office.name, widgets: [
+        {
+            pos: { x: 1, y: 1 },
+            width: 47,
+            height: 2,
+            widget: Rectangle(Label(() => 'Facilities Manager Report'))
+        },
+        {
+            pos: { x: 32, y: 11 },
+            width: 5,
+            height: 10,
+            widget: Rectangle(this.idleMinionsTable)
+        },
+        {
+            pos: { x: 1, y: 5 },
+            width: 30,
+            height: 30,
+            widget: Rectangle(this.requestsTable)
+        },
+        {
+            pos: { x: 32, y: 5 },
+            width: 15,
+            height: 5,
+            widget: Rectangle(Table(() => {
+                let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
+                // (WORK * 5) * ttl = max construction output
+                // 0.5 = expected efficiency
+                let workExpectancy = facilitiesAnalyst.getWorkExpectancy(this.office);
+                // Calculate construction energy
+                let totalWork = this.workPending();
+                return [[workExpectancy, totalWork]]
+            }, {
+                headers: ['Work Expectancy', 'Work Pending']
+            }))
+        },
+    ]})
+
     workPending() {
         let pending = 0;
         for (let req of this.requests) {
@@ -30,18 +69,7 @@ export class FacilitiesManager extends OfficeTaskManager {
     run() {
         super.run();
         if (global.v.facilities.state) {
-            super.report();
-            let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
-            // (WORK * 5) * ttl = max construction output
-            // 0.5 = expected efficiency
-            let workExpectancy = facilitiesAnalyst.getWorkExpectancy(this.office);
-            // Calculate construction energy
-            let totalWork = this.workPending();
-            let statusTable = [
-                ['Work Expectancy', 'Work Pending'],
-                [workExpectancy, totalWork]
-            ]
-            Table(new RoomPosition(2, 2, this.office.center.name), statusTable);
+            this.dashboard();
         }
         if (global.v.construction.state) {
             this.requests.forEach(task => {

@@ -13,6 +13,7 @@ import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LegalManager } from "../LegalManager";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "../LogisticsManager";
+import { Metrics } from "../screeps-viz";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
@@ -101,10 +102,10 @@ export class SpawnStrategist extends OfficeManager {
         // Engineer minions
         const MAX_ENGINEERS = 10;
         if (rcl < 5) {
-            let metrics = statisticsAnalyst.metrics.get(this.office.name);
-            if (metrics) {
-                let input = metrics.mineRate.mean();
-                let output = metrics.spawnEnergyRate.mean() + metrics.upgradeRate.mean();
+            let stats = statisticsAnalyst.metrics.get(this.office.name);
+            if (stats) {
+                let input = Metrics.avg(stats.mineRate);
+                let output = Metrics.avg(stats.spawnEnergyRate) + Metrics.avg(stats.upgradeRate);
                 if (
                     (input - output) > facilitiesAnalyst.getExpectedOutput(this.office) &&
                     MAX_ENGINEERS > facilitiesAnalyst.getEngineers(this.office).length
