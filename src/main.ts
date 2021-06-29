@@ -105,6 +105,6 @@ profiler.enable()
 // export const loop = ErrorMapper.wrapLoop(mainLoop);
 export const loop = () => {
   MemHack.pretick();
-  mainLoop();
+  // mainLoop();
   profiler.wrap(mainLoop);
 }
