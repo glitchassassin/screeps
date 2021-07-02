@@ -6,7 +6,6 @@ import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
-import profiler from 'screeps-profiler';
 
 try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -94,17 +93,12 @@ function mainLoop() {
   //   // CPU climbing back up, reset the trigger
   //   defensiveProfilingRun = false;
   // }
-
-  if (Game.cpu.bucket >= 10000 && Game.cpu.generatePixel) {
-    console.log("Pixel unlocked");
-    Game.cpu.generatePixel();
-  }
 }
 
-profiler.enable()
+// profiler.enable()
 // export const loop = ErrorMapper.wrapLoop(mainLoop);
 export const loop = () => {
   MemHack.pretick();
-  // mainLoop();
-  profiler.wrap(mainLoop);
+  mainLoop();
+  // profiler.wrap(mainLoop);
 }
