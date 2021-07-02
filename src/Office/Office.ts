@@ -1,4 +1,4 @@
-import { Bar, Dashboard, Grid, Rectangle, Table } from "screeps-viz";
+import { Bar, Dashboard, DashboardWidget, Grid, Rectangle, Table } from "screeps-viz";
 import { CachedRoom, RoomData } from "WorldState/Rooms";
 
 import { Boardroom } from "Boardroom/Boardroom";
@@ -26,8 +26,81 @@ export class Office {
     name: string;
     center: CachedRoom;
     managers: Map<string, OfficeManager> = new Map();
-    dashboard = Dashboard({});
-    milestones = Dashboard({});
+    dashboard: DashboardWidget[] = [];
+
+    milestones = [
+        {
+            pos: { x: 3, y: 18 },
+            width: 5,
+            height: 5,
+            widget: Rectangle({
+                data: Grid({
+                    data: [
+                        Bar(() => ({
+                            data: {
+                                value: Game.gcl.progress,
+                                maxValue: Game.gcl.progressTotal
+                            },
+                            config: {
+                                label: `GCL ${Game.gcl.level}`,
+                                style: {fill: 'green', stroke: 'green'}
+                            }
+                        })),
+                        Bar(() => ({
+                            data: {
+                                value: this.controller.progress ?? 0,
+                                maxValue: this.controller.progressTotal ?? 0
+                            },
+                            config: {
+                                label: `RCL ${this.controller.level ?? '-'}`,
+                                style: {fill: 'yellow', stroke: 'yellow'}
+                            }
+                        })),
+                    ],
+                    config: { columns: 2, rows: 1}
+                })
+            })
+        },
+        {
+            pos: { x: 10, y: 2 },
+            width: 20,
+            height: 7,
+            widget: Rectangle({
+                data: Table(() => {
+                    const rclMilestones = LegalData.byRoom(this.name)?.rclMilestones ?? {1: Game.time}
+
+                    const milestones = Object.entries(rclMilestones).map(
+                        ([rcl, tick]) => {
+                            return [
+                                rcl,
+                                tick - rclMilestones[Math.max(1, parseInt(rcl) - 1)],
+                                tick - rclMilestones[1],
+                            ]
+                        }
+                    )
+
+                    if (!(8 in rclMilestones)) {
+                        const lastMilestone = Math.max(...(Object.keys(rclMilestones).map(e => parseInt(e)) as number[]));
+                        const timeSinceLastMilestone = Game.time - rclMilestones[lastMilestone];
+
+                        const progress = this.controller.progress / this.controller.progressTotal;
+
+                        const timeToNextMilestone = (progress === 0) ? '---' : Math.round((timeSinceLastMilestone / progress) - timeSinceLastMilestone);
+                        const eta = (timeToNextMilestone === '---') ? '---' : Game.time + timeToNextMilestone;
+
+                        milestones.push([`${lastMilestone + 1} (est:)`, `+${timeToNextMilestone}`, eta]);
+                    }
+
+                    return {
+                        data: milestones,
+                        config: {
+                            headers: ['RCL', 'Ticks', 'Total']
+                        }
+                    }
+                })
+            })
+        }
+    ];
 
     public get controller() {
         let controller = Controllers.byRoom(this.center.name);
@@ -65,112 +138,62 @@ export class Office {
         SurveyStrategist.register(this);
         SpawnStrategist.register(this);
 
-        this.dashboard = Dashboard({
-            room: this.name,
-            widgets: [
-                {
-                    pos: { x: 1, y: 4 },
-                    width: 48,
-                    height: 13,
-                    widget: (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport
-                },
-                {
-                    pos: { x: 1, y: 18 },
-                    width: 15,
-                    height: 10,
-                    widget: Rectangle(Grid([
-                        Bar(() => ({
-                            value: Game.gcl.progress,
-                            maxValue: Game.gcl.progressTotal
-                        }), {
-                            label: `GCL ${Game.gcl.level}`,
-                            style: {fill: 'green', stroke: 'green'}
-                        }),
-                        Bar(() => ({
-                            value: this.controller.progress ?? 0,
-                            maxValue: this.controller.progressTotal ?? 0
-                        }), {
-                            label: `RCL ${this.controller.level ?? '-'}`,
-                            style: {fill: 'yellow', stroke: 'yellow'}
-                        }),
-                        Bar(() => ({
-                            value: Game.cpu.bucket,
-                            maxValue: 10000
-                        }), {
-                            label: `Bucket`,
-                            style: {fill: 'blue', stroke: 'blue'}
-                        }),
-                    ], { columns: 3, rows: 1}))
-                },
-                {
-                    pos: { x: 1, y: 29 },
-                    width: 15,
-                    height: 10,
-                    widget: Rectangle((this.managers.get('HRManager') as HRManager)?.miniReport)
-                },
-            ]
-        })
-
-        this.milestones = Dashboard({
-            room: this.name,
-            widgets: [
-                {
-                    pos: { x: 3, y: 18 },
-                    width: 5,
-                    height: 5,
-                    widget: Rectangle(Grid([
-                        Bar(() => ({
-                            value: Game.gcl.progress,
-                            maxValue: Game.gcl.progressTotal
-                        }), {
-                            label: `GCL ${Game.gcl.level}`,
-                            style: {fill: 'green', stroke: 'green'}
-                        }),
-                        Bar(() => ({
-                            value: this.controller.progress ?? 0,
-                            maxValue: this.controller.progressTotal ?? 0
-                        }), {
-                            label: `RCL ${this.controller.level ?? '-'}`,
-                            style: {fill: 'yellow', stroke: 'yellow'}
-                        }),
-                    ], { columns: 2, rows: 1}))
-                },
-                {
-                    pos: { x: 10, y: 2 },
-                    width: 20,
-                    height: 7,
-                    widget: Rectangle(Table(() => {
-                        const rclMilestones = LegalData.byRoom(this.name)?.rclMilestones ?? {1: Game.time}
-
-                        const milestones = Object.entries(rclMilestones).map(
-                            ([rcl, tick]) => {
-                                return [
-                                    rcl,
-                                    tick - rclMilestones[Math.max(1, parseInt(rcl) - 1)],
-                                    tick - rclMilestones[1],
-                                ]
-                            }
-                        )
-
-                        if (!(8 in rclMilestones)) {
-                            const lastMilestone = Math.max(...(Object.keys(rclMilestones).map(e => parseInt(e)) as number[]));
-                            const timeSinceLastMilestone = Game.time - rclMilestones[lastMilestone];
-
-                            const progress = this.controller.progress / this.controller.progressTotal;
-
-                            const timeToNextMilestone = (progress === 0) ? '---' : Math.round((timeSinceLastMilestone / progress) - timeSinceLastMilestone);
-                            const eta = (timeToNextMilestone === '---') ? '---' : Game.time + timeToNextMilestone;
-
-                            milestones.push([`${lastMilestone + 1} (est:)`, `+${timeToNextMilestone}`, eta]);
-                        }
-
-                        return milestones
-                    }, {
-                        headers: ['RCL', 'Ticks', 'Total']
-                    }))
-                }
-            ]
-        })
+        this.dashboard = [
+            {
+                pos: { x: 1, y: 4 },
+                width: 48,
+                height: 13,
+                widget: (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport
+            },
+            {
+                pos: { x: 1, y: 18 },
+                width: 15,
+                height: 10,
+                widget: Rectangle({
+                    data: Grid({
+                        data: [
+                            Bar(() => ({
+                                data: {
+                                    value: Game.gcl.progress,
+                                    maxValue: Game.gcl.progressTotal
+                                },
+                                config: {
+                                    label: `GCL ${Game.gcl.level}`,
+                                    style: {fill: 'green', stroke: 'green'}
+                                }
+                            })),
+                            Bar(() => ({
+                                data: {
+                                    value: this.controller.progress ?? 0,
+                                    maxValue: this.controller.progressTotal ?? 0
+                                },
+                                config: {
+                                    label: `RCL ${this.controller.level ?? '-'}`,
+                                    style: {fill: 'yellow', stroke: 'yellow'}
+                                }
+                            })),
+                            Bar(() => ({
+                                data: {
+                                    value: Game.cpu.bucket,
+                                    maxValue: 10000
+                                },
+                                config: {
+                                    label: `Bucket`,
+                                    style: {fill: 'blue', stroke: 'blue'}
+                                }
+                            })),
+                        ],
+                        config: { columns: 3, rows: 1}
+                    })
+                })
+            },
+            {
+                pos: { x: 1, y: 29 },
+                width: 15,
+                height: 10,
+                widget: Rectangle({ data: (this.managers.get('HRManager') as HRManager)?.miniReport })
+            },
+        ];
     }
 
     register(manager: OfficeManager) {
@@ -200,7 +223,10 @@ export class Office {
             this.report();
         }
         if (global.v.milestones.state) {
-            this.milestones();
+            Dashboard({
+                widgets: this.milestones,
+                config: { room: this.name }
+            });
         }
     }
 
@@ -218,7 +244,10 @@ export class Office {
     report() {
         (new RoomVisual(this.name)).text(`[greycompany ~/${this.center.city}]$`, 3, 3, {font: '2.5 Courier New', align: 'left', opacity: 0.5})
         Minimap(new RoomPosition(18, 18, this.center.name), this);
-        this.dashboard();
+        Dashboard({
+            widgets: this.dashboard,
+            config: { room: this.name }
+        });
     }
 }
 

@@ -4,7 +4,7 @@ import { DefenseAnalyst } from "./BoardroomManagers/DefenseAnalyst";
 import { FacilitiesAnalyst } from "./BoardroomManagers/FacilitiesAnalyst";
 import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
 import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
-import { MapAnalyst } from "./BoardroomManagers/MapAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Office } from "Office/Office";
 import { RoomAnalyst } from "./BoardroomManagers/RoomAnalyst";
 import { RoomArchitect } from "./BoardroomManagers/Architects/RoomArchitect";
@@ -32,7 +32,6 @@ export class Boardroom {
         Memory.cities ??= cityNames;
 
         // Create BoardroomManagers
-        MapAnalyst.register(this);
         ControllerAnalyst.register(this);
         DefenseAnalyst.register(this);
         FacilitiesAnalyst.register(this);
@@ -84,12 +83,11 @@ export class Boardroom {
     }
 
     getClosestOffice(pos: RoomPosition): Office|undefined {
-        let mapAnalyst = this.managers.get('MapAnalyst') as MapAnalyst;
         let closest: Office|undefined = undefined;
         let distance: number;
         this.offices.forEach(office => {
             let center = new RoomPosition(25, 25, office.name);
-            let range = mapAnalyst.getRangeTo(pos, center);
+            let range = MapAnalyst.getRangeTo(pos, center);
             if (!distance || range < distance) {
                 distance = range;
                 closest = office;

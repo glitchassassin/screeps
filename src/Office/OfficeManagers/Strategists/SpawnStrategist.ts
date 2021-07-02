@@ -13,7 +13,6 @@ import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LegalManager } from "../LegalManager";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "../LogisticsManager";
-import { Metrics } from "screeps-viz";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
@@ -101,26 +100,12 @@ export class SpawnStrategist extends OfficeManager {
 
         // Engineer minions
         const MAX_ENGINEERS = 10;
-        if (rcl < 5) {
-            let stats = statisticsAnalyst.metrics.get(this.office.name);
-            if (stats) {
-                let input = Metrics.avg(stats.mineRate);
-                let output = Metrics.avg(stats.spawnEnergyRate) + Metrics.avg(stats.upgradeRate);
-                if (
-                    (input - output) > facilitiesAnalyst.getExpectedOutput(this.office) &&
-                    MAX_ENGINEERS > facilitiesAnalyst.getEngineers(this.office).length
-                ) {
-                    this.submitRequest(new EngineerMinion());
-                    return;
-                }
-            }
-        } else {
-            if (
-                facilitiesManager.workPending() > facilitiesAnalyst.getWorkExpectancy(this.office)
-            ) {
-                this.submitRequest(new EngineerMinion());
-                return;
-            }
+        if (
+            MAX_ENGINEERS > facilitiesAnalyst.getEngineers(this.office).length &&
+            facilitiesManager.workPending() > facilitiesAnalyst.getWorkExpectancy(this.office)
+        ) {
+            this.submitRequest(new EngineerMinion());
+            return;
         }
 
         // Scout minions
@@ -145,7 +130,7 @@ export class SpawnStrategist extends OfficeManager {
         for (let spawn of hrAnalyst.getSpawns(this.office)) {
             let req = this.logisticsRequests.get(spawn.id)
             if ((!req || req.completed) && (Capacity.byId(spawn.id)?.free ?? 0) > 0) {
-                req = new TransferRequest(spawn, 5)
+                req = new TransferRequest(spawn, 4)
                 logisticsManager.submit(spawn.id, req);
                 this.logisticsRequests.set(spawn.id, req);
             }

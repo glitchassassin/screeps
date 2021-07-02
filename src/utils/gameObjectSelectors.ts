@@ -6,7 +6,7 @@ import { FranchiseData } from "WorldState/FranchiseData";
 import { Health } from "WorldState/Health";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Office } from "Office/Office";
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite) {
@@ -35,15 +35,14 @@ export function calculateFranchiseSurplus(source: CachedSource) {
 }
 
 export function sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) {
-    let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
     let distance = new Map<RoomPosition, number>();
     return (a: T, b: T) => {
         let aPos = (a instanceof RoomPosition) ? a : (a as _HasRoomPosition).pos
         let bPos = (b instanceof RoomPosition) ? b : (b as _HasRoomPosition).pos
         if (!distance.has(aPos)){
-            distance.set(aPos, mapAnalyst.getRangeTo(pos, aPos))
+            distance.set(aPos, MapAnalyst.getRangeTo(pos, aPos))
         }
-        if (!distance.has(bPos)) distance.set(bPos, mapAnalyst.getRangeTo(pos, bPos))
+        if (!distance.has(bPos)) distance.set(bPos, MapAnalyst.getRangeTo(pos, bPos))
         return (distance.get(aPos) as number) - (distance.get(bPos) as number)
     }
 }

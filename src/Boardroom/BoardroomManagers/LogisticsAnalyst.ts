@@ -88,7 +88,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         for (let item of items) {
             if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
                 results.push(item.resource as Resource<RESOURCE_ENERGY>);
-            } else if (item.structure instanceof StructureContainer || (item.structure instanceof StructureStorage && emergency) || item.structure instanceof StructureLink) {
+            } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage || item.structure instanceof StructureLink) {
                 results.push(item.structure);
             }
         }

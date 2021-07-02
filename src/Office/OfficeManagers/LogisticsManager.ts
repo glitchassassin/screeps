@@ -1,4 +1,5 @@
 import { Bar, Dashboard, Grid, Label, LineChart, Metrics, Rectangle, Table } from "screeps-viz";
+import { LogisticsSource, SourceType } from "Logistics/LogisticsSource";
 
 import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
@@ -8,12 +9,12 @@ import { LegalData } from "WorldState/LegalData";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsRequest } from "Logistics/LogisticsRequest";
 import { LogisticsRoute } from "Logistics/LogisticsRoute";
-import { LogisticsSource } from "Logistics/LogisticsSource";
 import { Office } from "Office/Office";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { lazyFilter } from "utils/lazyIterators";
+import { log } from "utils/logger";
 import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class LogisticsManager extends OfficeManager {
@@ -29,169 +30,198 @@ export class LogisticsManager extends OfficeManager {
         super(office);
     }
 
-    dashboard = Dashboard({ room: this.office.name, widgets: [
+    dashboard = [
         {
             pos: { x: 1, y: 1 },
             width: 47,
             height: 3,
-            widget: Rectangle(Label(() => 'Logistics Manager Report', { style: { font: 1.4 } }))
+            widget: Rectangle({ data: Label({
+                data: 'Logistics Manager Report',
+                config: { style: { font: 1.4 } }
+            }) })
         },
         {
             pos: { x: 1, y: 5 },
             width: 16,
             height: 10,
-            widget: Rectangle(Table(() => {
-                return [...this.sources.values()].map(source => [
-                    `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
-                    source.primary,
-                    source.capacity,
-                    source.reservedCapacity
-                ])
-            }, {
-                headers: ['Source', 'Primary', 'Capacity', 'Reserved']
-            }))
+            widget: Rectangle({ data: Table(() => {
+                return {
+                    data: [...this.sources.values()].map(source => [
+                        `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                        source.sourceType,
+                        source.capacity,
+                        source.reservedCapacity
+                    ]),
+                    config: {
+                        headers: ['Source', 'Source Type', 'Capacity', 'Reserved']
+                    }
+                }
+            }) })
         },
         {
             pos: { x: 18, y: 5 },
             width: 30,
             height: 10,
-            widget: Rectangle(Grid([
-                Bar(() => ({
-                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mineContainerLevels)[1],
-                    maxValue: this.salesAnalyst.getUsableSourceLocations(this.office).length * CONTAINER_CAPACITY,
-                }), {
-                    label: 'Franchises',
-                    style: {fill: 'yellow', stroke: 'yellow'}
-                }),
-                Bar(() => ({
-                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.roomEnergyLevels)[1],
-                    maxValue: Game.rooms[this.office.center.name].energyCapacityAvailable
-                }), {
-                    label: 'HR',
-                    style: {fill: 'magenta', stroke: 'magenta'}
-                }),
-                Bar(() => ({
-                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.fleetLevels)[1],
-                    maxValue: this.logisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
-                }), {
-                    label: 'Fleet',
-                    style: {fill: 'purple', stroke: 'purple'}
-                }),
-                Bar(() => ({
-                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mobileDepotLevels)[1],
-                    maxValue: this.logisticsAnalyst.depots.get(this.office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0,
-                }), {
-                    label: 'Depots',
-                    style: {fill: 'brown', stroke: 'brown'}
-                }),
-                Bar(() => ({
-                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.storageLevels)[1],
-                    maxValue: Capacity.byId(this.logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0,
-                }), {
-                    label: 'Storage',
-                    style: {fill: 'green', stroke: 'green'}
-                }),
-                Bar(() => ({
-                    value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.controllerDepotLevels)[1],
-                    maxValue: Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId)?.capacity || 0,
-                }), {
-                    label: 'Legal',
-                    style: {fill: 'blue', stroke: 'blue'}
-                }),
-            ], {
-                columns: 6,
-                rows: 1
-            }))
+            widget: Rectangle({ data: Grid({
+                data: [
+                    Bar(() => ({
+                        data: {
+                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mineContainerLevels)[1],
+                            maxValue: this.salesAnalyst.getUsableSourceLocations(this.office).length * CONTAINER_CAPACITY,
+                        },
+                        config: {
+                            label: 'Franchises',
+                            style: {fill: 'yellow', stroke: 'yellow'}
+                        }
+                    })),
+                    Bar(() => ({
+                        data: {
+                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.roomEnergyLevels)[1],
+                            maxValue: Game.rooms[this.office.center.name].energyCapacityAvailable
+                        },
+                        config: {
+                            label: 'HR',
+                            style: {fill: 'magenta', stroke: 'magenta'}
+                        }
+                    })),
+                    Bar(() => ({
+                        data: {
+                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.fleetLevels)[1],
+                            maxValue: this.logisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
+                        },
+                        config: {
+                            label: 'Fleet',
+                            style: {fill: 'purple', stroke: 'purple'}
+                        }
+                    })),
+                    Bar(() => ({
+                        data: {
+                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mobileDepotLevels)[1],
+                            maxValue: this.logisticsAnalyst.depots.get(this.office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0,
+                        },
+                        config: {
+                            label: 'Depots',
+                            style: {fill: 'brown', stroke: 'brown'}
+                        }
+                    })),
+                    Bar(() => ({
+                        data: {
+                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.storageLevels)[1],
+                            maxValue: Capacity.byId(this.logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0,
+                        },
+                        config: {
+                            label: 'Storage',
+                            style: {fill: 'green', stroke: 'green'}
+                        }
+                    })),
+                    Bar(() => ({
+                        data: {
+                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.controllerDepotLevels)[1],
+                            maxValue: Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId)?.capacity || 0,
+                        },
+                        config: {
+                            label: 'Legal',
+                            style: {fill: 'blue', stroke: 'blue'}
+                        }
+                    })),
+                ],
+                config: {
+                    columns: 6,
+                    rows: 1
+                }
+            }) })
         },
         {
             pos: { x: 1, y: 16 },
             width: 36,
-            height: 10,
-            widget: Rectangle(Table(() => {
-                return [...this.requests.values()].map(req => [
-                    `${req.pos.roomName}[${req.pos.x}, ${req.pos.y}]`,
-                    req.constructor.name,
-                    req.priority,
-                    req.capacity,
-                    req.assignedCapacity,
-                    req.completed ? 'Y' : ''
-                ])
-            }, {
-                headers: ['Requester', 'Type', 'Priority', 'Capacity', 'Assigned', 'Completed']
-            }))
+            height: 20,
+            widget: Rectangle({ data: Table(() => {
+                return {
+                    data: [...this.requests.values()].map(req => [
+                        `${req.pos.roomName}[${req.pos.x}, ${req.pos.y}]`,
+                        `${req.constructor.name} (${req.sourceType})`,
+                        req.priority,
+                        req.capacity,
+                        req.assignedCapacity,
+                        req.completed ? 'Y' : ''
+                    ]),
+                    config: {
+                        headers: ['Requester', 'Type', 'Priority', 'Capacity', 'Assigned', 'Completed']
+                    }
+                }
+            }) })
         },
         {
             pos: { x: 38, y: 16 },
             width: 10,
             height: 10,
-            widget: Rectangle(Table(
-                () => this.getIdleCarriers().map(creep => [creep.name]),
-                {
+            widget: Rectangle({ data: Table(() => ({
+                data: this.getIdleCarriers().map(creep => [creep.name]),
+                config: {
                     headers: ['Minion']
                 }
-            ))
+            })) })
         },
         {
-            pos: { x: 1, y: 27 },
+            pos: { x: 1, y: 37 },
             width: 47,
             height: 10,
-            widget: Rectangle(Table(() => {
-                return [...this.routes.values()].map(route => {
+            widget: Rectangle({ data: Table(() => ({
+                data: [...this.routes.values()].map(route => {
                     let source = 'SURPLUS';
-                    if (route.source) source = `${route.source.pos.roomName}[${route.source.pos.x}, ${route.source.pos.y}]` + `(${route.source?.primary ? 'Primary': 'Secondary'})`
+                    if (route.source) source = `${route.source.pos.roomName}[${route.source.pos.x}, ${route.source.pos.y}]` + `(${route.source?.sourceType ?? ''})`
                     return [
                         source,
                         route.requests.map(r => `${r.pos.roomName}[${r.pos.x}, ${r.pos.y}]`).join('->').slice(0, 42),
                         route.creep?.name,
                         `${Math.min(route.maxCapacity, route.maxCapacity - route.capacity)}/${route.maxCapacity}`,
                     ]
-                })
-            }, {
-                headers: ['Source', 'Requests', 'Minion', 'Utilized Capacity']
-            }))
+                }),
+                config: {
+                    headers: ['Source', 'Requests', 'Minion', 'Utilized Capacity']
+                }
+            })) })
         },
-    ]})
+    ]
 
     // TODO - Implement Metrics
-    miniReport = Rectangle(LineChart(() => {
+    miniReport = Rectangle({ data: LineChart(() => {
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
         let stats = statisticsAnalyst.metrics.get(this.office.name);
         return {
-            income: Metrics.granularity(stats!.mineRate, 20),
-            throughput: Metrics.granularity(stats!.logisticsThroughput, 20),
-            upgrade: Metrics.granularity(stats!.upgradeRate, 20),
-            spawn: Metrics.granularity(stats!.spawnEnergyRate, 20),
-            waste: Metrics.granularity(stats!.deathLossesRate, 20),
-            storage: Metrics.granularity(stats!.storageFillRate, 20)
+            data: {
+                income: Metrics.granularity(stats!.mineRate, 20),
+                throughput: Metrics.granularity(stats!.logisticsThroughput, 20),
+                spawn: Metrics.granularity(stats!.spawnEnergyRate, 20),
+                waste: Metrics.granularity(stats!.deathLossesRate, 20),
+                storage: Metrics.granularity(stats!.storageFillRate, 20)
+            },
+            config: {
+                series: {
+                    income: {
+                        label: 'Income',
+                        color: 'yellow'
+                    },
+                    throughput: {
+                        label: 'Throughput',
+                        color: 'magenta'
+                    },
+                    spawn: {
+                        label: 'Spawn',
+                        color: 'blueviolet'
+                    },
+                    waste: {
+                        label: 'Waste',
+                        color: 'red'
+                    },
+                    storage: {
+                        label: 'Storage',
+                        color: 'green'
+                    },
+                }
+            }
         }
-    }, {
-        series: {
-            income: {
-                label: 'Income',
-                color: 'yellow'
-            },
-            throughput: {
-                label: 'Throughput',
-                color: 'magenta'
-            },
-            upgrade: {
-                label: 'Upgrade',
-                color: 'cyan'
-            },
-            spawn: {
-                label: 'Spawn',
-                color: 'blueviolet'
-            },
-            waste: {
-                label: 'Waste',
-                color: 'red'
-            },
-            storage: {
-                label: 'Storage',
-                color: 'green'
-            },
-        }
-    }))
+    }) })
 
     lastMinionRequest = 0;
 
@@ -212,7 +242,7 @@ export class LogisticsManager extends OfficeManager {
         return Array.from(lazyFilter(
             this.logisticsAnalyst.getCarriers(this.office),
             c => !this.routes.has(c.name)
-        ));
+        )).sort(sortByDistanceTo(this.office.controller.pos));
     }
     /**
      * Returns ticks until the fleet is completely despawned
@@ -240,7 +270,7 @@ export class LogisticsManager extends OfficeManager {
             }
         });
         if (storagePos && !this.sources.has(storagePos.toString())) {
-            this.sources.set(storagePos.toString(), new LogisticsSource(storagePos, false, false))
+            this.sources.set(storagePos.toString(), new LogisticsSource(storagePos, SourceType.STORAGE, false))
         }
         spawns.forEach(spawn => {
             if (!this.sources.has(spawn.pos.toString())) {
@@ -248,7 +278,7 @@ export class LogisticsManager extends OfficeManager {
             }
         })
         if (legalData?.linkPos && legalData?.linkId && !this.sources.has(legalData.linkPos.toString())) {
-            this.sources.set(legalData.linkPos.toString(), new LogisticsSource(legalData.linkPos, true, false))
+            this.sources.set(legalData.linkPos.toString(), new LogisticsSource(legalData.linkPos, SourceType.PRIMARY, false))
         }
         // TODO: Clean up sources if storage gets destroyed/franchise is abandoned
 
@@ -265,6 +295,8 @@ export class LogisticsManager extends OfficeManager {
             level.push(req);
         }
 
+        log('LogisticsManager', `Request priorities: ${[...priorities.keys()]}`);
+
         while (priorities.size > 0) {
             let carrier = idleCarriers.shift();
             if (!carrier) break;
@@ -272,14 +304,25 @@ export class LogisticsManager extends OfficeManager {
             // Get requests for highest priority level
             let priority = Math.max(...priorities.keys());
             let level = priorities.get(priority) ?? [];
+
+            log('LogisticsManager', `Priority ${priority}: ${level.length} requests, ${idleCarriers.length + 1} Carriers`);
+
             if (level.length === 0) {
                 priorities.delete(priority);
+                idleCarriers.unshift(carrier);
                 continue;
             }
 
             // Set up route for initial request
             let lastRequest = level.shift() as LogisticsRequest;
             let route = new LogisticsRoute(this.office, carrier, lastRequest, [...this.sources.values()]);
+
+            if (route.maxCapacity === 0) {
+                // No available sources for request; continue
+                // log('LogisticsManager', `No available sources for request: ${lastRequest}`)
+                idleCarriers.unshift(carrier);
+                continue;
+            }
 
             // Fulfill other close requests, by priority order
             while (priorities.size > 0) {
@@ -323,7 +366,12 @@ export class LogisticsManager extends OfficeManager {
 
         // Display visuals
         if (global.v.logistics.state) {
-            this.dashboard();
+            Dashboard({
+                widgets: this.dashboard,
+                config: {
+                    room: this.office.name
+                }
+            });
             this.map();
         }
     }

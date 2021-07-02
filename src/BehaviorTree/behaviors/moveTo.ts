@@ -1,7 +1,7 @@
 import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
 
 import { Controllers } from "WorldState/Controllers";
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { log } from "utils/logger";
 
 export class Route {
@@ -19,9 +19,8 @@ export class Route {
     }
 
     calculatePath(creep: Creep, avoidCreeps = false) {
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
-        let positionsInRange = mapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
-                                         .filter(pos => mapAnalyst.isPositionWalkable(pos, false));
+        let positionsInRange = MapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
+                                         .filter(pos => MapAnalyst.isPositionWalkable(pos, false));
         log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
         // Calculate path in rooms first
         let rooms = [creep.pos.roomName];
@@ -48,7 +47,7 @@ export class Route {
         let route = PathFinder.search(creep.pos, positionsInRange, {
             roomCallback: (room) => {
                 if (!rooms.includes(room)) return false;
-                return mapAnalyst.getCostMatrix(room, avoidCreeps)
+                return MapAnalyst.getCostMatrix(room, avoidCreeps)
             },
             plainCost: 2,
             swampCost: 10,

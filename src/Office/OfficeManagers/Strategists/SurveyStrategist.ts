@@ -1,6 +1,6 @@
 import { Controllers } from "WorldState/Controllers";
 import { ExploreRequest } from "BehaviorTree/requests/Explore";
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { RoomData } from "WorldState/Rooms";
@@ -28,16 +28,15 @@ export class SurveyStrategist extends OfficeManager {
     }
 
     getRoomToScout() {
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         let surveyRadius = (getRcl(this.office.name) !== 8) ? 5 : 20
 
-        let rooms = mapAnalyst.calculateNearbyRooms(this.office.name, surveyRadius, false);
+        let rooms = MapAnalyst.calculateNearbyRooms(this.office.name, surveyRadius, false);
 
         let bestMatch: {distance: number, name: string, lastScanned: number}|undefined = undefined;
 
         for (let room of rooms) {
             let match = {
-                distance: mapAnalyst.getRangeTo(new RoomPosition(25, 25, this.office.name), new RoomPosition(25, 25, room)),
+                distance: MapAnalyst.getRangeTo(new RoomPosition(25, 25, this.office.name), new RoomPosition(25, 25, room)),
                 name: room,
                 lastScanned: this.scanDispatched.get(room) ?? RoomData.byRoom(room)?.scanned ?? 0,
                 hostile: Controllers.byRoom(room)?.owner && !Controllers.byRoom(room)?.my,

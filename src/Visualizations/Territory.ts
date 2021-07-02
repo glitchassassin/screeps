@@ -2,7 +2,7 @@ import { CachedRoom, RoomData } from "WorldState/Rooms";
 
 import { Controllers } from "WorldState/Controllers";
 import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Minerals } from "WorldState/Minerals";
 import { Office } from "Office/Office";
 import { RES_COLORS } from "utils/resourceColors";
@@ -94,7 +94,6 @@ export const Icon = (icon: string, center: RoomPosition, color: string, label?: 
 
 export const Minimap = (topLeft: RoomPosition, o: Office) => {
     let vis = new RoomVisual(topLeft.roomName);
-    let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
 
     // Draw background
     vis.rect(topLeft.x, topLeft.y, 31, 31, {fill: 'rgba(0,0,0,1)'})
@@ -105,12 +104,12 @@ export const Minimap = (topLeft: RoomPosition, o: Office) => {
         [null, null, null],
     ];
     territories[1][1] = o.center;
-    let coords = mapAnalyst.roomNameToCoords(o.center.name);
+    let coords = MapAnalyst.roomNameToCoords(o.center.name);
     let xOffset = coords.wx;
     let yOffset = coords.wy;
 
-    mapAnalyst.calculateNearbyRooms(o.center.name, 1).forEach(t => {
-        let {wx, wy} = mapAnalyst.roomNameToCoords(t);
+    MapAnalyst.calculateNearbyRooms(o.center.name, 1).forEach(t => {
+        let {wx, wy} = MapAnalyst.roomNameToCoords(t);
         wx = xOffset - wx;
         wy = yOffset - wy;
         territories[wx+1][wy+1] = RoomData.byRoom(t) ?? null;

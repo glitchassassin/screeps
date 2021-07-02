@@ -10,42 +10,45 @@ import { RepairRequest } from "BehaviorTree/requests/Repair";
 export class FacilitiesManager extends OfficeTaskManager {
     minionTypes = ['ENGINEER'];
 
-    dashboard = Dashboard({ room: this.office.name, widgets: [
+    dashboard = [
         {
             pos: { x: 1, y: 1 },
             width: 47,
             height: 2,
-            widget: Rectangle(Label(() => 'Facilities Manager Report'))
+            widget: Rectangle({ data: Label({ data: 'Facilities Manager Report' }) })
         },
         {
             pos: { x: 32, y: 11 },
             width: 5,
             height: 10,
-            widget: Rectangle(this.idleMinionsTable)
+            widget: Rectangle({ data: this.idleMinionsTable })
         },
         {
             pos: { x: 1, y: 5 },
             width: 30,
             height: 30,
-            widget: Rectangle(this.requestsTable)
+            widget: Rectangle({ data: this.requestsTable })
         },
         {
             pos: { x: 32, y: 5 },
             width: 15,
             height: 5,
-            widget: Rectangle(Table(() => {
+            widget: Rectangle({ data: Table(() => {
                 let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
                 // (WORK * 5) * ttl = max construction output
                 // 0.5 = expected efficiency
                 let workExpectancy = facilitiesAnalyst.getWorkExpectancy(this.office);
                 // Calculate construction energy
                 let totalWork = this.workPending();
-                return [[workExpectancy, totalWork]]
-            }, {
-                headers: ['Work Expectancy', 'Work Pending']
-            }))
+                return {
+                    data: [[workExpectancy, totalWork]],
+                    config: {
+                        headers: ['Work Expectancy', 'Work Pending']
+                    }
+                }
+            }) })
         },
-    ]})
+    ];
 
     workPending() {
         let pending = 0;
@@ -69,7 +72,10 @@ export class FacilitiesManager extends OfficeTaskManager {
     run() {
         super.run();
         if (global.v.facilities.state) {
-            this.dashboard();
+            Dashboard({
+                widgets: this.dashboard,
+                config: { room: this.office.name }
+            });
         }
         if (global.v.construction.state) {
             this.requests.forEach(task => {

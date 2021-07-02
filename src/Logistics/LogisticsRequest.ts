@@ -1,6 +1,7 @@
 import { CachedStructure } from "WorldState/Structures";
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { SourceType } from "./LogisticsSource";
 import { byId } from "utils/gameObjectSelectors";
 import { travel } from "Logistics/Travel";
 
@@ -8,16 +9,16 @@ export class LogisticsRequest {
     public assignedCapacity = 0;
     public completed = false;
     public assigned = false;
-    public resupply = false;
 
     toString() {
-        return `[${this.constructor.name} ${this.pos.roomName}{${this.pos.x}, ${this.pos.y}} ${this.completed ? 'completed' : 'pending'}]`;
+        return `[${this.constructor.name} ${this.pos.roomName}{${this.pos.x}, ${this.pos.y}} ${this.sourceType} ${this.completed ? 'completed' : 'pending'}]`;
     }
 
     constructor(
         public pos: RoomPosition,
         public priority: number,
         public capacity: number = -1,
+        public sourceType = SourceType.STORAGE
     ) {
         if (this.capacity === 0) {
             this.completed = true;
@@ -33,8 +34,9 @@ export class TransferRequest extends LogisticsRequest {
         target: CachedStructure<AnyStoreStructure>,
         public priority: number,
         public capacity: number = -1,
+        public sourceType = SourceType.STORAGE
     ) {
-        super(target.pos, priority, capacity);
+        super(target.pos, priority, capacity, sourceType);
         this.targetId = target.id;
         if (this.capacity === -1) {
             this.capacity = Capacity.byId(this.targetId)?.free ?? 0
@@ -57,11 +59,6 @@ export class TransferRequest extends LogisticsRequest {
     }
 }
 
-
-export class ResupplyRequest extends TransferRequest {
-    public resupply = true;
-}
-
 export class DepotRequest extends LogisticsRequest {
     private logisticsAnalyst: LogisticsAnalyst;
 
@@ -69,8 +66,9 @@ export class DepotRequest extends LogisticsRequest {
         public pos: RoomPosition,
         public priority: number,
         public capacity: number = -1,
+        public sourceType = SourceType.STORAGE
     ) {
-        super(pos, priority, capacity);
+        super(pos, priority, capacity, sourceType);
         this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         if (this.capacity === -1) {
             this.capacity = STORAGE_CAPACITY
@@ -79,15 +77,16 @@ export class DepotRequest extends LogisticsRequest {
 
     action(creep: Creep) {
         // Wait for minions to request resources
-        if (!creep.pos.isNearTo(this.pos)) {
-            return travel(creep, this.pos)
-        }
         if (!Capacity.byId(creep.id)?.used) {
             this.completed = true;
             return OK;
         }
-        this.logisticsAnalyst.reportDepot(creep);
-        return OK;
+        if (!creep.pos.isNearTo(this.pos)) {
+            return travel(creep, this.pos)
+        }
+        const result = creep.drop(RESOURCE_ENERGY);
+        this.completed = (result === OK);
+        return result;
     }
 }
 

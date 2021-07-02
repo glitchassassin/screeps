@@ -1,8 +1,8 @@
-import { DepotRequest, DropRequest, LogisticsRequest, ResupplyRequest } from "./LogisticsRequest";
+import { DepotRequest, LogisticsRequest } from "./LogisticsRequest";
 
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsSource } from "./LogisticsSource";
-import { MapAnalyst } from "Boardroom/BoardroomManagers/MapAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Office } from "Office/Office";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { byId } from "utils/gameObjectSelectors";
@@ -18,7 +18,6 @@ enum RouteState {
 
 export class LogisticsRoute {
     // Dependencies
-    private mapAnalyst: MapAnalyst;
     private statisticsAnalyst: StatisticsAnalyst;
 
     public length = Infinity;
@@ -41,9 +40,7 @@ export class LogisticsRoute {
 
     constructor(public office: Office, creep: Creep, request: LogisticsRequest, sources: LogisticsSource[]) {
         // Set up dependencies
-        this.mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         this.statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        // Resupply requests can only be fulfilled by a primary source
         this.requests = [request];
         this.creepId = creep.id;
         this.office = office;
@@ -65,8 +62,7 @@ export class LogisticsRoute {
         let fullRequestSources: LogisticsSource[] = [];
         let validSources: LogisticsSource[] = [];
         for (let source of sources) {
-            // Resupply requests can only be fulfilled by a primary source
-            if ((request instanceof ResupplyRequest || request instanceof DropRequest) && !source.primary) continue;
+            if (request.sourceType !== source.sourceType) continue;
 
             if (source.capacity > creepCapacity) {
                 fullCreepSources.push(source);
@@ -83,7 +79,7 @@ export class LogisticsRoute {
     calcInitialPath(creep: Creep, request: LogisticsRequest, prioritySources: LogisticsSource[]) {
         // Find shortest path from creep -> source -> request
         prioritySources.forEach(source => {
-            let distance = this.mapAnalyst.getRangeTo(creep.pos, source.pos) + this.mapAnalyst.getRangeTo(source.pos, request.pos);
+            let distance = MapAnalyst.getRangeTo(creep.pos, source.pos) + MapAnalyst.getRangeTo(source.pos, request.pos);
             if (distance < this.length) {
                 this.source = source;
                 this.length = distance;
@@ -103,8 +99,7 @@ export class LogisticsRoute {
 
     extend(request: LogisticsRequest) {
         if (this.capacity > 0) {
-            if ((request instanceof ResupplyRequest || request instanceof DropRequest) && this.source && !this.source.primary) {
-                // Resupply requests can only be handled by primary sources
+            if (request.sourceType !== this.source?.sourceType) {
                 return false;
             }
             if (request.completed) {

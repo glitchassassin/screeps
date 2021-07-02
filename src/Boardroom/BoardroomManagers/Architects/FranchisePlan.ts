@@ -1,7 +1,7 @@
 import { CachedSource } from "WorldState/Sources";
 import { Controllers } from "WorldState/Controllers";
 import { FranchiseData } from "WorldState/FranchiseData";
-import { MapAnalyst } from "../MapAnalyst";
+import { MapAnalyst } from "../../../Analysts/MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 
 export class FranchisePlan {
@@ -13,7 +13,6 @@ export class FranchisePlan {
 
     constructor(public source: CachedSource) {
         // Calculate from scratch
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
         let controller = Controllers.byRoom(source.pos.roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
 
@@ -35,8 +34,8 @@ export class FranchisePlan {
         this.rangeToController = route.cost;
 
         // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller.
-        let adjacents = mapAnalyst.calculateAdjacentPositions(this.container.pos).filter(pos => (
-            mapAnalyst.isPositionWalkable(pos) &&
+        let adjacents = MapAnalyst.calculateAdjacentPositions(this.container.pos).filter(pos => (
+            MapAnalyst.isPositionWalkable(pos) &&
             !pos.isEqualTo(route.path[1])
         ))
         if (spawn) {

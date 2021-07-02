@@ -4,8 +4,12 @@ import { Capacity } from "WorldState/Capacity";
 import { MemoizeByTick } from "utils/memoize";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
-import profiler from "screeps-profiler";
 import { travel } from "Logistics/Travel";
+
+export enum SourceType {
+    PRIMARY = 'PRIMARY',
+    STORAGE = 'STORAGE',
+}
 
 /**
  * A cached representation of a Source
@@ -18,11 +22,11 @@ export class LogisticsSource {
     /**
      *
      * @param pos Center of the source (adjacent squares will also be included)
-     * @param primary Only primary Sources can fulfill Resupply requests for non-primary Sources
+     * @param sourceType Only primary Sources can fulfill Resupply requests for non-primary Sources
      */
     constructor(
         public pos: RoomPosition,
-        public primary = true,
+        public sourceType = SourceType.PRIMARY,
         public includeAdjacent = true
     ) {
         this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;

@@ -6,40 +6,48 @@ import { RoomData } from "WorldState/Rooms";
 import { byId } from "utils/gameObjectSelectors";
 
 export class SecurityManager extends OfficeTaskManager {
-    dashboard = Dashboard({ room: this.office.name, widgets: [
+    dashboard = [
         {
             pos: { x: 1, y: 1 },
             width: 47,
             height: 3,
-            widget: Rectangle(Label(() => 'Security Manager Report', { style: { font: 1.4 } }))
+            widget: Rectangle({ data: Label({
+                data: 'Security Manager Report',
+                config: { style: { font: 1.4 } }
+            }) })
         },
         {
             pos: { x: 1, y: 5 },
             width: 30,
             height: 30,
-            widget: Rectangle(this.requestsTable)
+            widget: Rectangle({ data: this.requestsTable })
         },
         {
             pos: { x: 32, y: 5 },
             width: 16,
             height: 15,
-            widget: Rectangle(Table(() => {
-                return RoomData.byOffice(this.office).map(room => [room.name, room.scanned - Game.time])
-            }, {
-                headers: ['Territory', 'Last Surveyed']
-            }))
+            widget: Rectangle({ data: Table(() => ({
+                data: RoomData.byOffice(this.office).map(room => [room.name, room.scanned - Game.time]),
+                config: {
+                    headers: ['Territory', 'Last Surveyed']
+                }
+            })) })
         },
         {
             pos: { x: 32, y: 21 },
             width: 5,
             height: 10,
-            widget: Rectangle(this.idleMinionsTable)
+            widget: Rectangle({ data: this.idleMinionsTable })
         },
-    ]})
+    ]
+
     run() {
         super.run();
         if (global.v.security.state) {
-            this.dashboard();
+            Dashboard({
+                widgets: this.dashboard,
+                config: { room: this.office.name }
+            });
             this.map();
         }
     }

@@ -7,40 +7,46 @@ import { OfficeTaskManager } from "./OfficeTaskManager";
 export class LegalManager extends OfficeTaskManager {
     minionTypes = ['PARALEGAL', 'LAWYER'];
 
-    dashboard = Dashboard({ room: this.office.name, widgets: [
+    dashboard = [
         {
             pos: { x: 1, y: 1 },
             width: 47,
             height: 3,
-            widget: Rectangle(Label(() => 'Legal Manager Report', { style: { font: 1.4 } }))
+            widget: Rectangle({ data: Label({
+                data: 'Legal Manager Report',
+                config: { style: { font: 1.4 } }
+            }) })
         },
         {
             pos: { x: 32, y: 18 },
             width: 5,
             height: 10,
-            widget: Rectangle(this.idleMinionsTable)
+            widget: Rectangle({ data: this.idleMinionsTable })
         },
         {
             pos: { x: 1, y: 5 },
             width: 30,
             height: 30,
-            widget: Rectangle(this.requestsTable)
+            widget: Rectangle({ data: this.requestsTable })
         },
         {
             pos: { x: 32, y: 5 },
             width: 16,
             height: 12,
-            widget: Rectangle(Table(() => {
-                return Controllers.byOffice(this.office).map(controller => [
-                    controller.pos.roomName,
-                    controller.owner ?? controller.reservation?.username ?? '',
-                    controller.reservation?.ticksToEnd ?? ''
-                ])
-            }, {
-                headers: ['Controller', 'Owner', 'Reserved']
-            }))
+            widget: Rectangle({ data: Table(() => {
+                return {
+                    data: Controllers.byOffice(this.office).map(controller => [
+                        controller.pos.roomName,
+                        controller.owner ?? controller.reservation?.username ?? '',
+                        controller.reservation?.ticksToEnd ?? ''
+                    ]),
+                    config: {
+                        headers: ['Controller', 'Owner', 'Reserved']
+                    }
+                }
+            }) })
         },
-    ]})
+    ]
 
     run() {
         super.run()
@@ -53,6 +59,13 @@ export class LegalManager extends OfficeTaskManager {
                 LegalData.set(legalData.id, legalData, this.office.name);
             }
         }
-        if (global.v.legal.state) { this.dashboard(); }
+        if (global.v.legal.state) {
+            Dashboard({
+                widgets: this.dashboard,
+                config: {
+                    room: this.office.name
+                }
+            });
+        }
     }
 }

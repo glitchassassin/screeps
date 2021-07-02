@@ -4,7 +4,7 @@ import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
-import { MapAnalyst } from "./MapAnalyst";
+import { MapAnalyst } from "../../Analysts/MapAnalyst";
 import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { RoomArchitect } from "./Architects/RoomArchitect";
@@ -48,9 +48,8 @@ export class ControllerAnalyst extends BoardroomManager {
     }
     @MemoizeByTick((office: Office) => office.name)
     getReservingControllers(office: Office) {
-        let mapAnalyst = this.boardroom.managers.get('MapAnalyst') as MapAnalyst;
         let defenseAnalyst = this.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
-        let territories = mapAnalyst.calculateNearbyRooms(office.name, 1);
+        let territories = MapAnalyst.calculateNearbyRooms(office.name, 1);
         let controllers: CachedController[] = [];
         for (let t of territories) {
             let intent = defenseAnalyst.getTerritoryIntent(t)

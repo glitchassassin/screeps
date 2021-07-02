@@ -2,7 +2,6 @@ import { CachedController, Controllers } from "WorldState/Controllers";
 import { CachedSource, Sources } from "WorldState/Sources";
 
 import { LegalData } from "WorldState/LegalData";
-import { MapAnalyst } from "../MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 import { lazyMap } from "utils/lazyIterators";
 
@@ -31,7 +30,6 @@ export class HeadquartersPlan {
 
     constructor(roomName: string) {
         // Calculate from scratch
-        let mapAnalyst = global.boardroom.managers.get('MapAnalyst') as MapAnalyst
         let controller = Controllers.byRoom(roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
         let sources = Sources.byRoom(roomName);

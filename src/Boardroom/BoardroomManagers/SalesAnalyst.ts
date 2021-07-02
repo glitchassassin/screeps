@@ -1,22 +1,21 @@
 import { CachedSource, Sources } from "WorldState/Sources";
 import { DefenseAnalyst, TerritoryIntent } from "./DefenseAnalyst";
+import { calculateFranchiseSurplus, sortByDistanceTo } from "utils/gameObjectSelectors";
 
 import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { FranchiseData } from "WorldState/FranchiseData";
-import { MapAnalyst } from "./MapAnalyst";
+import { MapAnalyst } from "../../Analysts/MapAnalyst";
 import { MemoizeByTick } from "utils/memoize";
 import { Office } from "Office/Office";
 import { RoomArchitect } from "./Architects/RoomArchitect";
 import { RoomData } from "WorldState/Rooms";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
-import { calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
 export class SalesAnalyst extends BoardroomManager {
     constructor(
-        boardroom: Boardroom,
-        public mapAnalyst = boardroom.managers.get('MapAnalyst') as MapAnalyst
+        boardroom: Boardroom
     ) {
         super(boardroom);
     }
@@ -31,8 +30,8 @@ export class SalesAnalyst extends BoardroomManager {
                     // Initialize properties
                     if (!franchise.maxSalesmen) {
                         franchise.maxSalesmen = 0;
-                        for (let pos of this.mapAnalyst?.calculateAdjacentPositions(s.pos)) {
-                            if (this.mapAnalyst.isPositionWalkable(pos, true)) franchise.maxSalesmen += 1;
+                        for (let pos of MapAnalyst.calculateAdjacentPositions(s.pos)) {
+                            if (MapAnalyst.isPositionWalkable(pos, true)) franchise.maxSalesmen += 1;
                         }
                     }
                     if (!franchise.containerPos) {
@@ -55,12 +54,13 @@ export class SalesAnalyst extends BoardroomManager {
     getUsableSourceLocations(office: Office) {
         let defenseAnalyst = this.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
         let usableSources: CachedSource[] = [];
+        let canExploit = Math.max(2, office.controller.level + 1);
         for (let room of RoomData.byOffice(office) ?? []) {
             if (defenseAnalyst.getTerritoryIntent(room.name) === TerritoryIntent.EXPLOIT) {
                 usableSources.push(...Sources.byRoom(room.name))
             }
         }
-        return usableSources;
+        return usableSources.sort(sortByDistanceTo(office.controller.pos)).slice(0, canExploit);
     }
     @MemoizeByTick((office: Office) => office.name)
     getSources (office: Office) {

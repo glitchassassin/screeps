@@ -10,37 +10,34 @@ import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 export class SalesManager extends OfficeTaskManager {
     minionTypes = ['SALESMAN'];
 
-    dashboard = Dashboard({});
+    dashboard = [
+        {
+            pos: { x: 1, y: 1 },
+            width: 47,
+            height: 2,
+            widget: Rectangle({ data: Label({ data: 'Sales Manager Report' }) })
+        },
+        {
+            pos: { x: 41, y: 4 },
+            width: 7,
+            height: 10,
+            widget: Rectangle({ data: this.idleMinionsTable })
+        },
+        {
+            pos: { x: 1, y: 25 },
+            width: 26,
+            height: 20,
+            widget: Rectangle({ data: this.requestsTable })
+        },
+        {
+            pos: { x: 28, y: 25 },
+            width: 20,
+            height: 20,
+            widget: Rectangle({ data: Table(() => {
+                let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
-    constructor(office: Office) {
-        super(office);
-        let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-
-        this.dashboard = Dashboard({ room: this.office.name, widgets: [
-            {
-                pos: { x: 1, y: 1 },
-                width: 47,
-                height: 2,
-                widget: Rectangle(Label(() => 'Sales Manager Report'))
-            },
-            {
-                pos: { x: 41, y: 4 },
-                width: 7,
-                height: 10,
-                widget: Rectangle(this.idleMinionsTable)
-            },
-            {
-                pos: { x: 1, y: 25 },
-                width: 26,
-                height: 20,
-                widget: Rectangle(this.requestsTable)
-            },
-            {
-                pos: { x: 28, y: 25 },
-                width: 20,
-                height: 20,
-                widget: Rectangle(Table(() => {
-                    return salesAnalyst.getUsableSourceLocations(this.office).map(source => {
+                return {
+                    data: salesAnalyst.getUsableSourceLocations(this.office).map(source => {
                         let franchise = FranchiseData.byId(source.id);
                         let salesmen = this.requests.find(r => r.pos.isEqualTo(source.pos))?.assigned ?? []
                         franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
@@ -52,22 +49,26 @@ export class SalesManager extends OfficeTaskManager {
                             , 0) / 5 * 100).toFixed(0)}%`,
                             calculateFranchiseSurplus(source)
                         ]
-                    })
-                }, {
-                    headers: ['Franchise', 'Salesmen', 'Effective', 'Surplus']
-                }))
-            },
-            {
-                pos: { x: 1, y: 4 },
-                width: 39,
-                height: 20,
-                widget: Rectangle(Grid(
-                    salesAnalyst.getUsableSourceLocations(this.office).map(source => Bar(
-                        () => ({
+                    }),
+                    config: {
+                        headers: ['Franchise', 'Salesmen', 'Effective', 'Surplus']
+                    }
+                }
+            }) })
+        },
+        {
+            pos: { x: 1, y: 4 },
+            width: 39,
+            height: 20,
+            widget: Rectangle({ data: Grid(() => {
+                let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+                return {
+                    data: salesAnalyst.getUsableSourceLocations(this.office).map(source => Bar(() => ({
+                        data: {
                             value: calculateFranchiseSurplus(source),
                             maxValue: CONTAINER_CAPACITY
-                        }),
-                        {
+                        },
+                        config: {
                             label: `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
                             style: {
                                 fill: 'yellow',
@@ -75,18 +76,26 @@ export class SalesManager extends OfficeTaskManager {
                                 lineStyle: FranchiseData.byId(source.id)?.containerId ? 'solid' : 'dashed'
                             }
                         }
-                    )), {
+                    }))),
+                    config: {
                         columns: 7,
                         rows: 2
                     }
-                ))
-            },
-        ]})
+                }
+            }) })
+        },
+    ];
+
+    constructor(office: Office) {
+        super(office);
     }
     run() {
         super.run();
         if (global.v.sales.state) {
-            this.dashboard();
+            Dashboard({
+                widgets: this.dashboard,
+                config: { room: this.office.name }
+            });
         }
     }
     isSourceTapped(source: CachedSource) {

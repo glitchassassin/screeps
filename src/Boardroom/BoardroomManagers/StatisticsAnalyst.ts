@@ -8,7 +8,6 @@ import { FacilitiesAnalyst } from "./FacilitiesAnalyst";
 import { HRAnalyst } from "./HRAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
 import { Metrics } from "screeps-viz";
-import { RoomData } from "WorldState/Rooms";
 import { SalesAnalyst } from "./SalesAnalyst";
 
 export class PipelineMetrics {
@@ -24,9 +23,6 @@ export class PipelineMetrics {
         public controllerDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotFillRate: Metrics.DeltaTimeseries = Metrics.newTimeseries(),
         public logisticsThroughput: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
-        public buildRate: Metrics.Timeseries = Metrics.newTimeseries(),
-        public repairRate: Metrics.Timeseries = Metrics.newTimeseries(),
-        public upgradeRate: Metrics.Timeseries = Metrics.newTimeseries(),
         public deathLossesRate: Metrics.Timeseries = Metrics.newTimeseries(),
         public spawnUtilization: Metrics.Timeseries = Metrics.newTimeseries(),
     ) { }
@@ -125,89 +121,69 @@ export class StatisticsAnalyst extends BoardroomManager {
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.mineRate,
                     this.salesAnalyst.getUsableSourceLocations(office)
-                        .reduce((sum, source) => (sum + (source instanceof Source ? source.energy : 0)), 0)
+                        .reduce((sum, source) => (sum + (source instanceof Source ? source.energy : 0)), 0),
+                    500
                 );
                 Metrics.update(
                     pipelineMetrics.mineContainerLevels,
                     this.salesAnalyst.getUsableSourceLocations(office)
-                        .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0)
+                        .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0),
+                    500
                 );
                 Metrics.update(
                     pipelineMetrics.roomEnergyLevels,
-                    Game.rooms[office.name]?.energyAvailable ?? 0
+                    Game.rooms[office.name]?.energyAvailable ?? 0,
+                    500
                 );
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.spawnEnergyRate,
-                    Game.rooms[office.name]?.energyAvailable ?? 0
+                    Game.rooms[office.name]?.energyAvailable ?? 0,
+                    500
                 );
                 Metrics.update(
                     pipelineMetrics.storageLevels,
                     Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
-                    countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos)
+                    countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
+                    500
                 );
                 Metrics.updateDelta(
                     pipelineMetrics.storageFillRate,
-                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0
+                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0,
+                    500
                 );
                 let fleetLevel = this.logisticsAnalyst.getCarriers(office)
                     .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
-                Metrics.update(pipelineMetrics.fleetLevels, fleetLevel);
-                Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsThroughput, fleetLevel);
+                Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 500);
+                Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsThroughput, fleetLevel, 500);
                 Metrics.update(
                     pipelineMetrics.mobileDepotLevels,
-                    this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.used ?? 0)), 0) ?? 0
+                    this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.used ?? 0)), 0) ?? 0,
+                    500
                 );
                 Metrics.update(
                     pipelineMetrics.controllerDepotLevels,
-                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0
+                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
+                    500
                 );
                 Metrics.updateDelta(
                     pipelineMetrics.controllerDepotFillRate,
-                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0
+                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
+                    500
                 );
                 Metrics.update(
                     pipelineMetrics.spawnUtilization,
-                    this.hrAnalyst.getSpawns(office).filter(s => s.spawning).length
+                    this.hrAnalyst.getSpawns(office).filter(s => s.spawning).length,
+                    500
                 );
 
-                let building = 0;
-                let repairing = 0;
-                let upgrading = 0;
                 let deathLosses = this.logisticsAnalyst.getTombstones(office)
                     .filter(t => t.creep.my && t.deathTime === Game.time - 1)
                     .reduce((sum, t) => sum + (Capacity.byId(t.id)?.used ?? 0), 0);
 
-                for (let room of RoomData.byOffice(office) ?? []) {
-                    if (!Game.rooms[room.name]) return;
-                    Game.rooms[room.name].getEventLog().forEach(event => {
-                        switch (event.event) {
-                            case EVENT_BUILD:
-                                building += event.data.energySpent;
-                                break;
-                            case EVENT_REPAIR:
-                                repairing += event.data.energySpent;
-                                break;
-                            case EVENT_UPGRADE_CONTROLLER:
-                                upgrading += event.data.energySpent;
-                                break;
-                        }
-                    })
-                }
-                Metrics.update(
-                    pipelineMetrics.buildRate,
-                    building
-                );
-                Metrics.update(
-                    pipelineMetrics.repairRate,
-                    repairing
-                );
-                Metrics.update(
-                    pipelineMetrics.upgradeRate,
-                    upgrading
-                );
                 Metrics.update(
                     pipelineMetrics.deathLossesRate,
-                    deathLosses
+                    deathLosses,
+                    500
                 );
             }
         })
