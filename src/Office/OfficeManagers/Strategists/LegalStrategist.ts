@@ -51,13 +51,13 @@ export class LegalStrategist extends OfficeManager {
             legalManager.submit(this.request);
         }
 
-        if (controller.level < 5 && (!this.fallbackRequest || this.fallbackRequest.result)) {
-            // If Engineers are otherwise idle, they can
-            // upgrade the controller
-            this.fallbackRequest = new UpgradeRequest(controller);
-            this.fallbackRequest.priority = 1;
-            facilitiesManager.submit(this.fallbackRequest);
-        }
+        // if (controller.level < 5 && (!this.fallbackRequest || this.fallbackRequest.result)) {
+        //     // If Engineers are otherwise idle, they can
+        //     // upgrade the controller
+        //     this.fallbackRequest = new UpgradeRequest(controller);
+        //     this.fallbackRequest.priority = 1;
+        //     facilitiesManager.submit(this.fallbackRequest);
+        // }
     }
 }
 // profiler.registerClass(LegalStrategist, 'LegalStrategist');

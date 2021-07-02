@@ -40,7 +40,7 @@ export class Capacity {
         }
         let store = obj?.store as GenericStore
         if (!store) {
-            return global.Heap.Capacity?.data[id][resource];
+            return global.Heap.Capacity?.data[id]?.[resource];
         }
         return {
             capacity: store?.getCapacity(resource) ?? undefined,
