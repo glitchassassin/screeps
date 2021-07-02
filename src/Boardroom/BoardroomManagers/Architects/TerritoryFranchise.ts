@@ -22,12 +22,6 @@ export class TerritoryFranchisePlan {
         this.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
         this.rangeToController = route.cost;
 
-        if (!route.incomplete) {
-            route.path.forEach(p => {
-                this.roads.push(new PlannedStructure(p, STRUCTURE_ROAD));
-            });
-        }
-
         // Update franchise with data
         FranchiseData.set(source.id, {
             id: source.id,
