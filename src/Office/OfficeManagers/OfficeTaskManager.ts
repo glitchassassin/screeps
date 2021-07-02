@@ -1,31 +1,33 @@
 import { BehaviorResult } from "BehaviorTree/Behavior";
-import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "screeps-viz";
-import { sortByDistanceTo } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
+import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class OfficeTaskManager extends OfficeManager {
     requests: MinionRequest[] = [];
     minionTypes = ['INTERN'];
 
-    requestsTable = Table(() => {
-        return this.requests.map(req => [
+    requestsTable = Table(() => ({
+        data: this.requests.map(req => [
             req.constructor.name,
             req.pos.toString(),
             req.priority,
             req.assigned.length
-        ])
-    }, {
-        headers: ['Request', 'Location', 'Priority', 'Assigned Minions'],
-    })
+        ]),
+        config: {
+            headers: ['Request', 'Location', 'Priority', 'Assigned Minions'],
+        }
+    }))
 
-    idleMinionsTable = Table(() => {
-        return this.getAvailableCreeps().map(creep => [creep.name])
-    }, {
-        headers: ['Minion'],
-    })
+    idleMinionsTable = Table(() => ({
+        data: this.getAvailableCreeps().map(creep => [creep.name]),
+        config: {
+            headers: ['Minion'],
+        }
+    }))
 
     submit = (request: MinionRequest) => {
         this.requests.push(request);
