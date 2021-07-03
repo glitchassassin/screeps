@@ -41,7 +41,9 @@ export class TerritoryFranchisePlan {
 
         if (!route.incomplete) {
             route.path.forEach(p => {
-                this.roads.push(new PlannedStructure(p, STRUCTURE_ROAD));
+                if (![0,49].includes(p.x) && ![0,49].includes(p.y)) {
+                    this.roads.push(new PlannedStructure(p, STRUCTURE_ROAD));
+                }
             });
         }
 
