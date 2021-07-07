@@ -1,8 +1,7 @@
 import { CachedConstructionSite } from "WorldState/ConstructionSites";
-import { CachedSource } from "WorldState/Sources";
+import { CachedFranchise } from "WorldState/FranchiseData";
 import { Capacity } from "WorldState/Capacity";
 import { Controllers } from "WorldState/Controllers";
-import { FranchiseData } from "WorldState/FranchiseData";
 import { Health } from "WorldState/Health";
 import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
@@ -29,9 +28,9 @@ export function countEnergyInContainersOrGround(pos?: RoomPosition) {
     let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
     return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
 }
-export function calculateFranchiseSurplus(source: CachedSource) {
-    let linkCapacity = Capacity.byId(FranchiseData.byId(source.id)?.linkId)?.used ?? 0;
-    return countEnergyInContainersOrGround(source.pos) + linkCapacity;
+export function calculateFranchiseSurplus(franchise: CachedFranchise) {
+    let linkCapacity = Capacity.byId(franchise.linkId)?.used ?? 0;
+    return countEnergyInContainersOrGround(franchise.pos) + linkCapacity;
 }
 
 export function sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) {

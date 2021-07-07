@@ -56,6 +56,7 @@ export class FranchisePlan {
             pos: source.pos,
             linkPos: this.link.pos,
             containerPos: this.container.pos,
+            distance: this.rangeToController
         }, source.pos.roomName)
     }
 }

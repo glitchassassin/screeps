@@ -63,7 +63,8 @@ export const FranchiseData = {
             containerId: container?.id,
             linkPos,
             linkId: link?.id,
-            maxSalesmen: cached.maxSalesmen
+            maxSalesmen: cached.maxSalesmen,
+            distance: cached.distance
         }
     },
     byRoom(roomName: string): CachedFranchise[] {
@@ -89,7 +90,8 @@ export const FranchiseData = {
             containerPosPacked: franchise.containerPos ? packPos(franchise.containerPos) : undefined,
             linkId: franchise.linkId,
             linkPosPacked: franchise.linkPos ? packPos(franchise.linkPos) : undefined,
-            maxSalesmen: franchise.maxSalesmen
+            maxSalesmen: franchise.maxSalesmen,
+            distance: franchise.distance
         }
         Memory.Franchises.idByRoom[roomName] ??= [];
         if (!Memory.Franchises.idByRoom[roomName].includes(id)) {

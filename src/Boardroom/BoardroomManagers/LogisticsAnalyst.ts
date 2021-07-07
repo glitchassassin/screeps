@@ -5,7 +5,6 @@ import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Capacity } from "WorldState/Capacity";
 import { Controllers } from "WorldState/Controllers";
-import { FranchiseData } from "WorldState/FranchiseData";
 import { HRAnalyst } from "./HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
 import { MemoizeByTick } from "utils/memoize";
@@ -139,8 +138,8 @@ export class LogisticsAnalyst extends BoardroomManager {
     getUnallocatedSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         return [
             ...this.getFreeSources(office),
-            ...this.salesAnalyst.getUsableSourceLocations(office)
-                .map(source => Structures.byId(FranchiseData.byId(source.id)?.containerId))
+            ...this.salesAnalyst.getExploitableFranchises(office)
+                .map(source => Structures.byId(source.containerId))
                 .filter(c => c && (Capacity.byId(c.id)?.used ?? 0) > 0) as CachedStructure<StructureContainer>[],
         ];
     }

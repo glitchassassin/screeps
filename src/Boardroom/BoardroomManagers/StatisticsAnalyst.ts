@@ -4,6 +4,7 @@ import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "./ControllerAnalyst";
+import { Controllers } from "WorldState/Controllers";
 import { FacilitiesAnalyst } from "./FacilitiesAnalyst";
 import { HRAnalyst } from "./HRAnalyst";
 import { LogisticsAnalyst } from "./LogisticsAnalyst";
@@ -22,6 +23,7 @@ export class PipelineMetrics {
         public mobileDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotFillRate: Metrics.DeltaTimeseries = Metrics.newTimeseries(),
+        public controllerUpgradeRate: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
         public logisticsThroughput: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
         public deathLossesRate: Metrics.Timeseries = Metrics.newTimeseries(),
         public spawnUtilization: Metrics.Timeseries = Metrics.newTimeseries(),
@@ -120,13 +122,13 @@ export class StatisticsAnalyst extends BoardroomManager {
                 let pipelineMetrics = this.metrics.get(office.name) as PipelineMetrics;
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.mineRate,
-                    this.salesAnalyst.getUsableSourceLocations(office)
+                    this.salesAnalyst.getExploitableSources(office)
                         .reduce((sum, source) => (sum + (source instanceof Source ? source.energy : 0)), 0),
                     500
                 );
                 Metrics.update(
                     pipelineMetrics.mineContainerLevels,
-                    this.salesAnalyst.getUsableSourceLocations(office)
+                    this.salesAnalyst.getExploitableSources(office)
                         .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0),
                     500
                 );
@@ -170,6 +172,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
                     500
                 );
+                Metrics.updateNonNegativeDelta(pipelineMetrics.controllerUpgradeRate, (Controllers.byRoom(office.name) as StructureController)?.progress ?? 0, 500)
                 Metrics.update(
                     pipelineMetrics.spawnUtilization,
                     this.hrAnalyst.getSpawns(office).filter(s => s.spawning).length,

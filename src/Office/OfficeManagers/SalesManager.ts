@@ -37,21 +37,20 @@ export class SalesManager extends OfficeTaskManager {
                 let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
                 return {
-                    data: salesAnalyst.getUsableSourceLocations(this.office).map(source => {
-                        let franchise = FranchiseData.byId(source.id);
-                        let salesmen = this.requests.find(r => r.pos.isEqualTo(source.pos))?.assigned ?? []
+                    data: salesAnalyst.getExploitableFranchises(this.office).map(franchise => {
+                        let salesmen = this.requests.find(r => r.pos.isEqualTo(franchise.pos))?.assigned ?? []
                         franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
                         return [
-                            `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                            `${franchise.pos.roomName}[${franchise.pos.x}, ${franchise.pos.y}]`,
                             `${salesmen.length}/${franchise?.maxSalesmen}`,
                             `${(salesmen.reduce((sum, salesman) =>
                                 sum + (byId(salesman)?.getActiveBodyparts(WORK) ?? 0)
                             , 0) / 5 * 100).toFixed(0)}%`,
-                            calculateFranchiseSurplus(source)
+                            franchise.distance ?? '--'
                         ]
                     }),
                     config: {
-                        headers: ['Franchise', 'Salesmen', 'Effective', 'Surplus']
+                        headers: ['Franchise', 'Salesmen', 'Effective', 'Distance']
                     }
                 }
             }) })
@@ -63,17 +62,17 @@ export class SalesManager extends OfficeTaskManager {
             widget: Rectangle({ data: Grid(() => {
                 let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
                 return {
-                    data: salesAnalyst.getUsableSourceLocations(this.office).map(source => Bar(() => ({
+                    data: salesAnalyst.getExploitableFranchises(this.office).map(franchise => Bar(() => ({
                         data: {
-                            value: calculateFranchiseSurplus(source),
+                            value: calculateFranchiseSurplus(franchise),
                             maxValue: CONTAINER_CAPACITY
                         },
                         config: {
-                            label: `${source.pos.roomName}[${source.pos.x}, ${source.pos.y}]`,
+                            label: `${franchise.pos.roomName}[${franchise.pos.x}, ${franchise.pos.y}]`,
                             style: {
                                 fill: 'yellow',
                                 stroke: 'yellow',
-                                lineStyle: FranchiseData.byId(source.id)?.containerId ? 'solid' : 'dashed'
+                                lineStyle: franchise.containerId ? 'solid' : 'dashed'
                             }
                         }
                     }))),

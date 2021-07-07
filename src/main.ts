@@ -6,6 +6,7 @@ import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
+import { run as runReports } from 'Reports/ReportRunner';
 
 try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -84,6 +85,8 @@ function mainLoop() {
   } catch(e) {
     console.log(e, e.stack)
   }
+
+  runReports();
 
   // if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
   //   // CPU bucket dropping below 50%, send a CPU profile

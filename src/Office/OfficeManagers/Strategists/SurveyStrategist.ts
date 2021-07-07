@@ -19,46 +19,46 @@ export class SurveyStrategist extends OfficeManager {
         if (getRcl(this.office.name) !== 8) {
             // Handle scouting with minions
             let room = this.getRoomToScout();
-            this.scanDispatched.set(room, Game.time);
-            this.request = new ExploreRequest(room)
-            defenseManager.submit(this.request);
+            if(room) {
+                this.scanDispatched.set(room, Game.time);
+                this.request = new ExploreRequest(room)
+                defenseManager.submit(this.request);
+            }
         } else {
             // TODO: Handle scouting with observers
         }
     }
 
-    getRoomToScout() {
+    getRoomToScout(): string|undefined {
         let surveyRadius = (getRcl(this.office.name) !== 8) ? 5 : 20
 
         let rooms = MapAnalyst.calculateNearbyRooms(this.office.name, surveyRadius, false);
 
-        let bestMatch: {distance: number, name: string, lastScanned: number}|undefined = undefined;
+        const ignoreHostileRoomFor = 1000
 
-        for (let room of rooms) {
-            let match = {
+        const bestMatch = rooms.map(room => ({
                 distance: MapAnalyst.getRangeTo(new RoomPosition(25, 25, this.office.name), new RoomPosition(25, 25, room)),
                 name: room,
                 lastScanned: this.scanDispatched.get(room) ?? RoomData.byRoom(room)?.scanned ?? 0,
-                hostile: Controllers.byRoom(room)?.owner && !Controllers.byRoom(room)?.my,
-            }
-            // If no existing match, OR
-            // this match is older than the best match,
-            // OR this match is as old but closer,
-            // then this is the best match
-            if (
-                !bestMatch ||
-                ((
-                    match.lastScanned < bestMatch.lastScanned ||
-                    (match.distance < bestMatch.distance && match.lastScanned === bestMatch.lastScanned)
-                ) && (
-                    !match.hostile
-                ))
-            ) {
-                bestMatch = match;
-            }
-        }
-        if (!bestMatch) throw new Error('Error selecting a room to scout');
-        return bestMatch.name;
+                hostile: Boolean(Controllers.byRoom(room)?.owner && !Controllers.byRoom(room)?.my),
+            }))
+            .reduce((last, match) => {
+                // Ignore hostile rooms even if we have nothing better to do
+                if (match.hostile && Game.time - match.lastScanned < ignoreHostileRoomFor) {
+                    return last;
+                }
+                if (last === undefined) {
+                    return match;
+                }
+                if (
+                    match.lastScanned < last.lastScanned ||
+                    (match.distance < last.distance && match.lastScanned === last.lastScanned)
+                ) {
+                    return match;
+                }
+                return last;
+            })
+        return bestMatch?.name;
     }
 }
 // profiler.registerClass(SurveyStrategist, 'SurveyStrategist');

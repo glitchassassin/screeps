@@ -24,7 +24,7 @@ export class RoomAnalyst extends BoardroomManager {
     }
     @MemoizeByTick((office: Office) => office.name)
     getTerritoryRadius(office: Office) {
-        if (office.controller.level < 4) {
+        if (office.controller.level < 3) {
             return 0;
         } else {
             return TERRITORY_RADIUS;

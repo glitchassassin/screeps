@@ -143,7 +143,7 @@ export class Office {
                 pos: { x: 1, y: 4 },
                 width: 48,
                 height: 13,
-                widget: (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReport
+                widget: (this.managers.get('LogisticsManager') as LogisticsManager)?.miniReportBars
             },
             {
                 pos: { x: 1, y: 18 },

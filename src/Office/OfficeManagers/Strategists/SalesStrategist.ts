@@ -1,6 +1,5 @@
-import { CachedSource } from "WorldState/Sources";
+import { CachedFranchise } from "WorldState/FranchiseData";
 import { DropHarvestRequest } from "BehaviorTree/requests/DropHarvest";
-import { FranchiseData } from "WorldState/FranchiseData";
 import { LinkHarvestRequest } from "BehaviorTree/requests/LinkHarvest";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
@@ -13,28 +12,26 @@ export class SalesStrategist extends OfficeManager {
     plan() {
         let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
 
-        for (let source of salesAnalyst.getUntappedSources(this.office)) {
-            this.submitHarvestRequest(source);
+        for (let franchise of salesAnalyst.getExploitableFranchises(this.office)) {
+            this.submitHarvestRequest(franchise);
         }
     }
 
-    submitHarvestRequest(source: CachedSource) {
+    submitHarvestRequest(franchise: CachedFranchise) {
         let salesManager = this.office.managers.get('SalesManager') as SalesManager;
         // Check if we already have a harvest request
-        let req = this.harvestRequests.get(source.id);
+        let req = this.harvestRequests.get(franchise.id);
         if (req && !req.result)     return; // Request is pending
-        if (req?.result)            this.harvestRequests.delete(source.id); // Request completed or failed
-        if (source instanceof Source && source.energy === 0)    return; // Wait for source to replenish
+        if (req?.result)            this.harvestRequests.delete(franchise.id); // Request completed or failed
 
-        // Otherwise, create a new harvest request
-        if (!FranchiseData.byId(source.id)?.linkId) {
-            req = new DropHarvestRequest(source)
+        if (!franchise.linkId) {
+            req = new DropHarvestRequest(franchise)
         } else {
-            req = new LinkHarvestRequest(source)
+            req = new LinkHarvestRequest(franchise)
         }
 
         salesManager.submit(req);
-        this.harvestRequests.set(source.id, req);
+        this.harvestRequests.set(franchise.id, req);
     }
 }
 // profiler.registerClass(SalesStrategist, 'SalesStrategist');

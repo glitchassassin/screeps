@@ -67,7 +67,7 @@ export class LogisticsManager extends OfficeManager {
                     Bar(() => ({
                         data: {
                             value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mineContainerLevels)[1],
-                            maxValue: this.salesAnalyst.getUsableSourceLocations(this.office).length * CONTAINER_CAPACITY,
+                            maxValue: this.salesAnalyst.getExploitableFranchises(this.office).length * CONTAINER_CAPACITY,
                         },
                         config: {
                             label: 'Franchises',
@@ -223,6 +223,91 @@ export class LogisticsManager extends OfficeManager {
         }
     }) })
 
+    miniReportBars = Rectangle({ data: Grid(() => {
+        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let stats = statisticsAnalyst.metrics.get(this.office.name);
+
+        let mineRate = Metrics.avg(stats!.mineRate);
+        let spawn = Metrics.avg(stats!.spawnEnergyRate);
+        let waste = Metrics.avg(stats!.deathLossesRate);
+        let storage = Metrics.avg(stats!.storageFillRate);
+        let upgrade = Metrics.avg(stats!.controllerUpgradeRate);
+        let max = Math.max(mineRate, spawn, waste, storage, upgrade);
+        return {
+            data: [
+                Bar({
+                    data: {
+                        value: mineRate,
+                        maxValue: max,
+                    },
+                    config: {
+                        label: 'Income',
+                        style: {
+                            stroke: 'yellow',
+                            fill: 'yellow'
+                        }
+                    }
+                }),
+                Bar({
+                    data: {
+                        value: spawn,
+                        maxValue: max,
+                    },
+                    config: {
+                        label: 'Spawn',
+                        style: {
+                            stroke: 'blueviolet',
+                            fill: 'blueviolet'
+                        }
+                    }
+                }),
+                Bar({
+                    data: {
+                        value: waste,
+                        maxValue: max,
+                    },
+                    config: {
+                        label: 'Waste',
+                        style: {
+                            stroke: 'red',
+                            fill: 'red'
+                        }
+                    }
+                }),
+                Bar({
+                    data: {
+                        value: storage,
+                        maxValue: max,
+                    },
+                    config: {
+                        label: 'Storage',
+                        style: {
+                            stroke: 'green',
+                            fill: 'green'
+                        }
+                    }
+                }),
+                Bar({
+                    data: {
+                        value: upgrade,
+                        maxValue: max,
+                    },
+                    config: {
+                        label: 'Upgrading',
+                        style: {
+                            stroke: 'cyan',
+                            fill: 'cyan'
+                        }
+                    }
+                }),
+            ],
+            config: {
+                columns: 5,
+                rows: 1
+            }
+        }
+    }) })
+
     lastMinionRequest = 0;
 
     sources = new Map<string, LogisticsSource>();
@@ -264,7 +349,7 @@ export class LogisticsManager extends OfficeManager {
 
         // Update LogisticsSources
         this.sources = new Map<string, LogisticsSource>();
-        this.salesAnalyst.getUsableSourceLocations(this.office).forEach(f => {
+        this.salesAnalyst.getExploitableFranchises(this.office).forEach(f => {
             if (!this.sources.has(f.pos.toString())) {
                 this.sources.set(f.pos.toString(), new LogisticsSource(f.pos))
             }
