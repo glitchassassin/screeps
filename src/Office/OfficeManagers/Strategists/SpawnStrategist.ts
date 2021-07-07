@@ -20,6 +20,7 @@ import { Request } from "BehaviorTree/Request";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
 import { SalesManager } from "../SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
+import { SourceType } from "Logistics/LogisticsSource";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 
@@ -130,7 +131,7 @@ export class SpawnStrategist extends OfficeManager {
         for (let spawn of hrAnalyst.getSpawns(this.office)) {
             let req = this.logisticsRequests.get(spawn.id)
             if ((!req || req.completed) && (Capacity.byId(spawn.id)?.free ?? 0) > 0) {
-                req = new TransferRequest(spawn, 4)
+                req = new TransferRequest(spawn, 4, Capacity.byId(spawn.id)?.free, SourceType.PRIMARY)
                 logisticsManager.submit(spawn.id, req);
                 this.logisticsRequests.set(spawn.id, req);
             }

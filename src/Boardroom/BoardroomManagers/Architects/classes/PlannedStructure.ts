@@ -1,30 +1,29 @@
-import { CachedStructure, Structures } from "WorldState/Structures";
-
 import { BehaviorResult } from "BehaviorTree/Behavior";
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import profiler from "screeps-profiler";
+import { byId } from "utils/gameObjectSelectors";
+import { CachedStructure, Structures } from "WorldState/Structures";
+
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
         public pos: RoomPosition,
         public structureType: T
     ) {}
-    structure?: CachedStructure<Structure<T>>;
+    _structure?: CachedStructure<Structure<T>>;
     buildRequest?: BuildRequest;
 
-    survey() {
-        if (this.structure) return true; // Structure exists
-        if (!Game.rooms[this.pos.roomName]) {
-            // We cannot see the room
-            return false;
+    get structure() {
+        if (Game.rooms[this.pos.roomName] && byId(this._structure?.id)) {
+            return this._structure;
         }
 
-        // Look for structure at position
-        this.structure = Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
-        if (this.structure) {
-            // Structure exists
-            return true;
-        }
+        this._structure ??= Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
+        return this._structure;
+    }
+
+    survey() {
+        if (this.structure) return true; // Cached structure exists
 
         if (this.buildRequest && !this.buildRequest.result) {
             // Structure is being built
