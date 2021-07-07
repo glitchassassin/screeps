@@ -18,7 +18,7 @@ export class PipelineMetrics {
         public roomEnergyLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public spawnEnergyRate: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
         public storageLevels: Metrics.Timeseries = Metrics.newTimeseries(),
-        public storageFillRate: Metrics.DeltaTimeseries = Metrics.newTimeseries(),
+        public storageFillRate: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
         public fleetLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public mobileDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
@@ -123,7 +123,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.mineRate,
                     this.salesAnalyst.getExploitableSources(office)
-                        .reduce((sum, source) => (sum + (source instanceof Source ? source.energy : 0)), 0),
+                        .reduce((sum, source) => (sum + (source instanceof Source ? (source.energyCapacity - source.energy) : 0)), 0),
                     500
                 );
                 Metrics.update(
@@ -148,9 +148,10 @@ export class StatisticsAnalyst extends BoardroomManager {
                     countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
                     500
                 );
-                Metrics.updateDelta(
+                Metrics.updateNonNegativeDelta(
                     pipelineMetrics.storageFillRate,
-                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ?? 0,
+                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
+                    countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
                     500
                 );
                 let fleetLevel = this.logisticsAnalyst.getCarriers(office)

@@ -250,6 +250,19 @@ export class LogisticsManager extends OfficeManager {
                 }),
                 Bar({
                     data: {
+                        value: storage,
+                        maxValue: max,
+                    },
+                    config: {
+                        label: 'Storage',
+                        style: {
+                            stroke: 'green',
+                            fill: 'green'
+                        }
+                    }
+                }),
+                Bar({
+                    data: {
                         value: spawn,
                         maxValue: max,
                     },
@@ -271,19 +284,6 @@ export class LogisticsManager extends OfficeManager {
                         style: {
                             stroke: 'red',
                             fill: 'red'
-                        }
-                    }
-                }),
-                Bar({
-                    data: {
-                        value: storage,
-                        maxValue: max,
-                    },
-                    config: {
-                        label: 'Storage',
-                        style: {
-                            stroke: 'green',
-                            fill: 'green'
                         }
                     }
                 }),
