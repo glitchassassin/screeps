@@ -12,15 +12,13 @@ export class HRAnalyst extends BoardroomManager {
     getSpawns(office: Office) {
         return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_SPAWN) as StructureSpawn[];
     }
-    @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
+    @MemoizeByTick((office: Office, type?: string, excludeSpawning = true) => ('' + office.name + type + (excludeSpawning ? 'true' : 'false')))
     getEmployees(office: Office, type?: string, excludeSpawning = true) {
-        return Object.values(Game.creeps).filter(
-            creep => (
-                creep.memory.office === office.name &&
-                (!type || creep.memory.type === type) &&
-                (!excludeSpawning || !creep.spawning)
-            )
-        )
+        return Object.values(Game.creeps).filter(creep => (
+            creep.memory.office === office.name &&
+            (!type || creep.memory.type === type) &&
+            (!excludeSpawning || !creep.spawning)
+        ))
     }
     @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
     newestEmployee(office: Office, type?: string) {

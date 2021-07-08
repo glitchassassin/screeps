@@ -1,28 +1,34 @@
 import { LogisticsRequest, TransferRequest } from "Logistics/LogisticsRequest";
-import { getRcl, unassignedLogisticsRequestsPercent } from "utils/gameObjectSelectors";
 
 import { Capacity } from "WorldState/Capacity";
 import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
-import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
-import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
 import { FacilitiesManager } from "../FacilitiesManager";
+import { GuardMinion } from "MinionDefinitions/GuardMinion";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { HRManager } from "../HRManager";
 import { InternMinion } from "MinionDefinitions/InternMinion";
-import { LegalManager } from "../LegalManager";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LawyerMinion } from "MinionDefinitions/LawyerMinion";
 import { LogisticsManager } from "../LogisticsManager";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
 import { Request } from "BehaviorTree/Request";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
-import { SalesManager } from "../SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SourceType } from "Logistics/LogisticsSource";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
-import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { getRcl } from "utils/gameObjectSelectors";
+
+const minionClasses: Record<string, Minion> = {
+    SALESMAN: new SalesmanMinion(),
+    CARRIER: new CarrierMinion(),
+    GUARD: new GuardMinion(),
+    ENGINEER: new EngineerMinion(),
+    PARALEGAL: new ParalegalMinion(),
+    INTERN: new InternMinion(),
+    LAWYER: new LawyerMinion()
+}
 
 export class SpawnStrategist extends OfficeManager {
     spawnRequest?: Request<StructureSpawn>;
@@ -31,91 +37,71 @@ export class SpawnStrategist extends OfficeManager {
 
     plan() {
         if (Game.time - global.lastGlobalReset < 5) return; // Give time for data to catch up to prevent mis-spawns
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-        let legalAnalyst = global.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst;
-        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
-        let salesManager = this.office.managers.get('SalesManager') as SalesManager;
-        let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
-        let legalManager = this.office.managers.get('LegalManager') as LegalManager;
-        let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst;
-        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-        let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-
-        let rcl = getRcl(this.office.name) ?? 0;
 
         this.submitLogisticsRequests();
 
         if (this.spawnRequest && !this.spawnRequest.result) return; // Pending request exists
-
         if ((hrAnalyst.newestEmployee(this.office) ?? 0) > 1490) return; // Wait 10 ticks after previous spawn before considering new requests
 
-        // We probably need a roughly even balance of carriers and salesmen, up to a certain point.
+        // Get spawn queue
+        const spawnTargets = this.spawnTargets();
+        // Get current employee counts
+        const employees = this.getEmployees();
 
-        // If there are more salesmen than carriers, and there are a) no idle carriers and b) unassigned logistics requests,
+        // Calculate spawn pressure
+        const spawnPressure = Object.keys(spawnTargets)
+            .map(minion => ({
+                minion,
+                pressure: (employees[minion] ?? 0) / spawnTargets[minion]
+            }))
+            .filter(({pressure}) => pressure < 1)
+            .sort((a, b) => a.pressure - b.pressure)
 
-        // First priority: Carrier minions.
-        // If we have unassigned requests and all Carriers are busy,
-        // or if all Carriers will be dead in 50 ticks,
-        // we need more carriers
-        if ( // Carrier minions
-            unassignedLogisticsRequestsPercent(this.office) > 0.5 &&
-            logisticsManager.getIdleCarriers().length === 0 &&
-            (
-                hrAnalyst.getEmployees(this.office, 'SALESMAN', false).length > hrAnalyst.getEmployees(this.office, 'CARRIER', false).length ||
-                salesAnalyst.unassignedHarvestRequests(this.office).length === 0
-            )
-        ) {
-            this.submitRequest(new CarrierMinion());
-            return;
+        // Submit request for lowest-pressure minion type
+        const minion = minionClasses[spawnPressure.shift()?.minion ?? '']
+        if (minion) {
+            this.submitRequest(minion)
+        }
+    }
+
+    spawnTargets() {
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
+        let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
+        const rcl = getRcl(this.office.name) ?? 0;
+
+        const spawnTargets: Record<string, number> = {};
+
+        const franchiseCount = salesAnalyst.getExploitableFranchises(this.office).length;
+        const workPartsPerSalesman = Math.min(5, Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 50) / 100));
+        const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
+
+        spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
+        spawnTargets['CARRIER'] = spawnTargets['SALESMAN'];
+
+        const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
+        spawnTargets['ENGINEER'] = Math.min(10, Math.ceil(facilitiesManager.workPending() / (workPartsPerEngineer * 1500 * 2.5)));
+
+        // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
+        if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {
+            spawnTargets['PARALEGAL'] = 1
+        } else {
+            spawnTargets['PARALEGAL'] = franchiseCount;
         }
 
-        if ( // Salesman minions
-            (
-                salesAnalyst.unassignedHarvestRequests(this.office).length > 0 ||
-                salesManager.creepsExpiring(50).length > 0
-            ) &&
-            salesManager.getAvailableCreeps().length === 0
-        ) {
-            this.submitRequest(new SalesmanMinion());
-            return;
-        }
+        spawnTargets['INTERN'] = (rcl > 1) ? 1 : 0;
 
-        let legalDepotId = legalAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId
-        let legalDepotCapacity = Capacity.byId(legalDepotId)?.capacity ?? 1;
-        let legalDepotFreeCapacity = Capacity.byId(legalDepotId)?.free ?? 1;
-        let storageCapacity = Capacity.byId(logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0
-        // If there is no container, 1/1 === 1 (acts as if container is empty)
-        // Otherwise, if capacity is more than 50% full, spawn a new Paralegal
-        if ( // Paralegal minions
-            (hrAnalyst.getEmployees(this.office, 'PARALEGAL', false).length === 0 ||
-                (
-                    (hrAnalyst.newestEmployee(this.office, 'PARALEGAL') ?? 0) < 1400 &&
-                    (legalDepotFreeCapacity / legalDepotCapacity) < 0.5
-                )
-            )
-        ) {
-            this.submitRequest(new ParalegalMinion());
-            return;
-        }
+        return spawnTargets;
+    }
 
-        // Engineer minions
-        const MAX_ENGINEERS = 10;
-        if (
-            MAX_ENGINEERS > facilitiesAnalyst.getEngineers(this.office).length &&
-            facilitiesManager.workPending() > facilitiesAnalyst.getWorkExpectancy(this.office)
-        ) {
-            this.submitRequest(new EngineerMinion());
-            return;
-        }
-
-        // Scout minions
-        if (
-            rcl > 1 &&
-            (hrAnalyst.newestEmployee(this.office, 'INTERN') ?? 0) < 100
-        ) {
-            this.submitRequest(new InternMinion());
-        }
+    getEmployees() {
+        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
+        let result = hrAnalyst.getEmployees(this.office, undefined, false).reduce((employees: Record<string, number>, creep: Creep) => {
+            employees[creep.memory.type ?? ''] ??= 0
+            employees[creep.memory.type ?? '']++;
+            return employees;
+        }, {})
+        return result;
     }
 
     submitRequest(minion: Minion) {

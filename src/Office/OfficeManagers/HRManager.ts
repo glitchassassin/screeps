@@ -4,6 +4,7 @@ import { BehaviorResult } from "BehaviorTree/Behavior";
 import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
 import { Request } from "BehaviorTree/Request";
+import SpawnPressure from "Reports/widgets/SpawnPressure";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 
@@ -47,7 +48,7 @@ export class HRManager extends OfficeManager {
             }) })
         },
         {
-            pos: { x: 32, y: 35 },
+            pos: { x: 42, y: 19 },
             width: 5,
             height: 10,
             widget: Rectangle({ data: Bar(() => {
@@ -72,7 +73,7 @@ export class HRManager extends OfficeManager {
         {
             pos: { x: 1, y: 19 },
             width: 30,
-            height: 30,
+            height: 10,
             widget: Rectangle({ data: Table(() => {
                 return {
                     data: this.requests.map(req => ([
@@ -87,25 +88,10 @@ export class HRManager extends OfficeManager {
             }) })
         },
         {
-            pos: { x: 32, y: 19 },
-            width: 16,
-            height: 15,
-            widget: Rectangle({ data: Table(() => {
-                let hrAnalyst = this.office.boardroom.managers.get('HRAnalyst') as HRAnalyst
-                let employeeData = new Map<string, number>();
-
-                for (let e of hrAnalyst.getEmployees(this.office)) {
-                    let t = e.memory.type || 'NONE'
-                    employeeData.set(t, (employeeData.get(t) || 0) + 1);
-                }
-
-                return {
-                    data: [...employeeData.entries()],
-                    config: {
-                        headers: ['Role', 'Count']
-                    }
-                }
-            }) })
+            pos: { x: 1, y: 30 },
+            width: 47,
+            height: 10,
+            widget: SpawnPressure(this.office)
         },
     ];
 

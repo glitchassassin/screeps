@@ -1,7 +1,6 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
+import { CachedFranchise, FranchiseData } from "WorldState/FranchiseData";
 
-import { CachedSource } from "WorldState/Sources";
-import { FranchiseData } from "WorldState/FranchiseData";
 import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
@@ -12,16 +11,15 @@ export class DropHarvestRequest extends MinionRequest {
     public pos: RoomPosition;
     public sourceId: Id<Source>;
 
-    constructor(source: CachedSource) {
+    constructor(franchise: CachedFranchise) {
         super();
-        this.pos = source.pos;
-        this.sourceId = source.id;
-        let franchisePos = FranchiseData.byId(source.id)?.containerPos
+        this.pos = franchise.pos;
+        this.sourceId = franchise.id;
         this.action = Sequence(
             Selector(
-                moveTo(franchisePos, 0),
-                harvestEnergy(source.id),
-                moveTo(source.pos),
+                moveTo(franchise.containerPos, 0),
+                harvestEnergy(franchise.id),
+                moveTo(franchise.pos),
             ),
             continueIndefinitely()
         )

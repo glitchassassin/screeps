@@ -1,4 +1,5 @@
 import FranchiseStatus from "./FranchiseStatus";
+import SpawnStrategy from "./SpawnStrategy";
 
 declare global {
     namespace NodeJS {
@@ -28,3 +29,4 @@ global.d = (key: string) => {
 // Register reports
 
 register('franchises', FranchiseStatus);
+register('spawnstrategy', SpawnStrategy);
