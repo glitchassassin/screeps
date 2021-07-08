@@ -24,7 +24,7 @@ export class PipelineMetrics {
         public controllerDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotFillRate: Metrics.DeltaTimeseries = Metrics.newTimeseries(),
         public controllerUpgradeRate: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
-        public logisticsThroughput: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
+        public logisticsPrimaryThroughput: Metrics.Timeseries = Metrics.newTimeseries(),
         public deathLossesRate: Metrics.Timeseries = Metrics.newTimeseries(),
         public spawnUtilization: Metrics.Timeseries = Metrics.newTimeseries(),
     ) { }
@@ -42,6 +42,8 @@ export class StatisticsAnalyst extends BoardroomManager {
         super(boardroom);
     }
     metrics: Map<string, PipelineMetrics> = new Map();
+
+    tickMetrics: Record<string, Record<string, number>> = {}
 
     reset() {
         this.metrics = new Map();
@@ -122,8 +124,8 @@ export class StatisticsAnalyst extends BoardroomManager {
                 let pipelineMetrics = this.metrics.get(office.name) as PipelineMetrics;
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.mineRate,
-                    this.salesAnalyst.getExploitableSources(office)
-                        .reduce((sum, source) => (sum + (source instanceof Source ? (source.energyCapacity - source.energy) : 0)), 0),
+                    -this.salesAnalyst.getExploitableSources(office)
+                        .reduce((sum, source) => (sum + (source.energy ?? 0)), 0),
                     500
                 );
                 Metrics.update(
@@ -157,7 +159,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                 let fleetLevel = this.logisticsAnalyst.getCarriers(office)
                     .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
                 Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 500);
-                Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsThroughput, fleetLevel, 500);
+                Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsPrimaryThroughput, fleetLevel, 500);
                 Metrics.update(
                     pipelineMetrics.mobileDepotLevels,
                     this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.used ?? 0)), 0) ?? 0,
@@ -189,7 +191,19 @@ export class StatisticsAnalyst extends BoardroomManager {
                     deathLosses,
                     500
                 );
+
+                Metrics.update(
+                    pipelineMetrics.logisticsPrimaryThroughput,
+                    this.tickMetrics[office.name]?.logisticsPrimaryThroughput ?? 0,
+                    500
+                )
+                this.tickMetrics[office.name] = {};
             }
         })
+    }
+
+    reportMetric(officeName: string, metricName: string, value: number) {
+        this.tickMetrics[officeName] ??= {}
+        this.tickMetrics[officeName][metricName] = (this.tickMetrics[officeName][metricName] ?? 0) + value
     }
 }

@@ -10,6 +10,8 @@ declare global {
     namespace GreyCompany {
         type SourceCache = {
             posPacked: string,
+            energy: number,
+            energyCapacity: number,
         }
         interface Heap {
             CacheRefreshers: Function[];
@@ -24,7 +26,9 @@ declare global {
 }
 export type CachedSource = Source | {
     pos: RoomPosition,
-    id: Id<Source>
+    id: Id<Source>,
+    energy: number,
+    energyCapacity: number,
 }
 
 export class Sources {
@@ -37,6 +41,8 @@ export class Sources {
             return {
                 id: id,
                 pos: unpackPos(cached.posPacked),
+                energy: cached.energy,
+                energyCapacity: cached.energyCapacity,
             }
         }
         return site;
@@ -78,6 +84,8 @@ export class Sources {
                     // Cache capacities for each resource type
                     Memory.Sources.data[site.id] ??= {
                         posPacked: packPos(site.pos),
+                        energy: site.energy,
+                        energyCapacity: site.energyCapacity,
                     };
                 }
             } else {

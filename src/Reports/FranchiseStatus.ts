@@ -67,7 +67,7 @@ export default () => {
                         return {
                             data: salesAnalyst.getExploitableFranchises(office).map(franchise => {
                                 let source = Sources.byId(franchise.id);
-                                let level = (source instanceof Source) ? `${source.energy}/${source.energyCapacity}` : `??`;
+                                let level = source ? `${source.energy}/${source.energyCapacity}` : `??`;
                                 franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
                                 return [
                                     `${franchise.pos.roomName}[${franchise.pos.x}, ${franchise.pos.y}]`,

@@ -1,7 +1,7 @@
 import { CachedStructure } from "WorldState/Structures";
 import { Capacity } from "WorldState/Capacity";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
 import { SourceType } from "./LogisticsSource";
+import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { byId } from "utils/gameObjectSelectors";
 import { travel } from "Logistics/Travel";
 
@@ -55,12 +55,19 @@ export class TransferRequest extends LogisticsRequest {
         } else if (result === ERR_NOT_IN_RANGE) {
             return travel(creep, this.pos)
         }
+        if (this.completed && this.sourceType === SourceType.PRIMARY) {
+            const statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+            statisticsAnalyst.reportMetric(
+                global.boardroom.getClosestOffice(this.pos)?.name ?? '',
+                'logisticsPrimaryThroughput',
+                Capacity.byId(creep.id)?.used ?? 0
+            )
+        }
         return result;
     }
 }
 
 export class DepotRequest extends LogisticsRequest {
-    private logisticsAnalyst: LogisticsAnalyst;
 
     constructor(
         public pos: RoomPosition,
@@ -69,7 +76,6 @@ export class DepotRequest extends LogisticsRequest {
         public sourceType = SourceType.STORAGE
     ) {
         super(pos, priority, capacity, sourceType);
-        this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
         if (this.capacity === -1) {
             this.capacity = STORAGE_CAPACITY
         }
@@ -86,29 +92,14 @@ export class DepotRequest extends LogisticsRequest {
         }
         const result = creep.drop(RESOURCE_ENERGY);
         this.completed = (result === OK);
-        return result;
-    }
-}
-
-export class DropRequest extends LogisticsRequest {
-    constructor(
-        public pos: RoomPosition,
-        public priority: number,
-        public capacity: number = -1,
-    ) {
-        super(pos, priority, capacity);
-        if (this.capacity === -1) {
-            this.capacity = STORAGE_CAPACITY
+        if (this.completed && this.sourceType === SourceType.PRIMARY) {
+            const statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+            statisticsAnalyst.reportMetric(
+                global.boardroom.getClosestOffice(this.pos)?.name ?? '',
+                'logisticsPrimaryThroughput',
+                Capacity.byId(creep.id)?.used ?? 0
+            )
         }
-    }
-
-    action(creep: Creep) {
-        // Wait for minions to request resources
-        if (!creep.pos.isNearTo(this.pos)) {
-            return travel(creep, this.pos)
-        }
-        const result = creep.drop(RESOURCE_ENERGY)
-        this.completed = (result === OK);
         return result;
     }
 }

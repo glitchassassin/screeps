@@ -191,7 +191,7 @@ export class LogisticsManager extends OfficeManager {
         return {
             data: {
                 income: Metrics.granularity(stats!.mineRate, 20),
-                throughput: Metrics.granularity(stats!.logisticsThroughput, 20),
+                throughput: Metrics.granularity(stats!.logisticsPrimaryThroughput, 20),
                 spawn: Metrics.granularity(stats!.spawnEnergyRate, 20),
                 waste: Metrics.granularity(stats!.deathLossesRate, 20),
                 storage: Metrics.granularity(stats!.storageFillRate, 20)
@@ -230,9 +230,9 @@ export class LogisticsManager extends OfficeManager {
         let mineRate = Metrics.avg(stats!.mineRate);
         let spawn = Metrics.avg(stats!.spawnEnergyRate);
         let waste = Metrics.avg(stats!.deathLossesRate);
-        let storage = Metrics.avg(stats!.storageFillRate);
+        let throughput = Metrics.avg(stats!.logisticsPrimaryThroughput);
         let upgrade = Metrics.avg(stats!.controllerUpgradeRate);
-        let max = Math.max(mineRate, spawn, waste, storage, upgrade);
+        let max = Math.max(mineRate, spawn, waste, throughput, upgrade);
         return {
             data: [
                 Bar({
@@ -250,7 +250,7 @@ export class LogisticsManager extends OfficeManager {
                 }),
                 Bar({
                     data: {
-                        value: storage,
+                        value: throughput,
                         maxValue: max,
                     },
                     config: {
