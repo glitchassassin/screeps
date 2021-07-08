@@ -11,6 +11,7 @@ import { RoomArchitect } from "./Architects/RoomArchitect";
 import { RoomData } from "WorldState/Rooms";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
+import { Structures } from "WorldState/Structures";
 import { calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
 export class SalesAnalyst extends BoardroomManager {
@@ -46,7 +47,11 @@ export class SalesAnalyst extends BoardroomManager {
     @MemoizeByTick((office: Office) => office.name)
     getExploitableFranchises(office: Office): CachedFranchise[] {
         let defenseAnalyst = this.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
-        let canExploit = Math.max(2, office.controller.level + 1);
+        let spawnCount = Structures.byRoom(office.name).filter(s => s.structureType === STRUCTURE_SPAWN).length
+        let canExploit = Math.max(
+            2,
+            Math.min(6, office.controller.level + 1) * spawnCount
+        );
         return FranchiseData.byOffice(office)
             .filter(f => f.distance && defenseAnalyst.getTerritoryIntent(f.pos.roomName) === TerritoryIntent.EXPLOIT)
             .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? -Infinity))
