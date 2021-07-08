@@ -49,17 +49,28 @@ export class SpawnStrategist extends OfficeManager {
         // Get current employee counts
         const employees = this.getEmployees();
 
-        // Calculate spawn pressure
-        const spawnPressure = Object.keys(spawnTargets)
+        // Calculate income spawn pressure
+        let priority = ['SALESMAN', 'CARRIER']
             .map(minion => ({
                 minion,
                 pressure: (employees[minion] ?? 0) / spawnTargets[minion]
             }))
             .filter(({pressure}) => pressure < 1)
             .sort((a, b) => a.pressure - b.pressure)
+            .shift()
 
-        // Submit request for lowest-pressure minion type
-        const minion = minionClasses[spawnPressure.shift()?.minion ?? '']
+        if (!priority) {
+            priority = Object.keys(spawnTargets)
+                .map(minion => ({
+                    minion,
+                    pressure: (employees[minion] ?? 0) / spawnTargets[minion]
+                }))
+                .filter(({pressure}) => pressure < 1)
+                .sort((a, b) => a.pressure - b.pressure)
+                .shift()
+        }
+
+        const minion = minionClasses[priority?.minion ?? '']
         if (minion) {
             this.submitRequest(minion)
         }
@@ -99,11 +110,13 @@ export class SpawnStrategist extends OfficeManager {
 
     getEmployees() {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let result = hrAnalyst.getEmployees(this.office, undefined, false).reduce((employees: Record<string, number>, creep: Creep) => {
-            employees[creep.memory.type ?? ''] ??= 0
-            employees[creep.memory.type ?? '']++;
-            return employees;
-        }, {})
+        let result = hrAnalyst.getEmployees(this.office, undefined, false)
+            .filter(c => (c.ticksToLive ?? 1500) > 100)
+            .reduce((employees: Record<string, number>, creep: Creep) => {
+                employees[creep.memory.type ?? ''] ??= 0
+                employees[creep.memory.type ?? '']++;
+                return employees;
+            }, {})
         return result;
     }
 

@@ -54,132 +54,66 @@ export class StatisticsAnalyst extends BoardroomManager {
         this.boardroom.offices.forEach(office => {
             if (!this.metrics.has(office.name)) {
                 this.metrics.set(office.name,  new PipelineMetrics());
-                //     new NonNegativeDeltaMetric( // mineRate
-                //         this.salesAnalyst.getUsableSourceLocations(office)
-                //             .reduce((sum, source) => (sum + (source instanceof Source ? source.energyCapacity : 0)), 0),
-                //         500
-                //     ),
-                //     new Metric( // mineContainerLevels
-                //         this.salesAnalyst.getUsableSourceLocations(office).length * CONTAINER_CAPACITY,
-                //         500
-                //     ),
-                //     new Metric( // roomEnergyLevels
-                //         Game.rooms[office.center.name].energyCapacityAvailable,
-                //         500
-                //     ),
-                //     new NonNegativeDeltaMetric( // spawnEnergyRate
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // storageLevels
-                //         Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.capacity ?? 0,
-                //         500
-                //     ),
-                //     new DeltaMetric( // storageFillRate
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // fleetLevels
-                //         this.logisticsAnalyst.getCarriers(office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
-                //         500
-                //     ),
-                //     new Metric( // mobileDepotLevels
-                //         this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0,
-                //         500
-                //     ),
-                //     new Metric( // controllerDepotLevels
-                //         Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.capacity || 0,
-                //         500
-                //     ),
-                //     new DeltaMetric( // controllerDepotFillRate
-                //         Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.capacity || 0,
-                //         500
-                //     ),
-                //     new NonNegativeDeltaMetric( // logisticsThroughput
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // buildRate
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // repairRate
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // upgradeRate
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // deathLossesRate
-                //         100,
-                //         500
-                //     ),
-                //     new Metric( // spawnUtilization
-                //         1,
-                //         500
-                //     ),
-                // ));
             } else {
                 let pipelineMetrics = this.metrics.get(office.name) as PipelineMetrics;
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.mineRate,
                     -this.salesAnalyst.getExploitableSources(office)
                         .reduce((sum, source) => (sum + (source.energy ?? 0)), 0),
-                    500
+                    600
                 );
                 Metrics.update(
                     pipelineMetrics.mineContainerLevels,
                     this.salesAnalyst.getExploitableSources(office)
                         .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0),
-                    500
+                    600
                 );
                 Metrics.update(
                     pipelineMetrics.roomEnergyLevels,
                     Game.rooms[office.name]?.energyAvailable ?? 0,
-                    500
+                    600
                 );
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.spawnEnergyRate,
                     Game.rooms[office.name]?.energyAvailable ?? 0,
-                    500
+                    600
                 );
                 Metrics.update(
                     pipelineMetrics.storageLevels,
                     Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
                     countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
-                    500
+                    600
                 );
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.storageFillRate,
                     Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
                     countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
-                    500
+                    600
                 );
                 let fleetLevel = this.logisticsAnalyst.getCarriers(office)
                     .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
-                Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 500);
-                Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsPrimaryThroughput, fleetLevel, 500);
+                Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 600);
+                Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsPrimaryThroughput, fleetLevel, 600);
                 Metrics.update(
                     pipelineMetrics.mobileDepotLevels,
                     this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.used ?? 0)), 0) ?? 0,
-                    500
+                    600
                 );
                 Metrics.update(
                     pipelineMetrics.controllerDepotLevels,
                     Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
-                    500
+                    600
                 );
                 Metrics.updateDelta(
                     pipelineMetrics.controllerDepotFillRate,
                     Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
-                    500
+                    600
                 );
-                Metrics.updateNonNegativeDelta(pipelineMetrics.controllerUpgradeRate, (Controllers.byRoom(office.name) as StructureController)?.progress ?? 0, 500)
+                Metrics.updateNonNegativeDelta(pipelineMetrics.controllerUpgradeRate, (Controllers.byRoom(office.name) as StructureController)?.progress ?? 0, 600)
                 Metrics.update(
                     pipelineMetrics.spawnUtilization,
                     this.hrAnalyst.getSpawns(office).filter(s => s.spawning).length,
-                    500
+                    600
                 );
 
                 let deathLosses = this.logisticsAnalyst.getTombstones(office)
@@ -189,13 +123,13 @@ export class StatisticsAnalyst extends BoardroomManager {
                 Metrics.update(
                     pipelineMetrics.deathLossesRate,
                     deathLosses,
-                    500
+                    600
                 );
 
                 Metrics.update(
                     pipelineMetrics.logisticsPrimaryThroughput,
                     this.tickMetrics[office.name]?.logisticsPrimaryThroughput ?? 0,
-                    500
+                    600
                 )
                 this.tickMetrics[office.name] = {};
             }
