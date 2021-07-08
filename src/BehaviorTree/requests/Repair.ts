@@ -2,6 +2,7 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
+import { BUILD_PRIORITIES } from "config";
 import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
 import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
@@ -14,7 +15,7 @@ export class RepairRequest extends MinionRequest {
     public structureId: Id<Structure>
 
     constructor(structure: CachedStructure, public repairToHits?: number) {
-        super();
+        super(BUILD_PRIORITIES[structure.structureType as BuildableStructureConstant] + 1);
         this.pos = structure.pos;
         this.structureId = structure.id;
         this.action = Selector(

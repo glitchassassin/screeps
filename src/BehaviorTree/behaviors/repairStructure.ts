@@ -3,6 +3,7 @@ import { CachedStructure, unwrapStructure } from "WorldState/Structures";
 
 import { Health } from "WorldState/Health";
 import { byId } from "utils/gameObjectSelectors";
+import { log } from "utils/logger";
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
@@ -21,13 +22,16 @@ export const repairStructure = (structure: CachedStructure, repairToHits?: numbe
     if (bb.repairToHits === undefined) bb.repairToHits = repairToHits;
 
     let health = Health.byId(bb.repairSite.id);
+    log('repairStructure', `health (target ${repairToHits}): ${health?.hits}/${health?.hitsMax}`)
     if (!health) return BehaviorResult.FAILURE;
     if (health.hits >= (bb.repairToHits !== undefined ? bb.repairToHits : health.hitsMax)) return BehaviorResult.SUCCESS;
 
     let target = byId(bb.repairSite.id);
+    log('repairStructure', `target ${target?.pos} (${target?.structureType})`)
     if (!target) return BehaviorResult.FAILURE;
 
     let result = creep.repair(target);
+    log('repairStructure', `result ${result}`)
     if (result === OK) return BehaviorResult.INPROGRESS;
     if (result === ERR_NOT_ENOUGH_ENERGY) return BehaviorResult.SUCCESS;
     return BehaviorResult.FAILURE;

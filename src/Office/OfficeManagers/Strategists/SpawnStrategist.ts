@@ -80,7 +80,10 @@ export class SpawnStrategist extends OfficeManager {
         spawnTargets['CARRIER'] = spawnTargets['SALESMAN'];
 
         const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
-        spawnTargets['ENGINEER'] = Math.min(10, Math.ceil(facilitiesManager.workPending() / (workPartsPerEngineer * 1500 * 2.5)));
+        spawnTargets['ENGINEER'] = Math.min(
+            spawnTargets['SALESMAN'],
+            Math.ceil(facilitiesManager.workPending() / (workPartsPerEngineer * 1500 * 2.5))
+        );
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {

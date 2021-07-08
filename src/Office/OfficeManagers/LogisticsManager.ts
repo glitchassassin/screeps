@@ -12,6 +12,7 @@ import { LogisticsRoute } from "Logistics/LogisticsRoute";
 import { Office } from "Office/Office";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { Sources } from "WorldState/Sources";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { lazyFilter } from "utils/lazyIterators";
 import { log } from "utils/logger";
@@ -225,6 +226,7 @@ export class LogisticsManager extends OfficeManager {
 
     miniReportBars = Rectangle({ data: Grid(() => {
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
+        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let stats = statisticsAnalyst.metrics.get(this.office.name);
 
         let mineRate = Metrics.avg(stats!.mineRate);
@@ -232,7 +234,12 @@ export class LogisticsManager extends OfficeManager {
         let waste = Metrics.avg(stats!.deathLossesRate);
         let throughput = Metrics.avg(stats!.logisticsPrimaryThroughput);
         let upgrade = Metrics.avg(stats!.controllerUpgradeRate);
-        let max = Math.max(mineRate, spawn, waste, throughput, upgrade);
+
+        // Theoretical maximum income if utilizing all franchises
+        let max = salesAnalyst.getExploitableFranchises(this.office)
+            .map(f => Sources.byId(f.id)?.energyCapacity ?? 1500)
+            .reduce((a, b) => a + b) / 300
+
         return {
             data: [
                 Bar({

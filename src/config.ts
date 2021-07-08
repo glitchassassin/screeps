@@ -2,3 +2,39 @@
  * Rooms around an Office to control as remote territories
  */
 export const TERRITORY_RADIUS = 1;
+
+/**
+ * Barrier level targets by RCL
+ */
+export const BARRIER_LEVEL: Record<number, number> = {
+    1: 3e+3,
+    2: 3e+3,
+    3: 1e+4,
+    4: 5e+4,
+    5: 1e+5,
+    6: 1e+5,
+    7: 1e+5,
+    8: 1e+5,
+}
+
+/**
+ * Build priorities
+ */
+export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
+    [STRUCTURE_CONTAINER]:      5,
+    [STRUCTURE_EXTENSION]:      5,
+    [STRUCTURE_EXTRACTOR]:      5,
+    [STRUCTURE_FACTORY]:        5,
+    [STRUCTURE_LAB]:            5,
+    [STRUCTURE_LINK]:           5,
+    [STRUCTURE_NUKER]:          5,
+    [STRUCTURE_OBSERVER]:       5,
+    [STRUCTURE_POWER_SPAWN]:    5,
+    [STRUCTURE_RAMPART]:        5,
+    [STRUCTURE_ROAD]:           2,
+    [STRUCTURE_SPAWN]:          5,
+    [STRUCTURE_STORAGE]:        5,
+    [STRUCTURE_TERMINAL]:       5,
+    [STRUCTURE_TOWER]:          5,
+    [STRUCTURE_WALL]:           5,
+}

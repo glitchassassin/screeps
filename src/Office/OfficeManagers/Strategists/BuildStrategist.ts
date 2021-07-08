@@ -1,5 +1,7 @@
+import { BARRIER_LEVEL } from "config";
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { FacilitiesManager } from "../FacilitiesManager";
+import { Health } from "WorldState/Health";
 import { OfficeManager } from "Office/OfficeManager";
 import { RoomArchitect } from "Boardroom/BoardroomManagers/Architects/RoomArchitect";
 import { RoomData } from "WorldState/Rooms";
@@ -44,6 +46,23 @@ export class BuildStrategist extends OfficeManager {
                     if (!facilitiesManager.requests.includes(req)) {
                         facilitiesManager.submit(req);
                         structureCounts[c.structureType] = existingStructures + 1;
+                    }
+                }
+            } else {
+                let health = Health.byId(c.structure.id);
+                let barrierLevel = BARRIER_LEVEL[(getRcl(this.office.name) ?? 1)] ?? 0
+                // Barrier heuristic
+                if (c.structureType === STRUCTURE_WALL || c.structureType === STRUCTURE_RAMPART) {
+                    if ((health?.hits ?? 0) < barrierLevel * 0.5) {
+                        let req = c.generateRepairRequest(barrierLevel);
+                        if (req && !facilitiesManager.requests.includes(req)) {
+                            facilitiesManager.submit(req);
+                        }
+                    }
+                } else if ((health?.hits ?? 0) < (health?.hitsMax ?? 0) * 0.5) {
+                    let req = c.generateRepairRequest();
+                    if (req && !facilitiesManager.requests.includes(req)) {
+                        facilitiesManager.submit(req);
                     }
                 }
             }

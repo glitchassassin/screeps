@@ -1,9 +1,10 @@
-import { BehaviorResult } from "BehaviorTree/Behavior";
-import { BuildRequest } from "BehaviorTree/requests/Build";
-import profiler from "screeps-profiler";
-import { byId } from "utils/gameObjectSelectors";
 import { CachedStructure, Structures } from "WorldState/Structures";
 
+import { BehaviorResult } from "BehaviorTree/Behavior";
+import { BuildRequest } from "BehaviorTree/requests/Build";
+import { RepairRequest } from "BehaviorTree/requests/Repair";
+import { byId } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
@@ -12,6 +13,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     ) {}
     _structure?: CachedStructure<Structure<T>>;
     buildRequest?: BuildRequest;
+    repairRequest?: RepairRequest;
 
     get structure() {
         if (Game.rooms[this.pos.roomName] && byId(this._structure?.id)) {
@@ -36,6 +38,12 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
             this.buildRequest = new BuildRequest(this.pos, this.structureType);
         }
         return this.buildRequest;
+    }
+    generateRepairRequest(targetHealth?: number) {
+        if (this.structure && this.repairRequest?.result !== BehaviorResult.INPROGRESS) {
+            this.repairRequest = new RepairRequest(this.structure, targetHealth);
+        }
+        return this.repairRequest;
     }
     visualize() {
         let vis = new RoomVisual(this.pos.roomName);

@@ -14,7 +14,6 @@ import { LinkManager } from "./OfficeManagers/LinkManager";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
-import { RepairStrategist } from "Office/OfficeManagers/Strategists/RepairStrategist";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SalesStrategist } from "Office/OfficeManagers/Strategists/SalesStrategist";
 import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
@@ -132,8 +131,7 @@ export class Office {
         LegalStrategist.register(this);
         SalesStrategist.register(this);
         DefenseStrategist.register(this);
-        BuildStrategist.register(this);
-        RepairStrategist.register(this);
+        BuildStrategist.register(this);;
         StorageStrategist.register(this);
         SurveyStrategist.register(this);
         SpawnStrategist.register(this);
