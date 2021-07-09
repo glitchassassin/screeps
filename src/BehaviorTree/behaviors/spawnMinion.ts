@@ -18,7 +18,11 @@ declare module 'BehaviorTree/Behavior' {
  */
 export const spawnMinion = (type: Minion) => (spawn: StructureSpawn, bb: Blackboard) => {
     if (!bb.maxRoomEnergy) return BehaviorResult.FAILURE;
-    if (bb.spawnMinionName && Game.creeps[bb.spawnMinionName] && !Game.creeps[bb.spawnMinionName].spawning) return BehaviorResult.SUCCESS;
+    if (bb.spawnMinionName && Game.creeps[bb.spawnMinionName] && !Game.creeps[bb.spawnMinionName].spawning) {
+        // Creep has spawned - disable alerts
+        Game.creeps[bb.spawnMinionName].notifyWhenAttacked(false);
+        return BehaviorResult.SUCCESS;
+    }
 
 
     let {body, name, memory} = type.build({office: spawn.pos.roomName}, bb.maxRoomEnergy);
