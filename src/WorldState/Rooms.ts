@@ -19,6 +19,11 @@ declare global {
             data: Record<string, GreyCompany.RoomCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            RoomData: typeof RoomData
+        }
+    }
 }
 export type CachedRoom = {
     name: string,
@@ -55,5 +60,7 @@ export class RoomData {
         Memory.Rooms.data[roomName] = roomCache;
     }
 }
+
+global.RoomData = RoomData;
 
 registerCachePurger(RoomData.purge);

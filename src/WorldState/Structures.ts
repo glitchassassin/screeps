@@ -23,6 +23,11 @@ declare global {
             data: Record<string, GreyCompany.StructureCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            Structures: typeof Structures
+        }
+    }
 }
 export type CachedStructure<T extends Structure = Structure> = T | {
     pos: RoomPosition,
@@ -109,6 +114,8 @@ export const Structures = {
         }
     }
 }
+
+global.Structures = Structures;
 
 // Register the cache refresh
 registerCacheRefresher(Structures.refreshCache);

@@ -23,6 +23,11 @@ declare global {
             data: Record<string, GreyCompany.ConstructionSiteCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            ConstructionSites: typeof ConstructionSites
+        }
+    }
 }
 export type CachedConstructionSite = ConstructionSite | {
     pos: RoomPosition,
@@ -121,6 +126,8 @@ export const ConstructionSites = {
         }
     }
 }
+
+global.ConstructionSites = ConstructionSites
 
 // Register the cache refresh
 registerCacheRefresher(ConstructionSites.refreshCache);

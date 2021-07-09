@@ -25,6 +25,11 @@ declare global {
             data: Record<string, GreyCompany.MineralCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            Minerals: typeof Minerals
+        }
+    }
 }
 export type CachedMineral = Mineral | {
     pos: RoomPosition,
@@ -89,6 +94,8 @@ export class Minerals {
         }
     }
 }
+
+global.Minerals = Minerals
 
 // Register the cache refresh
 registerCacheRefresher(Minerals.refreshCache);

@@ -22,6 +22,11 @@ declare global {
             data: Record<string, GreyCompany.LegalCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            LegalData: typeof LegalData
+        }
+    }
 }
 export type CachedLegal = {
     id: Id<StructureController>,
@@ -85,6 +90,7 @@ export const LegalData = {
     }
 }
 
+global.LegalData = LegalData;
 
 registerCachePurger(LegalData.purge);
 

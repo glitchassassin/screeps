@@ -27,6 +27,11 @@ declare global {
             data: Record<string, GreyCompany.FranchiseCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            FranchiseData: typeof FranchiseData
+        }
+    }
 }
 export type CachedFranchise = {
     id: Id<Source>,
@@ -99,6 +104,8 @@ export const FranchiseData = {
         }
     }
 }
+
+global.FranchiseData = FranchiseData;
 
 registerCachePurger(FranchiseData.purge);
 

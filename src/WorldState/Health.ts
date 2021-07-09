@@ -16,6 +16,11 @@ declare global {
             }
         }
     }
+    namespace NodeJS {
+        interface Global {
+            Health: typeof Health
+        }
+    }
 }
 
 /**
@@ -23,8 +28,8 @@ declare global {
  * Only caches data for:
  * - [Heap] Containers in a room not owned by me
  */
-export class Health {
-    static byId(id: Id<Creep|Structure>|undefined) {
+export const Health = {
+    byId(id: Id<Creep|Structure>|undefined) {
         if (id === undefined) return undefined;
         let obj = Game.getObjectById(id);
         if (!obj) {
@@ -34,11 +39,11 @@ export class Health {
             hits: obj?.hits,
             hitsMax: obj?.hitsMax
         }
-    }
-    static purge() {
+    },
+    purge() {
         global.Heap.Health = {idByRoom: {}, data: {}};
-    }
-    static refreshCache() {
+    },
+    refreshCache() {
         // Initialize the Heap branch, if necessary
         global.Heap.Health ??= {idByRoom: {}, data: {}};
 
@@ -69,6 +74,8 @@ export class Health {
         }
     }
 }
+
+global.Health = Health;
 
 // Register the cache refresh
 registerCacheRefresher(Health.refreshCache);

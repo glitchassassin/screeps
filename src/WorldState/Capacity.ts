@@ -17,6 +17,11 @@ declare global {
             }
         }
     }
+    namespace NodeJS {
+        interface Global {
+            Capacity: typeof Capacity
+        }
+    }
 }
 
 /**
@@ -86,6 +91,8 @@ export class Capacity {
         }
     }
 }
+
+global.Capacity = Capacity;
 
 // Register the cache refresh
 registerCacheRefresher(Capacity.refreshCache);

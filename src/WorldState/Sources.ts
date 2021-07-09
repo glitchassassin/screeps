@@ -23,6 +23,11 @@ declare global {
             data: Record<string, GreyCompany.SourceCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            Sources: typeof Sources
+        }
+    }
 }
 export type CachedSource = Source | {
     pos: RoomPosition,
@@ -98,6 +103,8 @@ export class Sources {
         }
     }
 }
+
+global.Sources = Sources;
 
 // Register the cache refresh
 registerCacheRefresher(Sources.refreshCache);

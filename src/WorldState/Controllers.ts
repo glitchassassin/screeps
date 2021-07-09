@@ -24,6 +24,11 @@ declare global {
             data: Record<string, GreyCompany.ControllerCache>;
         }
     }
+    namespace NodeJS {
+        interface Global {
+            Controllers: typeof Controllers
+        }
+    }
 }
 export type CachedController = StructureController | {
     pos: RoomPosition,
@@ -105,6 +110,8 @@ export class Controllers {
         }
     }
 }
+
+global.Controllers = Controllers;
 
 // Register the cache refresh
 registerCacheRefresher(Controllers.refreshCache);

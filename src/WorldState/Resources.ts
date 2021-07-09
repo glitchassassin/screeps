@@ -4,6 +4,14 @@ import { RoomData } from "./Rooms";
 import { packPos } from "utils/packrat";
 import profiler from "screeps-profiler";
 
+declare global {
+    namespace NodeJS {
+        interface Global {
+            Resources: typeof Resources
+        }
+    }
+}
+
 export class Resources {
     static byId(id: Id<Resource>|undefined): Resource|undefined {
         if (id === undefined) return undefined;
@@ -35,5 +43,7 @@ export class Resources {
         }
     }
 }
+
+global.Resources = Resources;
 
 profiler.registerClass(Resources, 'Resources');
