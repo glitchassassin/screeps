@@ -36,8 +36,7 @@ export class OfficeTaskManager extends OfficeManager {
         let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         log(this.constructor.name, `.run CPU: ${Game.cpu.getUsed()}`)
         // Sort requests by priority descending, then by proximity to spawn
-        let [spawn] = hrAnalyst.getSpawns(this.office);
-        let target = (spawn? spawn.pos : new RoomPosition(25, 25, this.office.name)) as RoomPosition;
+        let target = this.office.controller.pos;
 
         log(this.constructor.name, `.run assigning ${this.getAvailableCreeps().length} minions...`)
         if (this.getAvailableCreeps().length > 0) {

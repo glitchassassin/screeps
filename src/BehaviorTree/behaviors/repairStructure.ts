@@ -33,6 +33,5 @@ export const repairStructure = (structure: CachedStructure, repairToHits?: numbe
     let result = creep.repair(target);
     log('repairStructure', `result ${result}`)
     if (result === OK) return BehaviorResult.INPROGRESS;
-    if (result === ERR_NOT_ENOUGH_ENERGY) return BehaviorResult.SUCCESS;
     return BehaviorResult.FAILURE;
 }

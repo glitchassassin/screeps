@@ -50,7 +50,7 @@ export class SalesAnalyst extends BoardroomManager {
         let spawnCount = Structures.byRoom(office.name).filter(s => s.structureType === STRUCTURE_SPAWN).length
         let canExploit = Math.max(
             2,
-            Math.min(6, office.controller.level + 1) * spawnCount
+            Math.min(5, office.controller.level + 1) * spawnCount
         );
         return FranchiseData.byOffice(office)
             .filter(f => f.distance && defenseAnalyst.getTerritoryIntent(f.pos.roomName) === TerritoryIntent.EXPLOIT)

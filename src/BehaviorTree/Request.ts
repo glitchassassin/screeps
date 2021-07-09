@@ -9,6 +9,8 @@ export abstract class Request<T extends Creep|StructureSpawn> {
     public blackboards = new Map<Id<T>, Blackboard>();
 
     public assigned: Id<T>[] = [];
+    public onAssigned = () => {};
+
     public assign(target: T) {
         if (!this.canBeFulfilledBy(target) || this.assigned.includes(target.id as Id<T>)) {
             return false;
@@ -16,6 +18,11 @@ export abstract class Request<T extends Creep|StructureSpawn> {
 
         this.assigned.push(target.id as Id<T>);
         this.blackboards.set(target.id as Id<T>, {});
+
+        if (this.assigned.length === 1) {
+            this.onAssigned();
+        }
+
         return true;
     }
 

@@ -40,7 +40,12 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         return this.buildRequest;
     }
     generateRepairRequest(targetHealth?: number) {
-        if (this.structure && this.repairRequest?.result !== BehaviorResult.INPROGRESS) {
+        if (this.structure && (
+            !this.repairRequest || (
+                this.repairRequest?.result === BehaviorResult.FAILURE ||
+                this.repairRequest?.result === BehaviorResult.SUCCESS
+            )
+        )) {
             this.repairRequest = new RepairRequest(this.structure, targetHealth);
         }
         return this.repairRequest;

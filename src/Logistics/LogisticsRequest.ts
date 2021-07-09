@@ -1,5 +1,8 @@
+import { BehaviorResult } from "BehaviorTree/Behavior";
+import { BuildRequest } from "BehaviorTree/requests/Build";
 import { CachedStructure } from "WorldState/Structures";
 import { Capacity } from "WorldState/Capacity";
+import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { SourceType } from "./LogisticsSource";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { byId } from "utils/gameObjectSelectors";
@@ -101,6 +104,23 @@ export class DepotRequest extends LogisticsRequest {
             )
         }
         return result;
+    }
+}
+
+export class SupportRequest extends DepotRequest {
+    constructor(
+        public req: BuildRequest|RepairRequest,
+        capacity: number
+    ) {
+        super(req.pos, req.priority, capacity, SourceType.STORAGE);
+    }
+
+    action(creep: Creep) {
+        if (this.req.result && this.req.result !== BehaviorResult.INPROGRESS) {
+            this.completed = true;
+            return OK;
+        }
+        return super.action(creep)
     }
 }
 

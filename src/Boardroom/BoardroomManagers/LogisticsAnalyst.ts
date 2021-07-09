@@ -121,7 +121,7 @@ export class LogisticsAnalyst extends BoardroomManager {
     getStorageSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         let rcl = Controllers.byRoom(office.name)?.level;
         let storage = this.getStorage(office);
-        let storageCapacity = storage ? Capacity.byId(storage.id)?.used ?? 0 : 0;
+        let storageCapacity = Capacity.byId(storage?.id)?.used ?? 0;
         if (rcl && storage && (emergency || storageCapacity > STORAGE_GOALS[rcl]))
             return [storage];
         return [];
