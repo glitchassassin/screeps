@@ -91,14 +91,12 @@ export class MapAnalyst {
         if (!room) return costs;
 
         for (let struct of Structures.byRoom(roomName)) {
-          if (struct.structureType === STRUCTURE_ROAD) {
-            // Favor roads over plain tiles
-            costs.set(struct.pos.x, struct.pos.y, 1);
-          } else if (struct.structureType !== STRUCTURE_CONTAINER &&
-                     (struct.structureType !== STRUCTURE_RAMPART ||
-                      !("my" in struct && struct.my))) {
+          if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
             // Can't walk through non-walkable buildings
             costs.set(struct.pos.x, struct.pos.y, 0xff);
+          } else if (struct.structureType === STRUCTURE_ROAD) {
+            // Favor roads over plain tiles
+            costs.set(struct.pos.x, struct.pos.y, 1);
           }
         }
 
