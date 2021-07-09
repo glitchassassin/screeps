@@ -94,7 +94,7 @@ export class MapAnalyst {
           if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
             // Can't walk through non-walkable buildings
             costs.set(struct.pos.x, struct.pos.y, 0xff);
-          } else if (struct.structureType === STRUCTURE_ROAD) {
+          } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
             // Favor roads over plain tiles
             costs.set(struct.pos.x, struct.pos.y, 1);
           }
