@@ -88,7 +88,7 @@ export class SpawnStrategist extends OfficeManager {
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
 
         spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
-        spawnTargets['CARRIER'] = spawnTargets['SALESMAN'];
+        spawnTargets['CARRIER'] = Math.max(spawnTargets['SALESMAN'], franchiseCount * 1.5);
 
         const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
         spawnTargets['ENGINEER'] = Math.min(

@@ -10,7 +10,6 @@ import { PlannedStructure } from './classes/PlannedStructure';
 import { Sources } from 'WorldState/Sources';
 import { TerritoryFranchisePlan } from './TerritoryFranchise';
 import { fillExtensions } from './ExtensionsPlan';
-import profiler from 'screeps-profiler';
 
 export class RoomArchitect extends BoardroomManager {
     roomPlans = new Map<string, BlockPlan>();
@@ -23,7 +22,7 @@ export class RoomArchitect extends BoardroomManager {
         for (let room of RoomData.all()) {
             if (Game.cpu.getUsed() - start > 5) break; // Don't spend more than 5 CPU/tick doing room planning
 
-            if (room.roomPlan !== '' && this.roomPlans.has(room.name)) continue;
+            if (room.roomPlan && this.roomPlans.has(room.name)) continue;
 
             if (room.roomPlan) {
                 if (room.roomPlan.startsWith('FAILED')) {
@@ -104,7 +103,7 @@ export class RoomArchitect extends BoardroomManager {
             franchises.sort((a, b) => a.rangeToController - b.rangeToController);
 
             roomBlock.structures.push(...franchises.map(f => f.container));
-            roomBlock.structures.push(...franchises.flatMap(f => f.roads));
+            // roomBlock.structures.push(...franchises.flatMap(f => f.roads));
 
             room.roomPlan = roomBlock.serialize();
 
