@@ -38,3 +38,7 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_TOWER]:          5,
     [STRUCTURE_WALL]:           5,
 }
+
+export const WHITELIST = [
+    'CrAzYDubC'
+]

@@ -7,6 +7,7 @@ import { RoomData } from "WorldState/Rooms";
 import { RoomPlanningAnalyst } from "./RoomPlanningAnalyst";
 import { Sources } from "WorldState/Sources";
 import { Structures } from "WorldState/Structures";
+import { WHITELIST } from "config";
 
 export enum TerritoryIntent {
     AVOID = 'AVOID',
@@ -15,10 +16,6 @@ export enum TerritoryIntent {
     EXPLOIT = 'EXPLOIT',
     IGNORE = 'IGNORE'
 }
-
-export const WHITELIST = [
-    'CrAzYDubC'
-]
 
 export class DefenseAnalyst {
     @MemoizeByTick((office: Office) => office.name)
