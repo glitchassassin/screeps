@@ -70,7 +70,7 @@ export class LegalManager extends OfficeTaskManager {
             controller.containerId = Structures.byPos(controller.containerPos)[0]?.id as Id<StructureContainer>
         }
         if (controller.linkPos && !byId(controller.linkId)) {
-            controller.linkId = Structures.byPos(controller.linkPos)[0]?.id as Id<StructureLink>
+            controller.linkId = Structures.byPos(controller.linkPos).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>
         }
         LegalData.set(controller.id, controller, this.office.name);
     }
