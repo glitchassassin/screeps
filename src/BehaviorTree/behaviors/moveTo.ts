@@ -1,6 +1,6 @@
 import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
+import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
-import { Controllers } from "WorldState/Controllers";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { log } from "utils/logger";
 
@@ -29,9 +29,11 @@ export class Route {
                 creep.pos.roomName,
                 this.pos.roomName,
                 {
-                    routeCallback(roomName, fromRoomName) {
-                        let controller = Controllers.byRoom(roomName);
-                        if (controller && controller.owner && !controller.my) return Infinity;
+                    routeCallback: (roomName, fromRoomName) => {
+                        if (
+                            roomName !== this.pos.roomName &&
+                            DefenseAnalyst.getTerritoryIntent(roomName) === TerritoryIntent.AVOID
+                        ) return Infinity;
                         return 1;
                     }
                 }
