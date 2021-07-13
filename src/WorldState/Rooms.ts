@@ -1,4 +1,5 @@
 import { Office } from "Office/Office";
+import { TerritoryIntent } from "Analysts/DefenseAnalyst";
 import { registerCachePurger } from "./registerCachePurger";
 
 declare global {
@@ -8,7 +9,9 @@ declare global {
             city?: string,
             lastHostileActivity?: number,
             roomPlan?: string,
-            territoryOf?: string
+            territoryOf?: string,
+            intent?: TerritoryIntent,
+            intentExpires?: number,
         }
         interface Heap {
             CacheRefreshers: Function[];

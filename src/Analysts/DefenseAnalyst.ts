@@ -61,8 +61,21 @@ export class DefenseAnalyst {
         let controller = Controllers.byRoom(roomName);
         let roomPlan = RoomPlanningAnalyst.getOfficeRoomPlan(roomName);
         let sources = Sources.byRoom(roomName);
+        let room = RoomData.byRoom(roomName);
         if (!controller) {
             return TerritoryIntent.IGNORE;
+        }
+        // Return the saved intent, or remove it if expired
+        if (room?.intent) {
+            if (room.intentExpires && Game.time <= room.intentExpires) {
+                return room.intent;
+            } else {
+                RoomData.set(roomName, {
+                    ...room,
+                    intent: undefined,
+                    intentExpires: undefined
+                })
+            }
         }
         if (!controller.my && controller.owner?.username) {
             return TerritoryIntent.AVOID;
