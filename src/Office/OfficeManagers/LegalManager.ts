@@ -3,6 +3,9 @@ import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
 import { Controllers } from "WorldState/Controllers";
 import { LegalData } from "WorldState/LegalData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { RoomPlanningAnalyst } from "Analysts/RoomPlanningAnalyst";
+import { Structures } from "WorldState/Structures";
+import { byId } from "utils/gameObjectSelectors";
 
 export class LegalManager extends OfficeTaskManager {
     minionTypes = ['PARALEGAL', 'LAWYER'];
@@ -47,6 +50,30 @@ export class LegalManager extends OfficeTaskManager {
             }) })
         },
     ]
+
+    plan() {
+        let controller = LegalData.byRoom(this.office.name)
+        if (!controller && Game.rooms[this.office.name].controller) {
+            controller = {
+                id: Game.rooms[this.office.name].controller!.id,
+                pos: Game.rooms[this.office.name].controller!.pos
+            }
+        };
+        if (!controller) return;
+        // Initialize properties
+        if (!controller.containerPos || !controller.linkPos) {
+            let {container, link} = RoomPlanningAnalyst.getHeadquartersPlan(this.office.name) ?? {}
+            controller.containerPos = container?.pos;
+            controller.linkPos = link?.pos;
+        }
+        if (controller.containerPos && !byId(controller.containerId)) {
+            controller.containerId = Structures.byPos(controller.containerPos)[0]?.id as Id<StructureContainer>
+        }
+        if (controller.linkPos && !byId(controller.linkId)) {
+            controller.linkId = Structures.byPos(controller.linkPos)[0]?.id as Id<StructureLink>
+        }
+        LegalData.set(controller.id, controller, this.office.name);
+    }
 
     run() {
         super.run()

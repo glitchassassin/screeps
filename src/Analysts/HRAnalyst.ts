@@ -1,19 +1,18 @@
-import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { MemoizeByTick } from "utils/memoize";
-import { Office } from "Office/Office";
+import type { Office } from "Office/Office";
 import { Structures } from "WorldState/Structures";
 
-export class HRAnalyst extends BoardroomManager {
+export class HRAnalyst {
     @MemoizeByTick((office: Office) => office.name)
-    getExtensions(office: Office) {
+    static getExtensions(office: Office) {
         return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_EXTENSION) as StructureExtension[];
     }
     @MemoizeByTick((office: Office) => office.name)
-    getSpawns(office: Office) {
+    static getSpawns(office: Office) {
         return Structures.byRoom(office.center.name).filter(s => s.structureType === STRUCTURE_SPAWN) as StructureSpawn[];
     }
     @MemoizeByTick((office: Office, type?: string, excludeSpawning = true) => ('' + office.name + type + (excludeSpawning ? 'true' : 'false')))
-    getEmployees(office: Office, type?: string, excludeSpawning = true) {
+    static getEmployees(office: Office, type?: string, excludeSpawning = true) {
         return Object.values(Game.creeps).filter(creep => (
             creep.memory.office === office.name &&
             (!type || creep.memory.type === type) &&
@@ -21,7 +20,7 @@ export class HRAnalyst extends BoardroomManager {
         ))
     }
     @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
-    newestEmployee(office: Office, type?: string) {
+    static newestEmployee(office: Office, type?: string) {
         let max = undefined;
         for (let employee of this.getEmployees(office, type, false)) {
             if (type && employee.memory.type !== type) continue;
@@ -34,7 +33,7 @@ export class HRAnalyst extends BoardroomManager {
         return max;
     }
     @MemoizeByTick((office: Office, type?: string) => ('' + office.name + type))
-    oldestEmployee(office: Office, type?: string) {
+    static oldestEmployee(office: Office, type?: string) {
         let min = undefined; // Max actual TTL should be 1500
         for (let employee of this.getEmployees(office, type)) {
             if (employee.memory.type !== type) continue;

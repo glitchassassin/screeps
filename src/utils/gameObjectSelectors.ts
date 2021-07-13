@@ -1,12 +1,7 @@
 import { CachedConstructionSite } from "WorldState/ConstructionSites";
-import { CachedFranchise } from "WorldState/FranchiseData";
 import { Capacity } from "WorldState/Capacity";
 import { Controllers } from "WorldState/Controllers";
 import { Health } from "WorldState/Health";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
-import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
-import { MapAnalyst } from "Analysts/MapAnalyst";
-import { Office } from "Office/Office";
 
 export function getBuildEnergyRemaining(target: CachedConstructionSite) {
     return (target.progressTotal ?? 0) - (target.progress ?? 0);
@@ -23,30 +18,6 @@ export function getCreepHomeOffice(creep: Creep) {
     if (!creep.memory.office) return;
     return global.boardroom.offices.get(creep.memory.office);
 }
-export function countEnergyInContainersOrGround(pos?: RoomPosition) {
-    if (!pos) return 0;
-    let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-    return logisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
-}
-export function calculateFranchiseSurplus(franchise: CachedFranchise) {
-    let linkCapacity = Capacity.byId(franchise.linkId)?.used ?? 0;
-    return countEnergyInContainersOrGround(franchise.pos) + linkCapacity;
-}
-
-export function sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) {
-    let distance = new Map<RoomPosition, number>();
-    return (a: T, b: T) => {
-        let aPos = (a instanceof RoomPosition) ? a : (a as _HasRoomPosition).pos
-        let bPos = (b instanceof RoomPosition) ? b : (b as _HasRoomPosition).pos
-        if (!distance.has(aPos)){
-            distance.set(aPos, MapAnalyst.getRangeTo(pos, aPos))
-        }
-        if (!distance.has(bPos)) distance.set(bPos, MapAnalyst.getRangeTo(pos, bPos))
-        return (distance.get(aPos) as number) - (distance.get(bPos) as number)
-    }
-}
-// profiler.registerFN(sortByDistanceTo, 'sortByDistanceTo');
-
 
 export function RoomPos(pos: {x: number, y: number, roomName: string}) {
     return new RoomPosition(pos.x, pos.y, pos.roomName);
@@ -75,19 +46,6 @@ export function rclIsGreaterThan(roomName: string, level: number) {
 
 export function getRcl(roomName: string) {
     return Controllers.byRoom(roomName)?.level;
-}
-
-export function unassignedLogisticsRequestsPercent(office: Office) {
-    let logisticsManager = office.managers.get('LogisticsManager') as LogisticsManager;
-    let total = 0;
-    let unassigned = 0;
-    for (let [,req] of logisticsManager.requests) {
-        total++;
-        if (!req.assigned) {
-            unassigned++;
-        }
-    }
-    return unassigned / total;
 }
 
 export function getCreepsById(...args: Id<Creep>[]) {

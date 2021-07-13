@@ -3,9 +3,10 @@ import { BuildRequest } from "BehaviorTree/requests/Build";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { Health } from "WorldState/Health";
 import { LogisticsManager } from "../LogisticsManager";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
-import { RoomArchitect } from "Boardroom/BoardroomManagers/Architects/RoomArchitect";
 import { RoomData } from "WorldState/Rooms";
+import { RoomPlanningAnalyst } from "Analysts/RoomPlanningAnalyst";
 import { Structures } from "WorldState/Structures";
 import { SupportRequest } from "Logistics/LogisticsRequest";
 import { getRcl } from "utils/gameObjectSelectors";
@@ -19,7 +20,6 @@ export class BuildStrategist extends OfficeManager {
     planRoom(roomName: string) {
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
-        let roomArchitect = global.boardroom.managers.get('RoomArchitect') as RoomArchitect;
         // Select valid structures
         let rcl = getRcl(roomName) ?? 0;
         let structureCounts: Record<string, number> = {};
@@ -36,7 +36,7 @@ export class BuildStrategist extends OfficeManager {
 
         // Submit requests, up to the quota, from the build plan,
         // once every 50 ticks
-        let plan = roomArchitect.roomPlans.get(roomName);
+        let plan = RoomPlanningAnalyst.getRoomPlan(roomName);
         if (!plan || Game.time % 100 !== 0) return;
         for (let c of plan.structures) {
             c.survey();
@@ -47,12 +47,32 @@ export class BuildStrategist extends OfficeManager {
                 if (existingStructures < availableStructures) {
                     let req = c.generateBuildRequest();
                     if (!facilitiesManager.requests.includes(req)) {
-                        if (c.structureType !== STRUCTURE_ROAD) {
-                            req.onAssigned = () => {
-                                logisticsManager.submit(req.pos.toString(), new SupportRequest(req, CONSTRUCTION_COST[c.structureType]));
+                        if (
+                            c.structureType === STRUCTURE_SPAWN &&
+                            !Structures.byRoom(roomName).some(s => s.structureType === STRUCTURE_SPAWN)
+                        ) {
+                            // No spawns - request help from neighboring office
+                            const neighbor = [...global.boardroom.offices.values()]
+                                .filter(o => o.name !== roomName)
+                                .sort(MapAnalyst.sortByDistanceToRoom(roomName))
+                                .shift()
+
+                            if (neighbor) {
+                                req.priority = 4;
+                                (neighbor.managers.get('LogisticsManager') as LogisticsManager).submit(
+                                    req.pos.toString(),
+                                    new SupportRequest(req, CONSTRUCTION_COST[c.structureType])
+                                );
+                                (neighbor.managers.get('FacilitiesManager') as FacilitiesManager).submit(req);
                             }
+                        } else {
+                            if (c.structureType !== STRUCTURE_ROAD) {
+                                req.onAssigned = () => {
+                                    logisticsManager.submit(req.pos.toString(), new SupportRequest(req, CONSTRUCTION_COST[c.structureType]));
+                                }
+                            }
+                            facilitiesManager.submit(req);
                         }
-                        facilitiesManager.submit(req);
                         structureCounts[c.structureType] = existingStructures + 1;
                     }
                 }

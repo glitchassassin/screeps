@@ -5,6 +5,7 @@ import { BoardroomManager } from 'Boardroom/BoardroomManager';
 import { Controllers } from 'WorldState/Controllers';
 import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
+import { MapAnalyst } from 'Analysts/MapAnalyst';
 import { Office } from 'Office/Office';
 import { PlannedStructure } from './classes/PlannedStructure';
 import { Sources } from 'WorldState/Sources';
@@ -80,6 +81,13 @@ export class RoomArchitect extends BoardroomManager {
             console.log(`Room planning for ${room.name} failed - Sources too close together`);
             return false;
         }
+
+        const terrainTypeCount = MapAnalyst.countTerrainTypes(room.name);
+
+        if ((terrainTypeCount.swamp * 1.5) > terrainTypeCount.plains) {
+            console.log(`Room planning for ${room.name} failed - Too much swamp`);
+            return false;
+        }
         return true;
     }
 
@@ -138,14 +146,14 @@ export class RoomArchitect extends BoardroomManager {
         } catch (e) {
             room.roomPlan = 'FAILED generating franchises';
             console.log(room.roomPlan, e);
-            return roomBlock;
+            return new BlockPlan();
         }
         try {
             headquarters = new HeadquartersPlan(room.name);
         } catch (e) {
             room.roomPlan = 'FAILED generating headquarters';
             console.log(room.roomPlan, e);
-            return roomBlock;
+            return new BlockPlan();
         }
 
         // Sort structures by build order
@@ -186,7 +194,7 @@ export class RoomArchitect extends BoardroomManager {
         } catch (e) {
             room.roomPlan = 'FAILED generating extensions';
             console.log(room.roomPlan, e);
-            return roomBlock;
+            return new BlockPlan();
         }
 
         room.roomPlan = roomBlock.serialize();

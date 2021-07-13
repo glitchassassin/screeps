@@ -1,10 +1,10 @@
 import { BehaviorResult } from "BehaviorTree/Behavior";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { Table } from "screeps-viz";
 import { log } from "utils/logger";
-import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class OfficeTaskManager extends OfficeManager {
     requests: MinionRequest[] = [];
@@ -33,7 +33,6 @@ export class OfficeTaskManager extends OfficeManager {
         this.requests.push(request);
     }
     run() {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         log(this.constructor.name, `.run CPU: ${Game.cpu.getUsed()}`)
         // Sort requests by priority descending, then by proximity to spawn
         let target = this.office.controller.pos;
@@ -43,7 +42,7 @@ export class OfficeTaskManager extends OfficeManager {
             this.requests.sort((a, b) => {
                 let p = b.priority - a.priority;
                 if (p !== 0) return p;
-                return sortByDistanceTo(target)(a, b);
+                return MapAnalyst.sortByDistanceTo(target)(a, b);
             });
 
             // Assign requests
@@ -54,7 +53,7 @@ export class OfficeTaskManager extends OfficeManager {
                 let creeps = this.getAvailableCreeps();
                 if (creeps.length === 0) break;
 
-                creeps.sort(sortByDistanceTo(request.pos));
+                creeps.sort(MapAnalyst.sortByDistanceTo(request.pos));
 
                 for (let creep of creeps) {
                     request.assign(creep);
@@ -77,9 +76,8 @@ export class OfficeTaskManager extends OfficeManager {
     }
 
     getAvailableCreeps = () => {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let busyCreeps = this.requests.flatMap(r => r.assigned);
-        return hrAnalyst.getEmployees(this.office).filter(
+        return HRAnalyst.getEmployees(this.office).filter(
             c => c.memory?.type && this.minionTypes.includes(c.memory?.type) && !busyCreeps.includes(c.id)
         )
     }
@@ -94,8 +92,7 @@ export class OfficeTaskManager extends OfficeManager {
      * @param ifRequestIsNotHandled If true, ignores minions whose request has backup coverage
      */
     creepsExpiring = (ttl: number, ifRequestIsNotHandled = true) => {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        return hrAnalyst.getEmployees(this.office).filter(
+        return HRAnalyst.getEmployees(this.office).filter(
             c => (
                 c.memory?.type &&
                 this.minionTypes.includes(c.memory?.type) &&

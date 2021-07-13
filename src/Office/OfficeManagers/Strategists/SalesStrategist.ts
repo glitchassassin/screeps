@@ -3,16 +3,14 @@ import { DropHarvestRequest } from "BehaviorTree/requests/DropHarvest";
 import { LinkHarvestRequest } from "BehaviorTree/requests/LinkHarvest";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesManager } from "../SalesManager";
 
 export class SalesStrategist extends OfficeManager {
     public harvestRequests = new Map<Id<Source>, MinionRequest>();
 
     plan() {
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-
-        for (let franchise of salesAnalyst.getExploitableFranchises(this.office)) {
+        for (let franchise of SalesAnalyst.getExploitableFranchises(this.office)) {
             this.submitHarvestRequest(franchise);
         }
     }

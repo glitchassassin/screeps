@@ -1,7 +1,7 @@
 import { CachedRoom, RoomData } from "WorldState/Rooms";
+import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
 import { Controllers } from "WorldState/Controllers";
-import { DefenseAnalyst } from "Boardroom/BoardroomManagers/DefenseAnalyst";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Minerals } from "WorldState/Minerals";
 import { Office } from "Office/Office";
@@ -11,9 +11,8 @@ import { Structures } from "WorldState/Structures";
 
 export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
     let vis = new RoomVisual(topLeft.roomName);
-    let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
 
-    let intent = defenseAnalyst.getTerritoryIntent(t.name);
+    let intent = DefenseAnalyst.getTerritoryIntent(t.name);
     let hostileMinions = Game.rooms[t.name]?.find(FIND_HOSTILE_CREEPS).length ?? 0
     let hostileStructures = Structures.byRoom(t.name).filter(structure => (
             (structure.structureType === STRUCTURE_SPAWN && !(structure as StructureSpawn).my) ||
@@ -26,17 +25,15 @@ export const Territory = (topLeft: RoomPosition, t: CachedRoom) => {
 
     // Draw background
     let intention = 'rgba(0,0,0,1)';
-    // if (intent === 'ACQUIRE') {
-    //     intention = 'rgba(32,32,64,1)';
-    // } else if (intent === 'AVOID') {
-    //     intention = 'rgba(64,0,0,1)';
-    // } else
-    if (intent === 'EXPLOIT') {
+    if (intent === TerritoryIntent.ACQUIRE) {
+        intention = 'rgba(32,32,64,1)';
+    } else if (intent === TerritoryIntent.AVOID) {
+        intention = 'rgba(64,0,0,1)';
+    } else if (intent === TerritoryIntent.EXPLOIT) {
         intention = 'rgba(0,64,0,1)';
+    } else if (intent === TerritoryIntent.DEFEND) {
+        intention = 'rgba(64,64,0,1)';
     }
-    // else if (intent === 'DEFEND') {
-    //     intention = 'rgba(64,64,0,1)';
-    // }
     vis.rect(topLeft.x, topLeft.y, 9, 9, {fill: intention})
     vis.text(t.name, topLeft.x + 4.5, topLeft.y + 4.5, {font: 2, backgroundColor: 'transparent', opacity: 0.7})
 

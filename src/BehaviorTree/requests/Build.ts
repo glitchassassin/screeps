@@ -8,6 +8,7 @@ import { buildSite } from "BehaviorTree/behaviors/buildSite";
 import { createConstructionSite } from "BehaviorTree/behaviors/createConstructionSite";
 import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
+import { getEnergyFromSource } from "BehaviorTree/behaviors/getEnergyFromSource";
 
 export class BuildRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -17,7 +18,10 @@ export class BuildRequest extends MinionRequest {
         this.action = Selector(
             Sequence(
                 stateIs(States.GET_ENERGY),
-                getEnergy(),
+                Selector(
+                    getEnergy(),
+                    getEnergyFromSource()
+                ),
                 setState(States.WORKING),
                 resetMoveTarget()
             ),

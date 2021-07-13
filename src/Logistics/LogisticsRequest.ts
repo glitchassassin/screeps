@@ -1,4 +1,5 @@
-import { BehaviorResult } from "BehaviorTree/Behavior";
+import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
+
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { CachedStructure } from "WorldState/Structures";
 import { Capacity } from "WorldState/Capacity";
@@ -6,12 +7,13 @@ import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { SourceType } from "./LogisticsSource";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { byId } from "utils/gameObjectSelectors";
-import { travel } from "Logistics/Travel";
+import { moveTo } from "BehaviorTree/behaviors/moveTo";
 
 export class LogisticsRequest {
     public assignedCapacity = 0;
     public completed = false;
     public assigned = false;
+    public blackboards = new Map<Id<Creep>, Blackboard>();
 
     toString() {
         return `[${this.constructor.name} ${this.pos.roomName}{${this.pos.x}, ${this.pos.y}} ${this.sourceType} ${this.completed ? 'completed' : 'pending'}]`;
@@ -50,13 +52,18 @@ export class TransferRequest extends LogisticsRequest {
     }
 
     action(creep: Creep) {
+        if (!this.blackboards.has(creep.id)) {
+            this.blackboards.set(creep.id, {});
+        }
+
         let target = byId(this.targetId)
         if (!target) return ERR_NOT_FOUND;
         let result = creep.transfer(target, RESOURCE_ENERGY);
         if (result === OK || result === ERR_NOT_ENOUGH_RESOURCES) {
             this.completed = true;
         } else if (result === ERR_NOT_IN_RANGE) {
-            return travel(creep, this.pos)
+            let result = moveTo(this.pos)(creep, this.blackboards.get(creep.id)!);
+            return (result !== BehaviorResult.FAILURE) ? OK : ERR_NO_PATH
         }
         if (this.completed && this.sourceType === SourceType.PRIMARY) {
             const statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
@@ -85,13 +92,18 @@ export class DepotRequest extends LogisticsRequest {
     }
 
     action(creep: Creep) {
+        if (!this.blackboards.has(creep.id)) {
+            this.blackboards.set(creep.id, {});
+        }
+
         // Wait for minions to request resources
         if (!Capacity.byId(creep.id)?.used) {
             this.completed = true;
             return OK;
         }
         if (!creep.pos.isNearTo(this.pos)) {
-            return travel(creep, this.pos)
+            let result = moveTo(this.pos)(creep, this.blackboards.get(creep.id)!);
+            return (result !== BehaviorResult.FAILURE) ? OK : ERR_NO_PATH
         }
         const result = creep.drop(RESOURCE_ENERGY);
         this.completed = (result === OK);

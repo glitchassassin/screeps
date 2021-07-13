@@ -160,4 +160,50 @@ export class MapAnalyst {
         y = (y < 0) ? ~y : y;
         return `${h}${x}${v}${y}`
     }
+    static countTerrainTypes(roomName: string) {
+        let terrain = Game.map.getRoomTerrain(roomName);
+        return terrain.getRawBuffer().reduce((terrainStats, t) => {
+            if (t & TERRAIN_MASK_SWAMP) {
+                terrainStats.swamp += 1;
+            } else if (t & TERRAIN_MASK_WALL) {
+                terrainStats.wall += 1
+            } else if (t & TERRAIN_MASK_LAVA) {
+                terrainStats.lava += 1
+            } else {
+                terrainStats.plains += 1
+            }
+            return terrainStats
+        }, {swamp: 0, plains: 0, wall: 0, lava: 0})
+    }
+    static sortByDistanceTo<T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) {
+        let distance = new Map<RoomPosition, number>();
+        return (a: T, b: T) => {
+            let aPos = (a instanceof RoomPosition) ? a : (a as _HasRoomPosition).pos
+            let bPos = (b instanceof RoomPosition) ? b : (b as _HasRoomPosition).pos
+            if (!distance.has(aPos)){
+                distance.set(aPos, this.getRangeTo(pos, aPos))
+            }
+            if (!distance.has(bPos)) distance.set(bPos, this.getRangeTo(pos, bPos))
+            return (distance.get(aPos) as number) - (distance.get(bPos) as number)
+        }
+    }
+    static sortByDistanceToRoom<T extends ({name: string}|string)>(roomName: string) {
+        let distance = new Map<string, number>();
+        let target = this.roomNameToCoords(roomName);
+        return (a: T, b: T) => {
+            let aName = (typeof a === 'string') ? a : (a as {name: string}).name;
+            let bName = (typeof b === 'string') ? b : (b as {name: string}).name;
+            let aCoords = this.roomNameToCoords(aName);
+            let bCoords = this.roomNameToCoords(bName);
+            if (!distance.has(aName)){
+                distance.set(aName,
+                    Math.max( Math.abs((target.wx-aCoords.wx)), Math.abs((target.wy-aCoords.wy)) )
+                )
+            }
+            if (!distance.has(bName)) distance.set(bName,
+                Math.max( Math.abs((target.wx-bCoords.wx)), Math.abs((target.wy-bCoords.wy)) )
+            )
+            return (distance.get(aName) as number) - (distance.get(bName) as number)
+        }
+    }
 }

@@ -1,9 +1,9 @@
 import { Bar, Dashboard, Grid, Label, Rectangle, Table } from "screeps-viz";
 
 import { CachedFranchise } from "WorldState/FranchiseData";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
+import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { Sources } from "WorldState/Sources";
-import { calculateFranchiseSurplus } from "utils/gameObjectSelectors";
 
 const sourceAndSurplusWidget = (franchise: CachedFranchise) => {
     return Rectangle({
@@ -25,7 +25,7 @@ const sourceAndSurplusWidget = (franchise: CachedFranchise) => {
                 })),
                 Bar(() => ({
                     data: {
-                        value: calculateFranchiseSurplus(franchise),
+                        value: LogisticsAnalyst.calculateFranchiseSurplus(franchise),
                         maxValue: CONTAINER_CAPACITY
                     },
                     config: {
@@ -62,17 +62,15 @@ export default () => {
                     width: 20,
                     height: 10,
                     widget: Rectangle({ data: Table(() => {
-                        let salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-
                         return {
-                            data: salesAnalyst.getExploitableFranchises(office).map(franchise => {
+                            data: SalesAnalyst.getExploitableFranchises(office).map(franchise => {
                                 let source = Sources.byId(franchise.id);
                                 let level = source ? `${source.energy}/${source.energyCapacity}` : `??`;
                                 franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
                                 return [
                                     `${franchise.pos.roomName}[${franchise.pos.x}, ${franchise.pos.y}]`,
                                     level,
-                                    calculateFranchiseSurplus(franchise),
+                                    LogisticsAnalyst.calculateFranchiseSurplus(franchise),
                                 ]
                             }),
                             config: {
@@ -86,9 +84,8 @@ export default () => {
                     width: 46,
                     height: 30,
                     widget: Grid(() => {
-                        let salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
                         return {
-                            data: salesAnalyst.getExploitableFranchises(office).map(franchise => sourceAndSurplusWidget(franchise)),
+                            data: SalesAnalyst.getExploitableFranchises(office).map(franchise => sourceAndSurplusWidget(franchise)),
                             config: {
                                 columns: 4,
                                 rows: 3

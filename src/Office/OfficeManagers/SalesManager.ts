@@ -1,11 +1,13 @@
 import { Bar, Dashboard, Grid, Label, Rectangle, Table } from "screeps-viz";
-import { byId, calculateFranchiseSurplus, sortByDistanceTo } from "utils/gameObjectSelectors";
+import { CachedSource, Sources } from "WorldState/Sources";
 
-import { CachedSource } from "WorldState/Sources";
 import { FranchiseData } from "WorldState/FranchiseData";
-import { Office } from "Office/Office";
+import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { OfficeTaskManager } from "./OfficeTaskManager";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { RoomData } from "WorldState/Rooms";
+import { SalesAnalyst } from "Analysts/SalesAnalyst";
+import { byId } from "utils/gameObjectSelectors";
 
 export class SalesManager extends OfficeTaskManager {
     minionTypes = ['SALESMAN'];
@@ -34,10 +36,8 @@ export class SalesManager extends OfficeTaskManager {
             width: 20,
             height: 20,
             widget: Rectangle({ data: Table(() => {
-                let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
-
                 return {
-                    data: salesAnalyst.getExploitableFranchises(this.office).map(franchise => {
+                    data: SalesAnalyst.getExploitableFranchises(this.office).map(franchise => {
                         let salesmen = this.requests.find(r => r.pos.isEqualTo(franchise.pos))?.assigned ?? []
                         franchise?.containerPos && new RoomVisual(franchise.containerPos?.roomName).circle(franchise.containerPos, {radius: 0.55, stroke: 'red', fill: 'transparent'});
                         return [
@@ -60,11 +60,10 @@ export class SalesManager extends OfficeTaskManager {
             width: 39,
             height: 20,
             widget: Rectangle({ data: Grid(() => {
-                let salesAnalyst = this.office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
                 return {
-                    data: salesAnalyst.getExploitableFranchises(this.office).map(franchise => Bar(() => ({
+                    data: SalesAnalyst.getExploitableFranchises(this.office).map(franchise => Bar(() => ({
                         data: {
-                            value: calculateFranchiseSurplus(franchise),
+                            value: LogisticsAnalyst.calculateFranchiseSurplus(franchise),
                             maxValue: CONTAINER_CAPACITY
                         },
                         config: {
@@ -85,8 +84,20 @@ export class SalesManager extends OfficeTaskManager {
         },
     ];
 
-    constructor(office: Office) {
-        super(office);
+    plan() {
+        for (let t of RoomData.byOffice(this.office)) {
+            for (let s of Sources.byRoom(t.name)) {
+                let franchise = FranchiseData.byId(s.id) ?? {id: s.id, pos: s.pos}
+                // Initialize properties
+                if (!franchise.maxSalesmen) {
+                    franchise.maxSalesmen = 0;
+                    for (let pos of MapAnalyst.calculateAdjacentPositions(s.pos)) {
+                        if (MapAnalyst.isPositionWalkable(pos, true)) franchise.maxSalesmen += 1;
+                    }
+                }
+                FranchiseData.set(s.id, franchise, s.pos.roomName);
+            }
+        }
     }
     run() {
         super.run();
@@ -103,7 +114,7 @@ export class SalesManager extends OfficeTaskManager {
 
         let maxSalesmen = FranchiseData.byId(source.id)?.maxSalesmen
 
-        for (let request of this.requests.sort(sortByDistanceTo(this.office.controller.pos))) {
+        for (let request of this.requests.sort(MapAnalyst.sortByDistanceTo(this.office.controller.pos))) {
             if (request.pos.isEqualTo(source.pos)) {
                 for (let salesman of request.assigned) {
                     count += 1;

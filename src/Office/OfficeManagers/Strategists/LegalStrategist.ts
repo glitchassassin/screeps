@@ -2,7 +2,7 @@ import { DepotRequest, TransferRequest } from "Logistics/LogisticsRequest";
 
 import { Controllers } from "WorldState/Controllers";
 import { FacilitiesManager } from "../FacilitiesManager";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
@@ -20,7 +20,6 @@ export class LegalStrategist extends OfficeManager {
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let controller = Controllers.byRoom(this.office.name);
         let legalData = LegalData.byRoom(this.office.name);
 
@@ -30,7 +29,7 @@ export class LegalStrategist extends OfficeManager {
         // Logistics and infrastructure
         if (controller?.level && controller.level > 0) {
             let container = Structures.byId(legalData?.containerId)
-            if (hrAnalyst.getEmployees(this.office).some(
+            if (HRAnalyst.getEmployees(this.office).some(
                 c => c.memory?.type === 'PARALEGAL'
             )) {
                 if (container) {

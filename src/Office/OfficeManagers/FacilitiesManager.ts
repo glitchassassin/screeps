@@ -2,7 +2,7 @@ import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
 
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { ConstructionSites } from "WorldState/ConstructionSites";
-import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
+import { FacilitiesAnalyst } from "Analysts/FacilitiesAnalyst";
 import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
@@ -34,10 +34,9 @@ export class FacilitiesManager extends OfficeTaskManager {
             width: 15,
             height: 5,
             widget: Rectangle({ data: Table(() => {
-                let facilitiesAnalyst = global.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
                 // (WORK * 5) * ttl = max construction output
                 // 0.5 = expected efficiency
-                let workExpectancy = facilitiesAnalyst.getWorkExpectancy(this.office);
+                let workExpectancy = FacilitiesAnalyst.getWorkExpectancy(this.office);
                 // Calculate construction energy
                 let totalWork = this.workPending();
                 return {

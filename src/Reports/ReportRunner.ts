@@ -1,5 +1,6 @@
 import FranchiseStatus from "./FranchiseStatus";
 import SpawnStrategy from "./SpawnStrategy";
+import TerritoryIntents from "./TerritoryIntents";
 
 declare global {
     namespace NodeJS {
@@ -30,3 +31,4 @@ global.d = (key: string) => {
 
 register('franchises', FranchiseStatus);
 register('spawnstrategy', SpawnStrategy);
+register('territory', TerritoryIntents);

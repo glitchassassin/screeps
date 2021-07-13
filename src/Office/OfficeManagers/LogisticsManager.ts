@@ -2,31 +2,26 @@ import { Bar, Dashboard, Grid, Label, LineChart, Metrics, Rectangle, Table } fro
 import { LogisticsSource, SourceType } from "Logistics/LogisticsSource";
 
 import { Capacity } from "WorldState/Capacity";
-import { ControllerAnalyst } from "Boardroom/BoardroomManagers/ControllerAnalyst";
-import { FacilitiesAnalyst } from "Boardroom/BoardroomManagers/FacilitiesAnalyst";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { ControllerAnalyst } from "Analysts/ControllerAnalyst";
+import { FacilitiesAnalyst } from "Analysts/FacilitiesAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
-import { LogisticsAnalyst } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { LogisticsRequest } from "Logistics/LogisticsRequest";
 import { LogisticsRoute } from "Logistics/LogisticsRoute";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Office } from "Office/Office";
 import { OfficeManager } from "Office/OfficeManager";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { Sources } from "WorldState/Sources";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
 import { lazyFilter } from "utils/lazyIterators";
 import { log } from "utils/logger";
-import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export class LogisticsManager extends OfficeManager {
     constructor(
         office: Office,
-        private logisticsAnalyst = office.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
-        private controllerAnalyst = office.boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
-        private salesAnalyst = office.boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
-        private hrAnalyst = office.boardroom.managers.get('HRAnalyst') as HRAnalyst,
-        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst,
-        private facilitiesAnalyst = office.boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
+        private statisticsAnalyst = office.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst
     ) {
         super(office);
     }
@@ -68,7 +63,7 @@ export class LogisticsManager extends OfficeManager {
                     Bar(() => ({
                         data: {
                             value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mineContainerLevels)[1],
-                            maxValue: this.salesAnalyst.getExploitableFranchises(this.office).length * CONTAINER_CAPACITY,
+                            maxValue: SalesAnalyst.getExploitableFranchises(this.office).length * CONTAINER_CAPACITY,
                         },
                         config: {
                             label: 'Franchises',
@@ -88,7 +83,7 @@ export class LogisticsManager extends OfficeManager {
                     Bar(() => ({
                         data: {
                             value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.fleetLevels)[1],
-                            maxValue: this.logisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
+                            maxValue: LogisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
                         },
                         config: {
                             label: 'Fleet',
@@ -97,18 +92,8 @@ export class LogisticsManager extends OfficeManager {
                     })),
                     Bar(() => ({
                         data: {
-                            value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.mobileDepotLevels)[1],
-                            maxValue: this.logisticsAnalyst.depots.get(this.office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.capacity ?? 0)), 0) ?? 0,
-                        },
-                        config: {
-                            label: 'Depots',
-                            style: {fill: 'brown', stroke: 'brown'}
-                        }
-                    })),
-                    Bar(() => ({
-                        data: {
                             value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.storageLevels)[1],
-                            maxValue: Capacity.byId(this.logisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0,
+                            maxValue: Capacity.byId(LogisticsAnalyst.getStorage(this.office)?.id)?.capacity ?? 0,
                         },
                         config: {
                             label: 'Storage',
@@ -118,7 +103,7 @@ export class LogisticsManager extends OfficeManager {
                     Bar(() => ({
                         data: {
                             value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.controllerDepotLevels)[1],
-                            maxValue: Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId)?.capacity || 0,
+                            maxValue: Capacity.byId(ControllerAnalyst.getDesignatedUpgradingLocations(this.office)?.containerId)?.capacity || 0,
                         },
                         config: {
                             label: 'Legal',
@@ -226,7 +211,6 @@ export class LogisticsManager extends OfficeManager {
 
     miniReportBars = Rectangle({ data: Grid(() => {
         let statisticsAnalyst = global.boardroom.managers.get('StatisticsAnalyst') as StatisticsAnalyst;
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let stats = statisticsAnalyst.metrics.get(this.office.name);
 
         let mineRate = Metrics.avg(stats!.mineRate);
@@ -236,9 +220,9 @@ export class LogisticsManager extends OfficeManager {
         let upgrade = Metrics.avg(stats!.controllerUpgradeRate);
 
         // Theoretical maximum income if utilizing all franchises
-        let max = salesAnalyst.getExploitableFranchises(this.office)
+        let max = SalesAnalyst.getExploitableFranchises(this.office)
             .map(f => Sources.byId(f.id)?.energyCapacity ?? 1500)
-            .reduce((a, b) => a + b) / 300
+            .reduce((a, b) => a + b, 0) / 300
 
         return {
             data: [
@@ -332,16 +316,16 @@ export class LogisticsManager extends OfficeManager {
 
     getIdleCarriers() {
         return Array.from(lazyFilter(
-            this.logisticsAnalyst.getCarriers(this.office),
+            LogisticsAnalyst.getCarriers(this.office),
             c => !this.routes.has(c.name)
-        )).sort(sortByDistanceTo(this.office.controller.pos));
+        )).sort(MapAnalyst.sortByDistanceTo(this.office.controller.pos));
     }
     /**
      * Returns ticks until the fleet is completely despawned
      */
     fleetTTL() {
         let max = 0;
-        for (let c of this.logisticsAnalyst.getCarriers(this.office)) {
+        for (let c of LogisticsAnalyst.getCarriers(this.office)) {
             max = Math.max((c.ticksToLive ?? 0), max)
         }
         return max;
@@ -349,14 +333,14 @@ export class LogisticsManager extends OfficeManager {
 
     plan() {
         let idleCarriers = this.getIdleCarriers();
-        let storage = this.logisticsAnalyst.getStorage(this.office);
-        let storagePos = storage?.pos ?? this.facilitiesAnalyst.getPlannedStructures(this.office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos
+        let storage = LogisticsAnalyst.getStorage(this.office);
+        let storagePos = storage?.pos ?? FacilitiesAnalyst.getPlannedStructures(this.office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos
         let legalData = LegalData.byRoom(this.office.name);
-        let spawns = this.hrAnalyst.getSpawns(this.office);
+        let spawns = HRAnalyst.getSpawns(this.office);
 
         // Update LogisticsSources
         this.sources = new Map<string, LogisticsSource>();
-        this.salesAnalyst.getExploitableFranchises(this.office).forEach(f => {
+        SalesAnalyst.getExploitableFranchises(this.office).forEach(f => {
             if (!this.sources.has(f.pos.toString())) {
                 this.sources.set(f.pos.toString(), new LogisticsSource(f.pos))
             }
@@ -419,7 +403,7 @@ export class LogisticsManager extends OfficeManager {
             // Fulfill other close requests, by priority order
             while (priorities.size > 0) {
                 // Among the same priority, fulfill the closest requests first
-                level.sort(sortByDistanceTo(lastRequest.pos));
+                level.sort(MapAnalyst.sortByDistanceTo(lastRequest.pos));
                 // Get next request
                 let request = level?.shift();
                 // If no more requests for this priority, skip to next
@@ -464,7 +448,6 @@ export class LogisticsManager extends OfficeManager {
                     room: this.office.name
                 }
             });
-            this.map();
         }
     }
     cleanup() {
@@ -481,16 +464,6 @@ export class LogisticsManager extends OfficeManager {
                 req.assigned = false;
             }
         }
-    }
-
-    map() {
-        let logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-        let depots = logisticsAnalyst.depots.get(this.office.name)
-
-        depots?.forEach(id => {
-            let c = Game.getObjectById(id);
-            if (c) new RoomVisual(c.pos.roomName).circle(c.pos, {radius: 1.5, stroke: '#f0f', fill: 'transparent'})
-        })
     }
 }
 

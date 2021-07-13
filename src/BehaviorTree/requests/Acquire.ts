@@ -2,24 +2,24 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 
 import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
+import { claimController } from "BehaviorTree/behaviors/claimController";
 import { markController } from "BehaviorTree/behaviors/markController";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
-import { reserveController } from "BehaviorTree/behaviors/reserveController";
 
-export class ReserveRequest extends MinionRequest {
+export class AcquireRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
     public controllerId: Id<StructureController>;
     public minionType = 'LAWYER';
 
-    constructor(controller: CachedController) {
+    constructor(public controller: CachedController) {
         super();
         this.pos = controller.pos;
         this.controllerId = controller.id;
         this.action = Selector(
             Sequence(
                 markController(controller.id, 'This sector property of the Grey Company'),
-                reserveController(controller.id)
+                claimController(controller.id)
             ),
             moveTo(controller.pos),
         )
@@ -35,6 +35,4 @@ export class ReserveRequest extends MinionRequest {
             creep.getActiveBodyparts(MOVE) > 0
         )
     }
-
 }
-// profiler.registerClass(ReserveRequest, 'ReserveRequest');

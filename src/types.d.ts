@@ -35,6 +35,10 @@ interface RoomMemory {
   requests?: string;
 }
 
+interface RoomTerrain {
+  getRawBuffer(): Uint8Array
+}
+
 interface Memory {
   uuid: number;
   logs: {[context: string]: string};

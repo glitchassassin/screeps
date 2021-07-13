@@ -1,7 +1,7 @@
 import { Bar, Dashboard, Label, LineChart, Metrics, Rectangle, Table } from "screeps-viz";
 
 import { BehaviorResult } from "BehaviorTree/Behavior";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
 import { Request } from "BehaviorTree/Request";
 import SpawnPressure from "Reports/widgets/SpawnPressure";
@@ -96,11 +96,10 @@ export class HRManager extends OfficeManager {
     ];
 
     miniReport = Table(() => {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst
         let employeeTypes = new Set<string>();
         let employeeCounts = new Map<string, number>();
         let spawnStatus = new Map<string, string>();
-        hrAnalyst.getEmployees(this.office).forEach(e => {
+        HRAnalyst.getEmployees(this.office).forEach(e => {
             let t = e.memory.type || 'NONE'
             employeeTypes.add(t);
             employeeCounts.set(t, (employeeCounts.get(t) || 0) + 1);
@@ -166,9 +165,8 @@ export class HRManager extends OfficeManager {
     }
 
     getAvailableSpawns() {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst
         let busySpawns = this.requests.flatMap(r => r.assigned);
-        return hrAnalyst.getSpawns(this.office).filter(c => !c.spawning && !busySpawns.includes(c.id))
+        return HRAnalyst.getSpawns(this.office).filter(c => !c.spawning && !busySpawns.includes(c.id))
     }
 }
 // profiler.registerClass(HRManager, 'HRManager');

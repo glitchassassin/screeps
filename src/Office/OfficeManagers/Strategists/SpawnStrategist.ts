@@ -5,16 +5,17 @@ import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { GuardMinion } from "MinionDefinitions/GuardMinion";
-import { HRAnalyst } from "Boardroom/BoardroomManagers/HRAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
 import { HRManager } from "../HRManager";
 import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LawyerMinion } from "MinionDefinitions/LawyerMinion";
+import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
 import { Request } from "BehaviorTree/Request";
-import { SalesAnalyst } from "Boardroom/BoardroomManagers/SalesAnalyst";
+import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SourceType } from "Logistics/LogisticsSource";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
@@ -37,12 +38,11 @@ export class SpawnStrategist extends OfficeManager {
 
     plan() {
         if (Game.time - global.lastGlobalReset < 5) return; // Give time for data to catch up to prevent mis-spawns
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
 
         this.submitLogisticsRequests();
 
         if (this.spawnRequest && !this.spawnRequest.result) return; // Pending request exists
-        if ((hrAnalyst.newestEmployee(this.office) ?? 0) > 1490) return; // Wait 10 ticks after previous spawn before considering new requests
+        if ((HRAnalyst.newestEmployee(this.office) ?? 0) > 1490) return; // Wait 10 ticks after previous spawn before considering new requests
 
         // Get spawn queue
         const spawnTargets = this.spawnTargets();
@@ -77,13 +77,13 @@ export class SpawnStrategist extends OfficeManager {
     }
 
     spawnTargets() {
-        let salesAnalyst = global.boardroom.managers.get('SalesAnalyst') as SalesAnalyst;
         let facilitiesManager = this.office.managers.get('FacilitiesManager') as FacilitiesManager;
+        let legalManager = this.office.managers.get('LegalManager') as LegalManager;
         const rcl = getRcl(this.office.name) ?? 0;
 
         const spawnTargets: Record<string, number> = {};
 
-        const franchiseCount = salesAnalyst.getExploitableFranchises(this.office).length;
+        const franchiseCount = SalesAnalyst.getExploitableFranchises(this.office).length;
         const workPartsPerSalesman = Math.min(5, Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 50) / 100));
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
 
@@ -100,17 +100,19 @@ export class SpawnStrategist extends OfficeManager {
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {
             spawnTargets['PARALEGAL'] = 1
         } else {
-            spawnTargets['PARALEGAL'] = franchiseCount;
+            spawnTargets['PARALEGAL'] = Math.max(2, 6 - rcl);
         }
 
         spawnTargets['INTERN'] = (rcl > 1) ? 1 : 0;
+
+        const lawyerRequests = legalManager.requests.some(r => r.minionType === 'LAWYER');
+        spawnTargets['LAWYER'] = lawyerRequests ? 1 : 0;
 
         return spawnTargets;
     }
 
     getEmployees() {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
-        let result = hrAnalyst.getEmployees(this.office, undefined, false)
+        let result = HRAnalyst.getEmployees(this.office, undefined, false)
             .filter(c => (c.ticksToLive ?? 1500) > 100)
             .reduce((employees: Record<string, number>, creep: Creep) => {
                 employees[creep.memory.type ?? ''] ??= 0
@@ -127,10 +129,9 @@ export class SpawnStrategist extends OfficeManager {
     }
 
     submitLogisticsRequests() {
-        let hrAnalyst = global.boardroom.managers.get('HRAnalyst') as HRAnalyst;
         let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
 
-        for (let spawn of hrAnalyst.getSpawns(this.office)) {
+        for (let spawn of HRAnalyst.getSpawns(this.office)) {
             let req = this.logisticsRequests.get(spawn.id)
             if ((!req || req.completed) && (Capacity.byId(spawn.id)?.free ?? 0) > 0) {
                 req = new TransferRequest(spawn, 4, Capacity.byId(spawn.id)?.free, SourceType.PRIMARY)
@@ -138,7 +139,7 @@ export class SpawnStrategist extends OfficeManager {
                 this.logisticsRequests.set(spawn.id, req);
             }
         }
-        let extensions = hrAnalyst.getExtensions(this.office);
+        let extensions = HRAnalyst.getExtensions(this.office);
         for (let extension of extensions) {
             let req = this.logisticsRequests.get(extension.id)
             if ((!req || req.completed) && (Capacity.byId(extension.id)?.free ?? 0) > 0) {

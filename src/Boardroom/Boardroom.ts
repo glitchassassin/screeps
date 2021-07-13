@@ -1,14 +1,10 @@
 import { BoardroomManager } from "./BoardroomManager";
-import { ControllerAnalyst } from "./BoardroomManagers/ControllerAnalyst";
-import { DefenseAnalyst } from "./BoardroomManagers/DefenseAnalyst";
-import { FacilitiesAnalyst } from "./BoardroomManagers/FacilitiesAnalyst";
-import { HRAnalyst } from "./BoardroomManagers/HRAnalyst";
-import { LogisticsAnalyst } from "./BoardroomManagers/LogisticsAnalyst";
+import { Controllers } from "WorldState/Controllers";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Office } from "Office/Office";
 import { RoomAnalyst } from "./BoardroomManagers/RoomAnalyst";
 import { RoomArchitect } from "./BoardroomManagers/Architects/RoomArchitect";
-import { SalesAnalyst } from "./BoardroomManagers/SalesAnalyst";
+import { RoomData } from "WorldState/Rooms";
 import { StatisticsAnalyst } from "./BoardroomManagers/StatisticsAnalyst";
 import { cityNames } from "./CityNames";
 
@@ -32,27 +28,25 @@ export class Boardroom {
         Memory.cities ??= cityNames;
 
         // Create BoardroomManagers
-        ControllerAnalyst.register(this);
-        DefenseAnalyst.register(this);
-        FacilitiesAnalyst.register(this);
-        HRAnalyst.register(this);
-        LogisticsAnalyst.register(this);
-        SalesAnalyst.register(this);
         StatisticsAnalyst.register(this);
         RoomAnalyst.register(this);
 
-        // Create Architects
+        // Create Architect
         RoomArchitect.register(this);
 
         // Initialize BoardroomManagers
         this.managers.forEach(m => m.init());
 
-        // Initialize Offices
-        Object.values(Game.spawns).forEach(spawn => {
-            if (!this.offices.get(spawn.room.name)) {
-                this.offices.set(spawn.room.name, new Office(this, spawn.room.name));
+        // initialize new Offices, if needed
+        for (let r of RoomData.all()) {
+            if (Controllers.byRoom(r.name)?.my && !this.offices.has(r.name)) {
+                this.offices.set(r.name,
+                    new Office(this, r.name)
+                );
+            } else if (!Controllers.byRoom(r.name)?.my && this.offices.has(r.name)) {
+                this.offices.delete(r.name);
             }
-        })
+        }
     }
 
     /**

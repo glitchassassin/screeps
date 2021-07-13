@@ -1,15 +1,12 @@
-import { calculateFranchiseSurplus, countEnergyInContainersOrGround } from "utils/gameObjectSelectors";
-
-import { Boardroom } from "Boardroom/Boardroom";
 import { BoardroomManager } from "Boardroom/BoardroomManager";
 import { Capacity } from "WorldState/Capacity";
-import { ControllerAnalyst } from "./ControllerAnalyst";
+import { ControllerAnalyst } from "Analysts/ControllerAnalyst";
 import { Controllers } from "WorldState/Controllers";
-import { FacilitiesAnalyst } from "./FacilitiesAnalyst";
-import { HRAnalyst } from "./HRAnalyst";
-import { LogisticsAnalyst } from "./LogisticsAnalyst";
+import { FacilitiesAnalyst } from "Analysts/FacilitiesAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
+import { LogisticsAnalyst } from "../../Analysts/LogisticsAnalyst";
 import { Metrics } from "screeps-viz";
-import { SalesAnalyst } from "./SalesAnalyst";
+import { SalesAnalyst } from "../../Analysts/SalesAnalyst";
 
 export class PipelineMetrics {
     constructor(
@@ -20,7 +17,6 @@ export class PipelineMetrics {
         public storageLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public storageFillRate: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
         public fleetLevels: Metrics.Timeseries = Metrics.newTimeseries(),
-        public mobileDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotLevels: Metrics.Timeseries = Metrics.newTimeseries(),
         public controllerDepotFillRate: Metrics.DeltaTimeseries = Metrics.newTimeseries(),
         public controllerUpgradeRate: Metrics.NonNegativeDeltaTimeseries = Metrics.newTimeseries(),
@@ -31,16 +27,6 @@ export class PipelineMetrics {
 }
 
 export class StatisticsAnalyst extends BoardroomManager {
-    constructor(
-        boardroom: Boardroom,
-        private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst,
-        private hrAnalyst = boardroom.managers.get('HRAnalyst') as HRAnalyst,
-        private logisticsAnalyst = boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst,
-        private controllerAnalyst = boardroom.managers.get('ControllerAnalyst') as ControllerAnalyst,
-        private facilitiesAnalyst = boardroom.managers.get('FacilitiesAnalyst') as FacilitiesAnalyst
-    ) {
-        super(boardroom);
-    }
     metrics: Map<string, PipelineMetrics> = new Map();
 
     tickMetrics: Record<string, Record<string, number>> = {}
@@ -58,14 +44,14 @@ export class StatisticsAnalyst extends BoardroomManager {
                 let pipelineMetrics = this.metrics.get(office.name) as PipelineMetrics;
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.mineRate,
-                    -this.salesAnalyst.getExploitableSources(office)
+                    -SalesAnalyst.getExploitableSources(office)
                         .reduce((sum, source) => (sum + (source.energy ?? 0)), 0),
                     600
                 );
                 Metrics.update(
                     pipelineMetrics.mineContainerLevels,
-                    this.salesAnalyst.getExploitableSources(office)
-                        .reduce((sum, source) => (sum + calculateFranchiseSurplus(source)), 0),
+                    SalesAnalyst.getExploitableSources(office)
+                        .reduce((sum, source) => (sum + LogisticsAnalyst.calculateFranchiseSurplus(source)), 0),
                     600
                 );
                 Metrics.update(
@@ -80,43 +66,38 @@ export class StatisticsAnalyst extends BoardroomManager {
                 );
                 Metrics.update(
                     pipelineMetrics.storageLevels,
-                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
-                    countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
+                    Capacity.byId(LogisticsAnalyst.getStorage(office)?.id)?.used ??
+                    LogisticsAnalyst.countEnergyInContainersOrGround(FacilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
                     600
                 );
                 Metrics.updateNonNegativeDelta(
                     pipelineMetrics.storageFillRate,
-                    Capacity.byId(this.logisticsAnalyst.getStorage(office)?.id)?.used ??
-                    countEnergyInContainersOrGround(this.facilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
+                    Capacity.byId(LogisticsAnalyst.getStorage(office)?.id)?.used ??
+                    LogisticsAnalyst.countEnergyInContainersOrGround(FacilitiesAnalyst.getPlannedStructures(office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos),
                     600
                 );
-                let fleetLevel = this.logisticsAnalyst.getCarriers(office)
+                let fleetLevel = LogisticsAnalyst.getCarriers(office)
                     .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
                 Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 600);
                 Metrics.updateNonNegativeDelta(pipelineMetrics.logisticsPrimaryThroughput, fleetLevel, 600);
                 Metrics.update(
-                    pipelineMetrics.mobileDepotLevels,
-                    this.logisticsAnalyst.depots.get(office.name)?.reduce((sum, creep) => (sum + (Capacity.byId(creep)?.used ?? 0)), 0) ?? 0,
-                    600
-                );
-                Metrics.update(
                     pipelineMetrics.controllerDepotLevels,
-                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
+                    Capacity.byId(ControllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
                     600
                 );
                 Metrics.updateDelta(
                     pipelineMetrics.controllerDepotFillRate,
-                    Capacity.byId(this.controllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
+                    Capacity.byId(ControllerAnalyst.getDesignatedUpgradingLocations(office)?.containerId)?.used || 0,
                     600
                 );
                 Metrics.updateNonNegativeDelta(pipelineMetrics.controllerUpgradeRate, (Controllers.byRoom(office.name) as StructureController)?.progress ?? 0, 600)
                 Metrics.update(
                     pipelineMetrics.spawnUtilization,
-                    this.hrAnalyst.getSpawns(office).filter(s => s.spawning).length,
+                    HRAnalyst.getSpawns(office).filter(s => s.spawning).length,
                     600
                 );
 
-                let deathLosses = this.logisticsAnalyst.getTombstones(office)
+                let deathLosses = LogisticsAnalyst.getTombstones(office)
                     .filter(t => t.creep.my && t.deathTime === Game.time - 1)
                     .reduce((sum, t) => sum + (Capacity.byId(t.id)?.used ?? 0), 0);
 

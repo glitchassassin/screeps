@@ -111,11 +111,10 @@ export class Office {
         this.name = roomName;
         if (!Game.rooms[roomName]) throw new Error(`Could not find central room for office ${roomName}`);
         let room = RoomData.byRoom(roomName) ?? {name: roomName, scanned: Game.time};
-        RoomData.set(roomName, room);
         this.center = room;
-
         // Name the office, if needed
         this.center.city ??= Memory.cities.shift();
+        RoomData.set(roomName, room);
 
         // Create Managers
         HRManager.register(this);

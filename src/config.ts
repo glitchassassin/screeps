@@ -32,7 +32,7 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_POWER_SPAWN]:    5,
     [STRUCTURE_RAMPART]:        5,
     [STRUCTURE_ROAD]:           2,
-    [STRUCTURE_SPAWN]:          5,
+    [STRUCTURE_SPAWN]:          7,
     [STRUCTURE_STORAGE]:        5,
     [STRUCTURE_TERMINAL]:       5,
     [STRUCTURE_TOWER]:          5,

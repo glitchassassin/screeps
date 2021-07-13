@@ -1,4 +1,4 @@
-import { LogisticsAnalyst, RealLogisticsSources } from "Boardroom/BoardroomManagers/LogisticsAnalyst";
+import { LogisticsAnalyst, RealLogisticsSources } from "Analysts/LogisticsAnalyst";
 
 import { Capacity } from "WorldState/Capacity";
 import { MemoizeByTick } from "utils/memoize";
@@ -17,8 +17,6 @@ export enum SourceType {
  * or just a loose pile of Energy
  */
 export class LogisticsSource {
-    // Dependencies
-    private logisticsAnalyst: LogisticsAnalyst;
     /**
      *
      * @param pos Center of the source (adjacent squares will also be included)
@@ -28,9 +26,7 @@ export class LogisticsSource {
         public pos: RoomPosition,
         public sourceType = SourceType.PRIMARY,
         public includeAdjacent = true
-    ) {
-        this.logisticsAnalyst = global.boardroom.managers.get('LogisticsAnalyst') as LogisticsAnalyst;
-    }
+    ) { }
 
     private _sources: RealLogisticsSources[] = [];
 
@@ -47,7 +43,7 @@ export class LogisticsSource {
      */
     public get sources() : RealLogisticsSources[] {
         if (!Game.rooms[this.pos.roomName]) return this._sources; // No visibility, use cached
-        this._sources = this.logisticsAnalyst.getRealLogisticsSources(this.pos, this.includeAdjacent);
+        this._sources = LogisticsAnalyst.getRealLogisticsSources(this.pos, this.includeAdjacent);
         return this._sources;
     }
 

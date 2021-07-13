@@ -1,4 +1,4 @@
-import { DefenseAnalyst, TerritoryIntent } from "Boardroom/BoardroomManagers/DefenseAnalyst";
+import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
 export type ControllerIntelligence = {
     pos?: RoomPosition,
@@ -37,8 +37,7 @@ export class TerritoryIntelligence {
     }
 
     public get intent(): TerritoryIntent {
-        let defenseAnalyst = global.boardroom.managers.get('DefenseAnalyst') as DefenseAnalyst;
-        return defenseAnalyst.getTerritoryIntent(this.name);
+        return DefenseAnalyst.getTerritoryIntent(this.name);
     }
 
     scan() {

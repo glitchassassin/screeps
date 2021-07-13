@@ -1,6 +1,6 @@
 import { BlockPlan } from "./classes/BlockPlan";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
-import { sortByDistanceTo } from "utils/gameObjectSelectors";
 
 export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: number) {
     if (count <= 0) return;
@@ -22,7 +22,7 @@ export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: nu
 
     if (extensions.length < count) throw new Error('Not enough room to fill extensions')
 
-    extensions.sort(sortByDistanceTo(storagePos));
+    extensions.sort(MapAnalyst.sortByDistanceTo(storagePos));
 
     extensions.forEach(pos => roomBlock.structures.push(new PlannedStructure(pos, STRUCTURE_EXTENSION)));
 }

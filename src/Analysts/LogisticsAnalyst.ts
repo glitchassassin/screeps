@@ -1,17 +1,15 @@
 import { CachedStructure, Structures } from "WorldState/Structures";
-import { getCreepsById, sortByDistanceTo } from "utils/gameObjectSelectors";
 
-import { Boardroom } from "Boardroom/Boardroom";
-import { BoardroomManager } from "Boardroom/BoardroomManager";
+import { CachedFranchise } from "WorldState/FranchiseData";
 import { Capacity } from "WorldState/Capacity";
 import { Controllers } from "WorldState/Controllers";
-import { HRAnalyst } from "./HRAnalyst";
+import { HRAnalyst } from "Analysts/HRAnalyst";
 import { LegalData } from "WorldState/LegalData";
+import { MapAnalyst } from "./MapAnalyst";
 import { MemoizeByTick } from "utils/memoize";
-import { Office } from "Office/Office";
+import type { Office } from "Office/Office";
 import { Resources } from "WorldState/Resources";
 import { RoomData } from "WorldState/Rooms";
-import { SalesAnalyst } from "./SalesAnalyst";
 import { packPos } from "utils/packrat";
 
 export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer|StructureLink>;
@@ -28,28 +26,14 @@ const STORAGE_GOALS: Record<number, number> = {
     8: 1000000
 }
 
-export class LogisticsAnalyst extends BoardroomManager {
-    constructor(
-        boardroom: Boardroom,
-        private salesAnalyst = boardroom.managers.get('SalesAnalyst') as SalesAnalyst
-    ) {
-        super(boardroom);
-    }
-    depots = new Map<string, Id<Creep>[]>();
-    newDepots = new Map<string, Id<Creep>[]>();
-
-    cleanup() {
-        this.depots = this.newDepots;
-        this.newDepots = new Map();
-    }
-
+export class LogisticsAnalyst {
     @MemoizeByTick((office: Office) => office.name)
-    getStorage(office: Office) {
+    static getStorage(office: Office) {
         let storage = Game.rooms[office.center.name]?.storage;
         return storage && Structures.byId(storage.id)
     }
     @MemoizeByTick((office: Office) => office.name)
-    getTombstones(office: Office) {
+    static getTombstones(office: Office) {
         let tombstones = [];
         for (let r of RoomData.byOffice(office)) {
             if (Game.rooms[r.name]) {
@@ -59,11 +43,11 @@ export class LogisticsAnalyst extends BoardroomManager {
         return tombstones;
     }
     @MemoizeByTick((office: Office) => office.name)
-    getContainers(office: Office) {
+    static getContainers(office: Office) {
         return Structures.byOffice(office).filter(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer>[];
     }
     @MemoizeByTick((office: Office) => office.name)
-    getLinks(office: Office, outputsOnly = false) {
+    static getLinks(office: Office, outputsOnly = false) {
         if (outputsOnly) {
             return Structures.byOffice(office).filter(s => s.id === LegalData.byRoom(office.name)?.linkId) as CachedStructure<StructureLink>[];
         } else {
@@ -71,11 +55,11 @@ export class LogisticsAnalyst extends BoardroomManager {
         }
     }
     @MemoizeByTick((office: Office) => office.name)
-    getFreeEnergy(office: Office) {
+    static getFreeEnergy(office: Office) {
         return Resources.byOffice(office, RESOURCE_ENERGY);
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
-    getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, emergency = false): RealLogisticsSources[] {
+    static getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, emergency = false): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
         let items;
         if (includeAdjacent) {
@@ -94,10 +78,10 @@ export class LogisticsAnalyst extends BoardroomManager {
         return results.sort((a, b) => (Capacity.byId(b.id)?.used ?? 0) - (Capacity.byId(a.id)?.used ?? 0))
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
-    getClosestAllSources(pos: RoomPosition, amount?: number) {
+    static getClosestAllSources(pos: RoomPosition, amount?: number) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
-        let sorted = this.getAllSources(office).filter(s => s.pos).sort(sortByDistanceTo(pos))
+        let sorted = this.getAllSources(office).filter(s => s.pos).sort(MapAnalyst.sortByDistanceTo(pos))
         if (!amount || amount === 0) return sorted[0];
         // Prioritize Depots, then dropped Resources, then sources that can provide the full amount
         let withAmount = sorted.filter(s => {
@@ -107,18 +91,16 @@ export class LogisticsAnalyst extends BoardroomManager {
         return sorted[0];
     }
     @MemoizeByTick((office: Office) => office.name)
-    getAllSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
-        let depots = this.depots.get(office.name) ?? [];
+    static getAllSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Creep|Resource<RESOURCE_ENERGY>)[] {
         return [
             ...this.getLinks(office, true),
             ...this.getFreeSources(office),
-            ...getCreepsById(...depots),
             ...this.getContainers(office),
             ...this.getStorageSources(office, emergency),
         ];
     }
     @MemoizeByTick((office: Office) => office.name)
-    getStorageSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+    static getStorageSources(office: Office, emergency = false): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         let rcl = Controllers.byRoom(office.name)?.level;
         let storage = this.getStorage(office);
         let storageCapacity = Capacity.byId(storage?.id)?.used ?? 0;
@@ -127,7 +109,7 @@ export class LogisticsAnalyst extends BoardroomManager {
         return [];
     }
     @MemoizeByTick((office: Office) => office.name)
-    getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
+    static getFreeSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
         let freeSources: (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] = [
             ...this.getFreeEnergy(office),
             ...this.getTombstones(office),
@@ -135,27 +117,17 @@ export class LogisticsAnalyst extends BoardroomManager {
         return freeSources;
     }
     @MemoizeByTick((office: Office) => office.name)
-    getUnallocatedSources(office: Office): (CachedStructure<AnyStoreStructure>|Tombstone|Resource<RESOURCE_ENERGY>)[] {
-        return [
-            ...this.getFreeSources(office),
-            ...this.salesAnalyst.getExploitableFranchises(office)
-                .map(source => Structures.byId(source.containerId))
-                .filter(c => c && (Capacity.byId(c.id)?.used ?? 0) > 0) as CachedStructure<StructureContainer>[],
-        ];
+    static getCarriers(office: Office) {
+        return HRAnalyst.getEmployees(office, 'CARRIER');
     }
-    @MemoizeByTick((office: Office) => office.name)
-    getCarriers(office: Office) {
-        let hrAnalyst = this.boardroom.managers.get('HRAnalyst') as HRAnalyst
-        return hrAnalyst.getEmployees(office, 'CARRIER');
+    @MemoizeByTick((pos?: RoomPosition) => pos ? packPos(pos) : '')
+    static countEnergyInContainersOrGround(pos?: RoomPosition) {
+        if (!pos) return 0;
+        return LogisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
     }
-    reportDepot(creep: Creep) {
-        if (!creep.memory.office) return;
-        let depots = this.newDepots.get(creep.memory.office);
-
-        if (!depots) {
-            this.newDepots.set(creep.memory.office, [creep.id]);
-        } else {
-            depots.push(creep.id);
-        }
+    @MemoizeByTick((franchise: CachedFranchise) => franchise.id)
+    static calculateFranchiseSurplus(franchise: CachedFranchise) {
+        let linkCapacity = Capacity.byId(franchise.linkId)?.used ?? 0;
+        return this.countEnergyInContainersOrGround(franchise.pos) + linkCapacity;
     }
 }
