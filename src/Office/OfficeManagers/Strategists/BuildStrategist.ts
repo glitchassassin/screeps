@@ -1,10 +1,13 @@
 import { BARRIER_LEVEL } from "config";
 import { BuildRequest } from "BehaviorTree/requests/Build";
+import { Controllers } from "WorldState/Controllers";
+import { DismantleRequest } from "BehaviorTree/requests/Dismantle";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { Health } from "WorldState/Health";
 import { LogisticsManager } from "../LogisticsManager";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
+import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { RoomData } from "WorldState/Rooms";
 import { RoomPlanningAnalyst } from "Analysts/RoomPlanningAnalyst";
 import { Structures } from "WorldState/Structures";
@@ -37,6 +40,7 @@ export class BuildStrategist extends OfficeManager {
         // Submit requests, up to the quota, from the build plan,
         // once every 50 ticks
         let plan = RoomPlanningAnalyst.getRoomPlan(roomName);
+        let plannedStructures = [];
         if (!plan || Game.time % 100 !== 0) return;
         for (let c of plan.structures) {
             c.survey();
@@ -72,11 +76,13 @@ export class BuildStrategist extends OfficeManager {
                                 }
                             }
                             facilitiesManager.submit(req);
+                            plannedStructures.push(c);
                         }
                         structureCounts[c.structureType] = existingStructures + 1;
                     }
                 }
             } else {
+                plannedStructures.push(c);
                 let health = Health.byId(c.structure.id);
                 let barrierLevel = BARRIER_LEVEL[(getRcl(this.office.name) ?? 1)] ?? 0
                 // Barrier heuristic
@@ -113,6 +119,37 @@ export class BuildStrategist extends OfficeManager {
                 }
             }
         }
+
+        // Generate dismantle requests, if needed
+        this.generateDismantleRequests(plannedStructures, roomName)
+            .forEach(req => facilitiesManager.submit(req))
+    }
+
+    generateDismantleRequests(plan: PlannedStructure[], roomName: string) {
+        const requests = [];
+        for (let structure of Structures.byRoom(roomName).filter(s => s.structureType !== STRUCTURE_CONTROLLER)) {
+            let dismantle = false;
+            for (let planned of plan) {
+                if (planned.structureType === structure.structureType && planned.pos.isEqualTo(structure.pos)) {
+                    // Structure is planned, ignore
+                    dismantle = false;
+                    break;
+                }
+                if (planned.pos.isNearTo(structure.pos)) {
+                    // Structure is near a planned structure
+                    // If it is not planned, dismantle it
+                    dismantle = true;
+                }
+            }
+            if (dismantle) {
+                if (Controllers.byRoom(roomName)?.my) {
+                    (structure as Structure).destroy();
+                } else {
+                    requests.push(new DismantleRequest(structure));
+                }
+            }
+        }
+        return requests;
     }
 }
 // profiler.registerClass(BuildStrategist, 'BuildStrategist');
