@@ -63,10 +63,6 @@ export class BuildStrategist extends OfficeManager {
 
                             if (neighbor) {
                                 req.priority = 4;
-                                (neighbor.managers.get('LogisticsManager') as LogisticsManager).submit(
-                                    req.pos.toString(),
-                                    new SupportRequest(req, CONSTRUCTION_COST[c.structureType])
-                                );
                                 (neighbor.managers.get('FacilitiesManager') as FacilitiesManager).submit(req);
                             }
                         } else {
