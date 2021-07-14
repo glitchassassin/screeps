@@ -11,12 +11,12 @@ import { transferEnergy } from "BehaviorTree/behaviors/transferEnergy";
 export class LinkHarvestRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
-    public sourceId: Id<Source>;
+    public targetId: Id<Source>;
 
     constructor(franchise: CachedFranchise) {
         super();
         this.pos = franchise.pos;
-        this.sourceId = franchise.id;
+        this.targetId = franchise.id;
         this.action = Sequence(
             Selector(
                 moveTo(franchise.containerPos, 0),
@@ -33,7 +33,7 @@ export class LinkHarvestRequest extends MinionRequest {
 
     meetsCapacity(creeps: Creep[]) {
         // Sources have a limited number of spaces to work from
-        if (creeps.length >= (FranchiseData.byId(this.sourceId)?.maxSalesmen ?? 0)) return true;
+        if (creeps.length >= (FranchiseData.byId(this.targetId)?.maxSalesmen ?? 0)) return true;
 
         // 5 WORK parts will max out a source
         let parts = 0;

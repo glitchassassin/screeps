@@ -7,15 +7,16 @@ import { Controllers } from "WorldState/Controllers";
 import { DefenseStrategist } from "Office/OfficeManagers/Strategists/DefenseStrategist";
 import { FacilitiesManager } from "Office/OfficeManagers/FacilitiesManager";
 import { HRManager } from "Office/OfficeManagers/HRManager";
+import { HarvestStrategist } from "Office/OfficeManagers/Strategists/HarvestStrategist";
 import { LegalData } from "WorldState/LegalData";
 import { LegalManager } from "Office/OfficeManagers/LegalManager";
 import { LegalStrategist } from "Office/OfficeManagers/Strategists/LegalStrategist";
 import { LinkManager } from "./OfficeManagers/LinkManager";
 import { LogisticsManager } from "Office/OfficeManagers/LogisticsManager";
+import { MineManager } from "./OfficeManagers/MineManager";
 import { Minimap } from "Visualizations/Territory";
 import { OfficeManager } from "./OfficeManager";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
-import { SalesStrategist } from "Office/OfficeManagers/Strategists/SalesStrategist";
 import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
 import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
@@ -125,10 +126,11 @@ export class Office {
         SalesManager.register(this);
         SecurityManager.register(this);
         LinkManager.register(this);
+        MineManager.register(this);
 
         // Create Strategists
         LegalStrategist.register(this);
-        SalesStrategist.register(this);
+        HarvestStrategist.register(this);
         DefenseStrategist.register(this);
         BuildStrategist.register(this);;
         StorageStrategist.register(this);

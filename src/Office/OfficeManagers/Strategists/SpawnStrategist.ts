@@ -1,9 +1,11 @@
 import { LogisticsRequest, TransferRequest } from "Logistics/LogisticsRequest";
+import { byId, getRcl } from "utils/gameObjectSelectors";
 
 import { Capacity } from "WorldState/Capacity";
 import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
 import { FacilitiesManager } from "../FacilitiesManager";
+import { ForemanMinion } from "MinionDefinitions/ForemanMinion";
 import { GuardMinion } from "MinionDefinitions/GuardMinion";
 import { HRAnalyst } from "Analysts/HRAnalyst";
 import { HRManager } from "../HRManager";
@@ -11,6 +13,7 @@ import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LawyerMinion } from "MinionDefinitions/LawyerMinion";
 import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
+import { MineData } from "WorldState/MineData";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
@@ -19,7 +22,6 @@ import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SourceType } from "Logistics/LogisticsSource";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
-import { getRcl } from "utils/gameObjectSelectors";
 
 const minionClasses: Record<string, Minion> = {
     SALESMAN: new SalesmanMinion(),
@@ -28,7 +30,8 @@ const minionClasses: Record<string, Minion> = {
     ENGINEER: new EngineerMinion(),
     PARALEGAL: new ParalegalMinion(),
     INTERN: new InternMinion(),
-    LAWYER: new LawyerMinion()
+    LAWYER: new LawyerMinion(),
+    FOREMAN: new ForemanMinion(),
 }
 
 export class SpawnStrategist extends OfficeManager {
@@ -95,6 +98,9 @@ export class SpawnStrategist extends OfficeManager {
             spawnTargets['SALESMAN'],
             Math.ceil(facilitiesManager.workPending() / (workPartsPerEngineer * 1500 * 2.5))
         );
+
+        const mineCount = MineData.byOffice(this.office).filter(m => byId(m.extractorId)).length;
+        spawnTargets['FOREMAN'] = mineCount;
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {

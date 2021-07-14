@@ -6,6 +6,8 @@ import { Controllers } from 'WorldState/Controllers';
 import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
 import { MapAnalyst } from 'Analysts/MapAnalyst';
+import { MinePlan } from './MinePlan';
+import { Minerals } from 'WorldState/Minerals';
 import { Office } from 'Office/Office';
 import { PlannedStructure } from './classes/PlannedStructure';
 import { Sources } from 'WorldState/Sources';
@@ -136,8 +138,9 @@ export class RoomArchitect extends BoardroomManager {
 
         // Get sources
         let sources = Sources.byRoom(room.name);
+        let mineral = Minerals.byRoom(room.name);
         // Calculate FranchisePlans
-        let franchise1, franchise2, headquarters;
+        let franchise1, franchise2, mine, headquarters;
         try {
             let plans = sources.map(source => new FranchisePlan(source));
             if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`)
@@ -145,6 +148,14 @@ export class RoomArchitect extends BoardroomManager {
             [franchise1, franchise2] = plans;
         } catch (e) {
             room.roomPlan = 'FAILED generating franchises';
+            console.log(room.roomPlan, e);
+            return new BlockPlan();
+        }
+        try {
+            if (!mineral) throw new Error(`No mineral found in room`)
+            mine = new MinePlan(mineral)
+        } catch (e) {
+            room.roomPlan = 'FAILED generating mine';
             console.log(room.roomPlan, e);
             return new BlockPlan();
         }
@@ -177,6 +188,8 @@ export class RoomArchitect extends BoardroomManager {
         // RCL 6
         roomBlock.structures.push(franchise1.link);
         roomBlock.structures.push(headquarters.terminal);
+        roomBlock.structures.push(mine.container);
+        roomBlock.structures.push(mine.extractor);
         // RCL 7
         roomBlock.structures.push(headquarters.spawn);
         roomBlock.structures.push(headquarters.towers[2]);

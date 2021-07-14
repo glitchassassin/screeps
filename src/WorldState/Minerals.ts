@@ -67,7 +67,8 @@ export class Minerals {
     }
     static byPos(pos: RoomPosition): CachedMineral|undefined {
         // Can only be one mineral in a room
-        return this.byRoom(pos.roomName);
+        const mineral = this.byRoom(pos.roomName);
+        return mineral && pos.isEqualTo(mineral.pos) ? mineral : undefined
     }
     static purge() {
         Memory.Minerals = {idByRoom: {}, data: {}};
