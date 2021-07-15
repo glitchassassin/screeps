@@ -1,6 +1,7 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 
 import { Minion } from "MinionDefinitions/Minion";
+import { log } from "utils/logger";
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
@@ -17,6 +18,8 @@ declare module 'BehaviorTree/Behavior' {
  * Returns FAILURE for any other error
  */
 export const spawnMinion = (type: Minion) => (spawn: StructureSpawn, bb: Blackboard) => {
+    log('spawnMinion', `maxRoomEnergy: ${bb.maxRoomEnergy}`)
+
     if (!bb.maxRoomEnergy) return BehaviorResult.FAILURE;
     if (bb.spawnMinionName && Game.creeps[bb.spawnMinionName] && !Game.creeps[bb.spawnMinionName].spawning) {
         // Creep has spawned - disable alerts
@@ -35,7 +38,11 @@ export const spawnMinion = (type: Minion) => (spawn: StructureSpawn, bb: Blackbo
         bb.spawnMinionName = name;
     }
 
+    log('spawnMinion', `${type.type} body: ${body}`)
+
     let result = spawn.spawnCreep(body, bb.spawnMinionName, {memory});
+
+    log('spawnMinion', `${type.type} result: ${result}`)
 
     if (
         result === OK ||

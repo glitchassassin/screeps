@@ -17,7 +17,6 @@ import { MineData } from "WorldState/MineData";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
-import { Request } from "BehaviorTree/Request";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SourceType } from "Logistics/LogisticsSource";
@@ -35,8 +34,6 @@ const minionClasses: Record<string, Minion> = {
 }
 
 export class SpawnStrategist extends OfficeManager {
-    spawnRequest?: Request<StructureSpawn>;
-
     logisticsRequests = new Map<Id<Structure>, LogisticsRequest>();
 
     plan() {
@@ -44,38 +41,34 @@ export class SpawnStrategist extends OfficeManager {
 
         this.submitLogisticsRequests();
 
-        if (this.spawnRequest && !this.spawnRequest.result) return; // Pending request exists
-        if ((HRAnalyst.newestEmployee(this.office) ?? 0) > 1490) return; // Wait 10 ticks after previous spawn before considering new requests
-
         // Get spawn queue
         const spawnTargets = this.spawnTargets();
         // Get current employee counts
         const employees = this.getEmployees();
 
         // Calculate income spawn pressure
-        let priority = ['SALESMAN', 'CARRIER']
+        let priorities = ['SALESMAN', 'CARRIER']
             .map(minion => ({
                 minion,
                 pressure: (employees[minion] ?? 0) / spawnTargets[minion]
             }))
             .filter(({pressure}) => pressure < 1)
-            .sort((a, b) => a.pressure - b.pressure)
-            .shift()
 
-        if (!priority) {
-            priority = Object.keys(spawnTargets)
+        if (!priorities.length) {
+            priorities = Object.keys(spawnTargets)
                 .map(minion => ({
                     minion,
                     pressure: (employees[minion] ?? 0) / spawnTargets[minion]
                 }))
                 .filter(({pressure}) => pressure < 1)
-                .sort((a, b) => a.pressure - b.pressure)
-                .shift()
         }
 
-        const minion = minionClasses[priority?.minion ?? '']
-        if (minion) {
-            this.submitRequest(minion)
+        for (let p of priorities) {
+            let minion = minionClasses[p.minion]
+            let priority = Math.floor(10 * (1 - p.pressure))
+            if (minion) {
+                this.submitRequest(minion, priority)
+            }
         }
     }
 
@@ -99,7 +92,9 @@ export class SpawnStrategist extends OfficeManager {
             Math.ceil(facilitiesManager.workPending() / (workPartsPerEngineer * 1500 * 2.5))
         );
 
-        const mineCount = MineData.byOffice(this.office).filter(m => byId(m.extractorId)).length;
+        const mineCount = MineData.byOffice(this.office).filter(m => (
+            byId(m.extractorId) && !byId(m.id)?.ticksToRegeneration
+        )).length;
         spawnTargets['FOREMAN'] = mineCount;
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
@@ -128,10 +123,12 @@ export class SpawnStrategist extends OfficeManager {
         return result;
     }
 
-    submitRequest(minion: Minion) {
+    submitRequest(minion: Minion, priority: number) {
         let hrManager = this.office.managers.get('HRManager') as HRManager;
-        this.spawnRequest = new SpawnRequest(minion);
-        hrManager.submit(this.spawnRequest);
+        if (!hrManager.requests.some(r => (r as SpawnRequest).type === minion.type)) {
+            console.log(this.office.name, 'submitting request for', minion.type);
+            hrManager.submit(new SpawnRequest(minion, priority));
+        }
     }
 
     submitLogisticsRequests() {

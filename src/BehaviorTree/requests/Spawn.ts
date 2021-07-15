@@ -9,7 +9,7 @@ export class SpawnRequest extends Request<StructureSpawn> {
     public action: Behavior<StructureSpawn>;
     public type: string;
 
-    constructor(minion: Minion) {
+    constructor(minion: Minion, public priority: number = 5) {
         super();
         this.type = minion.type;
         this.action = Sequence(
