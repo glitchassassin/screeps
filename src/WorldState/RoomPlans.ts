@@ -76,7 +76,6 @@ export class RoomPlanData {
                     mine: new MinePlan(cached.office.mine),
                     extensions: new ExtensionsPlan(cached.office.extensions),
                 }
-                let hq = new HeadquartersPlan(cached.office.headquarters)
             }
             let territory;
             if (cached.territory) {
