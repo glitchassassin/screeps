@@ -47,8 +47,8 @@ export function unwrapConstructionSite(site: CachedConstructionSite): CachedCons
     }
 }
 
-export const ConstructionSites = {
-    byId(id: Id<ConstructionSite>|undefined): CachedConstructionSite|undefined {
+export class ConstructionSites {
+    static byId(id: Id<ConstructionSite>|undefined): CachedConstructionSite|undefined {
         if (id === undefined) return undefined;
         let site = Game.getObjectById(id)
         if (!site) {
@@ -72,8 +72,8 @@ export const ConstructionSites = {
             }
         }
         return site;
-    },
-    byRoom(roomName: string): CachedConstructionSite[] {
+    }
+    static byRoom(roomName: string): CachedConstructionSite[] {
         if (Game.rooms[roomName]) {
             // We have vision here
             return Game.rooms[roomName].find(FIND_MY_CONSTRUCTION_SITES)
@@ -84,17 +84,17 @@ export const ConstructionSites = {
                 ?.map(id => ConstructionSites.byId(id))
                 .filter(site => site !== undefined) as CachedConstructionSite[] ?? []
         }
-    },
-    byOffice(office: Office): CachedConstructionSite[] {
+    }
+    static byOffice(office: Office): CachedConstructionSite[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    },
-    byPos(pos: RoomPosition): CachedConstructionSite|undefined {
+    }
+    static byPos(pos: RoomPosition): CachedConstructionSite|undefined {
         return ConstructionSites.byRoom(pos.roomName).find(site => site?.pos.isEqualTo(pos));
-    },
-    purge() {
+    }
+    static purge() {
         Memory.ConstructionSites = {idByRoom: {}, data: {}};
-    },
-    refreshCache() {
+    }
+    static refreshCache() {
         // Initialize the Heap branch, if necessary
         Memory.ConstructionSites ??= {idByRoom: {}, data: {}};
 
@@ -133,4 +133,4 @@ global.ConstructionSites = ConstructionSites
 registerCacheRefresher(ConstructionSites.refreshCache);
 registerCachePurger(ConstructionSites.purge);
 
-profiler.registerObject(ConstructionSites, 'ConstructionSites');
+profiler.registerClass(ConstructionSites, 'ConstructionSites');

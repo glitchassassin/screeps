@@ -1,5 +1,6 @@
 import { packPos, unpackPos } from "utils/packrat";
 
+import { CACHED_STRUCTURES } from "config";
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
 import profiler from "screeps-profiler";
@@ -94,7 +95,7 @@ export const Structures = {
 
             // We only need to cache if controller is unowned
             if (!Game.rooms[roomName].controller?.my) {
-                for (let site of Game.rooms[roomName].find(FIND_STRUCTURES)) {
+                for (let site of Game.rooms[roomName].find(FIND_STRUCTURES).filter(s => CACHED_STRUCTURES.includes(s.structureType))) {
                     // Update currently cached IDs
                     Memory.Structures.idByRoom[roomName].push(site.id);
                     existingIds.delete(site.id);

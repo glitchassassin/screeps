@@ -1,8 +1,9 @@
-import { CachedStructure, Structures } from "./Structures"
 import { packPos, unpackPos } from "utils/packrat"
 
 import { Office } from "Office/Office"
 import { RoomData } from "./Rooms"
+import { Structures } from "./Structures"
+import profiler from "screeps-profiler"
 import { registerCachePurger } from "./registerCachePurger"
 
 declare global {
@@ -41,22 +42,15 @@ export type CachedMine = {
     maxForemen?: number,
 }
 
-export const MineData = {
-    byId(id: Id<Mineral>|undefined): CachedMine|undefined {
+export class MineData {
+    static byId(id: Id<Mineral>|undefined): CachedMine|undefined {
         if (id === undefined) return undefined;
         let cached = Memory.Mines?.data[id]
         if (!cached) return;
         let pos = unpackPos(cached.posPacked);
         let containerPos = cached.containerPosPacked ? unpackPos(cached.containerPosPacked) : undefined;
-        let container = Structures.byId(cached.containerId) ?? (
-            containerPos ?
-                Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> :
-                undefined
-        );
-        let extractor = Structures.byId(cached.extractorId) ?? (
-            pos ? Structures.byPos(pos).find(s => s.structureType === STRUCTURE_EXTRACTOR) as CachedStructure<StructureExtractor> :
-            undefined
-        );
+        let container = Structures.byId(cached.containerId);
+        let extractor = Structures.byId(cached.extractorId);
         return {
             id,
             pos,
@@ -66,8 +60,8 @@ export const MineData = {
             maxForemen: cached.maxForemen,
             distance: cached.distance
         }
-    },
-    byRoom(roomName: string): CachedMine[] {
+    }
+    static byRoom(roomName: string): CachedMine[] {
         if (!Memory.Mines) {
             return [];
         } else {
@@ -75,14 +69,14 @@ export const MineData = {
                 ?.map(id => this.byId(id))
                 .filter(site => site !== undefined) as CachedMine[] ?? []
         }
-    },
-    byOffice(office: Office): CachedMine[] {
+    }
+    static byOffice(office: Office): CachedMine[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    },
-    purge() {
+    }
+    static purge() {
         Memory.Mines = {idByRoom: {}, data: {}}
-    },
-    set(id: Id<Mineral>, mine: CachedMine, roomName: string) {
+    }
+    static set(id: Id<Mineral>, mine: CachedMine, roomName: string) {
         Memory.Mines ??= {idByRoom: {}, data: {}}
         Memory.Mines.data[id] = {
             posPacked: packPos(mine.pos),
@@ -102,3 +96,5 @@ export const MineData = {
 global.MineData = MineData;
 
 registerCachePurger(MineData.purge);
+
+profiler.registerClass(MineData, 'MineData');

@@ -1,3 +1,4 @@
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -112,3 +113,5 @@ global.Capacity = Capacity;
 // Register the cache refresh
 registerCacheRefresher(Capacity.refreshCache);
 registerCachePurger(Capacity.purge);
+
+profiler.registerClass(Capacity, 'Capacity');

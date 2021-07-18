@@ -1,6 +1,7 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { Office } from "Office/Office";
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -116,3 +117,5 @@ global.Controllers = Controllers;
 // Register the cache refresh
 registerCacheRefresher(Controllers.refreshCache);
 registerCachePurger(Controllers.purge);
+
+profiler.registerClass(Controllers, 'Controllers');

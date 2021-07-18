@@ -1,8 +1,8 @@
-import { CachedStructure, Structures } from "./Structures"
 import { packPos, unpackPos } from "utils/packrat"
 
 import { Office } from "Office/Office"
 import { RoomData } from "./Rooms"
+import { Structures } from "./Structures"
 import profiler from "screeps-profiler"
 import { registerCachePurger } from "./registerCachePurger"
 
@@ -44,23 +44,16 @@ export type CachedFranchise = {
     maxSalesmen?: number,
 }
 
-export const FranchiseData = {
-    byId(id: Id<Source>|undefined): CachedFranchise|undefined {
+export class FranchiseData {
+    static byId(id: Id<Source>|undefined): CachedFranchise|undefined {
         if (id === undefined) return undefined;
         let cached = Memory.Franchises?.data[id]
         if (!cached) return;
         let pos = unpackPos(cached.posPacked);
         let containerPos = cached.containerPosPacked ? unpackPos(cached.containerPosPacked) : undefined;
-        let container = Structures.byId(cached.containerId) ?? (
-            containerPos ?
-                Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> :
-                undefined
-        );
+        let container = Structures.byId(cached.containerId);
         let linkPos = cached.linkPosPacked ? unpackPos(cached.linkPosPacked) : undefined;
-        let link = Structures.byId(cached.linkId) ?? (
-            linkPos ? Structures.byPos(linkPos).find(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink> :
-            undefined
-        );
+        let link = Structures.byId(cached.linkId);
         return {
             id,
             pos,
@@ -71,8 +64,8 @@ export const FranchiseData = {
             maxSalesmen: cached.maxSalesmen,
             distance: cached.distance
         }
-    },
-    byRoom(roomName: string): CachedFranchise[] {
+    }
+    static byRoom(roomName: string): CachedFranchise[] {
         if (!Memory.Franchises) {
             return [];
         } else {
@@ -80,14 +73,14 @@ export const FranchiseData = {
                 ?.map(id => this.byId(id))
                 .filter(site => site !== undefined) as CachedFranchise[] ?? []
         }
-    },
-    byOffice(office: Office): CachedFranchise[] {
+    }
+    static byOffice(office: Office): CachedFranchise[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    },
-    purge() {
+    }
+    static purge() {
         Memory.Franchises = {idByRoom: {}, data: {}}
-    },
-    set(id: Id<Source>, franchise: CachedFranchise, roomName: string) {
+    }
+    static set(id: Id<Source>, franchise: CachedFranchise, roomName: string) {
         Memory.Franchises ??= {idByRoom: {}, data: {}}
         Memory.Franchises.data[id] = {
             posPacked: packPos(franchise.pos),
@@ -109,4 +102,4 @@ global.FranchiseData = FranchiseData;
 
 registerCachePurger(FranchiseData.purge);
 
-profiler.registerObject(FranchiseData, 'FranchiseData')
+profiler.registerClass(FranchiseData, 'FranchiseData')

@@ -5,6 +5,7 @@ import { MinePlan } from "Boardroom/BoardroomManagers/Architects/MinePlan";
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
 import { TerritoryFranchisePlan } from "Boardroom/BoardroomManagers/Architects/TerritoryFranchise";
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 
 declare global {
@@ -134,3 +135,5 @@ export class RoomPlanData {
 global.RoomPlanData = RoomPlanData;
 
 registerCachePurger(RoomPlanData.purge);
+
+profiler.registerClass(RoomPlanData, 'RoomPlanData');

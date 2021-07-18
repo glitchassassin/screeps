@@ -1,5 +1,6 @@
 import { Office } from "Office/Office";
 import { TerritoryIntent } from "Analysts/DefenseAnalyst";
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 
 declare global {
@@ -66,3 +67,5 @@ export class RoomData {
 global.RoomData = RoomData;
 
 registerCachePurger(RoomData.purge);
+
+profiler.registerClass(RoomData, 'RoomData');

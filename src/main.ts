@@ -6,6 +6,7 @@ import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
 import { VisualizationController } from 'utils/VisualizationController';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
+import profiler from 'screeps-profiler';
 import { run as runReports } from 'Reports/ReportRunner';
 
 try {
@@ -98,10 +99,10 @@ function mainLoop() {
   // }
 }
 
-// profiler.enable()
+profiler.enable()
 // export const loop = ErrorMapper.wrapLoop(mainLoop);
 export const loop = () => {
   MemHack.pretick();
-  mainLoop();
-  // profiler.wrap(mainLoop);
+  // mainLoop();
+  profiler.wrap(mainLoop);
 }

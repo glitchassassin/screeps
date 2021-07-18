@@ -42,3 +42,7 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
 export const WHITELIST = [
     'CrAzYDubC'
 ]
+
+export const CACHED_STRUCTURES: StructureConstant[] = [
+    STRUCTURE_CONTAINER
+]

@@ -1,3 +1,4 @@
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 import { registerCacheRefresher } from "./registerCacheRefresher";
 
@@ -28,8 +29,8 @@ declare global {
  * Only caches data for:
  * - [Heap] Containers in a room not owned by me
  */
-export const Health = {
-    byId(id: Id<Creep|Structure>|undefined) {
+export class Health {
+    static byId(id: Id<Creep|Structure>|undefined) {
         if (id === undefined) return undefined;
         let obj = Game.getObjectById(id);
         if (!obj) {
@@ -39,11 +40,11 @@ export const Health = {
             hits: obj?.hits,
             hitsMax: obj?.hitsMax
         }
-    },
-    purge() {
+    }
+    static purge() {
         global.Heap.Health = {idByRoom: {}, data: {}};
-    },
-    refreshCache() {
+    }
+    static refreshCache() {
         // Initialize the Heap branch, if necessary
         global.Heap.Health ??= {idByRoom: {}, data: {}};
 
@@ -80,3 +81,5 @@ global.Health = Health;
 // Register the cache refresh
 registerCacheRefresher(Health.refreshCache);
 registerCachePurger(Health.purge);
+
+profiler.registerClass(Health, 'Health');

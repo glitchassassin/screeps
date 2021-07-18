@@ -1,7 +1,7 @@
-import { CachedStructure, Structures } from "./Structures"
 import { packPos, unpackPos } from "utils/packrat"
 
 import { Office } from "Office/Office"
+import { Structures } from "./Structures"
 import profiler from "screeps-profiler"
 import { registerCachePurger } from "./registerCachePurger"
 
@@ -38,20 +38,16 @@ export type CachedLegal = {
     rclMilestones?: Record<number, number>;
 }
 
-export const LegalData = {
-    byId(id: Id<StructureController>|undefined): CachedLegal|undefined {
+export class LegalData {
+    static byId(id: Id<StructureController>|undefined): CachedLegal|undefined {
         if (id === undefined) return undefined;
         let cached = Memory.Legal?.data[id]
         if (!cached) return;
         let pos = unpackPos(cached.posPacked);
         let containerPos = cached.containerPosPacked ? unpackPos(cached.containerPosPacked) : undefined;
-        let container = Structures.byId(cached.containerId) ?? (
-            containerPos ? Structures.byPos(containerPos).find(s => s.structureType === STRUCTURE_CONTAINER) as CachedStructure<StructureContainer> : undefined
-        );
+        let container = Structures.byId(cached.containerId);
         let linkPos = cached.linkPosPacked ? unpackPos(cached.linkPosPacked) : undefined;
-        let link = Structures.byId(cached.linkId) ?? (
-            linkPos ? Structures.byPos(linkPos).find(s => s.structureType === STRUCTURE_LINK) as CachedStructure<StructureLink> : undefined
-        );
+        let link = Structures.byId(cached.linkId);
         return {
             id,
             pos,
@@ -61,22 +57,22 @@ export const LegalData = {
             linkId: link?.id,
             rclMilestones: cached.rclMilestones
         }
-    },
-    byRoom(roomName: string) {
+    }
+    static byRoom(roomName: string) {
         if (!Memory.Legal) {
             return undefined;
         } else {
             return this.byId(Memory.Legal.idByRoom[roomName])
         }
-    },
-    byOffice(office: Office): CachedLegal[] {
+    }
+    static byOffice(office: Office): CachedLegal[] {
         let center = this.byRoom(office.name);
         return center ? [center] : []
-    },
-    purge() {
+    }
+    static purge() {
         Memory.Legal = {idByRoom: {}, data: {}}
-    },
-    set(id: Id<StructureController>, legal: CachedLegal, roomName: string) {
+    }
+    static set(id: Id<StructureController>, legal: CachedLegal, roomName: string) {
         Memory.Legal ??= {idByRoom: {}, data: {}}
         Memory.Legal.data[id] = {
             posPacked: packPos(legal.pos),
@@ -94,4 +90,4 @@ global.LegalData = LegalData;
 
 registerCachePurger(LegalData.purge);
 
-profiler.registerObject(LegalData, 'LegalData')
+profiler.registerClass(LegalData, 'LegalData')

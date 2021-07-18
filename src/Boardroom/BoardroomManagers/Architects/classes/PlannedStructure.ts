@@ -37,18 +37,9 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         public pos: RoomPosition,
         public structureType: T
     ) {}
-    _structure?: CachedStructure<Structure<T>>;
+    structure?: CachedStructure<Structure<T>>;
     buildRequest?: BuildRequest;
     repairRequest?: RepairRequest;
-
-    get structure() {
-        if (Game.rooms[this.pos.roomName] && byId(this._structure?.id)) {
-            return this._structure;
-        }
-
-        this._structure ??= Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
-        return this._structure;
-    }
 
     serialize() {
         return PackedStructureTypes[this.structureType] + packPos(this.pos);
@@ -59,7 +50,16 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         return new PlannedStructure(pos, structureType)
     }
     survey() {
-        if (this.structure) return true; // Cached structure exists
+        if (Game.rooms[this.pos.roomName]) {
+            if (byId(this.structure?.id)) {
+                return true; // Actual structure is visible
+            } else {
+                this.structure = Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
+                if (this.structure) return true; // Found structure at expected position
+            }
+        } else if (this.structure){
+            return true; // Cached structure exists
+        }
 
         if (this.buildRequest && !this.buildRequest.result) {
             // Structure is being built

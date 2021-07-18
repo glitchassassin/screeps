@@ -3,6 +3,7 @@ import { deserializeRoute, serializeRoute } from "WorldState/LogisticsRouteModel
 
 import { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
+import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
 
 declare global {
@@ -110,3 +111,5 @@ export class LogisticsRouteData {
 global.LogisticsRouteData = LogisticsRouteData;
 
 registerCachePurger(LogisticsRouteData.purge);
+
+profiler.registerClass(LogisticsRouteData, 'LogisticsRouteData');
