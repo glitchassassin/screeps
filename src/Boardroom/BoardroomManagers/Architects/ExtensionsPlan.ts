@@ -1,9 +1,13 @@
 import { BlockPlan } from "./classes/BlockPlan";
+import { BlockPlanBuilder } from "./classes/BlockPlanBuilder";
+import { FranchisePlan } from "./FranchisePlan";
+import { HeadquartersPlan } from "./HeadquartersPlan";
 import { MapAnalyst } from "Analysts/MapAnalyst";
+import { MinePlan } from "./MinePlan";
 import { PlannedStructure } from "./classes/PlannedStructure";
 
 export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: number) {
-    if (count <= 0) return;
+    if (count <= 0) return [];
 
     let terrain = Game.map.getRoomTerrain(roomName);
     let cm = new PathFinder.CostMatrix();
@@ -24,7 +28,7 @@ export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: nu
 
     extensions.sort(MapAnalyst.sortByDistanceTo(storagePos));
 
-    extensions.forEach(pos => roomBlock.structures.push(new PlannedStructure(pos, STRUCTURE_EXTENSION)));
+    return extensions.map(pos => new PlannedStructure(pos, STRUCTURE_EXTENSION));
 }
 
 function fillExtensionsRecursive(terrain: RoomTerrain, costMatrix: CostMatrix, startingPositions: RoomPosition[], count: number) {
@@ -77,4 +81,25 @@ function squareIsValid(terrain: RoomTerrain, costMatrix: CostMatrix, pos: RoomPo
         terrain.get(p.x, p.y) !== TERRAIN_MASK_WALL &&
         costMatrix.get(p.x, p.y) < 255
     ))
+}
+
+export class ExtensionsPlan extends BlockPlanBuilder {
+    public extensions: PlannedStructure[] = [];
+
+    deserialize() {
+        this.extensions = this.blockPlan.getStructures(STRUCTURE_EXTENSION);
+    }
+
+    plan(roomName: string, franchise1: FranchisePlan, franchise2: FranchisePlan, mine: MinePlan, headquarters: HeadquartersPlan) {
+        let roomPlan = new BlockPlan();
+        roomPlan.structures.push(
+            ...franchise1.blockPlan.structures,
+            ...franchise2.blockPlan.structures,
+            ...mine.blockPlan.structures,
+            ...headquarters.blockPlan.structures,
+        )
+        this.extensions = fillExtensions(roomName, roomPlan, CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8]);
+        this.blockPlan.structures.push(...this.extensions);
+        return this;
+    }
 }

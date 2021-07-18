@@ -1,17 +1,18 @@
 import { BARRIER_LEVEL } from "config";
+import { BehaviorResult } from "BehaviorTree/Behavior";
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { Controllers } from "WorldState/Controllers";
 import { DismantleRequest } from "BehaviorTree/requests/Dismantle";
+import { FacilitiesAnalyst } from "Analysts/FacilitiesAnalyst";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { Health } from "WorldState/Health";
 import { LogisticsManager } from "../LogisticsManager";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
-import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
+import type { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
+import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { RoomData } from "WorldState/Rooms";
-import { RoomPlanningAnalyst } from "Analysts/RoomPlanningAnalyst";
 import { Structures } from "WorldState/Structures";
-import { SupportRequest } from "Logistics/LogisticsRequest";
 import { getRcl } from "utils/gameObjectSelectors";
 
 export class BuildStrategist extends OfficeManager {
@@ -39,17 +40,17 @@ export class BuildStrategist extends OfficeManager {
 
         // Submit requests, up to the quota, from the build plan,
         // once every 50 ticks
-        let plan = RoomPlanningAnalyst.getRoomPlan(roomName);
+        let plan = FacilitiesAnalyst.getPlannedStructuresByRcl(this.office.name, rcl)
         let plannedStructures = [];
         if (!plan || Game.time % 100 !== 0) return;
-        for (let c of plan.structures) {
+        for (let c of plan) {
             c.survey();
             if (!c.structure) {
                 // Evaluate build
                 let existingStructures = structureCounts[c.structureType] ?? 0;
                 let availableStructures = CONTROLLER_STRUCTURES[c.structureType][rcl];
                 if (existingStructures < availableStructures) {
-                    let req = c.generateBuildRequest();
+                    let req = this.generateBuildRequest(c);
                     if (!facilitiesManager.requests.includes(req)) {
                         if (
                             c.structureType === STRUCTURE_SPAWN &&
@@ -66,11 +67,6 @@ export class BuildStrategist extends OfficeManager {
                                 (neighbor.managers.get('FacilitiesManager') as FacilitiesManager).submit(req);
                             }
                         } else {
-                            if (c.structureType !== STRUCTURE_ROAD) {
-                                req.onAssigned = () => {
-                                    logisticsManager.submit(req.pos.toString(), new SupportRequest(req, CONSTRUCTION_COST[c.structureType]));
-                                }
-                            }
                             facilitiesManager.submit(req);
                             plannedStructures.push(c);
                         }
@@ -84,32 +80,14 @@ export class BuildStrategist extends OfficeManager {
                 // Barrier heuristic
                 if (c.structureType === STRUCTURE_WALL || c.structureType === STRUCTURE_RAMPART) {
                     if ((health?.hits ?? 0) < barrierLevel * 0.5) {
-                        let req = c.generateRepairRequest(barrierLevel);
+                        let req = this.generateRepairRequest(c, barrierLevel);
                         if (req && !facilitiesManager.requests.includes(req)) {
-                            req.onAssigned = () => {
-                                let capacity = (
-                                    barrierLevel -
-                                    (Health.byId(req!.structureId)?.hits ?? 0)
-                                ) / 100
-                                if (capacity > 1000) {
-                                    logisticsManager.submit(req!.pos.toString(), new SupportRequest(req!, capacity));
-                                }
-                            }
                             facilitiesManager.submit(req);
                         }
                     }
                 } else if ((health?.hits ?? 0) < (health?.hitsMax ?? 0) * 0.5) {
-                    let req = c.generateRepairRequest();
+                    let req = this.generateRepairRequest(c);
                     if (req && !facilitiesManager.requests.includes(req)) {
-                        req.onAssigned = () => {
-                            let capacity = (
-                                (Health.byId(req!.structureId)?.hitsMax ?? 0) -
-                                (Health.byId(req!.structureId)?.hits ?? 0)
-                            ) / 100
-                            if (capacity > 1000) {
-                                logisticsManager.submit(req!.pos.toString(), new SupportRequest(req!, capacity));
-                            }
-                        }
                         facilitiesManager.submit(req);
                     }
                 }
@@ -119,6 +97,24 @@ export class BuildStrategist extends OfficeManager {
         // Generate dismantle requests, if needed
         this.generateDismantleRequests(plannedStructures, roomName)
             .forEach(req => facilitiesManager.submit(req))
+    }
+
+    generateBuildRequest(structure: PlannedStructure) {
+        if (!structure.buildRequest || (!structure.structure && structure.buildRequest.result === BehaviorResult.FAILURE)) {
+            structure.buildRequest = new BuildRequest(structure.pos, structure.structureType);
+        }
+        return structure.buildRequest;
+    }
+    generateRepairRequest(structure: PlannedStructure, targetHealth?: number) {
+        if (structure.structure && (
+            !structure.repairRequest || (
+                structure.repairRequest?.result === BehaviorResult.FAILURE ||
+                structure.repairRequest?.result === BehaviorResult.SUCCESS
+            )
+        )) {
+            structure.repairRequest = new RepairRequest(structure.structure, targetHealth);
+        }
+        return structure.repairRequest;
     }
 
     generateDismantleRequests(plan: PlannedStructure[], roomName: string) {

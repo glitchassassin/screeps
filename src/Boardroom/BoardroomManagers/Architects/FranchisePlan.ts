@@ -1,17 +1,22 @@
+import { BlockPlanBuilder } from "./classes/BlockPlanBuilder";
 import { CachedSource } from "WorldState/Sources";
 import { Controllers } from "WorldState/Controllers";
-import { FranchiseData } from "WorldState/FranchiseData";
 import { MapAnalyst } from "../../../Analysts/MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
 
-export class FranchisePlan {
-    rangeToController: number;
-    spawn: PlannedStructure;
-    link: PlannedStructure;
-    container: PlannedStructure;
+export class FranchisePlan extends BlockPlanBuilder {
+    spawn!: PlannedStructure;
+    link!: PlannedStructure;
+    container!: PlannedStructure;
     extensions: PlannedStructure[] = [];
 
-    constructor(public source: CachedSource) {
+    deserialize() {
+        this.spawn = this.blockPlan.getStructure(STRUCTURE_SPAWN);
+        this.link = this.blockPlan.getStructure(STRUCTURE_LINK);
+        this.container = this.blockPlan.getStructure(STRUCTURE_CONTAINER);
+        // this.extensions = this.blockPlan.getStructures(STRUCTURE_EXTENSION);
+    }
+    plan(source: CachedSource) {
         // Calculate from scratch
         let controller = Controllers.byRoom(source.pos.roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
@@ -31,7 +36,6 @@ export class FranchisePlan {
             }});
         if (route.incomplete) throw new Error('Unable to calculate path between source and controller');
         this.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
-        this.rangeToController = route.cost;
 
         // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller.
         let adjacents = MapAnalyst.calculateAdjacentPositions(this.container.pos).filter(pos => (
@@ -50,13 +54,13 @@ export class FranchisePlan {
         if (!linkPos) throw new Error('Not enough space to place a Franchise');
         this.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
 
-        // Update franchise with data
-        FranchiseData.set(source.id, {
-            id: source.id,
-            pos: source.pos,
-            linkPos: this.link.pos,
-            containerPos: this.container.pos,
-            distance: this.rangeToController
-        }, source.pos.roomName)
+        this.blockPlan.structures.push(
+            this.spawn,
+            this.link,
+            this.container,
+            ...this.extensions,
+        )
+
+        return this;
     }
 }

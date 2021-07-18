@@ -30,6 +30,21 @@ declare global {
  * - [Heap] Containers in a room not owned by me
  */
 export class Capacity {
+    static resourcesById(id: Id<Creep|Tombstone|Ruin|AnyStoreStructure|Resource>|undefined) {
+        if (id === undefined) return [];
+        let obj = Game.getObjectById(id);
+        if (obj === null) {
+            return []
+        }
+        if (obj instanceof Resource) {
+            return [obj.resourceType]
+        }
+        let store = obj?.store as GenericStore
+        if (!store) {
+            return Object.keys(global.Heap.Capacity?.data[id] ?? {}) as ResourceConstant[];
+        }
+        return Object.keys(store) as ResourceConstant[]
+    }
     static byId(id: Id<Creep|Tombstone|Ruin|AnyStoreStructure|Resource>|undefined, resource: ResourceConstant = RESOURCE_ENERGY) {
         if (id === undefined) return undefined;
         let obj = Game.getObjectById(id);
@@ -73,12 +88,12 @@ export class Capacity {
                     global.Heap.Capacity.idByRoom[roomName].add(container.id);
                     existingIds.delete(container.id);
                     // Cache capacities for each resource type
-                    for (let resource of RESOURCES_ALL) {
+                    for (let resource in container.store) {
                         global.Heap.Capacity.data[container.id] ??= {};
-                        global.Heap.Capacity.data[container.id][resource] = {
-                            capacity: container.store.getCapacity(resource) ?? undefined,
-                            used: container.store.getUsedCapacity(resource) ?? undefined,
-                            free: container.store.getFreeCapacity(resource) ?? undefined,
+                        global.Heap.Capacity.data[container.id][resource as ResourceConstant] = {
+                            capacity: container.store.getCapacity(resource as ResourceConstant) ?? undefined,
+                            used: container.store.getUsedCapacity(resource as ResourceConstant) ?? undefined,
+                            free: container.store.getFreeCapacity(resource as ResourceConstant) ?? undefined,
                         }
                     }
                 }

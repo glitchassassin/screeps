@@ -3,7 +3,7 @@ import { moveToTarget, setMoveTargetFromBlackboard } from "./moveTo";
 
 import { energyFull } from "./energyFull";
 import { findEnergySource } from "./findEnergySource";
-import { withdrawEnergy } from "./withdrawEnergy";
+import { withdrawResources } from "./withdrawResources";
 
 export const getEnergyNearby = (radius = 5) => Selector(
     energyFull(),
@@ -12,5 +12,5 @@ export const getEnergyNearby = (radius = 5) => Selector(
         setMoveTargetFromBlackboard(),
         moveToTarget(),
     ),
-    withdrawEnergy(),
+    withdrawResources(RESOURCE_ENERGY),
 )

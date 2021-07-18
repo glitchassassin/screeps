@@ -1,7 +1,5 @@
-import { LogisticsRequest, TransferRequest } from "Logistics/LogisticsRequest";
 import { byId, getRcl } from "utils/gameObjectSelectors";
 
-import { Capacity } from "WorldState/Capacity";
 import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
 import { FacilitiesManager } from "../FacilitiesManager";
@@ -12,14 +10,12 @@ import { HRManager } from "../HRManager";
 import { InternMinion } from "MinionDefinitions/InternMinion";
 import { LawyerMinion } from "MinionDefinitions/LawyerMinion";
 import { LegalManager } from "../LegalManager";
-import { LogisticsManager } from "../LogisticsManager";
 import { MineData } from "WorldState/MineData";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
-import { SourceType } from "Logistics/LogisticsSource";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 
 const minionClasses: Record<string, Minion> = {
@@ -34,12 +30,8 @@ const minionClasses: Record<string, Minion> = {
 }
 
 export class SpawnStrategist extends OfficeManager {
-    logisticsRequests = new Map<Id<Structure>, LogisticsRequest>();
-
     plan() {
         if (Game.time - global.lastGlobalReset < 5) return; // Give time for data to catch up to prevent mis-spawns
-
-        this.submitLogisticsRequests();
 
         // Get spawn queue
         const spawnTargets = this.spawnTargets();
@@ -126,30 +118,7 @@ export class SpawnStrategist extends OfficeManager {
     submitRequest(minion: Minion, priority: number) {
         let hrManager = this.office.managers.get('HRManager') as HRManager;
         if (!hrManager.requests.some(r => (r as SpawnRequest).type === minion.type)) {
-            console.log(this.office.name, 'submitting request for', minion.type);
             hrManager.submit(new SpawnRequest(minion, priority));
-        }
-    }
-
-    submitLogisticsRequests() {
-        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
-
-        for (let spawn of HRAnalyst.getSpawns(this.office)) {
-            let req = this.logisticsRequests.get(spawn.id)
-            if ((!req || req.completed) && (Capacity.byId(spawn.id)?.free ?? 0) > 0) {
-                req = new TransferRequest(spawn, 4, Capacity.byId(spawn.id)?.free, SourceType.PRIMARY)
-                logisticsManager.submit(spawn.id, req);
-                this.logisticsRequests.set(spawn.id, req);
-            }
-        }
-        let extensions = HRAnalyst.getExtensions(this.office);
-        for (let extension of extensions) {
-            let req = this.logisticsRequests.get(extension.id)
-            if ((!req || req.completed) && (Capacity.byId(extension.id)?.free ?? 0) > 0) {
-                req = new TransferRequest(extension, 5)
-                logisticsManager.submit(extension.id, req);
-                this.logisticsRequests.set(extension.id, req);
-            }
         }
     }
 }

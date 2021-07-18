@@ -1,5 +1,3 @@
-import { packPos, unpackPos } from "utils/packrat";
-
 import { PlannedStructure } from "./PlannedStructure";
 
 export enum PlanResult {
@@ -9,31 +7,7 @@ export enum PlanResult {
     FAILED = 'FAILED'
 }
 
-const PackedStructureTypes: Record<BuildableStructureConstant, string> = {
-    [STRUCTURE_CONTAINER]:      'a',
-    [STRUCTURE_EXTENSION]:      'b',
-    [STRUCTURE_EXTRACTOR]:      'c',
-    [STRUCTURE_FACTORY]:        'd',
-    [STRUCTURE_LAB]:            'e',
-    [STRUCTURE_LINK]:           'f',
-    [STRUCTURE_NUKER]:          'g',
-    [STRUCTURE_OBSERVER]:       'h',
-    [STRUCTURE_POWER_SPAWN]:    'i',
-    [STRUCTURE_RAMPART]:        'j',
-    [STRUCTURE_ROAD]:           'k',
-    [STRUCTURE_SPAWN]:          'l',
-    [STRUCTURE_STORAGE]:        'm',
-    [STRUCTURE_TERMINAL]:       'n',
-    [STRUCTURE_TOWER]:          'o',
-    [STRUCTURE_WALL]:           'p',
-}
-// Lookup table is the same, but inverted, generated once
-const PackedStructureTypesLookup: Record<string, BuildableStructureConstant> = Object.entries(PackedStructureTypes).reduce(
-    (net, [k, v]) => {
-        net[v] = k as BuildableStructureConstant;
-        return net;
-    }, {} as Record<string, BuildableStructureConstant>
-)
+
 
 export class BlockPlan {
     structures: PlannedStructure[] = [];
@@ -57,15 +31,24 @@ export class BlockPlan {
     serialize() {
         let serializedStructures = '';
         for (let s of this.structures) {
-            serializedStructures += PackedStructureTypes[s.structureType] + packPos(s.pos);
+            serializedStructures += s.serialize();
         }
         return serializedStructures;
     }
     deserialize(serializedStructures: string) {
         for (let i = 0; i < serializedStructures.length; i += 3) {
-            let structureType = PackedStructureTypesLookup[serializedStructures.slice(i, i+1)]
-            let pos = unpackPos(serializedStructures.slice(i+1, i+3))
-            this.structures.push(new PlannedStructure(pos, structureType))
+            this.structures.push(PlannedStructure.deserialize(serializedStructures.slice(i, i+3)))
         }
+    }
+
+    getStructure(structureType: StructureConstant) {
+        const structure = this.structures.find(s => s.structureType === structureType);
+        if (!structure) throw new Error(`No ${structureType} in plan`)
+        return structure
+    }
+    getStructures(structureType: StructureConstant) {
+        const structures = this.structures.filter(s => s.structureType === structureType);
+        if (!structures.length) throw new Error(`No ${structureType}s in plan`)
+        return structures
     }
 }

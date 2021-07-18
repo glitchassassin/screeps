@@ -23,9 +23,6 @@ export class RoomAnalyst extends BoardroomManager {
                 let office = global.boardroom.getClosestOffice(center);
                 if (office && roomName !== office.name && Game.map.getRoomLinearDistance(roomName, office.name) <= TERRITORY_RADIUS) {
                     data.territoryOf = office.name;
-                    // Reset the room plan, if necessary, to force it
-                    // to calculate a Territory room plan
-                    data.roomPlan = undefined;
                 }
             }
             RoomData.set(roomName, data);

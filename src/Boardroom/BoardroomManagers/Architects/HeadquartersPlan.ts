@@ -1,7 +1,7 @@
 import { CachedController, Controllers } from "WorldState/Controllers";
 import { CachedSource, Sources } from "WorldState/Sources";
 
-import { LegalData } from "WorldState/LegalData";
+import { BlockPlanBuilder } from "./classes/BlockPlanBuilder";
 import { PlannedStructure } from "./classes/PlannedStructure";
 import { lazyMap } from "utils/lazyIterators";
 
@@ -19,16 +19,26 @@ const HQ_UPGRADE_TOP = HQ_UPGRADE_LEFT[0].map((k, i) => HQ_UPGRADE_LEFT.map(row 
 
 const HQ_UPGRADE_BOTTOM = HQ_UPGRADE_RIGHT[0].map((k, i) => HQ_UPGRADE_RIGHT.map(row => row[i]))
 
-export class HeadquartersPlan {
+export class HeadquartersPlan extends BlockPlanBuilder {
     spawn!: PlannedStructure;
     link!: PlannedStructure;
     container!: PlannedStructure;
     storage!: PlannedStructure;
     terminal!: PlannedStructure;
-    towers: PlannedStructure[] = [];
-    roads: PlannedStructure[] = [];
+    towers!: PlannedStructure[];
+    roads!: PlannedStructure[];
 
-    constructor(roomName: string) {
+    deserialize() {
+        this.spawn = this.blockPlan.getStructure(STRUCTURE_SPAWN);
+        this.link = this.blockPlan.getStructure(STRUCTURE_LINK);
+        this.container = this.blockPlan.getStructure(STRUCTURE_CONTAINER);
+        this.storage = this.blockPlan.getStructure(STRUCTURE_STORAGE);
+        this.terminal = this.blockPlan.getStructure(STRUCTURE_TERMINAL);
+        this.towers = this.blockPlan.getStructures(STRUCTURE_TOWER);
+        this.roads = this.blockPlan.getStructures(STRUCTURE_ROAD);
+    }
+
+    plan(roomName: string) {
         // Calculate from scratch
         let controller = Controllers.byRoom(roomName);
         if (!controller) throw new Error('No known controller in room, unable to compute plan')
@@ -153,15 +163,17 @@ export class HeadquartersPlan {
             throw new Error('No room for a Headquarters block near controller');
         }
 
-        let legalData = LegalData.byRoom(roomName) ?? {
-            id: controller.id,
-            pos: controller.pos,
-        }
-        LegalData.set(controller.id, {
-            ...legalData,
-            containerPos: this.container.pos,
-            linkPos: this.link.pos,
-        }, roomName)
+        this.blockPlan.structures.push(
+            this.spawn,
+            this.link,
+            this.container,
+            this.storage,
+            this.terminal,
+            ...this.towers,
+            ...this.roads,
+        )
+
+        return this;
     }
 
     *findSpaces(controller: CachedController, sources: CachedSource[]) {

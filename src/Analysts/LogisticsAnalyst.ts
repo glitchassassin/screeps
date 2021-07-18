@@ -10,9 +10,10 @@ import { MemoizeByTick } from "utils/memoize";
 import type { Office } from "Office/Office";
 import { Resources } from "WorldState/Resources";
 import { RoomData } from "WorldState/Rooms";
+import type { Route } from "WorldState/LogisticsRouteModel";
 import { packPos } from "utils/packrat";
 
-export type RealLogisticsSources = Resource<RESOURCE_ENERGY>|CachedStructure<StructureStorage|StructureContainer|StructureLink>;
+export type RealLogisticsSources = Resource|CachedStructure<AnyStoreStructure>|Tombstone;
 
 const STORAGE_GOALS: Record<number, number> = {
     0:       0,
@@ -59,7 +60,7 @@ export class LogisticsAnalyst {
         return Resources.byOffice(office, RESOURCE_ENERGY);
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
-    static getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, emergency = false): RealLogisticsSources[] {
+    static getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, resource?: ResourceConstant): RealLogisticsSources[] {
         if (!Game.rooms[pos.roomName]) return [];
         let items;
         if (includeAdjacent) {
@@ -69,10 +70,23 @@ export class LogisticsAnalyst {
         }
         let results: RealLogisticsSources[] = [];
         for (let item of items) {
-            if (item.resource instanceof Resource && item.resource.resourceType === RESOURCE_ENERGY) {
+            if (
+                item.resource instanceof Resource &&
+                (
+                    !resource ||
+                    item.resource.resourceType === resource
+                )
+            ) {
                 results.push(item.resource as Resource<RESOURCE_ENERGY>);
-            } else if (item.structure instanceof StructureContainer || item.structure instanceof StructureStorage || item.structure instanceof StructureLink) {
-                results.push(item.structure);
+            } else if (
+                item.structure &&
+                (item.structure as AnyStoreStructure).store &&
+                (
+                    !resource ||
+                    (item.structure as AnyStoreStructure).store[resource]
+                )
+            ) {
+                results.push(item.structure as AnyStoreStructure);
             }
         }
         return results.sort((a, b) => (Capacity.byId(b.id)?.used ?? 0) - (Capacity.byId(a.id)?.used ?? 0))
@@ -129,5 +143,20 @@ export class LogisticsAnalyst {
     static calculateFranchiseSurplus(franchise: CachedFranchise) {
         let linkCapacity = Capacity.byId(franchise.linkId)?.used ?? 0;
         return this.countEnergyInContainersOrGround(franchise.pos) + linkCapacity;
+    }
+    static calculateRouteThroughput(route: Route) {
+        if (route.sources.some(s => s.structureType === STRUCTURE_STORAGE)) {
+            // Throughput is based on destination capacity
+            return route.destinations
+                .reduce((sum, s) => sum + (Capacity.byId(s.structure?.id as Id<AnyStoreStructure>)?.free ?? 0), 0)
+        } else {
+            // Throughput is based on route length & source efficiency
+            // We can approximate by RCL
+            const inputPerTick = route.sources.reduce((sum, s) =>
+                sum + (Controllers.byRoom(s.pos.roomName)?.my ? 10 : 5),
+                0
+            )
+            return inputPerTick * route.length;
+        }
     }
 }

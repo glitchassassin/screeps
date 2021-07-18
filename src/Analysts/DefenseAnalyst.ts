@@ -4,7 +4,7 @@ import { MapAnalyst } from "./MapAnalyst";
 import { MemoizeByTick } from "utils/memoize";
 import type { Office } from "Office/Office";
 import { RoomData } from "WorldState/Rooms";
-import { RoomPlanningAnalyst } from "./RoomPlanningAnalyst";
+import { RoomPlanData } from "WorldState/RoomPlans";
 import { Sources } from "WorldState/Sources";
 import { Structures } from "WorldState/Structures";
 import { WHITELIST } from "config";
@@ -56,7 +56,7 @@ export class DefenseAnalyst {
     @MemoizeByTick((roomName: string) => roomName)
     static getTerritoryIntent(roomName: string): TerritoryIntent {
         let controller = Controllers.byRoom(roomName);
-        let roomPlan = RoomPlanningAnalyst.getOfficeRoomPlan(roomName);
+        let roomPlan = RoomPlanData.byRoom(roomName);
         let sources = Sources.byRoom(roomName);
         let room = RoomData.byRoom(roomName);
         if (!controller) {
@@ -76,7 +76,7 @@ export class DefenseAnalyst {
         }
         if (!controller.my && controller.owner?.username) {
             return TerritoryIntent.AVOID;
-        } else if (roomPlan) {
+        } else if (roomPlan?.office) {
             return TerritoryIntent.ACQUIRE;
         } else if (sources.length === 2) {
             return TerritoryIntent.EXPLOIT;

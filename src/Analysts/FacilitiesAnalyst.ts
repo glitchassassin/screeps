@@ -2,7 +2,9 @@ import { ConstructionSites } from "WorldState/ConstructionSites";
 import { HRAnalyst } from "Analysts/HRAnalyst";
 import { MemoizeByTick } from "utils/memoize";
 import type { Office } from "Office/Office";
-import { RoomPlanningAnalyst } from "./RoomPlanningAnalyst";
+import type { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
+import { RoomData } from "WorldState/Rooms";
+import { RoomPlanData } from "WorldState/RoomPlans";
 import { Structures } from "WorldState/Structures";
 
 export class FacilitiesAnalyst {
@@ -36,7 +38,98 @@ export class FacilitiesAnalyst {
     }
     @MemoizeByTick((office: Office) => office.name)
     static getPlannedStructures(office: Office) {
-        return RoomPlanningAnalyst.getRoomPlan(office.name)?.structures ?? []
+        return this.getPlannedStructuresByRcl(office.name, 8);
+    }
+    @MemoizeByTick((roomName: string, rcl: number) => `${roomName}${rcl}`)
+    static getPlannedStructuresByRcl(roomName: string, rcl: number): PlannedStructure[] {
+        const plans = RoomPlanData.byRoom(roomName);
+        if (rcl < 0 || !plans) return [];
+
+        let plannedStructures: PlannedStructure[] = [];
+        if (RoomData.byRoom(roomName)?.territoryOf) {
+            if (!plans.territory) return [];
+            plannedStructures = [
+                plans.territory.franchise1.container,
+                ...plans.territory.franchise1.roads,
+            ]
+            if (plans.territory.franchise2) {
+                plannedStructures.push(
+                    plans.territory.franchise2?.container,
+                    ...plans.territory.franchise2?.roads,
+                )
+            }
+        } else {
+            if (!plans.office) return [];
+            let plannedExtensions = [
+                ...plans.office.franchise1.extensions,
+                ...plans.office.franchise2.extensions,
+                ...plans.office.extensions.extensions
+            ];
+
+            if (rcl >= 0) {
+                plannedStructures = [
+                    plans.office.franchise1.container,
+                    plans.office.franchise2.container,
+                    plans.office.headquarters.container,
+                ]
+            }
+            if (rcl >= 1) {
+                plannedStructures.push(
+                    plans.office.franchise1.spawn,
+                )
+            }
+            if (rcl >= 2) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(0, 5),
+                )
+            }
+            if (rcl >= 3) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(5, 10),
+                    plans.office.headquarters.towers[0],
+                )
+            }
+            if (rcl >= 4) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(15, 20),
+                    plans.office.headquarters.storage
+                )
+            }
+            if (rcl >= 5) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(20, 25),
+                    plans.office.headquarters.towers[1],
+                    plans.office.franchise2.link,
+                    plans.office.headquarters.link
+                )
+            }
+            if (rcl >= 6) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(25, 30),
+                    plans.office.franchise1.link,
+                    plans.office.headquarters.terminal,
+                    plans.office.mine.extractor,
+                    plans.office.mine.container,
+                )
+            }
+            if (rcl >= 7) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(30, 35),
+                    plans.office.franchise2.spawn,
+                    plans.office.headquarters.towers[2],
+                )
+            }
+            if (rcl === 8) {
+                plannedStructures.push(
+                    ...plannedExtensions.slice(35, 40),
+                    plans.office.headquarters.spawn,
+                    plans.office.headquarters.towers[3],
+                    plans.office.headquarters.towers[4],
+                    plans.office.headquarters.towers[5],
+                )
+            }
+        }
+        return plannedStructures
     }
 
     @MemoizeByTick((office: Office) => office.name)

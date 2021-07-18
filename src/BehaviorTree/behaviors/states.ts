@@ -5,6 +5,8 @@ import { log } from "utils/logger";
 export enum States {
     GET_ENERGY = 'GET_ENERGY',
     WORKING = 'WORKING',
+    WITHDRAW = 'WITHDRAW',
+    DEPOSIT = 'DEPOSIT',
 }
 
 declare module 'BehaviorTree/Behavior' {

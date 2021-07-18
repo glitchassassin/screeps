@@ -19,7 +19,6 @@ import { OfficeManager } from "./OfficeManager";
 import { SalesManager } from "Office/OfficeManagers/SalesManager";
 import { SecurityManager } from "Office/OfficeManagers/SecurityManager";
 import { SpawnStrategist } from "Office/OfficeManagers/Strategists/SpawnStrategist";
-import { StorageStrategist } from "./OfficeManagers/Strategists/StorageStrategist";
 import { SurveyStrategist } from "./OfficeManagers/Strategists/SurveyStrategist";
 
 export class Office {
@@ -132,8 +131,7 @@ export class Office {
         LegalStrategist.register(this);
         HarvestStrategist.register(this);
         DefenseStrategist.register(this);
-        BuildStrategist.register(this);;
-        StorageStrategist.register(this);
+        BuildStrategist.register(this);
         SurveyStrategist.register(this);
         SpawnStrategist.register(this);
 

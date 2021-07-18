@@ -7,7 +7,7 @@ import { log } from "utils/logger";
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
-        target?: Id<AnyStoreStructure|Tombstone|Creep|Resource<RESOURCE_ENERGY>>
+        target?: Id<Resource|AnyStoreStructure|Tombstone|Ruin|Creep>
         targetPos?: RoomPosition
     }
 }

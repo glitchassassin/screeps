@@ -1,13 +1,10 @@
 import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
-import { Capacity } from "WorldState/Capacity";
 import { Controllers } from "WorldState/Controllers";
 import { HRAnalyst } from "Analysts/HRAnalyst";
-import { LogisticsManager } from "../LogisticsManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { RoomData } from "WorldState/Rooms";
-import { TransferRequest } from "Logistics/LogisticsRequest";
 import { byId } from "utils/gameObjectSelectors";
 
 export class DefenseStrategist extends OfficeManager {
@@ -16,16 +13,9 @@ export class DefenseStrategist extends OfficeManager {
     buildRequest?: MinionRequest;
 
     plan() {
-        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
-
         let [target] = DefenseAnalyst.getPrioritizedAttackTargets(this.office);
 
         for (let tower of DefenseAnalyst.getTowers(this.office)) {
-            // Auxiliary orders
-            if ((Capacity.byId(tower.id)?.free ?? 0) > 0) {
-                logisticsManager.submit(tower.pos.roomName, new TransferRequest(tower, 4))
-            }
-
             // Primary orders
             if (target) {
                 tower.attack(target);

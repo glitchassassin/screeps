@@ -7,6 +7,7 @@ export abstract class Request<T extends Creep|StructureSpawn> {
     constructor(public priority = 5) {}
     public result?: BehaviorResult;
     public blackboards = new Map<Id<T>, Blackboard>();
+    public sharedBlackboard: Blackboard = {};
 
     public assigned: Id<T>[] = [];
     public onAssigned = () => {};
@@ -37,7 +38,7 @@ export abstract class Request<T extends Creep|StructureSpawn> {
             let blackboard = this.blackboards.get(target.id as Id<T>);
             if (!blackboard) throw new Error('Blackboard not created for target')
             // log(target.name, 'Blackboard: ' + JSON.stringify(blackboard));
-            let result = this.action(target, blackboard);
+            let result = this.action(target, blackboard, this.sharedBlackboard);
             // If one is finished, the request is finished
             if (result === BehaviorResult.SUCCESS) {
                 this.result = result;

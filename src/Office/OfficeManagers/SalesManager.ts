@@ -2,10 +2,12 @@ import { Bar, Dashboard, Grid, Label, Rectangle, Table } from "screeps-viz";
 import { CachedSource, Sources } from "WorldState/Sources";
 
 import { FranchiseData } from "WorldState/FranchiseData";
+import { FranchisePlan } from "Boardroom/BoardroomManagers/Architects/FranchisePlan";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RoomData } from "WorldState/Rooms";
+import { RoomPlanData } from "WorldState/RoomPlans";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { byId } from "utils/gameObjectSelectors";
 
@@ -86,8 +88,24 @@ export class SalesManager extends OfficeTaskManager {
 
     plan() {
         for (let t of RoomData.byOffice(this.office)) {
+            let plans = RoomPlanData.byRoom(t.name);
+            let plan = t.territoryOf ? plans?.territory : plans?.office
+            if (!plan) continue;
             for (let s of Sources.byRoom(t.name)) {
                 let franchise = FranchiseData.byId(s.id) ?? {id: s.id, pos: s.pos}
+
+                // Need to match franchise room plan to the source ID
+                // Need to populate link as well
+
+                let franchisePlan = (s.pos.isNearTo(plan.franchise1.container.pos) ? plan.franchise1 : plan.franchise2)
+
+                franchise.containerPos = franchisePlan?.container.pos;
+                franchise.containerId = franchisePlan?.container.structure?.id as Id<StructureContainer>;
+
+                if (!t.territoryOf && (franchisePlan as FranchisePlan).link) {
+                    franchise.linkPos = (franchisePlan as FranchisePlan).link.pos;
+                    franchise.linkId = (franchisePlan as FranchisePlan).link.structure?.id as Id<StructureLink>;
+                }
                 // Initialize properties
                 if (!franchise.maxSalesmen) {
                     franchise.maxSalesmen = 0;

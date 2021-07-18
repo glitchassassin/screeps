@@ -6,7 +6,7 @@ export enum BehaviorResult {
 
 export interface Blackboard {}
 
-export type Behavior<T> = (target: T, blackboard: Blackboard) => BehaviorResult
+export type Behavior<T> = (target: T, blackboard: Blackboard, sharedBlackboard?: Blackboard) => BehaviorResult
 export type BehaviorBuilder<T> = (...args: any[]) => Behavior<T>
 
 export function Sequence<T>(...args: Behavior<T>[]): Behavior<T> {

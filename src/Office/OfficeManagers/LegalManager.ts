@@ -3,9 +3,7 @@ import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
 import { Controllers } from "WorldState/Controllers";
 import { LegalData } from "WorldState/LegalData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
-import { RoomPlanningAnalyst } from "Analysts/RoomPlanningAnalyst";
-import { Structures } from "WorldState/Structures";
-import { byId } from "utils/gameObjectSelectors";
+import { RoomPlanData } from "WorldState/RoomPlans";
 
 export class LegalManager extends OfficeTaskManager {
     minionTypes = ['PARALEGAL', 'LAWYER'];
@@ -61,16 +59,13 @@ export class LegalManager extends OfficeTaskManager {
         };
         if (!controller) return;
         // Initialize properties
-        if (!controller.containerPos || !controller.linkPos) {
-            let {container, link} = RoomPlanningAnalyst.getHeadquartersPlan(this.office.name) ?? {}
-            controller.containerPos = container?.pos;
-            controller.linkPos = link?.pos;
-        }
-        if (controller.containerPos && !byId(controller.containerId)) {
-            controller.containerId = Structures.byPos(controller.containerPos).find(s => s.structureType === STRUCTURE_CONTAINER)?.id as Id<StructureContainer>
-        }
-        if (controller.linkPos && !byId(controller.linkId)) {
-            controller.linkId = Structures.byPos(controller.linkPos).find(s => s.structureType === STRUCTURE_LINK)?.id as Id<StructureLink>
+        const office = RoomPlanData.byRoom(this.office.name)?.office
+        if (office) {
+            let {container, link} = office.headquarters
+            controller.containerPos = container.pos;
+            controller.containerId = container.structure?.id as Id<StructureContainer>
+            controller.linkPos = link.pos;
+            controller.linkId = link.structure?.id as Id<StructureLink>
         }
         LegalData.set(controller.id, controller, this.office.name);
     }

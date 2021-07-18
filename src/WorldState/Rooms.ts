@@ -8,7 +8,6 @@ declare global {
             scanned: number,
             city?: string,
             lastHostileActivity?: number,
-            roomPlan?: string,
             territoryOf?: string,
             intent?: TerritoryIntent,
             intentExpires?: number,
