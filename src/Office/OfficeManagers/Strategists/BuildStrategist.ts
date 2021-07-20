@@ -14,6 +14,7 @@ import { RepairRequest } from "BehaviorTree/requests/Repair";
 import { RoomData } from "WorldState/Rooms";
 import { Structures } from "WorldState/Structures";
 import { getRcl } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 export class BuildStrategist extends OfficeManager {
     plan() {
@@ -144,4 +145,4 @@ export class BuildStrategist extends OfficeManager {
         return requests;
     }
 }
-// profiler.registerClass(BuildStrategist, 'BuildStrategist');
+profiler.registerClass(BuildStrategist, 'BuildStrategist');

@@ -8,13 +8,14 @@ export class FranchisePlan extends BlockPlanBuilder {
     spawn!: PlannedStructure;
     link!: PlannedStructure;
     container!: PlannedStructure;
-    extensions: PlannedStructure[] = [];
+    extensions!: PlannedStructure[];
 
     deserialize() {
         this.spawn = this.blockPlan.getStructure(STRUCTURE_SPAWN);
         this.link = this.blockPlan.getStructure(STRUCTURE_LINK);
         this.container = this.blockPlan.getStructure(STRUCTURE_CONTAINER);
         // this.extensions = this.blockPlan.getStructures(STRUCTURE_EXTENSION);
+        this.extensions = [];
     }
     plan(source: CachedSource) {
         // Calculate from scratch
@@ -53,6 +54,8 @@ export class FranchisePlan extends BlockPlanBuilder {
         let linkPos = adjacents.shift();
         if (!linkPos) throw new Error('Not enough space to place a Franchise');
         this.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
+
+        this.extensions = [];
 
         this.blockPlan.structures.push(
             this.spawn,

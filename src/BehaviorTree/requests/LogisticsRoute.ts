@@ -1,48 +1,62 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
-import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
-import { incrementLogisticsRoute, resetLogisticsRoute, setLogisticsRoute } from "BehaviorTree/behaviors/logisticsRoute";
+import { States, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
+import { checkIfLogisticsRouteIsDone, getNextLogisticsRouteStep, setLogisticsRoute } from "BehaviorTree/behaviors/logisticsRoute";
 
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { MinionRequest } from "./MinionRequest";
 import type { Route } from "WorldState/LogisticsRouteModel";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { depositAtLogisticsNode } from "BehaviorTree/behaviors/depositAtLogisticsNode";
+import { log } from "utils/logger";
 import { withdrawFromLogisticsNode } from "BehaviorTree/behaviors/withdrawFromLogisticsNode";
 
 export class LogisticsRouteRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
 
-    constructor(public name: string, public route: Route, resource?: ResourceConstant) {
+    constructor(public name: string, public route: Route, public priority: number = 5, resource?: ResourceConstant) {
         super();
         let dest = route.destinations[0];
         this.pos = dest instanceof RoomPosition ? dest : dest.pos;
         this.action = Sequence(
-            setLogisticsRoute(route),
+            setLogisticsRoute(route, resource),
             Selector(
                 Sequence(
                     stateIsEmpty(),
-                    resetLogisticsRoute(),
-                    setState(States.WITHDRAW),
+                    Selector(
+                        checkIfLogisticsRouteIsDone(),
+                        getNextLogisticsRouteStep(),
+                    ),
+                    continueIndefinitely(),
                 ),
                 Sequence(
                     stateIs(States.WITHDRAW),
                     withdrawFromLogisticsNode(resource),
-                    incrementLogisticsRoute(),
+                    Selector(
+                        checkIfLogisticsRouteIsDone(),
+                        getNextLogisticsRouteStep(),
+                    ),
+                    continueIndefinitely(),
                 ),
                 Sequence(
                     stateIs(States.DEPOSIT),
                     depositAtLogisticsNode(resource),
-                    incrementLogisticsRoute(),
+                    Selector(
+                        checkIfLogisticsRouteIsDone(),
+                        getNextLogisticsRouteStep(),
+                    ),
+                    continueIndefinitely(),
                 ),
-                continueIndefinitely(),
+                stateIs(States.DONE), // end
             )
         )
     }
 
     meetsCapacity(creeps: Creep[]) {
         const capacity = creeps.reduce((sum, c) => sum + c.getActiveBodyparts(CARRY), 0) * CARRY_CAPACITY;
-        return capacity >= LogisticsAnalyst.calculateRouteThroughput(this.route);
+        const throughput = LogisticsAnalyst.calculateRouteThroughput(this.route);
+        log('LogisticsRouteRequest', `meetsCapacity (${creeps.length}) ${capacity} / ${throughput}`)
+        return capacity >= throughput;
     }
     canBeFulfilledBy(creep: Creep) {
         return (

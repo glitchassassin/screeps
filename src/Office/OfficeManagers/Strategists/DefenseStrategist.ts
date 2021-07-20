@@ -6,6 +6,7 @@ import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { RoomData } from "WorldState/Rooms";
 import { byId } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 export class DefenseStrategist extends OfficeManager {
     public request?: MinionRequest;
@@ -52,4 +53,4 @@ export class DefenseStrategist extends OfficeManager {
         }
     }
 }
-// profiler.registerClass(DefenseStrategist, 'DefenseStrategist');
+profiler.registerClass(DefenseStrategist, 'DefenseStrategist');

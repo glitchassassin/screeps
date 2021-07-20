@@ -1,8 +1,9 @@
-import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
+import { BehaviorResult, Blackboard, Selector, Sequence } from "BehaviorTree/Behavior";
 import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { log } from "utils/logger";
+import profiler from "screeps-profiler";
 
 export class Route {
     lastPos?: RoomPosition;
@@ -22,6 +23,7 @@ export class Route {
         let positionsInRange = MapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
                                          .filter(pos => MapAnalyst.isPositionWalkable(pos, false));
         log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
+        if (positionsInRange.length === 0) throw new Error('No valid targets for path');
         // Calculate path in rooms first
         let rooms = [creep.pos.roomName];
         if (creep.pos.roomName !== this.pos.roomName) {
@@ -96,7 +98,7 @@ export class Route {
     }
 }
 
-// profiler.registerClass(Route, 'Route');
+profiler.registerClass(Route, 'Route');
 
 declare module 'BehaviorTree/Behavior' {
     interface Blackboard {
@@ -129,11 +131,13 @@ export const resetMoveTarget = () => {
 export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
     return (creep: Creep, bb: Blackboard) => {
         if (!pos) return BehaviorResult.FAILURE;
-        if (bb.moveDone === false) {
+        if (bb.movePos?.isEqualTo(pos) && bb.moveDone === false) {
             // Move in progress and locked in
             return BehaviorResult.SUCCESS
         }
         if (creep.pos.inRangeTo(pos, range)) {
+            bb.movePos = pos;
+            bb.moveRange = range;
             bb.moveDone = true;
             return BehaviorResult.SUCCESS;
         }
@@ -146,6 +150,9 @@ export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
             bb.moveRange = range;
             bb.moveRoute = new Route(creep, pos, range);
             bb.moveDone = false;
+            if (!bb.moveRoute.path?.length) {
+                log(creep.name, `setMoveTarget: bad route - ${creep.pos} -> ${pos}(${range})`);
+            }
         }
         catch {
             log(creep.name, `setMoveTarget: failed to calculate Route`);
@@ -160,7 +167,7 @@ export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
  */
 export const setMoveTargetFromBlackboard = (range = 1) => {
     return (creep: Creep, bb: Blackboard) => {
-        log(creep.name, `setMoveTargetFromBlackboard: ${bb.targetPos}`);
+        log(creep.name, `setMoveTargetFromBlackboard: ${bb.targetPos} range ${range}`);
         if (!bb.targetPos) return BehaviorResult.FAILURE;
         return setMoveTarget(bb.targetPos, range)(creep, bb);
     }
@@ -174,10 +181,10 @@ export const setMoveTargetFromBlackboard = (range = 1) => {
  */
 export const moveToTarget = () => {
     return (creep: Creep, bb: Blackboard) => {
+        log(creep.name, `moveToTarget: ${bb.moveRange} squares of ${bb.movePos} (starting)`)
+        if (bb.moveDone) return BehaviorResult.SUCCESS;
         if (!bb.movePos || bb.moveRange === undefined) return BehaviorResult.FAILURE;
-        if (bb.moveDone) {
-            return BehaviorResult.SUCCESS;
-        }
+        if (creep.pos.inRangeTo(bb.movePos, bb.moveRange)) return BehaviorResult.SUCCESS;
         if (!bb.moveRoute) return BehaviorResult.FAILURE;
 
         if (global.debug[creep.name]) bb.moveRoute.visualize();
@@ -223,9 +230,12 @@ export const moveToTarget = () => {
 }
 
 export const moveTo = (pos?: RoomPosition, range = 1) => {
-    return Sequence(
-        setMoveTarget(pos, range),
-        moveToTarget()
+    return Selector(
+        moveToTarget(),
+        Sequence(
+            setMoveTarget(pos, range),
+            moveToTarget()
+        )
     )
 }
 

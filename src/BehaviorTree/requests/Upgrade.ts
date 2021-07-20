@@ -4,7 +4,8 @@ import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
-import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
+import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
+import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergyNearby } from "BehaviorTree/behaviors/getEnergyNearby";
 import { upgradeController } from "BehaviorTree/behaviors/upgradeController";
 
@@ -21,8 +22,9 @@ export class UpgradeRequest extends MinionRequest {
             Sequence(
                 stateIs(States.GET_ENERGY),
                 getEnergyNearby(7),
+                resetMoveTarget(),
                 setState(States.WORKING),
-                resetMoveTarget()
+                continueIndefinitely(),
             ),
             Sequence(
                 stateIs(States.WORKING),
@@ -34,9 +36,10 @@ export class UpgradeRequest extends MinionRequest {
             Sequence(
                 Selector(
                     stateIsEmpty(),
-                    energyEmpty()
+                    creepCapacityEmpty()
                 ),
-                setState(States.GET_ENERGY)
+                setState(States.GET_ENERGY),
+                continueIndefinitely(),
             ),
         )
     }

@@ -7,6 +7,7 @@ import { Request } from "BehaviorTree/Request";
 import SpawnPressure from "Reports/widgets/SpawnPressure";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import profiler from "screeps-profiler";
 
 export class HRManager extends OfficeManager {
     requests: Request<StructureSpawn>[] = [];
@@ -169,4 +170,5 @@ export class HRManager extends OfficeManager {
         return HRAnalyst.getSpawns(this.office).filter(c => !c.spawning && !busySpawns.includes(c.id))
     }
 }
-// profiler.registerClass(HRManager, 'HRManager');
+
+profiler.registerClass(HRManager, 'HRManager');

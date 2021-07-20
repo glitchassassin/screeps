@@ -5,7 +5,8 @@ import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 import { BUILD_PRIORITIES } from "config";
 import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
-import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
+import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
+import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
@@ -22,8 +23,9 @@ export class RepairRequest extends MinionRequest {
             Sequence(
                 stateIs(States.GET_ENERGY),
                 getEnergy(),
+                resetMoveTarget(),
                 setState(States.WORKING),
-                resetMoveTarget()
+                continueIndefinitely()
             ),
             Sequence(
                 stateIs(States.WORKING),
@@ -35,9 +37,10 @@ export class RepairRequest extends MinionRequest {
             Sequence(
                 Selector(
                     stateIsEmpty(),
-                    energyEmpty()
+                    creepCapacityEmpty()
                 ),
-                setState(States.GET_ENERGY)
+                setState(States.GET_ENERGY),
+                continueIndefinitely()
             ),
         )
     }

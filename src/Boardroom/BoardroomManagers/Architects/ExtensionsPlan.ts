@@ -84,7 +84,7 @@ function squareIsValid(terrain: RoomTerrain, costMatrix: CostMatrix, pos: RoomPo
 }
 
 export class ExtensionsPlan extends BlockPlanBuilder {
-    public extensions: PlannedStructure[] = [];
+    public extensions!: PlannedStructure[];
 
     deserialize() {
         this.extensions = this.blockPlan.getStructures(STRUCTURE_EXTENSION);

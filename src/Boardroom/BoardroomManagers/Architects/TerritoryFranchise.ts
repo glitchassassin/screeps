@@ -5,7 +5,7 @@ import { PlannedStructure } from "./classes/PlannedStructure";
 
 export class TerritoryFranchisePlan extends BlockPlanBuilder {
     container!: PlannedStructure;
-    roads: PlannedStructure[] = [];
+    roads!: PlannedStructure[];
 
     deserialize() {
         this.container = this.blockPlan.getStructure(STRUCTURE_CONTAINER);
@@ -26,6 +26,8 @@ export class TerritoryFranchisePlan extends BlockPlanBuilder {
             });
         if (route.incomplete) throw new Error('Unable to calculate path between source and storage');
         this.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
+
+        this.roads = [];
 
         route.path.forEach(p => {
             if (![0,49].includes(p.x) && ![0,49].includes(p.y)) {

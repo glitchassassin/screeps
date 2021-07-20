@@ -20,9 +20,9 @@ export class LinkHarvestRequest extends MinionRequest {
         this.action = Sequence(
             Selector(
                 moveTo(franchise.containerPos, 0),
-                harvestEnergy(franchise.id),
                 moveTo(franchise.pos)
             ),
+            harvestEnergy(franchise.id),
             Selector(
                 transferEnergy(franchise.linkId),
                 dropEnergy(),

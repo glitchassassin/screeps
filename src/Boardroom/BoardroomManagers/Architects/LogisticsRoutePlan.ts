@@ -52,7 +52,7 @@ export const generateSourceRoute = (franchise1: FranchisePlan, franchise2: Franc
     return {
         sources: route.nodes,
         destinations: [headquarters.storage],
-        length: route.length
+        length: route.length,
     }
 }
 
@@ -81,6 +81,14 @@ export const generateTowersRoute = (headquarters: HeadquartersPlan) => {
         sources: [headquarters.storage],
         destinations: route.nodes,
         length: route.length
+    }
+}
+
+export const generateControllerRoute = (headquarters: HeadquartersPlan) => {
+    return {
+        sources: [headquarters.storage],
+        destinations: [headquarters.container],
+        length: 1
     }
 }
 

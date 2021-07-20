@@ -4,6 +4,7 @@ import { Controllers } from "WorldState/Controllers";
 import { LegalData } from "WorldState/LegalData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RoomPlanData } from "WorldState/RoomPlans";
+import profiler from "screeps-profiler";
 
 export class LegalManager extends OfficeTaskManager {
     minionTypes = ['PARALEGAL', 'LAWYER'];
@@ -91,3 +92,5 @@ export class LegalManager extends OfficeTaskManager {
         }
     }
 }
+
+profiler.registerClass(LegalManager, 'LegalManager')

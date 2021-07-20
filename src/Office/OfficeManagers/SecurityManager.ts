@@ -4,6 +4,7 @@ import { ExploreRequest } from "BehaviorTree/requests/Explore";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { RoomData } from "WorldState/Rooms";
 import { byId } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 export class SecurityManager extends OfficeTaskManager {
     dashboard = [
@@ -67,4 +68,4 @@ export class SecurityManager extends OfficeTaskManager {
     }
 }
 
-// profiler.registerClass(SecurityManager, 'SecurityManager');
+profiler.registerClass(SecurityManager, 'SecurityManager');

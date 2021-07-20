@@ -61,10 +61,11 @@ export class LogisticsAnalyst {
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
     static getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, resource?: ResourceConstant): RealLogisticsSources[] {
+        let sourceStructures: StructureConstant[] = [STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK];
         if (!Game.rooms[pos.roomName]) return [];
         let items;
         if (includeAdjacent) {
-            items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
+            items = Game.rooms[pos.roomName].lookAtArea(pos.y - 2, pos.x - 2, pos.y + 2, pos.x + 2, true)
         } else {
             items = Game.rooms[pos.roomName].lookAt(pos)
         }
@@ -77,10 +78,11 @@ export class LogisticsAnalyst {
                     item.resource.resourceType === resource
                 )
             ) {
-                results.push(item.resource as Resource<RESOURCE_ENERGY>);
+                results.push(item.resource);
             } else if (
                 item.structure &&
                 (item.structure as AnyStoreStructure).store &&
+                sourceStructures.includes(item.structure.structureType) &&
                 (
                     !resource ||
                     (item.structure as AnyStoreStructure).store[resource]
@@ -89,7 +91,7 @@ export class LogisticsAnalyst {
                 results.push(item.structure as AnyStoreStructure);
             }
         }
-        return results.sort((a, b) => (Capacity.byId(b.id)?.used ?? 0) - (Capacity.byId(a.id)?.used ?? 0))
+        return results.sort((a, b) => (Capacity.byId(b.id, resource)?.used ?? 0) - (Capacity.byId(a.id, resource)?.used ?? 0))
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
     static getClosestAllSources(pos: RoomPosition, amount?: number) {
@@ -135,9 +137,9 @@ export class LogisticsAnalyst {
         return HRAnalyst.getEmployees(office, 'CARRIER');
     }
     @MemoizeByTick((pos?: RoomPosition) => pos ? packPos(pos) : '')
-    static countEnergyInContainersOrGround(pos?: RoomPosition) {
+    static countEnergyInContainersOrGround(pos?: RoomPosition, includeAdjacent = true, resource?: ResourceConstant) {
         if (!pos) return 0;
-        return LogisticsAnalyst.getRealLogisticsSources(pos).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
+        return LogisticsAnalyst.getRealLogisticsSources(pos, includeAdjacent, resource).reduce((sum, resource) => (sum + (Capacity.byId(resource.id)?.used ?? 0)), 0)
     }
     @MemoizeByTick((franchise: CachedFranchise) => franchise.id)
     static calculateFranchiseSurplus(franchise: CachedFranchise) {
@@ -146,9 +148,23 @@ export class LogisticsAnalyst {
     }
     static calculateRouteThroughput(route: Route) {
         if (route.sources.some(s => s.structureType === STRUCTURE_STORAGE)) {
-            // Throughput is based on destination capacity
-            return route.destinations
-                .reduce((sum, s) => sum + (Capacity.byId(s.structure?.id as Id<AnyStoreStructure>)?.free ?? 0), 0)
+            // Throughput is based on lower of source and destination capacity
+            return Math.min(
+                route.destinations
+                    .reduce((sum, s) => {
+                        // Capacity is based on CONTAINER_CAPACITY if no structure limits
+                        let capacity = Capacity.byId(s.structure?.id as Id<AnyStoreStructure>)?.free
+
+                        if (capacity === undefined && s.structureType === STRUCTURE_STORAGE) {
+                            capacity = CONTAINER_CAPACITY - LogisticsAnalyst.countEnergyInContainersOrGround(s.pos)
+                        }
+
+                        return sum + (capacity ?? 0);
+                    }, 0),
+
+                route.sources
+                    .reduce((sum, s) => sum + LogisticsAnalyst.countEnergyInContainersOrGround(s.pos), 0)
+            )
         } else {
             // Throughput is based on route length & source efficiency
             // We can approximate by RCL

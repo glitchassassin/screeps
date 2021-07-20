@@ -1,4 +1,5 @@
 import FranchiseStatus from "./FranchiseStatus";
+import LogisticsRoutes from "./LogisticsRoutes";
 import SpawnStrategy from "./SpawnStrategy";
 import TerritoryIntents from "./TerritoryIntents";
 
@@ -32,3 +33,4 @@ global.d = (key: string) => {
 register('franchises', FranchiseStatus);
 register('spawnstrategy', SpawnStrategy);
 register('territory', TerritoryIntents);
+register('logisticsroutes', LogisticsRoutes);

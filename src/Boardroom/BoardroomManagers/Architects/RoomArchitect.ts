@@ -1,5 +1,5 @@
 import { CachedRoom, RoomData } from 'WorldState/Rooms';
-import { generateExtensionsRoute, generateSourceRoute, generateTerritorySourceRoute, generateTowersRoute } from './LogisticsRoutePlan';
+import { generateControllerRoute, generateExtensionsRoute, generateSourceRoute, generateTerritorySourceRoute, generateTowersRoute } from './LogisticsRoutePlan';
 
 import { BlockPlan } from './classes/BlockPlan';
 import { BoardroomManager } from 'Boardroom/BoardroomManager';
@@ -15,47 +15,111 @@ import { Office } from 'Office/Office';
 import { RoomPlanData } from 'WorldState/RoomPlans';
 import { Sources } from 'WorldState/Sources';
 import { TerritoryFranchisePlan } from './TerritoryFranchise';
+import profiler from 'screeps-profiler';
 
 export class RoomArchitect extends BoardroomManager {
     plan() {
         let start = Game.cpu.getUsed();
         if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
         for (let room of RoomData.all()) {
-            if (Game.cpu.getUsed() - start > 5) break; // Don't spend more than 5 CPU/tick doing room planning
+            this.surveyRoomPlans(room);
 
-            let plans = RoomPlanData.byRoom(room.name) ?? {results: {}};
+            if (Game.cpu.getUsed() - start > 5) continue; // Don't spend more than 5 CPU/tick doing room planning
 
-            if (plans?.results.office &&
-                !(room.territoryOf || plans?.results.territory)
-            ) continue;
-
-            if (room.territoryOf && !plans.results.territory) {
-                const office = this.boardroom.offices.get(room.territoryOf);
-                if (office) {
-                    try {
-                        plans.territory = this.planTerritory(room, office);
-                        plans.results.territory = 'SUCCESS';
-                    } catch (e) {
-                        plans.results.territory = e.message;
-                    }
-                }
-            }
-
-            if (!plans.results.office) {
-                if (this.isEligible(room)) {
-                    try {
-                        plans.office = this.planOffice(room);
-                        plans.results.office = 'SUCCESS';
-                    } catch (e) {
-                        plans.results.office = e.message;
-                    }
-                } else {
-                    plans.results.office = 'FAILED - Room is ineligible for an office'
-                }
-            }
-
-            RoomPlanData.set(room.name, plans)
+            this.generateRoomPlans(room);
+            this.generateLogisticsRoutes(room);
         }
+    }
+
+    surveyRoomPlans(room: CachedRoom) {
+        let plans = RoomPlanData.byRoom(room.name) ?? {results: {}};
+        if (plans.office) {
+            plans.office.extensions.blockPlan.survey();
+            plans.office.headquarters.blockPlan.survey();
+            plans.office.franchise1.blockPlan.survey();
+            plans.office.franchise2.blockPlan.survey();
+            plans.office.mine.blockPlan.survey();
+        }
+        if (plans.territory) {
+            plans.territory.franchise1.blockPlan.survey();
+            plans.territory.franchise2?.blockPlan.survey();
+        }
+        RoomPlanData.set(room.name, plans);
+    }
+
+    generateRoomPlans(room: CachedRoom) {
+        let plans = RoomPlanData.byRoom(room.name) ?? {results: {}};
+
+        if (plans?.results.office &&
+            !(room.territoryOf || plans?.results.territory)
+        ) return;
+
+        if (room.territoryOf && !plans.results.territory) {
+            const office = this.boardroom.offices.get(room.territoryOf);
+            if (office) {
+                try {
+                    plans.territory = this.planTerritory(room, office);
+                    plans.results.territory = 'SUCCESS';
+                } catch (e) {
+                    plans.results.territory = e.message;
+                }
+            }
+        }
+
+        if (!plans.results.office) {
+            if (this.isEligible(room)) {
+                try {
+                    plans.office = this.planOffice(room);
+                    plans.results.office = 'SUCCESS';
+                } catch (e) {
+                    plans.results.office = e.message;
+                }
+            } else {
+                plans.results.office = 'FAILED - Room is ineligible for an office'
+            }
+        }
+
+        RoomPlanData.set(room.name, plans)
+    }
+
+    generateLogisticsRoutes(room: CachedRoom) {
+        let plans = RoomPlanData.byRoom(room.name);
+        if (!plans) return;
+        let routes = LogisticsRouteData.byRoom(room.name) ?? {};
+
+        if (room.territoryOf && plans.territory) {
+            let office = RoomPlanData.byRoom(room.territoryOf);
+            if (office?.office) {
+                routes.territory = {
+                    sources: generateTerritorySourceRoute(office.office.headquarters, plans.territory.franchise1, plans.territory.franchise2)
+                }
+            }
+        }
+
+        if (plans.office) {
+            let sourcesRoute = generateSourceRoute(
+                plans.office.franchise1,
+                plans.office.franchise2,
+                plans.office.mine,
+                plans.office.headquarters
+            );
+            let towersRoute = generateTowersRoute(plans.office.headquarters);
+            let extensionsAndSpawnsRoute = generateExtensionsRoute(
+                plans.office.franchise1,
+                plans.office.franchise2,
+                plans.office.headquarters,
+                plans.office.extensions
+            );
+            let controllerRoute = generateControllerRoute(plans.office.headquarters);
+            routes.office = {
+                sources: sourcesRoute,
+                towers: towersRoute,
+                extensionsAndSpawns: extensionsAndSpawnsRoute,
+                controller: controllerRoute
+            };
+        }
+
+        LogisticsRouteData.set(room.name, routes);
     }
 
     isEligible(room: CachedRoom) {
@@ -121,16 +185,8 @@ export class RoomArchitect extends BoardroomManager {
 
             [franchise1, franchise2] = franchises;
         } catch (e) {
-            throw new Error('FAILED generating franchises')
+            throw new Error('FAILED generating franchises: ' + e.message)
         }
-
-        let routes = LogisticsRouteData.byRoom(room.name) ?? {};
-        LogisticsRouteData.set(room.name, {
-            ...routes,
-            territory: {
-                sources: generateTerritorySourceRoute(headquarters, franchise1, franchise2)
-            }
-        });
 
         let end = Game.cpu.getUsed();
         console.log(`Planned Territory room ${room.name} with ${end - start} CPU`);
@@ -156,42 +212,26 @@ export class RoomArchitect extends BoardroomManager {
             if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`);
             [franchise1, franchise2] = plans;
         } catch (e) {
-            throw new Error('FAILED generating franchises');
+            throw new Error('FAILED generating franchises: ' + e.message);
         }
         try {
             if (!mineral) throw new Error(`No mineral found in room`)
             mine = new MinePlan().plan(mineral)
         } catch (e) {
-            throw new Error('FAILED generating mine')
+            throw new Error('FAILED generating mine: ' + e.message)
         }
         try {
             headquarters = new HeadquartersPlan().plan(room.name);
         } catch (e) {
-            throw new Error('FAILED generating headquarters')
+            throw new Error('FAILED generating headquarters: ' + e.message)
         }
         // Fill in remaining extensions
 
         try {
             extensions = new ExtensionsPlan().plan(room.name, franchise1, franchise2, mine, headquarters);
         } catch (e) {
-            throw new Error('FAILED generating extensions')
+            throw new Error('FAILED generating extensions: ' + e.message)
         }
-
-        // Plan logistics routes
-
-        let sourcesRoute = generateSourceRoute(franchise1, franchise2, mine, headquarters);
-        let towersRoute = generateTowersRoute(headquarters);
-        let extensionsAndSpawnsRoute = generateExtensionsRoute(franchise1, franchise2, headquarters, extensions);
-
-        let routes = LogisticsRouteData.byRoom(room.name) ?? {};
-        LogisticsRouteData.set(room.name, {
-            ...routes,
-            office: {
-                sources: sourcesRoute,
-                towers: towersRoute,
-                extensionsAndSpawns: extensionsAndSpawnsRoute,
-            }
-        });
 
         let end = Game.cpu.getUsed();
         console.log(`Planned Office room ${room.name} with ${end - start} CPU`);
@@ -223,4 +263,4 @@ export class RoomArchitect extends BoardroomManager {
         }
     }
 }
-// profiler.registerClass(RoomArchitect, 'RoomArchitect');
+profiler.registerClass(RoomArchitect, 'RoomArchitect');

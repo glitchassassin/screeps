@@ -3,7 +3,7 @@ import { Minion } from "./Minion";
 export class ForemanMinion extends Minion {
     type = 'FOREMAN'
     scaleMinion = (energy: number) => {
-        if (energy < 200) {
+        if (energy < 550) {
             return [];
         }
         else {

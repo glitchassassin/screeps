@@ -27,7 +27,7 @@ export class DropMineRequest extends MinionRequest {
 
     meetsCapacity(creeps: Creep[]) {
         // Sources have a limited number of spaces to work from
-        return (creeps.length >= (MineData.byId(this.targetId)?.maxForemen ?? 0))
+        return (creeps.length >= (MineData.byId(this.targetId)?.maxForemen ?? 1))
     }
     canBeFulfilledBy(creep: Creep) {
         return (

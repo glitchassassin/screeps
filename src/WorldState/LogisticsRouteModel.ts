@@ -24,11 +24,11 @@ export const deserializeRoute = (route: SerializedRoute): Route => {
         destinations: [],
         length: route.length,
     }
-    for (let i = 0; i < route.sources.length; i += 3) {
-        r.sources.push(PlannedStructure.deserialize(route.sources.slice(i, i+3)));
+    for (let i = 0; i < route.sources.length; i += 9) {
+        r.sources.push(PlannedStructure.deserialize(route.sources.slice(i, i+9)));
     }
-    for (let i = 0; i < route.destinations.length; i += 3) {
-        r.destinations.push(PlannedStructure.deserialize(route.destinations.slice(i, i+3)));
+    for (let i = 0; i < route.destinations.length; i += 9) {
+        r.destinations.push(PlannedStructure.deserialize(route.destinations.slice(i, i+9)));
     }
     return r;
 }

@@ -5,8 +5,9 @@ import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 import { BUILD_PRIORITIES } from "config";
 import { MinionRequest } from "./MinionRequest";
 import { buildSite } from "BehaviorTree/behaviors/buildSite";
+import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { createConstructionSite } from "BehaviorTree/behaviors/createConstructionSite";
-import { energyEmpty } from "BehaviorTree/behaviors/energyFull";
+import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { getEnergyFromSource } from "BehaviorTree/behaviors/getEnergyFromSource";
 
@@ -22,8 +23,9 @@ export class BuildRequest extends MinionRequest {
                     getEnergy(),
                     getEnergyFromSource()
                 ),
+                resetMoveTarget(),
                 setState(States.WORKING),
-                resetMoveTarget()
+                continueIndefinitely()
             ),
             Sequence(
                 stateIs(States.WORKING),
@@ -38,9 +40,10 @@ export class BuildRequest extends MinionRequest {
             Sequence(
                 Selector(
                     stateIsEmpty(),
-                    energyEmpty()
+                    creepCapacityEmpty()
                 ),
-                setState(States.GET_ENERGY)
+                setState(States.GET_ENERGY),
+                continueIndefinitely()
             ),
         )
     }

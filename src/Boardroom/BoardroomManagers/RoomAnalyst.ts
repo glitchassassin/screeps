@@ -9,6 +9,7 @@ import { MapAnalyst } from "Analysts/MapAnalyst";
 import { Office } from "Office/Office";
 import { RoomData } from "WorldState/Rooms";
 import { TERRITORY_RADIUS } from "config";
+import profiler from "screeps-profiler";
 
 export class RoomAnalyst extends BoardroomManager {
     acquireRequest?: AcquireRequest;
@@ -67,3 +68,5 @@ export class RoomAnalyst extends BoardroomManager {
         }
     }
 }
+
+profiler.registerClass(RoomAnalyst, 'RoomAnalyst')

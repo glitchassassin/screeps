@@ -1,13 +1,10 @@
-import { CachedStructure } from "WorldState/Structures";
 import { Controllers } from "WorldState/Controllers";
-import { HRAnalyst } from "Analysts/HRAnalyst";
 import { LegalManager } from "../LegalManager";
 import { LogisticsManager } from "../LogisticsManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
-import { RoomPlanData } from "WorldState/RoomPlans";
-import { TransferRequest } from "BehaviorTree/requests/Transfer";
 import { UpgradeRequest } from "BehaviorTree/requests/Upgrade";
+import profiler from "screeps-profiler";
 
 export class LegalStrategist extends OfficeManager {
     public request?: MinionRequest;
@@ -20,22 +17,6 @@ export class LegalStrategist extends OfficeManager {
         let controller = Controllers.byRoom(this.office.name);
 
         if (!controller) return;
-
-        // Auxiliary orders
-        // Logistics and infrastructure
-        if (controller?.level && controller.level > 0) {
-            let officePlans = RoomPlanData.byRoom(this.office.name)?.office
-            if (HRAnalyst.getEmployees(this.office).some(
-                c => c.memory?.type === 'PARALEGAL'
-            )) {
-                if (officePlans) {
-                    logisticsManager.submit(new TransferRequest(
-                        (officePlans.headquarters.storage.structure as CachedStructure<StructureStorage>|undefined) ?? officePlans.headquarters.storage.pos,
-                        (officePlans.headquarters.container.structure as CachedStructure<StructureStorage>|undefined) ?? officePlans.headquarters.container.pos,
-                    ))
-                }
-            }
-        }
 
         // Upgrade orders
 
@@ -56,4 +37,4 @@ export class LegalStrategist extends OfficeManager {
         // }
     }
 }
-// profiler.registerClass(LegalStrategist, 'LegalStrategist');
+profiler.registerClass(LegalStrategist, 'LegalStrategist');

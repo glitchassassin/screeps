@@ -7,6 +7,7 @@ import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesManager } from "../SalesManager";
+import profiler from "screeps-profiler";
 
 export class HarvestStrategist extends OfficeManager {
     public harvestRequests = new Map<Id<Source|Mineral>, MinionRequest>();
@@ -41,4 +42,4 @@ export class HarvestStrategist extends OfficeManager {
         this.harvestRequests.set(req.targetId, req);
     }
 }
-// profiler.registerClass(SalesStrategist, 'SalesStrategist');
+profiler.registerClass(HarvestStrategist, 'HarvestStrategist');

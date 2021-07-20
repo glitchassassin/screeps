@@ -1,9 +1,8 @@
-import { CachedStructure, Structures } from "WorldState/Structures";
-import { packPos, unpackPos } from "utils/packrat";
+import { packId, packPos, unpackId, unpackPos } from "utils/packrat";
 
 import type { BuildRequest } from "BehaviorTree/requests/Build";
 import type { RepairRequest } from "BehaviorTree/requests/Repair";
-import { byId } from "utils/gameObjectSelectors";
+import { Structures } from "WorldState/Structures";
 import profiler from "screeps-profiler";
 
 const PackedStructureTypes: Record<BuildableStructureConstant, string> = {
@@ -35,27 +34,34 @@ const PackedStructureTypesLookup: Record<string, BuildableStructureConstant> = O
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
         public pos: RoomPosition,
-        public structureType: T
+        public structureType: T,
+        public structureId?: Id<Structure<T>>
     ) {}
-    structure?: CachedStructure<Structure<T>>;
     buildRequest?: BuildRequest;
     repairRequest?: RepairRequest;
 
+    get structure() {
+        return Structures.byId(this.structureId)
+    }
+
     serialize() {
-        return PackedStructureTypes[this.structureType] + packPos(this.pos);
+        return PackedStructureTypes[this.structureType] +
+               packPos(this.pos) +
+               (this.structureId ? packId(this.structureId as string) : '      ');
     }
     static deserialize(serialized: string) {
-        let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)]
-        let pos = unpackPos(serialized.slice(1, 3))
-        return new PlannedStructure(pos, structureType)
+        let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
+        let pos = unpackPos(serialized.slice(1, 3));
+        let id = unpackId(serialized.slice(3, 9)) as Id<Structure<BuildableStructureConstant>>;
+        return new PlannedStructure(pos, structureType, id);
     }
     survey() {
         if (Game.rooms[this.pos.roomName]) {
-            if (byId(this.structure?.id)) {
+            if (this.structure) {
                 return true; // Actual structure is visible
             } else {
-                this.structure = Structures.byPos(this.pos).find(s => s.structureType === this.structureType) as CachedStructure<Structure<T>>;
-                if (this.structure) return true; // Found structure at expected position
+                this.structureId = Structures.byPos(this.pos).find(s => s.structureType === this.structureType)?.id as Id<Structure<T>>;
+                if (this.structureId) return true; // Found structure at expected position
             }
         } else if (this.structure){
             return true; // Cached structure exists

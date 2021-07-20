@@ -7,6 +7,7 @@ import { HRAnalyst } from "Analysts/HRAnalyst";
 import { LogisticsAnalyst } from "../../Analysts/LogisticsAnalyst";
 import { Metrics } from "screeps-viz";
 import { SalesAnalyst } from "../../Analysts/SalesAnalyst";
+import profiler from "screeps-profiler";
 
 export class PipelineMetrics {
     constructor(
@@ -122,3 +123,5 @@ export class StatisticsAnalyst extends BoardroomManager {
         this.tickMetrics[officeName][metricName] = (this.tickMetrics[officeName][metricName] ?? 0) + value
     }
 }
+
+profiler.registerClass(StatisticsAnalyst, 'StatisticsAnalyst')

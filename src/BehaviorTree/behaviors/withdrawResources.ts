@@ -26,6 +26,8 @@ export const withdrawResources = (resourceType?: ResourceConstant, amount?: numb
     } else {
         let res = resourceType ?? Capacity.resourcesById(bb.target).shift();
 
+        log(creep.name, `withdrawResources type: ${res} (${Capacity.byId(bb.target, res)?.used})`);
+
         // If we're looking for a specific type and there isn't any, we're done
         if (!res || !Capacity.byId(bb.target, res)?.used) return BehaviorResult.SUCCESS;
         let result;
@@ -44,7 +46,7 @@ export const withdrawResources = (resourceType?: ResourceConstant, amount?: numb
             log(creep.name, `withdrawResources from Structure: ${target} (${result})`);
         }
 
-        if (Capacity.resourcesById(bb.target).length > 1) {
+        if (result !== ERR_FULL && Capacity.resourcesById(bb.target).length > 1) {
             return BehaviorResult.INPROGRESS;
         } else {
             bb.target = undefined;

@@ -13,6 +13,7 @@ declare global {
                 sources: SerializedRoute,
                 towers: SerializedRoute,
                 extensionsAndSpawns: SerializedRoute,
+                controller: SerializedRoute,
             },
             territory?: {
                 sources: SerializedRoute,
@@ -38,6 +39,7 @@ export type CachedLogisticsRoute = {
         sources: Route,
         towers: Route,
         extensionsAndSpawns: Route,
+        controller: Route,
     },
     territory?: {
         sources: Route,
@@ -58,6 +60,7 @@ export class LogisticsRouteData {
                     sources: deserializeRoute(cached.office.sources),
                     towers: deserializeRoute(cached.office.towers),
                     extensionsAndSpawns: deserializeRoute(cached.office.extensionsAndSpawns),
+                    controller: deserializeRoute(cached.office.controller),
                 }
             }
             let territory;
@@ -96,6 +99,7 @@ export class LogisticsRouteData {
                 sources: serializeRoute(room.office.sources),
                 towers: serializeRoute(room.office.towers),
                 extensionsAndSpawns: serializeRoute(room.office.extensionsAndSpawns),
+                controller: serializeRoute(room.office.controller),
             }
         }
         let territory;

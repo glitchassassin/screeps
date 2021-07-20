@@ -2,13 +2,20 @@ import { Bar, Dashboard, Grid, Label, LineChart, Metrics, Rectangle, Table } fro
 
 import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "Analysts/ControllerAnalyst";
+import { FillStructuresRequest } from "BehaviorTree/requests/FillStructuresRequest";
+import { FranchiseData } from "WorldState/FranchiseData";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { LogisticsRouteData } from "WorldState/LogisticsRoutes";
 import { LogisticsRouteRequest } from "BehaviorTree/requests/LogisticsRoute";
+import { MineData } from "WorldState/MineData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { RoomPlanData } from "WorldState/RoomPlans";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { Sources } from "WorldState/Sources";
 import { StatisticsAnalyst } from "Boardroom/BoardroomManagers/StatisticsAnalyst";
+import { StorageRequest } from "BehaviorTree/requests/StorageRequest";
+import { TransferRequest } from "BehaviorTree/requests/TransferRequest";
+import profiler from "screeps-profiler";
 
 export class LogisticsManager extends OfficeTaskManager {
     minionTypes = ['CARRIER']
@@ -89,16 +96,46 @@ export class LogisticsManager extends OfficeTaskManager {
             }) })
         },
         {
-            pos: { x: 38, y: 16 },
-            width: 10,
+            pos: { x: 1, y: 5 },
+            width: 5,
             height: 10,
-            widget: Rectangle({ data: Table(() => ({
-                data: this.getAvailableCreeps().map(creep => [creep.name]),
-                config: {
-                    headers: ['Minion']
-                }
-            })) })
+            widget: Rectangle({ data: this.idleMinionsTable })
         },
+        {
+            pos: { x: 1, y: 16 },
+            width: 30,
+            height: 15,
+            widget: Rectangle({ data: this.requestsTable })
+        },
+        {
+            pos: { x: 1, y: 34 },
+            width: 48,
+            height: 10,
+            widget: Rectangle({ data: Table(() => {
+                return {
+                    data: (this.requests.filter(r => r instanceof LogisticsRouteRequest) as LogisticsRouteRequest[]).map(r => {
+                        let sources = r.route.sources.reduce((sum, s) => sum + LogisticsAnalyst.countEnergyInContainersOrGround(s.pos), 0)
+                        let destinations = r.route.destinations.reduce((sum, d) => {
+                            if (d.structure) {
+                                return sum + (Capacity.byId(d.structure.id as Id<AnyStoreStructure>)?.free ?? 0)
+                            } else {
+                                return Math.max(0, sum + (CONTAINER_CAPACITY - LogisticsAnalyst.countEnergyInContainersOrGround(d.pos)))
+                            }
+                        }, 0)
+
+                        return [
+                            `${r.name} (${r.route.sources.length} -> ${r.route.destinations.length})`,
+                            sources,
+                            destinations,
+                            LogisticsAnalyst.calculateRouteThroughput(r.route)
+                        ]
+                    }),
+                    config: {
+                        headers: ['Route', 'Sources', 'Destinations', 'Throughput']
+                    }
+                }
+            }) })
+        }
     ];
 
     // TODO - Implement Metrics
@@ -236,14 +273,29 @@ export class LogisticsManager extends OfficeTaskManager {
         let plans = LogisticsRouteData.byRoom(this.office.name);
         if (!plans?.office) return;
 
-        if (!this.requests.some(r => r instanceof LogisticsRouteRequest && r.name === 'extensionsAndSpawns')) {
-            this.submit(new LogisticsRouteRequest('extensionsAndSpawns', plans.office.extensionsAndSpawns))
-        }
-        if (!this.requests.some(r => r instanceof LogisticsRouteRequest && r.name === 'sources')) {
-            this.submit(new LogisticsRouteRequest('sources', plans.office.sources))
-        }
-        if (!this.requests.some(r => r instanceof LogisticsRouteRequest && r.name === 'towers')) {
-            this.submit(new LogisticsRouteRequest('towers', plans.office.towers))
+        // Submit hauling orders
+        let office = RoomPlanData.byRoom(this.office.name)?.office;
+        if (office) {
+            if (!this.requests.some(r => r instanceof FillStructuresRequest && r.pos.isEqualTo(plans!.office!.extensionsAndSpawns.destinations[0].pos))) {
+                this.submit(new FillStructuresRequest(office.headquarters.storage, plans.office.extensionsAndSpawns.destinations, 8))
+            }
+            if (!this.requests.some(r => r instanceof FillStructuresRequest && r.pos.isEqualTo(plans!.office!.towers.destinations[0].pos))) {
+                this.submit(new FillStructuresRequest(office.headquarters.storage, plans.office.towers.destinations, 8))
+            }
+            for (let franchise of FranchiseData.byOffice(this.office)) {
+                if (!this.requests.some(r => r instanceof StorageRequest && r.pos.isEqualTo(franchise.pos))) {
+                    this.submit(new StorageRequest(franchise.pos, office.headquarters.storage, 7));
+                }
+            }
+            for (let mine of MineData.byOffice(this.office)) {
+                if (!this.requests.some(r => r instanceof StorageRequest && r.pos.isEqualTo(mine.pos))) {
+                    this.submit(new StorageRequest(mine.pos, office.headquarters.storage, 5));
+                }
+            }
+
+            if (!this.requests.some(r => r instanceof TransferRequest && r.pos.isEqualTo(office!.headquarters.container.pos))) {
+                this.submit(new TransferRequest(office.headquarters.storage, office.headquarters.container, true, 5, RESOURCE_ENERGY))
+            }
         }
     }
     run() {
@@ -260,3 +312,5 @@ export class LogisticsManager extends OfficeTaskManager {
         }
     }
 }
+
+profiler.registerClass(LogisticsManager, 'LogisticsManager')

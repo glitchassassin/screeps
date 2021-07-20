@@ -17,6 +17,7 @@ import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
+import profiler from "screeps-profiler";
 
 const minionClasses: Record<string, Minion> = {
     SALESMAN: new SalesmanMinion(),
@@ -72,21 +73,20 @@ export class SpawnStrategist extends OfficeManager {
         const spawnTargets: Record<string, number> = {};
 
         const franchiseCount = SalesAnalyst.getExploitableFranchises(this.office).length;
+        const mineCount = MineData.byOffice(this.office).filter(m => (
+            byId(m.extractorId) && !byId(m.id)?.ticksToRegeneration
+        )).length;
         const workPartsPerSalesman = Math.min(5, Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 50) / 100));
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
 
         spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
-        spawnTargets['CARRIER'] = Math.max(spawnTargets['SALESMAN'], franchiseCount * 1.5);
+        spawnTargets['CARRIER'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5);
 
         const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
         spawnTargets['ENGINEER'] = Math.min(
             spawnTargets['SALESMAN'],
             Math.ceil(facilitiesManager.workPending() / (workPartsPerEngineer * 1500 * 2.5))
         );
-
-        const mineCount = MineData.byOffice(this.office).filter(m => (
-            byId(m.extractorId) && !byId(m.id)?.ticksToRegeneration
-        )).length;
         spawnTargets['FOREMAN'] = mineCount;
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
@@ -122,4 +122,4 @@ export class SpawnStrategist extends OfficeManager {
         }
     }
 }
-// profiler.registerClass(SpawnStrategist, 'SpawnStrategist');
+profiler.registerClass(SpawnStrategist, 'SpawnStrategist');

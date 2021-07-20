@@ -7,6 +7,7 @@ export enum States {
     WORKING = 'WORKING',
     WITHDRAW = 'WITHDRAW',
     DEPOSIT = 'DEPOSIT',
+    DONE = 'DONE',
 }
 
 declare module 'BehaviorTree/Behavior' {
@@ -21,7 +22,7 @@ declare module 'BehaviorTree/Behavior' {
 export const stateIs = (state: States) => {
     return (target: any, bb: Blackboard) => {
         if (target instanceof Creep) {
-            log(target.name, `stateIs ${state} ? ${bb.state === state}`)
+            log(target.name, `stateIs ${state} ? ${bb.state === state} [actually ${bb.state}]`)
         }
         if (bb.state === state) return BehaviorResult.SUCCESS;
         return BehaviorResult.FAILURE;
@@ -39,7 +40,7 @@ export const stateIsEmpty = () => {
 }
 
 /**
- * Returns INPROGRESS and sets state in blackboard
+ * Returns SUCCESS and sets state in blackboard
  */
 export const setState = (state: States) => {
     return (target: any, bb: Blackboard) => {
@@ -47,6 +48,6 @@ export const setState = (state: States) => {
             log(target.name, `setState: ${state}`)
         }
         bb.state = state;
-        return BehaviorResult.INPROGRESS;
+        return BehaviorResult.SUCCESS;
     }
 }

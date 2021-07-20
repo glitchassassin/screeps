@@ -10,6 +10,7 @@ import { RoomData } from "WorldState/Rooms";
 import { RoomPlanData } from "WorldState/RoomPlans";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { byId } from "utils/gameObjectSelectors";
+import profiler from "screeps-profiler";
 
 export class SalesManager extends OfficeTaskManager {
     minionTypes = ['SALESMAN'];
@@ -146,4 +147,4 @@ export class SalesManager extends OfficeTaskManager {
         return false;
     }
 }
-// profiler.registerClass(SalesManager, 'SalesManager');
+profiler.registerClass(SalesManager, 'SalesManager');
