@@ -1,8 +1,8 @@
+import { BUILD_PRIORITIES, PROFILE } from "config";
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
-import { BUILD_PRIORITIES } from "config";
 import { MinionRequest } from "./MinionRequest";
 import { buildSite } from "BehaviorTree/behaviors/buildSite";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
@@ -10,6 +10,7 @@ import { createConstructionSite } from "BehaviorTree/behaviors/createConstructio
 import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { getEnergyFromSource } from "BehaviorTree/behaviors/getEnergyFromSource";
+import profiler from "screeps-profiler";
 
 export class BuildRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -46,6 +47,7 @@ export class BuildRequest extends MinionRequest {
                 continueIndefinitely()
             ),
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     // Assign any available minions to each build request
@@ -59,4 +61,5 @@ export class BuildRequest extends MinionRequest {
     }
 
 }
-// profiler.registerClass(BuildRequest, 'BuildRequest');
+
+if (PROFILE.requests) profiler.registerClass(BuildRequest, 'BuildRequest');

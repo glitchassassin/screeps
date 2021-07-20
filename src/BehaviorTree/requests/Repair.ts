@@ -1,13 +1,14 @@
+import { BUILD_PRIORITIES, PROFILE } from "config";
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
-import { BUILD_PRIORITIES } from "config";
 import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
+import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
 export class RepairRequest extends MinionRequest {
@@ -43,6 +44,7 @@ export class RepairRequest extends MinionRequest {
                 continueIndefinitely()
             ),
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     // Assign any available minions to each build request
@@ -56,4 +58,5 @@ export class RepairRequest extends MinionRequest {
     }
 
 }
-// profiler.registerClass(RepairRequest, 'RepairRequest');
+
+if (PROFILE.requests) profiler.registerClass(RepairRequest, 'RepairRequest');

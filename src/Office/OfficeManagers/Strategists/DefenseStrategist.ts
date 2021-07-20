@@ -4,6 +4,7 @@ import { Controllers } from "WorldState/Controllers";
 import { HRAnalyst } from "Analysts/HRAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
 import { RoomData } from "WorldState/Rooms";
 import { byId } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
@@ -53,4 +54,5 @@ export class DefenseStrategist extends OfficeManager {
         }
     }
 }
-profiler.registerClass(DefenseStrategist, 'DefenseStrategist');
+
+if (PROFILE.managers) profiler.registerClass(DefenseStrategist, 'DefenseStrategist');

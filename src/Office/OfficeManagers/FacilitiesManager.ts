@@ -5,6 +5,7 @@ import { ConstructionSites } from "WorldState/ConstructionSites";
 import { FacilitiesAnalyst } from "Analysts/FacilitiesAnalyst";
 import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { PROFILE } from "config";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import profiler from "screeps-profiler";
 
@@ -89,4 +90,4 @@ export class FacilitiesManager extends OfficeTaskManager {
     }
 }
 
-profiler.registerClass(FacilitiesManager, 'FacilitiesManager');
+if (PROFILE.managers) profiler.registerClass(FacilitiesManager, 'FacilitiesManager');

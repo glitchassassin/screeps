@@ -60,7 +60,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
             if (this.structure) {
                 return true; // Actual structure is visible
             } else {
-                this.structureId = Structures.byPos(this.pos).find(s => s.structureType === this.structureType)?.id as Id<Structure<T>>;
+                this.structureId = Game.rooms[this.pos.roomName].lookForAt(LOOK_STRUCTURES, this.pos).find(s => s.structureType === this.structureType)?.id as Id<Structure<T>>;
                 if (this.structureId) return true; // Found structure at expected position
             }
         } else if (this.structure){

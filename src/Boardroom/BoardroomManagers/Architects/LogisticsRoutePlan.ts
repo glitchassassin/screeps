@@ -28,7 +28,7 @@ const getNearestNeighborsRoute = (start: RoomPosition, targets: PlannedStructure
                 }
             )
 
-            if (path.incomplete) throw new Error('Unable to generate logistics route');
+            if (path.incomplete) throw new Error(`Unable to generate logistics route from ${lastPoint} to ${s.pos}`);
 
             return {s, length: path.cost}
         }).reduce((a, b) => (!b || a.length < b.length) ? a : b);

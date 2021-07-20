@@ -4,6 +4,7 @@ import { MapAnalyst } from "Analysts/MapAnalyst";
 import { MineData } from "WorldState/MineData";
 import { Minerals } from "WorldState/Minerals";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { PROFILE } from "config";
 import profiler from "screeps-profiler";
 
 export class MineManager extends OfficeTaskManager {
@@ -75,4 +76,4 @@ export class MineManager extends OfficeTaskManager {
     }
 }
 
-profiler.registerClass(MineManager, 'MineManager')
+if (PROFILE.managers) profiler.registerClass(MineManager, 'MineManager')

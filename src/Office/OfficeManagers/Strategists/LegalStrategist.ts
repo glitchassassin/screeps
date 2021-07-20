@@ -1,8 +1,9 @@
 import { Controllers } from "WorldState/Controllers";
 import { LegalManager } from "../LegalManager";
-import { LogisticsManager } from "../LogisticsManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
+import { RoomPlanData } from "WorldState/RoomPlans";
 import { UpgradeRequest } from "BehaviorTree/requests/Upgrade";
 import profiler from "screeps-profiler";
 
@@ -13,10 +14,10 @@ export class LegalStrategist extends OfficeManager {
 
     plan() {
         let legalManager = this.office.managers.get('LegalManager') as LegalManager;
-        let logisticsManager = this.office.managers.get('LogisticsManager') as LogisticsManager;
         let controller = Controllers.byRoom(this.office.name);
+        let office = RoomPlanData.byRoom(this.office.name)?.office
 
-        if (!controller) return;
+        if (!controller || !office) return;
 
         // Upgrade orders
 
@@ -24,7 +25,7 @@ export class LegalStrategist extends OfficeManager {
             // Upgrade with as many minions as are available
             // (SpawnStrategist will determine when to spawn
             // additional upgraders)
-            this.request = new UpgradeRequest(controller);
+            this.request = new UpgradeRequest(controller, office.headquarters.container);
             legalManager.submit(this.request);
         }
 
@@ -37,4 +38,5 @@ export class LegalStrategist extends OfficeManager {
         // }
     }
 }
-profiler.registerClass(LegalStrategist, 'LegalStrategist');
+
+if (PROFILE.managers) profiler.registerClass(LegalStrategist, 'LegalStrategist');

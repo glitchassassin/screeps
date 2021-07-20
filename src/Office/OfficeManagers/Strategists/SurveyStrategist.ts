@@ -3,6 +3,7 @@ import { ExploreRequest } from "BehaviorTree/requests/Explore";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
 import { RoomData } from "WorldState/Rooms";
 import { SecurityManager } from "../SecurityManager";
 import { getRcl } from "utils/gameObjectSelectors";
@@ -62,4 +63,5 @@ export class SurveyStrategist extends OfficeManager {
         return bestMatch?.name;
     }
 }
-profiler.registerClass(SurveyStrategist, 'SurveyStrategist');
+
+if (PROFILE.managers) profiler.registerClass(SurveyStrategist, 'SurveyStrategist');

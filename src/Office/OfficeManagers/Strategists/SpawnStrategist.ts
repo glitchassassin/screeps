@@ -13,6 +13,7 @@ import { LegalManager } from "../LegalManager";
 import { MineData } from "WorldState/MineData";
 import { Minion } from "MinionDefinitions/Minion";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
 import { ParalegalMinion } from "MinionDefinitions/ParalegalMinion";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesmanMinion } from "MinionDefinitions/SalesmanMinion";
@@ -122,4 +123,5 @@ export class SpawnStrategist extends OfficeManager {
         }
     }
 }
-profiler.registerClass(SpawnStrategist, 'SpawnStrategist');
+
+if (PROFILE.managers) profiler.registerClass(SpawnStrategist, 'SpawnStrategist');

@@ -78,6 +78,9 @@ export const Structures = {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
     },
     byPos(pos: RoomPosition): CachedStructure[] {
+        if (Game.rooms[pos.roomName]) {
+            return Game.rooms[pos.roomName].lookForAt(LOOK_STRUCTURES, pos);
+        }
         return Structures.byRoom(pos.roomName).filter(site => site?.pos.isEqualTo(pos));
     },
     purge() {

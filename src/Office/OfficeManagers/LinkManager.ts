@@ -1,6 +1,7 @@
 import { Capacity } from "WorldState/Capacity";
 import { ControllerAnalyst } from "Analysts/ControllerAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { byId } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
@@ -23,4 +24,5 @@ export class LinkManager extends OfficeManager {
         }
     }
 }
-profiler.registerClass(LinkManager, 'LinkManager');
+
+if (PROFILE.managers) profiler.registerClass(LinkManager, 'LinkManager');

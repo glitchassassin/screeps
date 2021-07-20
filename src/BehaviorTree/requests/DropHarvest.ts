@@ -2,9 +2,11 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedFranchise, FranchiseData } from "WorldState/FranchiseData";
 
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 
 export class DropHarvestRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -23,6 +25,7 @@ export class DropHarvestRequest extends MinionRequest {
             harvestEnergy(franchise.id),
             continueIndefinitely()
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     meetsCapacity(creeps: Creep[]) {
@@ -45,4 +48,4 @@ export class DropHarvestRequest extends MinionRequest {
 
 }
 
-// profiler.registerClass(DropHarvestRequest, 'DropHarvestRequest');
+if (PROFILE.requests) profiler.registerClass(DropHarvestRequest, 'DropHarvestRequest');

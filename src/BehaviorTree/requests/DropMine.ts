@@ -2,9 +2,11 @@ import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { CachedMine, MineData } from "WorldState/MineData";
 
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 
 export class DropMineRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -23,6 +25,7 @@ export class DropMineRequest extends MinionRequest {
             ),
             continueIndefinitely()
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     meetsCapacity(creeps: Creep[]) {
@@ -38,4 +41,4 @@ export class DropMineRequest extends MinionRequest {
 
 }
 
-// profiler.registerClass(DropHarvestRequest, 'DropHarvestRequest');
+if (PROFILE.requests) profiler.registerClass(DropMineRequest, 'DropMineRequest');

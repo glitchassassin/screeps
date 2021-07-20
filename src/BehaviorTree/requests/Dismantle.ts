@@ -2,8 +2,10 @@ import { Behavior, Selector } from "BehaviorTree/Behavior";
 
 import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
 import { dismantleStructure } from "BehaviorTree/behaviors/dismantleStructure";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 
 export class DismantleRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -16,6 +18,7 @@ export class DismantleRequest extends MinionRequest {
             dismantleStructure(structure),
             moveTo(structure.pos),
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     // Assign any available minions to each build request
@@ -29,4 +32,5 @@ export class DismantleRequest extends MinionRequest {
     }
 
 }
-// profiler.registerClass(BuildRequest, 'BuildRequest');
+
+if (PROFILE.requests) profiler.registerClass(DismantleRequest, 'DismantleRequest');

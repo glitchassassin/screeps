@@ -2,6 +2,8 @@ import { Behavior, Selector } from "BehaviorTree/Behavior";
 import { ifIsInRoom, moveTo } from "BehaviorTree/behaviors/moveTo";
 
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
+import profiler from "screeps-profiler";
 
 export class ExploreRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -14,6 +16,7 @@ export class ExploreRequest extends MinionRequest {
             ifIsInRoom(roomName),
             moveTo(this.pos, 5)
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     // Assign any available minions to each build request
@@ -26,4 +29,4 @@ export class ExploreRequest extends MinionRequest {
 
 }
 
-// profiler.registerClass(ExploreRequest, 'ExploreRequest');
+if (PROFILE.requests) profiler.registerClass(ExploreRequest, 'ExploreRequest');

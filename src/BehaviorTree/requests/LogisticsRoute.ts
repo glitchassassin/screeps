@@ -4,10 +4,12 @@ import { checkIfLogisticsRouteIsDone, getNextLogisticsRouteStep, setLogisticsRou
 
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
 import type { Route } from "WorldState/LogisticsRouteModel";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { depositAtLogisticsNode } from "BehaviorTree/behaviors/depositAtLogisticsNode";
 import { log } from "utils/logger";
+import profiler from "screeps-profiler";
 import { withdrawFromLogisticsNode } from "BehaviorTree/behaviors/withdrawFromLogisticsNode";
 
 export class LogisticsRouteRequest extends MinionRequest {
@@ -50,6 +52,7 @@ export class LogisticsRouteRequest extends MinionRequest {
                 stateIs(States.DONE), // end
             )
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     meetsCapacity(creeps: Creep[]) {
@@ -66,3 +69,5 @@ export class LogisticsRouteRequest extends MinionRequest {
     }
 
 }
+
+if (PROFILE.requests) profiler.registerClass(LogisticsRouteRequest, 'LogisticsRouteRequest');

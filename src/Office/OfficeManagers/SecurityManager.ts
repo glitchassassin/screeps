@@ -2,6 +2,7 @@ import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
 
 import { ExploreRequest } from "BehaviorTree/requests/Explore";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { PROFILE } from "config";
 import { RoomData } from "WorldState/Rooms";
 import { byId } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
@@ -68,4 +69,4 @@ export class SecurityManager extends OfficeTaskManager {
     }
 }
 
-profiler.registerClass(SecurityManager, 'SecurityManager');
+if (PROFILE.managers) profiler.registerClass(SecurityManager, 'SecurityManager');

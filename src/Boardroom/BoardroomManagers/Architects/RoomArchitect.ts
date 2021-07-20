@@ -14,15 +14,24 @@ import { Minerals } from 'WorldState/Minerals';
 import { Office } from 'Office/Office';
 import { RoomPlanData } from 'WorldState/RoomPlans';
 import { Sources } from 'WorldState/Sources';
+import { Structures } from 'WorldState/Structures';
 import { TerritoryFranchisePlan } from './TerritoryFranchise';
 import profiler from 'screeps-profiler';
 
 export class RoomArchitect extends BoardroomManager {
+    structureCount: Record<string, number> = {};
+
     plan() {
         let start = Game.cpu.getUsed();
         if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
         for (let room of RoomData.all()) {
-            this.surveyRoomPlans(room);
+            if (room.territoryOf || this.boardroom.offices.has(room.name)) {
+                const structures = Structures.byRoom(room.name).length;
+                if (this.structureCount[room.name] !== structures) {
+                    this.structureCount[room.name] = structures;
+                    this.surveyRoomPlans(room);
+                }
+            }
 
             if (Game.cpu.getUsed() - start > 5) continue; // Don't spend more than 5 CPU/tick doing room planning
 
@@ -87,7 +96,7 @@ export class RoomArchitect extends BoardroomManager {
         if (!plans) return;
         let routes = LogisticsRouteData.byRoom(room.name) ?? {};
 
-        if (room.territoryOf && plans.territory) {
+        if (room.territoryOf && plans.territory && !routes.territory) {
             let office = RoomPlanData.byRoom(room.territoryOf);
             if (office?.office) {
                 routes.territory = {
@@ -96,7 +105,7 @@ export class RoomArchitect extends BoardroomManager {
             }
         }
 
-        if (plans.office) {
+        if (plans.office && !routes.office) {
             let sourcesRoute = generateSourceRoute(
                 plans.office.franchise1,
                 plans.office.franchise2,

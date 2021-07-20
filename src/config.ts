@@ -46,3 +46,8 @@ export const WHITELIST = [
 export const CACHED_STRUCTURES: StructureConstant[] = [
     STRUCTURE_CONTAINER
 ]
+
+export const PROFILE = {
+    managers: false,
+    requests: true
+}

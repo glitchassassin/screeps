@@ -9,6 +9,7 @@ import { LogisticsRouteData } from "WorldState/LogisticsRoutes";
 import { LogisticsRouteRequest } from "BehaviorTree/requests/LogisticsRoute";
 import { MineData } from "WorldState/MineData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { PROFILE } from "config";
 import { RoomPlanData } from "WorldState/RoomPlans";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { Sources } from "WorldState/Sources";
@@ -313,4 +314,4 @@ export class LogisticsManager extends OfficeTaskManager {
     }
 }
 
-profiler.registerClass(LogisticsManager, 'LogisticsManager')
+if (PROFILE.managers) profiler.registerClass(LogisticsManager, 'LogisticsManager')

@@ -3,6 +3,7 @@ import { Bar, Dashboard, Label, LineChart, Metrics, Rectangle, Table } from "scr
 import { BehaviorResult } from "BehaviorTree/Behavior";
 import { HRAnalyst } from "Analysts/HRAnalyst";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
 import { Request } from "BehaviorTree/Request";
 import SpawnPressure from "Reports/widgets/SpawnPressure";
 import { SpawnRequest } from "BehaviorTree/requests/Spawn";
@@ -171,4 +172,4 @@ export class HRManager extends OfficeManager {
     }
 }
 
-profiler.registerClass(HRManager, 'HRManager');
+if (PROFILE.managers) profiler.registerClass(HRManager, 'HRManager');

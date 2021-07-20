@@ -3,6 +3,7 @@ import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
 import { Controllers } from "WorldState/Controllers";
 import { LegalData } from "WorldState/LegalData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { PROFILE } from "config";
 import { RoomPlanData } from "WorldState/RoomPlans";
 import profiler from "screeps-profiler";
 
@@ -93,4 +94,4 @@ export class LegalManager extends OfficeTaskManager {
     }
 }
 
-profiler.registerClass(LegalManager, 'LegalManager')
+if (PROFILE.managers) profiler.registerClass(LegalManager, 'LegalManager')

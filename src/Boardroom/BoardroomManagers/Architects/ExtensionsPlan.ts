@@ -62,10 +62,10 @@ function getNeighboringExtensionSquares(pos: RoomPosition) {
     // X O X
 
     let valid = [];
-    if (pos.x > 1 && pos.y > 1) valid.push(new RoomPosition(pos.x - 1, pos.y - 1, pos.roomName));
-    if (pos.x > 1 && pos.y < 48) valid.push(new RoomPosition(pos.x - 1, pos.y + 1, pos.roomName));
-    if (pos.x < 48 && pos.y > 1) valid.push(new RoomPosition(pos.x + 1, pos.y - 1, pos.roomName));
-    if (pos.x < 48 && pos.y < 48) valid.push(new RoomPosition(pos.x + 1, pos.y + 1, pos.roomName));
+    if (pos.x > 2 && pos.y > 2) valid.push(new RoomPosition(pos.x - 1, pos.y - 1, pos.roomName));
+    if (pos.x > 2 && pos.y < 47) valid.push(new RoomPosition(pos.x - 1, pos.y + 1, pos.roomName));
+    if (pos.x < 47 && pos.y > 2) valid.push(new RoomPosition(pos.x + 1, pos.y - 1, pos.roomName));
+    if (pos.x < 47 && pos.y < 47) valid.push(new RoomPosition(pos.x + 1, pos.y + 1, pos.roomName));
     return valid;
 }
 

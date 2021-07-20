@@ -6,6 +6,7 @@ import { FranchisePlan } from "Boardroom/BoardroomManagers/Architects/FranchiseP
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { OfficeTaskManager } from "./OfficeTaskManager";
+import { PROFILE } from "config";
 import { RoomData } from "WorldState/Rooms";
 import { RoomPlanData } from "WorldState/RoomPlans";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
@@ -147,4 +148,5 @@ export class SalesManager extends OfficeTaskManager {
         return false;
     }
 }
-profiler.registerClass(SalesManager, 'SalesManager');
+
+if (PROFILE.managers) profiler.registerClass(SalesManager, 'SalesManager');

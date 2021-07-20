@@ -5,12 +5,14 @@ import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/en
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { depositOrDrop } from "BehaviorTree/behaviors/depositOrDrop";
 import { fail } from "BehaviorTree/behaviors/fail";
 import { log } from "utils/logger";
 import { noResourcesAvailable } from "BehaviorTree/behaviors/resourcesAvailable";
+import profiler from "screeps-profiler";
 import { resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 import { withdrawFromLogisticsSource } from "BehaviorTree/behaviors/withdrawFromLogisticsSource";
 
@@ -58,6 +60,7 @@ export class StorageRequest extends MinionRequest {
                 )
             ),
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     meetsCapacity(creeps: Creep[]) {
@@ -80,3 +83,5 @@ export class StorageRequest extends MinionRequest {
     }
 
 }
+
+if (PROFILE.requests) profiler.registerClass(StorageRequest, 'StorageRequest');

@@ -6,6 +6,7 @@ import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { depositResources } from "BehaviorTree/behaviors/depositResources";
@@ -13,6 +14,7 @@ import { dropResources } from "BehaviorTree/behaviors/dropResources";
 import { fail } from "BehaviorTree/behaviors/fail";
 import { log } from "utils/logger";
 import { noResourcesAvailable } from "BehaviorTree/behaviors/resourcesAvailable";
+import profiler from "screeps-profiler";
 import { withdrawFromLogisticsSource } from "BehaviorTree/behaviors/withdrawFromLogisticsSource";
 
 export class TransferRequest extends MinionRequest {
@@ -65,6 +67,7 @@ export class TransferRequest extends MinionRequest {
                 )
             ),
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     meetsCapacity(creeps: Creep[]) {
@@ -87,3 +90,5 @@ export class TransferRequest extends MinionRequest {
     }
 
 }
+
+if (PROFILE.requests) profiler.registerClass(TransferRequest, 'TransferRequest');

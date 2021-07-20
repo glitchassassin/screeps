@@ -1,30 +1,33 @@
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
-import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedController } from "WorldState/Controllers";
 import { MinionRequest } from "./MinionRequest";
+import { PROFILE } from "config";
+import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
-import { getEnergyNearby } from "BehaviorTree/behaviors/getEnergyNearby";
+import { fail } from "BehaviorTree/behaviors/fail";
+import { moveTo } from "BehaviorTree/behaviors/moveTo";
+import profiler from "screeps-profiler";
 import { upgradeController } from "BehaviorTree/behaviors/upgradeController";
+import { withdrawFromLogisticsSource } from "BehaviorTree/behaviors/withdrawFromLogisticsSource";
 
 export class UpgradeRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
     public controllerId: Id<StructureController>;
 
-    constructor(controller: CachedController) {
+    constructor(controller: CachedController, container: PlannedStructure) {
         super();
         this.pos = controller.pos;
         this.controllerId = controller.id;
         this.action = Selector(
             Sequence(
                 stateIs(States.GET_ENERGY),
-                getEnergyNearby(7),
-                resetMoveTarget(),
+                withdrawFromLogisticsSource(container.pos, false, RESOURCE_ENERGY),
                 setState(States.WORKING),
-                continueIndefinitely(),
+                fail(), // Skip to next section
             ),
             Sequence(
                 stateIs(States.WORKING),
@@ -42,6 +45,7 @@ export class UpgradeRequest extends MinionRequest {
                 continueIndefinitely(),
             ),
         )
+        if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
     meetsCapacity() {
@@ -57,4 +61,5 @@ export class UpgradeRequest extends MinionRequest {
     }
 
 }
-// profiler.registerClass(UpgradeRequest, 'UpgradeRequest');
+
+if (PROFILE.requests) profiler.registerClass(UpgradeRequest, 'UpgradeRequest');

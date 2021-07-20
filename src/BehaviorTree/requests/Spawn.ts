@@ -1,8 +1,10 @@
 import { Behavior, Sequence } from "BehaviorTree/Behavior";
 
 import { Minion } from "MinionDefinitions/Minion";
+import { PROFILE } from "config";
 import { Request } from "BehaviorTree/Request";
 import { calcMaxRoomEnergy } from "BehaviorTree/behaviors/calcMaxRoomEnergy";
+import profiler from "screeps-profiler";
 import { spawnMinion } from "BehaviorTree/behaviors/spawnMinion";
 
 export class SpawnRequest extends Request<StructureSpawn> {
@@ -25,4 +27,5 @@ export class SpawnRequest extends Request<StructureSpawn> {
     }
 
 }
-// profiler.registerClass(SpawnRequest, 'SpawnRequest');
+
+if (PROFILE.requests) profiler.registerClass(SpawnRequest, 'SpawnRequest');

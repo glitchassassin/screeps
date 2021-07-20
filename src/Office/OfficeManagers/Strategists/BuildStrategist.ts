@@ -1,4 +1,5 @@
-import { BARRIER_LEVEL } from "config";
+import { BARRIER_LEVEL, PROFILE } from "config";
+
 import { BehaviorResult } from "BehaviorTree/Behavior";
 import { BuildRequest } from "BehaviorTree/requests/Build";
 import { Controllers } from "WorldState/Controllers";
@@ -145,4 +146,5 @@ export class BuildStrategist extends OfficeManager {
         return requests;
     }
 }
-profiler.registerClass(BuildStrategist, 'BuildStrategist');
+
+if (PROFILE.managers) profiler.registerClass(BuildStrategist, 'BuildStrategist');

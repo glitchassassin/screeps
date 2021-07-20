@@ -5,6 +5,7 @@ import { MineData } from "WorldState/MineData";
 import { MineManager } from "../MineManager";
 import { MinionRequest } from "BehaviorTree/requests/MinionRequest";
 import { OfficeManager } from "Office/OfficeManager";
+import { PROFILE } from "config";
 import { SalesAnalyst } from "Analysts/SalesAnalyst";
 import { SalesManager } from "../SalesManager";
 import profiler from "screeps-profiler";
@@ -42,4 +43,5 @@ export class HarvestStrategist extends OfficeManager {
         this.harvestRequests.set(req.targetId, req);
     }
 }
-profiler.registerClass(HarvestStrategist, 'HarvestStrategist');
+
+if (PROFILE.managers) profiler.registerClass(HarvestStrategist, 'HarvestStrategist');
