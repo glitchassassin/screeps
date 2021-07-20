@@ -49,5 +49,5 @@ export const CACHED_STRUCTURES: StructureConstant[] = [
 
 export const PROFILE = {
     managers: false,
-    requests: true
+    requests: false
 }
