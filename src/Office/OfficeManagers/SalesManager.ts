@@ -90,9 +90,10 @@ export class SalesManager extends OfficeTaskManager {
 
     plan() {
         for (let t of RoomData.byOffice(this.office)) {
+            let officePlan = RoomPlanData.byRoom(this.office.name)?.office
             let plans = RoomPlanData.byRoom(t.name);
             let plan = t.territoryOf ? plans?.territory : plans?.office
-            if (!plan) continue;
+            if (!plan || !officePlan) continue;
             for (let s of Sources.byRoom(t.name)) {
                 let franchise = FranchiseData.byId(s.id) ?? {id: s.id, pos: s.pos}
 
@@ -100,6 +101,19 @@ export class SalesManager extends OfficeTaskManager {
                 // Need to populate link as well
 
                 let franchisePlan = (s.pos.isNearTo(plan.franchise1.container.pos) ? plan.franchise1 : plan.franchise2)
+
+                if (!franchise.distance) {
+                    let route = PathFinder.search(
+                        franchise.pos,
+                        {pos: officePlan.headquarters.storage.pos, range: 1},
+                        {roomCallback: (room) => MapAnalyst.getCostMatrix(room, false) }
+                    );
+                    if (!route.incomplete) {
+                        franchise.distance = route.cost;
+                    } else {
+                        franchise.distance = MapAnalyst.getRangeTo(franchise.pos, officePlan.headquarters.storage.pos);
+                    }
+                }
 
                 franchise.containerPos = franchisePlan?.container.pos;
                 franchise.containerId = franchisePlan?.container.structure?.id as Id<StructureContainer>;
