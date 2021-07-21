@@ -39,9 +39,13 @@ export abstract class Request<T extends Creep|StructureSpawn> {
             if (!blackboard) throw new Error('Blackboard not created for target')
             // log(target.name, 'Blackboard: ' + JSON.stringify(blackboard));
             let result = this.action(target, blackboard, this.sharedBlackboard);
-            // If one is finished, the request is finished
+            // If all are finished and capacity is 0, request is finished
             if (result === BehaviorResult.SUCCESS) {
-                this.result = result;
+                this.result = BehaviorResult.INPROGRESS;
+                this.assigned = this.assigned.filter(a => a !== target?.id);
+                if (this.meetsCapacity([])) {
+                    this.result = result;
+                }
                 log(this.constructor.name, `Result: ${result}`);
                 return result;
             }

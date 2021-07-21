@@ -65,7 +65,7 @@ export class LogisticsAnalyst {
         if (!Game.rooms[pos.roomName]) return [];
         let items;
         if (includeAdjacent) {
-            items = Game.rooms[pos.roomName].lookAtArea(pos.y - 2, pos.x - 2, pos.y + 2, pos.x + 2, true)
+            items = Game.rooms[pos.roomName].lookAtArea(pos.y - 1, pos.x - 1, pos.y + 1, pos.x + 1, true)
         } else {
             items = Game.rooms[pos.roomName].lookAt(pos)
         }

@@ -1,12 +1,13 @@
 import { BUILD_PRIORITIES, PROFILE } from "config";
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
+import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedStructure } from "WorldState/Structures";
 import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
-import { creepCapacityEmpty } from "BehaviorTree/behaviors/energyFull";
+import { fail } from "BehaviorTree/behaviors/fail";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
@@ -22,6 +23,21 @@ export class RepairRequest extends MinionRequest {
         this.structureId = structure.id;
         this.action = Selector(
             Sequence(
+                Selector(
+                    stateIsEmpty(),
+                    creepCapacityEmpty()
+                ),
+                setState(States.GET_ENERGY),
+                fail(), // Skip to next step
+            ),
+            Sequence(
+                Selector(
+                    creepCapacityFull()
+                ),
+                setState(States.WORKING),
+                fail(), // Skip to next step
+            ),
+            Sequence(
                 stateIs(States.GET_ENERGY),
                 getEnergy(),
                 resetMoveTarget(),
@@ -33,15 +49,7 @@ export class RepairRequest extends MinionRequest {
                 Selector(
                     repairStructure(structure, repairToHits),
                     moveTo(structure.pos, 3),
-                )
-            ),
-            Sequence(
-                Selector(
-                    stateIsEmpty(),
-                    creepCapacityEmpty()
                 ),
-                setState(States.GET_ENERGY),
-                continueIndefinitely()
             ),
         )
         if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
