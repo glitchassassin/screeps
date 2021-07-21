@@ -36,8 +36,8 @@ export class BlockPlan {
         return serializedStructures;
     }
     deserialize(serializedStructures: string) {
-        for (let i = 0; i < serializedStructures.length; i += 9) {
-            this.structures.push(PlannedStructure.deserialize(serializedStructures.slice(i, i+9)))
+        for (let i = 0; i < serializedStructures.length; i += 27) {
+            this.structures.push(PlannedStructure.deserialize(serializedStructures.slice(i, i+27)))
         }
     }
 

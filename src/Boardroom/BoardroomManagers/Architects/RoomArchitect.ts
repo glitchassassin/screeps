@@ -30,6 +30,7 @@ export class RoomArchitect extends BoardroomManager {
                 if (this.structureCount[room.name] !== structures) {
                     this.structureCount[room.name] = structures;
                     this.surveyRoomPlans(room);
+                    this.surveyLogisticsRoutes(room);
                 }
             }
 
@@ -54,6 +55,15 @@ export class RoomArchitect extends BoardroomManager {
             plans.territory.franchise2?.blockPlan.survey();
         }
         RoomPlanData.set(room.name, plans);
+    }
+
+    surveyLogisticsRoutes(room: CachedRoom) {
+        let plans = LogisticsRouteData.byRoom(room.name) ?? {};
+        if (plans.office) {
+            plans.office.extensionsAndSpawns.destinations.forEach(s => s.survey());
+            plans.office.towers.destinations.forEach(s => s.survey());
+        }
+        LogisticsRouteData.set(room.name, plans);
     }
 
     generateRoomPlans(room: CachedRoom) {

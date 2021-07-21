@@ -1,4 +1,4 @@
-import { packId, packPos, unpackId, unpackPos } from "utils/packrat";
+import { packPos, unpackPos } from "utils/packrat";
 
 import type { BuildRequest } from "BehaviorTree/requests/Build";
 import type { RepairRequest } from "BehaviorTree/requests/Repair";
@@ -31,6 +31,8 @@ const PackedStructureTypesLookup: Record<string, BuildableStructureConstant> = O
     }, {} as Record<string, BuildableStructureConstant>
 )
 
+const EMPTY_ID = '                        ';
+
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
         public pos: RoomPosition,
@@ -47,12 +49,13 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     serialize() {
         return PackedStructureTypes[this.structureType] +
                packPos(this.pos) +
-               (this.structureId ? packId(this.structureId as string) : '      ');
+               (this.structureId ? this.structureId as string : EMPTY_ID);
     }
     static deserialize(serialized: string) {
         let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
         let pos = unpackPos(serialized.slice(1, 3));
-        let id = unpackId(serialized.slice(3, 9)) as Id<Structure<BuildableStructureConstant>>;
+        let id = serialized.slice(3, 27) as Id<Structure<BuildableStructureConstant>> | undefined;
+        if (id === EMPTY_ID) id = undefined;
         return new PlannedStructure(pos, structureType, id);
     }
     survey() {

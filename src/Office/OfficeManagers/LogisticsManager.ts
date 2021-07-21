@@ -6,7 +6,6 @@ import { FillStructuresRequest } from "BehaviorTree/requests/FillStructuresReque
 import { FranchiseData } from "WorldState/FranchiseData";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { LogisticsRouteData } from "WorldState/LogisticsRoutes";
-import { LogisticsRouteRequest } from "BehaviorTree/requests/LogisticsRoute";
 import { MineData } from "WorldState/MineData";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { PROFILE } from "config";
@@ -109,30 +108,19 @@ export class LogisticsManager extends OfficeTaskManager {
             widget: Rectangle({ data: this.requestsTable })
         },
         {
-            pos: { x: 1, y: 34 },
-            width: 48,
+            pos: { x: 1, y: 32 },
+            width: 15,
             height: 10,
             widget: Rectangle({ data: Table(() => {
                 return {
-                    data: (this.requests.filter(r => r instanceof LogisticsRouteRequest) as LogisticsRouteRequest[]).map(r => {
-                        let sources = r.route.sources.reduce((sum, s) => sum + LogisticsAnalyst.countEnergyInContainersOrGround(s.pos), 0)
-                        let destinations = r.route.destinations.reduce((sum, d) => {
-                            if (d.structure) {
-                                return sum + (Capacity.byId(d.structure.id as Id<AnyStoreStructure>)?.free ?? 0)
-                            } else {
-                                return Math.max(0, sum + (CONTAINER_CAPACITY - LogisticsAnalyst.countEnergyInContainersOrGround(d.pos)))
-                            }
-                        }, 0)
-
+                    data: (this.requests.filter(r => r instanceof FillStructuresRequest) as FillStructuresRequest[]).map(r => {
                         return [
-                            `${r.name} (${r.route.sources.length} -> ${r.route.destinations.length})`,
-                            sources,
-                            destinations,
-                            LogisticsAnalyst.calculateRouteThroughput(r.route)
+                            `${r.destinations[0].structureType} (${r.destinations.length})`,
+                            r.destinations.reduce((sum, d) => sum + (Capacity.byId(d.structure?.id as Id<AnyStoreStructure>)?.free ?? 0), 0)
                         ]
                     }),
                     config: {
-                        headers: ['Route', 'Sources', 'Destinations', 'Throughput']
+                        headers: ['Route', 'Destination Capacity']
                     }
                 }
             }) })

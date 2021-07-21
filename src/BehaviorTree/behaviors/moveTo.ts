@@ -1,4 +1,4 @@
-import { BehaviorResult, Blackboard, Selector, Sequence } from "BehaviorTree/Behavior";
+import { BehaviorResult, Blackboard, Sequence } from "BehaviorTree/Behavior";
 import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
 import { MapAnalyst } from "Analysts/MapAnalyst";
@@ -230,12 +230,9 @@ export const moveToTarget = () => {
 }
 
 export const moveTo = (pos?: RoomPosition, range = 1) => {
-    return Selector(
-        moveToTarget(),
-        Sequence(
-            setMoveTarget(pos, range),
-            moveToTarget()
-        )
+    return Sequence(
+        setMoveTarget(pos, range),
+        moveToTarget()
     )
 }
 

@@ -92,6 +92,7 @@ export class RoomPlanData {
             }
         } catch (e) {
             console.log(`Error reconstituting RoomPlanData for room ${roomName}`, e.message);
+            console.log(JSON.stringify(Memory.RoomPlans?.data[roomName]))
             delete Memory.RoomPlans?.data[roomName]
             return;
         }

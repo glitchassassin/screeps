@@ -50,14 +50,9 @@ export class FillStructuresRequest extends MinionRequest {
             Sequence(
                 stateIs(States.DEPOSIT),
                 Selector(
+                    creepCapacityEmpty(RESOURCE_ENERGY), // Done
                     Sequence(
-                        Selector(
-                            creepCapacityEmpty(RESOURCE_ENERGY),
-                        ), // Done
-                    ),
-                    Sequence(
-                        depositAtNextFillTarget(destinations),
-                        continueIndefinitely()
+                        depositAtNextFillTarget(destinations)
                     )
                 )
             ),
