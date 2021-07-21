@@ -55,10 +55,10 @@ export class FacilitiesManager extends OfficeTaskManager {
         let pending = 0;
         for (let req of this.requests) {
             if (req instanceof BuildRequest) {
-                pending += CONSTRUCTION_COST[req.structureType];
+                pending += CONSTRUCTION_COST[req.structure.structureType];
 
                 let site = ConstructionSites.byPos(req.pos);
-                if (site && req.structureType === site.structureType) {
+                if (site && req.structure.structureType === site.structureType) {
                     pending -= site.progress;
                 }
             } else if (req instanceof RepairRequest) {

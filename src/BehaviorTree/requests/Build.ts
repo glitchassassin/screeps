@@ -5,6 +5,7 @@ import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/en
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { MinionRequest } from "./MinionRequest";
+import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { buildSite } from "BehaviorTree/behaviors/buildSite";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { createConstructionSite } from "BehaviorTree/behaviors/createConstructionSite";
@@ -15,9 +16,11 @@ import profiler from "screeps-profiler";
 
 export class BuildRequest extends MinionRequest {
     public action: Behavior<Creep>;
+    public pos: RoomPosition;
 
-    constructor(public pos: RoomPosition, public structureType: BuildableStructureConstant) {
-        super(BUILD_PRIORITIES[structureType]);
+    constructor(public structure: PlannedStructure) {
+        super(BUILD_PRIORITIES[structure.structureType]);
+        this.pos = structure.pos;
         this.action = Selector(
             Sequence(
                 Selector(
@@ -48,18 +51,18 @@ export class BuildRequest extends MinionRequest {
                 stateIs(States.WORKING),
                 Selector(
                     Sequence(
-                        createConstructionSite(pos, structureType),
+                        createConstructionSite(structure),
                         buildSite(),
                     ),
-                    moveTo(pos, 3),
+                    moveTo(structure.pos, 3),
                 )
             ),
         )
         if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
-    // Assign any available minions to each build request
-    meetsCapacity() { return false; }
+    // Assign any available minions to each build request until complete
+    meetsCapacity() { return this.structure.survey(); }
     canBeFulfilledBy(creep: Creep) {
         return (
             creep.getActiveBodyparts(WORK) > 0 &&

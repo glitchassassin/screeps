@@ -35,8 +35,8 @@ export class BuildStrategist extends OfficeManager {
         }
         for (let r of facilitiesManager.requests) {
             if (r instanceof BuildRequest && r.pos.roomName === roomName) {
-                structureCounts[r.structureType] ??= 0;
-                structureCounts[r.structureType]++;
+                structureCounts[r.structure.structureType] ??= 0;
+                structureCounts[r.structure.structureType]++;
             }
         }
 
@@ -103,7 +103,7 @@ export class BuildStrategist extends OfficeManager {
 
     generateBuildRequest(structure: PlannedStructure) {
         if (!structure.buildRequest || (!structure.structure && structure.buildRequest.result === BehaviorResult.FAILURE)) {
-            structure.buildRequest = new BuildRequest(structure.pos, structure.structureType);
+            structure.buildRequest = new BuildRequest(structure);
         }
         return structure.buildRequest;
     }

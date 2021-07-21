@@ -25,6 +25,11 @@ export class RoomArchitect extends BoardroomManager {
         let start = Game.cpu.getUsed();
         if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
         for (let room of RoomData.all()) {
+            if (Game.cpu.getUsed() - start <= 5) {
+                this.generateRoomPlans(room);
+                this.generateLogisticsRoutes(room);
+            }
+
             if (room.territoryOf || this.boardroom.offices.has(room.name)) {
                 const structures = Structures.byRoom(room.name).length;
                 if (this.structureCount[room.name] !== structures) {
@@ -33,11 +38,6 @@ export class RoomArchitect extends BoardroomManager {
                     this.surveyLogisticsRoutes(room);
                 }
             }
-
-            if (Game.cpu.getUsed() - start > 5) continue; // Don't spend more than 5 CPU/tick doing room planning
-
-            this.generateRoomPlans(room);
-            this.generateLogisticsRoutes(room);
         }
     }
 
@@ -98,7 +98,7 @@ export class RoomArchitect extends BoardroomManager {
             }
         }
 
-        RoomPlanData.set(room.name, plans)
+        RoomPlanData.set(room.name, plans);
     }
 
     generateLogisticsRoutes(room: CachedRoom) {

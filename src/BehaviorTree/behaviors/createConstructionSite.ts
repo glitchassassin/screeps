@@ -1,6 +1,7 @@
 import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 import { CachedConstructionSite, ConstructionSites, unwrapConstructionSite } from "WorldState/ConstructionSites";
 
+import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { Structures } from "WorldState/Structures";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
@@ -18,32 +19,32 @@ declare module 'BehaviorTree/Behavior' {
  * @param pos Position of construction site
  * @param type Constant of structure to build
  */
-export const createConstructionSite = (pos: RoomPosition, type: BuildableStructureConstant) => (creep: Creep, bb: Blackboard) => {
-    log(creep.id, `createConstructionSite ${pos} ${type}`);
+export const createConstructionSite = (structure: PlannedStructure) => (creep: Creep, bb: Blackboard) => {
+    log(creep.id, `createConstructionSite ${structure.pos} ${structure.structureType}`);
 
     // If the room is not visible, fail
-    if (!Game.rooms[pos.roomName]) return BehaviorResult.FAILURE;
+    if (!Game.rooms[structure.pos.roomName]) return BehaviorResult.FAILURE;
 
     // If the site is already in the blackboard, no action needed
-    if (bb.buildSite?.pos?.isEqualTo(pos) && bb.buildSite.structureType === type && byId(bb.buildSite.id)) return BehaviorResult.SUCCESS;
+    if (bb.buildSite?.pos?.isEqualTo(structure.pos) && bb.buildSite.structureType === structure.structureType && byId(bb.buildSite.id)) return BehaviorResult.SUCCESS;
 
-    let structures = Structures.byPos(pos);
+    let structures = Structures.byPos(structure.pos);
 
-    if (structures.some(structure => structure.structureType === type)) {
+    if (structures.some(structure => structure.structureType === structure.structureType)) {
         // Structure already exists, no need to create site
         return BehaviorResult.SUCCESS;
     }
 
-    let site = ConstructionSites.byPos(pos)
+    let site = ConstructionSites.byPos(structure.pos)
 
     // Create the construction site, if needed
     if (!site) {
-        let result = pos.createConstructionSite(type);
+        let result = structure.pos.createConstructionSite(structure.structureType);
         return (result === OK) ? BehaviorResult.INPROGRESS : BehaviorResult.FAILURE
     }
 
     // Otherwise, add it to the Blackboard
-    if (site.structureType === type) {
+    if (site.structureType === structure.structureType) {
         bb.buildSite = unwrapConstructionSite(site);
         return BehaviorResult.SUCCESS;
     }
