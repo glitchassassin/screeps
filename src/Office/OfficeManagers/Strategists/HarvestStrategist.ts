@@ -15,12 +15,7 @@ export class HarvestStrategist extends OfficeManager {
 
     plan() {
         for (let franchise of SalesAnalyst.getExploitableFranchises(this.office)) {
-            if (!franchise.linkId) {
-                this.submitHarvestRequest(new DropHarvestRequest(franchise));
-            } else {
-                this.submitHarvestRequest(new LinkHarvestRequest(franchise));
-            }
-
+            this.submitHarvestRequest(new LinkHarvestRequest(franchise));
         }
         for (let mine of MineData.byOffice(this.office)) {
             this.submitHarvestRequest(new DropMineRequest(mine))

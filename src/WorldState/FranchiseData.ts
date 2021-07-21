@@ -14,6 +14,8 @@ declare global {
             containerId?: Id<StructureContainer>,
             linkPosPacked?: string,
             linkId?: Id<StructureLink>,
+            spawnPosPacked?: string,
+            spawnId?: Id<StructureSpawn>,
             maxSalesmen?: number,
             distance?: number
         }
@@ -41,6 +43,8 @@ export type CachedFranchise = {
     containerId?: Id<StructureContainer>,
     linkPos?: RoomPosition,
     linkId?: Id<StructureLink>,
+    spawnPos?: RoomPosition,
+    spawnId?: Id<StructureSpawn>,
     maxSalesmen?: number,
 }
 
@@ -54,6 +58,8 @@ export class FranchiseData {
         let container = Structures.byId(cached.containerId);
         let linkPos = cached.linkPosPacked ? unpackPos(cached.linkPosPacked) : undefined;
         let link = Structures.byId(cached.linkId);
+        let spawnPos = cached.spawnPosPacked ? unpackPos(cached.spawnPosPacked) : undefined;
+        let spawn = Structures.byId(cached.spawnId);
         return {
             id,
             pos,
@@ -61,6 +67,8 @@ export class FranchiseData {
             containerId: container?.id,
             linkPos,
             linkId: link?.id,
+            spawnPos,
+            spawnId: spawn?.id,
             maxSalesmen: cached.maxSalesmen,
             distance: cached.distance
         }
@@ -88,6 +96,8 @@ export class FranchiseData {
             containerPosPacked: franchise.containerPos ? packPos(franchise.containerPos) : undefined,
             linkId: franchise.linkId,
             linkPosPacked: franchise.linkPos ? packPos(franchise.linkPos) : undefined,
+            spawnId: franchise.spawnId,
+            spawnPosPacked: franchise.spawnPos ? packPos(franchise.spawnPos) : undefined,
             maxSalesmen: franchise.maxSalesmen,
             distance: franchise.distance
         }

@@ -121,6 +121,8 @@ export class SalesManager extends OfficeTaskManager {
                 if (!t.territoryOf && (franchisePlan as FranchisePlan).link) {
                     franchise.linkPos = (franchisePlan as FranchisePlan).link.pos;
                     franchise.linkId = (franchisePlan as FranchisePlan).link.structure?.id as Id<StructureLink>;
+                    franchise.spawnPos = (franchisePlan as FranchisePlan).spawn.pos;
+                    franchise.spawnId = (franchisePlan as FranchisePlan).spawn.structure?.id as Id<StructureSpawn>;
                 }
                 // Initialize properties
                 if (!franchise.maxSalesmen) {

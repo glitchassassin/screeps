@@ -4,6 +4,7 @@ import { CachedFranchise, FranchiseData } from "WorldState/FranchiseData";
 import { MinionRequest } from "./MinionRequest";
 import { PROFILE } from "config";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
+import { creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { dropEnergy } from "BehaviorTree/behaviors/dropEnergy";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
@@ -15,7 +16,7 @@ export class LinkHarvestRequest extends MinionRequest {
     public pos: RoomPosition;
     public targetId: Id<Source>;
 
-    constructor(franchise: CachedFranchise) {
+    constructor(franchise: CachedFranchise, ) {
         super();
         this.pos = franchise.pos;
         this.targetId = franchise.id;
@@ -26,10 +27,17 @@ export class LinkHarvestRequest extends MinionRequest {
             ),
             harvestEnergy(franchise.id),
             Selector(
-                transferEnergy(franchise.linkId),
-                dropEnergy(),
-            ),
-            continueIndefinitely()
+                Sequence(
+                    creepCapacityFull(),
+                    Selector(
+                        transferEnergy(franchise.spawnId),
+                        transferEnergy(franchise.linkId),
+                        dropEnergy(),
+                    ),
+                    continueIndefinitely()
+                ),
+                continueIndefinitely()
+            )
         )
         if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
