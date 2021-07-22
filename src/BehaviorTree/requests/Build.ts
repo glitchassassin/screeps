@@ -12,6 +12,7 @@ import { createConstructionSite } from "BehaviorTree/behaviors/createConstructio
 import { fail } from "BehaviorTree/behaviors/fail";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { getEnergyFromSource } from "BehaviorTree/behaviors/getEnergyFromSource";
+import { log } from "utils/logger";
 import profiler from "screeps-profiler";
 
 export class BuildRequest extends MinionRequest {
@@ -62,7 +63,11 @@ export class BuildRequest extends MinionRequest {
     }
 
     // Assign any available minions to each build request until complete
-    meetsCapacity() { return this.structure.survey(); }
+    meetsCapacity() {
+        const result = this.structure.survey();
+        log(this.constructor.name, `${this.structure.structureType} ${this.structure.pos}: ${result}`)
+        return result;
+    }
     canBeFulfilledBy(creep: Creep) {
         return (
             creep.getActiveBodyparts(WORK) > 0 &&

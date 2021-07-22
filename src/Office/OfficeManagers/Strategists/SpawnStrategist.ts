@@ -93,6 +93,8 @@ export class SpawnStrategist extends OfficeManager {
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {
             spawnTargets['PARALEGAL'] = 1
+        } else if (spawnTargets['SALESMAN'] === 0) {
+            spawnTargets['PARALEGAL'] = 0
         } else {
             spawnTargets['PARALEGAL'] = Math.max(2, 6 - rcl);
         }

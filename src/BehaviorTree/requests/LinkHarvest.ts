@@ -7,6 +7,7 @@ import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitel
 import { creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { dropEnergy } from "BehaviorTree/behaviors/dropEnergy";
 import { harvestEnergy } from "BehaviorTree/behaviors/harvestEnergy";
+import { ifNotOccupied } from "BehaviorTree/behaviors/ifNotOccupied";
 import { moveTo } from "BehaviorTree/behaviors/moveTo";
 import profiler from "screeps-profiler";
 import { transferEnergy } from "BehaviorTree/behaviors/transferEnergy";
@@ -22,7 +23,10 @@ export class LinkHarvestRequest extends MinionRequest {
         this.targetId = franchise.id;
         this.action = Sequence(
             Selector(
-                moveTo(franchise.containerPos, 0),
+                Sequence(
+                    ifNotOccupied(franchise.containerPos),
+                    moveTo(franchise.containerPos, 0),
+                ),
                 moveTo(franchise.pos)
             ),
             harvestEnergy(franchise.id),

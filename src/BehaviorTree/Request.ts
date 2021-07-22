@@ -42,8 +42,16 @@ export abstract class Request<T extends Creep|StructureSpawn> {
             // If creep succeeds or fails, remove from task
             if (result === BehaviorResult.SUCCESS) {
                 finalResult = BehaviorResult.INPROGRESS;
+                if (target instanceof Creep) {
+                    target.memory.targetPos = undefined;
+                    target.memory.targetRange = undefined;
+                }
                 this.assigned = this.assigned.filter(a => a !== target?.id);
             } else if (result === BehaviorResult.FAILURE) {
+                if (target instanceof Creep) {
+                    target.memory.targetPos = undefined;
+                    target.memory.targetRange = undefined;
+                }
                 this.assigned = this.assigned.filter(a => a !== target?.id);
             } else {
                 finalResult = result;
@@ -54,6 +62,15 @@ export abstract class Request<T extends Creep|StructureSpawn> {
         }
         if (this.meetsCapacity([])) {
             this.result = BehaviorResult.SUCCESS;
+        }
+        if (this.result === BehaviorResult.FAILURE || this.result === BehaviorResult.SUCCESS) {
+            this.assigned.forEach(id => {
+                let target = byId(id);
+                if (target instanceof Creep) {
+                    target.memory.targetPos = undefined;
+                    target.memory.targetRange = undefined;
+                }
+            })
         }
         log(this.constructor.name, `Result: ${finalResult}`);
         return finalResult;

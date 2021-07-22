@@ -15,14 +15,8 @@ interface RawMemory {
 
 // memory extension samples
 interface CreepMemory {
-  type?: string
-  source?: string
-  manager?: string
-  favoredTasks?: string[]
-  spawned?: number
-  arrived?: number
-  office?: string
-  depot?: boolean
+  type?: string;
+  office?: string;
 }
 
 interface FlagMemory {

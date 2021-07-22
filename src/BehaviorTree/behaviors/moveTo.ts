@@ -3,6 +3,7 @@ import { DefenseAnalyst, TerritoryIntent } from "Analysts/DefenseAnalyst";
 
 import { MapAnalyst } from "Analysts/MapAnalyst";
 import { log } from "utils/logger";
+import { packPos } from "utils/packrat";
 import profiler from "screeps-profiler";
 
 export class Route {
@@ -21,7 +22,7 @@ export class Route {
 
     calculatePath(creep: Creep, avoidCreeps = false) {
         let positionsInRange = MapAnalyst.calculateNearbyPositions(this.pos, this.range, true)
-                                         .filter(pos => MapAnalyst.isPositionWalkable(pos, false));
+                                         .filter(pos => MapAnalyst.isPositionWalkable(pos, true));
         log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
         if (positionsInRange.length === 0) throw new Error('No valid targets for path');
         // Calculate path in rooms first
@@ -72,7 +73,7 @@ export class Route {
         if (this.stuckForTicks > 2) {
             log(creep.name, `Route.run: stuck for ${this.stuckForTicks}, recalculating`);
             this.recalculatedPath += 1;
-            this.calculatePath(creep, true);
+            this.calculatePath(creep);
         }
         this.lastPos = creep.pos;
         let result = creep.moveByPath(this.path);
@@ -131,6 +132,8 @@ export const resetMoveTarget = () => {
 export const setMoveTarget = (pos?: RoomPosition, range = 1) => {
     return (creep: Creep, bb: Blackboard) => {
         if (!pos) return BehaviorResult.FAILURE;
+        creep.memory.targetPos = packPos(pos);
+        creep.memory.targetRange = range;
         if (bb.movePos?.isEqualTo(pos) && bb.moveDone === false) {
             // Move in progress and locked in
             return BehaviorResult.SUCCESS
@@ -217,8 +220,8 @@ export const moveToTarget = () => {
                 throw new Error(`Error running route: ${result}`);
             }
         }
-        catch {
-            log(creep.name, `moveToTarget: ${bb.movePos} path failed`)
+        catch (e) {
+            log(creep.name, `moveToTarget: ${bb.movePos} path failed: ${e.message}`)
             // Whether error encountered or execution fell through, the path failed
             bb.movePos = undefined;
             bb.moveRange = undefined;

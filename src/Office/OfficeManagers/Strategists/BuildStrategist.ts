@@ -53,7 +53,7 @@ export class BuildStrategist extends OfficeManager {
                 let availableStructures = CONTROLLER_STRUCTURES[c.structureType][rcl];
                 if (existingStructures < availableStructures) {
                     let req = this.generateBuildRequest(c);
-                    if (!facilitiesManager.requests.includes(req)) {
+                    if (!facilitiesManager.requests.some(r => r.pos.isEqualTo(req.pos))) {
                         if (
                             c.structureType === STRUCTURE_SPAWN &&
                             !Structures.byRoom(roomName).some(s => s.structureType === STRUCTURE_SPAWN)
