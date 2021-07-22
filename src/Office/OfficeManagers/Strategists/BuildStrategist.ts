@@ -137,7 +137,13 @@ export class BuildStrategist extends OfficeManager {
             }
             if (dismantle) {
                 if (Controllers.byRoom(roomName)?.my) {
-                    (structure as Structure).destroy();
+                    // Do not bulldoze the spawn if it is the last one
+                    if (
+                        structure.structureType !== STRUCTURE_SPAWN ||
+                        Structures.byRoom(roomName).filter(s => s.structureType === STRUCTURE_SPAWN).length > 1
+                    ) {
+                        (structure as Structure).destroy();
+                    }
                 } else {
                     requests.push(new DismantleRequest(structure));
                 }
