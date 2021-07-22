@@ -5,7 +5,6 @@ import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/en
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
 import { LogisticsRouteData } from "WorldState/LogisticsRoutes";
-import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
 import { PROFILE } from "config";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
@@ -62,7 +61,6 @@ export class FillStructuresRequest extends MinionRequest {
         if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
-    @MemoizeByTick()
     destinationsCapacity() {
         return LogisticsRouteData.byRoom(this.roomName)?.office?.[this.route].destinations
             .reduce((sum, d) => sum + (Capacity.byId(d.structureId as Id<AnyStoreStructure>, RESOURCE_ENERGY)?.free ?? 0), 0) ?? 0
