@@ -18,7 +18,7 @@ export class SalesAnalyst {
     @MemoizeByTick((office: Office) => office.name)
     static getExploitableFranchises(office: Office): CachedFranchise[] {
         let spawnCount = Structures.byRoom(office.name).filter(s => s.structureType === STRUCTURE_SPAWN).length
-        let canExploit = 2 * spawnCount;
+        let canExploit = Math.max(2, 2 * spawnCount);
 
         return FranchiseData.byOffice(office)
             .filter(f => f.distance && [TerritoryIntent.EXPLOIT, TerritoryIntent.ACQUIRE].includes(DefenseAnalyst.getTerritoryIntent(f.pos.roomName)))

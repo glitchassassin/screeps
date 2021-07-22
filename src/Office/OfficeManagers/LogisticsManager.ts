@@ -115,8 +115,8 @@ export class LogisticsManager extends OfficeTaskManager {
                 return {
                     data: (this.requests.filter(r => r instanceof FillStructuresRequest) as FillStructuresRequest[]).map(r => {
                         return [
-                            `${r.destinations[0].structureType} (${r.destinations.length})`,
-                            r.destinations.reduce((sum, d) => sum + (Capacity.byId(d.structure?.id as Id<AnyStoreStructure>)?.free ?? 0), 0)
+                            `${r.route}`,
+                            r.destinationsCapacity()
                         ]
                     }),
                     config: {
@@ -265,11 +265,11 @@ export class LogisticsManager extends OfficeTaskManager {
         // Submit hauling orders
         let office = RoomPlanData.byRoom(this.office.name)?.office;
         if (office) {
-            if (!this.requests.some(r => r instanceof FillStructuresRequest && r.pos.isEqualTo(plans!.office!.extensionsAndSpawns.destinations[0].pos))) {
-                this.submit(new FillStructuresRequest(office.headquarters.storage, plans.office.extensionsAndSpawns.destinations, 8))
+            if (!this.requests.some(r => r instanceof FillStructuresRequest && r.route === 'extensionsAndSpawns')) {
+                this.submit(new FillStructuresRequest(office.headquarters.storage, this.office.name, 'extensionsAndSpawns', 8))
             }
-            if (!this.requests.some(r => r instanceof FillStructuresRequest && r.pos.isEqualTo(plans!.office!.towers.destinations[0].pos))) {
-                this.submit(new FillStructuresRequest(office.headquarters.storage, plans.office.towers.destinations, 8))
+            if (!this.requests.some(r => r instanceof FillStructuresRequest && r.route === 'towers')) {
+                this.submit(new FillStructuresRequest(office.headquarters.storage, this.office.name, 'towers', 8))
             }
             for (let franchise of FranchiseData.byOffice(this.office)) {
                 if (!this.requests.some(r => r instanceof StorageRequest && r.pos.isEqualTo(franchise.pos))) {

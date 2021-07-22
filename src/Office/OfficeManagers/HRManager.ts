@@ -129,7 +129,7 @@ export class HRManager extends OfficeManager {
     }
     run() {
         // Sort requests by priority descending
-        this.requests.sort((a, b) => a.priority - b.priority);
+        this.requests.sort((a, b) => b.priority - a.priority);
 
         // Assign requests
         for (let request of this.requests) {

@@ -4,6 +4,8 @@ import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/en
 
 import { Capacity } from "WorldState/Capacity";
 import { LogisticsAnalyst } from "Analysts/LogisticsAnalyst";
+import { LogisticsRouteData } from "WorldState/LogisticsRoutes";
+import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
 import { PROFILE } from "config";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
@@ -20,9 +22,9 @@ export class FillStructuresRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
 
-    constructor(public storage: PlannedStructure, public destinations: PlannedStructure[], public priority: number = 5) {
+    constructor(public storage: PlannedStructure, public roomName: string, public route: "extensionsAndSpawns"|"towers", public priority: number = 5) {
         super();
-        this.pos = destinations[0].pos;
+        this.pos = storage.pos;
         this.action = Selector(
             Sequence(
                 stateIsEmpty(),
@@ -52,7 +54,7 @@ export class FillStructuresRequest extends MinionRequest {
                 Selector(
                     creepCapacityEmpty(RESOURCE_ENERGY), // Done
                     Sequence(
-                        depositAtNextFillTarget(destinations)
+                        depositAtNextFillTarget(roomName, route)
                     )
                 )
             ),
@@ -60,11 +62,16 @@ export class FillStructuresRequest extends MinionRequest {
         if (PROFILE.requests) this.action = profiler.registerFN(this.action, `${this.constructor.name}.action`) as Behavior<Creep>
     }
 
+    @MemoizeByTick()
+    destinationsCapacity() {
+        return LogisticsRouteData.byRoom(this.roomName)?.office?.[this.route].destinations
+            .reduce((sum, d) => sum + (Capacity.byId(d.structureId as Id<AnyStoreStructure>, RESOURCE_ENERGY)?.free ?? 0), 0) ?? 0
+    }
+
     meetsCapacity(creeps: Creep[]) {
         const capacity = creeps.reduce((sum, c) => sum + c.getActiveBodyparts(CARRY), 0) * CARRY_CAPACITY;
         const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.storage.pos, true);
-        const destinations = this.destinations
-            .reduce((sum, d) => sum + (Capacity.byId(d.structureId as Id<AnyStoreStructure>, RESOURCE_ENERGY)?.free ?? 0), 0)
+        const destinations = this.destinationsCapacity();
         const throughput = Math.min(sources, destinations);
 
         log('FillStructuresRequest', `meetsCapacity (${creeps.length}) ${capacity} / ${throughput}`)
