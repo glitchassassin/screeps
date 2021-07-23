@@ -77,7 +77,9 @@ export class MapAnalyst {
         }
         if (Game.rooms[pos.roomName] && pos.look().some(obj => {
             if (ignoreCreeps && obj.type === LOOK_CREEPS) return false;
-            return (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.type)
+            if (obj.constructionSite && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.constructionSite.structureType)) return true;
+            if (obj.structure && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.structure.structureType)) return true;
+            return false;
         })) {
             return false;
         }

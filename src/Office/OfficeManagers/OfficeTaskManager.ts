@@ -61,6 +61,16 @@ export class OfficeTaskManager extends OfficeManager {
                 }
             }
         }
+
+        // If a request is at capacity with no minions, it's complete
+        this.requests = this.requests.filter(r => {
+            if (r.meetsCapacity([]) && r.assigned.length === 0) {
+                r.result = BehaviorResult.SUCCESS;
+                return false;
+            }
+            return true;
+        });
+
         log(this.constructor.name, `.run assigning minions CPU: ${Game.cpu.getUsed()}`)
 
         // Run assigned tasks

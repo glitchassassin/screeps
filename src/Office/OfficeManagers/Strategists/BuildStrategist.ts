@@ -102,7 +102,8 @@ export class BuildStrategist extends OfficeManager {
     }
 
     generateBuildRequest(structure: PlannedStructure) {
-        if (!structure.buildRequest || (!structure.structure && structure.buildRequest.result === BehaviorResult.FAILURE)) {
+        if (!structure.buildRequest || structure.buildRequest.result === BehaviorResult.FAILURE) {
+            console.log(`Generating new BuildRequest for ${structure.structureType} at ${structure.pos}`)
             structure.buildRequest = new BuildRequest(structure);
         }
         return structure.buildRequest;

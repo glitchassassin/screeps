@@ -136,7 +136,6 @@ export class LogisticsManager extends OfficeTaskManager {
                 income: Metrics.granularity(stats!.mineRate, 20),
                 throughput: Metrics.granularity(stats!.logisticsPrimaryThroughput, 20),
                 spawn: Metrics.granularity(stats!.spawnEnergyRate, 20),
-                waste: Metrics.granularity(stats!.deathLossesRate, 20),
                 storage: Metrics.granularity(stats!.storageFillRate, 20)
             },
             config: {
@@ -153,10 +152,6 @@ export class LogisticsManager extends OfficeTaskManager {
                         label: 'Spawn',
                         color: 'blueviolet'
                     },
-                    waste: {
-                        label: 'Waste',
-                        color: 'red'
-                    },
                     storage: {
                         label: 'Storage',
                         color: 'green'
@@ -172,7 +167,6 @@ export class LogisticsManager extends OfficeTaskManager {
 
         let mineRate = Metrics.avg(stats!.mineRate);
         let spawn = Metrics.avg(stats!.spawnEnergyRate);
-        let waste = Metrics.avg(stats!.deathLossesRate);
         let throughput = Metrics.avg(stats!.logisticsPrimaryThroughput);
         let upgrade = Metrics.avg(stats!.controllerUpgradeRate);
 
@@ -224,19 +218,6 @@ export class LogisticsManager extends OfficeTaskManager {
                 }),
                 Bar({
                     data: {
-                        value: waste,
-                        maxValue: max,
-                    },
-                    config: {
-                        label: 'Waste',
-                        style: {
-                            stroke: 'red',
-                            fill: 'red'
-                        }
-                    }
-                }),
-                Bar({
-                    data: {
                         value: upgrade,
                         maxValue: max,
                     },
@@ -250,7 +231,7 @@ export class LogisticsManager extends OfficeTaskManager {
                 }),
             ],
             config: {
-                columns: 5,
+                columns: 4,
                 rows: 1
             }
         }
@@ -263,6 +244,7 @@ export class LogisticsManager extends OfficeTaskManager {
         if (!plans?.office) return;
 
         // Submit hauling orders
+        // Consumption orders should generally be higher-priority than supply orders
         let office = RoomPlanData.byRoom(this.office.name)?.office;
         if (office) {
             if (!this.requests.some(r => r instanceof FillStructuresRequest && r.route === 'extensionsAndSpawns')) {
@@ -273,7 +255,7 @@ export class LogisticsManager extends OfficeTaskManager {
             }
             for (let franchise of FranchiseData.byOffice(this.office)) {
                 if (!this.requests.some(r => r instanceof StorageRequest && r.pos.isEqualTo(franchise.pos))) {
-                    this.submit(new StorageRequest(franchise.pos, office.headquarters.storage, 7));
+                    this.submit(new StorageRequest(franchise.pos, office.headquarters.storage, 5));
                 }
             }
             for (let mine of MineData.byOffice(this.office)) {
@@ -283,7 +265,13 @@ export class LogisticsManager extends OfficeTaskManager {
             }
 
             if (!this.requests.some(r => r instanceof TransferRequest && r.pos.isEqualTo(office!.headquarters.container.pos))) {
-                this.submit(new TransferRequest(office.headquarters.storage, office.headquarters.container, true, 5, RESOURCE_ENERGY))
+                let freeSpace = Capacity.byId(office!.headquarters.container.structure?.id as Id<StructureContainer>, RESOURCE_ENERGY)?.free;
+                if (freeSpace === undefined) {
+                    freeSpace = CONTAINER_CAPACITY - LogisticsAnalyst.countEnergyInContainersOrGround(office!.headquarters.container.pos, false)
+                }
+                if (freeSpace > (CONTAINER_CAPACITY / 2)) {
+                    this.submit(new TransferRequest(office.headquarters.storage, office.headquarters.container, true, 7, RESOURCE_ENERGY))
+                }
             }
         }
     }

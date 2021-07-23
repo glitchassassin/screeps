@@ -77,11 +77,16 @@ export class SpawnStrategist extends OfficeManager {
         const mineCount = MineData.byOffice(this.office).filter(m => (
             byId(m.extractorId) && !byId(m.id)?.ticksToRegeneration
         )).length;
-        const workPartsPerSalesman = Math.min(5, Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 50) / 100));
-        const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
+        // Slightly overestimate number of salesmen to account for early transitional periods where we have some lingering
+        // low-capacity salesmen
+        const workPartsPerSalesman = Math.min(7, Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 50) / 100));
+        const salesmenPerFranchise = Math.ceil(7 / workPartsPerSalesman);
 
         spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
-        spawnTargets['CARRIER'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5);
+
+        // More carriers at lower energy levels
+        const lowEnergyBonus = Game.rooms[this.office.name].energyCapacityAvailable < 800 ? 1 : 0
+        spawnTargets['CARRIER'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5 + lowEnergyBonus);
 
         const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
         spawnTargets['ENGINEER'] = Math.min(
@@ -91,12 +96,14 @@ export class SpawnStrategist extends OfficeManager {
         spawnTargets['FOREMAN'] = mineCount;
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
+        const workPartsPerParalegal = Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 100) / 100);
+        const paralegals = Math.ceil((franchiseCount * 10) / (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal));
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {
             spawnTargets['PARALEGAL'] = 1
         } else if (spawnTargets['SALESMAN'] === 0) {
             spawnTargets['PARALEGAL'] = 0
         } else {
-            spawnTargets['PARALEGAL'] = Math.max(2, 6 - rcl);
+            spawnTargets['PARALEGAL'] = paralegals;
         }
 
         spawnTargets['INTERN'] = (rcl > 1) ? 1 : 0;

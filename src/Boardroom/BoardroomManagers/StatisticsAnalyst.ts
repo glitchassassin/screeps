@@ -76,7 +76,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
                 Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 600);
 
-                let controllerDepotLevel = LogisticsAnalyst.countEnergyInContainersOrGround(roomPlan?.office?.headquarters.container?.pos);
+                let controllerDepotLevel = LogisticsAnalyst.countEnergyInContainersOrGround(roomPlan?.office?.headquarters.container?.pos, false);
                 Metrics.update(pipelineMetrics.controllerDepotLevels, controllerDepotLevel, 600);
                 Metrics.updateDelta(pipelineMetrics.controllerDepotFillRate, controllerDepotLevel, 600);
                 Metrics.updateNonNegativeDelta(pipelineMetrics.controllerUpgradeRate, (Controllers.byRoom(office.name) as StructureController)?.progress ?? 0, 600)

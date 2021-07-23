@@ -5,6 +5,7 @@ import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/en
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedStructure } from "WorldState/Structures";
+import { Health } from "WorldState/Health";
 import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { fail } from "BehaviorTree/behaviors/fail";
@@ -56,7 +57,11 @@ export class RepairRequest extends MinionRequest {
     }
 
     // Assign any available minions to each build request
-    meetsCapacity() { return false; }
+    meetsCapacity() {
+        let health = Health.byId(this.structureId)
+        let full = (health?.hits ?? 0) >= (health?.hitsMax ?? 0)
+        return full; // If complete, assign no more minions
+    }
     canBeFulfilledBy(creep: Creep) {
         return (
             creep.getActiveBodyparts(WORK) > 0 &&

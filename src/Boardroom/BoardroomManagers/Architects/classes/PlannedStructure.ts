@@ -33,12 +33,21 @@ const PackedStructureTypesLookup: Record<string, BuildableStructureConstant> = O
 
 const EMPTY_ID = '                        ';
 
+let plannedStructures: Record<string, PlannedStructure> = {};
+
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     constructor(
         public pos: RoomPosition,
         public structureType: T,
         public structureId?: Id<Structure<T>>
-    ) {}
+    ) {
+        const key = packPos(pos) + structureType;
+        if (plannedStructures[key]) {
+            return plannedStructures[key] as PlannedStructure<T>;
+        } else {
+            plannedStructures[key] = this;
+        }
+    }
     buildRequest?: BuildRequest;
     repairRequest?: RepairRequest;
 
@@ -70,10 +79,6 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
             return true; // Cached structure exists
         }
 
-        if (this.buildRequest && !this.buildRequest.result) {
-            // Structure is being built
-            return false;
-        }
         return false; // Structure does not exist
     }
     visualize() {

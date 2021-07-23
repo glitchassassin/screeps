@@ -35,7 +35,7 @@ export class RoomArchitect extends BoardroomManager {
                 if (this.structureCount[room.name] !== structures) {
                     this.structureCount[room.name] = structures;
                     this.surveyRoomPlans(room);
-                    this.surveyLogisticsRoutes(room);
+                    // this.surveyLogisticsRoutes(room);
                 }
             }
         }

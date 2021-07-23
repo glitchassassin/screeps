@@ -24,7 +24,13 @@ export class StorageRequest extends MinionRequest {
         this.action = Selector(
             Sequence(
                 stateIsEmpty(),
-                setState(States.WITHDRAW),
+                Selector(
+                    Sequence(
+                        creepCapacityEmpty(),
+                        setState(States.WITHDRAW),
+                    ),
+                    setState(States.DEPOSIT),
+                ),
                 fail() // drop to next block
             ),
             Sequence(

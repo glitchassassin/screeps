@@ -36,14 +36,14 @@ export class TransferRequest extends MinionRequest {
                     Sequence(
                         Selector(
                             creepCapacityFull(),
-                            noResourcesAvailable(storage.pos, false)
+                            noResourcesAvailable(storage.pos, !storage.structure)
                         ),
                         resetMoveTarget(),
                         setState(States.DEPOSIT),
                         continueIndefinitely()
                     ),
                     Sequence(
-                        withdrawFromLogisticsSource(storage.pos, false, resource),
+                        withdrawFromLogisticsSource(storage.pos, !storage.structure, resource),
                         continueIndefinitely()
                     )
                 )
