@@ -100,7 +100,7 @@ export class SpawnStrategist extends OfficeManager {
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
         const workPartsPerParalegal = Math.floor(((Game.rooms[this.office.name].energyCapacityAvailable - 50) * 3/4) / 100)
-        const paralegals = Math.ceil((franchiseCount * 12) / (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal));
+        const paralegals = Math.ceil((franchiseCount * 7) / (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal));
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {
             spawnTargets['PARALEGAL'] = 1
         } else if (spawnTargets['SALESMAN'] === 0) {
