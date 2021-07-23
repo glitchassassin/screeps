@@ -73,7 +73,7 @@ export class Route {
         if (this.stuckForTicks > 2) {
             log(creep.name, `Route.run: stuck for ${this.stuckForTicks}, recalculating`);
             this.recalculatedPath += 1;
-            this.calculatePath(creep);
+            this.calculatePath(creep, true);
         }
         this.lastPos = creep.pos;
         let result = creep.moveByPath(this.path);
