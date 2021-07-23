@@ -1,6 +1,6 @@
 import { byId, getRcl } from "utils/gameObjectSelectors";
 
-import { CarrierMinion } from "MinionDefinitions/CarrierMinion";
+import { AccountantMinion } from "MinionDefinitions/AccountantMinion";
 import { EngineerMinion } from "MinionDefinitions/EngineerMinion";
 import { FacilitiesManager } from "../FacilitiesManager";
 import { ForemanMinion } from "MinionDefinitions/ForemanMinion";
@@ -22,7 +22,7 @@ import profiler from "screeps-profiler";
 
 const minionClasses: Record<string, Minion> = {
     SALESMAN: new SalesmanMinion(),
-    CARRIER: new CarrierMinion(),
+    ACCOUNTANT: new AccountantMinion(),
     GUARD: new GuardMinion(),
     ENGINEER: new EngineerMinion(),
     PARALEGAL: new ParalegalMinion(),
@@ -41,7 +41,7 @@ export class SpawnStrategist extends OfficeManager {
         const employees = this.getEmployees();
 
         // Calculate income spawn pressure
-        let priorities = ['SALESMAN', 'CARRIER']
+        let priorities = ['SALESMAN', 'ACCOUNTANT']
             .map(minion => ({
                 minion,
                 pressure: (employees[minion] ?? 0) / spawnTargets[minion]
@@ -84,9 +84,9 @@ export class SpawnStrategist extends OfficeManager {
 
         spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
 
-        // More carriers at lower energy levels
+        // More accountants at lower energy levels
         const lowEnergyBonus = Game.rooms[this.office.name].energyCapacityAvailable < 800 ? 1 : 0
-        spawnTargets['CARRIER'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5 + lowEnergyBonus);
+        spawnTargets['ACCOUNTANT'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5 + lowEnergyBonus);
 
         const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
         spawnTargets['ENGINEER'] = Math.min(

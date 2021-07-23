@@ -133,8 +133,8 @@ export class LogisticsAnalyst {
         return freeSources;
     }
     @MemoizeByTick((office: Office) => office.name)
-    static getCarriers(office: Office) {
-        return HRAnalyst.getEmployees(office, 'CARRIER');
+    static getAccountants(office: Office) {
+        return HRAnalyst.getEmployees(office, 'ACCOUNTANT');
     }
     @MemoizeByTick((pos?: RoomPosition) => pos ? packPos(pos) : '')
     static countEnergyInContainersOrGround(pos?: RoomPosition, includeAdjacent = true, resource?: ResourceConstant) {

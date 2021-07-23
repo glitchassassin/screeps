@@ -18,7 +18,7 @@ import { TransferRequest } from "BehaviorTree/requests/TransferRequest";
 import profiler from "screeps-profiler";
 
 export class LogisticsManager extends OfficeTaskManager {
-    minionTypes = ['CARRIER']
+    minionTypes = ['ACCOUNTANT']
     dashboard = [
         {
             pos: { x: 1, y: 1 },
@@ -60,7 +60,7 @@ export class LogisticsManager extends OfficeTaskManager {
                         Bar(() => ({
                             data: {
                                 value: Metrics.last(statisticsAnalyst.metrics.get(this.office.name)!.fleetLevels)[1],
-                                maxValue: LogisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
+                                maxValue: LogisticsAnalyst.getAccountants(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
                             },
                             config: {
                                 label: 'Fleet',

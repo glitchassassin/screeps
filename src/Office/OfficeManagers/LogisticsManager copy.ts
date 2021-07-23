@@ -83,7 +83,7 @@ export class LogisticsManager extends OfficeManager {
                     Bar(() => ({
                         data: {
                             value: Metrics.last(this.statisticsAnalyst.metrics.get(this.office.name)!.fleetLevels)[1],
-                            maxValue: LogisticsAnalyst.getCarriers(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
+                            maxValue: LogisticsAnalyst.getAccountants(this.office).reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.capacity ?? 0)), 0),
                         },
                         config: {
                             label: 'Fleet',
@@ -142,7 +142,7 @@ export class LogisticsManager extends OfficeManager {
             width: 10,
             height: 10,
             widget: Rectangle({ data: Table(() => ({
-                data: this.getIdleCarriers().map(creep => [creep.name]),
+                data: this.getIdleAccountants().map(creep => [creep.name]),
                 config: {
                     headers: ['Minion']
                 }
@@ -314,9 +314,9 @@ export class LogisticsManager extends OfficeManager {
         }
     }
 
-    getIdleCarriers() {
+    getIdleAccountants() {
         return Array.from(lazyFilter(
-            LogisticsAnalyst.getCarriers(this.office),
+            LogisticsAnalyst.getAccountants(this.office),
             c => !this.routes.has(c.name)
         )).sort(MapAnalyst.sortByDistanceTo(this.office.controller.pos));
     }
@@ -325,14 +325,14 @@ export class LogisticsManager extends OfficeManager {
      */
     fleetTTL() {
         let max = 0;
-        for (let c of LogisticsAnalyst.getCarriers(this.office)) {
+        for (let c of LogisticsAnalyst.getAccountants(this.office)) {
             max = Math.max((c.ticksToLive ?? 0), max)
         }
         return max;
     }
 
     plan() {
-        let idleCarriers = this.getIdleCarriers();
+        let idleAccountants = this.getIdleAccountants();
         let storage = LogisticsAnalyst.getStorage(this.office);
         let storagePos = storage?.pos ?? FacilitiesAnalyst.getPlannedStructures(this.office).find(s => s.structureType === STRUCTURE_STORAGE)?.pos
         let legalData = LegalData.byRoom(this.office.name);
@@ -374,29 +374,29 @@ export class LogisticsManager extends OfficeManager {
         log('LogisticsManager', `Request priorities: ${[...priorities.keys()]}`);
 
         while (priorities.size > 0) {
-            let carrier = idleCarriers.shift();
-            if (!carrier) break;
+            let accountant = idleAccountants.shift();
+            if (!accountant) break;
 
             // Get requests for highest priority level
             let priority = Math.max(...priorities.keys());
             let level = priorities.get(priority) ?? [];
 
-            log('LogisticsManager', `Priority ${priority}: ${level.length} requests, ${idleCarriers.length + 1} Carriers`);
+            log('LogisticsManager', `Priority ${priority}: ${level.length} requests, ${idleAccountants.length + 1} Accountants`);
 
             if (level.length === 0) {
                 priorities.delete(priority);
-                idleCarriers.unshift(carrier);
+                idleAccountants.unshift(accountant);
                 continue;
             }
 
             // Set up route for initial request
             let lastRequest = level.shift() as LogisticsRequest;
-            let route = new LogisticsRoute(this.office, carrier, lastRequest, [...this.sources.values()]);
+            let route = new LogisticsRoute(this.office, accountant, lastRequest, [...this.sources.values()]);
 
             if (route.maxCapacity === 0) {
                 // No available sources for request; continue
                 // log('LogisticsManager', `No available sources for request: ${lastRequest}`)
-                idleCarriers.unshift(carrier);
+                idleAccountants.unshift(accountant);
                 continue;
             }
 
@@ -425,7 +425,7 @@ export class LogisticsManager extends OfficeManager {
             }
 
             if (route.commit()) {
-                this.routes.set(carrier.name, route);
+                this.routes.set(accountant.name, route);
             } else {
                 throw new Error('Failed to commit route');
             }

@@ -72,7 +72,7 @@ export class StatisticsAnalyst extends BoardroomManager {
                     LogisticsAnalyst.countEnergyInContainersOrGround(roomPlan?.office?.headquarters.storage?.pos),
                     600
                 );
-                let fleetLevel = LogisticsAnalyst.getCarriers(office)
+                let fleetLevel = LogisticsAnalyst.getAccountants(office)
                     .reduce((sum, creep) => (sum + (Capacity.byId(creep.id)?.used ?? 0)), 0)
                 Metrics.update(pipelineMetrics.fleetLevels, fleetLevel, 600);
 
