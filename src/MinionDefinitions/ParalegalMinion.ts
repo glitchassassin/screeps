@@ -8,8 +8,9 @@ export class ParalegalMinion extends Minion {
         }
         else {
             // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
-            let workParts = Math.min(15, Math.floor((energy - 100) / 100))
-            return [...Array(workParts).fill(WORK), CARRY, MOVE]
+            let workParts = Math.floor(((energy - 50) * 3/4) / 100)
+            let moveParts = Math.floor(((energy - 50) * 1/4) / 50)
+            return [...Array(workParts).fill(WORK), CARRY, ...Array(moveParts).fill(MOVE)]
         }
     }
 }

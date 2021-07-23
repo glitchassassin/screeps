@@ -19,7 +19,7 @@ import { withdrawFromLogisticsSource } from "BehaviorTree/behaviors/withdrawFrom
 export class StorageRequest extends MinionRequest {
     public action: Behavior<Creep>;
 
-    constructor(public pos: RoomPosition, public storage: PlannedStructure, public priority: number = 5, public resource?: ResourceConstant) {
+    constructor(public pos: RoomPosition, public storage: PlannedStructure, public priority: number = 5, public resource?: ResourceConstant, public includeAdjacent = true) {
         super();
         this.action = Selector(
             Sequence(
@@ -39,14 +39,14 @@ export class StorageRequest extends MinionRequest {
                     Sequence(
                         Selector(
                             creepCapacityFull(),
-                            noResourcesAvailable(pos, true)
+                            noResourcesAvailable(pos, includeAdjacent)
                         ),
                         resetMoveTarget(),
                         setState(States.DEPOSIT),
                         continueIndefinitely()
                     ),
                     Sequence(
-                        withdrawFromLogisticsSource(pos, true, resource),
+                        withdrawFromLogisticsSource(pos, includeAdjacent, resource),
                         continueIndefinitely()
                     )
                 )
@@ -71,7 +71,7 @@ export class StorageRequest extends MinionRequest {
 
     meetsCapacity(creeps: Creep[]) {
         const capacity = creeps.reduce((sum, c) => sum + c.getActiveBodyparts(CARRY), 0) * CARRY_CAPACITY;
-        const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.pos, true);
+        const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.pos, this.includeAdjacent);
         const destination = (
             Capacity.byId(this.storage.structure?.id as Id<StructureStorage>, this.resource)?.free ??
             (CONTAINER_CAPACITY - LogisticsAnalyst.countEnergyInContainersOrGround(this.storage.pos, false))

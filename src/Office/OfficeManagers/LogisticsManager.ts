@@ -263,6 +263,10 @@ export class LogisticsManager extends OfficeTaskManager {
                     this.submit(new StorageRequest(mine.pos, office.headquarters.storage, 5));
                 }
             }
+            let link = office.headquarters.link;
+            if (link.structure && !this.requests.some(r => r instanceof StorageRequest && r.pos.isEqualTo(link.pos))) {
+                this.submit(new StorageRequest(link.pos, office.headquarters.storage, 5, RESOURCE_ENERGY, false));
+            }
 
             if (!this.requests.some(r => r instanceof TransferRequest && r.pos.isEqualTo(office!.headquarters.container.pos))) {
                 let freeSpace = Capacity.byId(office!.headquarters.container.structure?.id as Id<StructureContainer>, RESOURCE_ENERGY)?.free;

@@ -61,7 +61,10 @@ export class LogisticsAnalyst {
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
     static getRealLogisticsSources(pos: RoomPosition, includeAdjacent = true, resource?: ResourceConstant): RealLogisticsSources[] {
-        let sourceStructures: StructureConstant[] = [STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK];
+        // If we're getting all sources around a Source, ignore links (they'll send automatically when able)
+        let sourceStructures: StructureConstant[] = includeAdjacent ?
+            [STRUCTURE_CONTAINER, STRUCTURE_STORAGE] :
+            [STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK];
         if (!Game.rooms[pos.roomName]) return [];
         let items;
         if (includeAdjacent) {

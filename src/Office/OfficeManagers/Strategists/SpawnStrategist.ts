@@ -73,7 +73,9 @@ export class SpawnStrategist extends OfficeManager {
 
         const spawnTargets: Record<string, number> = {};
 
-        const franchiseCount = SalesAnalyst.getExploitableFranchises(this.office).length;
+        const franchises = SalesAnalyst.getExploitableFranchises(this.office);
+        const franchiseCount = franchises.length;
+        const linkCount = franchises.filter(f => f.linkId).length;
         const mineCount = MineData.byOffice(this.office).filter(m => (
             byId(m.extractorId) && !byId(m.id)?.ticksToRegeneration
         )).length;
@@ -84,9 +86,10 @@ export class SpawnStrategist extends OfficeManager {
 
         spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
 
-        // More accountants at lower energy levels
+        // More accountants at lower energy levels, fewer when we have links
         const lowEnergyBonus = Game.rooms[this.office.name].energyCapacityAvailable < 800 ? 1 : 0
-        spawnTargets['ACCOUNTANT'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5 + lowEnergyBonus);
+        const linkBonus = Math.min(0, -(linkCount - 1))
+        spawnTargets['ACCOUNTANT'] = Math.max(spawnTargets['SALESMAN'], (franchiseCount + mineCount) * 1.5 + lowEnergyBonus + linkBonus);
 
         const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[this.office.name].energyCapacityAvailable) / 100));
         spawnTargets['ENGINEER'] = Math.min(
@@ -96,8 +99,8 @@ export class SpawnStrategist extends OfficeManager {
         spawnTargets['FOREMAN'] = mineCount;
 
         // Once engineers are done, until room hits RCL 8, surplus energy should go to upgrading
-        const workPartsPerParalegal = Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 100) / 100);
-        const paralegals = Math.ceil((franchiseCount * 10) / (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal));
+        const workPartsPerParalegal = Math.floor(((Game.rooms[this.office.name].energyCapacityAvailable - 50) * 3/4) / 100)
+        const paralegals = Math.ceil((franchiseCount * 12) / (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal));
         if (rcl === 8 || spawnTargets['ENGINEER'] > 1) {
             spawnTargets['PARALEGAL'] = 1
         } else if (spawnTargets['SALESMAN'] === 0) {

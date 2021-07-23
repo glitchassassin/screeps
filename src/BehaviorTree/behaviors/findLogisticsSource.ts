@@ -15,6 +15,7 @@ declare module 'BehaviorTree/Behavior' {
  * @returns FAILURE if unable to get the office, or if no target is found; SUCCESS if a valid target is chosen
  */
 export const findLogisticsSource = (pos: RoomPosition, includeAdjacent = true, resource?: ResourceConstant) => (creep: Creep, bb: Blackboard) => {
+    log(creep.name, `findLogisticsSource ${pos} (adjacent? ${includeAdjacent})`);
     // This needs to reference a cached source, but there is no generic WorldState "get by ID" function.
     if (!bb.target || !byId(bb.target) || !bb.targetPos) {
         // Prefer sources that can fill the minion, even if they're further away
