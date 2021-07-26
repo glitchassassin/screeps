@@ -44,9 +44,8 @@ export class BuildStrategist extends OfficeManager {
         // once every 50 ticks
         let plan = FacilitiesAnalyst.getPlannedStructuresByRcl(this.office.name, rcl)
         let plannedStructures = [];
-        if (!plan || Game.time % 100 !== 0) return;
+        if (!plan) return;
         for (let c of plan) {
-            c.survey();
             if (!c.structure) {
                 // Evaluate build
                 let existingStructures = structureCounts[c.structureType] ?? 0;
@@ -115,6 +114,7 @@ export class BuildStrategist extends OfficeManager {
                 structure.repairRequest?.result === BehaviorResult.SUCCESS
             )
         )) {
+            console.log(`Generating new RepairRequest for ${structure.structureType} at ${structure.pos}`)
             structure.repairRequest = new RepairRequest(structure.structure, targetHealth);
         }
         return structure.repairRequest;
@@ -140,8 +140,9 @@ export class BuildStrategist extends OfficeManager {
                 if (Controllers.byRoom(roomName)?.my) {
                     // Do not bulldoze the spawn if it is the last one
                     if (
-                        structure.structureType !== STRUCTURE_SPAWN ||
-                        Structures.byRoom(roomName).filter(s => s.structureType === STRUCTURE_SPAWN).length > 1
+                        structure.structureType !== STRUCTURE_RAMPART &&
+                        (structure.structureType !== STRUCTURE_SPAWN ||
+                        Structures.byRoom(roomName).filter(s => s.structureType === STRUCTURE_SPAWN).length > 1)
                     ) {
                         (structure as Structure).destroy();
                     }

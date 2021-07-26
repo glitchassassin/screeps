@@ -9,12 +9,13 @@ export class FranchisePlan extends BlockPlanBuilder {
     link!: PlannedStructure;
     container!: PlannedStructure;
     extensions!: PlannedStructure[];
+    ramparts!: PlannedStructure[];
 
     deserialize() {
         this.spawn = this.blockPlan.getStructure(STRUCTURE_SPAWN);
         this.link = this.blockPlan.getStructure(STRUCTURE_LINK);
         this.container = this.blockPlan.getStructure(STRUCTURE_CONTAINER);
-        // this.extensions = this.blockPlan.getStructures(STRUCTURE_EXTENSION);
+        this.ramparts = this.blockPlan.getStructures(STRUCTURE_RAMPART);
         this.extensions = [];
     }
     plan(source: CachedSource) {
@@ -55,12 +56,21 @@ export class FranchisePlan extends BlockPlanBuilder {
         if (!linkPos) throw new Error('Not enough space to place a Franchise');
         this.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
 
+        this.ramparts = MapAnalyst.calculateAdjacentPositions(this.spawn.pos)
+            .filter(pos => (
+                MapAnalyst.isPositionWalkable(pos, true) &&
+                !pos.isEqualTo(this.link.pos) &&
+                !pos.isEqualTo(this.container.pos)
+            ))
+            .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
+
         this.extensions = [];
 
         this.blockPlan.structures.push(
             this.spawn,
             this.link,
             this.container,
+            ...this.ramparts,
             ...this.extensions,
         )
 

@@ -1,3 +1,4 @@
+import { BARRIER_LEVEL, PROFILE } from "config";
 import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
 
 import { BuildRequest } from "BehaviorTree/requests/Build";
@@ -5,7 +6,6 @@ import { ConstructionSites } from "WorldState/ConstructionSites";
 import { FacilitiesAnalyst } from "Analysts/FacilitiesAnalyst";
 import { Health } from "WorldState/Health";
 import { OfficeTaskManager } from "./OfficeTaskManager";
-import { PROFILE } from "config";
 import { RepairRequest } from "BehaviorTree/requests/Repair";
 import profiler from "screeps-profiler";
 
@@ -53,9 +53,14 @@ export class FacilitiesManager extends OfficeTaskManager {
 
     workPending() {
         let pending = 0;
+        let rcl = this.office.controller.level;
         for (let req of this.requests) {
             if (req instanceof BuildRequest) {
-                pending += CONSTRUCTION_COST[req.structure.structureType];
+                if (!([STRUCTURE_RAMPART, STRUCTURE_WALL] as string[]).includes(req.structure.structureType)) {
+                    pending += CONSTRUCTION_COST[req.structure.structureType];
+                } else {
+                    pending += BARRIER_LEVEL[rcl]
+                }
 
                 let site = ConstructionSites.byPos(req.pos);
                 if (site && req.structure.structureType === site.structureType) {

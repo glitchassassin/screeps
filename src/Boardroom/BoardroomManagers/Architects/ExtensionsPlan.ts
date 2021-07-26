@@ -1,3 +1,5 @@
+import { lazyFilter, lazyMap } from "utils/lazyIterators";
+
 import { BlockPlan } from "./classes/BlockPlan";
 import { BlockPlanBuilder } from "./classes/BlockPlanBuilder";
 import { FranchisePlan } from "./FranchisePlan";
@@ -16,7 +18,7 @@ export function fillExtensions(roomName: string, roomBlock: BlockPlan, count: nu
     for (let struct of roomBlock.structures) {
         if (struct.structureType === STRUCTURE_STORAGE) storagePos = struct.pos;
         if (struct.structureType === STRUCTURE_EXTENSION) count--;
-        if (struct.structureType !== STRUCTURE_ROAD) cm.set(struct.pos.x, struct.pos.y, 255);
+        if (!([STRUCTURE_ROAD, STRUCTURE_RAMPART] as string[]).includes(struct.structureType)) cm.set(struct.pos.x, struct.pos.y, 255);
     }
 
     if (!storagePos) throw new Error('No storage in room plan, aborting extensions plan')
@@ -83,11 +85,48 @@ function squareIsValid(terrain: RoomTerrain, costMatrix: CostMatrix, pos: RoomPo
     ))
 }
 
+function *outlineExtensions(roomName: string, extensions: PlannedStructure[]) {
+    for (let ext of extensions) {
+        let neighbors = getNeighboringExtensionSquares(ext.pos);
+        let neighborsStatus = neighbors.map(pos => (
+            !MapAnalyst.isPositionWalkable(pos, true) ||
+            extensions.some(e => e.pos.isEqualTo(pos))
+        ));
+
+        if (neighborsStatus.every(p => p === true)) continue; // Internal extension - all neighbors covered
+
+        yield ext.pos // Need a rampart where extension will be
+
+        // Top Left -> Bottom Left
+        if (neighborsStatus[0] !== neighborsStatus[1]) {
+            // Need left rampart
+            yield new RoomPosition(ext.pos.x - 1, ext.pos.y, roomName)
+        }
+        // Bottom Left -> Bottom Right
+        if (neighborsStatus[1] !== neighborsStatus[3]) {
+            // Need bottom rampart
+            yield new RoomPosition(ext.pos.x, ext.pos.y + 1, roomName)
+        }
+        // Top Right -> Bottom Right
+        if (neighborsStatus[2] !== neighborsStatus[3]) {
+            // Need right rampart
+            yield new RoomPosition(ext.pos.x + 1, ext.pos.y, roomName)
+        }
+        // Top Left -> Top Right
+        if (neighborsStatus[0] !== neighborsStatus[2]) {
+            // Need top rampart
+            yield new RoomPosition(ext.pos.x, ext.pos.y - 1, roomName)
+        }
+    }
+}
+
 export class ExtensionsPlan extends BlockPlanBuilder {
     public extensions!: PlannedStructure[];
+    public ramparts!: PlannedStructure[];
 
     deserialize() {
         this.extensions = this.blockPlan.getStructures(STRUCTURE_EXTENSION);
+        this.ramparts = this.blockPlan.getStructures(STRUCTURE_RAMPART);
     }
 
     plan(roomName: string, franchise1: FranchisePlan, franchise2: FranchisePlan, mine: MinePlan, headquarters: HeadquartersPlan) {
@@ -99,7 +138,17 @@ export class ExtensionsPlan extends BlockPlanBuilder {
             ...headquarters.blockPlan.structures,
         )
         this.extensions = fillExtensions(roomName, roomPlan, CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8]);
-        this.blockPlan.structures.push(...this.extensions);
+        this.ramparts = Array.from(lazyMap(
+            lazyFilter(
+                outlineExtensions(roomName, this.extensions),
+                pos => MapAnalyst.isPositionWalkable(pos, true)
+            ),
+            pos => new PlannedStructure(pos, STRUCTURE_RAMPART)
+        ));
+        this.blockPlan.structures.push(
+            ...this.extensions,
+            ...this.ramparts
+        );
         return this;
     }
 }

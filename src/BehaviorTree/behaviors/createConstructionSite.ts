@@ -2,7 +2,6 @@ import { BehaviorResult, Blackboard } from "BehaviorTree/Behavior";
 import { CachedConstructionSite, ConstructionSites, unwrapConstructionSite } from "WorldState/ConstructionSites";
 
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
-import { Structures } from "WorldState/Structures";
 import { byId } from "utils/gameObjectSelectors";
 import { log } from "utils/logger";
 
@@ -28,9 +27,7 @@ export const createConstructionSite = (structure: PlannedStructure) => (creep: C
     // If the site is already in the blackboard, no action needed
     if (bb.buildSite?.pos?.isEqualTo(structure.pos) && bb.buildSite.structureType === structure.structureType && byId(bb.buildSite.id)) return BehaviorResult.SUCCESS;
 
-    let structures = Structures.byPos(structure.pos);
-
-    if (structures.some(structure => structure.structureType === structure.structureType)) {
+    if (structure.structure) {
         // Structure already exists, no need to create site
         return BehaviorResult.SUCCESS;
     }
@@ -40,6 +37,7 @@ export const createConstructionSite = (structure: PlannedStructure) => (creep: C
     // Create the construction site, if needed
     if (!site) {
         let result = structure.pos.createConstructionSite(structure.structureType);
+        log(creep.name, `createConstructionSite result: ${result}`)
         return (result === OK) ? BehaviorResult.INPROGRESS : BehaviorResult.FAILURE
     }
 

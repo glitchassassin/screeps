@@ -18,7 +18,7 @@ export class RepairRequest extends MinionRequest {
     public pos: RoomPosition;
     public structureId: Id<Structure>
 
-    constructor(structure: CachedStructure, public repairToHits?: number) {
+    constructor(public structure: CachedStructure, public repairToHits?: number) {
         super(BUILD_PRIORITIES[structure.structureType as BuildableStructureConstant] + 1);
         this.pos = structure.pos;
         this.structureId = structure.id;
@@ -59,8 +59,9 @@ export class RepairRequest extends MinionRequest {
     // Assign any available minions to each build request
     meetsCapacity() {
         let health = Health.byId(this.structureId)
-        let full = (health?.hits ?? 0) >= (health?.hitsMax ?? 0)
-        return full; // If complete, assign no more minions
+        let hits = (health?.hits ?? 0)
+        let hitsMax = this.repairToHits ?? (health?.hitsMax ?? 0)
+        return hits >= hitsMax; // If complete, assign no more minions
     }
     canBeFulfilledBy(creep: Creep) {
         return (

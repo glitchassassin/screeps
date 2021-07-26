@@ -1,9 +1,10 @@
 import { CachedController, Controllers } from "WorldState/Controllers";
 import { CachedSource, Sources } from "WorldState/Sources";
+import { lazyFilter, lazyMap } from "utils/lazyIterators";
 
 import { BlockPlanBuilder } from "./classes/BlockPlanBuilder";
+import { MapAnalyst } from "Analysts/MapAnalyst";
 import { PlannedStructure } from "./classes/PlannedStructure";
-import { lazyMap } from "utils/lazyIterators";
 
 const HQ_UPGRADE_LEFT: StructureConstant[][] = [
     [STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
@@ -27,6 +28,7 @@ export class HeadquartersPlan extends BlockPlanBuilder {
     terminal!: PlannedStructure;
     towers!: PlannedStructure[];
     roads!: PlannedStructure[];
+    ramparts!: PlannedStructure[];
 
     deserialize() {
         this.spawn = this.blockPlan.getStructure(STRUCTURE_SPAWN);
@@ -36,6 +38,7 @@ export class HeadquartersPlan extends BlockPlanBuilder {
         this.terminal = this.blockPlan.getStructure(STRUCTURE_TERMINAL);
         this.towers = this.blockPlan.getStructures(STRUCTURE_TOWER);
         this.roads = this.blockPlan.getStructures(STRUCTURE_ROAD);
+        this.ramparts = this.blockPlan.getStructures(STRUCTURE_RAMPART);
     }
 
     plan(roomName: string) {
@@ -158,6 +161,13 @@ export class HeadquartersPlan extends BlockPlanBuilder {
             }
 
             this.roads = Array.from(lazyMap(roads, road => new PlannedStructure(road, STRUCTURE_ROAD)));
+            this.ramparts = Array.from(lazyMap(
+                lazyFilter(
+                    this.generateRampartPositions(roomName, space),
+                    pos => MapAnalyst.isPositionWalkable(pos, true)
+                ),
+                pos => new PlannedStructure(pos, STRUCTURE_RAMPART)
+            ));
         }
         if (!this.container || !this.link || !this.spawn || !this.storage || !this.terminal || this.towers.length !== 6) {
             throw new Error('No room for a Headquarters block near controller');
@@ -171,9 +181,23 @@ export class HeadquartersPlan extends BlockPlanBuilder {
             this.terminal,
             ...this.towers,
             ...this.roads,
+            ...this.ramparts,
         )
 
         return this;
+    }
+
+    *generateRampartPositions(roomName: string, space: {x: number, y: number, horizontal: boolean}) {
+        const w = space.horizontal ? 7 : 5;
+        const h = space.horizontal ? 5 : 7;
+        for (let x = space.x - 1; x < space.x + w - 1; x++) {
+            yield new RoomPosition(x, space.y - 1, roomName);
+            yield new RoomPosition(x, space.y - 2 + h, roomName);
+        }
+        for (let y = space.y; y < space.y + h - 2; y++) {
+            yield new RoomPosition(space.x - 1, y, roomName);
+            yield new RoomPosition(space.x - 2 + w, y, roomName);
+        }
     }
 
     *findSpaces(controller: CachedController, sources: CachedSource[]) {

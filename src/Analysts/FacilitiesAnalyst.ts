@@ -2,7 +2,7 @@ import { ConstructionSites } from "WorldState/ConstructionSites";
 import { HRAnalyst } from "Analysts/HRAnalyst";
 import { MemoizeByTick } from "utils/memoize";
 import type { Office } from "Office/Office";
-import type { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
+import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { RoomData } from "WorldState/Rooms";
 import { RoomPlanData } from "WorldState/RoomPlans";
 import { Structures } from "WorldState/Structures";
@@ -92,7 +92,12 @@ export class FacilitiesAnalyst {
             if (rcl >= 4) {
                 plannedStructures.push(
                     ...plannedExtensions.slice(15, 20),
-                    plans.office.headquarters.storage
+                    plans.office.headquarters.storage,
+                    ...plans.office.franchise1.ramparts,
+                    ...plans.office.franchise2.ramparts,
+                    ...plans.office.headquarters.ramparts,
+                    ...plans.office.extensions.ramparts,
+                    ...plans.office.headquarters.roads
                 )
             }
             if (rcl >= 5) {
@@ -127,6 +132,13 @@ export class FacilitiesAnalyst {
                     plans.office.headquarters.towers[4],
                     plans.office.headquarters.towers[5],
                 )
+            }
+        }
+        if (rcl >= 4) {
+            for (let s of plannedStructures) {
+                if (!([STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART] as string[]).includes(s.structureType)) {
+                    plannedStructures.push(new PlannedStructure(s.pos, STRUCTURE_RAMPART))
+                }
             }
         }
         return plannedStructures
