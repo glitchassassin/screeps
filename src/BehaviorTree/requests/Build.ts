@@ -4,6 +4,7 @@ import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/
 import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
+import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { buildSite } from "BehaviorTree/behaviors/buildSite";
@@ -63,6 +64,7 @@ export class BuildRequest extends MinionRequest {
     }
 
     // Assign any available minions to each build request until complete
+    @MemoizeByTick(true)
     meetsCapacity() {
         const result = this.structure.survey();
         log(this.constructor.name, `${this.structure.structureType} ${this.structure.pos}: ${result}`)

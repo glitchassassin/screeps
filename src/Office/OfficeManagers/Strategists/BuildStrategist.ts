@@ -18,6 +18,8 @@ import { getRcl } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
 
 export class BuildStrategist extends OfficeManager {
+    roomDismantleReviewed = false;
+    lastPlannedCount = 0;
     plan() {
         for (let r of RoomData.byOffice(this.office)) {
             this.planRoom(r.name);
@@ -41,8 +43,10 @@ export class BuildStrategist extends OfficeManager {
         }
 
         // Submit requests, up to the quota, from the build plan,
-        // once every 50 ticks
+        // once every 1000 ticks or if plan changes
         let plan = FacilitiesAnalyst.getPlannedStructuresByRcl(this.office.name, rcl)
+        if (this.lastPlannedCount === plan.length && Game.time % 1000 !== 0) return;
+        this.lastPlannedCount = plan.length;
         let plannedStructures = [];
         if (!plan) return;
         for (let c of plan) {
@@ -55,7 +59,7 @@ export class BuildStrategist extends OfficeManager {
                     if (!facilitiesManager.requests.some(r => r.pos.isEqualTo(req.pos))) {
                         if (
                             c.structureType === STRUCTURE_SPAWN &&
-                            !Structures.byRoom(roomName).some(s => s.structureType === STRUCTURE_SPAWN)
+                            existingStructures === 0
                         ) {
                             // No spawns - request help from neighboring office
                             const neighbor = [...global.boardroom.offices.values()]
@@ -95,9 +99,13 @@ export class BuildStrategist extends OfficeManager {
             }
         }
 
-        // Generate dismantle requests, if needed
-        this.generateDismantleRequests(plannedStructures, roomName)
-            .forEach(req => facilitiesManager.submit(req))
+        // Generate dismantle requests, if needed - only need to do this once per room planning,
+        // so we may move this to Memory instead
+        if (!this.roomDismantleReviewed) {
+            this.generateDismantleRequests(plannedStructures, roomName)
+                .forEach(req => facilitiesManager.submit(req))
+            this.roomDismantleReviewed = true;
+        }
     }
 
     generateBuildRequest(structure: PlannedStructure) {
@@ -122,7 +130,8 @@ export class BuildStrategist extends OfficeManager {
 
     generateDismantleRequests(plan: PlannedStructure[], roomName: string) {
         const requests = [];
-        for (let structure of Structures.byRoom(roomName).filter(s => s.structureType !== STRUCTURE_CONTROLLER)) {
+        for (let structure of Structures.byRoom(roomName)) {
+            if (structure.structureType === STRUCTURE_CONTROLLER) continue;
             let dismantle = false;
             for (let planned of plan) {
                 if (planned.structureType === structure.structureType && planned.pos.isEqualTo(structure.pos)) {

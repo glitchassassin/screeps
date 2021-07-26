@@ -6,6 +6,7 @@ import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
 import { CachedStructure } from "WorldState/Structures";
 import { Health } from "WorldState/Health";
+import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { fail } from "BehaviorTree/behaviors/fail";
@@ -57,6 +58,7 @@ export class RepairRequest extends MinionRequest {
     }
 
     // Assign any available minions to each build request
+    @MemoizeByTick(true)
     meetsCapacity() {
         let health = Health.byId(this.structureId)
         let hits = (health?.hits ?? 0)

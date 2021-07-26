@@ -19,6 +19,8 @@ import profiler from "screeps-profiler";
 
 export class LogisticsManager extends OfficeTaskManager {
     minionTypes = ['ACCOUNTANT']
+    sortRequestsByCreepDistance = false;
+
     dashboard = [
         {
             pos: { x: 1, y: 1 },

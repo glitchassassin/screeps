@@ -1,7 +1,8 @@
 import { packPos, unpackPos } from "utils/packrat";
 
 import { CACHED_STRUCTURES } from "config";
-import { Office } from "Office/Office";
+import { MemoizeByTick } from "utils/memoize";
+import type { Office } from "Office/Office";
 import { RoomData } from "./Rooms";
 import profiler from "screeps-profiler";
 import { registerCachePurger } from "./registerCachePurger";
@@ -46,8 +47,9 @@ export function unwrapStructure(structure: CachedStructure): CachedStructure {
     }
 }
 
-export const Structures = {
-    byId<T extends Structure = Structure>(id: Id<T>|undefined): CachedStructure<T>|undefined {
+export class Structures {
+    @MemoizeByTick((id: Id<any>|undefined) => id)
+    static byId<T extends Structure = Structure>(id: Id<T>|undefined): CachedStructure<T>|undefined {
         if (id === undefined) return undefined;
         let site = Game.getObjectById(id)
         if (!site) {
@@ -61,8 +63,9 @@ export const Structures = {
             }
         }
         return site;
-    },
-    byRoom(roomName: string): CachedStructure[] {
+    }
+    @MemoizeByTick((roomName: string) => roomName)
+    static byRoom(roomName: string): CachedStructure[] {
         if (Game.rooms[roomName]) {
             // We have vision here
             return Game.rooms[roomName].find(FIND_STRUCTURES)
@@ -73,20 +76,22 @@ export const Structures = {
                 ?.map(id => Structures.byId(id))
                 .filter(site => site !== undefined) as CachedStructure[] ?? []
         }
-    },
-    byOffice(office: Office): CachedStructure[] {
+    }
+    @MemoizeByTick((office: Office) => office.name)
+    static byOffice(office: Office): CachedStructure[] {
         return RoomData.byOffice(office).flatMap(r => this.byRoom(r.name));
-    },
-    byPos(pos: RoomPosition): CachedStructure[] {
+    }
+    @MemoizeByTick((pos: RoomPosition) => packPos(pos))
+    static byPos(pos: RoomPosition): CachedStructure[] {
         if (Game.rooms[pos.roomName]) {
             return Game.rooms[pos.roomName].lookForAt(LOOK_STRUCTURES, pos);
         }
         return Structures.byRoom(pos.roomName).filter(site => site?.pos.isEqualTo(pos));
-    },
-    purge() {
+    }
+    static purge() {
         Memory.Structures = {idByRoom: {}, data: {}};
-    },
-    refreshCache() {
+    }
+    static refreshCache() {
         // Initialize the Heap branch, if necessary
         Memory.Structures ??= {idByRoom: {}, data: {}};
 

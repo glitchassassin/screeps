@@ -11,6 +11,8 @@ import profiler from "screeps-profiler";
 
 export class FacilitiesManager extends OfficeTaskManager {
     minionTypes = ['ENGINEER'];
+    sortRequestsByCreepDistance = false;
+    sortRequestsByControllerDistance = false;
 
     dashboard = [
         {
