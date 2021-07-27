@@ -69,7 +69,7 @@ export class FacilitiesManager extends OfficeTaskManager {
                     pending -= site.progress;
                 }
             } else if (req instanceof RepairRequest) {
-                let health = Health.byId(req.structureId)
+                let health = Health.byId(req.structure.structureId)
                 let hits = (req.repairToHits ?? health?.hitsMax ?? 0) - (health?.hits ?? 0);
                 pending += hits / REPAIR_POWER
             }

@@ -19,7 +19,7 @@ declare module 'BehaviorTree/Behavior' {
  * @param type Constant of structure to build
  */
 export const createConstructionSite = (structure: PlannedStructure) => (creep: Creep, bb: Blackboard) => {
-    log(creep.id, `createConstructionSite ${structure.pos} ${structure.structureType}`);
+    log(creep.name, `createConstructionSite ${structure.pos} ${structure.structureType}`);
 
     // If the room is not visible, fail
     if (!Game.rooms[structure.pos.roomName]) return BehaviorResult.FAILURE;
@@ -38,6 +38,7 @@ export const createConstructionSite = (structure: PlannedStructure) => (creep: C
     if (!site) {
         let result = structure.pos.createConstructionSite(structure.structureType);
         log(creep.name, `createConstructionSite result: ${result}`)
+        if (result === ERR_INVALID_TARGET) return BehaviorResult.SUCCESS;
         return (result === OK) ? BehaviorResult.INPROGRESS : BehaviorResult.FAILURE
     }
 

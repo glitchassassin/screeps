@@ -123,7 +123,7 @@ export class BuildStrategist extends OfficeManager {
             )
         )) {
             console.log(`Generating new RepairRequest for ${structure.structureType} at ${structure.pos}`)
-            structure.repairRequest = new RepairRequest(structure.structure, targetHealth);
+            structure.repairRequest = new RepairRequest(structure, targetHealth);
         }
         return structure.repairRequest;
     }

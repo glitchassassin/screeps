@@ -136,7 +136,7 @@ export class FacilitiesAnalyst {
         }
         if (rcl >= 4) {
             for (let s of plannedStructures) {
-                if (!([STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART] as string[]).includes(s.structureType)) {
+                if (!([STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART, STRUCTURE_EXTRACTOR] as string[]).includes(s.structureType)) {
                     plannedStructures.push(new PlannedStructure(s.pos, STRUCTURE_RAMPART))
                 }
             }

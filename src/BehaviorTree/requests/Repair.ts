@@ -4,10 +4,10 @@ import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/
 import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
-import { CachedStructure } from "WorldState/Structures";
 import { Health } from "WorldState/Health";
 import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
+import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
 import { continueIndefinitely } from "BehaviorTree/behaviors/continueIndefinitely";
 import { fail } from "BehaviorTree/behaviors/fail";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
@@ -17,12 +17,10 @@ import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 export class RepairRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
-    public structureId: Id<Structure>
 
-    constructor(public structure: CachedStructure, public repairToHits?: number) {
+    constructor(public structure: PlannedStructure, public repairToHits?: number) {
         super(BUILD_PRIORITIES[structure.structureType as BuildableStructureConstant] + 1);
         this.pos = structure.pos;
-        this.structureId = structure.id;
         this.action = Selector(
             Sequence(
                 Selector(
@@ -60,9 +58,10 @@ export class RepairRequest extends MinionRequest {
     // Assign any available minions to each build request
     @MemoizeByTick(true)
     meetsCapacity() {
-        let health = Health.byId(this.structureId)
-        let hits = (health?.hits ?? 0)
-        let hitsMax = this.repairToHits ?? (health?.hitsMax ?? 0)
+        let health = Health.byId(this.structure.structureId)
+        if (!health) return true;
+        let hits = health.hits
+        let hitsMax = this.repairToHits ?? health.hitsMax
         return hits >= hitsMax; // If complete, assign no more minions
     }
     canBeFulfilledBy(creep: Creep) {

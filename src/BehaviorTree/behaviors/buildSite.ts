@@ -6,13 +6,12 @@ import { log } from "utils/logger";
 /**
  * Relies on Blackboard.buildSite to be populated by createConstructionSite
  *
- * Returns FAILURE if build site is not in blackboard
- * Returns SUCCESS if target could not be found (destroyed or completed)
+ * Returns SUCCESS if there is no build site or it could not be found (destroyed or completed)
  * If room is visible, builds and returns INPROGRESS
  * Otherwise, returns FAILURE
  */
 export const buildSite = () => (creep: Creep, bb: Blackboard) => {
-    if (!bb.buildSite) return BehaviorResult.FAILURE;
+    if (!bb.buildSite) return BehaviorResult.SUCCESS;
     let target = byId(bb.buildSite.id);
     log(creep.name, `buildSite ${target}`)
     if (Game.rooms[bb.buildSite.pos.roomName]) {

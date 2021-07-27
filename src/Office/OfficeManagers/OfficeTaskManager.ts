@@ -43,13 +43,11 @@ export class OfficeTaskManager extends OfficeManager {
         log(this.constructor.name, `.run assigning ${this.getAvailableCreeps().length} minions...`)
         let creeps = this.getAvailableCreeps()
         if (creeps.length > 0) {
-            if (this.sortRequestsByControllerDistance) {
-                this.requests.sort((a, b) => {
-                    let p = b.priority - a.priority;
-                    if (p !== 0) return p;
-                    return MapAnalyst.sortByDistanceTo(target)(a, b);
-                });
-            }
+            this.requests.sort((a, b) => {
+                let p = b.priority - a.priority;
+                if (p !== 0) return p;
+                return this.sortRequestsByControllerDistance ? MapAnalyst.sortByDistanceTo(target)(a, b) : p;
+            });
 
             // Assign requests
             for (let request of this.requests) {

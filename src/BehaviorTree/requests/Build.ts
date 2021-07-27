@@ -1,9 +1,10 @@
-import { BUILD_PRIORITIES, PROFILE } from "config";
+import { BARRIER_LEVEL, BUILD_PRIORITIES, PROFILE } from "config";
 import { Behavior, Selector, Sequence } from "BehaviorTree/Behavior";
 import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/states";
 import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
+import { Health } from "WorldState/Health";
 import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
@@ -13,16 +14,22 @@ import { createConstructionSite } from "BehaviorTree/behaviors/createConstructio
 import { fail } from "BehaviorTree/behaviors/fail";
 import { getEnergy } from "BehaviorTree/behaviors/getEnergy";
 import { getEnergyFromSource } from "BehaviorTree/behaviors/getEnergyFromSource";
-import { log } from "utils/logger";
+import { getRcl } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
+import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
 
 export class BuildRequest extends MinionRequest {
     public action: Behavior<Creep>;
     public pos: RoomPosition;
+    public repairToHits?: number;
 
     constructor(public structure: PlannedStructure) {
         super(BUILD_PRIORITIES[structure.structureType]);
         this.pos = structure.pos;
+        this.repairToHits =
+            (structure.structureType === STRUCTURE_RAMPART || structure.structureType === STRUCTURE_WALL) ?
+            BARRIER_LEVEL[getRcl(this.pos.roomName) ?? 0] :
+            undefined;
         this.action = Selector(
             Sequence(
                 Selector(
@@ -55,8 +62,10 @@ export class BuildRequest extends MinionRequest {
                     Sequence(
                         createConstructionSite(structure),
                         buildSite(),
+                        repairStructure(structure, this.repairToHits),
                     ),
                     moveTo(structure.pos, 3),
+                    continueIndefinitely()
                 )
             ),
         )
@@ -66,9 +75,11 @@ export class BuildRequest extends MinionRequest {
     // Assign any available minions to each build request until complete
     @MemoizeByTick(true)
     meetsCapacity() {
-        const result = this.structure.survey();
-        log(this.constructor.name, `${this.structure.structureType} ${this.structure.pos}: ${result}`)
-        return result;
+        let health = Health.byId(this.structure.structureId)
+        if (!health) return false;
+        let hits = health.hits
+        let hitsMax = this.repairToHits ?? health.hitsMax
+        return hits >= hitsMax; // If complete, assign no more minions
     }
     canBeFulfilledBy(creep: Creep) {
         return (
