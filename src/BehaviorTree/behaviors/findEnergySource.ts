@@ -22,7 +22,7 @@ export const findEnergySource = (radius?: number) => (creep: Creep, bb: Blackboa
         if (!office) return BehaviorResult.FAILURE;
 
         // Prefer sources that can fill the minion, even if they're further away
-        let target = LogisticsAnalyst.getClosestAllSources(creep.pos, Capacity.byId(creep.id)?.free);
+        let target = LogisticsAnalyst.getClosestAllSources(creep.pos, Capacity.byId(creep.id)?.free, RESOURCE_ENERGY);
 
         if (radius !== undefined && target && creep.pos.getRangeTo(target.pos) > radius) {
             log(creep.name, `findEnergySource: ${creep.pos} has no sources in radius ${radius}`)

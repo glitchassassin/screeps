@@ -29,6 +29,7 @@ export class HeadquartersPlan extends BlockPlanBuilder {
     towers!: PlannedStructure[];
     roads!: PlannedStructure[];
     ramparts!: PlannedStructure[];
+    walls!: PlannedStructure[];
 
     deserialize() {
         this.spawn = this.blockPlan.getStructure(STRUCTURE_SPAWN);
@@ -39,6 +40,7 @@ export class HeadquartersPlan extends BlockPlanBuilder {
         this.towers = this.blockPlan.getStructures(STRUCTURE_TOWER);
         this.roads = this.blockPlan.getStructures(STRUCTURE_ROAD);
         this.ramparts = this.blockPlan.getStructures(STRUCTURE_RAMPART);
+        this.walls = this.blockPlan.getStructures(STRUCTURE_WALL);
     }
 
     plan(roomName: string) {
@@ -168,6 +170,9 @@ export class HeadquartersPlan extends BlockPlanBuilder {
                 ),
                 pos => new PlannedStructure(pos, STRUCTURE_RAMPART)
             ));
+            this.walls = MapAnalyst.calculateAdjacentPositions(controller.pos)
+                    .filter(pos => MapAnalyst.isPositionWalkable(pos, true))
+                    .map(pos => new PlannedStructure(pos, STRUCTURE_WALL))
         }
         if (!this.container || !this.link || !this.spawn || !this.storage || !this.terminal || this.towers.length !== 6) {
             throw new Error('No room for a Headquarters block near controller');
@@ -182,6 +187,7 @@ export class HeadquartersPlan extends BlockPlanBuilder {
             ...this.towers,
             ...this.roads,
             ...this.ramparts,
+            ...this.walls
         )
 
         return this;

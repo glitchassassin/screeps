@@ -97,14 +97,14 @@ export class LogisticsAnalyst {
         return results.sort((a, b) => (Capacity.byId(b.id, resource)?.used ?? 0) - (Capacity.byId(a.id, resource)?.used ?? 0))
     }
     @MemoizeByTick((pos: RoomPosition) => packPos(pos))
-    static getClosestAllSources(pos: RoomPosition, amount?: number) {
+    static getClosestAllSources(pos: RoomPosition, amount?: number, resource?: ResourceConstant) {
         let office = global.boardroom.getClosestOffice(pos);
         if (!office) return undefined;
         let sorted = this.getAllSources(office).filter(s => s.pos).sort(MapAnalyst.sortByDistanceTo(pos))
         if (!amount || amount === 0) return sorted[0];
         // Prioritize Depots, then dropped Resources, then sources that can provide the full amount
         let withAmount = sorted.filter(s => {
-            return s instanceof Creep || s instanceof Resource || (Capacity.byId(s.id)?.used ?? 0) > amount
+            return s instanceof Creep || s instanceof Resource || (Capacity.byId(s.id, resource)?.used ?? 0) > amount
         })
         if (withAmount.length > 0) return withAmount[0];
         return sorted[0];

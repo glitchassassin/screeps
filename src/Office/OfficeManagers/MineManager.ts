@@ -5,6 +5,7 @@ import { MineData } from "WorldState/MineData";
 import { Minerals } from "WorldState/Minerals";
 import { OfficeTaskManager } from "./OfficeTaskManager";
 import { PROFILE } from "config";
+import { RoomPlanData } from "WorldState/RoomPlans";
 import profiler from "screeps-profiler";
 
 export class MineManager extends OfficeTaskManager {
@@ -61,6 +62,13 @@ export class MineManager extends OfficeTaskManager {
             for (let pos of MapAnalyst.calculateAdjacentPositions(mineral.pos)) {
                 if (MapAnalyst.isPositionWalkable(pos, true)) mine.maxForemen += 1;
             }
+        }
+        const office = RoomPlanData.byRoom(this.office.name)?.office
+        if (office) {
+            let {container, extractor} = office.mine
+            mine.containerPos = container.pos;
+            mine.containerId = container.structure?.id as Id<StructureContainer>
+            mine.extractorId = extractor.structure?.id as Id<StructureExtractor>
         }
         MineData.set(mineral.id, mine, this.office.name);
     }

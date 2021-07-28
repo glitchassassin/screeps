@@ -19,8 +19,8 @@ export class DropMineRequest extends MinionRequest {
         this.targetId = mine.id;
         this.action = Sequence(
             Selector(
-                moveTo(mine.containerPos, 0),
                 harvestEnergy(mine.id),
+                moveTo(mine.containerPos, 0),
                 moveTo(mine.pos),
             ),
             continueIndefinitely()

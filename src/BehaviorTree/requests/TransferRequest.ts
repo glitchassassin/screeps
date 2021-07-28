@@ -71,7 +71,7 @@ export class TransferRequest extends MinionRequest {
 
     meetsCapacity(creeps: Creep[]) {
         const capacity = creeps.reduce((sum, c) => sum + c.getActiveBodyparts(CARRY), 0) * CARRY_CAPACITY;
-        const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.storage.pos, true);
+        const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.storage.pos, true, this.resource);
         let destination = Capacity.byId(this.destination.structure?.id as Id<StructureStorage>, this.resource)?.free;
         if (destination === undefined && this.dropIfNotExists) {
             destination = CONTAINER_CAPACITY - LogisticsAnalyst.countEnergyInContainersOrGround(this.destination.pos, false)

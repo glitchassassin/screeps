@@ -66,24 +66,21 @@ export class OfficeTaskManager extends OfficeManager {
             }
         }
 
-        // If a request is at capacity with no minions, it's complete
-        this.requests = this.requests.filter(r => {
-            if (r.meetsCapacity([]) && r.assigned.length === 0) {
-                r.result = BehaviorResult.SUCCESS;
-                return false;
-            }
-            return true;
-        });
-
         log(this.constructor.name, `.run assigning minions CPU: +${Game.cpu.getUsed() - start}`)
 
         // Run assigned tasks
         log(this.constructor.name, `.run executing ${this.requests.length} requests...`)
         this.requests = this.requests.filter(request => {
-            if (request.assigned.length === 0) return true; // Unassigned
+            if (request.assigned.length === 0) {
+                if (request.meetsCapacity([])) {
+                    request.result = BehaviorResult.SUCCESS;
+                    return false;
+                }
+                return true; // Unassigned
+            }
 
-            let result = request.run();
-            if (result !== BehaviorResult.INPROGRESS) return false;
+            request.run();
+
             return true;
         });
         log(this.constructor.name, `.run executing requests CPU: +${Game.cpu.getUsed() - start}`)

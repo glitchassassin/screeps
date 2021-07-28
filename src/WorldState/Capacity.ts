@@ -46,7 +46,7 @@ export class Capacity {
         }
         return Object.keys(store) as ResourceConstant[]
     }
-    static byId(id: Id<Creep|Tombstone|Ruin|AnyStoreStructure|Resource>|undefined, resource: ResourceConstant = RESOURCE_ENERGY) {
+    static byId(id: Id<Creep|Tombstone|Ruin|AnyStoreStructure|Resource>|undefined, resource?: ResourceConstant) {
         if (id === undefined) return undefined;
         let obj = Game.getObjectById(id);
         if (obj === null) {
@@ -60,7 +60,7 @@ export class Capacity {
             }
         }
         let store = obj?.store as GenericStore
-        if (!store) {
+        if (!store && resource) {
             return global.Heap.Capacity?.data[id]?.[resource];
         }
         return {

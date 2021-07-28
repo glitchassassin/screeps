@@ -94,7 +94,6 @@ export class FacilitiesAnalyst {
                     ...plannedExtensions.slice(15, 20),
                     plans.office.headquarters.storage,
                     ...plans.office.franchise1.ramparts,
-                    ...plans.office.franchise2.ramparts,
                     ...plans.office.headquarters.ramparts,
                     ...plans.office.extensions.ramparts,
                     ...plans.office.headquarters.roads
@@ -121,6 +120,7 @@ export class FacilitiesAnalyst {
                 plannedStructures.push(
                     ...plannedExtensions.slice(30, 35),
                     plans.office.franchise2.spawn,
+                    ...plans.office.franchise2.ramparts,
                     plans.office.headquarters.towers[2],
                 )
             }
@@ -135,8 +135,11 @@ export class FacilitiesAnalyst {
             }
         }
         if (rcl >= 4) {
+            // No ramparts on roads, walls, ramparts, extractors, or extensions
+            // Perimeter extensions have ramparts already
+            const nonRampartedStructures: StructureConstant[] = [STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART, STRUCTURE_EXTRACTOR, STRUCTURE_EXTENSION]
             for (let s of plannedStructures) {
-                if (!([STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART, STRUCTURE_EXTRACTOR] as string[]).includes(s.structureType)) {
+                if (!nonRampartedStructures.includes(s.structureType)) {
                     plannedStructures.push(new PlannedStructure(s.pos, STRUCTURE_RAMPART))
                 }
             }

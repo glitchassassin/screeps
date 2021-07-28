@@ -68,7 +68,7 @@ export class FillStructuresRequest extends MinionRequest {
 
     meetsCapacity(creeps: Creep[]) {
         const capacity = creeps.reduce((sum, c) => sum + c.getActiveBodyparts(CARRY), 0) * CARRY_CAPACITY;
-        const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.storage.pos, true);
+        const sources = LogisticsAnalyst.countEnergyInContainersOrGround(this.storage.pos, true, RESOURCE_ENERGY);
         const destinations = this.destinationsCapacity();
         const throughput = Math.min(sources, destinations);
 

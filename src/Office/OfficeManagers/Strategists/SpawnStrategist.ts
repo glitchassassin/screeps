@@ -83,8 +83,9 @@ export class SpawnStrategist extends OfficeManager {
         // low-capacity salesmen
         const workPartsPerSalesman = Math.min(7, Math.floor((Game.rooms[this.office.name].energyCapacityAvailable - 50) / 100));
         const salesmenPerFranchise = Math.ceil(7 / workPartsPerSalesman);
+        const maxSalesmen = franchises.reduce((sum, f) => sum + (f.maxSalesmen ?? 1), 0)
 
-        spawnTargets['SALESMAN'] = franchiseCount * salesmenPerFranchise;
+        spawnTargets['SALESMAN'] = Math.min(maxSalesmen, franchiseCount * salesmenPerFranchise);
 
         // More accountants at lower energy levels, fewer when we have links
         const lowEnergyBonus = Game.rooms[this.office.name].energyCapacityAvailable < 800 ? 1 : 0

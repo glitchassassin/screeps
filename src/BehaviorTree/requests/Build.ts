@@ -4,7 +4,6 @@ import { States, setState, stateIs, stateIsEmpty } from "BehaviorTree/behaviors/
 import { creepCapacityEmpty, creepCapacityFull } from "BehaviorTree/behaviors/energyFull";
 import { moveTo, resetMoveTarget } from "BehaviorTree/behaviors/moveTo";
 
-import { Health } from "WorldState/Health";
 import { MemoizeByTick } from "utils/memoize";
 import { MinionRequest } from "./MinionRequest";
 import { PlannedStructure } from "Boardroom/BoardroomManagers/Architects/classes/PlannedStructure";
@@ -17,6 +16,7 @@ import { getEnergyFromSource } from "BehaviorTree/behaviors/getEnergyFromSource"
 import { getRcl } from "utils/gameObjectSelectors";
 import profiler from "screeps-profiler";
 import { repairStructure } from "BehaviorTree/behaviors/repairStructure";
+import { structureNeedsRepairs } from "Selectors/structureNeedsRepairs";
 
 export class BuildRequest extends MinionRequest {
     public action: Behavior<Creep>;
@@ -75,11 +75,7 @@ export class BuildRequest extends MinionRequest {
     // Assign any available minions to each build request until complete
     @MemoizeByTick(true)
     meetsCapacity() {
-        let health = Health.byId(this.structure.structureId)
-        if (!health) return false;
-        let hits = health.hits
-        let hitsMax = this.repairToHits ?? health.hitsMax
-        return hits >= hitsMax; // If complete, assign no more minions
+        return !structureNeedsRepairs(this.structure, this.repairToHits);
     }
     canBeFulfilledBy(creep: Creep) {
         return (
