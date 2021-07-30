@@ -16,7 +16,10 @@ export const BARRIER_LEVEL: Record<number, number> = {
     7: 1e+5,
     8: 1e+5,
 }
-
+export const BARRIER_TYPES: StructureConstant[] = [
+    STRUCTURE_WALL,
+    STRUCTURE_RAMPART
+]
 /**
  * Build priorities
  */

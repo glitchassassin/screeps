@@ -1,10 +1,3 @@
-export const onRespawn = (callback: Function) => {
-    if (hasRespawned()) {
-        console.log('Respawn detected');
-        callback();
-    }
-}
-
 /**
  * global.hasRespawned()
  *
@@ -31,6 +24,19 @@ export const onRespawn = (callback: Function) => {
  * v1.1 (by qnz): - fixed a condition where room.controller.safeMode can be SAFE_MODE_DURATION too
  *                - improved performance of creep number check (https://jsperf.com/isempty-vs-isemptyobject/23)
  */
+
+declare global {
+    interface Memory {
+        respawnTick: number;
+    }
+}
+
+export const onRespawn = (callback: Function) => {
+    if (hasRespawned()) {
+        console.log('Respawn detected');
+        callback();
+    }
+}
 
  function hasRespawned(){
     // check for multiple calls on same tick

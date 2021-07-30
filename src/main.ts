@@ -2,13 +2,10 @@ import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
 import './utils/RoomVisual';
 
-import { Boardroom } from 'Boardroom/Boardroom';
 import MemHack from 'utils/memhack';
-import { VisualizationController } from 'utils/VisualizationController';
-import { clearNudges } from 'utils/excuseMe';
+import { gameLoop } from 'gameLoop';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import profiler from 'screeps-profiler';
-import { run as runReports } from 'Reports/ReportRunner';
 
 try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -21,92 +18,25 @@ try {
   // Ignore
 }
 
-global.lastGlobalReset = Game.time;
-
 global.purge = () => {
   Memory.flags = {};
   Memory.rooms = {};
   Memory.creeps = {};
   Memory.powerCreeps = {};
-  Memory.metrics = {};
   Memory.offices = {};
-  Memory.hr = {};
-  Memory.tasks = {};
-  Memory.boardroom = {};
-
-  global.Heap.CachePurgers.forEach(fn => fn());
-
-  global.boardroom = new Boardroom();
 }
 
 // If respawning, wipe memory clean
 onRespawn(global.purge);
 
-// Set up defensive profiling
-let defensiveProfilingRun = true;
+profiler.enable()
 
-// Initialize control switches
-global.v = new VisualizationController();
-
-// Initialize Boardroom
-global.boardroom = new Boardroom();
-
-// When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
-// This utility uses source maps to get the line numbers and file names of the original, TS source code
-function mainLoop() {
+export const loop = () => {
+  MemHack.pretick();
   if (Game.cpu.bucket < 200) {
     console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
     return; // If the bucket gets really low, let it rebuild
   }
-  // Automatically delete memory of missing creeps
-  if(Game.time%1500 === 0) {
-    for (const name in Memory.creeps) {
-      if (!(name in Game.creeps)) {
-        delete Memory.creeps[name];
-      }
-    }
-  }
-
-  clearNudges();
-
-  try {
-    // Execute Boardroom plan phase
-
-    global.Heap.CacheRefreshers.forEach(fn => fn());
-
-    global.boardroom.plan()
-
-    global.boardroom.offices.forEach(office => {
-      // Execute Office plan phase
-      office.plan();
-      // Execute Office run phase
-      office.run();
-      // Execute Office cleanup phase
-      office.cleanup();
-    });
-
-    // Execute Boardroom cleanup phase
-    global.boardroom.cleanup();
-  } catch(e) {
-    console.log(e, e.stack)
-  }
-
-  runReports();
-
-  // if (Game.cpu.bucket <= 5000 && !defensiveProfilingRun) {
-  //   // CPU bucket dropping below 50%, send a CPU profile
-  //   defensiveProfilingRun = true;
-  //   Game.profiler.email(10);
-  // } else if (Game.cpu.bucket > 6000 && defensiveProfilingRun) {
-  //   // CPU climbing back up, reset the trigger
-  //   defensiveProfilingRun = false;
-  // }
-}
-
-profiler.enable()
-// export const loop = ErrorMapper.wrapLoop(mainLoop);
-export const loop = () => {
-  MemHack.pretick();
-  // mainLoop();
-  profiler.wrap(mainLoop);
+  // ErrorMapper.wrapLoop(mainLoop)();
+  profiler.wrap(gameLoop);
 }

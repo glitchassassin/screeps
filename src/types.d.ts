@@ -13,68 +13,15 @@ interface RawMemory {
   _parsed: Memory
 }
 
-// memory extension samples
-interface CreepMemory {
-  type?: string;
-  office?: string;
-}
-
-interface FlagMemory {
-  source?: string;
-  upgradeDepot?: boolean;
-}
-
-interface RoomMemory {
-  tasks?: string;
-  requests?: string;
-}
-
 interface RoomTerrain {
   getRawBuffer(): Uint8Array
 }
 
 interface Memory {
-  uuid: number;
-  logs: {[context: string]: string};
-  respawnTick: number;
-  cities: string[];
-  boardroom: {
-    [managerName: string]: any
-  }
-  hr: {
-    [officeName: string]: string
-  };
   offices: {
     [name: string]: {
       city: string,
-      employees: string[],
-      franchiseLocations: {
-        [sourceId: string]: {
-          franchise: RoomPosition,
-          source: RoomPosition
-        }
-      },
-      territories: {
-        [roomName: string]: {
-          controller: {
-            pos?: RoomPosition,
-            my?: boolean,
-          },
-          sources: {[id: string]: RoomPosition},
-          scanned: number,
-          lastHostileActivity?: number
-        }
-      }
     }
-  }
-  tasks: {
-    [officeName: string]: {
-      tasks: string,
-      requests: string
-    }
-  };
-  metrics: {
-    [roomName: string]: import('./Boardroom/BoardroomManagers/StatisticsAnalyst').PipelineMetrics
   }
   stats: {
     gcl: {
@@ -106,19 +53,7 @@ declare namespace GreyCompany {
 // `global` extension samples
 declare namespace NodeJS {
   interface Global {
-    IS_JEST_TEST: boolean;
     log: any;
-    boardroom: import('./Boardroom/Boardroom').Boardroom;
-    v: import('./utils/VisualizationController').VisualizationController;
-    taskReport: Function;
-    taskPurge: Function;
-    officeReport: Function;
-    hrReport: Function;
     purge: Function;
-    reportCPU: Function;
-    debug: {[id: string]: boolean}
-    Memory?: Memory
-    lastGlobalReset: number
-    Heap: GreyCompany.Heap
   }
 }

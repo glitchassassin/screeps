@@ -1,8 +1,3 @@
-import FranchiseStatus from "./FranchiseStatus";
-import LogisticsRoutes from "./LogisticsRoutes";
-import SpawnStrategy from "./SpawnStrategy";
-import TerritoryIntents from "./TerritoryIntents";
-
 declare global {
     namespace NodeJS {
         interface Global {
@@ -27,10 +22,3 @@ global.d = (key: string) => {
     activeReport = key;
 }
 
-
-// Register reports
-
-register('franchises', FranchiseStatus);
-register('spawnstrategy', SpawnStrategy);
-register('territory', TerritoryIntents);
-register('logisticsroutes', LogisticsRoutes);
