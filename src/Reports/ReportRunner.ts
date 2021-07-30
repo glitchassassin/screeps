@@ -1,3 +1,5 @@
+import FranchiseReport from "./FranchiseReport";
+
 declare global {
     namespace NodeJS {
         interface Global {
@@ -22,3 +24,4 @@ global.d = (key: string) => {
     activeReport = key;
 }
 
+register('franchises', FranchiseReport);

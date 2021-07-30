@@ -27,11 +27,10 @@ export const spawnTargets = (officeName: string) => {
     spawnTargets[MinionTypes.SALESMAN] = Math.min(maxSalesmen, franchises.length * salesmenPerFranchise, 5 * spawnCount);
 
     // More accountants at lower energy levels, fewer when we have links
-    const lowEnergyBonus = Game.rooms[officeName].energyCapacityAvailable < 800 ? 1 : 0
+    const lowEnergyBonus = Game.rooms[officeName].energyCapacityAvailable <= 800 ? 2 : 0
     const linkBonus = Math.min(0, -(linkCount - 1))
     spawnTargets[MinionTypes.ACCOUNTANT] = Math.max(spawnTargets[MinionTypes.SALESMAN]!, (franchises.length + mineCount) * 1.5 + lowEnergyBonus + linkBonus);
 
-    const workPartsPerEngineer = Math.min(25, Math.floor(((1/2) * Game.rooms[officeName].energyCapacityAvailable) / 100));
     spawnTargets[MinionTypes.ENGINEER] = Math.min(
         spawnTargets[MinionTypes.ACCOUNTANT]!,
         facilitiesWorkToDo(officeName).length

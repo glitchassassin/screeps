@@ -57,6 +57,7 @@ export class RefillTowersObjective extends Objective {
                 setState(States.DEPOSIT)(creep);
             } else if (result === BehaviorResult.FAILURE) {
                 resetCreep(creep);
+                return;
             }
         }
         if (creep.memory.state === States.DEPOSIT) {

@@ -91,23 +91,24 @@ export class StorageObjective extends Objective {
                         setState(States.DEPOSIT)(creep);
                         if (DEBUG) debugCPU('Withdraw: Franchise drained, returning to storage');
                     } else {
-                        // First, pick up loose resources
-                        const res = resourcesNearPos(pos, 1, RESOURCE_ENERGY).shift();
-                        if (DEBUG) debugCPU('Withdraw: Getting resource target');
-                        if (res) {
-                            if (moveTo(res.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                                creep.pickup(res)
-                            }
-                            if (DEBUG) debugCPU('Withdraw: Picking up loose resources');
-                        } else {
-                            // Otherwise, pick up from container
-                            const container = getFranchisePlanBySourceId(creep.memory.depositSource)?.container.structure
-                            if (!container) return;
+                        // First, pick up from container
+                        const container = getFranchisePlanBySourceId(creep.memory.depositSource)?.container.structure as StructureContainer|undefined
+                        if (container && container.store.getUsedCapacity(RESOURCE_ENERGY) > 20) {
                             if (DEBUG) debugCPU('Withdraw: Getting container target');
                             if (moveTo(container.pos, 1)(creep) === BehaviorResult.SUCCESS) {
                                 creep.withdraw(container, RESOURCE_ENERGY)
                             }
                             if (DEBUG) debugCPU('Withdraw: Getting from container');
+                        } else {
+                            // Otherwise, pick up loose resources
+                            const res = resourcesNearPos(pos, 1, RESOURCE_ENERGY).shift();
+                            if (DEBUG) debugCPU('Withdraw: Getting resource target');
+                            if (res) {
+                                if (moveTo(res.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+                                    creep.pickup(res)
+                                }
+                                if (DEBUG) debugCPU('Withdraw: Picking up loose resources');
+                            }
                         }
                     }
                 }

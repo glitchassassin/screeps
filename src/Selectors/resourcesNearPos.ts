@@ -7,5 +7,5 @@ export const resourcesNearPos = (pos: RoomPosition, radius = 1, resource?: Resou
         pos.x + radius,
         true
     )
-    return results?.map(r => r.resource).filter(r => !resource || r.resourceType === resource) ?? []
+    return results?.map(r => r.resource).filter(r => !resource || r.resourceType === resource).sort((a, b) => b.amount - a.amount) ?? []
 }
