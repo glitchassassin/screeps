@@ -80,7 +80,7 @@ export const MinionBuilders: Record<MinionTypes, (energy: number) => BodyPartCon
         }
     },
     [MinionTypes.PARALEGAL]: (energy: number) => {
-        if (energy < 200) {
+        if (energy < 250) {
             return [];
         }
         else {

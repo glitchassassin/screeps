@@ -8,7 +8,9 @@ import { Objective } from "./Objective";
 import { RefillExtensionsObjective } from "./RefillExtensions";
 import { RefillTowersObjective } from "./RefillTowers";
 import { StorageObjective } from "./Storage";
+import { SupportBootstrapObjective } from "./SupportBootstrap";
 import { TransferToLegalObjective } from "./TransferToLegal";
+import { UpgradeEngineerObjective } from "./UpgradeEngineer";
 import { UpgradeObjective } from "./Upgrade";
 
 declare global {
@@ -36,14 +38,16 @@ const initialize = (...args: Objective[]) => {
 initialize(
     new FranchiseObjective(),
     new MineObjective(),
-    new FacilitiesObjective(),
-    new UpgradeObjective(3),
+    new FacilitiesObjective(5),
+    new SupportBootstrapObjective(4),
+    new UpgradeEngineerObjective(3),
+    new UpgradeObjective(),
     new ExploreObjective(),
     new AcquireObjective(),
     // Logistics Objectives - shared by Accountants
-    new RefillExtensionsObjective(7),
+    new RefillExtensionsObjective(8),
     new RefillTowersObjective(7),
-    new TransferToLegalObjective(7),
+    new TransferToLegalObjective(6),
     new LinkStorageObjective(5),
     new StorageObjective(3),
 );

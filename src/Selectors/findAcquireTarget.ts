@@ -17,7 +17,6 @@ declare global {
  */
 export const findAcquireTarget = () => {
     const offices = Object.keys(Memory.offices);
-    if (Game.gcl.level <= offices.length) return;
 
     if (cachedAcquireTarget && acquireTargetIsValid(cachedAcquireTarget)) {
         return cachedAcquireTarget;
@@ -29,7 +28,13 @@ export const findAcquireTarget = () => {
     // No cached target, scan for an acceptable one
     let bestTarget: string|undefined;
     let bestTargetDistance: number = Infinity;
-    for (const room in Memory.rooms) {
+
+    // Look for acquire/support target in Offices if GCL = offices count
+    let targetRooms = (Game.gcl.level <= offices.length) ?
+        Object.keys(Memory.offices) :
+        Object.keys(Memory.rooms)
+
+    for (const room of targetRooms) {
         if (!acquireTargetIsValid(room)) {
             delete Memory.rooms[room].acquire;
             continue;
@@ -41,7 +46,7 @@ export const findAcquireTarget = () => {
             return room;
         }
 
-        const distance = Math.min(...offices.filter(r => Game.rooms[r].energyCapacityAvailable >= 850).map(r => Game.map.getRoomLinearDistance(r, room)))
+        const distance = Math.min(...offices.filter(r => Game.rooms[r].energyCapacityAvailable >= 850).map(r => Game.map.getRoomLinearDistance(r, room)), Infinity)
 
         if (!bestTarget || distance < bestTargetDistance) {
             bestTarget = room;
@@ -60,17 +65,36 @@ export const findAcquireTarget = () => {
 
 export const acquireTargetIsValid = (roomName: string) => {
     return (
-        !Memory.rooms[roomName].owner &&
-        !Memory.rooms[roomName].reserver &&
+        (
+            !Memory.rooms[roomName].owner ||
+            (
+                Memory.rooms[roomName].owner === 'LordGreywether' &&
+                (Game.rooms[roomName]?.controller?.level ?? 0) < 4
+            )
+        ) &&
+        (
+            !Memory.rooms[roomName].reserver ||
+            Memory.rooms[roomName].reserver === 'LordGreywether'
+        ) &&
         roomPlans(roomName)?.office
     )
 }
 
-export const officeShouldAcquireTarget = (officeName: string) => {
+export const officeShouldClaimAcquireTarget = (officeName: string) => {
+    // Sets acquireTarget and acquiringOffice. If we sohuld not
+    // support, we should not claim either.
+    if (!officeShouldSupportAcquireTarget(officeName)) return false;
+
+    // Evaluate further if claiming is actually necessary
+    if (!cachedAcquireTarget) return false;
+    return !Memory.offices[cachedAcquireTarget]
+}
+
+export const officeShouldSupportAcquireTarget = (officeName: string) => {
     const room = findAcquireTarget();
     if (!room) return false;
 
-    if (cachedAcquiringOffice) return cachedAcquiringOffice;
+    if (cachedAcquiringOffice) return (officeName === cachedAcquiringOffice);
 
     let bestTarget: string|undefined;
     let bestTargetDistance: number = Infinity;
@@ -80,7 +104,7 @@ export const officeShouldAcquireTarget = (officeName: string) => {
         const distance = Game.map.getRoomLinearDistance(o, room)
 
         if (!bestTarget || distance < bestTargetDistance) {
-            bestTarget = room;
+            bestTarget = o;
             bestTargetDistance = distance;
         }
     }

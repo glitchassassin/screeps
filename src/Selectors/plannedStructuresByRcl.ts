@@ -17,7 +17,6 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
         plannedStructures = [
             plans.franchise1.container,
             plans.franchise2.container,
-            plans.headquarters.container,
         ]
     }
     if (rcl >= 1) {
@@ -38,8 +37,9 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     }
     if (rcl >= 4) {
         plannedStructures.push(
-            ...plannedExtensions.slice(15, 20),
+            ...plannedExtensions.slice(10, 20),
             plans.headquarters.storage,
+            plans.headquarters.container,
             ...plans.franchise1.ramparts,
             ...plans.headquarters.ramparts,
             ...plans.extensions.ramparts,
@@ -48,7 +48,7 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     }
     if (rcl >= 5) {
         plannedStructures.push(
-            ...plannedExtensions.slice(20, 25),
+            ...plannedExtensions.slice(20, 30),
             plans.headquarters.towers[1],
             plans.franchise2.link,
             plans.headquarters.link
@@ -56,7 +56,7 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     }
     if (rcl >= 6) {
         plannedStructures.push(
-            ...plannedExtensions.slice(25, 30),
+            ...plannedExtensions.slice(30, 40),
             plans.franchise1.link,
             plans.headquarters.terminal,
             plans.mine.extractor,
@@ -65,7 +65,7 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     }
     if (rcl >= 7) {
         plannedStructures.push(
-            ...plannedExtensions.slice(30, 35),
+            ...plannedExtensions.slice(40, 50),
             plans.franchise2.spawn,
             ...plans.franchise2.ramparts,
             plans.headquarters.towers[2],
@@ -73,7 +73,7 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     }
     if (rcl === 8) {
         plannedStructures.push(
-            ...plannedExtensions.slice(35, 40),
+            ...plannedExtensions.slice(50, 60),
             plans.headquarters.spawn,
             plans.headquarters.towers[3],
             plans.headquarters.towers[4],

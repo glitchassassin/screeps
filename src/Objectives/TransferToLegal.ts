@@ -6,8 +6,8 @@ import { Objective } from "./Objective";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { resetCreep } from "Selectors/resetCreep";
-import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { roomPlans } from "Selectors/roomPlans";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
 /**
  * Picks up energy from Sources and transfers it to Storage
@@ -33,8 +33,7 @@ export class TransferToLegalObjective extends Objective {
 
         // If the creep's office has franchises with unassigned capacity, assign minion
         const demand = Math.min(
-            (plan.headquarters.storage.structure as StructureStorage)?.store.getUsedCapacity(RESOURCE_ENERGY) ??
-            resourcesNearPos(plan.headquarters.storage.pos, 1).reduce((sum, r) => sum + r.amount, 0),
+            storageEnergyAvailable(creep.memory.office),
             (plan.headquarters.container.structure as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY),
         )
         if (demand > (this.assignedCapacity[creep.memory.office] ?? 0)) {

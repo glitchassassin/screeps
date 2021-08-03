@@ -50,7 +50,6 @@ export const generateRoomPlans = (roomName: string)  => {
                 }
             };
         } catch (e) {
-            console.log(e);
             Memory.roomPlans[roomName] = null;
         }
     } else {
@@ -133,7 +132,6 @@ const planOffice = (roomName: string) => {
     try {
         extensions = planExtensions(roomName, franchise1, franchise2, mine, headquarters);
     } catch (e) {
-        console.log(e.stack)
         throw new Error('FAILED generating extensions: ' + e.message)
     }
 

@@ -22,6 +22,11 @@ export class AcquireObjective extends Objective {
             creep.memory.acquireTarget = Memory.rooms[room].controllerId;
         }
 
+        if (byId(creep.memory.acquireTarget)?.my) {
+            creep.memory.acquireTarget = undefined; // Already claimed this controller
+            return;
+        }
+
         const pos = posById(creep.memory.acquireTarget)
         if (!pos) return;
 

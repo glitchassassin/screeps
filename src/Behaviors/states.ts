@@ -2,6 +2,9 @@ import { BehaviorResult } from "Behaviors/Behavior";
 
 export enum States {
     GET_ENERGY = 'GET_ENERGY',
+    GET_ENERGY_FRANCHISE = 'GET_ENERGY_FRANCHISE',
+    GET_ENERGY_STORAGE = 'GET_ENERGY_STORAGE',
+    GET_ENERGY_SOURCE = 'GET_ENERGY_SOURCE',
     WORKING = 'WORKING',
     WITHDRAW = 'WITHDRAW',
     DEPOSIT = 'DEPOSIT',

@@ -41,6 +41,10 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_TOWER]:          5,
     [STRUCTURE_WALL]:           5,
 }
+/**
+ * Health percentage before dispatching repairers
+ */
+export const REPAIR_THRESHOLD = 0.5;
 
 export const WHITELIST = [
     'CrAzYDubC'

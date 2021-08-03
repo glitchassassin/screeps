@@ -1,4 +1,4 @@
-import { isPositionWalkable, sortByDistanceTo } from "Selectors/MapCoordinates";
+import { getCostMatrix, getRangeTo, isPositionWalkable, sortByDistanceTo } from "Selectors/MapCoordinates";
 
 import { FranchisePlan } from "./FranchisePlan";
 import { HeadquartersPlan } from "./HeadquartersPlan";
@@ -24,7 +24,7 @@ export const deserializeExtensionsPlan = (serialized: string) => {
 }
 
 const validateExtensionsPlan = (plan: Partial<ExtensionsPlan>) => {
-    if ((plan.extensions?.length !== 60) || !plan.ramparts?.length) {
+    if (plan.extensions?.length !== 60) {
         throw new Error(`Incomplete ExtensionsPlan`)
     } else {
         return plan as ExtensionsPlan;
@@ -45,10 +45,10 @@ export const planExtensions = (roomName: string, franchise1: FranchisePlan, fran
         ...Object.values(mine).flat(),
         ...Object.values(headquarters).flat(),
     )
-    plan.extensions = fillExtensions(roomName, roomPlan, CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8]);
-    plan.ramparts = outlineExtensions(roomName, plan.extensions)
-        .filter(pos => isPositionWalkable(pos, true))
-        .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
+    plan.extensions = sortExtensions(fillExtensions(roomName, roomPlan, CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8]));
+    // plan.ramparts = outlineExtensions(roomName, plan.extensions)
+    //     .filter(pos => isPositionWalkable(pos, true))
+    //     .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
     return validateExtensionsPlan(plan);
 }
 
@@ -128,6 +128,39 @@ function squareIsValid(terrain: RoomTerrain, costMatrix: CostMatrix, pos: RoomPo
         terrain.get(p.x, p.y) !== TERRAIN_MASK_WALL &&
         costMatrix.get(p.x, p.y) < 255
     ))
+}
+
+function sortExtensions(extensions: PlannedStructure[]) {
+    // Start with first extension
+    let route: PlannedStructure[] = []
+
+    let nodes = [...extensions];
+
+    let lastPoint = extensions[0].pos;
+    while (nodes.length > 0) {
+        let shortest = nodes.map(s => {
+            const distanceFromStart = getRangeTo(s.pos, extensions[0].pos);
+            let path = PathFinder.search(
+                lastPoint,
+                {pos: s.pos, range: 1},
+                {
+                    roomCallback: n => getCostMatrix(n),
+                    plainCost: 2,
+                    swampCost: 10,
+                }
+            )
+
+            if (path.incomplete) throw new Error(`Unable to generate logistics route from ${lastPoint} to ${s.pos}`);
+
+            return {s, length: path.cost + distanceFromStart}
+        }).reduce((a, b) => (!b || a.length < b.length) ? a : b);
+
+        route.push(shortest.s);
+        nodes = nodes.filter(s => s !== shortest.s);
+        lastPoint = shortest.s.pos
+    }
+
+    return route;
 }
 
 function outlineExtensions(roomName: string, extensions: PlannedStructure[]) {

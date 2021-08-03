@@ -1,5 +1,6 @@
 import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
 
+import { BehaviorResult } from "Behaviors/Behavior";
 import { MinionTypes } from "Minions/minionTypes";
 import { Objective } from "./Objective";
 import { moveTo } from "Behaviors/moveTo";
@@ -14,12 +15,6 @@ export class ExploreObjective extends Objective {
     minionTypes = [MinionTypes.INTERN];
 
     action = (creep: Creep) => {
-        // Check target for completion
-        if (creep.memory.exploreTarget && Game.rooms[creep.memory.exploreTarget]) {
-            // Room visible, explore complete
-            creep.memory.exploreTarget = undefined;
-        }
-
         // Select a target
         if (!creep.memory.exploreTarget) {
             // Ignore aggression on scouts
@@ -49,7 +44,23 @@ export class ExploreObjective extends Objective {
 
         // Do work
         if (creep.memory.exploreTarget) {
-            moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep)
+            if (!Game.rooms[creep.memory.exploreTarget]) {
+                moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep)
+            } else {
+                const controller = Game.rooms[creep.memory.exploreTarget].controller;
+                if (!controller) { // Exploration done
+                    delete creep.memory.exploreTarget;
+                    return;
+                }
+                // In room, sign controller
+                const result = moveTo(Game.rooms[creep.memory.exploreTarget].controller?.pos, 1)(creep)
+                creep.signController(controller, 'This sector property of the Grey Company');
+                if (result !== BehaviorResult.INPROGRESS) {
+                    // Done, or else no path to controller; abort
+                    delete creep.memory.exploreTarget;
+                    return;
+                }
+            }
         }
     }
 }

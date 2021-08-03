@@ -23,28 +23,6 @@ interface Memory {
       city: string,
     }
   }
-  stats: {
-    gcl: {
-      progress: number,
-      progressTotal: number,
-      level: number
-    },
-    cpu: {
-      bucket: number,
-      limit: number,
-      used: number
-    },
-    offices: {[id: string]: {
-      pipelineMetrics: {
-        sourcesLevel: number,
-        mineContainersLevel: number
-      },
-      controllerProgress: number,
-      controllerProgressTotal: number,
-      controllerLevel: number,
-    }},
-    time: number,
-  }
 }
 
 declare namespace GreyCompany {

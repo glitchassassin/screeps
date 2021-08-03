@@ -60,6 +60,10 @@ export class LinkStorageObjective extends Objective {
             }
         }
         if (creep.memory.state === States.DEPOSIT) {
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+                resetCreep(creep); // Free for a new task
+                return;
+            }
             const storage = roomPlans(creep.memory.office)?.office.headquarters.storage;
             if (!storage) return;
             if (storage.structure) {

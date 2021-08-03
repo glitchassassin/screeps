@@ -8,6 +8,7 @@ import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { resetCreep } from "Selectors/resetCreep";
 import { roomPlans } from "Selectors/roomPlans";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
 declare global {
     interface CreepMemory {
@@ -31,8 +32,11 @@ export class RefillTowersObjective extends Objective {
     }
 
     assign(creep: Creep) {
-        const demand = roomPlans(creep.memory.office)?.office.headquarters.towers
-            .reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0
+        const demand = Math.min(
+            roomPlans(creep.memory.office)?.office.headquarters.towers
+                .reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0,
+            storageEnergyAvailable(creep.memory.office),
+        )
         if (demand > (this.assignedCapacity[creep.memory.office] ?? 0)) {
             if (super.assign(creep)) {
                 this.assignedCapacity[creep.memory.office] += creep.store.getFreeCapacity(RESOURCE_ENERGY);

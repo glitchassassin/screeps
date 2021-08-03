@@ -13,6 +13,26 @@ export default () => {
                 widgets: [
                     {
                         pos: {
+                            x: source.pos.x - 5,
+                            y: source.pos.y - 2.5,
+                        },
+                        width: 2,
+                        height: 5,
+                        widget: Bar({
+                            data: {
+                                value: source.ticksToRegeneration ?? 0,
+                                maxValue: ENERGY_REGEN_TIME
+                            },
+                            config: {
+                                style: {
+                                    stroke: 'white',
+                                    fill: 'white'
+                                }
+                            }
+                        })
+                    },
+                    {
+                        pos: {
                             x: source.pos.x - 2.5,
                             y: source.pos.y - 2.5,
                         },

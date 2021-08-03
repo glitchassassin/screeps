@@ -39,7 +39,7 @@ export abstract class Objective {
      * is its capacity met?
      */
     assign(creep: Creep) {
-        if (this.minionTypes.includes(creep.memory.type)) {
+        if (!creep.spawning && this.minionTypes.includes(creep.memory.type)) {
             creep.memory.objective = this.id;
             return true;
         }

@@ -5,9 +5,10 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { MinionTypes } from "Minions/minionTypes";
 import { Objective } from "./Objective";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
+import { accountantGetEnergy } from "Behaviors/accountantGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { resetCreep } from "Selectors/resetCreep";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
 declare global {
     interface CreepMemory {
@@ -35,7 +36,10 @@ export class RefillExtensionsObjective extends Objective {
 
     assign(creep: Creep) {
         // If the creep's office has franchises with unassigned capacity, assign minion
-        const demand = spawnsAndExtensionsDemand(creep.memory.office)
+        const demand = Math.min(
+            spawnsAndExtensionsDemand(creep.memory.office),
+            storageEnergyAvailable(creep.memory.office)
+        )
         if (demand > (this.assignedCapacity[creep.memory.office] ?? 0)) {
             if (super.assign(creep)) {
                 this.assignedCapacity[creep.memory.office] += creep.store.getFreeCapacity(RESOURCE_ENERGY);
@@ -55,7 +59,7 @@ export class RefillExtensionsObjective extends Objective {
         }
 
         if (creep.memory.state === States.WITHDRAW) {
-            const result = getEnergyFromStorage(creep);
+            const result = accountantGetEnergy(creep)
             if (result === BehaviorResult.SUCCESS) {
                 setState(States.DEPOSIT)(creep);
             } else if (result === BehaviorResult.FAILURE) {

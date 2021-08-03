@@ -1,4 +1,4 @@
-import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
+import { BARRIER_LEVEL, BARRIER_TYPES, BUILD_PRIORITIES, REPAIR_THRESHOLD } from "config";
 
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { calculateAdjacentPositions } from "./MapCoordinates";
@@ -9,7 +9,7 @@ export const destroyAdjacentUnplannedStructures = (officeName: string, structure
     calculateAdjacentPositions(structure.pos).forEach(pos => {
         let structures = pos.lookFor(LOOK_STRUCTURES);
         for (let s of structures) {
-            if (!allPlannedStructures.some(planned => planned.structure === s)) {
+            if (!allPlannedStructures.some(planned => planned.pos.isEqualTo(s.pos) && planned.structureType === s.structureType)) {
                 // Destroy unplanned adjacent structures
                 if (s.structureType !== STRUCTURE_RAMPART && s.structureType !== STRUCTURE_SPAWN) {
                     s.destroy()
@@ -19,26 +19,42 @@ export const destroyAdjacentUnplannedStructures = (officeName: string, structure
     })
 }
 
-let cachedFacilitiesWork: PlannedStructure[] = [];
-let structureCount = 0;
-let rcl = 0;
+interface FacilitiesCache {
+    work: PlannedStructure[],
+    structureCount?: number,
+    rcl?: number
+}
+
+let cache: Record<string, FacilitiesCache> = {};
 
 export const facilitiesWorkToDo = (officeName: string) => {
+    // Initialize cache
+    cache[officeName] ??= { work: [] };
+
     // Filter out completed work
-    cachedFacilitiesWork = cachedFacilitiesWork
-        .filter(structure => plannedStructureNeedsWork(structure));
+    cache[officeName].work = cache[officeName].work
+        .filter(structure => plannedStructureNeedsWork(structure))
+        .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]);
 
     // Only re-scan work to do every 500 ticks unless structure count changes
+    if (!Game.rooms[officeName]) return [...cache[officeName].work];
+
     const foundStructures = Game.rooms[officeName].find(FIND_STRUCTURES).length
-    const foundRcl = Game.rooms[officeName].controller?.level ?? 0;
-    if (foundStructures !== structureCount || foundRcl !== rcl || Game.time % 500 === 0) {
-        structureCount = foundStructures;
-        rcl = foundRcl;
-        cachedFacilitiesWork = plannedStructuresByRcl(officeName)
-            .filter(structure => plannedStructureNeedsWork(structure));
+    const foundRcl = Game.rooms[officeName].controller?.level;
+    if (
+        (foundStructures !== undefined && foundStructures !== cache[officeName].structureCount) ||
+        (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
+        Game.time % 500 === 0
+    ) {
+        cache[officeName] = {
+            work: plannedStructuresByRcl(officeName)
+                .filter(structure => plannedStructureNeedsWork(structure)),
+            structureCount: foundStructures,
+            rcl: foundRcl,
+        }
     }
 
-    return [...cachedFacilitiesWork];
+    return [...cache[officeName].work];
 }
 
 export const plannedStructureNeedsWork = (structure: PlannedStructure) => {
@@ -48,7 +64,7 @@ export const plannedStructureNeedsWork = (structure: PlannedStructure) => {
     } else {
         const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
         const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
-        if (structure.structure.hits < (maxHits * 0.7)) {
+        if (structure.structure.hits < (maxHits * REPAIR_THRESHOLD)) {
             return true;
         }
     }

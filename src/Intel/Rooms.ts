@@ -20,6 +20,13 @@ export const scanRooms = () => {
     Memory.positions ??= {};
     Memory.rooms ??= {};
 
+    // Purge dead offices
+    for (let office in Memory.offices) {
+        if (!Game.rooms[office]) {
+            delete Memory.offices[office];
+        }
+    }
+
     for (let room in Game.rooms) {
         // Only need to store this once
         if (!Memory.rooms[room]) {

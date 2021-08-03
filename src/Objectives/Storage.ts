@@ -1,18 +1,16 @@
 import { States, setState } from "Behaviors/states";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
-import { getFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 
 import { BehaviorResult } from "Behaviors/Behavior";
 import { MinionTypes } from "Minions/minionTypes";
 import { Objective } from "./Objective";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
+import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { moveTo } from "Behaviors/moveTo";
-import { posById } from "Selectors/posById";
 import { resetCreep } from "Selectors/resetCreep";
-import { resourcesNearPos } from "Selectors/resourcesNearPos";
-import { sourceIds } from "Selectors/roomCache";
+import { roomPlans } from "Selectors/roomPlans";
 
 declare global {
     interface CreepMemory {
@@ -70,51 +68,20 @@ export class StorageObjective extends Objective {
             if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                 setState(States.DEPOSIT)(creep);
             } else {
-                if (!creep.memory.depositSource) {
-                    // Select a new target: franchise with most surplus
-                    let maxSurplus = 0;
-                    for (let source of sourceIds(creep.memory.office)) {
-                        const surplus = franchiseEnergyAvailable(source);
-                        if (surplus > maxSurplus) {
-                            maxSurplus = surplus;
-                            creep.memory.depositSource = source;
-                        }
-                    }
-                }
-                if (DEBUG) debugCPU('Withdraw: Setting deposit source');
-
-                if (creep.memory.depositSource) {
-                    const pos = posById(creep.memory.depositSource);
-                    if (!pos) return;
-                    if (franchiseEnergyAvailable(creep.memory.depositSource) === 0) {
-                        creep.memory.depositSource = undefined; // Franchise drained, return to storage
-                        setState(States.DEPOSIT)(creep);
-                        if (DEBUG) debugCPU('Withdraw: Franchise drained, returning to storage');
-                    } else {
-                        // First, pick up from container
-                        const container = getFranchisePlanBySourceId(creep.memory.depositSource)?.container.structure as StructureContainer|undefined
-                        if (container && container.store.getUsedCapacity(RESOURCE_ENERGY) > 20) {
-                            if (DEBUG) debugCPU('Withdraw: Getting container target');
-                            if (moveTo(container.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                                creep.withdraw(container, RESOURCE_ENERGY)
-                            }
-                            if (DEBUG) debugCPU('Withdraw: Getting from container');
-                        } else {
-                            // Otherwise, pick up loose resources
-                            const res = resourcesNearPos(pos, 1, RESOURCE_ENERGY).shift();
-                            if (DEBUG) debugCPU('Withdraw: Getting resource target');
-                            if (res) {
-                                if (moveTo(res.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                                    creep.pickup(res)
-                                }
-                                if (DEBUG) debugCPU('Withdraw: Picking up loose resources');
-                            }
-                        }
-                    }
+                const result = getEnergyFromFranchise(creep);
+                if (result === BehaviorResult.SUCCESS) {
+                    setState(States.DEPOSIT)(creep);
+                } else if (result === BehaviorResult.FAILURE) {
+                    resetCreep(creep);
+                    return;
                 }
             }
         }
         if (creep.memory.state === States.DEPOSIT) {
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+                resetCreep(creep); // Free for a new task
+                return;
+            }
             const storage = roomPlans(creep.memory.office)?.office.headquarters.storage;
             if (!storage) return;
             if (storage.structure) {
