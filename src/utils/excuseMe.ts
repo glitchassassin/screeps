@@ -24,26 +24,22 @@ const alwaysNudge = true;
 declare global {
   interface Creep {
     giveWay(): void;
-    giveWay(random: boolean): void;
-    giveWay(target: { pos: RoomPosition; range: number; }): void;
     move(direction: DirectionConstant | Creep, excuse?: boolean): CreepMoveReturnCode;
   }
 
   interface PowerCreep {
     giveWay(): void;
-    giveWay(random: boolean): void;
-    giveWay(target: { pos: RoomPosition; range: number; }): void;
     move(direction: DirectionConstant | Creep, excuse?: boolean): CreepMoveReturnCode;
   }
   interface CreepMemory {
     excuseMe?: DirectionConstant;
-    targetPos?: string;
-    targetRange?: number;
+    movePos?: string;
+    moveRange?: number;
   }
   interface PowerCreepMemory {
     excuseMe?: DirectionConstant;
-    targetPos?: string;
-    targetRange?: number;
+    movePos?: string;
+    moveRange?: number;
   }
 }
 
@@ -166,15 +162,7 @@ function excuseMe(pos: RoomPosition, direction: DirectionConstant) {
   const creeps = room.lookForAt(LOOK_CREEPS, nextX, nextY);
   if (creeps.length > 0 && creeps[0].my) {
     creeps[0].memory.excuseMe = getOppositeDir(direction);
-    if (creeps[0].memory.targetPos) {
-      let pos = unpackPos(creeps[0].memory.targetPos);
-      let range = creeps[0].memory.targetRange ?? 1;
-      if (range !== 0) {
-        creeps[0].giveWay({pos, range});
-      }
-    } else {
-      creeps[0].giveWay();
-    }
+    creeps[0].giveWay();
   }
   const powerCreeps = room.lookForAt(LOOK_POWER_CREEPS, nextX, nextY);
   if (powerCreeps.length > 0 && powerCreeps[0].my)
@@ -198,21 +186,23 @@ Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Cr
 /*
  * call this on creeps that should react to being nudged
  */
-function giveWay(creep: AnyCreep, arg?: boolean | { pos: RoomPosition; range: number; }) {
-  if (!movingThisTick.includes(creep.id) && creep.memory.excuseMe) {
-    if (!arg)
+function giveWay(creep: AnyCreep) {
+  let pos = creep.memory.movePos && unpackPos(creep.memory.movePos);
+  let range = creep.memory.moveRange ?? 1;
+  if (!movingThisTick.includes(creep.id)) {
+    if (!pos && creep.memory.excuseMe)
       creep.move(creep.memory.excuseMe, true);
-    else if (typeof arg === 'object')
-      creep.move(getNudgeDirection_KeepRange(creep.pos, arg), true);
+    else if (pos)
+      creep.move(getNudgeDirection_KeepRange(creep.pos, { pos, range }), true);
     else
       creep.move(getNudgeDirection_Random(creep.pos), true);
   }
 }
-Creep.prototype.giveWay = function (arg?: boolean | { pos: RoomPosition; range: number; }) {
-  giveWay(this, arg);
+Creep.prototype.giveWay = function () {
+  giveWay(this);
 };
-PowerCreep.prototype.giveWay = function (arg?: boolean | { pos: RoomPosition; range: number; }) {
-  giveWay(this, arg);
+PowerCreep.prototype.giveWay = function () {
+  giveWay(this);
 };
 
 /*

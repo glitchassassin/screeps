@@ -1,3 +1,11 @@
+declare global {
+    namespace NodeJS {
+        interface Global {
+            Memory?: Memory
+        }
+    }
+}
+
 // Usage:
 // At top of main: import MemHack from './MemHack'
 // At top of loop(): MemHack.pretick()

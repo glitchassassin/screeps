@@ -16,7 +16,10 @@ export const BARRIER_LEVEL: Record<number, number> = {
     7: 1e+5,
     8: 1e+5,
 }
-
+export const BARRIER_TYPES: StructureConstant[] = [
+    STRUCTURE_WALL,
+    STRUCTURE_RAMPART
+]
 /**
  * Build priorities
  */
@@ -38,6 +41,10 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_TOWER]:          5,
     [STRUCTURE_WALL]:           5,
 }
+/**
+ * Health percentage before dispatching repairers
+ */
+export const REPAIR_THRESHOLD = 0.5;
 
 export const WHITELIST = [
     'CrAzYDubC'

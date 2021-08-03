@@ -1,7 +1,9 @@
-import FranchiseStatus from "./FranchiseStatus";
-import LogisticsRoutes from "./LogisticsRoutes";
-import SpawnStrategy from "./SpawnStrategy";
-import TerritoryIntents from "./TerritoryIntents";
+import AcquireReport from "./AcquireReport";
+import FranchiseReport from "./FranchiseReport";
+import MilestonesReport from "./MilestonesReport";
+import RoomPlanningReport from "./RoomPlanningReport";
+import SpawnReport from "./SpawnReport";
+import facilitiesReport from "./facilitiesReport";
 
 declare global {
     namespace NodeJS {
@@ -25,12 +27,14 @@ export const run = () => {
 
 global.d = (key: string) => {
     activeReport = key;
+    if (!(key in allReports)) {
+        console.log('Reports: ', Object.keys(allReports));
+    }
 }
 
-
-// Register reports
-
-register('franchises', FranchiseStatus);
-register('spawnstrategy', SpawnStrategy);
-register('territory', TerritoryIntents);
-register('logisticsroutes', LogisticsRoutes);
+register('franchises', FranchiseReport);
+register('planning', RoomPlanningReport);
+register('facilities', facilitiesReport);
+register('spawn', SpawnReport);
+register('acquire', AcquireReport);
+register('milestones', MilestonesReport);
