@@ -16,7 +16,11 @@ export const destroyAdjacentUnplannedStructures = (officeName: string, structure
                 }
             }
         }
-    })
+    });
+    const existingSite = structure.pos.lookFor(LOOK_CONSTRUCTION_SITES).shift();
+    if (existingSite && existingSite.structureType !== structure.structureType) {
+        existingSite.remove();
+    }
 }
 
 interface FacilitiesCache {

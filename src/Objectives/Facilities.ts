@@ -135,7 +135,7 @@ export class FacilitiesObjective extends Objective {
                             plan.pos.lookFor(LOOK_CREEPS)[0]?.giveWay();
                         }
                         if (plan.constructionSite) {
-                            creep.build(plan.constructionSite)
+                            creep.build(plan.constructionSite);
                         }
                     }
                 }

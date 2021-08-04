@@ -2,6 +2,7 @@ import { Dashboard, Rectangle, Table } from "screeps-viz";
 
 import { FranchiseObjective } from "Objectives/Franchise";
 import { PrioritizedObjectives } from "Objectives/initializeObjectives";
+import { byId } from "Selectors/byId";
 
 export default () => {
     for (const room in Memory.offices) {
@@ -11,14 +12,15 @@ export default () => {
         let totalAssigned = 0;
         for (let o of objectives) {
             let value = o.energyValue(room);
+            let assigned = o.assigned.map(byId).filter(c => c?.memory.office === room).length
             table.push([
                 o.id,
                 o.priority.toFixed(3),
                 value.toFixed(2),
-                o.assigned.length,
+                assigned,
             ])
             totalValue += value;
-            totalAssigned += o.assigned.length;
+            totalAssigned += assigned;
         }
         table.push(['---', '---', '---', '---'])
         table.push([
