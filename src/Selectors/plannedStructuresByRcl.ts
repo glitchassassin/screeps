@@ -12,6 +12,15 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
         ...plans.franchise2.extensions,
         ...plans.extensions.extensions
     ];
+    // Sort already constructed structures to the top
+    plannedExtensions = [
+        ...plannedExtensions.filter(e => e.structure),
+        ...plannedExtensions.filter(e => !e.structure),
+    ];
+    let plannedTowers = [
+        ...plans.headquarters.towers.filter(t => t.structure),
+        ...plans.headquarters.towers.filter(t => !t.structure),
+    ]
 
     if (rcl >= 0) {
         plannedStructures = [
@@ -32,7 +41,7 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     if (rcl >= 3) {
         plannedStructures.push(
             ...plannedExtensions.slice(5, 10),
-            plans.headquarters.towers[0],
+            plannedTowers[0],
         )
     }
     if (rcl >= 4) {
@@ -49,7 +58,7 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     if (rcl >= 5) {
         plannedStructures.push(
             ...plannedExtensions.slice(20, 30),
-            plans.headquarters.towers[1],
+            plannedTowers[1],
             plans.franchise2.link,
             plans.headquarters.link
         )
@@ -68,16 +77,16 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
             ...plannedExtensions.slice(40, 50),
             plans.franchise2.spawn,
             ...plans.franchise2.ramparts,
-            plans.headquarters.towers[2],
+            plannedTowers[2],
         )
     }
     if (rcl === 8) {
         plannedStructures.push(
             ...plannedExtensions.slice(50, 60),
             plans.headquarters.spawn,
-            plans.headquarters.towers[3],
-            plans.headquarters.towers[4],
-            plans.headquarters.towers[5],
+            plannedTowers[3],
+            plannedTowers[4],
+            plannedTowers[5],
         )
     }
     if (rcl >= 4) {
