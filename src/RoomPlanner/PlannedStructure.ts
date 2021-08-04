@@ -49,7 +49,6 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     }
 
     get structure() {
-        if (Game.time > this.lastSurveyed) this.survey();
         return byId(this.structureId);
     }
 
@@ -70,6 +69,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         return new PlannedStructure(pos, structureType, id);
     }
     survey() {
+        if (Game.time === this.lastSurveyed) return !!byId(this.structureId); // Only survey once per tick
         if (Game.rooms[this.pos.roomName]) {
             if (byId(this.structureId)) {
                 return true; // Actual structure is visible

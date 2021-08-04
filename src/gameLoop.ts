@@ -9,6 +9,7 @@ import { runCreepObjective } from "Objectives/runCreepObjective";
 import { runLinks } from "Structures/Links";
 import { run as runReports } from 'Reports/ReportRunner';
 import { runSpawns } from "Minions/runSpawns";
+import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { scanRooms } from "Intel/Rooms";
 import { spawnObjectives } from "Objectives/spawnObjectives";
 
@@ -26,6 +27,7 @@ export const gameLoop = () => {
     if (DEBUG) debugCPU('Beginning office loop');
     // Office loop
     for (const room in Memory.offices) {
+        scanRoomPlanStructures(room);
         initializeDynamicObjectives(room);
         if (DEBUG) debugCPU('initializeDynamicObjectives');
         spawnObjectives(room);
