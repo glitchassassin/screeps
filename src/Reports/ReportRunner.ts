@@ -1,9 +1,11 @@
-import AcquireReport from "./AcquireReport";
-import FranchiseReport from "./FranchiseReport";
-import MilestonesReport from "./MilestonesReport";
-import RoomPlanningReport from "./RoomPlanningReport";
-import SpawnReport from "./SpawnReport";
-import facilitiesReport from "./facilitiesReport";
+import AcquireReport from "Reports/AcquireReport";
+import FacilitiesReport from "Reports/FacilitiesReport";
+import FranchiseReport from "Reports/FranchiseReport";
+import MilestonesReport from "Reports/MilestonesReport";
+import ObjectivesReport from "./ObjectivesReport";
+import RoomPlanningReport from "Reports/RoomPlanningReport";
+import SpawnReport from "Reports/SpawnReport";
+import TerritoriesReport from "./TerritoriesReport";
 
 declare global {
     namespace NodeJS {
@@ -34,7 +36,9 @@ global.d = (key: string) => {
 
 register('franchises', FranchiseReport);
 register('planning', RoomPlanningReport);
-register('facilities', facilitiesReport);
+register('facilities', FacilitiesReport);
 register('spawn', SpawnReport);
 register('acquire', AcquireReport);
 register('milestones', MilestonesReport);
+register('territories', TerritoriesReport);
+register('objectives', ObjectivesReport);

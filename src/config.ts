@@ -1,7 +1,7 @@
 /**
  * Rooms around an Office to control as remote territories
  */
-export const TERRITORY_RADIUS = 0;
+export const TERRITORY_RADIUS = 1;
 
 /**
  * Barrier level targets by RCL

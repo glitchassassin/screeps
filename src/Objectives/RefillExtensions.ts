@@ -1,14 +1,15 @@
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { States, setState } from "Behaviors/states";
-import { spawnsAndExtensions, spawnsAndExtensionsDemand } from "Selectors/spawnsAndExtensionsDemand";
 
 import { BehaviorResult } from "Behaviors/Behavior";
-import { MinionTypes } from "Minions/minionTypes";
 import { Objective } from "./Objective";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { accountantGetEnergy } from "Behaviors/accountantGetEnergy";
+import { byId } from "Selectors/byId";
+import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
-import { resetCreep } from "Selectors/resetCreep";
-import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import { roomPlans } from "Selectors/roomPlans";
+import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { spawnsAndExtensions } from "Selectors/spawnsAndExtensionsDemand";
 
 declare global {
     interface CreepMemory {
@@ -20,35 +21,43 @@ declare global {
  * Picks up energy from Sources and transfers it to Storage
  */
 export class RefillExtensionsObjective extends Objective {
-    minionTypes = [MinionTypes.ACCOUNTANT];
-
-    private assignedCapacity: Record<string, number> = {}
-
-    debug() {
-        console.log(JSON.stringify(this.assignedCapacity));
+    energyValue(office: string) {
+        return -(this.targetCarry(office) * 1.5 * BODYPART_COST[CARRY]) / CREEP_LIFE_TIME
     }
+    targetCarry(office: string) {
+        // Calculate extensions capacity
+        let capacity = roomPlans(office)?.office.extensions.extensions
+            .reduce((sum, e) => sum + ((e.structure as StructureExtension)?.store.getCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0
 
-    resetCapacity() { this.assignedCapacity = {}; }
-    updateCapacity(creep: Creep) {
-        this.assignedCapacity[creep.memory.office] ??= 0;
-        this.assignedCapacity[creep.memory.office] += creep.store.getCapacity(RESOURCE_ENERGY);
+        // Maintain one appropriately-sized Accountant
+        return Math.ceil(capacity / CARRY_CAPACITY);
     }
+    spawn(office: string, spawns: StructureSpawn[]) {
+        const targetCarry = this.targetCarry(office);
+        const actualCarry = this.assigned.map(byId).filter(c => c?.memory.office === office).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
 
-    assign(creep: Creep) {
-        // If the creep's office has franchises with unassigned capacity, assign minion
-        const demand = Math.min(
-            spawnsAndExtensionsDemand(creep.memory.office),
-            storageEnergyAvailable(creep.memory.office)
-        )
-        if (demand > (this.assignedCapacity[creep.memory.office] ?? 0)) {
-            if (super.assign(creep)) {
-                this.assignedCapacity[creep.memory.office] += creep.store.getFreeCapacity(RESOURCE_ENERGY);
-                return true;
-            } else {
-                return false;
-            }
+        let spawnQueue = [];
+
+        if (actualCarry < targetCarry) {
+            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
+                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
+                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
+                { memory: {
+                    type: MinionTypes.ACCOUNTANT,
+                    office,
+                    objective: this.id,
+                }}
+            ))
         }
-        return false;
+
+        // Truncate spawn queue to length of available spawns
+        spawnQueue = spawnQueue.slice(0, spawns.length);
+
+        // For each available spawn, up to the target number of minions,
+        // try to spawn a new minion
+        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
+
+        return spawnQueue.length;
     }
 
     action = (creep: Creep) => {
@@ -59,11 +68,10 @@ export class RefillExtensionsObjective extends Objective {
         }
 
         if (creep.memory.state === States.WITHDRAW) {
-            const result = accountantGetEnergy(creep)
+            const result = getEnergyFromStorage(creep)
             if (result === BehaviorResult.SUCCESS) {
                 setState(States.DEPOSIT)(creep);
             } else if (result === BehaviorResult.FAILURE) {
-                resetCreep(creep);
                 return;
             }
         }
@@ -77,8 +85,7 @@ export class RefillExtensionsObjective extends Objective {
                 }
             }
             if (!creep.memory.refillTarget) {
-                // No targets found. Free for another Objective
-                resetCreep(creep)
+                // No targets found.
                 return
             }
 

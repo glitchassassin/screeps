@@ -1,12 +1,10 @@
 import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
+import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { heapMetrics } from "./heapMetrics";
 import { sourceIds } from "Selectors/roomCache";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
-
-interface HeapMetrics {
-    roomEnergy: Metrics.Timeseries
-}
 
 declare global {
     interface Memory {
@@ -30,8 +28,8 @@ declare global {
                     energyCapacityAvailable: number,
                     franchiseEnergyAvailable: number,
                     franchiseSurplus: number,
+                    franchiseIncome: number,
                     storageLevel: number,
-                    spawnBudget: number,
                     minions: {
                         [id: string]: {
                             target: number,
@@ -44,8 +42,6 @@ declare global {
         }
     }
 }
-
-export const heapMetrics: Record<string, HeapMetrics> = {};
 
 export const recordMetrics = () => {
     let stats = {
@@ -76,7 +72,7 @@ export const recordMetrics = () => {
         heapMetrics[office] ??= {
             roomEnergy: Metrics.newTimeseries()
         }
-        Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 300);
+        Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 600);
 
         Memory.stats.offices[office] = {
             ...Memory.stats.offices[office],
@@ -87,6 +83,7 @@ export const recordMetrics = () => {
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             franchiseEnergyAvailable: sourceIds(office).map(byId).reduce((sum, s) => sum + (s?.energy ?? 0), 0),
             franchiseSurplus: sourceIds(office).map(franchiseEnergyAvailable).reduce((sum, s) => sum + s, 0),
+            franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
         }
     }

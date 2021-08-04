@@ -1,3 +1,10 @@
+declare global {
+    interface CreepMemory {
+        type: MinionTypes,
+        office: string,
+    }
+}
+
 export interface Minion {
     body: BodyPartConstant[],
     name: string,
@@ -15,11 +22,14 @@ export enum MinionTypes {
     SALESMAN = 'SALESMAN'
 }
 
-export const MinionBuilders: Record<MinionTypes, (energy: number) => BodyPartConstant[]> = {
-    [MinionTypes.ACCOUNTANT]: (energy: number) => {
+export const MinionBuilders = {
+    [MinionTypes.ACCOUNTANT]: (energy: number, maxCarryParts = 32) => {
+        if (energy < 200) {
+            return [];
+        }
         // 2/3 CARRY, 1/3 MOVE
-        let moveParts = Math.min(16, Math.floor(energy/3/50))
-        let carryParts = Math.min(32, 2 * moveParts);
+        let moveParts = Math.min(Math.ceil(Math.max(1, maxCarryParts) / 2), Math.floor(energy/3/50))
+        let carryParts = Math.min(Math.max(1, maxCarryParts), 2 * moveParts);
 
         return [...Array(carryParts).fill(CARRY), ...Array(moveParts).fill(MOVE)];
     },

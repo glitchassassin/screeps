@@ -1,10 +1,13 @@
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { findAcquireTarget, officeShouldClaimAcquireTarget } from "Selectors/findAcquireTarget";
+
 import { BehaviorResult } from "Behaviors/Behavior";
-import { MinionTypes } from "Minions/minionTypes";
 import { Objective } from "./Objective";
 import { byId } from "Selectors/byId";
-import { findAcquireTarget } from "Selectors/findAcquireTarget";
+import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { moveTo } from "Behaviors/moveTo";
 import { posById } from "Selectors/posById";
+import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
 declare global {
     interface CreepMemory {
@@ -13,7 +16,41 @@ declare global {
 }
 
 export class AcquireObjective extends Objective {
-    minionTypes = [MinionTypes.LAWYER];
+    spawnTarget(office: string) {
+        // No need to spawn more than one Lawyer
+        return officeShouldClaimAcquireTarget(office) ? 1 : 0
+    }
+    energyValue(office: string) {
+        if (!officeShouldClaimAcquireTarget(office)) return 0;
+        return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
+    }
+    spawn(office: string, spawns: StructureSpawn[]) {
+        const target = this.spawnTarget(office);
+        const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+
+        let spawnQueue = [];
+
+        if (target > actual) {
+            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
+                MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)),
+                `${MinionTypes.LAWYER}${Game.time % 10000}`,
+                { memory: {
+                    type: MinionTypes.LAWYER,
+                    office,
+                    objective: this.id,
+                }}
+            ))
+        }
+
+        // Truncate spawn queue to length of available spawns
+        spawnQueue = spawnQueue.slice(0, spawns.length);
+
+        // For each available spawn, up to the target number of minions,
+        // try to spawn a new minion
+        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
+
+        return spawnQueue.length;
+    }
 
     action = (creep: Creep) => {
         if (!creep.memory.acquireTarget) {

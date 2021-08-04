@@ -133,6 +133,22 @@ export const getCostMatrix = memoizeByTick(
         return costs;
     }
 )
+export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: number) => {
+    let positionsInRange = calculateNearbyPositions(to, range, true)
+                                         .filter(pos => isPositionWalkable(pos, true));
+    if (positionsInRange.length === 0) return;
+
+    let route = PathFinder.search(from, positionsInRange, {
+        roomCallback: (room) => {
+            return getCostMatrix(room, false)
+        },
+        plainCost: 2,
+        swampCost: 10,
+    })
+    if (!route || route.incomplete) return;
+
+    return route.cost;
+}
 export const getRangeTo = memoize(
     (from: RoomPosition, to: RoomPosition) => (`${from} ${to}`),
     (from: RoomPosition, to: RoomPosition) => {

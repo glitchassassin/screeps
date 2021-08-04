@@ -6,7 +6,10 @@ import { posById } from "Selectors/posById";
 import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { sourceIds } from "Selectors/roomCache";
 
-export const getEnergyFromFranchise = (creep: Creep) => {
+export const getEnergyFromFranchise = (creep: Creep, franchise?: Id<Source>) => {
+    // Default to specified franchise
+    creep.memory.depositSource ??= franchise;
+
     if (!creep.memory.depositSource) {
         // Select a new target: franchise with most surplus
         let maxSurplus = 0;

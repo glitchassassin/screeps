@@ -1,9 +1,12 @@
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
 
 import { BehaviorResult } from "Behaviors/Behavior";
-import { MinionTypes } from "Minions/minionTypes";
 import { Objective } from "./Objective";
+import { byId } from "Selectors/byId";
+import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { moveTo } from "Behaviors/moveTo";
+import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
 declare global {
     interface CreepMemory {
@@ -12,7 +15,36 @@ declare global {
 }
 
 export class ExploreObjective extends Objective {
-    minionTypes = [MinionTypes.INTERN];
+    energyValue(office: string) {
+        return -minionCostPerTick(MinionBuilders[MinionTypes.INTERN](spawnEnergyAvailable(office)));
+    }
+    spawn(office: string, spawns: StructureSpawn[]) {
+        const target = 1;
+        const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+
+        let spawnQueue = [];
+
+        if (target > actual) {
+            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
+                MinionBuilders[MinionTypes.INTERN](spawnEnergyAvailable(office)),
+                `${MinionTypes.INTERN}${Game.time % 10000}`,
+                { memory: {
+                    type: MinionTypes.INTERN,
+                    office,
+                    objective: this.id,
+                }}
+            ))
+        }
+
+        // Truncate spawn queue to length of available spawns
+        spawnQueue = spawnQueue.slice(0, spawns.length);
+
+        // For each available spawn, up to the target number of minions,
+        // try to spawn a new minion
+        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
+
+        return spawnQueue.length;
+    }
 
     action = (creep: Creep) => {
         // Select a target

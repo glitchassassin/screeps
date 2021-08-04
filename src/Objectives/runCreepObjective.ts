@@ -1,14 +1,9 @@
-import { Objectives } from "./initializeObjectives";
-
-export const resetObjectivesCapacity = () => {
-    for (let o in Objectives) {
-        Objectives[o].resetCapacity();
-    }
-}
+import { Objectives } from "./Objective";
 
 export const runCreepObjective = (creep: Creep) => {
-    if (!creep.memory.objective) return;
+    if (!creep.memory.objective || !Objectives[creep.memory.objective]) return;
+    if (!Objectives[creep.memory.objective].assigned.includes(creep.id)) {
+        Objectives[creep.memory.objective].assigned.push(creep.id);
+    }
     Objectives[creep.memory.objective].action(creep);
-    if (!creep.memory.objective) return;
-    Objectives[creep.memory.objective].updateCapacity(creep);
 }

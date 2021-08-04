@@ -11,7 +11,9 @@ declare global {
     }
 }
 
-export const harvestEnergyFromFranchise = (creep: Creep) => {
+export const harvestEnergyFromFranchise = (creep: Creep, franchiseTarget?: Id<Source>) => {
+    creep.memory.franchiseTarget ??= franchiseTarget;
+
     if (!creep.memory.franchiseTarget) {
         // Look for an available target
         creep.memory.franchiseTarget = findFranchiseTarget(creep);
@@ -25,7 +27,7 @@ export const harvestEnergyFromFranchise = (creep: Creep) => {
     const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
 
     if (
-        !plan || !sourcePos ||
+        !sourcePos ||
         (Game.rooms[sourcePos.roomName] && !source)
     ) {
         return BehaviorResult.FAILURE
@@ -33,6 +35,7 @@ export const harvestEnergyFromFranchise = (creep: Creep) => {
 
     // Prefer to work from container position, fall back to adjacent position
     if (
+        plan &&
         !creep.pos.isEqualTo(plan.container.pos) &&
         plan.container.pos.lookFor(LOOK_CREEPS).length === 0
     ) {

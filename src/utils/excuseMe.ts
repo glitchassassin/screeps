@@ -104,6 +104,7 @@ function getNudgeDirection_Random(pos: RoomPosition) {
  * never picks a direction that would result in hitting a wall or an obstacle structure
  */
 function getNudgeDirection_KeepRange(pos: RoomPosition, target: { pos: RoomPosition; range: number; }) {
+  if (pos.isEqualTo(target.pos) && target.range === 0) return undefined;
   const room = Game.rooms[pos.roomName];
   const terrain = Game.map.getRoomTerrain(pos.roomName);
   let keepRangeTotalWeight = 0;
@@ -185,18 +186,29 @@ Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Cr
 
 /*
  * call this on creeps that should react to being nudged
+ * Returns false if already moving out of the way or refused
+ * to be nudged
  */
 function giveWay(creep: AnyCreep) {
   let pos = creep.memory.movePos && unpackPos(creep.memory.movePos);
   let range = creep.memory.moveRange ?? 1;
   if (!movingThisTick.includes(creep.id)) {
-    if (!pos && creep.memory.excuseMe)
+    if (!pos && creep.memory.excuseMe) {
       creep.move(creep.memory.excuseMe, true);
-    else if (pos)
-      creep.move(getNudgeDirection_KeepRange(creep.pos, { pos, range }), true);
-    else
+    } else if (pos) {
+      const dir = getNudgeDirection_KeepRange(creep.pos, { pos, range })
+      if (dir) {
+        creep.move(dir, true);
+      } else {
+        return false;
+      }
+    } else {
       creep.move(getNudgeDirection_Random(creep.pos), true);
+    }
+  } else {
+    return false;
   }
+  return true;
 }
 Creep.prototype.giveWay = function () {
   giveWay(this);
