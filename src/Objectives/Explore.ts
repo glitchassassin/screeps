@@ -78,7 +78,7 @@ export class ExploreObjective extends Objective {
         if (creep.memory.exploreTarget) {
             if (!Game.rooms[creep.memory.exploreTarget]) {
                 if (moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep) === BehaviorResult.FAILURE) {
-                    Memory.rooms[creep.memory.exploreTarget] = {}; // Unable to path
+                    Memory.rooms[creep.memory.exploreTarget] ??= {}; // Unable to path
                     console.log(creep.name, 'unable to explore', creep.memory.exploreTarget);
                     delete creep.memory.exploreTarget;
                     return;
