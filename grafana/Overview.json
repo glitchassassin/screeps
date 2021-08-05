@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 3,
-  "iteration": 1628127410645,
+  "iteration": 1628176828679,
   "links": [],
   "panels": [
     {
@@ -1155,7 +1155,7 @@
         "y": 18
       },
       "hiddenSeries": false,
-      "id": 82,
+      "id": 197,
       "isNew": true,
       "legend": {
         "alignAsTable": true,
@@ -1181,7 +1181,6 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "repeatIteration": 1473912580654,
       "seriesOverrides": [
         {
           "alias": "Total",
@@ -1194,29 +1193,16 @@
       "steppedLine": false,
       "targets": [
         {
-          "refCount": -1,
+          "refCount": 0,
           "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.energyAvailable, 'Spawns and Extensions')"
-        },
-        {
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(sumSeries(#A, #B, #C), \"Total\")",
-          "targetFull": "alias(sumSeries(alias(stats.gauges.offices.$office.storageEnergy, 'Storage'), alias(stats.gauges.offices.$office.energyAvailable, 'Spawns and Extensions'), alias(stats.gauges.offices.$office.terminalEnergy, 'Terminal')), \"Total\")",
-          "textEditor": true
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "E",
-          "target": "alias(stats.gauges.offices.$office.energyCapacityAvailable, 'Spawns and Extensions')"
+          "target": "alias(stats.gauges.offices.$office.storageLevel, 'Storage level')"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Room Stored Energy",
+      "title": "Storage",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -1270,6 +1256,226 @@
         "h": 8,
         "w": 6,
         "x": 0,
+        "y": 26
+      },
+      "hiddenSeries": false,
+      "id": 178,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.6",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "seriesOverrides": [
+        {
+          "alias": "1hr Moving Average",
+          "fill": 0,
+          "steppedLine": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "hide": false,
+          "refCount": 1,
+          "refId": "A",
+          "target": "alias(stats.gauges.offices.$office.franchiseIncome, 'Energy Income')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Harvested Energy",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 26
+      },
+      "hiddenSeries": false,
+      "id": 209,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.6",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "1hr Moving Average",
+          "fill": 0,
+          "steppedLine": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "refCount": 1,
+          "refId": "A",
+          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.storageLevel), #C), 'Storage Energy/tick')",
+          "targetFull": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.storageLevel), derivative(stats.gauges.time)), 'Storage Energy/tick')",
+          "textEditor": false
+        },
+        {
+          "hide": true,
+          "refCount": 0,
+          "refId": "C",
+          "target": "derivative(stats.gauges.time)"
+        },
+        {
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.storageLevel), #C), '1hour'), '1hr Moving Average')",
+          "targetFull": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.storageLevel), derivative(stats.gauges.time)), '1hour'), '1hr Moving Average')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Storage Energy",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
         "y": 26
       },
       "hiddenSeries": false,
@@ -1384,7 +1590,6 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": null,
-      "description": "",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -1393,114 +1598,11 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 6,
+        "x": 18,
         "y": 26
       },
       "hiddenSeries": false,
-      "id": 178,
-      "isNew": true,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": true,
-        "min": true,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "connected",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "8.0.6",
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "repeatDirection": "h",
-      "seriesOverrides": [
-        {
-          "alias": "1hr Moving Average",
-          "fill": 0,
-          "steppedLine": false
-        }
-      ],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": true,
-      "targets": [
-        {
-          "hide": false,
-          "refCount": 1,
-          "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.franchiseIncome, 'Energy Income')"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Harvested Energy",
-      "tooltip": {
-        "msResolution": false,
-        "shared": true,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "editable": true,
-      "error": false,
-      "fill": 1,
-      "fillGradient": 0,
-      "grid": {},
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 26
-      },
-      "hiddenSeries": false,
-      "id": 197,
+      "id": 82,
       "isNew": true,
       "legend": {
         "alignAsTable": true,
@@ -1526,6 +1628,7 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
+      "repeatIteration": 1473912580654,
       "seriesOverrides": [
         {
           "alias": "Total",
@@ -1538,16 +1641,29 @@
       "steppedLine": false,
       "targets": [
         {
-          "refCount": 0,
+          "refCount": -1,
           "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.storageLevel, 'Storage level')"
+          "target": "alias(stats.gauges.offices.$office.energyAvailable, 'Spawns and Extensions')"
+        },
+        {
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(sumSeries(#A, #B, #C), \"Total\")",
+          "targetFull": "alias(sumSeries(alias(stats.gauges.offices.$office.storageEnergy, 'Storage'), alias(stats.gauges.offices.$office.energyAvailable, 'Spawns and Extensions'), alias(stats.gauges.offices.$office.terminalEnergy, 'Terminal')), \"Total\")",
+          "textEditor": true
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "E",
+          "target": "alias(stats.gauges.offices.$office.energyCapacityAvailable, 'Spawns and Extensions')"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Storage",
+      "title": "Room Stored Energy",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -1599,8 +1715,8 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 18,
-        "y": 26
+        "x": 0,
+        "y": 34
       },
       "hiddenSeries": false,
       "id": 187,
@@ -1708,7 +1824,7 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 0,
+        "x": 18,
         "y": 34
       },
       "hiddenSeries": false,
@@ -1746,7 +1862,7 @@
         }
       ],
       "spaceLength": 10,
-      "stack": true,
+      "stack": false,
       "steppedLine": false,
       "targets": [
         {
@@ -1831,7 +1947,7 @@
     ]
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -1841,5 +1957,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "NXXaURGnk",
-  "version": 11
+  "version": 12
 }
