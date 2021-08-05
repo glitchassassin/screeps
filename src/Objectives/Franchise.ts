@@ -90,19 +90,8 @@ export class FranchiseObjective extends Objective {
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
         const maxSalesmen = adjacentWalkablePositions(franchisePos).length;
         const target = Math.min(maxSalesmen, salesmenPerFranchise);
+        let salesmenPressure = salesmen / target;
         // Pre-spawn salesmen
-
-        if (salesmen < target) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office)),
-                `${MinionTypes.SALESMAN}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.SALESMAN,
-                    office,
-                    objective: this.id,
-                }}
-            ))
-        }
 
         // Maintain one appropriately-sized Accountant
         const targetCarry = this.targetCarryParts;
@@ -112,18 +101,37 @@ export class FranchiseObjective extends Objective {
         let targetAccountants = 0; // No need for Accountants if there is a link
         if (!link) targetAccountants = Math.ceil(targetCarry / carryPartsPerAccountant);
         if (link && surplus) targetAccountants = 1;
+        let accountantPressure = accountants / targetAccountants;
         // Pre-spawn accountants
 
-        if (accountants < targetAccountants) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
-                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.ACCOUNTANT,
-                    office,
-                    objective: this.id,
-                }}
-            ))
+        while (salesmenPressure < 1 || accountantPressure < 1 && spawnQueue.length < spawns.length) {
+            if (accountantPressure < 1 && accountantPressure < salesmenPressure) {
+                spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
+                    `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
+                    { memory: {
+                        type: MinionTypes.ACCOUNTANT,
+                        office,
+                        objective: this.id,
+                    }}
+                ))
+                accountants += 1;
+                accountantPressure = accountants / targetAccountants;
+            } else if (salesmenPressure < 1 && salesmenPressure < accountantPressure) {
+                spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
+                    MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office)),
+                    `${MinionTypes.SALESMAN}${Game.time % 10000}`,
+                    { memory: {
+                        type: MinionTypes.SALESMAN,
+                        office,
+                        objective: this.id,
+                    }}
+                ))
+                salesmen += 1;
+                salesmenPressure = salesmen / target;
+            } else {
+                break;
+            }
         }
 
         // Truncate spawn queue to length of available spawns
