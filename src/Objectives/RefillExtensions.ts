@@ -1,16 +1,16 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { States, setState } from "Behaviors/states";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
-import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { byId } from "Selectors/byId";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { byId } from "Selectors/byId";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { spawnsAndExtensions } from "Selectors/spawnsAndExtensionsDemand";
+import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
+import { Objective } from "./Objective";
+
 
 declare global {
     interface CreepMemory {
@@ -95,7 +95,7 @@ export class RefillExtensionsObjective extends Objective {
         }
         if (creep.memory.state === States.DEPOSIT) {
             if (!creep.memory.refillTarget) {
-                for (let s of spawnsAndExtensions(creep.memory.office)) {
+                for (let s of getExtensions(creep.memory.office)) {
                     if (((s.structure as StructureExtension)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0) {
                         creep.memory.refillTarget = s.serialize();
                         break;

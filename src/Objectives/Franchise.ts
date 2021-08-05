@@ -1,18 +1,18 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { States, setState } from "Behaviors/states";
-import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "Selectors/MapCoordinates";
-import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
-import { byId } from "Selectors/byId";
-import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRoute";
-import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
 import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise";
 import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { byId } from "Selectors/byId";
+import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRoute";
+import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
+import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
+import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { Objective } from "./Objective";
+
 
 const franchiseObjectives: Record<string, FranchiseObjective> = {};
 
@@ -225,6 +225,9 @@ export class FranchiseObjective extends Objective {
                         if (result === BehaviorResult.SUCCESS) {
                             setState(States.DEPOSIT)(creep);
                         }
+                    } else {
+                        // Return to post to wait for energy
+                        moveTo(posById(this.sourceId), 3)(creep)
                     }
                 }
             }
