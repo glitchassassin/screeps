@@ -3,6 +3,7 @@ import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
 
 import { BehaviorResult } from "Behaviors/Behavior";
 import { Objective } from "./Objective";
+import { TERRITORY_RADIUS } from "config";
 import { byId } from "Selectors/byId";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { moveTo } from "Behaviors/moveTo";
@@ -52,7 +53,7 @@ export class ExploreObjective extends Objective {
             // Ignore aggression on scouts
             creep.notifyWhenAttacked(false);
 
-            let surveyRadius = (Game.rooms[creep.memory.office].controller?.level !== 8) ? 5 : 20
+            let surveyRadius = (Game.rooms[creep.memory.office].controller?.level !== 8) ? TERRITORY_RADIUS : 20
 
             let rooms = calculateNearbyRooms(creep.memory.office, surveyRadius, false);
 

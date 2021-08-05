@@ -33,14 +33,29 @@ export class RefillExtensionsObjective extends Objective {
         return Math.ceil(capacity / CARRY_CAPACITY);
     }
     spawn(office: string, spawns: StructureSpawn[]) {
+        if (roomPlans(office)?.office.extensions.extensions.every(e => !e.structure)) return 0; // No extensions
         const targetCarry = this.targetCarry(office);
-        const actualCarry = this.assigned.map(byId).filter(c => c?.memory.office === office).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
+        const actualCarry = this.assigned.map(byId).filter(c =>
+            c?.memory.office === office &&
+            (!c.ticksToLive || c.ticksToLive > 100)
+        ).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
 
         let spawnQueue = [];
 
         if (actualCarry < targetCarry) {
             spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
                 MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
+                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
+                { memory: {
+                    type: MinionTypes.ACCOUNTANT,
+                    office,
+                    objective: this.id,
+                }}
+            ))
+        } else if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
+            // Emergency refiller
+            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
+                MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyAvailable, targetCarry),
                 `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
                 { memory: {
                     type: MinionTypes.ACCOUNTANT,

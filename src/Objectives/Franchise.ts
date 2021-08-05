@@ -68,11 +68,17 @@ export class FranchiseObjective extends Objective {
         let spawnQueue = [];
 
         // Maintain enough Salesman to capitalize the source
-        const workPartsPerSalesman = Math.min(7, Math.floor((spawnEnergyAvailable(office) - 50) / 100));
+        const workPartsPerSalesman = Math.min(5, Math.floor((spawnEnergyAvailable(office) - 50) / 100));
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
         const maxSalesmen = adjacentWalkablePositions(franchisePos).length;
         const target = Math.min(maxSalesmen, salesmenPerFranchise);
-        const salesmen = this.assigned.map(byId).filter(c => c?.memory.type === MinionTypes.SALESMAN).length;
+        // Pre-spawn salesmen
+        const salesmen = this.assigned.map(byId).filter(c => {
+            if (c?.memory.type !== MinionTypes.SALESMAN) return false;
+            if (!c.ticksToLive) return true;
+            if (!c.memory.arrivedAtFranchise) return true;
+            return (c.ticksToLive < c.memory.arrivedAtFranchise);
+        }).length;
 
         if (salesmen < target) {
             spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
@@ -94,8 +100,12 @@ export class FranchiseObjective extends Objective {
         let targetAccountants = 0; // No need for Accountants if there is a link
         if (!link) targetAccountants = Math.ceil(targetCarry / carryPartsPerAccountant);
         if (link && surplus) targetAccountants = 1;
-
-        const accountants = this.assigned.map(byId).filter(c => c?.memory.type === MinionTypes.ACCOUNTANT).length
+        // Pre-spawn accountants
+        const accountants = this.assigned.map(byId).filter(c => {
+            if (c?.memory.type !== MinionTypes.ACCOUNTANT) return false;
+            if (!c.ticksToLive) return true;
+            return (c.ticksToLive > 100);
+        }).length
 
         if (accountants < targetAccountants) {
             spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
@@ -154,6 +164,10 @@ export class FranchiseObjective extends Objective {
                 }
             }
             if (creep.memory.state === States.WITHDRAW) {
+                // Opportunity targets
+                const tombstone = creep.pos.findInRange(FIND_TOMBSTONES, 1).shift()
+                if (tombstone) creep.withdraw(tombstone, RESOURCE_ENERGY)
+
                 if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                     setState(States.DEPOSIT)(creep);
                 } else {

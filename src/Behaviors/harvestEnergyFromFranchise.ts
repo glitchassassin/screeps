@@ -8,6 +8,7 @@ import { posById } from "Selectors/posById";
 declare global {
     interface CreepMemory {
         franchiseTarget?: Id<Source>
+        arrivedAtFranchise?: number
     }
 }
 
@@ -34,14 +35,19 @@ export const harvestEnergyFromFranchise = (creep: Creep, franchiseTarget?: Id<So
     }
 
     // Prefer to work from container position, fall back to adjacent position
+    let result;
     if (
         plan &&
         !creep.pos.isEqualTo(plan.container.pos) &&
         plan.container.pos.lookFor(LOOK_CREEPS).length === 0
     ) {
-        moveTo(plan.container.pos, 0)(creep);
+        result = moveTo(plan.container.pos, 0)(creep);
     } else if (!creep.pos.isNearTo(sourcePos!)) {
-        moveTo(sourcePos, 1)(creep);
+        result = moveTo(sourcePos, 1)(creep);
+    }
+
+    if (result === BehaviorResult.SUCCESS) {
+        creep.memory.arrivedAtFranchise ??= CREEP_LIFE_TIME - (creep.ticksToLive ?? 0);
     }
 
     creep.harvest(source!)

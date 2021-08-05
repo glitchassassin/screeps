@@ -160,7 +160,7 @@ export const moveTo = (pos?: RoomPosition, range = 1) => {
         }
         catch (e) {
             // Whether error encountered or execution fell through, the path failed
-            console.log(e);
+            // console.log(e);
             creep.memory.movePos = undefined;
             creep.memory.moveRange = undefined;
             delete Routes[creep.name];

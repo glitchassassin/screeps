@@ -1,4 +1,6 @@
+import { FranchiseObjective } from "Objectives/Franchise";
 import { Metrics } from "screeps-viz";
+import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { byId } from "Selectors/byId";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
@@ -30,10 +32,11 @@ declare global {
                     franchiseSurplus: number,
                     franchiseIncome: number,
                     storageLevel: number,
-                    minions: {
+                    objectives: {
                         [id: string]: {
-                            target: number,
-                            actual: number,
+                            energy: number,
+                            assigned: number,
+                            priority: number,
                         }
                     }
                 }
@@ -74,6 +77,17 @@ export const recordMetrics = () => {
         }
         Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 600);
 
+        const objectives = PrioritizedObjectives
+            .filter(o => !(o instanceof FranchiseObjective) || (!o.disabled && o.office === office))
+            .reduce((sum, o) => {
+                sum[o.id] = {
+                    energy: o.energyValue(office),
+                    assigned: o.assigned.map(byId).filter(c => c?.memory.office === office).length,
+                    priority: o.priority
+                }
+                return sum;
+            }, {} as Record<string, {energy: number, assigned: number, priority: number}>);
+
         Memory.stats.offices[office] = {
             ...Memory.stats.offices[office],
             controllerProgress: Game.rooms[office].controller?.progress ?? 0,
@@ -85,6 +99,7 @@ export const recordMetrics = () => {
             franchiseSurplus: sourceIds(office).map(franchiseEnergyAvailable).reduce((sum, s) => sum + s, 0),
             franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
+            objectives
         }
     }
 

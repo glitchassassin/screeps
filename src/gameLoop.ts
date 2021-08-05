@@ -5,6 +5,7 @@ import { initializeDynamicObjectives } from "Objectives/initializeDynamicObjecti
 import { planRooms } from "RoomPlanner/planRooms";
 import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
 import { recordMetrics } from "Metrics/recordMetrics";
+import { roomPlans } from "Selectors/roomPlans";
 import { runCreepObjective } from "Objectives/runCreepObjective";
 import { runLinks } from "Structures/Links";
 import { run as runReports } from 'Reports/ReportRunner';
@@ -27,6 +28,8 @@ export const gameLoop = () => {
     if (DEBUG) debugCPU('Beginning office loop');
     // Office loop
     for (const room in Memory.offices) {
+        if (!roomPlans(room)) continue; // Skip office until it's planned
+
         scanRoomPlanStructures(room);
         initializeDynamicObjectives(room);
         if (DEBUG) debugCPU('initializeDynamicObjectives');

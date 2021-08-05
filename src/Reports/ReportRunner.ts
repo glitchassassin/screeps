@@ -4,7 +4,6 @@ import FranchiseReport from "Reports/FranchiseReport";
 import MilestonesReport from "Reports/MilestonesReport";
 import ObjectivesReport from "./ObjectivesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
-import SpawnReport from "Reports/SpawnReport";
 import TerritoriesReport from "./TerritoriesReport";
 
 declare global {
@@ -37,7 +36,6 @@ global.d = (key: string) => {
 register('franchises', FranchiseReport);
 register('planning', RoomPlanningReport);
 register('facilities', FacilitiesReport);
-register('spawn', SpawnReport);
 register('acquire', AcquireReport);
 register('milestones', MilestonesReport);
 register('territories', TerritoriesReport);
