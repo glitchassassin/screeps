@@ -10,7 +10,6 @@ import { runCreepObjective } from "Objectives/runCreepObjective";
 import { runLinks } from "Structures/Links";
 import { run as runReports } from 'Reports/ReportRunner';
 import { runSpawns } from "Minions/runSpawns";
-import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { scanRooms } from "Intel/Rooms";
 import { spawnObjectives } from "Objectives/spawnObjectives";
 
@@ -28,9 +27,8 @@ export const gameLoop = () => {
     if (DEBUG) debugCPU('Beginning office loop');
     // Office loop
     for (const room in Memory.offices) {
-        if (!roomPlans(room)) continue; // Skip office until it's planned
+        if (!roomPlans(room)?.office) continue; // Skip office until it's planned
 
-        scanRoomPlanStructures(room);
         initializeDynamicObjectives(room);
         if (DEBUG) debugCPU('initializeDynamicObjectives');
         spawnObjectives(room);
@@ -42,16 +40,16 @@ export const gameLoop = () => {
     if (DEBUG) debugCPU('Beginning creep loop');
     // Main Creep loop
     for (const creep in Game.creeps) {
-        if (DEBUG) debugCPU('Running creep ' + creep);
         runCreepObjective(Game.creeps[creep]);
+        if (DEBUG) debugCPU('Running creep ' + creep);
     }
 
-    if (DEBUG) debugCPU('Beginning room planning');
     planRooms();
+    if (DEBUG) debugCPU('Planning rooms');
 
-    if (DEBUG) debugCPU('Recording metrics');
     recordMetrics();
+    if (DEBUG) debugCPU('Recording metrics');
 
-    if (DEBUG) debugCPU('Running reports');
     runReports();
+    if (DEBUG) debugCPU('Running reports');
 }

@@ -13,7 +13,7 @@ export default () => {
         if (!(objective instanceof FranchiseObjective)) continue;
 
         let sourcePos = posById(objective.sourceId);
-        let storagePos = roomPlans(objective.office)?.office.headquarters.storage.pos;
+        let storagePos = roomPlans(objective.office)?.office?.headquarters.storage.pos;
         if (sourcePos && storagePos) {
             Game.map.visual.line(sourcePos, storagePos, {
                 color: objective.disabled ? '#cccccc' : '#ffff00',

@@ -26,7 +26,7 @@ export const engineerGetEnergy = (creep: Creep, targetRoom?: string) => {
             creep.memory.getEnergyState = States.GET_ENERGY_SOURCE // For work outside the Office, harvest locally
         } else {
             // Get energy from legal container, or storage if that doesn't exist
-            const container = roomPlans(creep.memory.office)?.office.headquarters.container;
+            const container = roomPlans(creep.memory.office)?.office?.headquarters.container;
             if (!container) return;
             let result;
             if (container.structure) {

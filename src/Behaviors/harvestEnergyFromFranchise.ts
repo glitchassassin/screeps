@@ -1,7 +1,8 @@
+import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId } from "Selectors/roomPlans";
+
 import { BehaviorResult } from "./Behavior";
 import { byId } from "Selectors/byId";
 import { findFranchiseTarget } from "Selectors/findFranchiseTarget";
-import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { moveTo } from "./moveTo";
 import { posById } from "Selectors/posById";
 
@@ -23,9 +24,11 @@ export const harvestEnergyFromFranchise = (creep: Creep, franchiseTarget?: Id<So
     if (!creep.memory.franchiseTarget) {
         return BehaviorResult.FAILURE;
     }
-    const plan = getFranchisePlanBySourceId(creep.memory.franchiseTarget)
     const source = byId(creep.memory.franchiseTarget);
     const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
+    const plan = (creep.memory.office === sourcePos?.roomName) ?
+        getFranchisePlanBySourceId(creep.memory.franchiseTarget) :
+        getTerritoryFranchisePlanBySourceId(creep.memory.franchiseTarget)
 
     if (
         !sourcePos ||
@@ -39,7 +42,7 @@ export const harvestEnergyFromFranchise = (creep: Creep, franchiseTarget?: Id<So
     if (
         plan &&
         !creep.pos.isEqualTo(plan.container.pos) &&
-        plan.container.pos.lookFor(LOOK_CREEPS).length === 0
+        (!Game.rooms[plan.container.pos.roomName] || plan.container.pos.lookFor(LOOK_CREEPS).length === 0)
     ) {
         result = moveTo(plan.container.pos, 0)(creep);
     } else if (!creep.pos.isNearTo(sourcePos!)) {

@@ -5,7 +5,7 @@ import { roomPlans } from "Selectors/roomPlans";
 
 export const getResourcesFromMineContainer = (creep: Creep) => {
     // Default to specified franchise
-    const plan = roomPlans(creep.memory.office)?.office.mine;
+    const plan = roomPlans(creep.memory.office)?.office?.mine;
     const container = plan?.container.structure as StructureContainer|undefined
     if (!plan || !container) return BehaviorResult.FAILURE;
 

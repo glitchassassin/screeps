@@ -10,7 +10,7 @@ export default () => {
             ))
             .forEach(s => s.visualize());
 
-        const route = roomPlans(room)?.office.extensions.extensions.map(e => e.pos) ?? [];
+        const route = roomPlans(room)?.office?.extensions.extensions.map(e => e.pos) ?? [];
         new RoomVisual(room).poly(route, {stroke: 'magenta', fill: 'transparent'});
     }
 }

@@ -19,14 +19,14 @@ export class MineObjective extends Objective {
         )
     }
     targetForemen(office: string) {
-        const mine = roomPlans(office)?.office.mine;
+        const mine = roomPlans(office)?.office?.mine;
         // Only spawn Foreman/Accountant if mine structures are built
         if (!mine?.extractor.structure || !mine?.container.structure) return 0;
         const mineral = byId(Memory.rooms[office].mineralId)
         return mineral?.mineralAmount ? 1 : 0;
     }
     targetAccountants(office: string) {
-        const mine = roomPlans(office)?.office.mine;
+        const mine = roomPlans(office)?.office?.mine;
         // Only spawn Foreman/Accountant if mine structures are built
         if (!mine?.extractor.structure || !mine?.container.structure) return 0;
         return (mine.container.structure as StructureContainer).store.getUsedCapacity() ? 1 : 0; // One Foreman/Accountant (if there is anything to mine)
@@ -83,7 +83,7 @@ export class MineObjective extends Objective {
         [MinionTypes.FOREMAN]: (creep: Creep) => {
             const mine = byId(Memory.rooms[creep.memory.office].mineralId);
             if (!mine) return;
-            const plan = roomPlans(creep.memory.office)?.office.mine;
+            const plan = roomPlans(creep.memory.office)?.office?.mine;
             if (!plan?.extractor.structure) return;
 
             // Prefer to work from container position, fall back to adjacent position
@@ -99,7 +99,7 @@ export class MineObjective extends Objective {
             creep.harvest(mine);
         },
         [MinionTypes.ACCOUNTANT]: (creep: Creep) => {
-            const plan = roomPlans(creep.memory.office)?.office.mine;
+            const plan = roomPlans(creep.memory.office)?.office?.mine;
             if (!plan?.container.structure) return;
 
             if (!creep.memory.state || creep.store.getUsedCapacity() === 0) {
@@ -113,8 +113,8 @@ export class MineObjective extends Objective {
             }
             if (creep.memory.state === States.DEPOSIT) {
                 // Try to deposit to Terminal, or else Storage
-                const storage = roomPlans(creep.memory.office)?.office.headquarters.storage;
-                const terminal = roomPlans(creep.memory.office)?.office.headquarters.terminal;
+                const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
+                const terminal = roomPlans(creep.memory.office)?.office?.headquarters.terminal;
                 const res = Object.keys(creep.store)[0] as ResourceConstant|undefined;
                 if (!res) {
                     setState(States.WITHDRAW)(creep);

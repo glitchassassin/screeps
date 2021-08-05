@@ -1,7 +1,7 @@
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { States, setState } from "Behaviors/states";
 import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "Selectors/MapCoordinates";
-import { getFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
+import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 
 import { BehaviorResult } from "Behaviors/Behavior";
 import { Objective } from "./Objective";
@@ -31,7 +31,7 @@ export class FranchiseObjective extends Objective {
         franchiseObjectives[this.id] = this;
 
         const franchisePos = posById(this.sourceId);
-        const storagePos = roomPlans(this.office)?.office.headquarters.storage.pos
+        const storagePos = roomPlans(this.office)?.office?.headquarters.storage.pos
         if (!storagePos || !franchisePos) {
             this.disabled = true;
             return;
@@ -65,6 +65,24 @@ export class FranchiseObjective extends Objective {
         const franchisePos = posById(this.sourceId);
         if (!franchisePos) return 0; // No idea where this source is
 
+        let salesmen = 0, accountants = 0;
+        for (let a of this.assigned) {
+            const c = byId(a);
+            if (!c) continue;
+            if (
+                c.memory.type === MinionTypes.SALESMAN && (
+                    (!c.ticksToLive || !c.memory.arrivedAtFranchise) ||
+                    (c.ticksToLive < c.memory.arrivedAtFranchise)
+                )
+            ) salesmen += 1;
+            if (
+                c.memory.type === MinionTypes.ACCOUNTANT && (
+                    !c.ticksToLive ||
+                    c.ticksToLive > 100
+                )
+            ) accountants += 1;
+        }
+
         let spawnQueue = [];
 
         // Maintain enough Salesman to capitalize the source
@@ -73,12 +91,6 @@ export class FranchiseObjective extends Objective {
         const maxSalesmen = adjacentWalkablePositions(franchisePos).length;
         const target = Math.min(maxSalesmen, salesmenPerFranchise);
         // Pre-spawn salesmen
-        const salesmen = this.assigned.map(byId).filter(c => {
-            if (c?.memory.type !== MinionTypes.SALESMAN) return false;
-            if (!c.ticksToLive) return true;
-            if (!c.memory.arrivedAtFranchise) return true;
-            return (c.ticksToLive < c.memory.arrivedAtFranchise);
-        }).length;
 
         if (salesmen < target) {
             spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
@@ -101,11 +113,6 @@ export class FranchiseObjective extends Objective {
         if (!link) targetAccountants = Math.ceil(targetCarry / carryPartsPerAccountant);
         if (link && surplus) targetAccountants = 1;
         // Pre-spawn accountants
-        const accountants = this.assigned.map(byId).filter(c => {
-            if (c?.memory.type !== MinionTypes.ACCOUNTANT) return false;
-            if (!c.ticksToLive) return true;
-            return (c.ticksToLive > 100);
-        }).length
 
         if (accountants < targetAccountants) {
             spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
@@ -141,17 +148,51 @@ export class FranchiseObjective extends Objective {
         [MinionTypes.SALESMAN]: (creep: Creep) => {
             harvestEnergyFromFranchise(creep, this.sourceId);
 
-            if (creep.memory.franchiseTarget && creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.8) {
-                const plan = getFranchisePlanBySourceId(creep.memory.franchiseTarget)
-                if (!plan) return;
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.8) {
+                const franchisePos = posById(this.sourceId);
+                if (creep.memory.office === franchisePos?.roomName) {
+                    // Local franchise
+                    const plan = getFranchisePlanBySourceId(this.sourceId)
+                    if (!plan) return;
 
-                // Try to deposit at spawn
-                let result: ScreepsReturnCode = ERR_FULL
-                if (plan.spawn.structure) {
-                    result = creep.transfer(plan.spawn.structure, RESOURCE_ENERGY)
-                }
-                if (result !== OK && plan.link.structure) {
-                    creep.transfer(plan.link.structure, RESOURCE_ENERGY)
+                    // Try to deposit at spawn
+                    let result: ScreepsReturnCode = ERR_FULL
+                    if (plan.spawn.structure) {
+                        result = creep.transfer(plan.spawn.structure, RESOURCE_ENERGY)
+                    }
+                    // Try to build (or repair) container
+                    // if (!plan.container.structure) {
+                    //     if (!plan.container.constructionSite) {
+                    //         plan.container.pos.createConstructionSite(plan.container.structureType);
+                    //     } else {
+                    //         creep.build(plan.container.constructionSite);
+                    //     }
+                    // } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
+                    //     creep.repair(plan.container.structure);
+                    // }
+                    // Try to deposit at link
+                    if (result !== OK && plan.link.structure) {
+                        result = creep.transfer(plan.link.structure, RESOURCE_ENERGY)
+                    }
+
+                    if (result !== OK) {
+                        creep.drop(RESOURCE_ENERGY)
+                    }
+                } else {
+                    // Remote franchise
+                    const plan = getTerritoryFranchisePlanBySourceId(this.sourceId)
+                    if (!plan || !Game.rooms[plan.container.pos.roomName]) return;
+
+                    // Try to build or repair container
+                    // if (!plan.container.structure) {
+                    //     if (!plan.container.constructionSite) {
+                    //         plan.container.pos.createConstructionSite(plan.container.structureType);
+                    //     } else {
+                    //         creep.build(plan.container.constructionSite);
+                    //     }
+                    // } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
+                    //     creep.repair(plan.container.structure);
+                    // }
                 }
             }
         },
@@ -180,7 +221,7 @@ export class FranchiseObjective extends Objective {
                 }
             }
             if (creep.memory.state === States.DEPOSIT) {
-                const storage = roomPlans(creep.memory.office)?.office.headquarters.storage;
+                const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
                 if (!storage) return;
                 if (storage.structure) {
                     if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {

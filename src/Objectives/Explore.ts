@@ -13,6 +13,9 @@ declare global {
     interface CreepMemory {
         exploreTarget?: string;
     }
+    interface RoomMemory {
+        scanned?: number;
+    }
 }
 
 export class ExploreObjective extends Objective {
@@ -60,17 +63,18 @@ export class ExploreObjective extends Objective {
             const bestMatch = rooms.map(room => ({
                     distance: getRangeTo(new RoomPosition(25, 25, creep.memory.office), new RoomPosition(25, 25, room)),
                     name: room,
-                    scanned: room in Memory.rooms
+                    scanned: Memory.rooms[room]?.scanned
                 }))
                 .reduce((last, match) => {
                     // Ignore rooms we've already scanned for now
-                    if (match.scanned) {
+                    if (last === undefined) return match;
+                    if ((match.scanned ?? 0) > (last.scanned ?? 0)) {
                         return last;
                     }
-                    if (last === undefined || match.distance < last.distance) {
+                    if (match.scanned === last.scanned && match.distance < last.distance) {
                         return match;
                     }
-                    return last;
+                    return match;
                 })
             creep.memory.exploreTarget = bestMatch?.name;
         }
@@ -79,7 +83,7 @@ export class ExploreObjective extends Objective {
         if (creep.memory.exploreTarget) {
             if (!Game.rooms[creep.memory.exploreTarget]) {
                 if (moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep) === BehaviorResult.FAILURE) {
-                    Memory.rooms[creep.memory.exploreTarget] ??= {}; // Unable to path
+                    Memory.rooms[creep.memory.exploreTarget] ??= { scanned: Game.time }; // Unable to path
                     console.log(creep.name, 'unable to explore', creep.memory.exploreTarget);
                     delete creep.memory.exploreTarget;
                     return;

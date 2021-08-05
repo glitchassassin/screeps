@@ -2,10 +2,8 @@ import { FranchiseObjective } from "Objectives/Franchise";
 import { Metrics } from "screeps-viz";
 import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { byId } from "Selectors/byId";
-import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { heapMetrics } from "./heapMetrics";
-import { sourceIds } from "Selectors/roomCache";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
 declare global {
@@ -28,8 +26,6 @@ declare global {
                     controllerLevel: number,
                     energyAvailable: number,
                     energyCapacityAvailable: number,
-                    franchiseEnergyAvailable: number,
-                    franchiseSurplus: number,
                     franchiseIncome: number,
                     storageLevel: number,
                     objectives: {
@@ -75,7 +71,7 @@ export const recordMetrics = () => {
         heapMetrics[office] ??= {
             roomEnergy: Metrics.newTimeseries()
         }
-        Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 600);
+        Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 300);
 
         const objectives = PrioritizedObjectives
             .filter(o => !(o instanceof FranchiseObjective) || (!o.disabled && o.office === office))
@@ -95,8 +91,6 @@ export const recordMetrics = () => {
             controllerLevel: Game.rooms[office].controller?.level ?? 0,
             energyAvailable: Game.rooms[office].energyAvailable,
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
-            franchiseEnergyAvailable: sourceIds(office).map(byId).reduce((sum, s) => sum + (s?.energy ?? 0), 0),
-            franchiseSurplus: sourceIds(office).map(franchiseEnergyAvailable).reduce((sum, s) => sum + s, 0),
             franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
             objectives

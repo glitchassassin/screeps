@@ -13,7 +13,7 @@ declare global {
     interface Memory {
         roomPlans: {
             [index: string]: {
-                office: {
+                office?: {
                     headquarters: string,
                     franchise1: string,
                     franchise2: string,
@@ -34,32 +34,34 @@ export const generateRoomPlans = (roomName: string)  => {
 
     if (Memory.roomPlans[roomName] !== undefined) return; // Already planned
 
-    // TODO Add TerritoryFranchise planning for remote mining
-
+    let office, territory;
     if (isEligible(roomName)) {
         try {
             const officePlan = planOffice(roomName);
-            const office = {
+            office = {
                 headquarters: serializePlannedStructures(Object.values(officePlan.headquarters).flat()),
                 franchise1: serializeFranchisePlan(officePlan.franchise1),
                 franchise2: serializeFranchisePlan(officePlan.franchise2),
                 mine: serializePlannedStructures(Object.values(officePlan.mine).flat()),
                 extensions: serializePlannedStructures(Object.values(officePlan.extensions).flat())
             };
-            const territoryPlan = planTerritory(roomName);
-            const territory = territoryPlan.franchise1 ? {
-                franchise1: serializeTerritoryFranchisePlan(territoryPlan.franchise1),
-                franchise2: territoryPlan.franchise2 && serializeTerritoryFranchisePlan(territoryPlan.franchise2),
-            } : undefined;
-            Memory.roomPlans[roomName] = { office, territory };
         } catch (e) {
-            console.log(roomName, 'failed room planning', e)
-            Memory.roomPlans[roomName] = null;
+            console.log(roomName, 'failed Office planning', e)
         }
     } else {
         console.log(roomName, 'is ineligible for an Office')
-        Memory.roomPlans[roomName] = null;
     }
+    try {
+        const territoryPlan = planTerritory(roomName);
+        territory = territoryPlan.franchise1 ? {
+            franchise1: serializeTerritoryFranchisePlan(territoryPlan.franchise1),
+            franchise2: territoryPlan.franchise2 && serializeTerritoryFranchisePlan(territoryPlan.franchise2),
+        } : undefined;
+    } catch (e) {
+        console.log(roomName, 'failed Territory planning', e)
+    }
+    Memory.roomPlans[roomName] = { office, territory };
+
 }
 
 const isEligible = (roomName: string) => {

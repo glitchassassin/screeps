@@ -9,6 +9,7 @@ import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { moveTo } from "Behaviors/moveTo";
+import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
@@ -27,10 +28,12 @@ export class HeadquartersLogisticsObjective extends Objective {
     }
     spawn(office: string, spawns: StructureSpawn[]) {
         // Only needed if we have central HQ structures
-        const hq = roomPlans(office)?.office.headquarters;
+        const hq = roomPlans(office)?.office?.headquarters;
         if (!(hq?.towers.some(t => t.structure) || hq?.container.structure || hq?.link.structure)) {
             return 0;
         }
+
+        if (profitPerTick(office) <= 0) return 0; // Only spawn logistics minions if we have active Franchises
 
         let spawnQueue = [];
 
@@ -73,7 +76,7 @@ export class HeadquartersLogisticsObjective extends Objective {
         // Else deposit in storage
 
         // Check HQ state
-        const hq = roomPlans(creep.memory.office)?.office.headquarters;
+        const hq = roomPlans(creep.memory.office)?.office?.headquarters;
         if (!hq) return;
         const creepIsEmpty = creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0;
         const towersNeedRefilled = hq.towers.reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) > 0
@@ -150,7 +153,7 @@ export class HeadquartersLogisticsObjective extends Objective {
                 setState(States.GET_ENERGY_LINK)(creep);
                 return;
             }
-            const storage = roomPlans(creep.memory.office)?.office.headquarters.storage;
+            const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
             if (!storage) return;
             if (storage.structure) {
                 moveTo(storage.pos, 1)(creep);

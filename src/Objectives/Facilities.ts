@@ -46,7 +46,13 @@ export class FacilitiesObjective extends Objective {
     }
     spawn(office: string, spawns: StructureSpawn[]) {
         const target = this.spawnTarget(office);
-        const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+        // Calculate prespawn time based on time to spawn next minion
+        const prespawnTime = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
+        const actual = this.assigned.map(byId).filter(c => (
+            c?.memory.office === office && (
+                !c.ticksToLive || c.ticksToLive > prespawnTime
+            )
+        )).length
 
         let spawnQueue = [];
 

@@ -16,7 +16,7 @@ export const serializeTerritoryFranchisePlan = (plan: TerritoryFranchisePlan) =>
     return sourceId + EMPTY_ID.slice(sourceId.length) + serializePlannedStructures(Object.values(structures).flat())
 }
 
-export const deserializeFranchisePlan = (serialized: string) => {
+export const deserializeTerritoryFranchisePlan = (serialized: string) => {
     const plan: Partial<TerritoryFranchisePlan> = {
         sourceId: serialized.slice(0, 24).trim() as Id<Source>,
         container: undefined,

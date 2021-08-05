@@ -1,5 +1,6 @@
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
+import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 
 declare global {
     interface RoomMemory {
@@ -54,6 +55,7 @@ export const scanRooms = () => {
         Memory.rooms[room].rcl = Game.rooms[room].controller?.level
         Memory.rooms[room].owner = Game.rooms[room].controller?.owner?.username
         Memory.rooms[room].reserver = Game.rooms[room].controller?.reservation?.username
+        Memory.rooms[room].scanned = Game.time
 
         // Assign office, if necessary
         Memory.offices ??= {}
@@ -67,5 +69,7 @@ export const scanRooms = () => {
                 }
             }
         }
+
+        scanRoomPlanStructures(room);
     }
 }

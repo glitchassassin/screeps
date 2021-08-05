@@ -1,7 +1,23 @@
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { roomPlans } from "./roomPlans";
 
-export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) => {
+export const plannedStructuresByRcl = (roomName: string, targetRcl?: number) => {
+    if (Memory.offices[roomName]) {
+        return plannedOfficeStructuresByRcl(roomName, targetRcl);
+    } else {
+        return plannedTerritoryStructures(roomName);
+    }
+}
+
+export const plannedTerritoryStructures = (territoryName: string) => {
+    const plans = roomPlans(territoryName)?.territory;
+    return [
+        plans?.franchise1.container,
+        plans?.franchise2?.container,
+    ].filter(s => s) as PlannedStructure[];
+}
+
+export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: number) => {
     const plans = roomPlans(officeName)?.office;
     const rcl = targetRcl ?? Game.rooms[officeName]?.controller?.level;
     if (!rcl || !plans) return [];
@@ -24,8 +40,6 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
 
     if (rcl >= 0) {
         plannedStructures = [
-            plans.franchise1.container,
-            plans.franchise2.container,
         ]
     }
     if (rcl >= 1) {
@@ -36,6 +50,8 @@ export const plannedStructuresByRcl = (officeName: string, targetRcl?: number) =
     if (rcl >= 2) {
         plannedStructures.push(
             ...plannedExtensions.slice(0, 5),
+            plans.franchise1.container,
+            plans.franchise2.container,
         )
     }
     if (rcl >= 3) {
