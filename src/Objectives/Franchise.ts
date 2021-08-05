@@ -104,7 +104,7 @@ export class FranchiseObjective extends Objective {
         let accountantPressure = accountants / targetAccountants;
         // Pre-spawn accountants
 
-        while (salesmenPressure < 1 || accountantPressure < 1 && spawnQueue.length < spawns.length) {
+        while ((salesmenPressure < 1 || accountantPressure < 1) && spawnQueue.length < spawns.length) {
             if (accountantPressure < 1 && accountantPressure < salesmenPressure) {
                 spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
                     MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
@@ -117,7 +117,7 @@ export class FranchiseObjective extends Objective {
                 ))
                 accountants += 1;
                 accountantPressure = accountants / targetAccountants;
-            } else if (salesmenPressure < 1 && salesmenPressure < accountantPressure) {
+            } else if (salesmenPressure < 1) {
                 spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
                     MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office)),
                     `${MinionTypes.SALESMAN}${Game.time % 10000}`,
