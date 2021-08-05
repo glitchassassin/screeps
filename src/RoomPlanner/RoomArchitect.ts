@@ -1,13 +1,12 @@
-import { controllerPosition, mineralPosition, sourceIds, sourcePositions } from 'Selectors/roomCache';
-import { countTerrainTypes, getRangeTo } from 'Selectors/MapCoordinates';
+import { controllerPosition, mineralPosition, sourceIds } from 'Selectors/roomCache';
 import { planFranchise, serializeFranchisePlan } from 'RoomPlanner/FranchisePlan';
+import { planTerritoryFranchise, serializeTerritoryFranchisePlan } from './TerritoryFranchise';
 
+import { countTerrainTypes } from 'Selectors/MapCoordinates';
 import { planExtensions } from 'RoomPlanner/ExtensionsPlan';
 import { planHeadquarters } from 'RoomPlanner/HeadquartersPlan';
 import { planMine } from 'RoomPlanner/MinePlan';
-import { planTerritoryFranchise } from './TerritoryFranchise';
 import { posById } from 'Selectors/posById';
-import { roomPlans } from 'Selectors/roomPlans';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
 
 declare global {
@@ -39,17 +38,22 @@ export const generateRoomPlans = (roomName: string)  => {
 
     if (isEligible(roomName)) {
         try {
-            const plan = planOffice(roomName);
-            Memory.roomPlans[roomName] = {
-                office: {
-                    headquarters: serializePlannedStructures(Object.values(plan.headquarters).flat()),
-                    franchise1: serializeFranchisePlan(plan.franchise1),
-                    franchise2: serializeFranchisePlan(plan.franchise2),
-                    mine: serializePlannedStructures(Object.values(plan.mine).flat()),
-                    extensions: serializePlannedStructures(Object.values(plan.extensions).flat())
-                }
+            const officePlan = planOffice(roomName);
+            const office = {
+                headquarters: serializePlannedStructures(Object.values(officePlan.headquarters).flat()),
+                franchise1: serializeFranchisePlan(officePlan.franchise1),
+                franchise2: serializeFranchisePlan(officePlan.franchise2),
+                mine: serializePlannedStructures(Object.values(officePlan.mine).flat()),
+                extensions: serializePlannedStructures(Object.values(officePlan.extensions).flat())
             };
+            const territoryPlan = planTerritory(roomName);
+            const territory = territoryPlan.franchise1 ? {
+                franchise1: serializeTerritoryFranchisePlan(territoryPlan.franchise1),
+                franchise2: territoryPlan.franchise2 && serializeTerritoryFranchisePlan(territoryPlan.franchise2),
+            } : undefined;
+            Memory.roomPlans[roomName] = { office, territory };
         } catch (e) {
+            console.log(roomName, 'failed room planning', e)
             Memory.roomPlans[roomName] = null;
         }
     } else {
@@ -147,27 +151,15 @@ const planOffice = (roomName: string) => {
     }
 }
 
-const planTerritory = (roomName: string, officeRoom: string) => {
+const planTerritory = (roomName: string) => {
     let start = Game.cpu.getUsed();
-
-    // Get sources
-    let sources = sourcePositions(roomName);
-    let headquarters = roomPlans(officeRoom)?.office?.headquarters
-    if (!headquarters) {
-        throw new Error('FAILED generating territory - no office headquarters found')
-    }
-    let storage = headquarters.storage.pos
 
     // Calculate FranchisePlans
     let franchise1, franchise2;
     try {
-        let franchises = sources
-            .sort((a, b) => getRangeTo(a, storage!) - getRangeTo(b, storage!))
-            .map(source => planTerritoryFranchise(source, storage!));
-
-        [franchise1, franchise2] = franchises;
+        [franchise1, franchise2] = sourceIds(roomName).map(source => planTerritoryFranchise(source));
     } catch (e) {
-        throw new Error('FAILED generating franchises: ' + e.message)
+        throw new Error('FAILED generating territory franchises: ' + e.message)
     }
 
     let end = Game.cpu.getUsed();

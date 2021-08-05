@@ -1,27 +1,35 @@
+import { deserializePlannedStructures, serializePlannedStructures } from "Selectors/plannedStructures";
+
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { deserializePlannedStructures } from "Selectors/plannedStructures";
 import { getCostMatrix } from "Selectors/MapCoordinates";
+import { posById } from "Selectors/posById";
 
 export interface TerritoryFranchisePlan {
+    sourceId: Id<Source>;
     container: PlannedStructure;
-    roads: PlannedStructure[];
 }
 
-export const deserializeTerritoryFranchisePlan = (serialized: string) => {
+const EMPTY_ID = '                        '
+
+export const serializeTerritoryFranchisePlan = (plan: TerritoryFranchisePlan) => {
+    const {sourceId, ...structures} = plan;
+    return sourceId + EMPTY_ID.slice(sourceId.length) + serializePlannedStructures(Object.values(structures).flat())
+}
+
+export const deserializeFranchisePlan = (serialized: string) => {
     const plan: Partial<TerritoryFranchisePlan> = {
+        sourceId: serialized.slice(0, 24).trim() as Id<Source>,
         container: undefined,
-        roads: [],
     }
-    for (const s of deserializePlannedStructures(serialized)) {
+    for (const s of deserializePlannedStructures(serialized.slice(24))) {
         if (s.structureType === STRUCTURE_CONTAINER) plan.container = s;
-        if (s.structureType === STRUCTURE_ROAD) plan.roads?.push(s);
     }
     return validateTerritoryFranchisePlan(plan);
 }
 
 const validateTerritoryFranchisePlan = (plan: Partial<TerritoryFranchisePlan>) => {
     if (
-        !plan.container || !plan.roads?.length
+        !plan.container
     ) {
         throw new Error(`Incomplete TerritoryFranchisePlan`)
     } else {
@@ -29,15 +37,18 @@ const validateTerritoryFranchisePlan = (plan: Partial<TerritoryFranchisePlan>) =
     }
 }
 
-export const planTerritoryFranchise = (sourcePos: RoomPosition, storagePos: RoomPosition) => {
+export const planTerritoryFranchise = (sourceId: Id<Source>) => {
     const plan: Partial<TerritoryFranchisePlan> = {
+        sourceId,
         container: undefined,
-        roads: [],
     }
+    let sourcePos = posById(sourceId)
+    if (!sourcePos) throw new Error(`No source pos cached for ${sourceId}`)
+    let controllerPos = posById(Memory.rooms[sourcePos.roomName].controllerId) ?? new RoomPosition(25, 25, sourcePos.roomName);
     // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
     let route = PathFinder.search(
         sourcePos,
-        {pos: storagePos, range: 1},
+        {pos: controllerPos, range: 5},
         {
             plainCost: 2,
             swampCost: 10,
@@ -46,14 +57,6 @@ export const planTerritoryFranchise = (sourcePos: RoomPosition, storagePos: Room
         });
     if (route.incomplete) throw new Error('Unable to calculate path between source and storage');
     plan.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
-
-    plan.roads = [];
-
-    route.path.forEach(p => {
-        if (![0,49].includes(p.x) && ![0,49].includes(p.y)) {
-            plan.roads?.push(new PlannedStructure(p, STRUCTURE_ROAD));
-        }
-    });
 
     return validateTerritoryFranchisePlan(plan);
 }

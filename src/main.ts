@@ -24,6 +24,7 @@ global.purge = () => {
   Memory.creeps = {};
   Memory.powerCreeps = {};
   Memory.offices = {};
+  Memory.roomPlans = {};
 }
 
 // If respawning, wipe memory clean
