@@ -1,17 +1,17 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { States, setState } from "Behaviors/states";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
-import { byId } from "Selectors/byId";
 import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
+import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { byId } from "Selectors/byId";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { moveTo } from "Behaviors/moveTo";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { Objective } from "./Objective";
+
 
 declare global {
     interface CreepMemory {
@@ -39,14 +39,11 @@ export class HeadquartersLogisticsObjective extends Objective {
 
         // Maintain one max-sized Accountant
         if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)),
-                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.ACCOUNTANT,
-                    office,
-                    objective: this.id,
-                }}
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.ACCOUNTANT,
+                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
             ))
         }
 

@@ -1,18 +1,18 @@
-import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { States, setState } from "Behaviors/states";
-import { destroyAdjacentUnplannedStructures, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
-import { findAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
+import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
+import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
+import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { byId } from "Selectors/byId";
-import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
+import { destroyAdjacentUnplannedStructures, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { findAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { moveTo } from "Behaviors/moveTo";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { Objective } from "./Objective";
+
 
 declare global {
     interface CreepMemory {
@@ -24,13 +24,11 @@ export class FacilitiesObjective extends Objective {
     spawnTarget(office: string) {
         let surplusIncome = profitPerTick(office, this) - 4; // Extra for spawning minions
         const acquireTarget = findAcquireTarget();
-        if (office === acquireTarget) {
-            return 0; // We are being supported by another office, don't spawn Engineers
-        }
         if (acquireTarget && officeShouldSupportAcquireTarget(office)) {
             surplusIncome -= 2 // Adjust available energy for spawning extra Engineers
             surplusIncome += profitPerTick(acquireTarget);
         }
+        surplusIncome = Math.max(0, surplusIncome);
         // Spawn based on maximizing use of available energy
         const workPartsPerEngineer = Math.min(25, Math.floor((spawnEnergyAvailable(office) * 1/2) / 100))
         // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
@@ -57,14 +55,11 @@ export class FacilitiesObjective extends Objective {
         let spawnQueue = [];
 
         if (target > actual) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office)),
-                `${MinionTypes.ENGINEER}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.ENGINEER,
-                    office,
-                    objective: this.id,
-                }}
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.ENGINEER,
+                MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
             ))
         }
 

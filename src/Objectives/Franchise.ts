@@ -3,7 +3,7 @@ import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
 import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { byId } from "Selectors/byId";
 import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRoute";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
@@ -57,7 +57,10 @@ export class FranchiseObjective extends Objective {
         const salesmanCost = 650 / CREEP_LIFE_TIME;
         const accountantCost = link ? 0 : (this.targetCarryParts * 1.5 * BODYPART_COST[CARRY]) / CREEP_LIFE_TIME
 
-        return this.assigned.length ? income - (salesmanCost + accountantCost) : 0;
+        const workParts = this.assigned.map(byId).reduce((sum, c) => sum + (c?.getActiveBodyparts(WORK) ?? 0), 0)
+        const efficiency = Math.min(1, (workParts / 5))
+
+        return efficiency * (income - (salesmanCost + accountantCost));
     }
 
     spawn(office: string, spawns: StructureSpawn[]) {
@@ -88,7 +91,7 @@ export class FranchiseObjective extends Objective {
         // Maintain enough Salesman to capitalize the source
         const workPartsPerSalesman = Math.min(5, Math.floor((spawnEnergyAvailable(office) - 50) / 100));
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
-        const maxSalesmen = adjacentWalkablePositions(franchisePos).length;
+        const maxSalesmen = adjacentWalkablePositions(franchisePos, true).length;
         const target = Math.min(maxSalesmen, salesmenPerFranchise);
         let salesmenPressure = salesmen / target;
         // Pre-spawn salesmen
@@ -106,26 +109,20 @@ export class FranchiseObjective extends Objective {
 
         while ((salesmenPressure < 1 || accountantPressure < 1) && spawnQueue.length < spawns.length) {
             if (accountantPressure < 1 && accountantPressure < salesmenPressure) {
-                spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
-                    `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
-                    { memory: {
-                        type: MinionTypes.ACCOUNTANT,
-                        office,
-                        objective: this.id,
-                    }}
+                spawnQueue.push(spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
                 ))
                 accountants += 1;
                 accountantPressure = accountants / targetAccountants;
             } else if (salesmenPressure < 1) {
-                spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                    MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office)),
-                    `${MinionTypes.SALESMAN}${Game.time % 10000}`,
-                    { memory: {
-                        type: MinionTypes.SALESMAN,
-                        office,
-                        objective: this.id,
-                    }}
+                spawnQueue.push(spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.SALESMAN,
+                    MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office))
                 ))
                 salesmen += 1;
                 salesmenPressure = salesmen / target;

@@ -1,6 +1,6 @@
 import { memoize, memoizeByTick } from "utils/memoizeFunction";
-
 import { packPos } from "utils/packrat";
+
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
     return [].concat(...arr.map(f))
@@ -22,7 +22,7 @@ export const calculateAdjacentPositions = memoize(
     }
 );
 
-export const adjacentWalkablePositions = (pos: RoomPosition) => calculateAdjacentPositions(pos).filter(p => isPositionWalkable(p));
+export const adjacentWalkablePositions = (pos: RoomPosition, ignoreCreeps = false) => calculateAdjacentPositions(pos).filter(p => isPositionWalkable(p, ignoreCreeps));
 
 export const calculateNearbyPositions = memoize(
     (pos: RoomPosition, proximity: number, includeCenter = false) => (`[${pos.x}, ${pos.y}: ${pos.roomName}]x${proximity} ${includeCenter}`),
@@ -86,7 +86,7 @@ export const isPositionWalkable = memoizeByTick(
             return false;
         }
         if (Game.rooms[pos.roomName] && pos.look().some(obj => {
-            if (ignoreCreeps && obj.type === LOOK_CREEPS) return false;
+            if (!ignoreCreeps && obj.type === LOOK_CREEPS) return true;
             if (obj.constructionSite && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.constructionSite.structureType)) return true;
             if (obj.structure && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.structure.structureType)) return true;
             return false;

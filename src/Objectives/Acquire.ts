@@ -1,13 +1,16 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { findAcquireTarget, officeShouldClaimAcquireTarget } from "Selectors/findAcquireTarget";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
-import { byId } from "Selectors/byId";
-import { minionCostPerTick } from "Selectors/minionCostPerTick";
+import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { byId } from "Selectors/byId";
+import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
+import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
+import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { FacilitiesObjective } from "./Facilities";
+import { Objective } from "./Objective";
+
 
 declare global {
     interface CreepMemory {
@@ -16,29 +19,46 @@ declare global {
 }
 
 export class AcquireObjective extends Objective {
-    spawnTarget(office: string) {
+    spawnLawyersTarget(office: string) {
         // No need to spawn more than one Lawyer
         return officeShouldClaimAcquireTarget(office) ? 1 : 0
+    }
+    spawnEngineersTarget(office: string) {
+        // Use surplus energy to generate Engineers
+        if (!officeShouldSupportAcquireTarget(office)) return 0;
+        let surplusIncome = profitPerTick(office, this);
+        let build = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(build);
+        let fill = (build.filter(p => p === CARRY).length * CARRY_CAPACITY) / CREEP_LIFE_TIME;
+
+        return Math.floor(surplusIncome / (cost + fill))
     }
     energyValue(office: string) {
         if (!officeShouldClaimAcquireTarget(office)) return 0;
         return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
     }
     spawn(office: string, spawns: StructureSpawn[]) {
-        const target = this.spawnTarget(office);
-        const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+        const lawyersTarget = this.spawnLawyersTarget(office);
+        const engineersTarget = this.spawnEngineersTarget(office);
+        const lawyers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.LAWYER).length
+        const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length
 
         let spawnQueue = [];
 
-        if (target > actual) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)),
-                `${MinionTypes.LAWYER}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.LAWYER,
-                    office,
-                    objective: this.id,
-                }}
+        if (lawyersTarget > lawyers) {
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.LAWYER,
+                MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))
+            ))
+        }
+        if (engineersTarget > engineers) {
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.ENGINEER,
+                MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
             ))
         }
 
@@ -53,25 +73,42 @@ export class AcquireObjective extends Objective {
     }
 
     action = (creep: Creep) => {
-        if (!creep.memory.acquireTarget) {
+        if (creep.memory.type === MinionTypes.LAWYER || creep.memory.type === MinionTypes.ENGINEER) {
+            this.actions[creep.memory.type](creep);
+        }
+    }
+
+    actions = {
+        [MinionTypes.LAWYER]: (creep: Creep) => {
+            if (!creep.memory.acquireTarget) {
+                const room = findAcquireTarget();
+                if (!room) return;
+                creep.memory.acquireTarget = Memory.rooms[room].controllerId;
+            }
+
+            if (byId(creep.memory.acquireTarget)?.my) {
+                creep.memory.acquireTarget = undefined; // Already claimed this controller
+                return;
+            }
+
+            const pos = posById(creep.memory.acquireTarget)
+            if (!pos) return;
+
+            if (moveTo(pos, 1)(creep) === BehaviorResult.SUCCESS) {
+                const controller = byId(creep.memory.acquireTarget)
+                if (!controller) return;
+                creep.signController(controller, 'This sector property of the Grey Company');
+                creep.claimController(controller);
+            }
+        },
+        [MinionTypes.ENGINEER]: (creep: Creep) => {
             const room = findAcquireTarget();
             if (!room) return;
-            creep.memory.acquireTarget = Memory.rooms[room].controllerId;
-        }
-
-        if (byId(creep.memory.acquireTarget)?.my) {
-            creep.memory.acquireTarget = undefined; // Already claimed this controller
-            return;
-        }
-
-        const pos = posById(creep.memory.acquireTarget)
-        if (!pos) return;
-
-        if (moveTo(pos, 1)(creep) === BehaviorResult.SUCCESS) {
-            const controller = byId(creep.memory.acquireTarget)
-            if (!controller) return;
-            creep.signController(controller, 'This sector property of the Grey Company');
-            creep.claimController(controller);
+            // Fill up with energy at home office and then reassign
+            if (engineerGetEnergy(creep) === BehaviorResult.SUCCESS) {
+                creep.memory.office = room;
+                creep.memory.objective = FacilitiesObjective.constructor.name;
+            }
         }
     }
 }

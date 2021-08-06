@@ -1,6 +1,6 @@
 import { controllerId, sourceIds } from "./roomCache";
-
 import { roomPlans } from "./roomPlans";
+
 
 export enum TerritoryIntent {
     AVOID = 'AVOID',
@@ -21,7 +21,7 @@ export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
         return TerritoryIntent.AVOID;
     } else if (roomPlan?.office) {
         return TerritoryIntent.ACQUIRE;
-    } else if (sources.length === 2) {
+    } else if (sources.length > 0) {
         return TerritoryIntent.EXPLOIT;
     } else {
         return TerritoryIntent.IGNORE;

@@ -1,20 +1,21 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { States, setState } from "Behaviors/states";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
-import { byId } from "Selectors/byId";
 import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineContainer";
+import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { byId } from "Selectors/byId";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { moveTo } from "Behaviors/moveTo";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { Objective } from "./Objective";
+
 
 export class MineObjective extends Objective {
     energyValue(office: string) {
+        const carry = this.targetCarry(office);
         return -(
-            this.targetAccountants(office) * minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))) +
+            (carry ? minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), carry)) : 0) +
             this.targetForemen(office) * minionCostPerTick(MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)))
         )
     }
@@ -25,41 +26,39 @@ export class MineObjective extends Objective {
         const mineral = byId(Memory.rooms[office].mineralId)
         return mineral?.mineralAmount ? 1 : 0;
     }
-    targetAccountants(office: string) {
+    targetCarry(office: string) {
         const mine = roomPlans(office)?.office?.mine;
+        const workParts = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)).filter(p => p === WORK).length;
+        const minedPerTick = (HARVEST_MINERAL_POWER * workParts) / EXTRACTOR_COOLDOWN;
+        const estimatedPerTrip = 50 * minedPerTick
+        const estimatedCarry = Math.ceil(estimatedPerTrip / CARRY_CAPACITY)
         // Only spawn Foreman/Accountant if mine structures are built
         if (!mine?.extractor.structure || !mine?.container.structure) return 0;
-        return (mine.container.structure as StructureContainer).store.getUsedCapacity() ? 1 : 0; // One Foreman/Accountant (if there is anything to mine)
+        return (mine.container.structure as StructureContainer).store.getUsedCapacity() ? estimatedCarry : 0; // One Foreman/Accountant (if there is anything to mine)
     }
     spawn(office: string, spawns: StructureSpawn[]) {
         const targetForemen = this.targetForemen(office);
-        const targetAccountants = this.targetAccountants(office);
+        const targetCarry = this.targetCarry(office);
         const foremen = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.FOREMAN).length
         const accountants = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ACCOUNTANT).length
 
         let spawnQueue = [];
 
         if (targetForemen > foremen) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)),
-                `${MinionTypes.FOREMAN}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.FOREMAN,
-                    office,
-                    objective: this.id,
-                }}
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.FOREMAN,
+                MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
             ))
         }
 
-        if (targetAccountants > accountants) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)),
-                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.ACCOUNTANT,
-                    office,
-                    objective: this.id,
-                }}
+        if (targetCarry && 1 > accountants) {
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.ACCOUNTANT,
+                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
             ))
         }
 

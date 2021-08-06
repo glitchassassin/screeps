@@ -2,7 +2,7 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { byId } from "Selectors/byId";
 import { profitPerTick } from "Selectors/profitPerTick";
@@ -46,25 +46,19 @@ export class RefillExtensionsObjective extends Objective {
         let spawnQueue = [];
 
         if (actualCarry < targetCarry) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry),
-                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.ACCOUNTANT,
-                    office,
-                    objective: this.id,
-                }}
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.ACCOUNTANT,
+                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
             ))
         } else if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
             // Emergency refiller
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyAvailable, targetCarry),
-                `${MinionTypes.ACCOUNTANT}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.ACCOUNTANT,
-                    office,
-                    objective: this.id,
-                }}
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.ACCOUNTANT,
+                MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyAvailable, targetCarry)
             ))
         }
 
@@ -79,6 +73,12 @@ export class RefillExtensionsObjective extends Objective {
     }
 
     action = (creep: Creep) => {
+        // Cleanup
+        const tombstone = creep.pos.findInRange(FIND_TOMBSTONES, 1).shift()
+        if (tombstone) creep.withdraw(tombstone, RESOURCE_ENERGY)
+        const res = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, { filter: RESOURCE_ENERGY }).shift()
+        if (res) creep.pickup(res)
+
         if (!creep.memory.state || creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
             setState(States.WITHDRAW)(creep);
         } else if (!creep.memory.state) {

@@ -1,13 +1,12 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
-
 import { BehaviorResult } from "Behaviors/Behavior";
-import { Objective } from "./Objective";
-import { TERRITORY_RADIUS } from "config";
-import { byId } from "Selectors/byId";
-import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { moveTo } from "Behaviors/moveTo";
+import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { byId } from "Selectors/byId";
+import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
+import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { Objective } from "./Objective";
+
 
 declare global {
     interface CreepMemory {
@@ -29,14 +28,11 @@ export class ExploreObjective extends Objective {
         let spawnQueue = [];
 
         if (target > actual) {
-            spawnQueue.push((spawn: StructureSpawn) => spawn.spawnCreep(
-                MinionBuilders[MinionTypes.INTERN](spawnEnergyAvailable(office)),
-                `${MinionTypes.INTERN}${Game.time % 10000}`,
-                { memory: {
-                    type: MinionTypes.INTERN,
-                    office,
-                    objective: this.id,
-                }}
+            spawnQueue.push(spawnMinion(
+                office,
+                this.id,
+                MinionTypes.INTERN,
+                MinionBuilders[MinionTypes.INTERN](spawnEnergyAvailable(office))
             ))
         }
 
@@ -56,15 +52,17 @@ export class ExploreObjective extends Objective {
             // Ignore aggression on scouts
             creep.notifyWhenAttacked(false);
 
-            let surveyRadius = (Game.rooms[creep.memory.office].controller?.level !== 8) ? TERRITORY_RADIUS : 20
+            let surveyRadius = (Game.rooms[creep.memory.office].controller?.level !== 8) ? 5 : 20
 
-            let rooms = calculateNearbyRooms(creep.memory.office, surveyRadius, false);
+            let rooms = calculateNearbyRooms(creep.memory.office, surveyRadius, false).map(room => ({
+                distance: getRangeTo(new RoomPosition(25, 25, creep.memory.office), new RoomPosition(25, 25, room)),
+                name: room,
+                scanned: Memory.rooms[room]?.scanned
+            }));
 
-            const bestMatch = rooms.map(room => ({
-                    distance: getRangeTo(new RoomPosition(25, 25, creep.memory.office), new RoomPosition(25, 25, room)),
-                    name: room,
-                    scanned: Memory.rooms[room]?.scanned
-                }))
+            if (!rooms.length) return;
+
+            const bestMatch = rooms
                 .reduce((last, match) => {
                     // Ignore rooms we've already scanned for now
                     if (last === undefined) return match;
@@ -83,7 +81,8 @@ export class ExploreObjective extends Objective {
         if (creep.memory.exploreTarget) {
             if (!Game.rooms[creep.memory.exploreTarget]) {
                 if (moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep) === BehaviorResult.FAILURE) {
-                    Memory.rooms[creep.memory.exploreTarget] ??= { scanned: Game.time }; // Unable to path
+                    Memory.rooms[creep.memory.exploreTarget] ??= { }; // Unable to path
+                    Memory.rooms[creep.memory.exploreTarget].scanned = Game.time;
                     console.log(creep.name, 'unable to explore', creep.memory.exploreTarget);
                     delete creep.memory.exploreTarget;
                     return;

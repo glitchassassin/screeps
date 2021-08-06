@@ -1,17 +1,18 @@
-import { debugCPU, resetDebugCPU } from "utils/debugCPU";
-
-import { clearNudges } from 'utils/excuseMe';
-import { initializeDynamicObjectives } from "Objectives/initializeDynamicObjectives";
-import { planRooms } from "RoomPlanner/planRooms";
-import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
-import { recordMetrics } from "Metrics/recordMetrics";
-import { roomPlans } from "Selectors/roomPlans";
-import { runCreepObjective } from "Objectives/runCreepObjective";
-import { runLinks } from "Structures/Links";
-import { run as runReports } from 'Reports/ReportRunner';
-import { runSpawns } from "Minions/runSpawns";
 import { scanRooms } from "Intel/Rooms";
+import { recordMetrics } from "Metrics/recordMetrics";
+import { runSpawns } from "Minions/runSpawns";
+import { initializeDynamicObjectives } from "Objectives/initializeDynamicObjectives";
+import { runCreepObjective } from "Objectives/runCreepObjective";
 import { spawnObjectives } from "Objectives/spawnObjectives";
+import { run as runReports } from 'Reports/ReportRunner';
+import { planRooms } from "RoomPlanner/planRooms";
+import { roomPlans } from "Selectors/roomPlans";
+import { runLinks } from "Structures/Links";
+import { runTowers } from "Structures/Towers";
+import { debugCPU, resetDebugCPU } from "utils/debugCPU";
+import { clearNudges } from 'utils/excuseMe';
+import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
+
 
 const DEBUG = false;
 
@@ -35,6 +36,7 @@ export const gameLoop = () => {
         if (DEBUG) debugCPU('spawnObjectives');
         runLinks(room);
         runSpawns(room);
+        runTowers(room);
     }
 
     if (DEBUG) debugCPU('Beginning creep loop');

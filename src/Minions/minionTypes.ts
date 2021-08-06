@@ -22,9 +22,25 @@ export enum MinionTypes {
     SALESMAN = 'SALESMAN'
 }
 
+export const spawnMinion = (office: string, objective: string, minionType: MinionTypes, body: BodyPartConstant[]) => (spawn: StructureSpawn) => {
+    const r = spawn.spawnCreep(
+        body,
+        `${minionType}-${office}-${Game.time % 10000}-${spawn.id.slice(23)}`,
+        { memory: {
+            type: minionType,
+            office,
+            objective
+        }}
+    )
+    if (r !== OK && r !== ERR_BUSY && r !== ERR_NOT_ENOUGH_ENERGY) {
+        console.log(objective, 'unexpected Spawn error', r)
+    }
+    return r;
+}
+
 export const MinionBuilders = {
     [MinionTypes.ACCOUNTANT]: (energy: number, maxCarryParts = 32) => {
-        if (energy < 200) {
+        if (energy < 200 || maxCarryParts === 0) {
             return [];
         }
         // 2/3 CARRY, 1/3 MOVE
@@ -115,3 +131,4 @@ export const MinionBuilders = {
         }
     }
 }
+
