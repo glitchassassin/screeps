@@ -23,6 +23,7 @@ export enum MinionTypes {
 }
 
 export const spawnMinion = (office: string, objective: string, minionType: MinionTypes, body: BodyPartConstant[]) => (spawn: StructureSpawn) => {
+    if (body.length === 0) return ERR_NO_BODYPART;
     const r = spawn.spawnCreep(
         body,
         `${minionType}-${office}-${Game.time % 10000}-${spawn.id.slice(23)}`,
@@ -44,8 +45,8 @@ export const MinionBuilders = {
             return [];
         }
         // 2/3 CARRY, 1/3 MOVE
-        let moveParts = Math.min(Math.ceil(Math.max(1, maxCarryParts) / 2), Math.floor(energy/3/50))
-        let carryParts = Math.min(Math.max(1, maxCarryParts), 2 * moveParts);
+        let moveParts = Math.min(16, Math.ceil(Math.max(1, maxCarryParts) / 2), Math.floor(energy/3/50))
+        let carryParts = Math.min(32, Math.max(1, maxCarryParts), 2 * moveParts);
 
         return [...Array(carryParts).fill(CARRY), ...Array(moveParts).fill(MOVE)];
     },
@@ -55,12 +56,12 @@ export const MinionBuilders = {
         }
         else {
             // Try to maintain WORK/CARRY/MOVE ratio
-            let workParts = Math.min(25, Math.floor(((1/2) * energy) / 100))
-            let carryMoveParts = Math.min(12, Math.floor(((1/4) * energy) / 50))
+            let workParts = Math.min(16, Math.floor(((1/2) * energy) / 100))
+
             return [
                 ...Array(workParts).fill(WORK),
-                ...Array(carryMoveParts).fill(CARRY),
-                ...Array(carryMoveParts).fill(MOVE)
+                ...Array(workParts).fill(CARRY),
+                ...Array(workParts).fill(MOVE)
             ]
         }
     },
@@ -111,8 +112,8 @@ export const MinionBuilders = {
         }
         else {
             // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
-            let workParts = Math.floor(((energy - 50) * 3/4) / 100)
-            let moveParts = Math.floor(((energy - 50) * 1/4) / 50)
+            let workParts = Math.min(15, Math.floor(((energy - 50) * 3/4) / 100))
+            let moveParts = Math.min(8, Math.floor(((energy - 50) * 1/4) / 50))
             return [...Array(workParts).fill(WORK), CARRY, ...Array(moveParts).fill(MOVE)]
         }
     },

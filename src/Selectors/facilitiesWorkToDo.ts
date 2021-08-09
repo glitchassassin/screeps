@@ -1,26 +1,30 @@
 import { BARRIER_LEVEL, BARRIER_TYPES, BUILD_PRIORITIES, REPAIR_THRESHOLD } from "config";
-
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { calculateAdjacentPositions } from "./MapCoordinates";
 import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
 
-export const destroyAdjacentUnplannedStructures = (officeName: string, structure: PlannedStructure) => {
-    const allPlannedStructures = plannedStructuresByRcl(officeName, 8)
-    calculateAdjacentPositions(structure.pos).forEach(pos => {
-        let structures = pos.lookFor(LOOK_STRUCTURES);
-        for (let s of structures) {
-            if (!allPlannedStructures.some(planned => planned.pos.isEqualTo(s.pos) && planned.structureType === s.structureType)) {
-                // Destroy unplanned adjacent structures
-                if (s.structureType !== STRUCTURE_RAMPART && s.structureType !== STRUCTURE_SPAWN) {
-                    s.destroy()
+
+export const destroyUnplannedStructures = (room: string) => {
+    if (!Game.rooms[room]) return; // No visibility here, can't destroy
+    const allPlannedStructures = plannedStructuresByRcl(room, 8)
+    allPlannedStructures.forEach(structure => {
+        calculateAdjacentPositions(structure.pos).forEach(pos => {
+            let structures = pos.lookFor(LOOK_STRUCTURES);
+            for (let s of structures) {
+                if (!allPlannedStructures.some(planned => planned.pos.isEqualTo(s.pos) && planned.structureType === s.structureType)) {
+                    // Destroy unplanned adjacent structures
+                    if (s.structureType !== STRUCTURE_RAMPART && s.structureType !== STRUCTURE_SPAWN) {
+                        s.destroy()
+                    }
                 }
             }
+        });
+        const existingSite = structure.pos.lookFor(LOOK_CONSTRUCTION_SITES).shift();
+        if (existingSite && existingSite.structureType !== structure.structureType) {
+            existingSite.remove();
         }
-    });
-    const existingSite = structure.pos.lookFor(LOOK_CONSTRUCTION_SITES).shift();
-    if (existingSite && existingSite.structureType !== structure.structureType) {
-        existingSite.remove();
-    }
+    })
+
 }
 
 interface FacilitiesCache {
@@ -38,7 +42,6 @@ export const facilitiesWorkToDo = (officeName: string) => {
     // Filter out completed work
     cache[officeName].work = cache[officeName].work
         .filter(structure => plannedStructureNeedsWork(structure))
-        .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]);
 
     // Only re-scan work to do every 500 ticks unless structure count changes
     if (!Game.rooms[officeName]) return [...cache[officeName].work];
@@ -52,7 +55,8 @@ export const facilitiesWorkToDo = (officeName: string) => {
     ) {
         cache[officeName] = {
             work: plannedStructuresByRcl(officeName)
-                .filter(structure => plannedStructureNeedsWork(structure)),
+                .filter(structure => plannedStructureNeedsWork(structure))
+                .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
             structureCount: foundStructures,
             rcl: foundRcl,
         }

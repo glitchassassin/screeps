@@ -4,10 +4,11 @@ import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
+import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { Objective } from "./Objective";
@@ -33,7 +34,7 @@ export class HeadquartersLogisticsObjective extends Objective {
             return 0;
         }
 
-        if (profitPerTick(office) <= 0) return 0; // Only spawn logistics minions if we have active Franchises
+        if (franchiseIncomePerTick(office) <= 0 ) return 0; // Only spawn logistics minions if we have active Franchises
 
         let spawnQueue = [];
 
@@ -57,7 +58,7 @@ export class HeadquartersLogisticsObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         // Priorities:
         // Link -> Storage
         // Storage -> Towers
@@ -174,3 +175,4 @@ export class HeadquartersLogisticsObjective extends Objective {
     }
 }
 
+profiler.registerClass(HeadquartersLogisticsObjective, 'HeadquartersLogisticsObjective')

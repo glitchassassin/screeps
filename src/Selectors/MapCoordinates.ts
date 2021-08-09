@@ -73,8 +73,8 @@ export const calculateNearbyRooms = memoize(
     }
 )
 export const isPositionWalkable = memoizeByTick(
-    (pos: RoomPosition, ignoreCreeps: boolean = false) => packPos(pos) + ignoreCreeps,
-    (pos: RoomPosition, ignoreCreeps: boolean = false) => {
+    (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => packPos(pos) + ignoreCreeps + ignoreStructures,
+    (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => {
         let terrain;
         try {
             terrain = Game.map.getRoomTerrain(pos.roomName);
@@ -87,8 +87,8 @@ export const isPositionWalkable = memoizeByTick(
         }
         if (Game.rooms[pos.roomName] && pos.look().some(obj => {
             if (!ignoreCreeps && obj.type === LOOK_CREEPS) return true;
-            if (obj.constructionSite && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.constructionSite.structureType)) return true;
-            if (obj.structure && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.structure.structureType)) return true;
+            if (!ignoreStructures && obj.constructionSite && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.constructionSite.structureType)) return true;
+            if (!ignoreStructures && obj.structure && (OBSTACLE_OBJECT_TYPES as string[]).includes(obj.structure.structureType)) return true;
             return false;
         })) {
             return false;
@@ -195,18 +195,22 @@ export const roomNameFromCoords = (x: number, y: number) => {
 }
 export const countTerrainTypes = (roomName: string) => {
     let terrain = Game.map.getRoomTerrain(roomName);
-    return terrain.getRawBuffer().reduce((terrainStats, t) => {
-        if (t & TERRAIN_MASK_SWAMP) {
-            terrainStats.swamp += 1;
-        } else if (t & TERRAIN_MASK_WALL) {
-            terrainStats.wall += 1
-        } else if (t & TERRAIN_MASK_LAVA) {
-            terrainStats.lava += 1
-        } else {
-            terrainStats.plains += 1
+    const terrainStats = {swamp: 0, plains: 0, wall: 0, lava: 0};
+    for (let x = 0; x < 50; x += 1) {
+        for (let y = 0; y < 50; y += 1) {
+            const t = terrain.get(x, y)
+            if (t & TERRAIN_MASK_SWAMP) {
+                terrainStats.swamp += 1;
+            } else if (t & TERRAIN_MASK_WALL) {
+                terrainStats.wall += 1
+            } else if (t & TERRAIN_MASK_LAVA) {
+                terrainStats.lava += 1
+            } else {
+                terrainStats.plains += 1
+            }
         }
-        return terrainStats
-    }, {swamp: 0, plains: 0, wall: 0, lava: 0})
+    }
+    return terrainStats
 }
 export const sortByDistanceTo = <T extends (RoomPosition|_HasRoomPosition)>(pos: RoomPosition) => {
     let distance = new Map<RoomPosition, number>();

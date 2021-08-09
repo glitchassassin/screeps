@@ -1,6 +1,7 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -46,7 +47,7 @@ export class ExploreObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         // Select a target
         if (!creep.memory.exploreTarget) {
             // Ignore aggression on scouts
@@ -83,7 +84,6 @@ export class ExploreObjective extends Objective {
                 if (moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep) === BehaviorResult.FAILURE) {
                     Memory.rooms[creep.memory.exploreTarget] ??= { }; // Unable to path
                     Memory.rooms[creep.memory.exploreTarget].scanned = Game.time;
-                    console.log(creep.name, 'unable to explore', creep.memory.exploreTarget);
                     delete creep.memory.exploreTarget;
                     return;
                 }
@@ -106,3 +106,4 @@ export class ExploreObjective extends Objective {
     }
 }
 
+profiler.registerClass(ExploreObjective, 'ExploreObjective')

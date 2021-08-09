@@ -1,6 +1,8 @@
+import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
+import profiler from "screeps-profiler";
+import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
-import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 
 declare global {
     interface RoomMemory {
@@ -17,7 +19,7 @@ declare global {
     }
 }
 
-export const scanRooms = () => {
+export const scanRooms = profiler.registerFN(() => {
     Memory.positions ??= {};
     Memory.rooms ??= {};
 
@@ -64,12 +66,14 @@ export const scanRooms = () => {
             Memory.rooms[room].rclMilestones![Game.rooms[room].controller!.level] ??= Game.time;
 
             if (!Memory.offices[room]) {
+                // Initialize new office
                 Memory.offices[room] = {
                     city: cityNames.find(name => !Object.values(Memory.offices).some(r => r.city === name)) ?? room
                 }
+                destroyUnplannedStructures(room);
             }
         }
 
         scanRoomPlanStructures(room);
     }
-}
+}, 'scanRooms');

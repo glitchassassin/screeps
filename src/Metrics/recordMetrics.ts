@@ -1,10 +1,11 @@
 import { FranchiseObjective } from "Objectives/Franchise";
-import { Metrics } from "screeps-viz";
 import { PrioritizedObjectives } from "Objectives/initializeObjectives";
+import profiler from "screeps-profiler";
+import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
-import { heapMetrics } from "./heapMetrics";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import { heapMetrics } from "./heapMetrics";
 
 declare global {
     interface Memory {
@@ -42,7 +43,7 @@ declare global {
     }
 }
 
-export const recordMetrics = () => {
+export const recordMetrics = profiler.registerFN(() => {
     let stats = {
         time: Game.time,
         gcl: {
@@ -96,5 +97,4 @@ export const recordMetrics = () => {
             objectives
         }
     }
-
-}
+}, 'recordMetrics')

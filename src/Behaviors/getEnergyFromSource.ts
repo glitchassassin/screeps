@@ -1,9 +1,9 @@
-import { BehaviorResult } from "./Behavior";
 import { byId } from "Selectors/byId";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
-import { moveTo } from "./moveTo";
 import { posById } from "Selectors/posById";
 import { sourceIds } from "Selectors/roomCache";
+import { BehaviorResult } from "./Behavior";
+import { moveTo } from "./moveTo";
 
 declare global {
     interface CreepMemory {
@@ -30,7 +30,7 @@ export const getEnergyFromSource = (creep: Creep, roomName?: string) => {
         const targetRoom = roomName ?? creep.memory.office;
         const [source1, source2] = sourceIds(targetRoom)
             .map(id => ({pos: posById(id), id, source: byId(id)}))
-            .filter(s => !s.source || s.source.energy > 0 || !franchiseIsFull(creep, s.id))
+            .filter(s => !s.source || (s.source.energy > 0 && !franchiseIsFull(creep, s.id)))
 
         if (!source1) return BehaviorResult.FAILURE // No known sources in room
 

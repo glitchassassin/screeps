@@ -3,6 +3,7 @@ import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineCon
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -72,7 +73,7 @@ export class MineObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         if (creep.memory.type === MinionTypes.FOREMAN || creep.memory.type === MinionTypes.ACCOUNTANT) {
             this.actions[creep.memory.type](creep);
         }
@@ -145,3 +146,4 @@ export class MineObjective extends Objective {
     }
 }
 
+profiler.registerClass(MineObjective, 'MineObjective')

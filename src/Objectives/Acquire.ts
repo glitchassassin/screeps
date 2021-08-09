@@ -2,13 +2,13 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { FacilitiesObjective } from "./Facilities";
 import { Objective } from "./Objective";
 
 
@@ -72,7 +72,7 @@ export class AcquireObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         if (creep.memory.type === MinionTypes.LAWYER || creep.memory.type === MinionTypes.ENGINEER) {
             this.actions[creep.memory.type](creep);
         }
@@ -107,9 +107,10 @@ export class AcquireObjective extends Objective {
             // Fill up with energy at home office and then reassign
             if (engineerGetEnergy(creep) === BehaviorResult.SUCCESS) {
                 creep.memory.office = room;
-                creep.memory.objective = FacilitiesObjective.constructor.name;
+                creep.memory.objective = 'FacilitiesObjective';
             }
         }
     }
 }
 
+profiler.registerClass(AcquireObjective, 'AcquireObjective')

@@ -1,12 +1,13 @@
-import { debugCPU, resetDebugCPU } from "utils/debugCPU";
-
-import { PrioritizedObjectives } from "./initializeObjectives";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { spawns } from "Selectors/roomPlans";
+import { debugCPU, resetDebugCPU } from "utils/debugCPU";
+import { PrioritizedObjectives } from "./initializeObjectives";
+
 
 const DEBUG = false;
 
-export const spawnObjectives = (room: string) => {
+export const spawnObjectives = profiler.registerFN((room: string) => {
     let s = spawns(room);
     if (DEBUG) resetDebugCPU();
     for (let o of PrioritizedObjectives) {
@@ -18,4 +19,4 @@ export const spawnObjectives = (room: string) => {
         // Remove any booked spawns and continue
         s = s.slice(spawnedCount);
     }
-}
+}, 'spawnObjectives')

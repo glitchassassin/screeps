@@ -16,7 +16,7 @@ export abstract class Objective {
     /**
      * The BehaviorTree for all creeps (regardless of office)
      */
-    abstract action: (creep: Creep) => void;
+    abstract action(creep: Creep): void;
 
     /**
      * Checks to see if this Objective needs more minions in the

@@ -7,6 +7,7 @@
  * Creep.giveWay({pos: controller.pos, range: 3 }) - moves into random available spot in range of target, if none are avaiable fallbacks to random spot
  */
 
+import profiler from "screeps-profiler";
 import { unpackPos } from "./packrat";
 
 /*
@@ -221,7 +222,7 @@ PowerCreep.prototype.giveWay = function () {
  * clears nudges from memory of creeps that moved
  * call on tick start
  */
-export function clearNudges() {
+export const clearNudges = profiler.registerFN(() => {
   movingThisTick = [];
   for (let creepName in creepsThatTriedToMove) {
     const creep = Game.creeps[creepName];
@@ -237,4 +238,4 @@ export function clearNudges() {
       delete creepsThatTriedToMove[creepName];
     }
   }
-}
+}, 'clearNudges')

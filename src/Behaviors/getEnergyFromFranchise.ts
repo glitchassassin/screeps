@@ -1,12 +1,13 @@
-import { BehaviorResult } from "./Behavior";
+import profiler from "screeps-profiler";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
-import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
-import { moveTo } from "./moveTo";
 import { posById } from "Selectors/posById";
 import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { sourceIds } from "Selectors/roomCache";
+import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
+import { BehaviorResult } from "./Behavior";
+import { moveTo } from "./moveTo";
 
-export const getEnergyFromFranchise = (creep: Creep, franchise?: Id<Source>) => {
+export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, franchise?: Id<Source>) => {
     // Default to specified franchise
     creep.memory.depositSource ??= franchise;
 
@@ -51,4 +52,4 @@ export const getEnergyFromFranchise = (creep: Creep, franchise?: Id<Source>) => 
     }
 
     return BehaviorResult.INPROGRESS;
-}
+}, 'getEnergyFromFranchise')

@@ -1,3 +1,4 @@
+import profiler from "screeps-profiler";
 import { roomPlans } from "Selectors/roomPlans";
 
 /**
@@ -13,7 +14,7 @@ export const towerDamage = (tower?: StructureTower, pos?: RoomPosition) => {
     return amount;
 }
 
-export const runTowers = (roomName: string) => {
+export const runTowers = profiler.registerFN((roomName: string) => {
     const plan = roomPlans(roomName)?.office;
     if (!plan || !Game.rooms[roomName]) return;
 
@@ -42,4 +43,4 @@ export const runTowers = (roomName: string) => {
             (t.structure as StructureTower).attack(priorityTarget);
         }
     }
-}
+}, 'runTowers')

@@ -1,3 +1,4 @@
+import profiler from "screeps-profiler";
 import { roomPlans } from "Selectors/roomPlans";
 
 const linkUsedCapacity = (link: StructureLink|undefined) => {
@@ -5,7 +6,7 @@ const linkUsedCapacity = (link: StructureLink|undefined) => {
     return link.store.getUsedCapacity(RESOURCE_ENERGY) / link.store.getCapacity(RESOURCE_ENERGY)
 }
 
-export const runLinks = (roomName: string) => {
+export const runLinks = profiler.registerFN((roomName: string) => {
     const plan = roomPlans(roomName)?.office;
     if (!plan || !plan.headquarters.link.structure) return;
 
@@ -19,4 +20,4 @@ export const runLinks = (roomName: string) => {
     if (linkUsedCapacity(franchise2link) > 0.8) {
         franchise2link!.transferEnergy(hqlink);
     }
-}
+}, 'runLinks')

@@ -7,7 +7,7 @@ export const scanRoomPlanStructures = (room: string) => {
     const rcl = Game.rooms[room]?.controller?.level ?? 0;
     if (Game.rooms[room] && (scanned[room] !== structures || Game.time % 50 === 0)) {
         scanned[room] = structures;
-        for (let s of plannedStructuresByRcl(room, rcl)) {
+        for (let s of plannedStructuresByRcl(room, 8)) {
             s.survey();
         }
     }

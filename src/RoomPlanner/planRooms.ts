@@ -1,6 +1,7 @@
+import profiler from "screeps-profiler";
 import { generateRoomPlans } from "./RoomArchitect";
 
-export const planRooms = () => {
+export const planRooms = profiler.registerFN(() => {
     let start = Game.cpu.getUsed();
     if (Game.cpu.bucket < 500) return; // Don't do room planning at low bucket levels
 
@@ -12,4 +13,4 @@ export const planRooms = () => {
             generateRoomPlans(room);
         }
     }
-}
+}, 'planRooms')

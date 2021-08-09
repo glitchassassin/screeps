@@ -4,6 +4,7 @@ import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRoute";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
@@ -141,7 +142,7 @@ export class FranchiseObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         if (this.disabled) return;
 
         if (creep.memory.type === MinionTypes.SALESMAN || creep.memory.type === MinionTypes.ACCOUNTANT) {
@@ -150,7 +151,7 @@ export class FranchiseObjective extends Objective {
     }
 
     actions = {
-        [MinionTypes.SALESMAN]: (creep: Creep) => {
+        [MinionTypes.SALESMAN]: profiler.registerFN((creep: Creep) => {
             harvestEnergyFromFranchise(creep, this.sourceId);
 
             if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.8) {
@@ -200,8 +201,8 @@ export class FranchiseObjective extends Objective {
                     // }
                 }
             }
-        },
-        [MinionTypes.ACCOUNTANT]: (creep: Creep) => {
+        }, 'FranchiseObjective.action[SALESMAN]'),
+        [MinionTypes.ACCOUNTANT]: profiler.registerFN((creep: Creep) => {
             if (!creep.memory.state) {
                 if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
                     setState(States.WITHDRAW)(creep);
@@ -250,7 +251,8 @@ export class FranchiseObjective extends Objective {
                     }
                 }
             }
-        }
+        }, 'FranchiseObjective.action[ACCOUNTANT]')
     }
 }
 
+profiler.registerClass(FranchiseObjective, 'FranchiseObjective')

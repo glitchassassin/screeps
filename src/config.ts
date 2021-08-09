@@ -4,6 +4,20 @@
 export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 0 : 1;
 
 /**
+ * Storage level targets by RCL
+ */
+ export const STORAGE_LEVEL: Record<number, number> = {
+    1: 2e+3,
+    2: 2e+3,
+    3: 2e+3,
+    4: 1e+4,
+    5: 5e+4,
+    6: 1e+5,
+    7: 5e+5,
+    8: 9e+5,
+}
+
+/**
  * Barrier level targets by RCL
  */
 export const BARRIER_LEVEL: Record<number, number> = {
@@ -53,8 +67,3 @@ export const WHITELIST = [
 export const CACHED_STRUCTURES: StructureConstant[] = [
     STRUCTURE_CONTAINER
 ]
-
-export const PROFILE = {
-    managers: false,
-    requests: false
-}

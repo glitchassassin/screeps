@@ -1,11 +1,11 @@
-import { ExtensionsPlan, deserializeExtensionsPlan } from "RoomPlanner/ExtensionsPlan";
-import { FranchisePlan, deserializeFranchisePlan } from "RoomPlanner/FranchisePlan";
-import { HeadquartersPlan, deserializeHeadquartersPlan } from "RoomPlanner/HeadquartersPlan";
-import { MinePlan, deserializeMinePlan } from "RoomPlanner/MinePlan";
-import { TerritoryFranchisePlan, deserializeTerritoryFranchisePlan } from "RoomPlanner/TerritoryFranchise";
-
-import { posById } from "./posById";
+import { deserializeExtensionsPlan, ExtensionsPlan } from "RoomPlanner/ExtensionsPlan";
+import { deserializeFranchisePlan, FranchisePlan } from "RoomPlanner/FranchisePlan";
+import { deserializeHeadquartersPlan, HeadquartersPlan } from "RoomPlanner/HeadquartersPlan";
+import { deserializeMinePlan, MinePlan } from "RoomPlanner/MinePlan";
+import { deserializeTerritoryFranchisePlan, TerritoryFranchisePlan } from "RoomPlanner/TerritoryFranchise";
 import profiler from "screeps-profiler";
+import { posById } from "./posById";
+
 
 export interface RoomPlan {
     office?: {
@@ -59,7 +59,7 @@ export const spawns = (roomName: string) => {
     ].filter(s => s) as StructureSpawn[];
 }
 
-export const getFranchisePlanBySourceId = (id: Id<Source>) => {
+export const getFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) => {
     const pos = posById(id);
     if (!pos) return;
     const plan = roomPlans(pos.roomName);
@@ -67,7 +67,7 @@ export const getFranchisePlanBySourceId = (id: Id<Source>) => {
     if (plan.office.franchise1.sourceId === id) return plan.office.franchise1;
     if (plan.office.franchise2.sourceId === id) return plan.office.franchise2;
     return;
-}
+}, 'getFranchisePlanBySourceId')
 
 export const getTerritoryFranchisePlanBySourceId = (id: Id<Source>) => {
     const pos = posById(id);

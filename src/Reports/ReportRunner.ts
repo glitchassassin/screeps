@@ -2,8 +2,9 @@ import AcquireReport from "Reports/AcquireReport";
 import FacilitiesReport from "Reports/FacilitiesReport";
 import FranchiseReport from "Reports/FranchiseReport";
 import MilestonesReport from "Reports/MilestonesReport";
-import ObjectivesReport from "./ObjectivesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
+import profiler from "screeps-profiler";
+import ObjectivesReport from "./ObjectivesReport";
 import TerritoriesReport from "./TerritoriesReport";
 
 declare global {
@@ -22,9 +23,9 @@ export const register = (key: string, runner: CallableFunction) => {
     allReports[key] = runner;
 }
 
-export const run = () => {
+export const run = profiler.registerFN(() => {
     allReports[activeReport]?.();
-}
+}, 'runReports')
 
 global.d = (key: string) => {
     activeReport = key;

@@ -5,6 +5,7 @@ import { HeadquartersLogisticsObjective } from "./HeadquartersLogistics";
 import { MineObjective } from "./Mine";
 import { Objective, Objectives } from "./Objective";
 import { RefillExtensionsObjective } from "./RefillExtensions";
+import { UpgradeObjective } from "./Upgrade";
 
 
 declare global {
@@ -39,6 +40,7 @@ initialize(
     new MineObjective(5),
     new ExploreObjective(4),
     new AcquireObjective(4),
+    new UpgradeObjective(3),
     // Remote FranchiseObjectives are 2
 );
 

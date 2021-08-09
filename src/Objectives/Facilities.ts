@@ -5,9 +5,9 @@ import { setState, States } from "Behaviors/states";
 import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
-import { destroyAdjacentUnplannedStructures, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
-import { findAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
+import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
@@ -22,24 +22,22 @@ declare global {
 
 export class FacilitiesObjective extends Objective {
     spawnTarget(office: string) {
-        let surplusIncome = profitPerTick(office, this) - 4; // Extra for spawning minions
-        const acquireTarget = findAcquireTarget();
-        if (acquireTarget && officeShouldSupportAcquireTarget(office)) {
-            surplusIncome -= 2 // Adjust available energy for spawning extra Engineers
-            surplusIncome += profitPerTick(acquireTarget);
-        }
-        surplusIncome = Math.max(0, surplusIncome);
+        const work = facilitiesWorkToDo(office);
+        if (!work.length) return 0;
+        let surplusIncome = Math.max(0, profitPerTick(office, this));
+        const constructionToDo = work.some(s => !s.structure);
         // Spawn based on maximizing use of available energy
-        const workPartsPerEngineer = Math.min(25, Math.floor((spawnEnergyAvailable(office) * 1/2) / 100))
-        // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
-        const engineers = Math.floor(surplusIncome / (UPGRADE_CONTROLLER_POWER * workPartsPerEngineer));
-        return engineers;
+        const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * spawnEnergyAvailable(office) / 100))
+        const engineers = Math.floor(surplusIncome / (REPAIR_COST * REPAIR_POWER * workPartsPerEngineer));
+
+        // Spawn to maximize energy for building, but spawn fewer if only repairing
+        return constructionToDo ? engineers : Math.round(work.length / 5);
     }
     energyValue(office: string) {
         const engineers = this.spawnTarget(office);
-        const workPartsPerEngineer = Math.min(25, Math.floor((spawnEnergyAvailable(office) * 1/2) / 100))
+        const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * spawnEnergyAvailable(office) / 100))
         const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))) * engineers;
-        const workCosts = (workPartsPerEngineer * engineers) * UPGRADE_CONTROLLER_POWER;
+        const workCosts = (workPartsPerEngineer * engineers) * REPAIR_COST * REPAIR_POWER;
         return -(workCosts + minionCosts);
     }
     spawn(office: string, spawns: StructureSpawn[]) {
@@ -73,13 +71,13 @@ export class FacilitiesObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         let facilitiesTarget;
         // Check target for completion
         if (creep.memory.facilitiesTarget) {
             facilitiesTarget = PlannedStructure.deserialize(creep.memory.facilitiesTarget)
             if (facilitiesTarget.structure) {
-                const rcl = Game.rooms[creep.memory.office].controller?.level ?? 0;
+                const rcl = Game.rooms[creep.memory.office]?.controller?.level ?? 0;
                 const maxHits = BARRIER_TYPES.includes(facilitiesTarget.structureType) ? BARRIER_LEVEL[rcl] : facilitiesTarget.structure.hitsMax;
                 if (facilitiesTarget.structure.hits >= maxHits) {
                     creep.memory.facilitiesTarget = undefined;
@@ -90,14 +88,9 @@ export class FacilitiesObjective extends Objective {
         // Select a target
         if (!creep.memory.facilitiesTarget) {
             const workToDo = facilitiesWorkToDo(creep.memory.office);
-            const acquireTarget = findAcquireTarget();
-            if (acquireTarget && officeShouldSupportAcquireTarget(creep.memory.office)) {
-                workToDo.push(...facilitiesWorkToDo(acquireTarget))
-            }
             facilitiesTarget = workToDo.shift();
             if (facilitiesTarget) {
                 creep.memory.facilitiesTarget = facilitiesTarget.serialize();
-                destroyAdjacentUnplannedStructures(facilitiesTarget.pos.roomName, facilitiesTarget);
             }
         }
 
@@ -116,7 +109,7 @@ export class FacilitiesObjective extends Objective {
         if (creep.memory.state === States.WORKING) {
             if (!creep.memory.facilitiesTarget) {
                 // No construction - upgrade instead
-                const controller = Game.rooms[creep.memory.office].controller
+                const controller = Game.rooms[creep.memory.office]?.controller
                 if (!controller) return;
                 moveTo(controller.pos, 3)(creep);
                 if (creep.upgradeController(controller) == ERR_NOT_ENOUGH_ENERGY) {
@@ -124,6 +117,7 @@ export class FacilitiesObjective extends Objective {
                 }
             } else {
                 const plan = PlannedStructure.deserialize(creep.memory.facilitiesTarget)
+                // console.log(plan.pos, plan.structureType)
 
                 if (moveTo(plan.pos, 3)(creep) === BehaviorResult.SUCCESS) {
                     if (plan.structure) {
@@ -145,3 +139,4 @@ export class FacilitiesObjective extends Objective {
     }
 }
 
+profiler.registerClass(FacilitiesObjective, 'FacilitiesObjective')

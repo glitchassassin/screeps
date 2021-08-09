@@ -1,10 +1,10 @@
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { getCostMatrix, getRangeTo, isPositionWalkable, sortByDistanceTo } from "Selectors/MapCoordinates";
-
+import { deserializePlannedStructures } from "Selectors/plannedStructures";
 import { FranchisePlan } from "./FranchisePlan";
 import { HeadquartersPlan } from "./HeadquartersPlan";
 import { MinePlan } from "./MinePlan";
-import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { deserializePlannedStructures } from "Selectors/plannedStructures";
+
 
 export interface ExtensionsPlan {
     extensions: PlannedStructure[];
@@ -168,7 +168,7 @@ function outlineExtensions(roomName: string, extensions: PlannedStructure[]) {
     for (let ext of extensions) {
         let neighbors = getNeighboringExtensionSquares(ext.pos);
         let neighborsStatus = neighbors.map(pos => (
-            !isPositionWalkable(pos, true) ||
+            !isPositionWalkable(pos, true, true) ||
             extensions.some(e => e.pos.isEqualTo(pos))
         ));
 

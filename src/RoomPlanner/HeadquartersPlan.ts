@@ -1,8 +1,8 @@
-import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
-
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
 import { deserializePlannedStructures } from "Selectors/plannedStructures";
 import { posById } from "Selectors/posById";
+
 
 const HQ_UPGRADE_LEFT: StructureConstant[][] = [
     [STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
@@ -61,6 +61,7 @@ const validateHeadquartersPlan = (plan: Partial<HeadquartersPlan>) => {
         !plan.spawn || !plan.link || !plan.container || !plan.storage || !plan.terminal ||
         !plan.towers?.length || !plan.roads?.length || !plan.ramparts?.length || !plan.walls?.length
     ) {
+        console.log(JSON.stringify(plan))
         throw new Error(`Incomplete HeadquartersPlan`)
     } else {
         return plan as HeadquartersPlan;
@@ -68,17 +69,6 @@ const validateHeadquartersPlan = (plan: Partial<HeadquartersPlan>) => {
 }
 
 export const planHeadquarters = (roomName: string) => {
-    const plan: Partial<HeadquartersPlan> = {
-        spawn: undefined,
-        link: undefined,
-        container: undefined,
-        storage: undefined,
-        terminal: undefined,
-        towers: [],
-        roads: [],
-        ramparts: [],
-        walls: [],
-    }
     // Calculate from scratch
     if (!Memory.rooms[roomName]) throw new Error('No data cached for planning room')
     let controllerPos = posById(Memory.rooms[roomName].controllerId)
@@ -87,8 +77,20 @@ export const planHeadquarters = (roomName: string) => {
     if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
 
     let bestDistance = Infinity;
+    let bestPlan: Partial<HeadquartersPlan> = {};
 
     for (let space of findSpaces(controllerPos, sources)) {
+        let plan: Partial<HeadquartersPlan> = {
+            spawn: undefined,
+            link: undefined,
+            container: undefined,
+            storage: undefined,
+            terminal: undefined,
+            towers: [],
+            roads: [],
+            ramparts: [],
+            walls: [],
+        }
         // Orient the space
         //            X X X
         // X X O X X  X X X
@@ -162,6 +164,7 @@ export const planHeadquarters = (roomName: string) => {
         )) continue; // Invalid room plan
         if (distance >= bestDistance) continue; // We already have a better layout
         bestDistance = distance;
+        bestPlan = plan;
 
         // Valid room plan
         for (let y = 0; y < orientation.length; y++) {
@@ -200,15 +203,15 @@ export const planHeadquarters = (roomName: string) => {
         plan.roads = Array.from(roads);
 
         plan.ramparts = generateRampartPositions(roomName, space)
-            .filter(pos => isPositionWalkable(pos, true))
+            .filter(pos => isPositionWalkable(pos, true, true))
             .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
 
         plan.walls = calculateAdjacentPositions(controllerPos)
-            .filter(pos => isPositionWalkable(pos, true))
+            .filter(pos => isPositionWalkable(pos, true, true))
             .map(pos => new PlannedStructure(pos, STRUCTURE_WALL));
     }
 
-    return validateHeadquartersPlan(plan);
+    return validateHeadquartersPlan(bestPlan);
 }
 
 function generateRampartPositions(roomName: string, space: {x: number, y: number, horizontal: boolean}) {
@@ -241,11 +244,11 @@ function *findSpaces(controllerPos: RoomPosition, sources: RoomPosition[]) {
         for (let xGrid = 0; xGrid < width; xGrid++) {
             // For each cell...
             let t = terrain.get(x+xGrid, y+yGrid)
-            // If the cell is a wall, adjacent to the controller, or within 3 squares of a source, reset its value to 0,0
+            // If the cell is a wall, adjacent to the controller, or within 5 squares of a source, reset its value to 0,0
             if (
                 t === TERRAIN_MASK_WALL ||
-                controllerPos.inRangeTo(x, y, 1) ||
-                sources.some(s => s.inRangeTo(x, y, 3))
+                controllerPos.inRangeTo(x+xGrid, y+yGrid, 1) ||
+                sources.some(s => s.inRangeTo(x+xGrid, y+yGrid, 5))
             ) {
                 grid[yGrid][xGrid] = {x: 0, y: 0};
                 continue;

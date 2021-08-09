@@ -1,13 +1,13 @@
-import { controllerPosition, mineralPosition, sourceIds } from 'Selectors/roomCache';
-import { planFranchise, serializeFranchisePlan } from 'RoomPlanner/FranchisePlan';
-import { planTerritoryFranchise, serializeTerritoryFranchisePlan } from './TerritoryFranchise';
-
-import { countTerrainTypes } from 'Selectors/MapCoordinates';
 import { planExtensions } from 'RoomPlanner/ExtensionsPlan';
+import { planFranchise, serializeFranchisePlan } from 'RoomPlanner/FranchisePlan';
 import { planHeadquarters } from 'RoomPlanner/HeadquartersPlan';
 import { planMine } from 'RoomPlanner/MinePlan';
-import { posById } from 'Selectors/posById';
+import { countTerrainTypes } from 'Selectors/MapCoordinates';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
+import { posById } from 'Selectors/posById';
+import { controllerPosition, mineralPosition, sourceIds } from 'Selectors/roomCache';
+import { planTerritoryFranchise, serializeTerritoryFranchisePlan } from './TerritoryFranchise';
+
 
 declare global {
     interface Memory {
@@ -118,7 +118,8 @@ const planOffice = (roomName: string) => {
             .sort((a, b) => posById(a)!.getRangeTo(controller!) - posById(b)!.getRangeTo(controller!))
             .map(source => planFranchise(source));
         if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`);
-        [franchise1, franchise2] = plans;
+        // If one plan has a spawn already, that is franchise1
+        [franchise1, franchise2] = plans.sort((a, b) => (!b.spawn.structure && a.spawn.structure) ? -1 : 0);
     } catch (e) {
         throw new Error('FAILED generating franchises: ' + e.message);
     }

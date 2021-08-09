@@ -1,8 +1,8 @@
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
 import { deserializePlannedStructures, serializePlannedStructures } from "Selectors/plannedStructures";
-
-import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { posById } from "Selectors/posById";
+
 
 export interface FranchisePlan {
     sourceId: Id<Source>;
@@ -65,7 +65,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
 
     // 0. Check if an initial spawn already exists near Source.
     let spawn: StructureSpawn|undefined = undefined;
-    try { [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 2); } catch {}
+    try { [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 3); } catch {}
 
     // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
     let route = PathFinder.search(
@@ -81,7 +81,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
 
     // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller.
     let adjacents = calculateAdjacentPositions(plan.container.pos).filter(pos => (
-        isPositionWalkable(pos) &&
+        isPositionWalkable(pos, true, true) &&
         !pos.isEqualTo(route.path[1])
     ))
     if (spawn) {
@@ -98,7 +98,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
 
     plan.ramparts = calculateAdjacentPositions(plan.spawn.pos)
         .filter(pos => (
-            isPositionWalkable(pos, true) &&
+            isPositionWalkable(pos, true, true) &&
             !pos.isEqualTo(plan.link!.pos) &&
             !pos.isEqualTo(plan.container!.pos)
         ))

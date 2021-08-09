@@ -4,8 +4,9 @@ import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
-import { profitPerTick } from "Selectors/profitPerTick";
+import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
@@ -34,7 +35,7 @@ export class RefillExtensionsObjective extends Objective {
         return Math.ceil(capacity / CARRY_CAPACITY);
     }
     spawn(office: string, spawns: StructureSpawn[]) {
-        if (profitPerTick(office) <= 0) return 0; // Only spawn refillers if we have active Franchises
+        if (franchiseIncomePerTick(office) <= 0 ) return 0; // Only spawn refillers if we have active Franchises
 
         if (roomPlans(office)?.office?.extensions.extensions.every(e => !e.structure)) return 0; // No extensions
         const targetCarry = this.targetCarry(office);
@@ -72,7 +73,7 @@ export class RefillExtensionsObjective extends Objective {
         return spawnQueue.length;
     }
 
-    action = (creep: Creep) => {
+    action(creep: Creep) {
         // Cleanup
         const tombstone = creep.pos.findInRange(FIND_TOMBSTONES, 1).shift()
         if (tombstone) creep.withdraw(tombstone, RESOURCE_ENERGY)
@@ -123,3 +124,4 @@ export class RefillExtensionsObjective extends Objective {
     }
 }
 
+profiler.registerClass(RefillExtensionsObjective, 'RefillExtensionsObjective')

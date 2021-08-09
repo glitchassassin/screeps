@@ -80,17 +80,7 @@ export const acquireTargetIsValid = (roomName: string) => {
     )
 }
 
-export const officeShouldClaimAcquireTarget = (officeName: string) => {
-    // Sets acquireTarget and acquiringOffice. If we sohuld not
-    // support, we should not claim either.
-    if (!officeShouldSupportAcquireTarget(officeName)) return false;
-
-    // Evaluate further if claiming is actually necessary
-    if (!cachedAcquireTarget) return false;
-    return !Memory.offices[cachedAcquireTarget]
-}
-
-export const officeShouldSupportAcquireTarget = (officeName: string) => {
+export const officeShouldAcquireTarget = (officeName: string) => {
     const room = findAcquireTarget();
     if (!room) return false;
 
@@ -114,4 +104,26 @@ export const officeShouldSupportAcquireTarget = (officeName: string) => {
     }
 
     return (officeName === cachedAcquiringOffice);
+}
+
+export const officeShouldClaimAcquireTarget = (officeName: string) => {
+    // Sets acquireTarget and acquiringOffice. If we sohuld not
+    // support, we should not claim either.
+    if (!officeShouldAcquireTarget(officeName)) return false;
+
+    // Evaluate further if claiming is actually necessary
+    if (!cachedAcquireTarget) return false;
+    return !Memory.offices[cachedAcquireTarget]
+}
+
+export const officeShouldSupportAcquireTarget = (officeName: string) => {
+    // Sets acquireTarget and acquiringOffice. If we sohuld not
+    // support, we should not claim either.
+    if (!officeShouldAcquireTarget(officeName)) return false;
+
+    // Evaluate further if claiming is actually necessary
+    if (!cachedAcquireTarget) return false;
+    const controller = Game.rooms[cachedAcquireTarget]?.controller
+    if (!controller) return false;
+    return controller.my && controller.level < 4;
 }
