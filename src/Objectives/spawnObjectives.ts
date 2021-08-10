@@ -1,7 +1,7 @@
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { spawns } from "Selectors/roomPlans";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
+import profiler from "utils/profiler";
 import { PrioritizedObjectives } from "./initializeObjectives";
 
 

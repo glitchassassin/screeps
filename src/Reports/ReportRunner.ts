@@ -3,7 +3,7 @@ import FacilitiesReport from "Reports/FacilitiesReport";
 import FranchiseReport from "Reports/FranchiseReport";
 import MilestonesReport from "Reports/MilestonesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
-import profiler from "screeps-profiler";
+import profiler from "utils/profiler";
 import ObjectivesReport from "./ObjectivesReport";
 import TerritoriesReport from "./TerritoriesReport";
 

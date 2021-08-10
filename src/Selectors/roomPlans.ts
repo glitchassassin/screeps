@@ -3,7 +3,7 @@ import { deserializeFranchisePlan, FranchisePlan } from "RoomPlanner/FranchisePl
 import { deserializeHeadquartersPlan, HeadquartersPlan } from "RoomPlanner/HeadquartersPlan";
 import { deserializeMinePlan, MinePlan } from "RoomPlanner/MinePlan";
 import { deserializeTerritoryFranchisePlan, TerritoryFranchisePlan } from "RoomPlanner/TerritoryFranchise";
-import profiler from "screeps-profiler";
+import profiler from "utils/profiler";
 import { posById } from "./posById";
 
 
@@ -21,18 +21,18 @@ export interface RoomPlan {
     }
 }
 
-const plans: Record<string, RoomPlan> = {}
+const plans: Map<string, RoomPlan> = new Map();
 
 export const roomPlans = profiler.registerFN((roomName: string) => {
-    if (plans[roomName]) {
-        return plans[roomName];
-    }
     Memory.roomPlans ??= {};
 
     let plan = Memory.roomPlans[roomName];
     if (!plan) {
-        delete plans[roomName];
+        plans.delete(roomName);
         return;
+    }
+    if (plans.has(roomName)) {
+        return plans.get(roomName);
     }
 
     const territory = plan.territory ? {
@@ -47,8 +47,8 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
         extensions: deserializeExtensionsPlan(plan.office.extensions),
     } : undefined;
 
-    plans[roomName] ??= { office, territory }
-    return plans[roomName]
+    plans.set(roomName, { office, territory })
+    return plans.get(roomName)
 }, 'roomPlans') as (roomName: string) => RoomPlan|undefined
 
 export const spawns = (roomName: string) => {
@@ -69,7 +69,7 @@ export const getFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) =
     return;
 }, 'getFranchisePlanBySourceId')
 
-export const getTerritoryFranchisePlanBySourceId = (id: Id<Source>) => {
+export const getTerritoryFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) => {
     const pos = posById(id);
     if (!pos) return;
     const plan = roomPlans(pos.roomName);
@@ -77,4 +77,4 @@ export const getTerritoryFranchisePlanBySourceId = (id: Id<Source>) => {
     if (plan.territory?.franchise1.sourceId === id) return plan.territory.franchise1;
     if (plan.territory?.franchise2?.sourceId === id) return plan.territory.franchise2;
     return;
-}
+}, 'getTerritoryFranchisePlanBySourceId')

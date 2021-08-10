@@ -1,7 +1,7 @@
-import { packPos, unpackPos } from "utils/packrat";
-
 import { byId } from "Selectors/byId";
-import profiler from "screeps-profiler";
+import { packPos, unpackPos } from "utils/packrat";
+import profiler from "utils/profiler";
+
 
 const PackedStructureTypes: Record<BuildableStructureConstant, string> = {
     [STRUCTURE_CONTAINER]:      'a',
@@ -35,6 +35,8 @@ let plannedStructures: Record<string, PlannedStructure> = {};
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     private lastSurveyed = 0;
+    private lastGet = 0;
+    private _structure: Structure<T>|undefined = undefined;
     constructor(
         public pos: RoomPosition,
         public structureType: T,
@@ -49,7 +51,10 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     }
 
     get structure() {
-        return byId(this.structureId);
+        if (Game.time !== this.lastGet) {
+            this._structure = byId(this.structureId);
+        }
+        return this._structure;
     }
 
     get constructionSite() {

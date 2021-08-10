@@ -1,10 +1,10 @@
 import { FranchiseObjective } from "Objectives/Franchise";
 import { PrioritizedObjectives } from "Objectives/initializeObjectives";
-import profiler from "screeps-profiler";
 import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import profiler from "utils/profiler";
 import { heapMetrics } from "./heapMetrics";
 
 declare global {

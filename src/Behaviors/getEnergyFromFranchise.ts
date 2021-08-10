@@ -1,9 +1,9 @@
-import profiler from "screeps-profiler";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { posById } from "Selectors/posById";
 import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { sourceIds } from "Selectors/roomCache";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 

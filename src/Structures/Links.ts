@@ -1,5 +1,5 @@
-import profiler from "screeps-profiler";
 import { roomPlans } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
 
 const linkUsedCapacity = (link: StructureLink|undefined) => {
     if (!link) return 0;

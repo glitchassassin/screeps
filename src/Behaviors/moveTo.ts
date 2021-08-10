@@ -1,9 +1,9 @@
-import { TerritoryIntent, getTerritoryIntent } from "Selectors/territoryIntent";
-import { calculateNearbyPositions, getCostMatrix, isPositionWalkable } from "Selectors/MapCoordinates";
-
 import { BehaviorResult } from "Behaviors/Behavior";
+import { calculateNearbyPositions, getCostMatrix, isPositionWalkable } from "Selectors/MapCoordinates";
+import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import { packPos } from "utils/packrat";
-import profiler from "screeps-profiler";
+import profiler from "utils/profiler";
+
 
 export class Route {
     lastPos?: RoomPosition;
@@ -98,7 +98,7 @@ export class Route {
     }
 }
 
-profiler.registerClass(Route, 'Route');
+// profiler.registerClass(Route, 'Route');
 
 declare global {
     interface CreepMemory {
@@ -109,7 +109,7 @@ declare global {
 
 let Routes: Record<string, Route> = {};
 
-export const moveTo = (pos?: RoomPosition, range = 1) => {
+export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
     return (creep: Creep) => {
         if (!pos) return BehaviorResult.FAILURE;
 
@@ -167,4 +167,4 @@ export const moveTo = (pos?: RoomPosition, range = 1) => {
             return BehaviorResult.FAILURE;
         }
     }
-}
+}, 'moveTo')

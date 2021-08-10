@@ -1,4 +1,4 @@
-import profiler from "screeps-profiler";
+import profiler from "utils/profiler";
 import { generateRoomPlans } from "./RoomArchitect";
 
 export const planRooms = profiler.registerFN(() => {

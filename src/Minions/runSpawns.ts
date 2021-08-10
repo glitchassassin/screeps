@@ -1,6 +1,6 @@
-import profiler from "screeps-profiler";
 import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
 import { spawns } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
 
 export const runSpawns = profiler.registerFN((office: string) => {
     spawns(office).forEach(s => {

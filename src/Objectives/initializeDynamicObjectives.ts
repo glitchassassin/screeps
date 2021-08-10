@@ -1,6 +1,6 @@
-import profiler from "screeps-profiler"
 import { remoteFranchises } from "Selectors/remoteFranchises"
 import { sourceIds } from "Selectors/roomCache"
+import profiler from "utils/profiler"
 import { FranchiseObjective } from "./Franchise"
 import { initialize } from "./initializeObjectives"
 

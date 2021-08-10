@@ -4,7 +4,6 @@ import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRoute";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
@@ -12,6 +11,7 @@ import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "S
 import { posById } from "Selectors/posById";
 import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 
@@ -48,8 +48,11 @@ export class FranchiseObjective extends Objective {
         this.targetCarryParts = carryPartsForFranchiseRoute(franchisePos.roomName === office, this.distance)
     }
 
+    private _energyValue = 0;
+    private _energyValueCached = 0;
     energyValue(office: string) {
         if (office !== this.office) return 0;
+        if (this._energyValueCached === Game.time) return this._energyValue;
         const franchisePos = posById(this.sourceId);
         const link = getFranchisePlanBySourceId(this.sourceId)?.link.structure
         if (!franchisePos) return 0; // No idea where this source is
@@ -61,7 +64,9 @@ export class FranchiseObjective extends Objective {
         const workParts = this.assigned.map(byId).reduce((sum, c) => sum + (c?.getActiveBodyparts(WORK) ?? 0), 0)
         const efficiency = Math.min(1, (workParts / 5))
 
-        return efficiency * (income - (salesmanCost + accountantCost));
+        this._energyValue = efficiency * (income - (salesmanCost + accountantCost));
+        this._energyValueCached = Game.time;
+        return this._energyValue;
     }
 
     spawn(office: string, spawns: StructureSpawn[]) {

@@ -4,12 +4,12 @@ import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
+import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 

@@ -1,8 +1,8 @@
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
-import profiler from "screeps-profiler";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
+import profiler from "utils/profiler";
 
 declare global {
     interface RoomMemory {

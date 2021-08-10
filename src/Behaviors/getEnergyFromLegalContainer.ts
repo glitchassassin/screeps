@@ -1,8 +1,9 @@
+import { roomPlans } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
-import { roomPlans } from "Selectors/roomPlans";
 
-export const getEnergyFromLegalContainer = (creep: Creep): BehaviorResult => {
+export const getEnergyFromLegalContainer = profiler.registerFN((creep: Creep): BehaviorResult => {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.SUCCESS;
 
     const container = roomPlans(creep.memory.office)?.office?.headquarters.container.structure as StructureContainer|undefined;
@@ -13,4 +14,4 @@ export const getEnergyFromLegalContainer = (creep: Creep): BehaviorResult => {
         return BehaviorResult.SUCCESS;
     }
     return BehaviorResult.INPROGRESS;
-}
+}, 'getEnergyFromLegalContainer')

@@ -1,9 +1,10 @@
-import { BehaviorResult } from "./Behavior";
-import { moveTo } from "./moveTo";
 import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { roomPlans } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
+import { BehaviorResult } from "./Behavior";
+import { moveTo } from "./moveTo";
 
-export const getResourcesFromMineContainer = (creep: Creep) => {
+export const getResourcesFromMineContainer = profiler.registerFN((creep: Creep) => {
     // Default to specified franchise
     const plan = roomPlans(creep.memory.office)?.office?.mine;
     const container = plan?.container.structure as StructureContainer|undefined
@@ -36,4 +37,4 @@ export const getResourcesFromMineContainer = (creep: Creep) => {
     }
 
     return BehaviorResult.INPROGRESS;
-}
+}, 'getResourcesFromMineContainer');

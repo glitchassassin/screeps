@@ -5,12 +5,12 @@ import { setState, States } from "Behaviors/states";
 import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 

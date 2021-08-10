@@ -7,7 +7,7 @@
  * Creep.giveWay({pos: controller.pos, range: 3 }) - moves into random available spot in range of target, if none are avaiable fallbacks to random spot
  */
 
-import profiler from "screeps-profiler";
+import profiler from "utils/profiler";
 import { unpackPos } from "./packrat";
 
 /*

@@ -1,6 +1,6 @@
 import { Objectives } from "Objectives/Objective";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
+import profiler from "utils/profiler";
 
 export const purgeDeadCreeps = profiler.registerFN(() => {
   // Automatically delete memory of missing creeps

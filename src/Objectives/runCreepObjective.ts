@@ -1,4 +1,4 @@
-import profiler from "screeps-profiler";
+import profiler from "utils/profiler";
 import { Objectives } from "./Objective";
 
 export const runCreepObjective = profiler.registerFN((creep: Creep) => {

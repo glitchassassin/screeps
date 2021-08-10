@@ -1,10 +1,11 @@
-import { BehaviorResult } from "./Behavior";
-import { moveTo } from "./moveTo";
 import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { roomPlans } from "Selectors/roomPlans";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import profiler from "utils/profiler";
+import { BehaviorResult } from "./Behavior";
+import { moveTo } from "./moveTo";
 
-export const getEnergyFromStorage = (creep: Creep): BehaviorResult => {
+export const getEnergyFromStorage = profiler.registerFN((creep: Creep): BehaviorResult => {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.SUCCESS;
 
     const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
@@ -24,4 +25,4 @@ export const getEnergyFromStorage = (creep: Creep): BehaviorResult => {
         }
     }
     return BehaviorResult.INPROGRESS;
-}
+}, 'getEnergyFromStorage')

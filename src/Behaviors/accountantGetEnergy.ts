@@ -1,10 +1,11 @@
-import { BehaviorResult } from "./Behavior";
-import { States } from "./states";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
-import { getEnergyFromFranchise } from "./getEnergyFromFranchise";
-import { getEnergyFromStorage } from "./getEnergyFromStorage";
 import { sourceIds } from "Selectors/roomCache";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import profiler from "utils/profiler";
+import { BehaviorResult } from "./Behavior";
+import { getEnergyFromFranchise } from "./getEnergyFromFranchise";
+import { getEnergyFromStorage } from "./getEnergyFromStorage";
+import { States } from "./states";
 
 declare global {
     interface CreepMemory {
@@ -12,7 +13,7 @@ declare global {
     }
 }
 
-export const accountantGetEnergy = (creep: Creep) => {
+export const accountantGetEnergy = profiler.registerFN((creep: Creep) => {
     if (!creep.memory.getEnergyState || creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
         creep.memory.getEnergyState = States.GET_ENERGY_STORAGE;
         const storageAvailable = storageEnergyAvailable(creep.memory.office);
@@ -50,4 +51,4 @@ export const accountantGetEnergy = (creep: Creep) => {
         }
     }
     return BehaviorResult.INPROGRESS;
-}
+}, 'accountantGetEnergy')

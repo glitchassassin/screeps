@@ -2,6 +2,7 @@ import { byId } from "Selectors/byId";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
 import { posById } from "Selectors/posById";
 import { sourceIds } from "Selectors/roomCache";
+import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 
@@ -14,7 +15,7 @@ declare global {
 /**
  * harvest energy from the closest source
  */
-export const getEnergyFromSource = (creep: Creep, roomName?: string) => {
+export const getEnergyFromSource = profiler.registerFN((creep: Creep, roomName?: string) => {
     if (
         byId(creep.memory.franchiseTarget)?.energy === 0 ||
         franchiseIsFull(creep, creep.memory.franchiseTarget)
@@ -61,4 +62,4 @@ export const getEnergyFromSource = (creep: Creep, roomName?: string) => {
     } else {
         return BehaviorResult.INPROGRESS;
     }
-}
+}, 'getEnergyFromSource')

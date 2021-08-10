@@ -1,11 +1,11 @@
+import { gameLoop } from 'gameLoop';
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
+import MemHack from 'utils/memhack';
+import profiler from 'utils/profiler';
+import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import './utils/RoomVisual';
 
-import MemHack from 'utils/memhack';
-import { gameLoop } from 'gameLoop';
-import { onRespawn } from 'utils/ResetMemoryOnRespawn';
-import profiler from 'screeps-profiler';
 
 try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
@@ -30,7 +30,7 @@ global.purge = () => {
 // If respawning, wipe memory clean
 onRespawn(global.purge);
 
-profiler.enable()
+// profiler.enable()
 
 export const loop = () => {
   MemHack.pretick();

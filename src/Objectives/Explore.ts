@@ -1,11 +1,11 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
-import { calculateNearbyRooms, getRangeTo } from "Selectors/MapCoordinates";
+import { getPatrolRoute } from "Selectors/getPatrolRoute";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 
@@ -53,10 +53,7 @@ export class ExploreObjective extends Objective {
             // Ignore aggression on scouts
             creep.notifyWhenAttacked(false);
 
-            let surveyRadius = (Game.rooms[creep.memory.office].controller?.level !== 8) ? 5 : 20
-
-            let rooms = calculateNearbyRooms(creep.memory.office, surveyRadius, false).map(room => ({
-                distance: getRangeTo(new RoomPosition(25, 25, creep.memory.office), new RoomPosition(25, 25, room)),
+            let rooms = getPatrolRoute(creep).map(room => ({
                 name: room,
                 scanned: Memory.rooms[room]?.scanned
             }));
@@ -69,9 +66,6 @@ export class ExploreObjective extends Objective {
                     if (last === undefined) return match;
                     if ((match.scanned ?? 0) > (last.scanned ?? 0)) {
                         return last;
-                    }
-                    if (match.scanned === last.scanned && match.distance < last.distance) {
-                        return match;
                     }
                     return match;
                 })
@@ -88,6 +82,7 @@ export class ExploreObjective extends Objective {
                     return;
                 }
             } else {
+                // Room is visible
                 const controller = Game.rooms[creep.memory.exploreTarget].controller;
                 if (!controller) { // Exploration done
                     delete creep.memory.exploreTarget;

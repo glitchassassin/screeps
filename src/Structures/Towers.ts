@@ -1,5 +1,5 @@
-import profiler from "screeps-profiler";
 import { roomPlans } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
 
 /**
  * Based on https://github.com/screeps/engine/blob/master/src/processor/intents/towers/attack.js#L32

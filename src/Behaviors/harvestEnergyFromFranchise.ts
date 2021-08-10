@@ -1,10 +1,11 @@
-import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId } from "Selectors/roomPlans";
-
-import { BehaviorResult } from "./Behavior";
 import { byId } from "Selectors/byId";
 import { findFranchiseTarget } from "Selectors/findFranchiseTarget";
-import { moveTo } from "./moveTo";
 import { posById } from "Selectors/posById";
+import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId } from "Selectors/roomPlans";
+import profiler from "utils/profiler";
+import { BehaviorResult } from "./Behavior";
+import { moveTo } from "./moveTo";
+
 
 declare global {
     interface CreepMemory {
@@ -13,7 +14,7 @@ declare global {
     }
 }
 
-export const harvestEnergyFromFranchise = (creep: Creep, franchiseTarget?: Id<Source>) => {
+export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, franchiseTarget?: Id<Source>) => {
     creep.memory.franchiseTarget ??= franchiseTarget;
 
     if (!creep.memory.franchiseTarget) {
@@ -60,4 +61,4 @@ export const harvestEnergyFromFranchise = (creep: Creep, franchiseTarget?: Id<So
     } else {
         return BehaviorResult.INPROGRESS;
     }
-}
+}, 'harvestEnergyFromFranchise');

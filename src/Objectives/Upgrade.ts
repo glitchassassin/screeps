@@ -5,13 +5,13 @@ import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { STORAGE_LEVEL } from "config";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 

@@ -2,13 +2,13 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
-import profiler from "screeps-profiler";
 import { byId } from "Selectors/byId";
 import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 
