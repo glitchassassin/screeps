@@ -26,7 +26,6 @@ export interface HeadquartersPlan {
     terminal: PlannedStructure;
     towers: PlannedStructure[];
     roads: PlannedStructure[];
-    ramparts: PlannedStructure[];
     walls: PlannedStructure[];
 }
 
@@ -39,7 +38,6 @@ export const deserializeHeadquartersPlan = (serialized: string) => {
         terminal: undefined,
         towers: [],
         roads: [],
-        ramparts: [],
         walls: [],
     }
     for (const s of deserializePlannedStructures(serialized)) {
@@ -50,7 +48,6 @@ export const deserializeHeadquartersPlan = (serialized: string) => {
         if (s.structureType === STRUCTURE_TERMINAL) plan.terminal = s;
         if (s.structureType === STRUCTURE_TOWER) plan.towers?.push(s);
         if (s.structureType === STRUCTURE_ROAD) plan.roads?.push(s);
-        if (s.structureType === STRUCTURE_RAMPART) plan.ramparts?.push(s);
         if (s.structureType === STRUCTURE_WALL) plan.walls?.push(s);
     }
     return validateHeadquartersPlan(plan);
@@ -59,7 +56,7 @@ export const deserializeHeadquartersPlan = (serialized: string) => {
 const validateHeadquartersPlan = (plan: Partial<HeadquartersPlan>) => {
     if (
         !plan.spawn || !plan.link || !plan.container || !plan.storage || !plan.terminal ||
-        !plan.towers?.length || !plan.roads?.length || !plan.ramparts?.length || !plan.walls?.length
+        !plan.towers?.length || !plan.roads?.length || !plan.walls?.length
     ) {
         console.log(JSON.stringify(plan))
         throw new Error(`Incomplete HeadquartersPlan`)
@@ -88,7 +85,6 @@ export const planHeadquarters = (roomName: string) => {
             terminal: undefined,
             towers: [],
             roads: [],
-            ramparts: [],
             walls: [],
         }
         // Orient the space
@@ -202,9 +198,9 @@ export const planHeadquarters = (roomName: string) => {
 
         plan.roads = Array.from(roads);
 
-        plan.ramparts = generateRampartPositions(roomName, space)
-            .filter(pos => isPositionWalkable(pos, true, true))
-            .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
+        // plan.ramparts = generateRampartPositions(roomName, space)
+        //     .filter(pos => isPositionWalkable(pos, true, true))
+        //     .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
 
         plan.walls = calculateAdjacentPositions(controllerPos)
             .filter(pos => isPositionWalkable(pos, true, true))

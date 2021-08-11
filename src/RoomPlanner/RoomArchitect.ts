@@ -6,6 +6,7 @@ import { countTerrainTypes } from 'Selectors/MapCoordinates';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
 import { posById } from 'Selectors/posById';
 import { controllerPosition, mineralPosition, sourceIds } from 'Selectors/roomCache';
+import { planPerimeter } from './PerimeterPlan';
 import { planTerritoryFranchise, serializeTerritoryFranchisePlan } from './TerritoryFranchise';
 
 
@@ -19,6 +20,7 @@ declare global {
                     franchise2: string,
                     mine: string,
                     extensions: string,
+                    perimeter: string,
                 },
                 territory?: {
                     franchise1: string,
@@ -43,7 +45,8 @@ export const generateRoomPlans = (roomName: string)  => {
                 franchise1: serializeFranchisePlan(officePlan.franchise1),
                 franchise2: serializeFranchisePlan(officePlan.franchise2),
                 mine: serializePlannedStructures(Object.values(officePlan.mine).flat()),
-                extensions: serializePlannedStructures(Object.values(officePlan.extensions).flat())
+                extensions: serializePlannedStructures(Object.values(officePlan.extensions).flat()),
+                perimeter: serializePlannedStructures(Object.values(officePlan.perimeter).flat())
             };
         } catch (e) {
             console.log(roomName, 'failed Office planning', e)
@@ -80,14 +83,14 @@ const isEligible = (roomName: string) => {
     }
 
     let [source1, source2] = sources;
-    if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 5)) {
-        console.log(`Room planning for ${roomName} failed - Controller too close to exit`);
-        return false;
-    }
-    if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 5))) {
-        console.log(`Room planning for ${roomName} failed - Source too close to exit`);
-        return false;
-    }
+    // if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 5)) {
+    //     console.log(`Room planning for ${roomName} failed - Controller too close to exit`);
+    //     return false;
+    // }
+    // if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 5))) {
+    //     console.log(`Room planning for ${roomName} failed - Source too close to exit`);
+    //     return false;
+    // }
     if (controller.inRangeTo(source1, 5)) {
         console.log(`Room planning for ${roomName} failed - Source too close to controller`);
         return false;
@@ -120,7 +123,7 @@ const planOffice = (roomName: string) => {
     if (!controller || !mineral || sources.length !== 2) throw new Error('Invalid room for planning an office');
 
     // Calculate FranchisePlans
-    let franchise1, franchise2, mine, headquarters, extensions;
+    let franchise1, franchise2, mine, headquarters, extensions, perimeter;
     try {
         let plans = sources
             .sort((a, b) => posById(a)!.getRangeTo(controller!) - posById(b)!.getRangeTo(controller!))
@@ -150,6 +153,13 @@ const planOffice = (roomName: string) => {
         throw new Error('FAILED generating extensions: ' + e.message)
     }
 
+    // Draw min-cut perimeter
+    try {
+        perimeter = planPerimeter(controller, headquarters, extensions);
+    } catch (e) {
+        throw new Error('FAILED generating perimeter: ' + e.message)
+    }
+
     let end = Game.cpu.getUsed();
     console.log(`Planned Office room ${roomName} with ${end - start} CPU`);
 
@@ -159,6 +169,7 @@ const planOffice = (roomName: string) => {
         mine,
         headquarters,
         extensions,
+        perimeter,
     }
 }
 

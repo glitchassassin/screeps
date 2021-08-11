@@ -2,6 +2,7 @@ import { deserializeExtensionsPlan, ExtensionsPlan } from "RoomPlanner/Extension
 import { deserializeFranchisePlan, FranchisePlan } from "RoomPlanner/FranchisePlan";
 import { deserializeHeadquartersPlan, HeadquartersPlan } from "RoomPlanner/HeadquartersPlan";
 import { deserializeMinePlan, MinePlan } from "RoomPlanner/MinePlan";
+import { deserializePerimeterPlan, PerimeterPlan } from "RoomPlanner/PerimeterPlan";
 import { deserializeTerritoryFranchisePlan, TerritoryFranchisePlan } from "RoomPlanner/TerritoryFranchise";
 import profiler from "utils/profiler";
 import { posById } from "./posById";
@@ -14,6 +15,7 @@ export interface RoomPlan {
         franchise2: FranchisePlan,
         mine: MinePlan,
         extensions: ExtensionsPlan,
+        perimeter: PerimeterPlan,
     },
     territory?: {
         franchise1: TerritoryFranchisePlan,
@@ -35,19 +37,25 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
         return plans.get(roomName);
     }
 
-    const territory = plan.territory ? {
-        franchise1: deserializeTerritoryFranchisePlan(plan.territory.franchise1),
-        franchise2: plan.territory.franchise2 ? deserializeTerritoryFranchisePlan(plan.territory.franchise2) : undefined,
-    } : undefined;
-    const office = plan.office ? {
-        headquarters: deserializeHeadquartersPlan(plan.office.headquarters),
-        franchise1: deserializeFranchisePlan(plan.office.franchise1),
-        franchise2: deserializeFranchisePlan(plan.office.franchise2),
-        mine: deserializeMinePlan(plan.office.mine),
-        extensions: deserializeExtensionsPlan(plan.office.extensions),
-    } : undefined;
+    try {
+        const territory = plan.territory ? {
+            franchise1: deserializeTerritoryFranchisePlan(plan.territory.franchise1),
+            franchise2: plan.territory.franchise2 ? deserializeTerritoryFranchisePlan(plan.territory.franchise2) : undefined,
+        } : undefined;
+        const office = plan.office ? {
+            headquarters: deserializeHeadquartersPlan(plan.office.headquarters),
+            franchise1: deserializeFranchisePlan(plan.office.franchise1),
+            franchise2: deserializeFranchisePlan(plan.office.franchise2),
+            mine: deserializeMinePlan(plan.office.mine),
+            extensions: deserializeExtensionsPlan(plan.office.extensions),
+            perimeter: deserializePerimeterPlan(plan.office.perimeter),
+        } : undefined;
+        plans.set(roomName, { office, territory })
+    } catch (e) {
+        console.log('Error deserializing room plan', roomName, '(resetting)')
+        delete Memory.roomPlans[roomName]
+    }
 
-    plans.set(roomName, { office, territory })
     return plans.get(roomName)
 }, 'roomPlans') as (roomName: string) => RoomPlan|undefined
 

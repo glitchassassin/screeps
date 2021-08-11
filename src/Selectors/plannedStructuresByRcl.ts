@@ -66,7 +66,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
             plans.headquarters.storage,
             plans.headquarters.container,
             ...plans.franchise1.ramparts,
-            ...plans.headquarters.ramparts,
+            ...plans.perimeter.ramparts,
             ...plans.extensions.ramparts,
             ...plans.headquarters.roads
         )
@@ -105,15 +105,15 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
             plannedTowers[5],
         )
     }
-    if (rcl >= 4) {
-        // No ramparts on roads, walls, ramparts, extractors, or extensions
-        // Perimeter extensions have ramparts already
-        const nonRampartedStructures: StructureConstant[] = [STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART, STRUCTURE_EXTRACTOR, STRUCTURE_EXTENSION]
-        for (let s of plannedStructures) {
-            if (!nonRampartedStructures.includes(s.structureType)) {
-                plannedStructures.push(new PlannedStructure(s.pos, STRUCTURE_RAMPART))
-            }
-        }
-    }
+    // if (rcl >= 4) {
+    //     // No ramparts on roads, walls, ramparts, extractors, or extensions
+    //     // Perimeter extensions have ramparts already
+    //     const nonRampartedStructures: StructureConstant[] = [STRUCTURE_ROAD, STRUCTURE_WALL, STRUCTURE_RAMPART, STRUCTURE_EXTRACTOR, STRUCTURE_EXTENSION]
+    //     for (let s of plannedStructures) {
+    //         if (!nonRampartedStructures.includes(s.structureType)) {
+    //             plannedStructures.push(new PlannedStructure(s.pos, STRUCTURE_RAMPART))
+    //         }
+    //     }
+    // }
     return plannedStructures
 }
