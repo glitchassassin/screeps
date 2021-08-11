@@ -9,6 +9,8 @@ declare global {
     }
 }
 
+const timeSince = (time: number|undefined) => Game.time - (time ?? 0)
+
 /**
  * If GCL <= Memory.offices.length, return
  * If an Acquire target is already saved (and still valid), use that
@@ -18,7 +20,7 @@ declare global {
 export const findAcquireTarget = () => {
     const offices = Object.keys(Memory.offices);
 
-    if (cachedAcquireTarget && acquireTargetIsValid(cachedAcquireTarget)) {
+    if (cachedAcquireTarget && acquireTargetIsValid(cachedAcquireTarget) && !shouldPostponeAcquire(cachedAcquireTarget)) {
         return cachedAcquireTarget;
     } else {
         cachedAcquireTarget = undefined;
@@ -35,12 +37,13 @@ export const findAcquireTarget = () => {
         Object.keys(Memory.rooms)
 
     for (const room of targetRooms) {
-        if (!acquireTargetIsValid(room)) {
+        if (!acquireTargetIsValid(room) || shouldPostponeAcquire(room)) {
             delete Memory.rooms[room].acquire;
             continue;
         }
 
         if (Memory.rooms[room].acquire) {
+            delete Memory.rooms[room].lastAcquireAttempt;
             cachedAcquireTarget = room;
             cachedAcquiringOffice = undefined;
             return room;
@@ -56,11 +59,30 @@ export const findAcquireTarget = () => {
 
     if (bestTarget && bestTargetDistance <= 10) {
         Memory.rooms[bestTarget].acquire = true;
+        delete Memory.rooms[bestTarget].lastAcquireAttempt;
         cachedAcquireTarget = bestTarget;
         cachedAcquiringOffice = undefined;
     }
 
     return cachedAcquireTarget;
+}
+
+/**
+ * If acquire attempt fails, reschedule attempt on a progressive scale
+ * 20k ticks after first failure, 40k ticks after second, etc.
+ */
+const shouldPostponeAcquire = (roomName: string) => {
+    // If it's less than five ticks since Lawyer checked in,
+    // or Lawyer hasn't checked in yet, ignore
+    const timeSinceLastAttempt = Game.time - (Memory.rooms[roomName].lastAcquireAttempt ?? Game.time)
+    const attempts = Memory.rooms[roomName].acquireAttempts ?? 0
+    if (timeSinceLastAttempt < 5) {
+        return false;
+    }
+    if (timeSinceLastAttempt > attempts * 20000) {
+        return false;
+    }
+    return true;
 }
 
 export const acquireTargetIsValid = (roomName: string) => {

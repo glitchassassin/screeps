@@ -16,6 +16,10 @@ declare global {
     interface CreepMemory {
         acquireTarget?: Id<StructureController>
     }
+    interface RoomMemory {
+        acquireAttempts?: number
+        lastAcquireAttempt?: number
+    }
 }
 
 export class AcquireObjective extends Objective {
@@ -89,7 +93,14 @@ export class AcquireObjective extends Objective {
             if (!creep.memory.acquireTarget) {
                 const room = findAcquireTarget();
                 if (!room) return;
+
+                Memory.rooms[room].acquireAttempts = (Memory.rooms[room].acquireAttempts ?? 0) + 1;
+
                 creep.memory.acquireTarget = Memory.rooms[room].controllerId;
+            }
+
+            if (creep.memory.acquireTarget && Memory.rooms[creep.memory.acquireTarget]) {
+                Memory.rooms[creep.memory.acquireTarget].lastAcquireAttempt = Game.time;
             }
 
             if (byId(creep.memory.acquireTarget)?.my) {

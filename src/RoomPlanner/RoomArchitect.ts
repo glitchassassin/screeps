@@ -66,7 +66,7 @@ export const generateRoomPlans = (roomName: string)  => {
 
 const isEligible = (roomName: string) => {
     // Room must have a controller and two sources
-    // To avoid edge cases, controller and sources must not be within range 5 of each other
+    // To avoid edge cases, controller and sources must not be within range 5 of each other or an exit square
     let controller = posById(Memory.rooms[roomName]?.controllerId)
     if (!controller) {
         console.log(`Room planning for ${roomName} failed - No controller`);
@@ -80,7 +80,15 @@ const isEligible = (roomName: string) => {
     }
 
     let [source1, source2] = sources;
-    if (controller.getRangeTo(source1) < 5) {
+    if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 5)) {
+        console.log(`Room planning for ${roomName} failed - Controller too close to exit`);
+        return false;
+    }
+    if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 5))) {
+        console.log(`Room planning for ${roomName} failed - Source too close to exit`);
+        return false;
+    }
+    if (controller.inRangeTo(source1, 5)) {
         console.log(`Room planning for ${roomName} failed - Source too close to controller`);
         return false;
     }
