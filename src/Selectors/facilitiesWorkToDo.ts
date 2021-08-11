@@ -7,13 +7,19 @@ import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
 export const destroyUnplannedStructures = (room: string) => {
     if (!Game.rooms[room]) return; // No visibility here, can't destroy
     const allPlannedStructures = plannedStructuresByRcl(room, 8)
+    // Destroy all controller-limited structures
+    Game.rooms[room].find(FIND_STRUCTURES).forEach(s => {
+        if (s.structureType !== STRUCTURE_WALL && s.structureType !== STRUCTURE_ROAD && s.structureType !== STRUCTURE_CONTROLLER) {
+            s.destroy()
+        }
+    })
     allPlannedStructures.forEach(structure => {
         calculateAdjacentPositions(structure.pos).forEach(pos => {
             let structures = pos.lookFor(LOOK_STRUCTURES);
             for (let s of structures) {
                 if (!allPlannedStructures.some(planned => planned.pos.isEqualTo(s.pos) && planned.structureType === s.structureType)) {
                     // Destroy unplanned adjacent structures
-                    if (s.structureType !== STRUCTURE_RAMPART && s.structureType !== STRUCTURE_SPAWN) {
+                    if (s.structureType === STRUCTURE_WALL) {
                         s.destroy()
                     }
                 }
