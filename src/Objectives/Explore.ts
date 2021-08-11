@@ -20,7 +20,7 @@ declare global {
 
 export class ExploreObjective extends Objective {
     energyValue(office: string) {
-        return -minionCostPerTick(MinionBuilders[MinionTypes.INTERN](spawnEnergyAvailable(office)));
+        return -minionCostPerTick(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office)));
     }
     spawn(office: string, spawns: StructureSpawn[]) {
         const target = 1;
@@ -32,8 +32,8 @@ export class ExploreObjective extends Objective {
             spawnQueue.push(spawnMinion(
                 office,
                 this.id,
-                MinionTypes.INTERN,
-                MinionBuilders[MinionTypes.INTERN](spawnEnergyAvailable(office))
+                MinionTypes.AUDITOR,
+                MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office))
             ))
         }
 

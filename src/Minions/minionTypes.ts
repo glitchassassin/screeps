@@ -16,7 +16,7 @@ export enum MinionTypes {
     ENGINEER = 'ENGINEER',
     FOREMAN = 'FOREMAN',
     GUARD = 'GUARD',
-    INTERN = 'INTERN',
+    AUDITOR = 'AUDITOR',
     LAWYER = 'LAWYER',
     PARALEGAL = 'PARALEGAL',
     SALESMAN = 'SALESMAN'
@@ -82,14 +82,14 @@ export const MinionBuilders = {
         }
         else {
             // Try to maintain ATTACK/MOVE ratio
-            let attackParts = Math.min(25, Math.floor(((1/2) * energy) / 80))
+            let attackParts = Math.min(25, Math.floor(((80/130) * energy) / 80))
             return [
                 ...Array(attackParts).fill(ATTACK),
                 ...Array(attackParts).fill(MOVE),
             ]
         }
     },
-    [MinionTypes.INTERN]: (energy: number) => {
+    [MinionTypes.AUDITOR]: (energy: number) => {
         return [TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE];
     },
     [MinionTypes.LAWYER]:  (energy: number) => {
