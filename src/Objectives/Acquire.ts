@@ -9,7 +9,7 @@ import { posById } from "Selectors/posById";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
-import { Objective } from "./Objective";
+import { Objective, Objectives } from "./Objective";
 
 
 declare global {
@@ -38,10 +38,16 @@ export class AcquireObjective extends Objective {
         return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
     }
     spawn(office: string, spawns: StructureSpawn[]) {
+        const acquireTarget = findAcquireTarget();
+        // console.log(acquireTarget)
+        if (!acquireTarget) return 0;
         const lawyersTarget = this.spawnLawyersTarget(office);
         const engineersTarget = this.spawnEngineersTarget(office);
         const lawyers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.LAWYER).length
-        const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length
+        const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length +
+            Objectives['FacilitiesObjective'].assigned.map(byId).filter(c => c?.memory.office === acquireTarget && c.memory.type === MinionTypes.ENGINEER).length
+        // console.log('lawyers', lawyers, lawyersTarget)
+        // console.log('engineers', engineers, engineersTarget)
 
         let spawnQueue = [];
 
@@ -94,7 +100,8 @@ export class AcquireObjective extends Objective {
             const pos = posById(creep.memory.acquireTarget)
             if (!pos) return;
 
-            if (moveTo(pos, 1)(creep) === BehaviorResult.SUCCESS) {
+            const result = moveTo(pos, 1)(creep);
+            if (result === BehaviorResult.SUCCESS) {
                 const controller = byId(creep.memory.acquireTarget)
                 if (!controller) return;
                 creep.signController(controller, 'This sector property of the Grey Company');

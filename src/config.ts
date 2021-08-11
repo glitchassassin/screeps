@@ -67,3 +67,7 @@ export const WHITELIST = [
 export const CACHED_STRUCTURES: StructureConstant[] = [
     STRUCTURE_CONTAINER
 ]
+
+export const FEATURES = {
+    MINING: Game.shard.name.startsWith('shard') ? true: false
+}

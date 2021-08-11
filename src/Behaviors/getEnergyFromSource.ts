@@ -16,9 +16,10 @@ declare global {
  * harvest energy from the closest source
  */
 export const getEnergyFromSource = profiler.registerFN((creep: Creep, roomName?: string) => {
+    const franchiseTarget = byId(creep.memory.franchiseTarget);
     if (
-        byId(creep.memory.franchiseTarget)?.energy === 0 ||
-        franchiseIsFull(creep, creep.memory.franchiseTarget)
+        franchiseTarget?.energy === 0 ||
+        (franchiseIsFull(creep, creep.memory.franchiseTarget) && !franchiseTarget?.pos.inRangeTo(creep.pos, 1))
     ) {
         delete creep.memory.franchiseTarget;
         return BehaviorResult.FAILURE;

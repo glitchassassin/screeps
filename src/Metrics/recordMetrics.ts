@@ -29,6 +29,7 @@ declare global {
                     energyCapacityAvailable: number,
                     franchiseIncome: number,
                     storageLevel: number,
+                    facilitiesCosts: number,
                     objectives: {
                         [id: string]: {
                             energy: number,
@@ -85,6 +86,18 @@ export const recordMetrics = profiler.registerFN(() => {
                 return sum;
             }, {} as Record<string, {energy: number, assigned: number, priority: number}>);
 
+        let facilitiesCosts = Memory.stats.offices[office]?.facilitiesCosts ?? 0;
+        if (isNaN(facilitiesCosts)) facilitiesCosts = 0;
+        for (let event of Game.rooms[office]?.getEventLog() ?? []) {
+            if (
+                (event.event === EVENT_BUILD || event.event === EVENT_REPAIR) &&
+                !isNaN(event.data.energySpent)
+            ) {
+                facilitiesCosts += event.data.energySpent;
+            }
+        }
+
+
         Memory.stats.offices[office] = {
             ...Memory.stats.offices[office],
             controllerProgress: Game.rooms[office].controller?.progress ?? 0,
@@ -94,6 +107,7 @@ export const recordMetrics = profiler.registerFN(() => {
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
+            facilitiesCosts,
             objectives
         }
     }

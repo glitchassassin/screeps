@@ -22,16 +22,20 @@ declare global {
 
 export class FacilitiesObjective extends Objective {
     spawnTarget(office: string) {
-        const work = facilitiesWorkToDo(office);
-        if (!work.length) return 0;
+        const rcl = Game.rooms[office]?.controller?.level ?? 0
         let surplusIncome = Math.max(0, profitPerTick(office, this));
-        const constructionToDo = work.some(s => !s.structure);
         // Spawn based on maximizing use of available energy
         const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * spawnEnergyAvailable(office) / 100))
         const engineers = Math.floor(surplusIncome / (REPAIR_COST * REPAIR_POWER * workPartsPerEngineer));
+        if (rcl < 4) return engineers; // Surplus engineer lifespan will go to upgrading
+
+        const work = facilitiesWorkToDo(office);
+        if (!work.length) return 0;
+
+        const constructionToDo = work.some(s => !s.structure);
 
         // Spawn to maximize energy for building, but spawn fewer if only repairing
-        return constructionToDo ? engineers : Math.round(work.length / 5);
+        return Math.min(engineers, constructionToDo ? engineers : Math.round(work.length / 5));
     }
     energyValue(office: string) {
         const engineers = this.spawnTarget(office);

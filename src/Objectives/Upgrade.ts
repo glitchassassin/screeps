@@ -6,6 +6,8 @@ import { setState, States } from "Behaviors/states";
 import { STORAGE_LEVEL } from "config";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { byId } from "Selectors/byId";
+import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -24,8 +26,11 @@ declare global {
 export class UpgradeObjective extends Objective {
     spawnTarget(office: string) {
         const rcl = Game.rooms[office]?.controller?.level ?? 0
+        if (rcl < 4) return 0; // Engineers will handle early upgrades
 
         if (rcl === 8) return 1; // Upgrading is capped at RCL8
+        if (officeShouldSupportAcquireTarget(office)) return 0; // Scale back upgrading to support office
+        if (facilitiesWorkToDo(office).some(s => !s.structure)) return 0; // Scale back upgrading for construction
 
         let surplusIncome = profitPerTick(office, this);
         surplusIncome = Math.max(0, surplusIncome);

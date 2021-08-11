@@ -55,10 +55,10 @@ export class Route {
             },
             plainCost: 2,
             swampCost: 10,
-            maxOps: 2000 * rooms.length
+            maxOps: 4000 * rooms.length
         })
         if (!route || route.incomplete) throw new Error('Unable to plan route');
-        // log(creep.name, `calculatePath: ${route.cost} (complete: ${!route.incomplete})`);
+
         this.path = route.path;
         this.lastPos = creep.pos;
     }
@@ -126,7 +126,8 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
         if (!Routes[creep.name]) {
             try {
                 Routes[creep.name] = new Route(creep, pos, range);
-            } catch {
+            } catch (e) {
+                // console.log(e)
                 return BehaviorResult.FAILURE;
             }
         }

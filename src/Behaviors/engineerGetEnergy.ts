@@ -15,7 +15,7 @@ declare global {
 
 export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?: string) => {
     const facilitiesTarget = targetRoom ?? creep.memory.office;
-    if (!creep.memory.getEnergyState || creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+    if (!creep.memory.getEnergyState) {
         creep.memory.getEnergyState = States.GET_ENERGY_STORAGE
     }
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {

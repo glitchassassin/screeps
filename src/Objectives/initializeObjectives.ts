@@ -1,3 +1,4 @@
+import { FEATURES } from "config";
 import { AcquireObjective } from "./Acquire";
 import { ExploreObjective } from "./Explore";
 import { FacilitiesObjective } from "./Facilities";
@@ -37,11 +38,11 @@ initialize(
     new RefillExtensionsObjective(9),
     // FranchiseObjectives are 8
     new FacilitiesObjective(6),
-    new MineObjective(5),
     new ExploreObjective(4),
     new AcquireObjective(4),
     new UpgradeObjective(3),
     // Remote FranchiseObjectives are 2
 );
+if (FEATURES.MINING) initialize(new MineObjective(5));
 
 global.Objectives = Objectives;
