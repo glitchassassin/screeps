@@ -13,6 +13,7 @@ export const destroyUnplannedStructures = (room: string) => {
             s.destroy()
         }
     })
+    Game.rooms[room].find(FIND_CONSTRUCTION_SITES).forEach(s => s.remove())
     allPlannedStructures.forEach(structure => {
         calculateAdjacentPositions(structure.pos).forEach(pos => {
             let structures = pos.lookFor(LOOK_STRUCTURES);
