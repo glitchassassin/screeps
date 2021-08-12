@@ -1,5 +1,6 @@
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
+import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
 import profiler from "utils/profiler";
@@ -13,6 +14,7 @@ declare global {
         owner?: string,
         reserver?: string,
         rclMilestones?: Record<number, number>,
+        eligibleForOffice: boolean,
     }
     interface Memory {
         positions: Record<string, string>
@@ -45,11 +47,13 @@ export const scanRooms = profiler.registerFN(() => {
                 Memory.positions[m.id] = packPos(m.pos);
                 return m.id;
             })[0];
+            const eligibleForOffice = roomIsEligibleForOffice(room)
 
             Memory.rooms[room] = {
                 controllerId,
                 sourceIds,
                 mineralId,
+                eligibleForOffice,
             }
         }
 
