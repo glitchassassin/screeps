@@ -14,7 +14,7 @@ declare global {
         owner?: string,
         reserver?: string,
         rclMilestones?: Record<number, number>,
-        eligibleForOffice: boolean,
+        eligibleForOffice?: boolean,
     }
     interface Memory {
         positions: Record<string, string>
