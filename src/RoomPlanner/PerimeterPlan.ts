@@ -1,5 +1,5 @@
 import { deserializePlannedStructures } from 'Selectors/plannedStructures';
-import util_mincut from '../utils/mincut';
+import util_mincut, { Rect } from '../utils/mincut';
 import { ExtensionsPlan } from './ExtensionsPlan';
 import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
@@ -18,7 +18,16 @@ const getBoundingRect = (...args: PlannedStructure[]) => {
         rect.x2 = Math.max(s.pos.x, rect.x2)
         rect.y2 = Math.max(s.pos.y, rect.y2)
     }
-    return rect;
+    return padBoundingRect(rect);
+}
+
+const padBoundingRect = (rect: Rect, buffer = 3) => {
+    return {
+        x1: Math.max(rect.x1 - buffer, 0),
+        y1: Math.max(rect.y1 - buffer, 0),
+        x2: Math.min(rect.x2 + buffer, 49),
+        y2: Math.min(rect.y2 + buffer, 49),
+    }
 }
 
 export interface PerimeterPlan {
