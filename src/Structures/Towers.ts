@@ -29,11 +29,12 @@ export const runTowers = profiler.registerFN((roomName: string) => {
         const damage = plan.headquarters.towers.reduce((sum, t) =>
             sum + towerDamage(t.structure as StructureTower|undefined, target.pos
         ), 0)
+        const exitRange = target.pos.findClosestByRange(FIND_EXIT)?.getRangeTo(target) ?? 50
         const selfHeal = target.getActiveBodyparts(HEAL) * HEAL_POWER;
         const allyHeal = target.pos.findInRange(FIND_HOSTILE_CREEPS, RANGED_HEAL_RANGE).reduce((sum, ally) => {
             return sum + (ally.getActiveBodyparts(HEAL) * (ally.pos.inRangeTo(target.pos, HEAL_RANGE) ? HEAL_POWER : RANGED_HEAL_POWER))
         }, 0)
-        const netDamage = (damage - (selfHeal + allyHeal));
+        const netDamage = (exitRange > 2) ? (damage - (selfHeal + allyHeal)) : 0; // Assume creeps within range of an exit will escape for healing
         if (netDamage > bestDamage) {
             priorityTarget = target;
             bestDamage = netDamage;
