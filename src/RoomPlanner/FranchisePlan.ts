@@ -41,7 +41,7 @@ export const deserializeFranchisePlan = (serialized: string) => {
 
 const validateFranchisePlan = (plan: Partial<FranchisePlan>) => {
     if (
-        !plan.sourceId || !plan.spawn || !plan.link || !plan.container || !plan.ramparts?.length
+        !plan.sourceId || !plan.spawn || !plan.link || !plan.container // || !plan.ramparts?.length
     ) {
         throw new Error(`Incomplete FranchisePlan`)
     } else {
@@ -96,17 +96,17 @@ export const planFranchise = (sourceId: Id<Source>) => {
     if (!linkPos) throw new Error('Not enough space to place a Franchise');
     plan.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
 
-    plan.ramparts = calculateAdjacentPositions(plan.spawn.pos)
-        .filter(pos => (
-            isPositionWalkable(pos, true, true) &&
-            !pos.isEqualTo(plan.link!.pos) &&
-            !pos.isEqualTo(plan.container!.pos)
-        ))
-        .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
+    // plan.ramparts = calculateAdjacentPositions(plan.spawn.pos)
+    //     .filter(pos => (
+    //         isPositionWalkable(pos, true, true) &&
+    //         !pos.isEqualTo(plan.link!.pos) &&
+    //         !pos.isEqualTo(plan.container!.pos)
+    //     ))
+    //     .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
 
-    plan.ramparts.push(new PlannedStructure(plan.spawn.pos, STRUCTURE_RAMPART))
-    plan.ramparts.push(new PlannedStructure(plan.link.pos, STRUCTURE_RAMPART))
-    plan.ramparts.push(new PlannedStructure(plan.container.pos, STRUCTURE_RAMPART))
+    // plan.ramparts.push(new PlannedStructure(plan.spawn.pos, STRUCTURE_RAMPART))
+    // plan.ramparts.push(new PlannedStructure(plan.link.pos, STRUCTURE_RAMPART))
+    // plan.ramparts.push(new PlannedStructure(plan.container.pos, STRUCTURE_RAMPART))
 
     plan.extensions = [];
 
