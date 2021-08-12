@@ -41,7 +41,8 @@ export class FacilitiesObjective extends Objective {
         const engineers = this.spawnTarget(office);
         const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * spawnEnergyAvailable(office) / 100))
         const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))) * engineers;
-        const workCosts = (workPartsPerEngineer * engineers) * REPAIR_COST * REPAIR_POWER;
+        const constructionToDo = facilitiesWorkToDo(office).some(s => !s.structure);
+        const workCosts = (workPartsPerEngineer * engineers) * (constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER);
         return -(workCosts + minionCosts);
     }
     spawn(office: string, spawns: StructureSpawn[]) {
