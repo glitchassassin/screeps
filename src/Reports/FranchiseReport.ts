@@ -22,7 +22,7 @@ export default () => {
             });
             if (!objective.disabled) {
                 Game.map.visual.text(`${objective.assigned.length}`, new RoomPosition(sourcePos.x, Math.max(0, sourcePos.y - 5), sourcePos.roomName), {fontSize: 5});
-                Game.map.visual.text(objective.energyValue(objective.office).toFixed(2), new RoomPosition(sourcePos.x, Math.min(50, sourcePos.y + 5), sourcePos.roomName), {fontSize: 5});
+                Game.map.visual.text(objective.energyValue(objective.office).toFixed(2), new RoomPosition(sourcePos.x, Math.min(49, sourcePos.y + 5), sourcePos.roomName), {fontSize: 5});
             }
         }
 
