@@ -1,6 +1,7 @@
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { byId } from "Selectors/byId";
+import { findClosestHostileCreepByRange, findHostileCreeps } from "Selectors/findHostileCreeps";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
@@ -22,10 +23,10 @@ export class DefendObjective extends Objective {
         return -(this.spawnTarget(office) * minionCostPerTick(MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office))));
     }
     spawnTarget(office: string) {
-        return Game.rooms[office].find(FIND_HOSTILE_CREEPS).length
+        return findHostileCreeps(office).length
     }
     spawn(office: string, spawns: StructureSpawn[]) {
-        const target = Game.rooms[office].find(FIND_HOSTILE_CREEPS).length;
+        const target = this.spawnTarget(office);
         const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
 
         let spawnQueue = [];
@@ -51,7 +52,7 @@ export class DefendObjective extends Objective {
 
     action(creep: Creep) {
         // Find the nearest enemy creep, and move to the closest rampart
-        const target = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+        const target = findClosestHostileCreepByRange(creep.pos);
         if (!target) return; // No targets
         const plan = roomPlans(creep.memory.office)?.office;
         if (!plan) return;
