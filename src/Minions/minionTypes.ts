@@ -1,3 +1,5 @@
+import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
+
 declare global {
     interface CreepMemory {
         type: MinionTypes,
@@ -31,7 +33,7 @@ export const spawnMinion = (office: string, objective: string, minionType: Minio
             type: minionType,
             office,
             objective
-        }}
+        }, energyStructures: getEnergyStructures(office)}
     )
     if (r !== OK && r !== ERR_BUSY && r !== ERR_NOT_ENOUGH_ENERGY) {
         console.log(objective, 'unexpected Spawn error', r)
