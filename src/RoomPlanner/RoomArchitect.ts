@@ -155,7 +155,7 @@ const planOffice = (roomName: string) => {
 
     // Draw min-cut perimeter
     try {
-        perimeter = planPerimeter(controller, headquarters, extensions);
+        perimeter = planPerimeter(controller, headquarters, extensions, franchise1, franchise2);
     } catch (e) {
         throw new Error('FAILED generating perimeter: ' + e.message)
     }

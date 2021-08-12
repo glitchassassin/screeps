@@ -68,6 +68,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
             ...plans.franchise1.ramparts,
             ...plans.perimeter.ramparts,
             ...plans.extensions.ramparts,
+            ...plans.franchise2.ramparts,
             ...plans.headquarters.roads
         )
     }
@@ -92,7 +93,6 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         plannedStructures.push(
             ...plannedExtensions.slice(40, 50),
             plans.franchise2.spawn,
-            ...plans.franchise2.ramparts,
             plannedTowers[2],
         )
     }

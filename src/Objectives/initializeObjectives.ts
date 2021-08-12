@@ -1,5 +1,6 @@
 import { FEATURES } from "config";
 import { AcquireObjective } from "./Acquire";
+import { DefendObjective } from "./Defend";
 import { ExploreObjective } from "./Explore";
 import { FacilitiesObjective } from "./Facilities";
 import { HeadquartersLogisticsObjective } from "./HeadquartersLogistics";
@@ -36,6 +37,7 @@ export const initialize = (...args: Objective[]) => {
 initialize(
     new HeadquartersLogisticsObjective(10),
     new RefillExtensionsObjective(9),
+    new DefendObjective(8.5),
     // FranchiseObjectives are 8
     new FacilitiesObjective(6),
     new ExploreObjective(4),

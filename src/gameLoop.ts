@@ -9,7 +9,6 @@ import { planRooms } from "RoomPlanner/planRooms";
 import { roomPlans } from "Selectors/roomPlans";
 import { runLinks } from "Structures/Links";
 import { runTerminal } from "Structures/Terminal";
-import { runTowers } from "Structures/Towers";
 import { clearNudges } from 'utils/excuseMe';
 import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
 
@@ -26,7 +25,7 @@ export const gameLoop = () => {
         spawnObjectives(room);
         runLinks(room);
         runSpawns(room);
-        runTowers(room);
+        // runTowers(room);
         runTerminal(room);
     }
 

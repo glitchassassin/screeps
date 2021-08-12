@@ -1,6 +1,7 @@
 import { deserializePlannedStructures } from 'Selectors/plannedStructures';
 import util_mincut from '../utils/mincut';
 import { ExtensionsPlan } from './ExtensionsPlan';
+import { FranchisePlan } from './FranchisePlan';
 import { HeadquartersPlan } from './HeadquartersPlan';
 import { PlannedStructure } from './PlannedStructure';
 
@@ -42,11 +43,13 @@ export const validatePerimeterPlan = (plan: Partial<PerimeterPlan>) => {
     }
 }
 
-export const planPerimeter = (controllerPos: RoomPosition, hq: HeadquartersPlan, extensions: ExtensionsPlan) => {
+export const planPerimeter = (controllerPos: RoomPosition, hq: HeadquartersPlan, extensions: ExtensionsPlan, franchise1: FranchisePlan, franchise2: FranchisePlan) => {
     const plan: Partial<PerimeterPlan> = {
         ramparts: util_mincut.GetCutTiles(controllerPos.roomName, [
             getBoundingRect(...hq.towers),
             getBoundingRect(...extensions.extensions),
+            getBoundingRect(franchise1.spawn, franchise1.container, franchise1.link),
+            getBoundingRect(franchise2.spawn, franchise2.container, franchise2.link),
         ]).map(pos => new PlannedStructure(new RoomPosition(pos.x, pos.y, controllerPos!.roomName), STRUCTURE_RAMPART)),
     }
 
