@@ -71,9 +71,15 @@ export class FranchiseObjective extends Objective {
     }
 
     spawn(office: string, spawns: StructureSpawn[]) {
-        if (this.disabled || office !== this.office) return 0; // Only spawn in assigned office
+        if (office !== this.office) return 0; // Only spawn in assigned office
+
+        // Check if site belongs to a new office, and if so, disable it
         const franchisePos = posById(this.sourceId);
-        if (!franchisePos) return 0; // No idea where this source is
+        if (franchisePos && franchisePos?.roomName !== office && Memory.offices[franchisePos?.roomName]) {
+            this.disabled = true;
+        }
+
+        if (this.disabled || !franchisePos) return 0;
 
         // Skip spawning for remote Franchises during a crisis
         if (franchisePos.roomName !== office && getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
@@ -152,7 +158,10 @@ export class FranchiseObjective extends Objective {
     }
 
     action(creep: Creep) {
-        if (this.disabled) return;
+        if (this.disabled) {
+            creep.suicide();
+            return;
+        }
 
         if (creep.memory.type === MinionTypes.SALESMAN || creep.memory.type === MinionTypes.ACCOUNTANT) {
             this.actions[creep.memory.type](creep);

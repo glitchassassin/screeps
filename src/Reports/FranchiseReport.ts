@@ -1,13 +1,14 @@
-import { Bar, Dashboard } from "screeps-viz";
-
 import { FranchiseObjective } from "Objectives/Franchise";
 import { Objectives } from "Objectives/Objective";
+import { Bar, Dashboard } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { posById } from "Selectors/posById";
 import { roomPlans } from "Selectors/roomPlans";
 
+
 export default () => {
+    // Objectives
     for (let o in Objectives) {
         let objective = Objectives[o];
         if (!(objective instanceof FranchiseObjective)) continue;
