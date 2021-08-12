@@ -8,6 +8,7 @@ import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import profiler from "utils/profiler";
 import { Objective, Objectives } from "./Objective";
 
@@ -42,6 +43,7 @@ export class AcquireObjective extends Objective {
         return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
     }
     spawn(office: string, spawns: StructureSpawn[]) {
+        if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
         const acquireTarget = findAcquireTarget();
         // console.log(acquireTarget)
         if (!acquireTarget) return 0;

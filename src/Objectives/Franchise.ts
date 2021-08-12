@@ -11,6 +11,7 @@ import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "S
 import { posById } from "Selectors/posById";
 import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -73,6 +74,9 @@ export class FranchiseObjective extends Objective {
         if (this.disabled || office !== this.office) return 0; // Only spawn in assigned office
         const franchisePos = posById(this.sourceId);
         if (!franchisePos) return 0; // No idea where this source is
+
+        // Skip spawning for remote Franchises during a crisis
+        if (franchisePos.roomName !== office && getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
 
         let salesmen = 0, accountants = 0;
         for (let a of this.assigned) {
@@ -192,22 +196,30 @@ export class FranchiseObjective extends Objective {
                 } else {
                     // Remote franchise
                     const plan = getTerritoryFranchisePlanBySourceId(this.sourceId)
-                    if (!plan || !Game.rooms[plan.container.pos.roomName]) return;
+                    const rcl = Game.rooms[creep.memory.office].controller?.level ?? 0;
+                    if (!plan || !Game.rooms[plan.container.pos.roomName] || rcl < 4) return;
 
                     // Try to build or repair container
-                    // if (!plan.container.structure) {
-                    //     if (!plan.container.constructionSite) {
-                    //         plan.container.pos.createConstructionSite(plan.container.structureType);
-                    //     } else {
-                    //         creep.build(plan.container.constructionSite);
-                    //     }
-                    // } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
-                    //     creep.repair(plan.container.structure);
-                    // }
+                    if (!plan.container.structure) {
+                        if (!plan.container.constructionSite) {
+                            plan.container.pos.createConstructionSite(plan.container.structureType);
+                        } else {
+                            creep.build(plan.container.constructionSite);
+                        }
+                    } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
+                        creep.repair(plan.container.structure);
+                    }
                 }
             }
         }, 'FranchiseObjective.action[SALESMAN]'),
         [MinionTypes.ACCOUNTANT]: profiler.registerFN((creep: Creep) => {
+            const franchisePos = posById(this.sourceId);
+            if (franchisePos?.roomName !== creep.memory.office && getTerritoryIntent(creep.memory.office) === TerritoryIntent.DEFEND) {
+                // Skip hauling and retreat to remote Franchise during a crisis
+                moveTo(franchisePos, 3)(creep)
+                return;
+            }
+
             if (!creep.memory.state) {
                 if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
                     setState(States.WITHDRAW)(creep);

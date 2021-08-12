@@ -5,6 +5,7 @@ import { byId } from "Selectors/byId";
 import { getPatrolRoute } from "Selectors/getPatrolRoute";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -23,6 +24,7 @@ export class ExploreObjective extends Objective {
         return -minionCostPerTick(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office)));
     }
     spawn(office: string, spawns: StructureSpawn[]) {
+        if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
         const target = 1;
         const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
 

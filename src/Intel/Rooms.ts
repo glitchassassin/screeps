@@ -1,5 +1,6 @@
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
+import { findHostileCreeps } from "Selectors/findHostileCreeps";
 import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
@@ -15,6 +16,7 @@ declare global {
         reserver?: string,
         rclMilestones?: Record<number, number>,
         eligibleForOffice?: boolean,
+        lastHostileSeen?: number,
     }
     interface Memory {
         positions: Record<string, string>
@@ -62,6 +64,8 @@ export const scanRooms = profiler.registerFN(() => {
         Memory.rooms[room].owner = Game.rooms[room].controller?.owner?.username
         Memory.rooms[room].reserver = Game.rooms[room].controller?.reservation?.username
         Memory.rooms[room].scanned = Game.time
+
+        if (findHostileCreeps(room).length) Memory.rooms[room].lastHostileSeen = Game.time
 
         // Assign office, if necessary
         Memory.offices ??= {}
