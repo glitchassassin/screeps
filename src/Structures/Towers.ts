@@ -1,3 +1,4 @@
+import { HEAL_RANGE, RANGED_HEAL_RANGE } from "gameConstants";
 import { roomPlans } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 
@@ -28,8 +29,11 @@ export const runTowers = profiler.registerFN((roomName: string) => {
         const damage = plan.headquarters.towers.reduce((sum, t) =>
             sum + towerDamage(t.structure as StructureTower|undefined, target.pos
         ), 0)
-        const heal = target.getActiveBodyparts(HEAL) * HEAL_POWER;
-        const netDamage = (damage - heal);
+        const selfHeal = target.getActiveBodyparts(HEAL) * HEAL_POWER;
+        const allyHeal = target.pos.findInRange(FIND_HOSTILE_CREEPS, RANGED_HEAL_RANGE).reduce((sum, ally) => {
+            return sum + (ally.getActiveBodyparts(HEAL) * (ally.pos.inRangeTo(target.pos, HEAL_RANGE) ? HEAL_POWER : RANGED_HEAL_POWER))
+        }, 0)
+        const netDamage = (damage - (selfHeal + allyHeal));
         if (netDamage > bestDamage) {
             priorityTarget = target;
             bestDamage = netDamage;
