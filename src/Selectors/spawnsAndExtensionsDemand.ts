@@ -1,25 +1,25 @@
 import { roomPlans } from "./roomPlans";
 
 export const getExtensions = (room: string) => {
-    const plan = roomPlans(room)?.office;
+    const plan = roomPlans(room);
     if (!plan) return [];
     return [
-        ...plan.extensions.extensions,
-        ...plan.franchise1.extensions,
-        ...plan.franchise2.extensions,
+        ...plan.extensions?.extensions ?? [],
+        ...plan.franchise1?.extensions ?? [],
+        ...plan.franchise2?.extensions ?? [],
     ]
 }
 
 export const getEnergyStructures = (room: string) => {
-    const plan = roomPlans(room)?.office;
+    const plan = roomPlans(room);
     if (!plan) return [];
     return [
-        ...plan.extensions.extensions,
-        ...plan.franchise1.extensions,
-        plan.franchise1.spawn,
-        ...plan.franchise2.extensions,
-        plan.franchise2.spawn,
-    ].map(s => s.structure).filter(s => s) as (StructureExtension|StructureSpawn)[]
+        ...plan.extensions?.extensions ?? [],
+        ...plan.franchise1?.extensions ?? [],
+        plan.franchise1?.spawn,
+        ...plan.franchise2?.extensions ?? [],
+        plan.franchise2?.spawn,
+    ].map(s => s?.structure).filter(s => s) as (StructureExtension|StructureSpawn)[]
 }
 
 export const extensionsDemand = (room: string) => {

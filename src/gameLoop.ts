@@ -21,7 +21,7 @@ export const gameLoop = () => {
 
     // Office loop
     for (const room in Memory.offices) {
-        if (!roomPlans(room)?.office) continue; // Skip office until it's planned
+        if (!roomPlans(room)?.franchise1) continue; // Skip office until it's (at least partly) planned
         initializeDynamicObjectives(room);
         spawnObjectives(room);
         runLinks(room);

@@ -1,5 +1,4 @@
 import { BehaviorResult } from "Behaviors/Behavior";
-import { getEnergyFromLegalContainer } from "Behaviors/getEnergyFromLegalContainer";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
@@ -10,7 +9,6 @@ import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
-import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
@@ -93,15 +91,8 @@ export class UpgradeObjective extends Objective {
             setState(States.WORKING)(creep);
         }
         if (creep.memory.state === States.GET_ENERGY) {
-            const container = roomPlans(creep.memory.office)?.office?.headquarters.container;
-            if (container?.structure) {
-                if (getEnergyFromLegalContainer(creep) === BehaviorResult.SUCCESS) {
-                    setState(States.WORKING)(creep);
-                }
-            } else {
-                if (getEnergyFromStorage(creep) === BehaviorResult.SUCCESS) {
-                    setState(States.WORKING)(creep);
-                }
+            if (getEnergyFromStorage(creep) === BehaviorResult.SUCCESS) {
+                setState(States.WORKING)(creep);
             }
         }
         if (creep.memory.state === States.WORKING) {

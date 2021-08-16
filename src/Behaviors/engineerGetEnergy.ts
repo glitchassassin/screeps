@@ -1,8 +1,6 @@
-import { roomPlans } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { getEnergyFromFranchise } from "./getEnergyFromFranchise";
-import { getEnergyFromLegalContainer } from "./getEnergyFromLegalContainer";
 import { getEnergyFromRuin } from "./getEnergyFromRuin";
 import { getEnergyFromSource } from "./getEnergyFromSource";
 import { getEnergyFromStorage } from "./getEnergyFromStorage";
@@ -40,14 +38,7 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?:
             creep.memory.getEnergyState = States.GET_ENERGY_SOURCE // For work outside the Office, harvest locally
         } else {
             // Get energy from legal container, or storage if that doesn't exist
-            const container = roomPlans(creep.memory.office)?.office?.headquarters.container;
-            if (!container) return;
-            let result;
-            if (container.structure) {
-                result = getEnergyFromLegalContainer(creep);
-            } else {
-                result = getEnergyFromStorage(creep);
-            }
+            let result = getEnergyFromStorage(creep);
 
             if (result === BehaviorResult.SUCCESS) {
                 return BehaviorResult.SUCCESS;

@@ -1,29 +1,29 @@
-import { deserializeExtensionsPlan, ExtensionsPlan } from "RoomPlanner/ExtensionsPlan";
-import { deserializeFranchisePlan, FranchisePlan } from "RoomPlanner/FranchisePlan";
-import { deserializeHeadquartersPlan, HeadquartersPlan } from "RoomPlanner/HeadquartersPlan";
-import { deserializeMinePlan, MinePlan } from "RoomPlanner/MinePlan";
-import { deserializePerimeterPlan, PerimeterPlan } from "RoomPlanner/PerimeterPlan";
-import { deserializeTerritoryFranchisePlan, TerritoryFranchisePlan } from "RoomPlanner/TerritoryFranchise";
+import { RoomPlan } from "RoomPlanner";
+import { deserializeExtensionsPlan } from "RoomPlanner/Extensions/deserializeExtensionsPlan";
+import { deserializeFranchisePlan } from "RoomPlanner/Franchise/deserializeFranchisePlan";
+import { deserializeHeadquartersPlan } from "RoomPlanner/Headquarters/deserializeHeadquartersPlan";
+import { deserializeLabsPlan } from "RoomPlanner/Labs/deserializeLabsPlan";
+import { deserializeMinePlan } from "RoomPlanner/Mine/deserializeMinePlan";
+import { deserializePerimeterPlan } from "RoomPlanner/Perimeter/deserializePerimeterPlan";
 import profiler from "utils/profiler";
 import { posById } from "./posById";
 
+const plans: Map<string, RoomPlan> = new Map();
 
-export interface RoomPlan {
-    office?: {
-        headquarters: HeadquartersPlan,
-        franchise1: FranchisePlan,
-        franchise2: FranchisePlan,
-        mine: MinePlan,
-        extensions: ExtensionsPlan,
-        perimeter: PerimeterPlan,
-    },
-    territory?: {
-        franchise1: TerritoryFranchisePlan,
-        franchise2?: TerritoryFranchisePlan,
+const updateRoomPlan = <T extends keyof RoomPlan>(roomName: string, plan: T, deserializer: (plan: string) => RoomPlan[T]) => {
+    let memoryPlan = Memory.roomPlans[roomName][plan];
+    let cachedPlan = plans.get(roomName) ?? {};
+    plans.set(roomName, cachedPlan);
+
+    if (typeof memoryPlan === 'string' && !cachedPlan[plan]) {
+        try {
+            cachedPlan[plan] = deserializer(memoryPlan)
+        } catch {
+            console.log(`Error deserializing ${plan} plan for ${roomName}, resetting it`)
+            delete Memory.roomPlans[roomName][plan]
+        }
     }
 }
-
-const plans: Map<string, RoomPlan> = new Map();
 
 export const roomPlans = profiler.registerFN((roomName: string) => {
     Memory.roomPlans ??= {};
@@ -33,37 +33,26 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
         plans.delete(roomName);
         return;
     }
-    if (plans.has(roomName)) {
-        return plans.get(roomName);
-    }
+    let cachedPlan = plans.get(roomName) ?? {}
+    plans.set(roomName, cachedPlan);
 
-    try {
-        const territory = plan.territory ? {
-            franchise1: deserializeTerritoryFranchisePlan(plan.territory.franchise1),
-            franchise2: plan.territory.franchise2 ? deserializeTerritoryFranchisePlan(plan.territory.franchise2) : undefined,
-        } : undefined;
-        const office = plan.office ? {
-            headquarters: deserializeHeadquartersPlan(plan.office.headquarters),
-            franchise1: deserializeFranchisePlan(plan.office.franchise1),
-            franchise2: deserializeFranchisePlan(plan.office.franchise2),
-            mine: deserializeMinePlan(plan.office.mine),
-            extensions: deserializeExtensionsPlan(plan.office.extensions),
-            perimeter: deserializePerimeterPlan(plan.office.perimeter),
-        } : undefined;
-        plans.set(roomName, { office, territory })
-    } catch (e) {
-        console.log('Error deserializing room plan', roomName, '(resetting)')
-        delete Memory.roomPlans[roomName]
-    }
+    // Check if room plan needs to be updated
+    updateRoomPlan(roomName, 'franchise1', deserializeFranchisePlan);
+    updateRoomPlan(roomName, 'franchise2', deserializeFranchisePlan);
+    updateRoomPlan(roomName, 'mine', deserializeMinePlan);
+    updateRoomPlan(roomName, 'headquarters', deserializeHeadquartersPlan);
+    updateRoomPlan(roomName, 'labs', deserializeLabsPlan);
+    updateRoomPlan(roomName, 'extensions', deserializeExtensionsPlan);
+    updateRoomPlan(roomName, 'perimeter', deserializePerimeterPlan);
 
-    return plans.get(roomName)
+    return cachedPlan;
 }, 'roomPlans') as (roomName: string) => RoomPlan|undefined
 
 export const spawns = (roomName: string) => {
     return [
-        roomPlans(roomName)?.office?.franchise1.spawn.structure,
-        roomPlans(roomName)?.office?.franchise2.spawn.structure,
-        roomPlans(roomName)?.office?.headquarters.spawn.structure,
+        roomPlans(roomName)?.franchise1?.spawn.structure,
+        roomPlans(roomName)?.franchise2?.spawn.structure,
+        roomPlans(roomName)?.headquarters?.spawn.structure,
     ].filter(s => s) as StructureSpawn[];
 }
 
@@ -71,18 +60,7 @@ export const getFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) =
     const pos = posById(id);
     if (!pos) return;
     const plan = roomPlans(pos.roomName);
-    if (!plan?.office) return;
-    if (plan.office.franchise1.sourceId === id) return plan.office.franchise1;
-    if (plan.office.franchise2.sourceId === id) return plan.office.franchise2;
+    if (plan?.franchise1?.sourceId === id) return plan.franchise1;
+    if (plan?.franchise2?.sourceId === id) return plan.franchise2;
     return;
 }, 'getFranchisePlanBySourceId')
-
-export const getTerritoryFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) => {
-    const pos = posById(id);
-    if (!pos) return;
-    const plan = roomPlans(pos.roomName);
-    if (!plan) return;
-    if (plan.territory?.franchise1.sourceId === id) return plan.territory.franchise1;
-    if (plan.territory?.franchise2?.sourceId === id) return plan.territory.franchise2;
-    return;
-}, 'getTerritoryFranchisePlanBySourceId')

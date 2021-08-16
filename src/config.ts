@@ -69,5 +69,5 @@ export const CACHED_STRUCTURES: StructureConstant[] = [
 ]
 
 export const FEATURES = {
-    MINING: Game.shard.name.startsWith('shard') ? true: false
+    MINING: true //Game.shard.name.startsWith('shard') ? true: false
 }

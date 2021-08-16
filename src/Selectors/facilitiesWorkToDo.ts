@@ -5,7 +5,7 @@ import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
 
 
 export const destroyUnplannedStructures = (room: string) => {
-    if (!Game.rooms[room]) return; // No visibility here, can't destroy
+    if (!Game.rooms[room]?.controller?.my || !Memory.roomPlans?.[room]?.office) return;
     const allPlannedStructures = plannedStructuresByRcl(room, 8)
     // Destroy all controller-limited structures
     Game.rooms[room].find(FIND_STRUCTURES).forEach(s => {

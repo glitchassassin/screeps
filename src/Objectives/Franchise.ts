@@ -9,7 +9,7 @@ import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRou
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
-import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
+import { getFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import profiler from "utils/profiler";
@@ -33,7 +33,7 @@ export class FranchiseObjective extends Objective {
         franchiseObjectives[this.id] = this;
 
         const franchisePos = posById(this.sourceId);
-        const storagePos = roomPlans(this.office)?.office?.headquarters.storage.pos
+        const storagePos = roomPlans(this.office)?.headquarters?.storage.pos
         if (!storagePos || !franchisePos) {
             this.disabled = true;
             return;
@@ -204,7 +204,7 @@ export class FranchiseObjective extends Objective {
                     }
                 } else {
                     // Remote franchise
-                    const plan = getTerritoryFranchisePlanBySourceId(this.sourceId)
+                    const plan = getFranchisePlanBySourceId(this.sourceId)
                     const rcl = Game.rooms[creep.memory.office].controller?.level ?? 0;
                     if (!plan || !Game.rooms[plan.container.pos.roomName] || rcl < 4) return;
 
@@ -256,7 +256,7 @@ export class FranchiseObjective extends Objective {
                 }
             }
             if (creep.memory.state === States.DEPOSIT) {
-                const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
+                const storage = roomPlans(creep.memory.office)?.headquarters?.storage;
                 if (!storage) return;
                 if (storage.structure) {
                     if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {

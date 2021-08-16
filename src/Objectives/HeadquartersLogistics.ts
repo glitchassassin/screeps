@@ -1,6 +1,5 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
-import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
@@ -29,8 +28,8 @@ export class HeadquartersLogisticsObjective extends Objective {
     }
     spawn(office: string, spawns: StructureSpawn[]) {
         // Only needed if we have central HQ structures
-        const hq = roomPlans(office)?.office?.headquarters;
-        if (!(hq?.towers.some(t => t.structure) || hq?.container.structure || hq?.link.structure)) {
+        const hq = roomPlans(office)?.headquarters;
+        if (!(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure)) {
             return 0;
         }
 
@@ -61,24 +60,12 @@ export class HeadquartersLogisticsObjective extends Objective {
     action(creep: Creep) {
         // Priorities:
         // Link -> Storage
-        // Storage -> Towers
-        // Storage -> Legal
         // If link has energy, GET_ENERGY_LINK and DEPOSIT_STORAGE
-        // If towers need refilled, GET_ENERGY_STORAGE and FILL_TOWERS
-        // If legal needs refilled, GET_ENERGY_STORAGE and FILL_LEGAL
-
-        // If creep is empty, get energy from link
-        // If that fails and towers or legal need refilled, get energy from storage
-        // If creep is full and towers need refilled, fill towers
-        // Else if legal needs refilled, refill legal
-        // Else deposit in storage
 
         // Check HQ state
-        const hq = roomPlans(creep.memory.office)?.office?.headquarters;
+        const hq = roomPlans(creep.memory.office)?.headquarters;
         if (!hq) return;
         const creepIsEmpty = creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0;
-        const towersNeedRefilled = hq.towers.reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) > 0
-        const legalNeedsRefilled = ((hq.container.structure as StructureContainer)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0
 
         if (!creep.memory.state) {
             if (creepIsEmpty) {
@@ -90,60 +77,7 @@ export class HeadquartersLogisticsObjective extends Objective {
         if (creep.memory.state === States.GET_ENERGY_LINK) {
             const result = getEnergyFromLink(creep)
             if (result === BehaviorResult.SUCCESS) {
-                if (towersNeedRefilled) {
-                    setState(States.FILL_TOWERS)(creep);
-                } else if (legalNeedsRefilled) {
-                    setState(States.FILL_LEGAL)(creep);
-                } else {
-                    setState(States.DEPOSIT)(creep);
-                }
-            } else if (result === BehaviorResult.FAILURE) {
-                if (towersNeedRefilled || legalNeedsRefilled) {
-                    setState(States.GET_ENERGY_STORAGE)(creep);
-                } else {
-                    setState(States.DEPOSIT)(creep);
-                }
-            }
-        }
-        if (creep.memory.state === States.GET_ENERGY_STORAGE) {
-            const result = getEnergyFromStorage(creep)
-            if (result === BehaviorResult.SUCCESS) {
-                if (towersNeedRefilled) {
-                    setState(States.FILL_TOWERS)(creep);
-                } else if (legalNeedsRefilled) {
-                    setState(States.FILL_LEGAL)(creep);
-                } else {
-                    setState(States.DEPOSIT)(creep);
-                }
-            } else if (result === BehaviorResult.FAILURE) {
-                if (towersNeedRefilled || legalNeedsRefilled) {
-                    setState(States.GET_ENERGY_LINK)(creep);
-                    return;
-                }
-            }
-        }
-        if (creep.memory.state === States.FILL_TOWERS) {
-            if (creepIsEmpty) {
-                setState(States.GET_ENERGY_LINK)(creep);
-                return;
-            }
-            const tower = hq.towers.find(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0);
-            if (!tower || !tower.structure) {
-                setState(States.GET_ENERGY_LINK)(creep);
-            } else if (moveTo(tower?.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                creep.transfer(tower.structure, RESOURCE_ENERGY);
-            }
-        }
-        if (creep.memory.state === States.FILL_LEGAL) {
-            if (creepIsEmpty) {
-                setState(States.GET_ENERGY_LINK)(creep);
-                return;
-            }
-            const container = hq.container;
-            if (!legalNeedsRefilled || !container.structure) {
-                setState(States.GET_ENERGY_LINK)(creep);
-            } else if (moveTo(container?.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                creep.transfer(container.structure, RESOURCE_ENERGY);
+                setState(States.DEPOSIT)(creep);
             }
         }
         if (creep.memory.state === States.DEPOSIT) {
@@ -151,7 +85,7 @@ export class HeadquartersLogisticsObjective extends Objective {
                 setState(States.GET_ENERGY_LINK)(creep);
                 return;
             }
-            const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
+            const storage = roomPlans(creep.memory.office)?.headquarters?.storage;
             if (!storage) return;
             if (storage.structure) {
                 moveTo(storage.pos, 1)(creep);

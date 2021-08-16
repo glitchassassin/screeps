@@ -1,7 +1,7 @@
 import { byId } from "Selectors/byId";
 import { findFranchiseTarget } from "Selectors/findFranchiseTarget";
 import { posById } from "Selectors/posById";
-import { getFranchisePlanBySourceId, getTerritoryFranchisePlanBySourceId } from "Selectors/roomPlans";
+import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
@@ -27,9 +27,7 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
     }
     const source = byId(creep.memory.franchiseTarget);
     const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
-    const plan = (creep.memory.office === sourcePos?.roomName) ?
-        getFranchisePlanBySourceId(creep.memory.franchiseTarget) :
-        getTerritoryFranchisePlanBySourceId(creep.memory.franchiseTarget)
+    const plan = getFranchisePlanBySourceId(creep.memory.franchiseTarget);
 
     if (
         !sourcePos ||

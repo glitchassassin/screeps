@@ -9,7 +9,7 @@ const getSellPrice = (resourceType: ResourceConstant) => {
 }
 
 export const runTerminal = profiler.registerFN(function runTerminal(roomName: string) {
-    const terminal = roomPlans(roomName)?.office?.headquarters.terminal.structure as StructureTerminal;
+    const terminal = roomPlans(roomName)?.headquarters?.terminal.structure as StructureTerminal;
     if (!terminal) return;
 
     // Just sell all resources except energy

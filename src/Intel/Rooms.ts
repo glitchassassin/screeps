@@ -29,7 +29,7 @@ export const scanRooms = profiler.registerFN(() => {
 
     // Purge dead offices
     for (let office in Memory.offices) {
-        if (!Game.rooms[office]) {
+        if (!Game.rooms[office]?.controller?.my) {
             delete Memory.offices[office];
         }
     }

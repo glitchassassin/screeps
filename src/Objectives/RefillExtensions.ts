@@ -28,7 +28,7 @@ export class RefillExtensionsObjective extends Objective {
     }
     targetCarry(office: string) {
         // Calculate extensions capacity
-        let capacity = roomPlans(office)?.office?.extensions.extensions
+        let capacity = roomPlans(office)?.extensions?.extensions
             .reduce((sum, e) => sum + ((e.structure as StructureExtension)?.store.getCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0
 
         // Maintain one appropriately-sized Accountant
@@ -37,7 +37,7 @@ export class RefillExtensionsObjective extends Objective {
     spawn(office: string, spawns: StructureSpawn[]) {
         if (franchiseIncomePerTick(office) <= 0 ) return 0; // Only spawn refillers if we have active Franchises
 
-        if (roomPlans(office)?.office?.extensions.extensions.every(e => !e.structure)) return 0; // No extensions
+        if (roomPlans(office)?.extensions?.extensions.every(e => !e.structure)) return 0; // No extensions
         const targetCarry = this.targetCarry(office);
         const actualCarry = this.assigned.map(byId).filter(c =>
             c?.memory.office === office &&

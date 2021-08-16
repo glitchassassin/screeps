@@ -6,7 +6,7 @@ import { moveTo } from "./moveTo";
 
 export const getResourcesFromMineContainer = profiler.registerFN((creep: Creep) => {
     // Default to specified franchise
-    const plan = roomPlans(creep.memory.office)?.office?.mine;
+    const plan = roomPlans(creep.memory.office)?.mine;
     const container = plan?.container.structure as StructureContainer|undefined
     if (!plan || !container) return BehaviorResult.FAILURE;
 

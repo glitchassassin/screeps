@@ -1,7 +1,7 @@
 import { gameLoop } from 'gameLoop';
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
-import MemHack from 'utils/memhack';
+// import MemHack from 'utils/memhack';
 import profiler from 'utils/profiler';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import './utils/RoomVisual';
@@ -33,7 +33,7 @@ onRespawn(global.purge);
 // profiler.enable()
 
 export const loop = () => {
-  MemHack.pretick();
+  // MemHack.pretick();
   if (Game.cpu.bucket < 200) {
     console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
     return; // If the bucket gets really low, let it rebuild

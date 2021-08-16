@@ -1,4 +1,3 @@
-import { roomPlans } from "./roomPlans";
 
 let cachedAcquireTarget: string|undefined;
 let cachedAcquiringOffice: string|undefined;
@@ -98,7 +97,7 @@ export const acquireTargetIsValid = (roomName: string) => {
             !Memory.rooms[roomName].reserver ||
             Memory.rooms[roomName].reserver === 'LordGreywether'
         ) &&
-        roomPlans(roomName)?.office
+        Memory.roomPlans[roomName]?.office
     )
 }
 

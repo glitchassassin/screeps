@@ -1,5 +1,4 @@
 import { memoize, memoizeByTick } from "utils/memoizeFunction";
-import { packPos } from "utils/packrat";
 
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
@@ -16,7 +15,7 @@ export const calculateAdjacencyMatrix = memoize(
     }
 );
 export const calculateAdjacentPositions = memoize(
-    (pos: RoomPosition) => (`[${pos.x}, ${pos.y}]`),
+    (pos: RoomPosition) => (pos.toString()),
     (pos: RoomPosition) => {
         return calculateNearbyPositions(pos, 1);
     }
@@ -25,7 +24,7 @@ export const calculateAdjacentPositions = memoize(
 export const adjacentWalkablePositions = (pos: RoomPosition, ignoreCreeps = false) => calculateAdjacentPositions(pos).filter(p => isPositionWalkable(p, ignoreCreeps));
 
 export const calculateNearbyPositions = memoize(
-    (pos: RoomPosition, proximity: number, includeCenter = false) => (`[${pos.x}, ${pos.y}: ${pos.roomName}]x${proximity} ${includeCenter}`),
+    (pos: RoomPosition, proximity: number, includeCenter = false) => (`${pos}x${proximity} ${includeCenter}`),
     (pos: RoomPosition, proximity: number, includeCenter = false) => {
         let adjacent: RoomPosition[] = [];
         adjacent = calculateAdjacencyMatrix(proximity)
@@ -73,7 +72,7 @@ export const calculateNearbyRooms = memoize(
     }
 )
 export const isPositionWalkable = memoizeByTick(
-    (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => packPos(pos) + ignoreCreeps + ignoreStructures,
+    (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => pos.toString() + ignoreCreeps + ignoreStructures,
     (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => {
         let terrain;
         try {

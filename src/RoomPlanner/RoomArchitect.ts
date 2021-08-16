@@ -1,146 +1,90 @@
-import { planExtensions } from 'RoomPlanner/ExtensionsPlan';
-import { planFranchise, serializeFranchisePlan } from 'RoomPlanner/FranchisePlan';
-import { planHeadquarters } from 'RoomPlanner/HeadquartersPlan';
-import { planMine } from 'RoomPlanner/MinePlan';
+import { RoomPlan } from 'RoomPlanner';
+import { planExtensions } from 'RoomPlanner/Extensions/ExtensionsPlan';
+import { planFranchise } from 'RoomPlanner/Franchise/FranchisePlan';
+import { planHeadquarters } from 'RoomPlanner/Headquarters/HeadquartersPlan';
+import { planLabs } from 'RoomPlanner/Labs/LabsPlan';
+import { planMine } from 'RoomPlanner/Mine/MinePlan';
+import { planPerimeter } from 'RoomPlanner/Perimeter/PerimeterPlan';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
-import { posById } from 'Selectors/posById';
-import { controllerPosition, mineralPosition, sourceIds } from 'Selectors/roomCache';
-import { planPerimeter } from './PerimeterPlan';
-import { planTerritoryFranchise, serializeTerritoryFranchisePlan } from './TerritoryFranchise';
+import { sourceIds } from 'Selectors/roomCache';
+import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
 
 
 declare global {
     interface Memory {
         roomPlans: {
             [index: string]: {
-                office?: {
-                    headquarters: string,
-                    franchise1: string,
-                    franchise2: string,
-                    mine: string,
-                    extensions: string,
-                    perimeter: string,
-                },
-                territory?: {
-                    franchise1: string,
-                    franchise2?: string
-                }
-            } | null
+                complete: boolean,
+                office?: boolean,
+                headquarters?: string|null,
+                franchise1?: string|null,
+                franchise2?: string|null,
+                mine?: string|null,
+                extensions?: string|null,
+                perimeter?: string|null,
+                labs?: string|null,
+            }
         }
     }
+}
+
+const roomSectionPlanner = <T extends keyof RoomPlan>(
+    room: string,
+    plan: T,
+    planner: (room: string) => RoomPlan[T],
+    serializer: (plan: RoomPlan[T]) => string
+) => () => {
+    if (Memory.roomPlans[room][plan] === undefined) {
+        try {
+            const plannedSection = planner(room)
+            Memory.roomPlans[room][plan] = serializer(plannedSection)
+        } catch (e) {
+            console.log(`Error planning ${plan} for ${room}: ${e}`)
+            Memory.roomPlans[room][plan] = null;
+        }
+    }
+}
+
+const serializePlan = <T extends keyof RoomPlan>(plan: RoomPlan[T]) => {
+    if (!plan) throw new Error('Undefined plan, cannot serialize');
+    return serializePlannedStructures(Object.values(plan ?? {}).flat())
 }
 
 export const generateRoomPlans = (roomName: string)  => {
     Memory.roomPlans ??= {};
+    Memory.roomPlans[roomName] ??= {
+        complete: false
+    }
+    if (Memory.roomPlans[roomName].complete) return;
 
-    if (Memory.roomPlans[roomName] !== undefined) return; // Already planned
+    const [franchise1, franchise2] = sourceIds(roomName);
+    const steps = [
+        roomSectionPlanner(roomName, 'franchise1', () => planFranchise(franchise1), serializeFranchisePlan),
+        roomSectionPlanner(roomName, 'franchise2', () => planFranchise(franchise2), serializeFranchisePlan),
+        roomSectionPlanner(roomName, 'mine', planMine, serializePlan),
+        roomSectionPlanner(roomName, 'headquarters', planHeadquarters, serializePlan),
+        roomSectionPlanner(roomName, 'labs', planLabs, serializePlan),
+        roomSectionPlanner(roomName, 'extensions', planExtensions, serializePlan),
+        roomSectionPlanner(roomName, 'perimeter', planPerimeter, serializePlan),
+    ]
 
-    let office, territory;
-    if (Memory.rooms[roomName].eligibleForOffice) {
-        try {
-            const officePlan = planOffice(roomName);
-            office = {
-                headquarters: serializePlannedStructures(Object.values(officePlan.headquarters).flat()),
-                franchise1: serializeFranchisePlan(officePlan.franchise1),
-                franchise2: serializeFranchisePlan(officePlan.franchise2),
-                mine: serializePlannedStructures(Object.values(officePlan.mine).flat()),
-                extensions: serializePlannedStructures(Object.values(officePlan.extensions).flat()),
-                perimeter: serializePlannedStructures(Object.values(officePlan.perimeter).flat())
-            };
-        } catch (e) {
-            console.log(roomName, 'failed Office planning', e)
+    const start = Game.cpu.getUsed();
+    for (let step of steps) {
+        step();
+        const used = Game.cpu.getUsed() - start;
+        if (used > 10) {
+            return; // continue planning next time
         }
-    } else {
-        console.log(roomName, 'is ineligible for an Office')
-    }
-    try {
-        const territoryPlan = planTerritory(roomName);
-        territory = territoryPlan.franchise1 ? {
-            franchise1: serializeTerritoryFranchisePlan(territoryPlan.franchise1),
-            franchise2: territoryPlan.franchise2 && serializeTerritoryFranchisePlan(territoryPlan.franchise2),
-        } : undefined;
-    } catch (e) {
-        console.log(roomName, 'failed Territory planning', e)
-    }
-    Memory.roomPlans[roomName] = { office, territory };
-
-}
-
-const planOffice = (roomName: string) => {
-    let start = Game.cpu.getUsed();
-
-    // Get sources
-    let sources = sourceIds(roomName);
-    let mineral = mineralPosition(roomName);
-    let controller = controllerPosition(roomName);
-    if (!controller || !mineral || sources.length !== 2) throw new Error('Invalid room for planning an office');
-
-    // Calculate FranchisePlans
-    let franchise1, franchise2, mine, headquarters, extensions, perimeter;
-    try {
-        let plans = sources
-            .sort((a, b) => posById(a)!.getRangeTo(controller!) - posById(b)!.getRangeTo(controller!))
-            .map(source => planFranchise(source));
-        if (plans.length !== 2) throw new Error(`Unexpected number of sources: ${plans.length}`);
-        // If one plan has a spawn already, that is franchise1
-        [franchise1, franchise2] = plans.sort((a, b) => (!b.spawn.structure && a.spawn.structure) ? -1 : 0);
-    } catch (e) {
-        throw new Error('FAILED generating franchises: ' + e.message);
-    }
-    try {
-        if (!mineral) throw new Error(`No mineral found in room`)
-        mine = planMine(mineral)
-    } catch (e) {
-        throw new Error('FAILED generating mine: ' + e.message)
-    }
-    try {
-        headquarters = planHeadquarters(roomName);
-    } catch (e) {
-        throw new Error('FAILED generating headquarters: ' + e.message)
-    }
-    // Fill in remaining extensions
-
-    try {
-        extensions = planExtensions(roomName, franchise1, franchise2, mine, headquarters);
-    } catch (e) {
-        throw new Error('FAILED generating extensions: ' + e.message)
     }
 
-    // Draw min-cut perimeter
-    try {
-        perimeter = planPerimeter(controller, headquarters, extensions, franchise1, franchise2);
-    } catch (e) {
-        throw new Error('FAILED generating perimeter: ' + e.message)
-    }
-
-    let end = Game.cpu.getUsed();
-    console.log(`Planned Office room ${roomName} with ${end - start} CPU`);
-
-    return {
-        franchise1,
-        franchise2,
-        mine,
-        headquarters,
-        extensions,
-        perimeter,
-    }
-}
-
-const planTerritory = (roomName: string) => {
-    let start = Game.cpu.getUsed();
-
-    // Calculate FranchisePlans
-    let franchise1, franchise2;
-    try {
-        [franchise1, franchise2] = sourceIds(roomName).map(source => planTerritoryFranchise(source));
-    } catch (e) {
-        throw new Error('FAILED generating territory franchises: ' + e.message)
-    }
-
-    let end = Game.cpu.getUsed();
-    console.log(`Planned Territory room ${roomName} with ${end - start} CPU`);
-    return {
-        franchise1,
-        franchise2,
-    }
+    Memory.roomPlans[roomName].complete = true;
+    Memory.roomPlans[roomName].office = (
+        Memory.roomPlans[roomName].headquarters !== null &&
+        Memory.roomPlans[roomName].franchise1 !== null &&
+        Memory.roomPlans[roomName].franchise2 !== null &&
+        Memory.roomPlans[roomName].mine !== null &&
+        Memory.roomPlans[roomName].labs !== null &&
+        Memory.roomPlans[roomName].extensions !== null &&
+        Memory.roomPlans[roomName].perimeter !== null
+    )
 }

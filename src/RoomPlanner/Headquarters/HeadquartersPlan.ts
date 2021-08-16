@@ -1,15 +1,18 @@
+import { HeadquartersPlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
 import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
-import { deserializePlannedStructures } from "Selectors/plannedStructures";
 import { posById } from "Selectors/posById";
+import { validatePathsToPointsOfInterest } from "Selectors/validatePathsToPointsOfInterest";
+import { validateHeadquartersPlan } from "./validateHeadquartersPlan";
 
 
-const HQ_UPGRADE_LEFT: StructureConstant[][] = [
-    [STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
-    [STRUCTURE_TERMINAL, STRUCTURE_ROAD, STRUCTURE_ROAD],
-    [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_STORAGE],
-    [STRUCTURE_LINK, STRUCTURE_ROAD, STRUCTURE_ROAD],
-    [STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
+const HQ_UPGRADE_LEFT: (BuildableStructureConstant|undefined)[][] = [
+    [undefined, STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
+    [undefined, STRUCTURE_TOWER, undefined, STRUCTURE_TOWER],
+    [undefined, STRUCTURE_STORAGE, STRUCTURE_SPAWN, STRUCTURE_TOWER],
+    [undefined, STRUCTURE_ROAD, undefined, STRUCTURE_LINK],
+    [undefined, STRUCTURE_POWER_SPAWN, STRUCTURE_FACTORY, STRUCTURE_TERMINAL],
 ]
 
 const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => [...row].reverse());
@@ -18,52 +21,16 @@ const HQ_UPGRADE_TOP = HQ_UPGRADE_LEFT[0].map((k, i) => HQ_UPGRADE_LEFT.map(row 
 
 const HQ_UPGRADE_BOTTOM = HQ_UPGRADE_RIGHT[0].map((k, i) => HQ_UPGRADE_RIGHT.map(row => row[i]))
 
-export interface HeadquartersPlan {
-    spawn: PlannedStructure;
-    link: PlannedStructure;
-    container: PlannedStructure;
-    storage: PlannedStructure;
-    terminal: PlannedStructure;
-    towers: PlannedStructure[];
-    roads: PlannedStructure[];
-    walls: PlannedStructure[];
-}
-
-export const deserializeHeadquartersPlan = (serialized: string) => {
-    const plan: Partial<HeadquartersPlan> = {
-        spawn: undefined,
-        link: undefined,
-        container: undefined,
-        storage: undefined,
-        terminal: undefined,
-        towers: [],
-        roads: [],
-        walls: [],
-    }
-    for (const s of deserializePlannedStructures(serialized)) {
-        if (s.structureType === STRUCTURE_SPAWN) plan.spawn = s;
-        if (s.structureType === STRUCTURE_LINK) plan.link = s;
-        if (s.structureType === STRUCTURE_CONTAINER) plan.container = s;
-        if (s.structureType === STRUCTURE_STORAGE) plan.storage = s;
-        if (s.structureType === STRUCTURE_TERMINAL) plan.terminal = s;
-        if (s.structureType === STRUCTURE_TOWER) plan.towers?.push(s);
-        if (s.structureType === STRUCTURE_ROAD) plan.roads?.push(s);
-        if (s.structureType === STRUCTURE_WALL) plan.walls?.push(s);
-    }
-    return validateHeadquartersPlan(plan);
-}
-
-const validateHeadquartersPlan = (plan: Partial<HeadquartersPlan>) => {
-    if (
-        !plan.spawn || !plan.link || !plan.container || !plan.storage || !plan.terminal ||
-        !plan.towers?.length || !plan.roads?.length || !plan.walls?.length
-    ) {
-        console.log(JSON.stringify(plan))
-        throw new Error(`Incomplete HeadquartersPlan`)
-    } else {
-        return plan as HeadquartersPlan;
-    }
-}
+// Anchor should be in range 3 of controller
+const ANCHOR_LEFT = { x: 0, y: 2 };
+const ANCHOR_RIGHT = { x: 3, y: 2 };
+const ANCHOR_TOP = { x: 2, y: 0 };
+const ANCHOR_BOTTOM = { x: 2, y: 3 };
+// Spawn should not be
+const SPAWN_LEFT = { x: 2, y: 2 };
+const SPAWN_RIGHT = { x: 1, y: 2 };
+const SPAWN_TOP = { x: 2, y: 2 };
+const SPAWN_BOTTOM = { x: 2, y: 1 };
 
 export const planHeadquarters = (roomName: string) => {
     // Calculate from scratch
@@ -73,91 +40,83 @@ export const planHeadquarters = (roomName: string) => {
     let sources = Memory.rooms[roomName].sourceIds?.map(s => posById(s)).filter(s => s) as RoomPosition[] ?? []
     if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
 
+    let currentRoomPlan = costMatrixFromRoomPlan(roomName);
+
     let bestDistance = Infinity;
     let bestPlan: Partial<HeadquartersPlan> = {};
 
-    for (let space of findSpaces(controllerPos, sources)) {
+    for (let space of findSpaces(controllerPos, currentRoomPlan)) {
         let plan: Partial<HeadquartersPlan> = {
             spawn: undefined,
             link: undefined,
-            container: undefined,
+            factory: undefined,
+            powerSpawn: undefined,
             storage: undefined,
             terminal: undefined,
             towers: [],
             roads: [],
             walls: [],
         }
-        // Orient the space
-        //            X X X
-        // X X O X X  X X X
-        // X X X X X  O X O <-- +2,+2
-        // X X O X X  X X X
-        //     ^      X X X
-        //   +2,+2
-        // There are two valid upgrading locations; range to Controller
-        // will determine which orientation the Headquarters has. We
-        // only need to check one pos for either horizontal or vertical
 
         // Get the upgrade location closest to Controller
-        let orientation: StructureConstant[][];
-        let inRange = new RoomPosition(space.x + 2, space.y + 2, controllerPos.roomName).inRangeTo(controllerPos, 3);
+        let orientation: (BuildableStructureConstant|undefined)[][];
+        let anchor: {x: number, y: number};
         if (space.horizontal) {
+            let inRange = new RoomPosition(space.x + ANCHOR_BOTTOM.x, space.y + ANCHOR_BOTTOM.y, controllerPos.roomName).inRangeTo(controllerPos, 3);
             if (inRange) {
                 orientation = HQ_UPGRADE_BOTTOM;
+                anchor = ANCHOR_BOTTOM;
             } else {
                 orientation = HQ_UPGRADE_TOP;
+                anchor = ANCHOR_TOP;
             }
         } else {
+            let inRange = new RoomPosition(space.x + ANCHOR_RIGHT.x, space.y + ANCHOR_RIGHT.y, controllerPos.roomName).inRangeTo(controllerPos, 3);
             if (inRange) {
                 orientation = HQ_UPGRADE_RIGHT;
+                anchor = ANCHOR_RIGHT;
             } else {
                 orientation = HQ_UPGRADE_LEFT;
+                anchor = ANCHOR_LEFT;
             }
         }
 
-        let costMatrix = new PathFinder.CostMatrix();
+        let costMatrix = currentRoomPlan.clone();
 
         for (let y = 0; y < orientation.length; y++) {
             for (let x = 0; x < orientation[y].length; x++) {
-                // Container is an "obstacle" because the upgrading creep will stay there
-                if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
+                const tile = orientation[y][x]
+                if (tile === undefined) {
+                    continue;
+                } else if ((OBSTACLE_OBJECT_TYPES as string[]).includes(tile)) {
                     costMatrix.set(space.x + x, space.y + y, 255);
-                } else if (orientation[y][x] === STRUCTURE_ROAD) {
+                } else if (tile === STRUCTURE_ROAD) {
                     costMatrix.set(space.x + x, space.y + y, 1);
                 }
             }
         }
 
-        // Verify paths from spawning squares to both sources
-        let spawnPoints = [
-            new RoomPosition(space.x + 1, space.y + 1, controllerPos.roomName),
-            (space.horizontal ?
-                new RoomPosition(space.x + 3, space.y + 1, controllerPos.roomName) :
-                new RoomPosition(space.x + 1, space.y + 3, controllerPos.roomName)
-            )
-        ];
-        let roads = new Set<PlannedStructure>();
-        let distance = 0;
-        if (sources.some(source =>
-            spawnPoints.some(pos =>
-                {
-                    let path = PathFinder.search(
-                        pos,
-                        {pos: source, range: 1},
-                        {maxRooms: 1, roomCallback: () => costMatrix, plainCost: 2, swampCost: 10}
-                    );
-                    if (!path.incomplete) {
-                        path.path.forEach(p => {
-                            roads.add(new PlannedStructure(p, STRUCTURE_ROAD));
-                            costMatrix.set(p.x, p.y, 1);
-                        });
-                        distance += path.cost;
-                    }
-                    return path.incomplete
-                }
+        // Verify paths from anchor to points of interest
+        let origin = new RoomPosition(space.x + anchor.x, space.y + anchor.x, controllerPos.roomName);
+        if (!validatePathsToPointsOfInterest(roomName, costMatrix, origin)) continue; // This layout blocks paths
 
-            )
-        )) continue; // Invalid room plan
+        // Score this position and generate roads
+        let roads = new Set<PlannedStructure<STRUCTURE_ROAD>>();
+        let distance = 0;
+        for (let pos of sources) {
+            let path = PathFinder.search(
+                origin,
+                {pos, range: 1},
+                {maxRooms: 1, roomCallback: () => costMatrix, plainCost: 2, swampCost: 10}
+            );
+            if (!path.incomplete) {
+                path.path.forEach(p => {
+                    roads.add(new PlannedStructure(p, STRUCTURE_ROAD));
+                    costMatrix.set(p.x, p.y, 1);
+                });
+                distance += path.cost;
+            }
+        }
         if (distance >= bestDistance) continue; // We already have a better layout
         bestDistance = distance;
         bestPlan = plan;
@@ -170,11 +129,14 @@ export const planHeadquarters = (roomName: string) => {
                     case STRUCTURE_SPAWN:
                         plan.spawn = new PlannedStructure(pos, STRUCTURE_SPAWN);
                         break;
+                    case STRUCTURE_POWER_SPAWN:
+                        plan.powerSpawn = new PlannedStructure(pos, STRUCTURE_POWER_SPAWN);
+                        break;
+                    case STRUCTURE_FACTORY:
+                        plan.factory = new PlannedStructure(pos, STRUCTURE_FACTORY);
+                        break;
                     case STRUCTURE_LINK:
                         plan.link = new PlannedStructure(pos, STRUCTURE_LINK);
-                        break;
-                    case STRUCTURE_CONTAINER:
-                        plan.container = new PlannedStructure(pos, STRUCTURE_CONTAINER);
                         break;
                     case STRUCTURE_STORAGE:
                         plan.storage = new PlannedStructure(pos, STRUCTURE_STORAGE);
@@ -188,10 +150,6 @@ export const planHeadquarters = (roomName: string) => {
                     case STRUCTURE_ROAD:
                         roads.add(new PlannedStructure(pos, STRUCTURE_ROAD));
                         break;
-                }
-
-                if ((OBSTACLE_OBJECT_TYPES as string[]).includes(orientation[y][x]) || orientation[y][x] === STRUCTURE_CONTAINER) {
-                    costMatrix.set(space.x + x, space.y + y, 255)
                 }
             }
         }
@@ -225,12 +183,17 @@ function generateRampartPositions(roomName: string, space: {x: number, y: number
     return results;
 }
 
-function *findSpaces(controllerPos: RoomPosition, sources: RoomPosition[]) {
+function *findSpaces(controllerPos: RoomPosition, currentRoomPlan: CostMatrix) {
     // Lay out the grid, cropping for edges
     let x = Math.max(1, controllerPos.x - 5);
     let y = Math.max(1, controllerPos.y - 5);
     let width = Math.min(48, controllerPos.x + 5) - x + 1;
     let height = Math.min(48, controllerPos.y + 5) - y + 1;
+
+    let stamp = {
+        x: HQ_UPGRADE_LEFT.length,
+        y: HQ_UPGRADE_LEFT[0].length,
+    }
 
     let grid: {x: number, y: number}[][] = [];
     let terrain = Game.map.getRoomTerrain(controllerPos.roomName);
@@ -240,11 +203,11 @@ function *findSpaces(controllerPos: RoomPosition, sources: RoomPosition[]) {
         for (let xGrid = 0; xGrid < width; xGrid++) {
             // For each cell...
             let t = terrain.get(x+xGrid, y+yGrid)
-            // If the cell is a wall, adjacent to the controller, or within 5 squares of a source, reset its value to 0,0
+            // If the cell is a wall, adjacent to the controller, or occupied by a planned structure, reset its value to 0,0
             if (
                 t === TERRAIN_MASK_WALL ||
                 controllerPos.inRangeTo(x+xGrid, y+yGrid, 1) ||
-                sources.some(s => s.inRangeTo(x+xGrid, y+yGrid, 5))
+                currentRoomPlan.get(x+xGrid, y+yGrid) === 255
             ) {
                 grid[yGrid][xGrid] = {x: 0, y: 0};
                 continue;
@@ -258,21 +221,21 @@ function *findSpaces(controllerPos: RoomPosition, sources: RoomPosition[]) {
 
             // If the values are greater than (3,5), and opposite corners agree, there is room for a vertical HQ
             if (
-                grid[yGrid][xGrid].x >= 3 &&
-                grid[yGrid][xGrid].y >= 5 &&
-                (grid[yGrid][xGrid - 2]?.y ?? 0) >= 5 &&
-                (grid[yGrid - 4]?.[xGrid].x ?? 0) >= 3
+                grid[yGrid][xGrid].x >= stamp.x &&
+                grid[yGrid][xGrid].y >= stamp.y &&
+                (grid[yGrid][xGrid - stamp.x + 1]?.y ?? 0) >= stamp.y &&
+                (grid[yGrid - stamp.y + 1]?.[xGrid].x ?? 0) >= stamp.x
             ) {
-                yield { x: x + xGrid - 2, y: y + yGrid - 4, horizontal: false }
+                yield { x: x + xGrid - stamp.x + 1, y: y + yGrid - stamp.y + 1, horizontal: false }
             }
             // If the values are greater than (3,5), there is room for a horizontal HQ
             if (
-                grid[yGrid][xGrid].x >= 5 &&
-                grid[yGrid][xGrid].y >= 3 &&
-                (grid[yGrid][xGrid - 4]?.y ?? 0) >= 3 &&
-                (grid[yGrid - 2]?.[xGrid].x ?? 0) >= 5
+                grid[yGrid][xGrid].x >= stamp.y &&
+                grid[yGrid][xGrid].y >= stamp.x &&
+                (grid[yGrid][xGrid - stamp.y + 1]?.y ?? 0) >= stamp.x &&
+                (grid[yGrid - stamp.x + 1]?.[xGrid].x ?? 0) >= stamp.y
             ) {
-                yield { x: x + xGrid - 4, y: y + yGrid - 2, horizontal: true }
+                yield { x: x + xGrid - stamp.y + 1, y: y + yGrid - stamp.x + 1, horizontal: true }
             }
         }
     }

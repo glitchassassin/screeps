@@ -1,40 +1,18 @@
+import { MinePlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { deserializePlannedStructures } from "Selectors/plannedStructures";
 import { getCostMatrix } from "Selectors/MapCoordinates";
-import { posById } from "Selectors/posById";
+import { controllerPosition, mineralPosition } from "Selectors/roomCache";
+import { validateMinePlan } from "./validateMinePlan";
 
-export interface MinePlan {
-    extractor: PlannedStructure;
-    container: PlannedStructure;
-}
-
-export const deserializeMinePlan = (serialized: string) => {
-    const plan: Partial<MinePlan> = {
-        extractor: undefined,
-        container: undefined,
-    }
-    for (const s of deserializePlannedStructures(serialized)) {
-        if (s.structureType === STRUCTURE_EXTRACTOR) plan.extractor = s;
-        if (s.structureType === STRUCTURE_CONTAINER) plan.container = s;
-    }
-    return validateMinePlan(plan);
-}
-
-export const validateMinePlan = (plan: Partial<MinePlan>) => {
-    if (!plan.extractor || !plan.container) {
-        throw new Error(`Incomplete MinePlan`)
-    } else {
-        return plan as MinePlan;
-    }
-}
-
-export const planMine = (mineralPos: RoomPosition) => {
+export const planMine = (room: string) => {
+    const mineralPos = mineralPosition(room);
+    if (!mineralPos) throw new Error('No known mineral in room, unable to compute plan')
     const plan: Partial<MinePlan> = {
         extractor: undefined,
         container: undefined,
     }
     // Calculate from scratch
-    let controllerPos = posById(Memory.rooms[mineralPos.roomName].controllerId);
+    let controllerPos = controllerPosition(room);
     if (!controllerPos) throw new Error('No known controller in room, unable to compute plan')
 
     // 1. The Mine containers will be at the first position of the path between the Mineral and the Controller.

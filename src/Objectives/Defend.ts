@@ -54,12 +54,12 @@ export class DefendObjective extends Objective {
         // Find the nearest enemy creep, and move to the closest rampart
         const target = findClosestHostileCreepByRange(creep.pos);
         if (!target) return; // No targets
-        const plan = roomPlans(creep.memory.office)?.office;
+        const plan = roomPlans(creep.memory.office);
         if (!plan) return;
         const defensePositions = [
-            ...plan.perimeter.ramparts,
-            ...plan.franchise1.ramparts,
-            ...plan.franchise2.ramparts,
+            ...plan.perimeter?.ramparts ?? [],
+            ...plan.franchise1?.ramparts ?? [],
+            ...plan.franchise2?.ramparts ?? [],
         ];
 
         // Try to attack

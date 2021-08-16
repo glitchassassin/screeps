@@ -1,5 +1,6 @@
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { roomPlans } from "./roomPlans";
+import { isPlannedStructure } from "./typeguards";
 
 export const plannedStructuresByRcl = (roomName: string, targetRcl?: number) => {
     if (Memory.offices[roomName]) {
@@ -10,23 +11,25 @@ export const plannedStructuresByRcl = (roomName: string, targetRcl?: number) => 
 }
 
 export const plannedTerritoryStructures = (territoryName: string) => {
-    const plans = roomPlans(territoryName)?.territory;
+    const plans = roomPlans(territoryName);
     return [
-        plans?.franchise1.container,
+        plans?.franchise1?.container,
         plans?.franchise2?.container,
     ].filter(s => s) as PlannedStructure[];
 }
 
 export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: number) => {
-    const plans = roomPlans(officeName)?.office;
+    const plans = roomPlans(officeName);
     const rcl = targetRcl ?? Game.rooms[officeName]?.controller?.level;
-    if (!rcl || !plans) return [];
+    if (
+        !rcl || !plans
+    ) return [];
 
-    let plannedStructures: PlannedStructure[] = [];
+    let plannedStructures: (PlannedStructure|undefined)[] = [];
     let plannedExtensions = [
-        ...plans.franchise1.extensions,
-        ...plans.franchise2.extensions,
-        ...plans.extensions.extensions
+        ...plans.franchise1?.extensions ?? [],
+        ...plans.franchise2?.extensions ?? [],
+        ...plans.extensions?.extensions ?? []
     ];
     // Sort already constructed structures to the top
     plannedExtensions = [
@@ -34,8 +37,8 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         ...plannedExtensions.filter(e => !e.structure),
     ];
     let plannedTowers = [
-        ...plans.headquarters.towers.filter(t => t.structure),
-        ...plans.headquarters.towers.filter(t => !t.structure),
+        ...plans.headquarters?.towers.filter(t => t.structure) ?? [],
+        ...plans.headquarters?.towers.filter(t => !t.structure) ?? [],
     ]
 
     if (rcl >= 0) {
@@ -44,14 +47,14 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     }
     if (rcl >= 1) {
         plannedStructures.push(
-            plans.franchise1.spawn,
+            plans.franchise1?.spawn,
         )
     }
     if (rcl >= 2) {
         plannedStructures.push(
             ...plannedExtensions.slice(0, 5),
-            plans.franchise1.container,
-            plans.franchise2.container,
+            plans.franchise1?.container,
+            plans.franchise2?.container,
         )
     }
     if (rcl >= 3) {
@@ -63,46 +66,51 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     if (rcl >= 4) {
         plannedStructures.push(
             ...plannedExtensions.slice(10, 20),
-            plans.headquarters.storage,
-            plans.headquarters.container,
-            ...plans.franchise1.ramparts,
-            ...plans.perimeter.ramparts,
-            ...plans.extensions.ramparts,
-            ...plans.franchise2.ramparts,
-            ...plans.headquarters.roads
+            plans.headquarters?.storage,
+            ...plans.franchise1?.ramparts ?? [],
+            ...plans.perimeter?.ramparts ?? [],
+            ...plans.extensions?.ramparts ?? [],
+            ...plans.franchise2?.ramparts ?? [],
+            ...plans.headquarters?.roads ?? []
         )
     }
     if (rcl >= 5) {
         plannedStructures.push(
             ...plannedExtensions.slice(20, 30),
             plannedTowers[1],
-            plans.franchise2.link,
-            plans.headquarters.link
+            plans.franchise2?.link,
+            plans.headquarters?.link
         )
     }
     if (rcl >= 6) {
         plannedStructures.push(
             ...plannedExtensions.slice(30, 40),
-            plans.franchise1.link,
-            plans.headquarters.terminal,
-            plans.mine.extractor,
-            plans.mine.container,
+            plans.franchise1?.link,
+            plans.headquarters?.terminal,
+            plans.mine?.extractor,
+            plans.mine?.container,
+            ...plans.labs?.roads ?? [],
+            ...plans.labs?.labs.slice(0, 3) ?? [],
         )
     }
     if (rcl >= 7) {
         plannedStructures.push(
             ...plannedExtensions.slice(40, 50),
-            plans.franchise2.spawn,
+            plans.franchise2?.spawn,
             plannedTowers[2],
+            ...plans.labs?.labs.slice(3, 6) ?? [],
+            plans.headquarters?.factory,
         )
     }
     if (rcl === 8) {
         plannedStructures.push(
             ...plannedExtensions.slice(50, 60),
-            plans.headquarters.spawn,
+            plans.headquarters?.spawn,
             plannedTowers[3],
             plannedTowers[4],
             plannedTowers[5],
+            ...plans.labs?.labs.slice(6, 10) ?? [],
+            plans.headquarters?.powerSpawn,
         )
     }
     // if (rcl >= 4) {
@@ -115,5 +123,5 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     //         }
     //     }
     // }
-    return plannedStructures
+    return plannedStructures.filter(isPlannedStructure())
 }
