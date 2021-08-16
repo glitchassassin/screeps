@@ -17,6 +17,7 @@ declare global {
         rclMilestones?: Record<number, number>,
         eligibleForOffice?: boolean,
         lastHostileSeen?: number,
+        invaderCore?: number,
     }
     interface Memory {
         positions: Record<string, string>
@@ -66,6 +67,7 @@ export const scanRooms = profiler.registerFN(() => {
         Memory.rooms[room].scanned = Game.time
 
         if (findHostileCreeps(room).length) Memory.rooms[room].lastHostileSeen = Game.time
+        if (Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, { filter: STRUCTURE_INVADER_CORE })) Memory.rooms[room].invaderCore = Game.time
 
         // Assign office, if necessary
         Memory.offices ??= {}

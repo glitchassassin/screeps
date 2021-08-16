@@ -1,5 +1,6 @@
 import { memoize, memoizeByTick } from "utils/memoizeFunction";
 import { packPos } from "utils/packrat";
+import { mineralPosition, sourcePositions } from "./roomCache";
 
 
 let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
@@ -96,11 +97,29 @@ export const isPositionWalkable = memoizeByTick(
         return true;
     }
 )
+interface getCostMatrixOptions {
+    ignoreSourceKeepers?: boolean
+}
 export const getCostMatrix = memoizeByTick(
-    (roomName: string, avoidCreeps: boolean = false) => `${roomName} ${avoidCreeps ? 'Y' : 'N'}`,
-    (roomName: string, avoidCreeps: boolean = false) => {
+    (roomName: string, avoidCreeps: boolean = false, opts = {}) => `${roomName} ${avoidCreeps ? 'Y' : 'N'} ${JSON.stringify(opts)}`,
+    (roomName: string, avoidCreeps: boolean = false, opts?: getCostMatrixOptions) => {
         let room = Game.rooms[roomName];
         let costs = new PathFinder.CostMatrix;
+
+        if (!opts?.ignoreSourceKeepers && isSourceKeeperRoom(roomName)) {
+            // Block out radius of 5 around protected sources
+            for (let source of sourcePositions(roomName)) {
+                for (let pos of calculateNearbyPositions(source, 5, true)) {
+                    costs.set(pos.x, pos.y, 255)
+                }
+            }
+            const mineral = mineralPosition(roomName);
+            if (mineral) {
+                for (let pos of calculateNearbyPositions(mineral, 5, true)) {
+                    costs.set(pos.x, pos.y, 255)
+                }
+            }
+        }
 
         if (!room) return costs;
 
@@ -176,6 +195,13 @@ export const isHighway = (roomName: string) => {
     let parsed = roomName.match(/^[WE]([0-9]+)[NS]([0-9]+)$/);
     if (!parsed) throw new Error('Invalid room name')
     return (Number(parsed[1]) % 10 === 0) || (Number(parsed[2]) % 10 === 0);
+}
+export const isSourceKeeperRoom = (roomName: string) => {
+    let parsed = roomName.match(/^[WE]([0-9]+)[NS]([0-9]+)$/);
+    if (!parsed) throw new Error('Invalid room name')
+    let fmod = Number(parsed[1]) % 10;
+    let smod = Number(parsed[2]) % 10;
+    return !(fmod === 5 && smod === 5) && (fmod <= 4 && fmod >= 6) && (smod <= 4 && smod >= 6);
 }
 export const roomNameToCoords = (roomName: string) => {
     let match = roomName.match(/^([WE])([0-9]+)([NS])([0-9]+)$/);
