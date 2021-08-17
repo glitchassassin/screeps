@@ -3,7 +3,8 @@ import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
 import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRoute";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
@@ -71,19 +72,17 @@ export class FranchiseObjective extends Objective {
         return this._energyValue;
     }
 
-    spawn(office: string, spawns: StructureSpawn[]) {
-        if (office !== this.office) return 0; // Only spawn in assigned office
-
+    spawn() {
         // Check if site belongs to a new office, and if so, disable it
         const franchisePos = posById(this.sourceId);
-        if (franchisePos && franchisePos?.roomName !== office && Memory.offices[franchisePos?.roomName]) {
+        if (franchisePos && franchisePos?.roomName !== this.office && Memory.offices[franchisePos?.roomName]) {
             this.disabled = true;
         }
 
-        if (this.disabled || !franchisePos) return 0;
+        if (this.disabled || !franchisePos) return;
 
         // Skip spawning for remote Franchises during a crisis
-        if (franchisePos.roomName !== office && getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
+        if (franchisePos.roomName !== this.office && getTerritoryIntent(this.office) === TerritoryIntent.DEFEND) return;
 
         let salesmen = 0, accountants = 0;
         for (let a of this.assigned) {
@@ -103,10 +102,8 @@ export class FranchiseObjective extends Objective {
             ) accountants += 1;
         }
 
-        let spawnQueue = [];
-
         // Maintain enough Salesman to capitalize the source
-        const workPartsPerSalesman = Math.min(5, Math.floor((spawnEnergyAvailable(office) - 50) / 100));
+        const workPartsPerSalesman = Math.min(5, Math.floor((spawnEnergyAvailable(this.office) - 50) / 100));
         const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
         const maxSalesmen = adjacentWalkablePositions(franchisePos, true).length;
         const target = Math.min(maxSalesmen, salesmenPerFranchise);
@@ -115,8 +112,9 @@ export class FranchiseObjective extends Objective {
 
         // Maintain one appropriately-sized Accountant
         const targetCarry = this.targetCarryParts;
-        const carryPartsPerAccountant = Math.min(32, Math.floor((spawnEnergyAvailable(office) * 2/3) / 50))
-        const link = getFranchisePlanBySourceId(this.sourceId)?.link.structure
+        const carryPartsPerAccountant = Math.min(32, Math.floor((spawnEnergyAvailable(this.office) * 2/3) / 50))
+        const plan = getFranchisePlanBySourceId(this.sourceId);
+        const link = plan?.link.structure
         const surplus = franchiseEnergyAvailable(this.sourceId);
         let targetAccountants = 0; // No need for Accountants if there is a link
         if (!link) targetAccountants = Math.ceil(targetCarry / carryPartsPerAccountant);
@@ -124,38 +122,31 @@ export class FranchiseObjective extends Objective {
         let accountantPressure = accountants / targetAccountants;
         // Pre-spawn accountants
 
-        while ((salesmenPressure < 1 || accountantPressure < 1) && spawnQueue.length < spawns.length) {
-            if (accountantPressure < 1 && accountantPressure < salesmenPressure) {
-                spawnQueue.push(spawnMinion(
-                    office,
-                    this.id,
-                    MinionTypes.ACCOUNTANT,
-                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
-                ))
-                accountants += 1;
-                accountantPressure = accountants / targetAccountants;
-            } else if (salesmenPressure < 1) {
-                spawnQueue.push(spawnMinion(
-                    office,
-                    this.id,
-                    MinionTypes.SALESMAN,
-                    MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office))
-                ))
-                salesmen += 1;
-                salesmenPressure = salesmen / target;
-            } else {
-                break;
-            }
+        let result: ScreepsReturnCode = OK;
+        const preferredSpawn = plan?.spawn.structure as StructureSpawn|undefined
+        const containerSpace = plan?.container.pos
+        const preferredSalesmenSpaces = preferredSpawn ? [containerSpace].concat(adjacentWalkablePositions(preferredSpawn.pos)).filter(pos => pos?.inRangeTo(franchisePos, 1)) as RoomPosition[] : undefined
+
+        if (accountantPressure < 1 && accountantPressure < salesmenPressure) {
+            result = spawnMinion(
+                this.office,
+                this.id,
+                MinionTypes.ACCOUNTANT,
+                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(this.office), targetCarry)
+            )({
+                preferredSpawn,
+            })
+        } else if (salesmenPressure < 1) {
+            spawnMinion(
+                this.office,
+                this.id,
+                MinionTypes.SALESMAN,
+                MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(this.office))
+            )({
+                preferredSpawn,
+                preferredSpaces: preferredSalesmenSpaces
+            })
         }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

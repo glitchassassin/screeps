@@ -1,6 +1,7 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { getPatrolRoute } from "Selectors/getPatrolRoute";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -23,30 +24,27 @@ export class ExploreObjective extends Objective {
     energyValue(office: string) {
         return -minionCostPerTick(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office)));
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
-        const target = 1;
-        const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+    spawn() {
+        for (const office in Memory.offices) {
+            if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return;
+            const target = 1;
+            const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
 
-        let spawnQueue = [];
+            let spawnQueue = [];
 
-        if (target > actual) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.AUDITOR,
-                MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office))
-            ))
+            if (target > actual) {
+                spawnQueue.push(spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.AUDITOR,
+                    MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office))
+                ))
+            }
+
+            // For each available spawn, up to the target number of minions,
+            // try to spawn a new minion
+            spawnQueue.forEach((spawner, i) => spawner());
         }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

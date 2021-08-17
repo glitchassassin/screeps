@@ -2,9 +2,11 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { getHeadquarterLogisticsLocation } from "Selectors/getHqLocations";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -26,35 +28,31 @@ export class HeadquartersLogisticsObjective extends Objective {
     energyValue(office: string) {
         return -minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        // Only needed if we have central HQ structures
-        const hq = roomPlans(office)?.headquarters;
-        if (!(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure)) {
-            return 0;
+    spawn() {
+        for (let office in Memory.offices) {
+            // Only needed if we have central HQ structures
+            const hq = roomPlans(office)?.headquarters;
+            if (!(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure)) {
+                return;
+            }
+
+            if (franchiseIncomePerTick(office) <= 0 ) return; // Only spawn logistics minions if we have active Franchises
+
+            // Maintain one max-sized Accountant
+            if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
+                const preferredSpace = getHeadquarterLogisticsLocation(office);
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
+                )({
+                    preferredSpawn: hq.spawn.structure as StructureSpawn,
+                    preferredSpaces: preferredSpace ? [preferredSpace] : [],
+                    allowOtherSpaces: false
+                })
+            }
         }
-
-        if (franchiseIncomePerTick(office) <= 0 ) return 0; // Only spawn logistics minions if we have active Franchises
-
-        let spawnQueue = [];
-
-        // Maintain one max-sized Accountant
-        if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ACCOUNTANT,
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
-            ))
-        }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

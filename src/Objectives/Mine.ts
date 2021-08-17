@@ -2,7 +2,8 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineContainer";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -37,40 +38,37 @@ export class MineObjective extends Objective {
         if (!mine?.extractor.structure || !mine?.container.structure) return 0;
         return (mine.container.structure as StructureContainer).store.getUsedCapacity() ? estimatedCarry : 0; // One Foreman/Accountant (if there is anything to mine)
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        const targetForemen = this.targetForemen(office);
-        const targetCarry = this.targetCarry(office);
-        const foremen = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.FOREMAN).length
-        const accountants = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ACCOUNTANT).length
+    spawn() {
+        for (let office in Memory.offices) {
+            const targetForemen = this.targetForemen(office);
+            const targetCarry = this.targetCarry(office);
+            const foremen = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.FOREMAN).length
+            const accountants = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ACCOUNTANT).length
 
-        let spawnQueue = [];
+            let spawnQueue = [];
 
-        if (targetForemen > foremen) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.FOREMAN,
-                MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
-            ))
+            if (targetForemen > foremen) {
+                spawnQueue.push(spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.FOREMAN,
+                    MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
+                ))
+            }
+
+            if (targetCarry && 1 > accountants) {
+                spawnQueue.push(spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
+                ))
+            }
+
+            // For each available spawn, up to the target number of minions,
+            // try to spawn a new minion
+            spawnQueue.forEach((spawner, i) => spawner());
         }
-
-        if (targetCarry && 1 > accountants) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ACCOUNTANT,
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
-            ))
-        }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

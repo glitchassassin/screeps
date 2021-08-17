@@ -1,4 +1,3 @@
-import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
 
 declare global {
     interface CreepMemory {
@@ -23,23 +22,6 @@ export enum MinionTypes {
     PARALEGAL = 'PARALEGAL',
     SALESMAN = 'SALESMAN',
     MARKETER = 'MARKETER',
-}
-
-export const spawnMinion = (office: string, objective: string, minionType: MinionTypes, body: BodyPartConstant[]) => (spawn: StructureSpawn) => {
-    if (body.length === 0) return ERR_NO_BODYPART;
-    const r = spawn.spawnCreep(
-        body,
-        `${minionType}-${office}-${Game.time % 10000}-${spawn.id.slice(23)}`,
-        { memory: {
-            type: minionType,
-            office,
-            objective
-        }, energyStructures: getEnergyStructures(office)}
-    )
-    if (r !== OK && r !== ERR_BUSY && r !== ERR_NOT_ENOUGH_ENERGY) {
-        console.log(objective, 'unexpected Spawn error', r)
-    }
-    return r;
 }
 
 export const MinionBuilders = {

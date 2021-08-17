@@ -3,7 +3,8 @@ import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { byId } from "Selectors/byId";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
@@ -26,16 +27,17 @@ export class FacilitiesObjective extends Objective {
         let surplusIncome = Math.max(0, profitPerTick(office, this));
         // Spawn based on maximizing use of available energy
         const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * spawnEnergyAvailable(office) / 100))
-        const engineers = Math.floor(surplusIncome / (REPAIR_COST * REPAIR_POWER * workPartsPerEngineer));
-        if (rcl < 4) return engineers; // Surplus engineer lifespan will go to upgrading
+        const engineersForRepairing = Math.floor(surplusIncome / (REPAIR_COST * REPAIR_POWER * workPartsPerEngineer));
+        const engineersForBuilding = Math.floor(surplusIncome / (BUILD_POWER * workPartsPerEngineer));
 
         const work = facilitiesWorkToDo(office);
+        const constructionToDo = work.some(s => !s.structure);
+        const engineers = constructionToDo ? engineersForBuilding : engineersForRepairing;
+
+        if (rcl < 4) return engineers; // Surplus engineer lifespan will go to upgrading
         if (!work.length) return 0;
 
-        const constructionToDo = work.some(s => !s.structure);
-
-        // Spawn to maximize energy for building, but spawn fewer if only repairing
-        return Math.min(engineers, constructionToDo ? engineers : Math.round(work.length / 5));
+        return engineers;
     }
     energyValue(office: string) {
         const engineers = this.spawnTarget(office);
@@ -45,35 +47,26 @@ export class FacilitiesObjective extends Objective {
         const workCosts = (workPartsPerEngineer * engineers) * (constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER);
         return -(workCosts + minionCosts);
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        const target = this.spawnTarget(office);
-        // Calculate prespawn time based on time to spawn next minion
-        const prespawnTime = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
-        const actual = this.assigned.map(byId).filter(c => (
-            c?.memory.office === office && (
-                !c.ticksToLive || c.ticksToLive > prespawnTime
-            )
-        )).length
+    spawn() {
+        for (const office in Memory.offices) {
+            const target = this.spawnTarget(office);
+            // Calculate prespawn time based on time to spawn next minion
+            const prespawnTime = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
+            const actual = this.assigned.map(byId).filter(c => (
+                c?.memory.office === office && (
+                    !c.ticksToLive || c.ticksToLive > prespawnTime
+                )
+            )).length
 
-        let spawnQueue = [];
-
-        if (target > actual) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ENGINEER,
-                MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
-            ))
+            if (target > actual) {
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ENGINEER,
+                    MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
+                )()
+            }
         }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

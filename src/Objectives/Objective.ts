@@ -23,7 +23,7 @@ export abstract class Objective {
      * given office. If so, attempt to spawn them using one or
      * more of the provided list of spawns.
      */
-    abstract spawn(officeName: string, spawns: StructureSpawn[]): number;
+    abstract spawn(): void;
 
     /**
      * Returns estimated energy/tick to run this objective (positive if net income, negative if net loss)

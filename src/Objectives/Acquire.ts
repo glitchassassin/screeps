@@ -1,17 +1,16 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import profiler from "utils/profiler";
 import { Objective, Objectives } from "./Objective";
-
 
 declare global {
     interface CreepMemory {
@@ -42,46 +41,45 @@ export class AcquireObjective extends Objective {
         if (!officeShouldClaimAcquireTarget(office)) return 0;
         return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
+    spawn() {
         const acquireTarget = findAcquireTarget();
-        // console.log(acquireTarget)
-        if (!acquireTarget) return 0;
-        const lawyersTarget = this.spawnLawyersTarget(office);
-        const engineersTarget = this.spawnEngineersTarget(office);
-        const lawyers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.LAWYER).length
-        const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length +
-            Objectives['FacilitiesObjective'].assigned.map(byId).filter(c => c?.memory.office === acquireTarget && c.memory.type === MinionTypes.ENGINEER).length
-        // console.log('lawyers', lawyers, lawyersTarget)
-        // console.log('engineers', engineers, engineersTarget)
+        if (!acquireTarget) return;
 
-        let spawnQueue = [];
+        // For each office:
+        //   If this office is the closest, and officeShouldClaim, spawn up to one lawyer
+        //   If this office is in range, and officeShouldSupport, spawn up to target Engineers
+        for (let office in Memory.offices) {
+            let spawnQueue = [];
 
-        if (lawyersTarget > lawyers) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.LAWYER,
-                MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))
-            ))
+            if (officeShouldClaimAcquireTarget(office)) {
+                const lawyersTarget = this.spawnLawyersTarget(office);
+                const lawyers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.LAWYER).length
+
+                if (lawyersTarget > lawyers) {
+                    spawnQueue.push(spawnMinion(
+                        office,
+                        this.id,
+                        MinionTypes.LAWYER,
+                        MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))
+                    ))
+                }
+            }
+            if (officeShouldSupportAcquireTarget(office)) {
+                const engineersTarget = this.spawnEngineersTarget(office);
+                const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length +
+                    Objectives['FacilitiesObjective'].assigned.map(byId).filter(c => c?.memory.office === acquireTarget && c.memory.type === MinionTypes.ENGINEER).length
+                if (engineersTarget > engineers) {
+                    spawnQueue.push(spawnMinion(
+                        office,
+                        this.id,
+                        MinionTypes.ENGINEER,
+                        MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
+                    ))
+                }
+            }
+
+            spawnQueue.forEach((spawner, i) => spawner());
         }
-        if (engineersTarget > engineers) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ENGINEER,
-                MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
-            ))
-        }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

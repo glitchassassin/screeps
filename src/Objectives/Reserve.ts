@@ -1,6 +1,7 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { findReserveTargets } from "Selectors/findReserveTargets";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -45,29 +46,26 @@ export class ReserveObjective extends Objective {
         const reserveBonus = (SOURCE_ENERGY_CAPACITY - SOURCE_ENERGY_NEUTRAL_CAPACITY) * 2 / ENERGY_REGEN_TIME
         return reserveBonus - (minionCost * this.spawnTarget(office))
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        const target = this.spawnTarget(office);
-        const marketers = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+    spawn() {
+        for (let office in Memory.offices) {
+            const target = this.spawnTarget(office);
+            const marketers = this.assigned.map(byId).filter(c => c?.memory.office === office).length
 
-        let spawnQueue = [];
+            let spawnQueue = [];
 
-        if (target > marketers) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.MARKETER,
-                MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office))
-            ))
+            if (target > marketers) {
+                spawnQueue.push(spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.MARKETER,
+                    MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office))
+                ))
+            }
+
+            // For each available spawn, up to the target number of minions,
+            // try to spawn a new minion
+            spawnQueue.forEach((spawner, i) => spawner());
         }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

@@ -23,7 +23,6 @@ export const gameLoop = () => {
     for (const room in Memory.offices) {
         if (!roomPlans(room)?.franchise1) continue; // Skip office until it's (at least partly) planned
         initializeDynamicObjectives(room);
-        spawnObjectives(room);
         runLinks(room);
         runSpawns(room);
         runTowers(room);
@@ -34,6 +33,9 @@ export const gameLoop = () => {
     for (const creep in Game.creeps) {
         runCreepObjective(Game.creeps[creep]);
     }
+
+    // Spawning
+    spawnObjectives();
 
     planRooms();
 

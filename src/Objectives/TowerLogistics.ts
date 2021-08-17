@@ -2,9 +2,11 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { getTowerRefillerLocation } from "Selectors/getHqLocations";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
@@ -25,35 +27,31 @@ export class TowerLogisticsObjective extends Objective {
     energyValue(office: string) {
         return -minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 3));
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        const hq = roomPlans(office)?.headquarters;
-        const towersNeedRefilled = (hq?.towers.reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0) > 0
-        if (!towersNeedRefilled) {
-            return 0;
+    spawn() {
+        for (let office in Memory.offices) {
+            const hq = roomPlans(office)?.headquarters;
+            const towersNeedRefilled = (hq?.towers.reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0) > 0
+            if (!towersNeedRefilled) {
+                continue
+            }
+
+            if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn logistics minions if we have active Franchises
+
+            // Maintain one small Accountant to fill towers
+            let preferredSpace = getTowerRefillerLocation(office);
+            if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 3)
+                )({
+                    preferredSpawn: hq?.spawn.structure as StructureSpawn,
+                    preferredSpaces: preferredSpace ? [preferredSpace] : undefined,
+                    allowOtherSpaces: false
+                })
+            }
         }
-
-        if (franchiseIncomePerTick(office) <= 0 ) return 0; // Only spawn logistics minions if we have active Franchises
-
-        let spawnQueue = [];
-
-        // Maintain one small Accountant to fill towers
-        if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ACCOUNTANT,
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 3)
-            ))
-        }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

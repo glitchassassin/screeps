@@ -4,12 +4,14 @@ import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { STORAGE_LEVEL } from "config";
 import { UPGRADE_CONTROLLER_COST } from "gameConstants";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
+import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
@@ -52,35 +54,28 @@ export class UpgradeObjective extends Objective {
         const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_COST;
         return -(workCosts + minionCosts);
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        const target = this.spawnTarget(office);
-        // Calculate prespawn time based on time to spawn next minion
-        const prespawnTime = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
-        const actual = this.assigned.map(byId).filter(c => (
-            c?.memory.office === office && (
-                !c.ticksToLive || c.ticksToLive > prespawnTime
-            )
-        )).length
+    spawn() {
+        for (let office in Memory.offices) {
+            const target = this.spawnTarget(office);
+            // Calculate prespawn time based on time to spawn next minion
+            const prespawnTime = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
+            const actual = this.assigned.map(byId).filter(c => (
+                c?.memory.office === office && (
+                    !c.ticksToLive || c.ticksToLive > prespawnTime
+                )
+            )).length
 
-        let spawnQueue = [];
-
-        if (target > actual) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.PARALEGAL,
-                MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))
-            ))
+            if (target > actual) {
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.PARALEGAL,
+                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))
+                )({
+                    preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn
+                })
+            }
         }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {

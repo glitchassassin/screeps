@@ -48,7 +48,7 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
     return cachedPlan;
 }, 'roomPlans') as (roomName: string) => RoomPlan|undefined
 
-export const spawns = (roomName: string) => {
+export const getSpawns = (roomName: string) => {
     return [
         roomPlans(roomName)?.franchise1?.spawn.structure,
         roomPlans(roomName)?.franchise2?.spawn.structure,

@@ -2,7 +2,8 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
@@ -34,43 +35,34 @@ export class RefillExtensionsObjective extends Objective {
         // Maintain one appropriately-sized Accountant
         return Math.ceil(capacity / CARRY_CAPACITY);
     }
-    spawn(office: string, spawns: StructureSpawn[]) {
-        if (franchiseIncomePerTick(office) <= 0 ) return 0; // Only spawn refillers if we have active Franchises
+    spawn() {
+        for (let office in Memory.offices) {
+            if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn refillers if we have active Franchises
 
-        if (roomPlans(office)?.extensions?.extensions.every(e => !e.structure)) return 0; // No extensions
-        const targetCarry = this.targetCarry(office);
-        const actualCarry = this.assigned.map(byId).filter(c =>
-            c?.memory.office === office &&
-            (!c.ticksToLive || c.ticksToLive > 100)
-        ).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
+            if (roomPlans(office)?.extensions?.extensions.every(e => !e.structure)) continue; // No extensions
+            const targetCarry = this.targetCarry(office);
+            const actualCarry = this.assigned.map(byId).filter(c =>
+                c?.memory.office === office &&
+                (!c.ticksToLive || c.ticksToLive > 100)
+            ).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
 
-        let spawnQueue = [];
-
-        if (actualCarry < targetCarry) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ACCOUNTANT,
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
-            ))
-        } else if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
-            // Emergency refiller
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ACCOUNTANT,
-                MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyAvailable, targetCarry)
-            ))
+            if (actualCarry < targetCarry) {
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
+                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
+            } else if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
+                // Emergency refiller
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyAvailable, targetCarry)
+                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
+            }
         }
-
-        // Truncate spawn queue to length of available spawns
-        spawnQueue = spawnQueue.slice(0, spawns.length);
-
-        // For each available spawn, up to the target number of minions,
-        // try to spawn a new minion
-        spawnQueue.forEach((spawner, i) => spawner(spawns[i]));
-
-        return spawnQueue.length;
     }
 
     action(creep: Creep) {
