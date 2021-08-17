@@ -28,7 +28,7 @@ export class FacilitiesObjective extends Objective {
         // Spawn based on maximizing use of available energy
         const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * spawnEnergyAvailable(office) / 100))
         const engineersForRepairing = Math.floor(surplusIncome / (REPAIR_COST * REPAIR_POWER * workPartsPerEngineer));
-        const engineersForBuilding = Math.floor(surplusIncome / (BUILD_POWER * workPartsPerEngineer));
+        const engineersForBuilding = Math.max(1, Math.floor(surplusIncome / (BUILD_POWER * workPartsPerEngineer)));
 
         const work = facilitiesWorkToDo(office);
         const constructionToDo = work.some(s => !s.structure);

@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1629144549336,
+  "iteration": 1629221527643,
   "links": [],
   "panels": [
     {
@@ -1211,6 +1211,12 @@
           "refCount": 0,
           "refId": "B",
           "target": "alias(stats.gauges.offices.$office.storageLevel, 'Storage level')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage level')"
         }
       ],
       "thresholds": [],
@@ -1789,5 +1795,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 6
+  "version": 7
 }

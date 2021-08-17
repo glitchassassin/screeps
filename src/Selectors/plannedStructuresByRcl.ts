@@ -96,7 +96,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     if (rcl >= 7) {
         plannedStructures.push(
             ...plannedExtensions.slice(40, 50),
-            plans.franchise2?.spawn,
+            plans.headquarters?.spawn,
             plannedTowers[2],
             ...plans.labs?.labs.slice(3, 6) ?? [],
             plans.headquarters?.factory,
@@ -105,7 +105,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     if (rcl === 8) {
         plannedStructures.push(
             ...plannedExtensions.slice(50, 60),
-            plans.headquarters?.spawn,
+            plans.franchise2?.spawn,
             plannedTowers[3],
             plannedTowers[4],
             plannedTowers[5],

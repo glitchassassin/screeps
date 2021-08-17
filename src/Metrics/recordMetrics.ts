@@ -3,6 +3,7 @@ import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { getStorageBudget } from "Selectors/getStorageBudget";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { heapMetrics } from "./heapMetrics";
@@ -29,6 +30,7 @@ declare global {
                     energyCapacityAvailable: number,
                     franchiseIncome: number,
                     storageLevel: number,
+                    storageLevelTarget: number,
                     facilitiesCosts: number,
                     objectives: {
                         [id: string]: {
@@ -107,6 +109,7 @@ export const recordMetrics = profiler.registerFN(() => {
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
+            storageLevelTarget: getStorageBudget(Game.rooms[office].controller?.level ?? 0),
             facilitiesCosts,
             objectives
         }
