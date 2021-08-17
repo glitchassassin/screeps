@@ -24,8 +24,8 @@ const HQ_UPGRADE_BOTTOM = HQ_UPGRADE_RIGHT[0].map((k, i) => HQ_UPGRADE_RIGHT.map
 // Anchor should be in range 3 of controller
 const ANCHOR_LEFT = { x: 0, y: 2 };
 const ANCHOR_RIGHT = { x: 3, y: 2 };
-const ANCHOR_TOP = { x: 2, y: 0 };
-const ANCHOR_BOTTOM = { x: 2, y: 3 };
+const ANCHOR_TOP = { x: 2, y: 3 };
+const ANCHOR_BOTTOM = { x: 2, y: 2 };
 // Spawn should not be
 const SPAWN_LEFT = { x: 2, y: 2 };
 const SPAWN_RIGHT = { x: 1, y: 2 };
