@@ -5,25 +5,28 @@ import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
 const officeTerritoryMap = new Map<string, string[]>();
 let lastProcessedOffices = '';
 
-export const getTerritoriesByOffice = () => {
+export const getTerritoriesByOffice = (office: string) => {
+    return getOfficeTerritoryMap().get(office)?.filter(room => {
+        return (
+            (getTerritoryIntent(room) === TerritoryIntent.EXPLOIT ||
+            getTerritoryIntent(room) === TerritoryIntent.ACQUIRE) &&
+            !Memory.offices[room]
+        )
+    }) ?? [];
+}
+
+export const getOfficeTerritoryMap = () => {
     let territories: string[] = [];
     const offices = Object.keys(Memory.offices);
     const processedOffices = offices.join('-');
-    if (lastProcessedOffices === processedOffices) return officeTerritoryMap;
+    if (lastProcessedOffices === processedOffices) return officeTerritoryMap
 
     // Cache no longer valid, recalculate
     const candidates = new Map<string, string[]>();
     for (const office of offices) {
         officeTerritoryMap.set(office, []);
         // Add surrounding rooms to the list of potential territories
-        territories = territories.concat(calculateNearbyRooms(office, TERRITORY_RADIUS, false)
-            .filter(room => {
-                return (
-                    (getTerritoryIntent(room) === TerritoryIntent.EXPLOIT ||
-                    getTerritoryIntent(room) === TerritoryIntent.ACQUIRE) &&
-                    !Memory.offices[room]
-                )
-            }))
+        territories = territories.concat(calculateNearbyRooms(office, TERRITORY_RADIUS, false))
     }
     // Get viable offices in range of each territory
     for (const territory of territories) {

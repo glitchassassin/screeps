@@ -86,6 +86,7 @@ const shouldPostponeAcquire = (roomName: string) => {
 
 export const acquireTargetIsValid = (roomName: string) => {
     return (
+        Memory.rooms[roomName].eligibleForOffice &&
         (
             !Memory.rooms[roomName].owner ||
             (

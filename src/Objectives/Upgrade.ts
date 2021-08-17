@@ -3,6 +3,7 @@ import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { STORAGE_LEVEL } from "config";
+import { UPGRADE_CONTROLLER_COST } from "gameConstants";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { byId } from "Selectors/byId";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
@@ -35,12 +36,12 @@ export class UpgradeObjective extends Objective {
         // Spawn based on maximizing use of available energy
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
         // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
-        let paralegals = Math.floor(surplusIncome / (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal));
+        let paralegals = Math.floor(surplusIncome / (UPGRADE_CONTROLLER_COST * workPartsPerParalegal));
 
         // Unless at RCL 8, Adjust by storage energy levels - more for surplus, fewer for deficit
         paralegals += Math.min(2, Math.floor(
             (storageEnergyAvailable(office) - STORAGE_LEVEL[rcl]) /
-            (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal * CREEP_LIFE_TIME * 0.8)
+            (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME * 0.8)
         ))
         return Math.max(0, paralegals);
     }
@@ -48,7 +49,7 @@ export class UpgradeObjective extends Objective {
         const paralegals = this.spawnTarget(office);
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
         const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))) * paralegals;
-        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_POWER;
+        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_COST;
         return -(workCosts + minionCosts);
     }
     spawn(office: string, spawns: StructureSpawn[]) {

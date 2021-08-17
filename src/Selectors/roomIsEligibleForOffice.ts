@@ -1,5 +1,4 @@
 import { countTerrainTypes } from "./MapCoordinates";
-import { posById } from "./posById";
 
 /**
  * Requires vision
@@ -7,36 +6,27 @@ import { posById } from "./posById";
 export const roomIsEligibleForOffice = (roomName: string) => {
     // Room must have a controller and two sources
     // To avoid edge cases, controller and sources must not be within range 5 of each other or an exit square
-    let controller = posById(Memory.rooms[roomName]?.controllerId)
+    let controller = Game.rooms[roomName].controller?.pos
     if (!controller) {
         console.log(`Room planning for ${roomName} failed - No controller`);
         return false;
     }
-    let sources = Memory.rooms[roomName]?.sourceIds?.map(id => posById(id))
-        .filter(s => s) as RoomPosition[];
+    let sources = Game.rooms[roomName].find(FIND_SOURCES).map(s => s.pos);
     if (!sources || sources.length < 2) {
         console.log(`Room planning for ${roomName} failed - Invalid number of sources`);
         return false;
     }
 
     let [source1, source2] = sources;
-    if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 5)) {
+    if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 3)) {
         console.log(`Room planning for ${roomName} failed - Controller too close to exit`);
         return false;
     }
-    if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 5))) {
+    if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 3))) {
         console.log(`Room planning for ${roomName} failed - Source too close to exit`);
         return false;
     }
-    if (controller.inRangeTo(source1, 5)) {
-        console.log(`Room planning for ${roomName} failed - Source too close to controller`);
-        return false;
-    }
-    if (controller.getRangeTo(source2) < 5) {
-        console.log(`Room planning for ${roomName} failed - Source too close to controller`);
-        return false;
-    }
-    if (source1.getRangeTo(source2) < 5) {
+    if (source1.getRangeTo(source2) < 3) {
         console.log(`Room planning for ${roomName} failed - Sources too close together`);
         return false;
     }

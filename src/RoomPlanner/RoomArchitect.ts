@@ -78,7 +78,7 @@ export const generateRoomPlans = (roomName: string)  => {
     }
 
     Memory.roomPlans[roomName].complete = true;
-    Memory.roomPlans[roomName].office = (
+    Memory.roomPlans[roomName].office = Memory.rooms[roomName].eligibleForOffice && (
         Memory.roomPlans[roomName].headquarters !== null &&
         Memory.roomPlans[roomName].franchise1 !== null &&
         Memory.roomPlans[roomName].franchise2 !== null &&

@@ -122,7 +122,7 @@ export class FacilitiesObjective extends Objective {
                 }
             } else {
                 const plan = PlannedStructure.deserialize(creep.memory.facilitiesTarget)
-                // console.log(plan.pos, plan.structureType)
+                // console.log(creep.name, plan.pos, plan.structureType)
 
                 if (moveTo(plan.pos, 3)(creep) === BehaviorResult.SUCCESS) {
                     if (plan.structure) {
