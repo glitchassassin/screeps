@@ -57,7 +57,8 @@ export class FranchiseObjective extends Objective {
         const franchisePos = posById(this.sourceId);
         const link = getFranchisePlanBySourceId(this.sourceId)?.link.structure
         if (!franchisePos) return 0; // No idea where this source is
-        const income = ((this.office === franchisePos.roomName) ? SOURCE_ENERGY_CAPACITY : SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
+        const reserved = Game.rooms[franchisePos.roomName]?.controller?.reservation?.username === 'LordGreywether';
+        const income = ((this.office === franchisePos.roomName || reserved) ? SOURCE_ENERGY_CAPACITY : SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
 
         const salesmanCost = 650 / CREEP_LIFE_TIME;
         const accountantCost = link ? 0 : (this.targetCarryParts * 1.5 * BODYPART_COST[CARRY]) / CREEP_LIFE_TIME

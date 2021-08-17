@@ -1,76 +1,62 @@
 import { BehaviorResult } from "Behaviors/Behavior";
-import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes, spawnMinion } from "Minions/minionTypes";
 import { byId } from "Selectors/byId";
-import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
+import { findReserveTargets } from "Selectors/findReserveTargets";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
-import { profitPerTick } from "Selectors/profitPerTick";
+import { controllerPosition } from "Selectors/roomCache";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import profiler from "utils/profiler";
+import { FranchiseObjective } from "./Franchise";
 import { Objective, Objectives } from "./Objective";
 
 
 declare global {
     interface CreepMemory {
-        acquireTarget?: Id<StructureController>
-    }
-    interface RoomMemory {
-        acquireAttempts?: number
-        lastAcquireAttempt?: number
+        /**
+         * Name of room to reserve
+         */
+        reserveTarget?: string,
+        arrived?: number
     }
 }
 
-export class AcquireObjective extends Objective {
-    spawnLawyersTarget(office: string) {
-        // No need to spawn more than one Lawyer
-        return officeShouldClaimAcquireTarget(office) ? 1 : 0
-    }
-    spawnEngineersTarget(office: string) {
-        // Use surplus energy to generate Engineers
-        if (!officeShouldSupportAcquireTarget(office)) return 0;
-        let surplusIncome = profitPerTick(office, this);
-        let build = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
-        let cost = minionCostPerTick(build);
-        let fill = (build.filter(p => p === CARRY).length * CARRY_CAPACITY) / CREEP_LIFE_TIME;
-
-        return Math.floor(surplusIncome / (cost + fill))
+export class ReserveObjective extends Objective {
+    spawnTarget(office: string) {
+        // One for each room with two active remote franchises
+        const rooms = new Set<string>();
+        for (let o of Object.values(Objectives)) {
+            if (
+                o instanceof FranchiseObjective &&
+                o.office === office &&
+                o.assigned.length > 1 &&
+                !Memory.offices[posById(o.sourceId)?.roomName ?? ''] &&
+                Memory.rooms[posById(o.sourceId)?.roomName ?? '']?.sourceIds?.length === 2
+            ) {
+                rooms.add(posById(o.sourceId)!.roomName)
+            }
+        }
+        return rooms.size;
     }
     energyValue(office: string) {
-        if (!officeShouldClaimAcquireTarget(office)) return 0;
-        return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
+        // Minus minion cost, plus average of 30
+        const minionCost = minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
+        const reserveBonus = (SOURCE_ENERGY_CAPACITY - SOURCE_ENERGY_NEUTRAL_CAPACITY) * 2 / ENERGY_REGEN_TIME
+        return reserveBonus - (minionCost * this.spawnTarget(office))
     }
     spawn(office: string, spawns: StructureSpawn[]) {
-        if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return 0;
-        const acquireTarget = findAcquireTarget();
-        // console.log(acquireTarget)
-        if (!acquireTarget) return 0;
-        const lawyersTarget = this.spawnLawyersTarget(office);
-        const engineersTarget = this.spawnEngineersTarget(office);
-        const lawyers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.LAWYER).length
-        const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length +
-            Objectives['FacilitiesObjective'].assigned.map(byId).filter(c => c?.memory.office === acquireTarget && c.memory.type === MinionTypes.ENGINEER).length
-        // console.log('lawyers', lawyers, lawyersTarget)
-        // console.log('engineers', engineers, engineersTarget)
+        const target = this.spawnTarget(office);
+        const marketers = this.assigned.map(byId).filter(c => c?.memory.office === office).length
 
         let spawnQueue = [];
 
-        if (lawyersTarget > lawyers) {
+        if (target > marketers) {
             spawnQueue.push(spawnMinion(
                 office,
                 this.id,
-                MinionTypes.LAWYER,
-                MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))
-            ))
-        }
-        if (engineersTarget > engineers) {
-            spawnQueue.push(spawnMinion(
-                office,
-                this.id,
-                MinionTypes.ENGINEER,
-                MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
+                MinionTypes.MARKETER,
+                MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office))
             ))
         }
 
@@ -85,52 +71,43 @@ export class AcquireObjective extends Objective {
     }
 
     action(creep: Creep) {
-        if (creep.memory.type === MinionTypes.LAWYER || creep.memory.type === MinionTypes.ENGINEER) {
-            this.actions[creep.memory.type](creep);
+        // Select target controller
+        if (!creep.memory.reserveTarget) {
+            const reserved = new Set<string>();
+            for (let id of this.assigned) {
+                const creep = byId(id);
+                if (
+                    creep?.memory.reserveTarget &&
+                    (
+                        (!creep.ticksToLive || !creep.memory.arrived) ||
+                        (creep.ticksToLive < creep.memory.arrived)
+                    )
+                ) {
+                    reserved.add(creep.memory.reserveTarget)
+                }
+            }
+            for (let franchise of findReserveTargets(creep.memory.office)) {
+                let room = posById(franchise.sourceId)?.roomName
+                if (room && !reserved.has(room)) {
+                    creep.memory.reserveTarget = room;
+                    break;
+                }
+            }
         }
-    }
+        if (!creep.memory.reserveTarget) return;
 
-    actions = {
-        [MinionTypes.LAWYER]: (creep: Creep) => {
-            if (!creep.memory.acquireTarget) {
-                const room = findAcquireTarget();
-                if (!room) return;
+        const controllerPos = controllerPosition(creep.memory.reserveTarget)
+        if (!controllerPos) return;
 
-                Memory.rooms[room].acquireAttempts = (Memory.rooms[room].acquireAttempts ?? 0) + 1;
-
-                creep.memory.acquireTarget = Memory.rooms[room].controllerId;
-            }
-
-            if (creep.memory.acquireTarget && Memory.rooms[creep.memory.acquireTarget]) {
-                Memory.rooms[creep.memory.acquireTarget].lastAcquireAttempt = Game.time;
-            }
-
-            if (byId(creep.memory.acquireTarget)?.my) {
-                creep.memory.acquireTarget = undefined; // Already claimed this controller
-                return;
-            }
-
-            const pos = posById(creep.memory.acquireTarget)
-            if (!pos) return;
-
-            const result = moveTo(pos, 1)(creep);
-            if (result === BehaviorResult.SUCCESS) {
-                const controller = byId(creep.memory.acquireTarget)
-                if (!controller) return;
-                creep.signController(controller, 'This sector property of the Grey Company');
-                creep.claimController(controller);
-            }
-        },
-        [MinionTypes.ENGINEER]: (creep: Creep) => {
-            const room = findAcquireTarget();
-            if (!room) return;
-            // Fill up with energy at home office and then reassign
-            if (engineerGetEnergy(creep) === BehaviorResult.SUCCESS) {
-                creep.memory.office = room;
-                creep.memory.objective = 'FacilitiesObjective';
-            }
+        // Move to controller
+        if (moveTo(controllerPos, 1)(creep) === BehaviorResult.SUCCESS) {
+            // Set arrived timestamp when in range
+            creep.memory.arrived ??= Game.time;
+            // Reserve controller
+            const controller = Game.rooms[creep.memory.reserveTarget].controller
+            if (controller) creep.reserveController(controller);
         }
     }
 }
 
-profiler.registerClass(AcquireObjective, 'AcquireObjective')
+profiler.registerClass(ReserveObjective, 'ReserveObjective')

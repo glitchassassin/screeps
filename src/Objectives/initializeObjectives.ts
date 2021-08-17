@@ -7,6 +7,7 @@ import { HeadquartersLogisticsObjective } from "./HeadquartersLogistics";
 import { MineObjective } from "./Mine";
 import { Objective, Objectives } from "./Objective";
 import { RefillExtensionsObjective } from "./RefillExtensions";
+import { ReserveObjective } from "./Reserve";
 import { TowerLogisticsObjective } from "./TowerLogistics";
 import { UpgradeObjective } from "./Upgrade";
 
@@ -45,6 +46,7 @@ initialize(
     new ExploreObjective(4),
     new AcquireObjective(4),
     new UpgradeObjective(3),
+    new ReserveObjective(2.5),
     // Remote FranchiseObjectives are 2
 );
 if (FEATURES.MINING) initialize(new MineObjective(5));

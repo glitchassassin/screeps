@@ -21,7 +21,8 @@ export enum MinionTypes {
     AUDITOR = 'AUDITOR',
     LAWYER = 'LAWYER',
     PARALEGAL = 'PARALEGAL',
-    SALESMAN = 'SALESMAN'
+    SALESMAN = 'SALESMAN',
+    MARKETER = 'MARKETER',
 }
 
 export const spawnMinion = (office: string, objective: string, minionType: MinionTypes, body: BodyPartConstant[]) => (spawn: StructureSpawn) => {
@@ -99,12 +100,24 @@ export const MinionBuilders = {
             return [];
         }
         else {
-            // Equal claim and move parts
             let claimParts = 1;
             let moveParts = claimParts * 5;
             return [
                 ...Array(claimParts).fill(CLAIM),
                 ...Array(moveParts).fill(MOVE),
+            ]
+        }
+    },
+    [MinionTypes.MARKETER]:  (energy: number) => {
+        if (energy < 850) {
+            return [];
+        }
+        else {
+            // Equal claim and move parts
+            let claimParts = Math.floor(energy / (BODYPART_COST[CLAIM] + BODYPART_COST[MOVE]));
+            return [
+                ...Array(claimParts).fill(CLAIM),
+                ...Array(claimParts).fill(MOVE),
             ]
         }
     },

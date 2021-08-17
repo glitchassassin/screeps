@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1628625254284,
+  "iteration": 1629144549336,
   "links": [],
   "panels": [
     {
@@ -1186,7 +1186,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "alertThreshold": true
       },
@@ -1197,6 +1197,7 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
+          "$$hashKey": "object:227",
           "alias": "Total",
           "lines": false,
           "stack": false
@@ -1233,6 +1234,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:236",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1241,6 +1243,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:237",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1403,13 +1406,13 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "1hr Moving Average",
-          "fill": 0,
-          "steppedLine": false
+          "$$hashKey": "object:195",
+          "alias": "Total",
+          "hiddenSeries": true
         }
       ],
       "spaceLength": 10,
-      "stack": true,
+      "stack": false,
       "steppedLine": true,
       "targets": [
         {
@@ -1440,6 +1443,13 @@
           "refCount": 1,
           "refId": "C",
           "target": "derivative(stats.gauges.time)"
+        },
+        {
+          "hide": false,
+          "refCount": 2,
+          "refId": "B",
+          "target": "alias(sumSeries(#A, #D, #E), 'Total')",
+          "targetFull": "alias(sumSeries(alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), 'Facilities'), alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), 'Upgrade'), alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.energyAvailable), derivative(stats.gauges.time)), 'Spawn')), 'Total')"
         }
       ],
       "thresholds": [],
@@ -1463,6 +1473,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:204",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1471,6 +1482,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:205",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1519,7 +1531,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "alertThreshold": true
       },
@@ -1530,6 +1542,7 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
+          "$$hashKey": "object:445",
           "alias": "Total",
           "lines": false,
           "stack": false
@@ -1566,6 +1579,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:454",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1574,6 +1588,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:455",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1622,7 +1637,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "alertThreshold": true
       },
@@ -1634,6 +1649,7 @@
       "repeatIteration": 1473912580654,
       "seriesOverrides": [
         {
+          "$$hashKey": "object:326",
           "alias": "Total",
           "lines": false,
           "stack": false
@@ -1683,6 +1699,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:335",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1691,6 +1708,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:336",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1771,5 +1789,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 3
+  "version": 6
 }
