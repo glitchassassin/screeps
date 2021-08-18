@@ -1,3 +1,4 @@
+import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
 import { roomPlans } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 
@@ -8,24 +9,39 @@ const getSellPrice = (resourceType: ResourceConstant) => {
     )
 }
 
-export const runTerminal = profiler.registerFN(function runTerminal(roomName: string) {
-    const terminal = roomPlans(roomName)?.headquarters?.terminal.structure as StructureTerminal;
-    if (!terminal) return;
+const TERMINAL_SEND_THRESHOLD = 100;
 
-    // Just sell all resources except energy
-    for (let resource in terminal.store) {
-        let resourceType = resource as ResourceConstant;
-        if (resourceType === RESOURCE_ENERGY) continue;
-        let order = Object.values(Game.market.orders).find(o => o.roomName === roomName && o.resourceType === resourceType)
-        if (!order) {
-            // Place a sell order
-            Game.market.createOrder({
-                type: ORDER_SELL,
-                resourceType,
-                price: getSellPrice(resourceType),
-                totalAmount: terminal.store.getUsedCapacity(resourceType),
-                roomName
-            });
+export const runTerminals = profiler.registerFN(function runTerminals() {
+    const maxDeficits = new Map<ResourceConstant, [string, number]>();
+    const maxSurpluses = new Map<ResourceConstant, [string, number]>();
+    const terminalsUsed = new Set<string>();
+
+    for (let office in Memory.offices) {
+        if (!roomPlans(office)?.headquarters?.terminal.structure) continue;
+
+        const surpluses = officeResourceSurplus(office);
+        for (let [resource, amount] of surpluses) {
+            if ((maxDeficits.get(resource)?.[1] ?? 0) > amount) {
+                maxDeficits.set(resource, [office, amount])
+            }
+            if ((maxSurpluses.get(resource)?.[1] ?? 0) < amount) {
+                maxSurpluses.set(resource, [office, amount])
+            }
+        }
+    }
+    for (let [resource, [office, amount]] of maxSurpluses) {
+        if (terminalsUsed.has(office)) continue; // Already sent resources this tick
+
+        const [targetOffice, targetAmount] = maxDeficits.get(resource) ?? [];
+        if (targetOffice && targetAmount) {
+            // Office should transfer resource to targetOffice
+            const transferAmount = Math.min(Math.abs(amount), Math.abs(targetAmount));
+            const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal;
+            if (terminal && transferAmount > TERMINAL_SEND_THRESHOLD) {
+                if (terminal.send(resource, transferAmount, targetOffice, 'BalancingResources') === OK) {
+                    terminalsUsed.add(office);
+                }
+            }
         }
     }
 })

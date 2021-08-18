@@ -53,7 +53,7 @@ export const getSpawns = (roomName: string) => {
         roomPlans(roomName)?.franchise1?.spawn.structure,
         roomPlans(roomName)?.franchise2?.spawn.structure,
         roomPlans(roomName)?.headquarters?.spawn.structure,
-    ].filter(s => s) as StructureSpawn[];
+    ].filter(s => s && s.isActive()) as StructureSpawn[];
 }
 
 export const getFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) => {

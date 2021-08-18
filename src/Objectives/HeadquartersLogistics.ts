@@ -1,14 +1,13 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
 import { moveTo } from "Behaviors/moveTo";
-import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { getHeadquarterLogisticsLocation } from "Selectors/getHqLocations";
-import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
+import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
@@ -58,50 +57,45 @@ export class HeadquartersLogisticsObjective extends Objective {
     action(creep: Creep) {
         // Priorities:
         // Link -> Storage
+        // Storage <-> Terminal (energy)
         // If link has energy, GET_ENERGY_LINK and DEPOSIT_STORAGE
+
+        // Move to target square if needed
+        const targetPos = getHeadquarterLogisticsLocation(creep.memory.office);
+        if (moveTo(targetPos, 0)(creep) !== BehaviorResult.SUCCESS) return;
 
         // Check HQ state
         const hq = roomPlans(creep.memory.office)?.headquarters;
         if (!hq) return;
-        const creepIsEmpty = creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0;
+        const creepEnergy = creep.store.getUsedCapacity(RESOURCE_ENERGY);
+        const terminalEnergySurplus = (officeResourceSurplus(creep.memory.office).get(RESOURCE_ENERGY) ?? 0)
+        const terminal = hq.terminal.structure
+        const storage = hq.storage.structure;
+        let gotEnergy = false;
 
-        if (!creep.memory.state) {
-            if (creepIsEmpty) {
-                setState(States.GET_ENERGY_LINK)(creep);
-            } else {
-                setState(States.DEPOSIT)(creep);
-            }
+        if (getEnergyFromLink(creep) === BehaviorResult.SUCCESS) {
+            gotEnergy = true;
         }
-        if (creep.memory.state === States.GET_ENERGY_LINK) {
-            const result = getEnergyFromLink(creep)
-            if (result === BehaviorResult.SUCCESS) {
-                setState(States.DEPOSIT)(creep);
-            }
+
+        if (terminal && terminalEnergySurplus > 0) {
+            creep.withdraw(terminal, RESOURCE_ENERGY, terminalEnergySurplus);
         }
-        if (creep.memory.state === States.DEPOSIT) {
-            if (creepIsEmpty) {
-                setState(States.GET_ENERGY_LINK)(creep);
-                return;
+
+        if (terminal && terminalEnergySurplus < 0) {
+            // Deposit in terminal, if it needs it, or get energy from storage if we need to
+            if (creepEnergy > 0) {
+                creep.transfer(terminal, RESOURCE_ENERGY, Math.max(Math.abs(terminalEnergySurplus), creepEnergy))
+            } else if (!gotEnergy && storage) {
+                creep.withdraw(storage, RESOURCE_ENERGY, Math.max(Math.abs(terminalEnergySurplus), creepEnergy))
             }
-            const storage = roomPlans(creep.memory.office)?.headquarters?.storage;
-            if (!storage) return;
-            if (storage.structure) {
-                moveTo(storage.pos, 1)(creep);
-                if (creep.transfer(storage.structure, RESOURCE_ENERGY) === OK) {
-                    setState(States.GET_ENERGY_LINK)(creep);
-                }
-            } else if (isPositionWalkable(storage.pos)) {
-                // Drop at storage position
-                if (moveTo(storage.pos, 0)(creep) === BehaviorResult.SUCCESS) {
-                    creep.drop(RESOURCE_ENERGY);
-                    setState(States.GET_ENERGY_LINK)(creep);
+        } else {
+            // Terminal does not need energy, deposit in storage (or drop) instead
+            if (storage) {
+                if (creep.transfer(storage, RESOURCE_ENERGY) !== OK) {
+                    creep.drop(RESOURCE_ENERGY)
                 }
             } else {
-                // Drop next to storage under construction
-                if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                    creep.drop(RESOURCE_ENERGY);
-                    setState(States.GET_ENERGY_LINK)(creep);
-                }
+                creep.drop(RESOURCE_ENERGY);
             }
         }
     }

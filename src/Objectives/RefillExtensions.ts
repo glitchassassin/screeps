@@ -10,6 +10,7 @@ import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -37,7 +38,7 @@ export class RefillExtensionsObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn refillers if we have active Franchises
+            if (franchiseIncomePerTick(office) <= 0 && storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
 
             if (roomPlans(office)?.extensions?.extensions.every(e => !e.structure)) continue; // No extensions
             const targetCarry = this.targetCarry(office);
@@ -46,20 +47,20 @@ export class RefillExtensionsObjective extends Objective {
                 (!c.ticksToLive || c.ticksToLive > 100)
             ).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
 
-            if (actualCarry < targetCarry) {
-                spawnMinion(
-                    office,
-                    this.id,
-                    MinionTypes.ACCOUNTANT,
-                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
-                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
-            } else if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
+            if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
                 // Emergency refiller
                 spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
-                    MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyAvailable, targetCarry)
+                    MinionBuilders[MinionTypes.ACCOUNTANT](300, targetCarry)
+                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
+            } else if (actualCarry < targetCarry) {
+                spawnMinion(
+                    office,
+                    this.id,
+                    MinionTypes.ACCOUNTANT,
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
                 )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
             }
         }

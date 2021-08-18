@@ -17,11 +17,14 @@ interface RoomTerrain {
   getRawBuffer(): Uint8Array
 }
 
+interface OfficeMemory {
+  city: string,
+  resourceQuotas: Partial<Record<ResourceConstant, number>>,
+}
+
 interface Memory {
   offices: {
-    [name: string]: {
-      city: string,
-    }
+    [name: string]: OfficeMemory
   }
 }
 

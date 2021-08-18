@@ -10,7 +10,6 @@ import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { profitPerTick } from "Selectors/profitPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
@@ -27,25 +26,21 @@ declare global {
 export class UpgradeObjective extends Objective {
     spawnTarget(office: string) {
         const rcl = Game.rooms[office]?.controller?.level ?? 0
+        const emergencyUpgraders = ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 1500) ? 1 : 0
         if (rcl < 4) return 0; // Engineers will handle early upgrades
 
         if (rcl === 8) return 1; // Upgrading is capped at RCL8
-        if (officeShouldSupportAcquireTarget(office)) return 0; // Scale back upgrading to support office
-        if (facilitiesWorkToDo(office).some(s => !s.structure)) return 0; // Scale back upgrading for construction
+        if (officeShouldSupportAcquireTarget(office)) return emergencyUpgraders; // Scale back upgrading to support office
+        if (facilitiesWorkToDo(office).some(s => !s.structure)) return emergencyUpgraders; // Scale back upgrading for construction
 
-        let surplusIncome = profitPerTick(office, this);
-        surplusIncome = Math.max(0, surplusIncome);
         // Spawn based on maximizing use of available energy
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
         // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
-        let paralegals = Math.floor(surplusIncome / (UPGRADE_CONTROLLER_COST * workPartsPerParalegal));
-
-        // Unless at RCL 8, Adjust by storage energy levels - more for surplus, fewer for deficit
-        paralegals += Math.min(2, Math.floor(
+        let paralegals = Math.min(2, Math.floor(
             (storageEnergyAvailable(office) - getStorageBudget(rcl)) /
-            (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME * 0.8)
+            (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME)
         ))
-        return Math.max(0, paralegals);
+        return Math.max(emergencyUpgraders, paralegals);
     }
     energyValue(office: string) {
         const paralegals = this.spawnTarget(office);

@@ -14,6 +14,14 @@ const LABS_STAMP: (BuildableStructureConstant|undefined)[][] = [
 ]
 const LABS_MIRRORED_STAMP = LABS_STAMP.map(row => [...row].reverse());
 
+const LABS_ORDER = [
+    [1, 2], [0, 2], [1, 3],
+    [2, 1], [2, 0], [3, 1],
+    [0, 1], [1, 0], [2, 3], [3, 2]
+]
+
+const LABS_MIRRORED_ORDER = LABS_ORDER.map(([x, y]) => ([LABS_STAMP[0].length - x, y]));
+
 const PATHABLE_STAMP: (boolean)[][] = [
     [true,  false, false, true ],
     [false, false, false, false],
@@ -106,16 +114,19 @@ export const planLabs = (room: string) => {
 
     const plan: LabsPlan = { labs: [], roads: [] };
     const stamp = bestOrientationIsDefault ? LABS_STAMP : LABS_MIRRORED_STAMP;
+    const order = bestOrientationIsDefault ? LABS_ORDER : LABS_MIRRORED_ORDER;
     const corners = bestOrientationIsDefault ? defaultStampCorners(bestPos, LABS_STAMP) : mirroredStampCorners(bestPos, LABS_STAMP)
+
+    for (let [x, y] of order) {
+        plan.labs.push(new PlannedStructure(new RoomPosition(bestPos.x + x, bestPos.y + y, room), STRUCTURE_LAB))
+        cm.set(bestPos.x+x, bestPos.y+y, 255);
+    }
 
     for (let y = 0; y < stamp.length; y++) {
         for (let x = 0; x < stamp[y].length; x++) {
             const tile = stamp[y][x];
             if (tile === undefined) {
                 continue;
-            } else if (tile === STRUCTURE_LAB) {
-                plan.labs.push(new PlannedStructure(new RoomPosition(bestPos.x + x, bestPos.y + y, room), tile));
-                cm.set(bestPos.x+x, bestPos.y+y, 255);
             } else if (tile === STRUCTURE_ROAD) {
                 plan.roads.push(new PlannedStructure(new RoomPosition(bestPos.x + x, bestPos.y + y, room), tile));
                 cm.set(bestPos.x+x, bestPos.y+y, 1);

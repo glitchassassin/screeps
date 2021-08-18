@@ -76,10 +76,26 @@ export const scanRooms = profiler.registerFN(() => {
             if (!Memory.offices[room]) {
                 // Initialize new office
                 Memory.offices[room] = {
-                    city: cityNames.find(name => !Object.values(Memory.offices).some(r => r.city === name)) ?? room
+                    city: cityNames.find(name => !Object.values(Memory.offices).some(r => r.city === name)) ?? room,
+                    resourceQuotas: {
+                        [RESOURCE_ENERGY]: 2000,
+                        [RESOURCE_KEANIUM]: 3000,
+                        [RESOURCE_HYDROGEN]: 3000,
+                        [RESOURCE_ZYNTHIUM]: 3000,
+                        [RESOURCE_OXYGEN]: 3000
+                    },
                 }
                 destroyUnplannedStructures(room);
             }
+
+            Memory.offices[room].resourceQuotas = {
+                [RESOURCE_ENERGY]: 2000,
+                [RESOURCE_KEANIUM]: 3000,
+                [RESOURCE_HYDROGEN]: 3000,
+                [RESOURCE_ZYNTHIUM]: 3000,
+                [RESOURCE_OXYGEN]: 3000
+            }
+
         }
 
         scanRoomPlanStructures(room);

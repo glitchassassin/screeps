@@ -3,6 +3,7 @@ import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
@@ -75,7 +76,7 @@ export const recordMetrics = profiler.registerFN(() => {
         heapMetrics[office] ??= {
             roomEnergy: Metrics.newTimeseries()
         }
-        Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 300);
+        Metrics.update(heapMetrics[office].roomEnergy, getActualEnergyAvailable(office), 300);
 
         const objectives = PrioritizedObjectives
             .filter(o => !(o instanceof FranchiseObjective) || (!o.disabled && o.office === office))

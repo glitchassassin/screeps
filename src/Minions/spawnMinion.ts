@@ -23,7 +23,7 @@ export const spawnMinion = (
     // select spawn
     let spawn: StructureSpawn|undefined;
     let directions: DirectionConstant[] = [];
-    if (opts.preferredSpawn && spawningCache.get(opts.preferredSpawn.id) !== Game.time) {
+    if (opts.preferredSpawn?.isActive() && spawningCache.get(opts.preferredSpawn.id) !== Game.time) {
         spawn = opts.preferredSpawn
         // select direction
         if (opts.preferredSpaces) {
@@ -58,5 +58,6 @@ export const spawnMinion = (
         }
     )
     if (r === OK) spawningCache.set(spawn.id, Game.time)
+    // console.log(spawn, r, objective, body);
     return r;
 }

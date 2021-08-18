@@ -105,7 +105,7 @@ export class FacilitiesObjective extends Objective {
             }
         }
         if (creep.memory.state === States.WORKING) {
-            if (!creep.memory.facilitiesTarget) {
+            if (!creep.memory.facilitiesTarget && (Game.rooms[creep.memory.office].controller?.level ?? 0) < 4) {
                 // No construction - upgrade instead
                 const controller = Game.rooms[creep.memory.office]?.controller
                 if (!controller) return;
@@ -113,7 +113,7 @@ export class FacilitiesObjective extends Objective {
                 if (creep.upgradeController(controller) == ERR_NOT_ENOUGH_ENERGY) {
                     setState(States.GET_ENERGY)(creep);
                 }
-            } else {
+            } else if (creep.memory.facilitiesTarget) {
                 const plan = PlannedStructure.deserialize(creep.memory.facilitiesTarget)
                 // console.log(creep.name, plan.pos, plan.structureType)
 

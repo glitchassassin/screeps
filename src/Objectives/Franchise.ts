@@ -111,7 +111,8 @@ export class FranchiseObjective extends Objective {
         // Pre-spawn salesmen
 
         // Maintain one appropriately-sized Accountant
-        const targetCarry = this.targetCarryParts;
+        const reserved = Memory.rooms[franchisePos.roomName].reserver === 'LordGreywether';
+        const targetCarry = this.targetCarryParts * (reserved ? 2 : 1)
         const carryPartsPerAccountant = Math.min(32, Math.floor((spawnEnergyAvailable(this.office) * 2/3) / 50))
         const plan = getFranchisePlanBySourceId(this.sourceId);
         const link = plan?.link.structure

@@ -13,8 +13,8 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 0 : 2;
     4: 1e+4,
     5: 5e+4,
     6: 1e+5,
-    7: 5e+5,
-    8: 9e+5,
+    7: 3e+5,
+    8: 5e+5,
 }
 
 /**

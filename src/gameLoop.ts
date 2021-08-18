@@ -8,7 +8,7 @@ import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
 import { roomPlans } from "Selectors/roomPlans";
 import { runLinks } from "Structures/Links";
-import { runTerminal } from "Structures/Terminal";
+import { runTerminals } from "Structures/Terminal";
 import { runTowers } from "Structures/Towers";
 import { clearNudges } from 'utils/excuseMe';
 import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
@@ -26,7 +26,6 @@ export const gameLoop = () => {
         runLinks(room);
         runSpawns(room);
         runTowers(room);
-        runTerminal(room);
     }
 
     // Main Creep loop
@@ -34,6 +33,8 @@ export const gameLoop = () => {
         runCreepObjective(Game.creeps[creep]);
     }
 
+    // terminals
+    runTerminals();
     // Spawning
     spawnObjectives();
 
