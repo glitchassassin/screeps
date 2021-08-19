@@ -44,7 +44,7 @@ export class Route {
                 this.path = [];
                 return;
             }
-            rooms.push(...roomsRoute.map(r => r.room));
+            rooms = rooms.concat(roomsRoute.map(r => r.room));
         }
 
 

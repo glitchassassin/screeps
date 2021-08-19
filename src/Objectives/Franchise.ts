@@ -35,11 +35,13 @@ export class FranchiseObjective extends Objective {
 
         const franchisePos = posById(this.sourceId);
         const storagePos = roomPlans(this.office)?.headquarters?.storage.pos
+        console.log(this.id, storagePos, franchisePos)
         if (!storagePos || !franchisePos) {
             this.disabled = true;
             return;
         }
         const distance = getRangeByPath(storagePos, franchisePos, 1);
+        console.log(this.id, distance)
         if (distance === undefined) {
             this.disabled = true;
             return;

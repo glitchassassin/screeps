@@ -12,7 +12,7 @@ const LABS_STAMP: (BuildableStructureConstant|undefined)[][] = [
     [STRUCTURE_LAB, STRUCTURE_LAB, STRUCTURE_ROAD, STRUCTURE_LAB],
     [undefined, STRUCTURE_LAB, STRUCTURE_LAB, STRUCTURE_ROAD],
 ]
-const LABS_MIRRORED_STAMP = LABS_STAMP.map(row => [...row].reverse());
+const LABS_MIRRORED_STAMP = LABS_STAMP.map(row => row.slice().reverse());
 
 const LABS_ORDER = [
     [1, 2], [0, 2], [1, 3],
@@ -57,7 +57,8 @@ export const planLabs = (room: string) => {
         let costMatrix = cm.clone();
 
         if (
-            [...defaultStampCorners(space, LABS_STAMP), ...mirroredStampCorners(space, LABS_STAMP)]
+            defaultStampCorners(space, LABS_STAMP)
+            .concat(mirroredStampCorners(space, LABS_STAMP))
             .some(corner => calculateAdjacentPositions(corner).some(pos => costMatrix.get(pos.x, pos.y) === 255))
         ) {
             continue

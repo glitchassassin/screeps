@@ -33,7 +33,10 @@ export const MinionBuilders = {
         let moveParts = Math.min(16, Math.ceil(Math.max(1, maxCarryParts) / 2), Math.floor(energy/3/50))
         let carryParts = Math.min(32, Math.max(1, maxCarryParts), 2 * moveParts);
 
-        return [...Array(carryParts).fill(CARRY), ...Array(moveParts).fill(MOVE)];
+        return ([] as BodyPartConstant[]).concat(
+            Array(carryParts).fill(CARRY),
+            Array(moveParts).fill(MOVE)
+        );
     },
     [MinionTypes.ENGINEER]: (energy: number) => {
         if (energy < 200) {
@@ -43,11 +46,11 @@ export const MinionBuilders = {
             // Try to maintain WORK/CARRY/MOVE ratio
             let workParts = Math.min(16, Math.floor(((1/2) * energy) / 100))
 
-            return [
-                ...Array(workParts).fill(WORK),
-                ...Array(workParts).fill(CARRY),
-                ...Array(workParts).fill(MOVE)
-            ]
+            return ([] as BodyPartConstant[]).concat(
+                Array(workParts).fill(WORK),
+                Array(workParts).fill(CARRY),
+                Array(workParts).fill(MOVE)
+            )
         }
     },
     [MinionTypes.FOREMAN]: (energy: number) => {
@@ -58,7 +61,10 @@ export const MinionBuilders = {
             // Maintain 5-1 WORK-MOVE ratio
             let workParts = Math.min(40, Math.floor((10/11 * energy) / 100))
             let moveParts = Math.min(8, Math.floor((1/11 * energy) / 50))
-            return [...Array(workParts).fill(WORK), ...Array(moveParts).fill(MOVE)]
+            return ([] as BodyPartConstant[]).concat(
+                Array(workParts).fill(WORK),
+                Array(moveParts).fill(MOVE)
+            )
         }
     },
     [MinionTypes.GUARD]: (energy: number) => {
@@ -68,10 +74,10 @@ export const MinionBuilders = {
         else {
             // Try to maintain ATTACK/MOVE ratio
             let attackParts = Math.min(25, Math.floor(((80/130) * energy) / 80))
-            return [
-                ...Array(attackParts).fill(ATTACK),
-                ...Array(attackParts).fill(MOVE),
-            ]
+            return ([] as BodyPartConstant[]).concat(
+                Array(attackParts).fill(ATTACK),
+                Array(attackParts).fill(MOVE),
+            )
         }
     },
     [MinionTypes.AUDITOR]: (energy: number) => {
@@ -84,10 +90,10 @@ export const MinionBuilders = {
         else {
             let claimParts = 1;
             let moveParts = claimParts * 5;
-            return [
-                ...Array(claimParts).fill(CLAIM),
-                ...Array(moveParts).fill(MOVE),
-            ]
+            return ([] as BodyPartConstant[]).concat(
+                Array(claimParts).fill(CLAIM),
+                Array(moveParts).fill(MOVE),
+            )
         }
     },
     [MinionTypes.MARKETER]:  (energy: number) => {
@@ -97,10 +103,10 @@ export const MinionBuilders = {
         else {
             // Equal claim and move parts
             let claimParts = Math.floor(energy / (BODYPART_COST[CLAIM] + BODYPART_COST[MOVE]));
-            return [
-                ...Array(claimParts).fill(CLAIM),
-                ...Array(claimParts).fill(MOVE),
-            ]
+            return ([] as BodyPartConstant[]).concat(
+                Array(claimParts).fill(CLAIM),
+                Array(claimParts).fill(MOVE),
+            )
         }
     },
     [MinionTypes.PARALEGAL]: (energy: number) => {
@@ -111,7 +117,11 @@ export const MinionBuilders = {
             // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
             let workParts = Math.min(15, Math.floor(((energy - 50) * 3/4) / 100))
             let moveParts = Math.min(8, Math.floor(((energy - 50) * 1/4) / 50))
-            return [...Array(workParts).fill(WORK), CARRY, ...Array(moveParts).fill(MOVE)]
+            return ([] as BodyPartConstant[]).concat(
+                Array(workParts).fill(WORK),
+                [CARRY],
+                Array(moveParts).fill(MOVE)
+            )
         }
     },
     [MinionTypes.SALESMAN]: (energy: number) => {
@@ -121,11 +131,11 @@ export const MinionBuilders = {
             let moveParts = (energy <= 550) ? 1 : 2;
             let carryParts = 1;
             let workParts = Math.min(5, Math.floor((energy - (moveParts + carryParts) * 50) / 100));
-            return [
-                ...Array(workParts).fill(WORK),
-                ...Array(moveParts).fill(MOVE),
-                ...Array(carryParts).fill(CARRY),
-            ]
+            return ([] as BodyPartConstant[]).concat(
+                Array(workParts).fill(WORK),
+                Array(moveParts).fill(MOVE),
+                Array(carryParts).fill(CARRY),
+            )
         }
     }
 }

@@ -1,6 +1,7 @@
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { byId } from "Selectors/byId";
 import { findClosestHostileCreepByRange, findHostileCreeps } from "Selectors/findHostileCreeps";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -54,11 +55,11 @@ export class DefendObjective extends Objective {
         if (!target) return; // No targets
         const plan = roomPlans(creep.memory.office);
         if (!plan) return;
-        const defensePositions = [
-            ...plan.perimeter?.ramparts ?? [],
-            ...plan.franchise1?.ramparts ?? [],
-            ...plan.franchise2?.ramparts ?? [],
-        ];
+        const defensePositions = ([] as PlannedStructure[]).concat(
+            plan.perimeter?.ramparts ?? [],
+            plan.franchise1?.ramparts ?? [],
+            plan.franchise2?.ramparts ?? [],
+        );
 
         // Try to attack
         creep.attack(target)

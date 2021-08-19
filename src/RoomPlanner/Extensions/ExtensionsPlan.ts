@@ -64,7 +64,7 @@ function fillExtensionsRecursive(terrain: RoomTerrain, costMatrix: CostMatrix, s
         if (nextIterationCount <= 0) break;
     }
     if (nextIterationCount > 0 && extensions.length > 0) {
-        extensions.push(...fillExtensionsRecursive(terrain, costMatrix, extensions, nextIterationCount))
+        extensions = extensions.concat(fillExtensionsRecursive(terrain, costMatrix, extensions, nextIterationCount))
     }
     return extensions;
 }
@@ -101,7 +101,7 @@ function sortExtensions(extensions: PlannedStructure[]) {
     // Start with first extension
     let route: PlannedStructure[] = []
 
-    let nodes = [...extensions];
+    let nodes = extensions.slice();
 
     let lastPoint = extensions[0].pos;
     while (nodes.length > 0) {

@@ -15,7 +15,7 @@ const HQ_UPGRADE_LEFT: (BuildableStructureConstant|undefined)[][] = [
     [undefined, STRUCTURE_POWER_SPAWN, STRUCTURE_FACTORY, STRUCTURE_TERMINAL],
 ]
 
-const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => [...row].reverse());
+const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => row.slice().reverse());
 
 const HQ_UPGRADE_TOP = HQ_UPGRADE_LEFT[0].map((k, i) => HQ_UPGRADE_LEFT.map(row => row[i]))
 

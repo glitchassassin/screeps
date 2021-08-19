@@ -8,11 +8,13 @@ import { isRoomPosition } from "./typeguards";
  * least one exit square
  */
 export const validatePathsToPointsOfInterest = (room: string, costMatrix: CostMatrix, origin: RoomPosition) => {
-    const pointsOfInterest = [
-        ...sourcePositions(room),
-        mineralPosition(room),
-        controllerPosition(room)
-    ].filter(isRoomPosition)
+    const pointsOfInterest = ([] as (RoomPosition|undefined)[]).concat(
+        sourcePositions(room),
+        [
+            mineralPosition(room),
+            controllerPosition(room)
+        ]
+    ).filter(isRoomPosition)
     const exits = getExitTiles(room);
 
     for (const pos of pointsOfInterest) {
