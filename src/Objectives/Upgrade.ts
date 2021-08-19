@@ -6,8 +6,6 @@ import { UPGRADE_CONTROLLER_COST } from "gameConstants";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
-import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
-import { officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -26,18 +24,18 @@ declare global {
 export class UpgradeObjective extends Objective {
     spawnTarget(office: string) {
         const rcl = Game.rooms[office]?.controller?.level ?? 0
-        const emergencyUpgraders = ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 1500) ? 1 : 0
         if (rcl < 4) return 0; // Engineers will handle early upgrades
-
         if (rcl === 8) return 1; // Upgrading is capped at RCL8
-        if (officeShouldSupportAcquireTarget(office)) return emergencyUpgraders; // Scale back upgrading to support office
-        if (facilitiesWorkToDo(office).some(s => !s.structure)) return emergencyUpgraders; // Scale back upgrading for construction
+
+        const storageSurplus = (storageEnergyAvailable(office) - getStorageBudget(rcl))
+
+        const emergencyUpgraders = ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 10000) ? 1 : 0
 
         // Spawn based on maximizing use of available energy
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
         // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
-        let paralegals = Math.min(2, Math.floor(
-            (storageEnergyAvailable(office) - getStorageBudget(rcl)) /
+        let paralegals = Math.min(2, Math.ceil(
+            storageSurplus /
             (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME)
         ))
         return Math.max(emergencyUpgraders, paralegals);

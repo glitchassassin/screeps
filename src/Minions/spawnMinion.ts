@@ -57,7 +57,7 @@ export const spawnMinion = (
             directions
         }
     )
-    if (r === OK) spawningCache.set(spawn.id, Game.time)
-    // console.log(spawn, r, objective, body);
+    if (r === OK || r === ERR_NOT_ENOUGH_ENERGY || r === ERR_BUSY) spawningCache.set(spawn.id, Game.time)
+    // if (spawn.name === 'Spawn6') console.log(spawn, r, objective, body);
     return r;
 }

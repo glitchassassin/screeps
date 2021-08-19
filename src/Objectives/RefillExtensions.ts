@@ -6,7 +6,6 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { byId } from "Selectors/byId";
-import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
@@ -38,7 +37,7 @@ export class RefillExtensionsObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            if (franchiseIncomePerTick(office) <= 0 && storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
+            if (storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
 
             if (roomPlans(office)?.extensions?.extensions.every(e => !e.structure)) continue; // No extensions
             const targetCarry = this.targetCarry(office);

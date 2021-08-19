@@ -69,7 +69,9 @@ export class HeadquartersLogisticsObjective extends Objective {
         if (!hq) return;
         const creepEnergy = creep.store.getUsedCapacity(RESOURCE_ENERGY);
         const terminalEnergySurplus = (officeResourceSurplus(creep.memory.office).get(RESOURCE_ENERGY) ?? 0)
-        const terminal = hq.terminal.structure
+        const terminal = hq.terminal.structure;
+        const spawn = hq.spawn.structure as StructureSpawn|undefined;
+        const spawnCapacity = spawn?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0
         const storage = hq.storage.structure;
         let gotEnergy = false;
 
@@ -81,7 +83,13 @@ export class HeadquartersLogisticsObjective extends Objective {
             creep.withdraw(terminal, RESOURCE_ENERGY, terminalEnergySurplus);
         }
 
-        if (terminal && terminalEnergySurplus < 0) {
+        if (spawn && spawnCapacity > 0) {
+            if (creepEnergy > 0) {
+                creep.transfer(spawn, RESOURCE_ENERGY, Math.max(Math.abs(spawnCapacity), creepEnergy))
+            } else if (!gotEnergy && storage) {
+                creep.withdraw(storage, RESOURCE_ENERGY, Math.max(Math.abs(spawnCapacity), creepEnergy))
+            }
+        } else if (terminal && terminalEnergySurplus < 0) {
             // Deposit in terminal, if it needs it, or get energy from storage if we need to
             if (creepEnergy > 0) {
                 creep.transfer(terminal, RESOURCE_ENERGY, Math.max(Math.abs(terminalEnergySurplus), creepEnergy))

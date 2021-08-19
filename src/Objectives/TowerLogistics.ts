@@ -5,11 +5,11 @@ import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
-import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { getTowerRefillerLocation } from "Selectors/getHqLocations";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -34,8 +34,7 @@ export class TowerLogisticsObjective extends Objective {
             if (!towersNeedRefilled) {
                 continue
             }
-
-            if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn logistics minions if we have active Franchises
+            if (storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
 
             // Maintain one small Accountant to fill towers
             let preferredSpace = getTowerRefillerLocation(office);

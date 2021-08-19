@@ -73,10 +73,11 @@ export class FranchiseObjective extends Objective {
     }
 
     spawn() {
-        // Check if site belongs to a new office, and if so, disable it
+        // Check if site belongs to a new office, and if so, re-prioritize it
         const franchisePos = posById(this.sourceId);
         if (franchisePos && franchisePos?.roomName !== this.office && Memory.offices[franchisePos?.roomName]) {
-            this.disabled = true;
+            this.office = franchisePos.roomName;
+            this.priority = 8;
         }
 
         if (this.disabled || !franchisePos) return;

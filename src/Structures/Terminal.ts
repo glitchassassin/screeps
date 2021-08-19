@@ -42,6 +42,12 @@ export const runTerminals = profiler.registerFN(function runTerminals() {
                     terminalsUsed.add(office);
                 }
             }
+        } else if (amount > TERMINAL_SEND_THRESHOLD) {
+            const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal;
+            if (terminal) {
+                const order = _.max(Game.market.getAllOrders(o => o.resourceType === resource && o.type === ORDER_BUY), o => o.price)
+                if (order) Game.market.deal(order.id, amount, office)
+            }
         }
     }
 })
