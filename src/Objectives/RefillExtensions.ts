@@ -5,7 +5,7 @@ import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { byId } from "Selectors/byId";
+import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
@@ -29,22 +29,22 @@ export class RefillExtensionsObjective extends Objective {
     }
     targetCarry(office: string) {
         // Calculate extensions capacity
-        let capacity = roomPlans(office)?.extensions?.extensions
-            .reduce((sum, e) => sum + ((e.structure as StructureExtension)?.store.getCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0
+        let capacity = approximateExtensionsCapacity(office)
 
         // Maintain one appropriately-sized Accountant
         return Math.ceil(capacity / CARRY_CAPACITY);
+    }
+    _assignedCarryCache = new Map<string, [number, number]>();
+    getCarryCapacityByOffice(office: string) {
+        return this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > 100).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
     }
     spawn() {
         for (let office in Memory.offices) {
             if (storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
 
-            if (roomPlans(office)?.extensions?.extensions.every(e => !e.structure)) continue; // No extensions
+            if (!roomHasExtensions(office)) continue; // No extensions
             const targetCarry = this.targetCarry(office);
-            const actualCarry = this.assigned.map(byId).filter(c =>
-                c?.memory.office === office &&
-                (!c.ticksToLive || c.ticksToLive > 100)
-            ).reduce((sum, c) => sum + (c?.getActiveBodyparts(CARRY) ?? 0), 0);
+            const actualCarry = this.getCarryCapacityByOffice(office);
 
             if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
                 // Emergency refiller

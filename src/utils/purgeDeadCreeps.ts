@@ -1,5 +1,3 @@
-import { Objectives } from "Objectives/Objective";
-import { byId } from "Selectors/byId";
 import profiler from "utils/profiler";
 
 export const purgeDeadCreeps = profiler.registerFN(() => {
@@ -11,7 +9,4 @@ export const purgeDeadCreeps = profiler.registerFN(() => {
       }
     }
   }
-  Object.values(Objectives).forEach(o => {
-    o.assigned = o.assigned.filter(byId);
-  })
 }, 'purgeDeadCreeps')

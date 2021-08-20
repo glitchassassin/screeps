@@ -10,14 +10,18 @@ import { roomPlans } from "Selectors/roomPlans";
 import { runLinks } from "Structures/Links";
 import { runTerminals } from "Structures/Terminal";
 import { runTowers } from "Structures/Towers";
+import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { clearNudges } from 'utils/excuseMe';
 import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
 
 export const gameLoop = () => {
+    resetDebugCPU(true);
     purgeDeadCreeps();
     clearNudges();
+    debugCPU('gameLoop setup', true);
     // Cache data where needed
     scanRooms();
+    debugCPU('scanRooms', true);
 
     // Office loop
     for (const room in Memory.offices) {
@@ -27,18 +31,23 @@ export const gameLoop = () => {
         runSpawns(room);
         runTowers(room);
     }
+    debugCPU('Offices', true);
 
     // Main Creep loop
     for (const creep in Game.creeps) {
         runCreepObjective(Game.creeps[creep]);
     }
+    debugCPU('Creeps', true);
 
     // terminals
     runTerminals();
+    debugCPU('runTerminals', true);
     // Spawning
     spawnObjectives();
+    debugCPU('spawnObjectives', true);
 
     planRooms();
+    debugCPU('planRooms', true);
 
     recordMetrics();
 

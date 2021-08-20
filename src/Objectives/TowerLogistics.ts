@@ -4,7 +4,6 @@ import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { byId } from "Selectors/byId";
 import { getTowerRefillerLocation } from "Selectors/getHqLocations";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -38,7 +37,7 @@ export class TowerLogisticsObjective extends Objective {
 
             // Maintain one small Accountant to fill towers
             let preferredSpace = getTowerRefillerLocation(office);
-            if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
+            if (!this.minions(office)) {
                 spawnMinion(
                     office,
                     this.id,

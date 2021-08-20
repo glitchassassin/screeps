@@ -20,7 +20,7 @@ declare global {
             cpu: {
                 bucket: number,
                 limit: number,
-                used: number
+                used: number,
             },
             offices: {
                 [id: string]: {
@@ -32,6 +32,8 @@ declare global {
                     franchiseIncome: number,
                     storageLevel: number,
                     storageLevelTarget: number,
+                    terminalLevel: number,
+                    terminalLevelTarget: number,
                     facilitiesCosts: number,
                     objectives: {
                         [id: string]: {
@@ -42,6 +44,7 @@ declare global {
                     }
                 }
             },
+            profiling: Record<string, number>,
             time: number,
         }
     }
@@ -65,6 +68,7 @@ export const recordMetrics = profiler.registerFN(() => {
     // Initialize, if necessary
     Memory.stats ??= {
         ...stats,
+        profiling: {},
         offices: {}
     }
     Memory.stats = {
@@ -111,6 +115,8 @@ export const recordMetrics = profiler.registerFN(() => {
             franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
             storageLevelTarget: getStorageBudget(Game.rooms[office].controller?.level ?? 0),
+            terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
+            terminalLevelTarget: Memory.offices[office].resourceQuotas[RESOURCE_ENERGY] ?? 2000,
             facilitiesCosts,
             objectives
         }

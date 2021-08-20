@@ -4,6 +4,7 @@ import FranchiseReport from "Reports/FranchiseReport";
 import MilestonesReport from "Reports/MilestonesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
 import profiler from "utils/profiler";
+import BalanceReport from "./BalanceReport";
 import ObjectivesReport from "./ObjectivesReport";
 import TerminalsReport from "./TerminalsReport";
 import TerritoriesReport from "./TerritoriesReport";
@@ -43,3 +44,6 @@ register('milestones', MilestonesReport);
 register('territories', TerritoriesReport);
 register('objectives', ObjectivesReport);
 register('terminals', TerminalsReport);
+register('balance', BalanceReport);
+
+global.d('balance')

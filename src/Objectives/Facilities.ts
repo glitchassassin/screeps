@@ -6,7 +6,6 @@ import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { byId } from "Selectors/byId";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { profitPerTick } from "Selectors/profitPerTick";
@@ -52,10 +51,8 @@ export class FacilitiesObjective extends Objective {
             const target = this.spawnTarget(office);
             // Calculate prespawn time based on time to spawn next minion
             const prespawnTime = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
-            const actual = this.assigned.map(byId).filter(c => (
-                c?.memory.office === office && (
+            const actual = this.minions(office).filter(c => (
                     !c.ticksToLive || c.ticksToLive > prespawnTime
-                )
             )).length
 
             if (target > actual) {

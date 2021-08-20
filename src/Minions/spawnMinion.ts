@@ -23,7 +23,7 @@ export const spawnMinion = (
     // select spawn
     let spawn: StructureSpawn|undefined;
     let directions: DirectionConstant[] = [];
-    if (opts.preferredSpawn?.isActive() && spawningCache.get(opts.preferredSpawn.id) !== Game.time) {
+    if (opts.preferredSpawn && spawningCache.get(opts.preferredSpawn.id) !== Game.time && !opts.preferredSpawn.spawning) {
         spawn = opts.preferredSpawn
         // select direction
         if (opts.preferredSpaces) {
@@ -38,7 +38,7 @@ export const spawnMinion = (
             directions = defaultDirectionsForSpawn(office, spawn)
         }
     } else if (opts.allowOtherSpawns !== false) {
-        spawn = getSpawns(office).find(s => !s.spawning && spawningCache.get(s.id) !== Game.time)
+        spawn = getSpawns(office).find(s => !s.spawning && spawningCache.get(s.id) !== Game.time && !s.spawning)
         directions = spawn ? defaultDirectionsForSpawn(office, spawn) : []
     }
     if (!spawn) return ERR_BUSY; // No valid spawn available

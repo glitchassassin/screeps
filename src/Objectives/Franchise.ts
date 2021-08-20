@@ -10,6 +10,7 @@ import { carryPartsForFranchiseRoute } from "Selectors/carryPartsForFranchiseRou
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { adjacentWalkablePositions, getRangeByPath, isPositionWalkable } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
+import { rcl } from "Selectors/rcl";
 import { getFranchisePlanBySourceId, roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
@@ -23,6 +24,7 @@ export class FranchiseObjective extends Objective {
     public distance: number = Infinity;
     public disabled = false;
     public targetCarryParts = 0;
+    public minionCosts = 0;
     public constructor(priority: number, public office: string, public sourceId: Id<Source>) {
         super(priority);
         this.id = `FranchiseObjective|${sourceId}`;
@@ -35,13 +37,11 @@ export class FranchiseObjective extends Objective {
 
         const franchisePos = posById(this.sourceId);
         const storagePos = roomPlans(this.office)?.headquarters?.storage.pos
-        console.log(this.id, storagePos, franchisePos)
         if (!storagePos || !franchisePos) {
             this.disabled = true;
             return;
         }
         const distance = getRangeByPath(storagePos, franchisePos, 1);
-        console.log(this.id, distance)
         if (distance === undefined) {
             this.disabled = true;
             return;
@@ -50,6 +50,10 @@ export class FranchiseObjective extends Objective {
         this.distance = distance;
         this.priority += (1 / distance); // Adjusts priority by distance
         this.targetCarryParts = carryPartsForFranchiseRoute(franchisePos.roomName === office, this.distance)
+        this.minionCosts = (
+            (650 / CREEP_LIFE_TIME) + // salesman
+            ((this.targetCarryParts * 1.5 * BODYPART_COST[CARRY]) / CREEP_LIFE_TIME) // accountant
+        )
     }
 
     private _energyValue = 0;
@@ -57,20 +61,18 @@ export class FranchiseObjective extends Objective {
     energyValue(office: string) {
         if (office !== this.office) return 0;
         if (this._energyValueCached === Game.time) return this._energyValue;
+
         const franchisePos = posById(this.sourceId);
-        const link = getFranchisePlanBySourceId(this.sourceId)?.link.structure
         if (!franchisePos) return 0; // No idea where this source is
         const reserved = Game.rooms[franchisePos.roomName]?.controller?.reservation?.username === 'LordGreywether';
         const income = ((this.office === franchisePos.roomName || reserved) ? SOURCE_ENERGY_CAPACITY : SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
 
-        const salesmanCost = 650 / CREEP_LIFE_TIME;
-        const accountantCost = link ? 0 : (this.targetCarryParts * 1.5 * BODYPART_COST[CARRY]) / CREEP_LIFE_TIME
-
         const workParts = this.assigned.map(byId).reduce((sum, c) => sum + (c?.getActiveBodyparts(WORK) ?? 0), 0)
         const efficiency = Math.min(1, (workParts / 5))
 
-        this._energyValue = efficiency * (income - (salesmanCost + accountantCost));
+        this._energyValue = efficiency * (income - (this.minionCosts));
         this._energyValueCached = Game.time;
+
         return this._energyValue;
     }
 
@@ -86,6 +88,8 @@ export class FranchiseObjective extends Objective {
 
         // Skip spawning for remote Franchises during a crisis
         if (franchisePos.roomName !== this.office && getTerritoryIntent(this.office) === TerritoryIntent.DEFEND) return;
+        // Skip spawning for remote franchises at RCL 8
+        if (franchisePos.roomName !== this.office && rcl(this.office) === 8) return;
 
         let salesmen = 0, accountants = 0;
         for (let a of this.assigned) {

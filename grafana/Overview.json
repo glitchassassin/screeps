@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1629221527643,
+  "iteration": 1629403974814,
   "links": [],
   "panels": [
     {
@@ -320,13 +320,113 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 290,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "aliasByMetric(stats.gauges.profiling.*)",
+          "textEditor": false
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU Usage",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:306",
+          "format": "ms",
+          "label": "Usage",
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:307",
+          "format": "short",
+          "label": "Bucket",
+          "logBase": 1,
+          "max": 10000,
+          "min": 0,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 15
       },
       "id": 166,
       "panels": [],
@@ -373,7 +473,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 9
+        "y": 16
       },
       "id": 4,
       "interval": null,
@@ -446,7 +546,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 9
+        "y": 16
       },
       "id": 6,
       "interval": null,
@@ -520,7 +620,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 9
+        "y": 16
       },
       "id": 7,
       "interval": null,
@@ -576,7 +676,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 9
+        "y": 16
       },
       "hiddenSeries": false,
       "id": 5,
@@ -686,7 +786,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 9
+        "y": 16
       },
       "hiddenSeries": false,
       "id": 164,
@@ -796,7 +896,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 24
       },
       "id": 167,
       "panels": [],
@@ -848,7 +948,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 18
+        "y": 25
       },
       "id": 8,
       "interval": null,
@@ -922,7 +1022,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 18
+        "y": 25
       },
       "id": 16,
       "interval": null,
@@ -997,7 +1097,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 18
+        "y": 25
       },
       "id": 31,
       "interval": null,
@@ -1055,7 +1155,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 18
+        "y": 25
       },
       "hiddenSeries": false,
       "id": 53,
@@ -1166,7 +1266,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 18
+        "y": 25
       },
       "hiddenSeries": false,
       "id": 197,
@@ -1197,10 +1297,14 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "$$hashKey": "object:227",
-          "alias": "Total",
-          "lines": false,
-          "stack": false
+          "$$hashKey": "object:407",
+          "alias": "Terminal level",
+          "yaxis": 2
+        },
+        {
+          "$$hashKey": "object:436",
+          "alias": "Terminal target",
+          "yaxis": 2
         }
       ],
       "spaceLength": 10,
@@ -1216,7 +1320,19 @@
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage level')"
+          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage Target')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(stats.gauges.offices.$office.terminalLevel, 'Terminal level')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(stats.gauges.offices.$office.terminalLevelTarget, 'Terminal target')"
         }
       ],
       "thresholds": [],
@@ -1253,8 +1369,8 @@
           "format": "short",
           "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
+          "max": "5000",
+          "min": "0",
           "show": true
         }
       ],
@@ -1279,7 +1395,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 178,
@@ -1383,7 +1499,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 209,
@@ -1517,7 +1633,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 208,
@@ -1623,7 +1739,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 82,
@@ -1795,5 +1911,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 7
+  "version": 8
 }

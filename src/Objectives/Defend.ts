@@ -2,7 +2,6 @@ import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { byId } from "Selectors/byId";
 import { findClosestHostileCreepByRange, findHostileCreeps } from "Selectors/findHostileCreeps";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -30,7 +29,7 @@ export class DefendObjective extends Objective {
     spawn() {
         for (let office in Memory.offices) {
             const target = this.spawnTarget(office);
-            const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+            const actual = this.minions(office).length
 
             let spawnQueue = [];
 

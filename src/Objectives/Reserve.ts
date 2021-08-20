@@ -49,7 +49,7 @@ export class ReserveObjective extends Objective {
     spawn() {
         for (let office in Memory.offices) {
             const target = this.spawnTarget(office);
-            const marketers = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+            const marketers = this.minions(office).length
 
             let spawnQueue = [];
 

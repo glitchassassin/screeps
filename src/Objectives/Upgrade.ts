@@ -5,7 +5,6 @@ import { setState, States } from "Behaviors/states";
 import { UPGRADE_CONTROLLER_COST } from "gameConstants";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { byId } from "Selectors/byId";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -52,11 +51,7 @@ export class UpgradeObjective extends Objective {
             const target = this.spawnTarget(office);
             // Calculate prespawn time based on time to spawn next minion
             const prespawnTime = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
-            const actual = this.assigned.map(byId).filter(c => (
-                c?.memory.office === office && (
-                    !c.ticksToLive || c.ticksToLive > prespawnTime
-                )
-            )).length
+            const actual = this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > prespawnTime).length
 
             if (target > actual) {
                 spawnMinion(

@@ -2,7 +2,6 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { byId } from "Selectors/byId";
 import { getPatrolRoute } from "Selectors/getPatrolRoute";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
@@ -28,7 +27,7 @@ export class ExploreObjective extends Objective {
         for (const office in Memory.offices) {
             if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return;
             const target = 1;
-            const actual = this.assigned.map(byId).filter(c => c?.memory.office === office).length
+            const actual = this.minions(office).length
 
             let spawnQueue = [];
 

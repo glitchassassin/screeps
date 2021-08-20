@@ -5,8 +5,8 @@ import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
-import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
+import { officeShouldMine } from "Selectors/officeShouldMine";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
@@ -40,6 +40,8 @@ export class MineObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
+            // Check local reserves
+            if (!officeShouldMine(office)) continue;
             const targetForemen = this.targetForemen(office);
             const targetCarry = this.targetCarry(office);
             const foremen = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.FOREMAN).length
@@ -111,34 +113,36 @@ export class MineObjective extends Objective {
             }
             if (creep.memory.state === States.DEPOSIT) {
                 // Try to deposit to Terminal, or else Storage
-                const storage = roomPlans(creep.memory.office)?.headquarters?.storage;
+                // const storage = roomPlans(creep.memory.office)?.headquarters?.storage;
                 const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal;
                 const res = Object.keys(creep.store)[0] as ResourceConstant|undefined;
                 if (!res) {
                     setState(States.WITHDRAW)(creep);
                     return;
                 }
-                if (!storage || !terminal) return;
+                if (!terminal) return;
 
                 if (terminal.structure && (terminal.structure as StructureTerminal).store.getFreeCapacity()) {
                     if (moveTo(terminal.pos, 1)(creep) === BehaviorResult.SUCCESS) {
                         creep.transfer(terminal.structure, res);
                     }
-                } else if (storage.structure) {
-                    if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                        creep.transfer(storage.structure, res);
-                    }
-                } else if (isPositionWalkable(storage.pos)) {
-                    // Drop at storage position
-                    if (moveTo(storage.pos, 0)(creep) === BehaviorResult.SUCCESS) {
-                        creep.drop(res);
-                    }
                 } else {
-                    // Drop next to storage under construction
-                    if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                        creep.drop(res);
-                    }
-                }
+                    creep.drop(res)
+                } //else if (storage.structure) {
+                //     if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+                //         creep.transfer(storage.structure, res);
+                //     }
+                // } else if (isPositionWalkable(storage.pos)) {
+                //     // Drop at storage position
+                //     if (moveTo(storage.pos, 0)(creep) === BehaviorResult.SUCCESS) {
+                //         creep.drop(res);
+                //     }
+                // } else {
+                //     // Drop next to storage under construction
+                //     if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+                //         creep.drop(res);
+                //     }
+                // }
             }
         }
     }

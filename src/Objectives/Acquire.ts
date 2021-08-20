@@ -41,6 +41,9 @@ export class AcquireObjective extends Objective {
         if (!officeShouldClaimAcquireTarget(office)) return 0;
         return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
     }
+    _indexer(creep: Creep) {
+        return creep.memory.office + creep.memory.type
+    }
     spawn() {
         const acquireTarget = findAcquireTarget();
         if (!acquireTarget) return;
@@ -53,7 +56,7 @@ export class AcquireObjective extends Objective {
 
             if (officeShouldClaimAcquireTarget(office)) {
                 const lawyersTarget = this.spawnLawyersTarget(office);
-                const lawyers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.LAWYER).length
+                const lawyers = this.minions(office + MinionTypes.LAWYER).length
 
                 if (lawyersTarget > lawyers) {
                     spawnQueue.push(spawnMinion(
@@ -66,8 +69,8 @@ export class AcquireObjective extends Objective {
             }
             if (officeShouldSupportAcquireTarget(office)) {
                 const engineersTarget = this.spawnEngineersTarget(office);
-                const engineers = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ENGINEER).length +
-                    Objectives['FacilitiesObjective'].assigned.map(byId).filter(c => c?.memory.office === acquireTarget && c.memory.type === MinionTypes.ENGINEER).length
+                const engineers = this.minions(office + MinionTypes.ENGINEER).length +
+                    Objectives['FacilitiesObjective'].minions(acquireTarget).length
                 if (engineersTarget > engineers) {
                     spawnQueue.push(spawnMinion(
                         office,

@@ -5,6 +5,7 @@ import { deserializeHeadquartersPlan } from "RoomPlanner/Headquarters/deserializ
 import { deserializeLabsPlan } from "RoomPlanner/Labs/deserializeLabsPlan";
 import { deserializeMinePlan } from "RoomPlanner/Mine/deserializeMinePlan";
 import { deserializePerimeterPlan } from "RoomPlanner/Perimeter/deserializePerimeterPlan";
+import { memoizeByTick } from "utils/memoizeFunction";
 import profiler from "utils/profiler";
 import { posById } from "./posById";
 
@@ -48,19 +49,25 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
     return cachedPlan;
 }, 'roomPlans') as (roomName: string) => RoomPlan|undefined
 
-export const getSpawns = (roomName: string) => {
-    return [
-        roomPlans(roomName)?.franchise1?.spawn.structure,
-        roomPlans(roomName)?.franchise2?.spawn.structure,
-        roomPlans(roomName)?.headquarters?.spawn.structure,
-    ].filter(s => s && s.isActive()) as StructureSpawn[];
-}
+export const getSpawns = memoizeByTick(
+    roomName => roomName,
+    (roomName: string) => {
+        return [
+            roomPlans(roomName)?.franchise1?.spawn.structure,
+            roomPlans(roomName)?.franchise2?.spawn.structure,
+            roomPlans(roomName)?.headquarters?.spawn.structure,
+        ].filter(s => s && s.isActive()) as StructureSpawn[];
+    }
+)
 
-export const getFranchisePlanBySourceId = profiler.registerFN((id: Id<Source>) => {
-    const pos = posById(id);
-    if (!pos) return;
-    const plan = roomPlans(pos.roomName);
-    if (plan?.franchise1?.sourceId === id) return plan.franchise1;
-    if (plan?.franchise2?.sourceId === id) return plan.franchise2;
-    return;
-}, 'getFranchisePlanBySourceId')
+export const getFranchisePlanBySourceId = memoizeByTick(
+    id => id,
+    (id: Id<Source>) => {
+        const pos = posById(id);
+        if (!pos) return;
+        const plan = roomPlans(pos.roomName);
+        if (plan?.franchise1?.sourceId === id) return plan.franchise1;
+        if (plan?.franchise2?.sourceId === id) return plan.franchise2;
+        return;
+    }
+)

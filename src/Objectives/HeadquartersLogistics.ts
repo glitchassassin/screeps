@@ -3,13 +3,14 @@ import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { getHeadquarterLogisticsLocation } from "Selectors/getHqLocations";
+import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
+import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -32,13 +33,13 @@ export class HeadquartersLogisticsObjective extends Objective {
             // Only needed if we have central HQ structures
             const hq = roomPlans(office)?.headquarters;
             if (!(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure)) {
-                return;
+                continue;
             }
 
-            if (franchiseIncomePerTick(office) <= 0 ) return; // Only spawn logistics minions if we have active Franchises
+            if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn logistics minions if we have active Franchises
 
             // Maintain one max-sized Accountant
-            if (!this.assigned.map(byId).some(c => c?.memory.office === office)) {
+            if (this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > 100).length === 0) {
                 const preferredSpace = getHeadquarterLogisticsLocation(office);
                 spawnMinion(
                     office,
@@ -68,33 +69,68 @@ export class HeadquartersLogisticsObjective extends Objective {
         const hq = roomPlans(creep.memory.office)?.headquarters;
         if (!hq) return;
         const creepEnergy = creep.store.getUsedCapacity(RESOURCE_ENERGY);
-        const terminalEnergySurplus = (officeResourceSurplus(creep.memory.office).get(RESOURCE_ENERGY) ?? 0)
-        const terminal = hq.terminal.structure;
+        const terminal = hq.terminal.structure as StructureTerminal|undefined;
+        const storage = hq.storage.structure as StructureStorage|undefined;
         const spawn = hq.spawn.structure as StructureSpawn|undefined;
+
+        const terminalTargetLevel = Memory.offices[creep.memory.office].resourceQuotas[RESOURCE_ENERGY] ?? 2000
+        const terminalPressure = terminal ? terminal.store.getUsedCapacity(RESOURCE_ENERGY) / terminalTargetLevel : undefined;
+        const storageTargetLevel = getStorageBudget(rcl(creep.memory.office));
+        const storagePressure = storage ? storageEnergyAvailable(creep.memory.office) / storageTargetLevel : undefined;
+
         const spawnCapacity = spawn?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0
-        const storage = hq.storage.structure;
+
         let gotEnergy = false;
 
+        // Emergency provision for over-full Storage
+        if (storage && storage.store.getFreeCapacity() < 5000) {
+            creep.withdraw(storage, RESOURCE_ENERGY);
+            creep.drop(RESOURCE_ENERGY);
+            return;
+        }
+
+        // First, try to get energy from link
         if (getEnergyFromLink(creep) === BehaviorResult.SUCCESS) {
             gotEnergy = true;
         }
 
-        if (terminal && terminalEnergySurplus > 0) {
-            creep.withdraw(terminal, RESOURCE_ENERGY, terminalEnergySurplus);
+        // Balance energy from Storage to Terminal
+        // If storage pressure is higher AND we have no energy, withdraw from storage just enough to correct the imbalance (if more than threshold)
+        // If terminal pressure is higher AND we have no energy, withdraw from terminal just enough to correct the imbalance
+
+        const threshold = 100;
+
+        if (terminal && storage && terminalPressure !== undefined && storagePressure !== undefined) {
+            if (creep.memory.office === 'W8N8') console.log('pressure', terminalPressure, storagePressure)
+            if (terminalPressure > storagePressure) {
+                const difference = ((terminalPressure - storagePressure) / 2) * terminalTargetLevel
+                if (difference > threshold) {
+                    const result = creep.withdraw(terminal, RESOURCE_ENERGY, Math.min(difference, creep.store.getFreeCapacity()));
+                    if (creep.memory.office === 'W8N8') console.log('difference', difference, result)
+                    gotEnergy = (result === OK);
+                }
+            } else if (storagePressure > terminalPressure) {
+                const difference = ((storagePressure - terminalPressure) / 2) * storageTargetLevel
+                if (difference > threshold) {
+                    const result = creep.withdraw(storage, RESOURCE_ENERGY, Math.min(difference, creep.store.getFreeCapacity()));
+                    if (creep.memory.office === 'W8N8') console.log('difference', difference, result)
+                    gotEnergy = (result === OK);
+                }
+            }
         }
 
+        // If storage pressure is higher AND we have energy, deposit all energy in terminal
+        // If terminal pressure is higher AND we have energy, deposit all energy in storage
         if (spawn && spawnCapacity > 0) {
             if (creepEnergy > 0) {
-                creep.transfer(spawn, RESOURCE_ENERGY, Math.max(Math.abs(spawnCapacity), creepEnergy))
+                creep.transfer(spawn, RESOURCE_ENERGY)
             } else if (!gotEnergy && storage) {
                 creep.withdraw(storage, RESOURCE_ENERGY, Math.max(Math.abs(spawnCapacity), creepEnergy))
             }
-        } else if (terminal && terminalEnergySurplus < 0) {
-            // Deposit in terminal, if it needs it, or get energy from storage if we need to
+        } else if (terminal && storagePressure !== undefined && terminalPressure !== undefined && storagePressure > terminalPressure) {
+            // Deposit in terminal, if it needs it
             if (creepEnergy > 0) {
-                creep.transfer(terminal, RESOURCE_ENERGY, Math.max(Math.abs(terminalEnergySurplus), creepEnergy))
-            } else if (!gotEnergy && storage) {
-                creep.withdraw(storage, RESOURCE_ENERGY, Math.max(Math.abs(terminalEnergySurplus), creepEnergy))
+                creep.transfer(terminal, RESOURCE_ENERGY)
             }
         } else {
             // Terminal does not need energy, deposit in storage (or drop) instead
