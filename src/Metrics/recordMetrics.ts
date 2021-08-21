@@ -99,7 +99,7 @@ export const recordMetrics = profiler.registerFN(() => {
 
         let facilitiesCosts = Memory.stats.offices[office]?.facilitiesCosts ?? 0;
         if (isNaN(facilitiesCosts)) facilitiesCosts = 0;
-        for (let event of Game.rooms[office]?.getEventLog() ?? []) {
+        for (let event of Game.rooms[office]?.getEventLog?.() ?? []) {
             if (
                 (event.event === EVENT_BUILD || event.event === EVENT_REPAIR) &&
                 !isNaN(event.data.energySpent)

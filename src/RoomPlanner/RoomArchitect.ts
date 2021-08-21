@@ -6,7 +6,8 @@ import { planLabs } from 'RoomPlanner/Labs/LabsPlan';
 import { planMine } from 'RoomPlanner/Mine/MinePlan';
 import { planPerimeter } from 'RoomPlanner/Perimeter/PerimeterPlan';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
-import { sourceIds } from 'Selectors/roomCache';
+import { posById } from 'Selectors/posById';
+import { controllerPosition, sourceIds } from 'Selectors/roomCache';
 import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
 
 
@@ -57,7 +58,8 @@ export const generateRoomPlans = (roomName: string)  => {
     }
     if (Memory.roomPlans[roomName].complete) return;
 
-    const [franchise1, franchise2] = sourceIds(roomName);
+    const controllerPos = controllerPosition(roomName)!;
+    const [franchise1, franchise2] = sourceIds(roomName).sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
     const steps = [
         roomSectionPlanner(roomName, 'franchise1', () => planFranchise(franchise1), serializeFranchisePlan),
         roomSectionPlanner(roomName, 'franchise2', () => planFranchise(franchise2), serializeFranchisePlan),
