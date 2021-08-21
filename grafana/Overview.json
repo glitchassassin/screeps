@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1629403974814,
+  "iteration": 1629487776743,
   "links": [],
   "panels": [
     {
@@ -418,6 +418,110 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 8
+      },
+      "id": 422,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "stats.gauges.creepCount"
+        }
+      ],
+      "title": "Creeps",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 8
+      },
+      "id": 423,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "stats.gauges.officeCount"
+        }
+      ],
+      "title": "Offices",
+      "type": "stat"
     },
     {
       "collapsed": false,
@@ -1297,12 +1401,12 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "$$hashKey": "object:407",
+          "$$hashKey": "object:227",
           "alias": "Terminal level",
           "yaxis": 2
         },
         {
-          "$$hashKey": "object:436",
+          "$$hashKey": "object:491",
           "alias": "Terminal target",
           "yaxis": 2
         }
@@ -1320,7 +1424,7 @@
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage Target')"
+          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage target')"
         },
         {
           "hide": false,
@@ -1369,8 +1473,8 @@
           "format": "short",
           "label": null,
           "logBase": 1,
-          "max": "5000",
-          "min": "0",
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
@@ -1911,5 +2015,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 8
+  "version": 10
 }

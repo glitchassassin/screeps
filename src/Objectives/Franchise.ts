@@ -86,10 +86,12 @@ export class FranchiseObjective extends Objective {
 
         if (this.disabled || !franchisePos) return;
 
-        // Skip spawning for remote Franchises during a crisis
-        if (franchisePos.roomName !== this.office && getTerritoryIntent(this.office) === TerritoryIntent.DEFEND) return;
-        // Skip spawning for remote franchises at RCL 8
-        if (franchisePos.roomName !== this.office && rcl(this.office) === 8) return;
+
+        if (franchisePos.roomName !== this.office && (
+            getTerritoryIntent(this.office) === TerritoryIntent.DEFEND || // Skip spawning for remote Franchises during a crisis
+            rcl(this.office) === 8 || // Skip spawning for remote franchises at RCL 8
+            (Game.cpu.limit / Object.keys(Memory.offices).length) < 12 // Or when available CPU drops below 12/room
+        )) return;
 
         let salesmen = 0, accountants = 0;
         for (let a of this.assigned) {

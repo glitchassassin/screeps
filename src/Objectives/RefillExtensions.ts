@@ -20,6 +20,8 @@ declare global {
     }
 }
 
+const cachedRefillTargets = new Map<string, PlannedStructure>();
+
 /**
  * Picks up energy from Sources and transfers it to Storage
  */
@@ -31,8 +33,8 @@ export class RefillExtensionsObjective extends Objective {
         // Calculate extensions capacity
         let capacity = approximateExtensionsCapacity(office)
 
-        // Maintain one appropriately-sized Accountant
-        return Math.ceil(capacity / CARRY_CAPACITY);
+        // Maintain up to three Accountants (at max level) to refill extensions
+        return Math.min(32 * 3, Math.ceil(capacity / CARRY_CAPACITY));
     }
     _assignedCarryCache = new Map<string, [number, number]>();
     getCarryCapacityByOffice(office: string) {
@@ -66,11 +68,6 @@ export class RefillExtensionsObjective extends Objective {
     }
 
     action(creep: Creep) {
-        // Cleanup
-        const tombstone = creep.pos.findInRange(FIND_TOMBSTONES, 1).shift()
-        if (tombstone) creep.withdraw(tombstone, RESOURCE_ENERGY)
-        const res = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, { filter: RESOURCE_ENERGY }).shift()
-        if (res) creep.pickup(res)
 
         if (!creep.memory.state || creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
             setState(States.WITHDRAW)(creep);
@@ -87,6 +84,9 @@ export class RefillExtensionsObjective extends Objective {
             }
         }
         if (creep.memory.state === States.DEPOSIT) {
+            // Short-circuit if everything is full
+            if (Game.rooms[creep.memory.office]?.energyAvailable === Game.rooms[creep.memory.office]?.energyCapacityAvailable) return;
+
             if (!creep.memory.refillTarget) {
                 for (let s of getExtensions(creep.memory.office)) {
                     if (((s.structure as StructureExtension)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0) {
@@ -95,17 +95,26 @@ export class RefillExtensionsObjective extends Objective {
                     }
                 }
             }
+
             if (!creep.memory.refillTarget) {
                 // No targets found.
                 return
             }
 
-            const target = PlannedStructure.deserialize(creep.memory.refillTarget);
+            const target = cachedRefillTargets.get(creep.memory.refillTarget) ?? PlannedStructure.deserialize(creep.memory.refillTarget);
+            cachedRefillTargets.set(creep.memory.refillTarget, target)
+
             if (!target.structure || (target.structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                 // Re-target
                 creep.memory.refillTarget = undefined;
                 return;
             }
+
+            // Cleanup
+            const tombstone = creep.pos.findInRange(FIND_TOMBSTONES, 1).shift()
+            if (tombstone) creep.withdraw(tombstone, RESOURCE_ENERGY)
+            const res = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, { filter: RESOURCE_ENERGY }).shift()
+            if (res) creep.pickup(res)
 
             if (moveTo(target.pos, 1)(creep) === BehaviorResult.SUCCESS) {
                 creep.transfer(target.structure, RESOURCE_ENERGY);

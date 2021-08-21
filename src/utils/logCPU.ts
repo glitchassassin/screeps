@@ -7,9 +7,9 @@ export const logCpuStart = () => last = Game.cpu.getUsed()
 export const logCpu = (context: string) => {
     if (reportedTick !== Game.time) {
         for (let [c, data] of log) {
-            const countPerTick = data[0] / loggedTicks
-            const averagePerTick = data[1] / data[0]
-            console.log(`${c}: ${(countPerTick).toFixed(3)} x ${(averagePerTick).toFixed(3)} = ${(countPerTick * averagePerTick).toFixed(3)}`)
+            const invocationsPerTick = data[0] / loggedTicks
+            const averagePerInvocation = data[1] / data[0]
+            console.log(`${c}: ${(invocationsPerTick).toFixed(3)} x ${(averagePerInvocation).toFixed(3)} = ${(invocationsPerTick * averagePerInvocation).toFixed(3)}`)
         }
         loggedTicks += 1;
         reportedTick = Game.time;

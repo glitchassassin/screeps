@@ -130,7 +130,7 @@ export const MinionBuilders = {
         } else {
             let moveParts = (energy <= 550) ? 1 : 2;
             let carryParts = 1;
-            let workParts = Math.min(5, Math.floor((energy - (moveParts + carryParts) * 50) / 100));
+            let workParts = Math.min(10, Math.floor((energy - (moveParts + carryParts) * 50) / 100));
             return ([] as BodyPartConstant[]).concat(
                 Array(workParts).fill(WORK),
                 Array(moveParts).fill(MOVE),

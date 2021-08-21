@@ -46,6 +46,8 @@ declare global {
             },
             profiling: Record<string, number>,
             time: number,
+            creepCount: number,
+            officeCount: number,
         }
     }
 }
@@ -63,6 +65,8 @@ export const recordMetrics = profiler.registerFN(() => {
             limit: Game.cpu.limit,
             used: Game.cpu.getUsed(),
         },
+        creepCount: Object.keys(Game.creeps).length,
+        officeCount: Object.keys(Memory.offices).length
     }
 
     // Initialize, if necessary

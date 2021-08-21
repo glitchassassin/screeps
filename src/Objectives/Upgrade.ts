@@ -24,11 +24,11 @@ export class UpgradeObjective extends Objective {
     spawnTarget(office: string) {
         const rcl = Game.rooms[office]?.controller?.level ?? 0
         if (rcl < 4) return 0; // Engineers will handle early upgrades
-        if (rcl === 8) return 1; // Upgrading is capped at RCL8
 
         const storageSurplus = (storageEnergyAvailable(office) - getStorageBudget(rcl))
-
         const emergencyUpgraders = ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 10000) ? 1 : 0
+
+        if (rcl === 8) return emergencyUpgraders; // Upgrading is capped at RCL8
 
         // Spawn based on maximizing use of available energy
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))

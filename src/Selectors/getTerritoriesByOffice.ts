@@ -21,6 +21,8 @@ export const getOfficeTerritoryMap = () => {
     const processedOffices = offices.join('-');
     if (lastProcessedOffices === processedOffices) return officeTerritoryMap
 
+    if (Game.cpu.bucket < 500) return officeTerritoryMap; // Don't recalculate with low bucket
+
     // Cache no longer valid, recalculate
     const candidates = new Map<string, string[]>();
     for (const office of offices) {

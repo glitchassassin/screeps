@@ -29,7 +29,8 @@ export class TowerLogisticsObjective extends Objective {
     spawn() {
         for (let office in Memory.offices) {
             const hq = roomPlans(office)?.headquarters;
-            const towersNeedRefilled = (hq?.towers.reduce((sum, t) => sum + ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0), 0) ?? 0) > 0
+
+            const towersNeedRefilled = hq?.towers.some(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > CARRY_CAPACITY * 3)
             if (!towersNeedRefilled) {
                 continue
             }
@@ -37,7 +38,7 @@ export class TowerLogisticsObjective extends Objective {
 
             // Maintain one small Accountant to fill towers
             let preferredSpace = getTowerRefillerLocation(office);
-            if (!this.minions(office)) {
+            if (this.minions(office).length === 0) {
                 spawnMinion(
                     office,
                     this.id,
@@ -76,7 +77,7 @@ export class TowerLogisticsObjective extends Objective {
                 setState(States.GET_ENERGY_STORAGE)(creep);
                 return;
             }
-            const tower = hq.towers.find(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0);
+            const tower = hq.towers.find(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) >= creep.store.getCapacity());
             if (tower?.structure && moveTo(tower?.pos, 1)(creep) === BehaviorResult.SUCCESS) {
                 creep.transfer(tower.structure, RESOURCE_ENERGY);
             }

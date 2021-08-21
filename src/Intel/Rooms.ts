@@ -1,6 +1,7 @@
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
 import { findHostileCreeps } from "Selectors/findHostileCreeps";
+import { ownedMinerals } from "Selectors/ownedMinerals";
 import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
@@ -78,22 +79,17 @@ export const scanRooms = profiler.registerFN(() => {
                 Memory.offices[room] = {
                     city: cityNames.find(name => !Object.values(Memory.offices).some(r => r.city === name)) ?? room,
                     resourceQuotas: {
-                        [RESOURCE_ENERGY]: 2000,
-                        [RESOURCE_KEANIUM]: 3000,
-                        [RESOURCE_HYDROGEN]: 3000,
-                        [RESOURCE_ZYNTHIUM]: 3000,
-                        [RESOURCE_OXYGEN]: 3000
+                        [RESOURCE_ENERGY]: 10000,
                     },
                 }
                 destroyUnplannedStructures(room);
             }
 
             Memory.offices[room].resourceQuotas = {
-                [RESOURCE_ENERGY]: 2000,
-                [RESOURCE_KEANIUM]: 3000,
-                [RESOURCE_HYDROGEN]: 3000,
-                [RESOURCE_ZYNTHIUM]: 3000,
-                [RESOURCE_OXYGEN]: 3000
+                [RESOURCE_ENERGY]: 10000
+            }
+            for (let m of ownedMinerals()) {
+                Memory.offices[room].resourceQuotas[m as ResourceConstant] = 3000
             }
 
         }

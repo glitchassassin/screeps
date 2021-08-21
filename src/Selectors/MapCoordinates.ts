@@ -54,7 +54,7 @@ export const calculateNearbyRooms = memoize(
                 if (n === null) return false;
                 try {
                     let status = Game.map.getRoomStatus(n);
-                    if (roomStatus === roomStatus || status.status === 'normal') {
+                    if (roomStatus.status === status.status || status.status === 'normal') {
                         return true;
                     }
                     return false;

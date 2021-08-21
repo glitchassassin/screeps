@@ -101,19 +101,16 @@ export class HeadquartersLogisticsObjective extends Objective {
         const threshold = 100;
 
         if (terminal && storage && terminalPressure !== undefined && storagePressure !== undefined) {
-            if (creep.memory.office === 'W8N8') console.log('pressure', terminalPressure, storagePressure)
             if (terminalPressure > storagePressure) {
                 const difference = ((terminalPressure - storagePressure) / 2) * terminalTargetLevel
                 if (difference > threshold) {
                     const result = creep.withdraw(terminal, RESOURCE_ENERGY, Math.min(difference, creep.store.getFreeCapacity()));
-                    if (creep.memory.office === 'W8N8') console.log('difference', difference, result)
                     gotEnergy = (result === OK);
                 }
             } else if (storagePressure > terminalPressure) {
                 const difference = ((storagePressure - terminalPressure) / 2) * storageTargetLevel
                 if (difference > threshold) {
                     const result = creep.withdraw(storage, RESOURCE_ENERGY, Math.min(difference, creep.store.getFreeCapacity()));
-                    if (creep.memory.office === 'W8N8') console.log('difference', difference, result)
                     gotEnergy = (result === OK);
                 }
             }
