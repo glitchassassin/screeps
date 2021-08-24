@@ -24,8 +24,8 @@ const HQ_UPGRADE_BOTTOM = HQ_UPGRADE_RIGHT[0].map((k, i) => HQ_UPGRADE_RIGHT.map
 // Anchor should be in range 3 of controller
 const ANCHOR_LEFT = { x: 0, y: 2 };
 const ANCHOR_RIGHT = { x: 3, y: 2 };
-const ANCHOR_TOP = { x: 2, y: 3 };
-const ANCHOR_BOTTOM = { x: 2, y: 2 };
+const ANCHOR_TOP = { x: 2, y: 2 };
+const ANCHOR_BOTTOM = { x: 2, y: 3 };
 // Spawn should not be
 const SPAWN_LEFT = { x: 2, y: 2 };
 const SPAWN_RIGHT = { x: 1, y: 2 };
@@ -59,29 +59,38 @@ export const planHeadquarters = (roomName: string) => {
         }
 
         // Get the upgrade location closest to Controller
-        let orientation: (BuildableStructureConstant|undefined)[][];
-        let anchor: {x: number, y: number};
+        let orientation: (BuildableStructureConstant|undefined)[][]|undefined = undefined;
+        let anchor: {x: number, y: number}|undefined = undefined;
         if (space.horizontal) {
-            let inRange = new RoomPosition(space.x + ANCHOR_BOTTOM.x, space.y + ANCHOR_BOTTOM.y, controllerPos.roomName).inRangeTo(controllerPos, 3);
-            if (inRange) {
+            if (new RoomPosition(space.x + ANCHOR_BOTTOM.x, space.y + ANCHOR_BOTTOM.y, controllerPos.roomName).inRangeTo(controllerPos, 3)) {
                 orientation = HQ_UPGRADE_BOTTOM;
                 anchor = ANCHOR_BOTTOM;
-            } else {
+            } else if (new RoomPosition(space.x + ANCHOR_TOP.x, space.y + ANCHOR_TOP.y, controllerPos.roomName).inRangeTo(controllerPos, 3)) {
                 orientation = HQ_UPGRADE_TOP;
                 anchor = ANCHOR_TOP;
             }
         } else {
-            let inRange = new RoomPosition(space.x + ANCHOR_RIGHT.x, space.y + ANCHOR_RIGHT.y, controllerPos.roomName).inRangeTo(controllerPos, 3);
-            if (inRange) {
+            if (new RoomPosition(space.x + ANCHOR_RIGHT.x, space.y + ANCHOR_RIGHT.y, controllerPos.roomName).inRangeTo(controllerPos, 3)) {
                 orientation = HQ_UPGRADE_RIGHT;
                 anchor = ANCHOR_RIGHT;
-            } else {
+            } else if (new RoomPosition(space.x + ANCHOR_LEFT.x, space.y + ANCHOR_LEFT.y, controllerPos.roomName).inRangeTo(controllerPos, 3)) {
                 orientation = HQ_UPGRADE_LEFT;
                 anchor = ANCHOR_LEFT;
             }
         }
+        if (!orientation || !anchor) continue;
 
         let costMatrix = currentRoomPlan.clone();
+
+        // Discourage pathing along the border
+        for (let y = 0; y < 50; y++) {
+            costMatrix.set(1, y, 20);
+            costMatrix.set(48, y, 20);
+        }
+        for (let x = 2; x < 48; x++) {
+            costMatrix.set(x, 1, 20);
+            costMatrix.set(x, 48, 20);
+        }
 
         for (let y = 0; y < orientation.length; y++) {
             for (let x = 0; x < orientation[y].length; x++) {

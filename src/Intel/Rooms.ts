@@ -50,7 +50,7 @@ export const scanRooms = profiler.registerFN(() => {
             const { mineralId, mineralType } = Game.rooms[room].find(FIND_MINERALS).map(m => {
                 Memory.positions[m.id] = packPos(m.pos);
                 return {mineralId: m.id, mineralType: m.mineralType};
-            })[0];
+            })[0] ?? {};
             const eligibleForOffice = roomIsEligibleForOffice(room)
 
             Memory.rooms[room] = {

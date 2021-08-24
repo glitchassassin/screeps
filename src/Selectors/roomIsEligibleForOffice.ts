@@ -18,11 +18,11 @@ export const roomIsEligibleForOffice = (roomName: string) => {
     }
 
     let [source1, source2] = sources;
-    if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 3)) {
+    if (controller.findClosestByRange(FIND_EXIT)?.inRangeTo(controller, 2)) {
         console.log(`Room planning for ${roomName} failed - Controller too close to exit`);
         return false;
     }
-    if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 3))) {
+    if (sources.some(s => s.findClosestByRange(FIND_EXIT)?.inRangeTo(s, 2))) {
         console.log(`Room planning for ${roomName} failed - Source too close to exit`);
         return false;
     }

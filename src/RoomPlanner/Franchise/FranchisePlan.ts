@@ -37,10 +37,12 @@ export const planFranchise = (sourceId: Id<Source>) => {
     if (route.incomplete) throw new Error('Unable to calculate path between source and controller');
     plan.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
 
-    // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller.
+    // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller,
+    // and not too close to an edge (to make room for exit ramparts, if needed)
     let adjacents = calculateAdjacentPositions(plan.container.pos).filter(pos => (
         isPositionWalkable(pos, true, true) &&
-        !pos.isEqualTo(route.path[1])
+        !pos.isEqualTo(route.path[1]) &&
+        (pos.x > 1 && pos.x < 48 && pos.y > 1 && pos.y < 48)
     ))
     if (spawn) {
         plan.spawn = new PlannedStructure(spawn.pos, STRUCTURE_SPAWN)
