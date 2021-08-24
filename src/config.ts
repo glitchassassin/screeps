@@ -71,3 +71,13 @@ export const CACHED_STRUCTURES: StructureConstant[] = [
 export const FEATURES = {
     MINING: true //Game.shard.name.startsWith('shard') ? true: false
 }
+
+export const MINERAL_PRIORITIES: MineralConstant[] = [
+    RESOURCE_CATALYST,
+    RESOURCE_UTRIUM,
+    RESOURCE_KEANIUM,
+    RESOURCE_LEMERGIUM,
+    RESOURCE_ZYNTHIUM,
+    RESOURCE_HYDROGEN,
+    RESOURCE_OXYGEN
+]

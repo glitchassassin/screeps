@@ -11,7 +11,8 @@ declare global {
     interface RoomMemory {
         controllerId?: Id<StructureController>,
         sourceIds?: Id<Source>[],
-        mineralId?: Id<Mineral>
+        mineralId?: Id<Mineral>,
+        mineralType?: MineralConstant,
         rcl?: number,
         owner?: string,
         reserver?: string,
@@ -46,9 +47,9 @@ export const scanRooms = profiler.registerFN(() => {
                 Memory.positions[s.id] = packPos(s.pos);
                 return s.id
             });
-            const mineralId = Game.rooms[room].find(FIND_MINERALS).map(m => {
+            const { mineralId, mineralType } = Game.rooms[room].find(FIND_MINERALS).map(m => {
                 Memory.positions[m.id] = packPos(m.pos);
-                return m.id;
+                return {mineralId: m.id, mineralType: m.mineralType};
             })[0];
             const eligibleForOffice = roomIsEligibleForOffice(room)
 
@@ -56,6 +57,7 @@ export const scanRooms = profiler.registerFN(() => {
                 controllerId,
                 sourceIds,
                 mineralId,
+                mineralType,
                 eligibleForOffice,
             }
         }
