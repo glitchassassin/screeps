@@ -15,9 +15,9 @@ const LABS_STAMP: (BuildableStructureConstant|undefined)[][] = [
 const LABS_MIRRORED_STAMP = LABS_STAMP.map(row => row.slice().reverse());
 
 const LABS_ORDER = [
-    [1, 2], [0, 2], [1, 3],
-    [2, 1], [2, 0], [3, 1],
-    [0, 1], [1, 0], [2, 3], [3, 2]
+    [1, 2], [2, 1], [2, 3],
+    [1, 3], [3, 2], [3, 1],
+    [0, 1], [0, 2], [1, 0], [2, 0]
 ]
 
 const LABS_MIRRORED_ORDER = LABS_ORDER.map(([x, y]) => ([LABS_STAMP[0].length - x, y]));

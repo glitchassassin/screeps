@@ -8,6 +8,7 @@ import { MineObjective } from "./Mine";
 import { Objective, Objectives } from "./Objective";
 import { RefillExtensionsObjective } from "./RefillExtensions";
 import { ReserveObjective } from "./Reserve";
+import { ScienceObjective } from "./Science";
 import { TowerLogisticsObjective } from "./TowerLogistics";
 import { UpgradeObjective } from "./Upgrade";
 
@@ -43,6 +44,7 @@ initialize(
     new TowerLogisticsObjective(8.5),
     // FranchiseObjectives are 8
     new FacilitiesObjective(6),
+    new ScienceObjective(5),
     new ExploreObjective(4),
     new AcquireObjective(4),
     new UpgradeObjective(3),

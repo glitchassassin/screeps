@@ -13,6 +13,9 @@ export enum States {
     DONE = 'DONE',
     FILL_TOWERS = 'FILL_TOWERS',
     FILL_LEGAL = 'FILL_LEGAL',
+    FILL_LABS = 'FILL_LABS',
+    EMPTY_LABS = 'EMPTY_LABS',
+    RENEW = 'RENEW',
 }
 
 declare global {

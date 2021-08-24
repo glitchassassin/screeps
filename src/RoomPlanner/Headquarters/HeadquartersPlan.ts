@@ -12,7 +12,7 @@ const HQ_UPGRADE_LEFT: (BuildableStructureConstant|undefined)[][] = [
     [undefined, STRUCTURE_TOWER, undefined, STRUCTURE_TOWER],
     [undefined, STRUCTURE_STORAGE, STRUCTURE_SPAWN, STRUCTURE_TOWER],
     [undefined, STRUCTURE_ROAD, undefined, STRUCTURE_LINK],
-    [undefined, STRUCTURE_POWER_SPAWN, STRUCTURE_FACTORY, STRUCTURE_TERMINAL],
+    [undefined, STRUCTURE_TERMINAL, STRUCTURE_FACTORY, STRUCTURE_POWER_SPAWN],
 ]
 
 const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => row.slice().reverse());

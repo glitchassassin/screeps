@@ -81,10 +81,16 @@ export const scanRooms = profiler.registerFN(() => {
                     resourceQuotas: {
                         [RESOURCE_ENERGY]: 10000,
                     },
+                    labOrders: []
                 }
                 destroyUnplannedStructures(room);
             }
-
+            Memory.offices[room].labOrders ??= [{
+                ingredient1: RESOURCE_ZYNTHIUM,
+                ingredient2: RESOURCE_KEANIUM,
+                output: RESOURCE_ZYNTHIUM_KEANITE,
+                amount: 3000
+            }]
             Memory.offices[room].resourceQuotas = {
                 [RESOURCE_ENERGY]: 10000
             }

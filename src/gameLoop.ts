@@ -7,6 +7,8 @@ import { spawnObjectives } from "Objectives/spawnObjectives";
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
 import { roomPlans } from "Selectors/roomPlans";
+import { runLabs } from "Structures/Labs/Labs";
+import { planLabOrders } from "Structures/Labs/planLabOrders";
 import { runLinks } from "Structures/Links";
 import { runTerminals } from "Structures/Terminal";
 import { runTowers } from "Structures/Towers";
@@ -30,6 +32,8 @@ export const gameLoop = () => {
         runLinks(room);
         runSpawns(room);
         runTowers(room);
+        planLabOrders(room);
+        runLabs(room);
     }
     debugCPU('Offices', true);
 

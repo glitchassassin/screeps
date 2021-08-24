@@ -70,6 +70,7 @@ export class DefendObjective extends Objective {
             if (rampart.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length) continue; // Rampart already occupied
             if (!closest || rampart.pos.getRangeTo(target.pos) < closestDistance) {
                 closest = rampart.pos;
+                closestDistance = rampart.pos.getRangeTo(target.pos);
             }
         }
         moveTo(closest, 0)(creep)
