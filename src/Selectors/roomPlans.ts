@@ -5,6 +5,7 @@ import { deserializeHeadquartersPlan } from "RoomPlanner/Headquarters/deserializ
 import { deserializeLabsPlan } from "RoomPlanner/Labs/deserializeLabsPlan";
 import { deserializeMinePlan } from "RoomPlanner/Mine/deserializeMinePlan";
 import { deserializePerimeterPlan } from "RoomPlanner/Perimeter/deserializePerimeterPlan";
+import { deserializeRoadsPlan } from "RoomPlanner/Roads/deserializeRoadsPlan";
 import { memoizeByTick } from "utils/memoizeFunction";
 import profiler from "utils/profiler";
 import { posById } from "./posById";
@@ -45,6 +46,7 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
     updateRoomPlan(roomName, 'labs', deserializeLabsPlan);
     updateRoomPlan(roomName, 'extensions', deserializeExtensionsPlan);
     updateRoomPlan(roomName, 'perimeter', deserializePerimeterPlan);
+    updateRoomPlan(roomName, 'roads', deserializeRoadsPlan);
 
     return cachedPlan;
 }, 'roomPlans') as (roomName: string) => RoomPlan|undefined

@@ -68,7 +68,8 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
             plans.perimeter?.ramparts ?? [],
             plans.extensions?.ramparts ?? [],
             plans.franchise2?.ramparts ?? [],
-            plans.headquarters?.roads ?? []
+            plans.headquarters?.roads ?? [],
+            plans.roads?.roads ?? []
         )
     }
     if (rcl >= 5) {
@@ -86,7 +87,6 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
             [plans.headquarters?.terminal],
             [plans.mine?.extractor],
             [plans.mine?.container],
-            plans.labs?.roads ?? [],
             plans.labs?.labs.slice(0, 3) ?? [],
         )
     }

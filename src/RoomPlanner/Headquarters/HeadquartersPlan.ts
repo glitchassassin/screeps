@@ -8,11 +8,11 @@ import { validateHeadquartersPlan } from "./validateHeadquartersPlan";
 
 
 const HQ_UPGRADE_LEFT: (BuildableStructureConstant|undefined)[][] = [
-    [undefined, STRUCTURE_TOWER, STRUCTURE_TOWER, STRUCTURE_TOWER],
-    [undefined, STRUCTURE_TOWER, undefined, STRUCTURE_TOWER],
-    [undefined, STRUCTURE_STORAGE, STRUCTURE_SPAWN, STRUCTURE_TOWER],
-    [undefined, STRUCTURE_ROAD, undefined, STRUCTURE_LINK],
-    [undefined, STRUCTURE_TERMINAL, STRUCTURE_FACTORY, STRUCTURE_POWER_SPAWN],
+    [undefined,         STRUCTURE_TOWER,    STRUCTURE_TOWER,    STRUCTURE_TOWER],
+    [STRUCTURE_ROAD,    STRUCTURE_TOWER,    undefined,          STRUCTURE_TOWER],
+    [STRUCTURE_ROAD,    STRUCTURE_STORAGE,  STRUCTURE_SPAWN,    STRUCTURE_TOWER],
+    [STRUCTURE_ROAD,    STRUCTURE_ROAD,     undefined,          STRUCTURE_LINK],
+    [undefined,         STRUCTURE_TERMINAL, STRUCTURE_FACTORY,  STRUCTURE_POWER_SPAWN],
 ]
 
 const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => row.slice().reverse());
@@ -109,8 +109,7 @@ export const planHeadquarters = (roomName: string) => {
         let origin = new RoomPosition(space.x + anchor.x, space.y + anchor.x, controllerPos.roomName);
         if (!validatePathsToPointsOfInterest(roomName, costMatrix, origin)) continue; // This layout blocks paths
 
-        // Score this position and generate roads
-        let roads = new Set<PlannedStructure<STRUCTURE_ROAD>>();
+        // Score this position
         let distance = 0;
         for (let pos of sources) {
             let path = PathFinder.search(
@@ -119,10 +118,6 @@ export const planHeadquarters = (roomName: string) => {
                 {maxRooms: 1, roomCallback: () => costMatrix, plainCost: 2, swampCost: 10}
             );
             if (!path.incomplete) {
-                path.path.forEach(p => {
-                    roads.add(new PlannedStructure(p, STRUCTURE_ROAD));
-                    costMatrix.set(p.x, p.y, 1);
-                });
                 distance += path.cost;
             }
         }
@@ -157,13 +152,11 @@ export const planHeadquarters = (roomName: string) => {
                         plan.towers?.push(new PlannedStructure(pos, STRUCTURE_TOWER));
                         break;
                     case STRUCTURE_ROAD:
-                        roads.add(new PlannedStructure(pos, STRUCTURE_ROAD));
+                        plan.roads?.push(new PlannedStructure(pos, STRUCTURE_ROAD));
                         break;
                 }
             }
         }
-
-        plan.roads = Array.from(roads);
 
         // plan.ramparts = generateRampartPositions(roomName, space)
         //     .filter(pos => isPositionWalkable(pos, true, true))

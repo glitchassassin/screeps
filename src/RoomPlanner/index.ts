@@ -14,6 +14,10 @@ export interface FranchisePlan {
     ramparts: PlannedStructure[];
 }
 
+export interface RoadsPlan {
+    roads: PlannedStructure<STRUCTURE_ROAD>[];
+}
+
 export interface HeadquartersPlan {
     spawn: PlannedStructure<STRUCTURE_SPAWN>;
     powerSpawn: PlannedStructure<STRUCTURE_POWER_SPAWN>;
@@ -48,4 +52,5 @@ export interface RoomPlan {
     labs?: LabsPlan,
     extensions?: ExtensionsPlan,
     perimeter?: PerimeterPlan,
+    roads?: RoadsPlan
 }

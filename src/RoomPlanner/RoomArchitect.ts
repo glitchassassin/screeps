@@ -9,6 +9,7 @@ import { serializePlannedStructures } from 'Selectors/plannedStructures';
 import { posById } from 'Selectors/posById';
 import { controllerPosition, sourceIds } from 'Selectors/roomCache';
 import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
+import { planRoads } from './Roads/RoadsPlan';
 
 
 declare global {
@@ -24,6 +25,7 @@ declare global {
                 extensions?: string|null,
                 perimeter?: string|null,
                 labs?: string|null,
+                roads?: string|null
             }
         }
     }
@@ -68,6 +70,7 @@ export const generateRoomPlans = (roomName: string)  => {
         roomSectionPlanner(roomName, 'labs', planLabs, serializePlan),
         roomSectionPlanner(roomName, 'extensions', planExtensions, serializePlan),
         roomSectionPlanner(roomName, 'perimeter', planPerimeter, serializePlan),
+        roomSectionPlanner(roomName, 'roads', planRoads, serializePlan),
     ]
 
     const start = Game.cpu.getUsed();
@@ -87,6 +90,7 @@ export const generateRoomPlans = (roomName: string)  => {
         Memory.roomPlans[roomName].mine !== null &&
         Memory.roomPlans[roomName].labs !== null &&
         Memory.roomPlans[roomName].extensions !== null &&
-        Memory.roomPlans[roomName].perimeter !== null
+        Memory.roomPlans[roomName].perimeter !== null &&
+        Memory.roomPlans[roomName].roads !== null
     )
 }

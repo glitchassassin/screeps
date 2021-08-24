@@ -125,10 +125,10 @@ export class FranchiseObjective extends Objective {
         const carryPartsPerAccountant = Math.min(32, Math.floor((spawnEnergyAvailable(this.office) * 2/3) / 50))
         const plan = getFranchisePlanBySourceId(this.sourceId);
         const link = plan?.link.structure
-        const surplus = franchiseEnergyAvailable(this.sourceId);
+        // const surplus = franchiseEnergyAvailable(this.sourceId);
         let targetAccountants = 0; // No need for Accountants if there is a link
         if (!link) targetAccountants = Math.ceil(targetCarry / carryPartsPerAccountant);
-        if (link && surplus) targetAccountants = 1;
+        // if (link && surplus) targetAccountants = 1;
         let accountantPressure = accountants / targetAccountants;
         // Pre-spawn accountants
 

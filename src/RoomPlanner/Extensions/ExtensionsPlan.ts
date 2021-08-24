@@ -24,20 +24,21 @@ export function fillExtensions(roomName: string, count: number) {
 
     let terrain = Game.map.getRoomTerrain(roomName);
     const cm = costMatrixFromRoomPlan(roomName);
-    let startingPositions = [
-        roomPlans(roomName)?.headquarters?.terminal.pos,
-        roomPlans(roomName)?.headquarters?.powerSpawn.pos
-    ].filter(isRoomPosition).flatMap(calculateAdjacentPositions)
-    .filter(pos => squareIsValid(terrain, cm, pos))
+    const hq = roomPlans(roomName)?.headquarters;
+
+    let startingPositions = new Set(
+        [ hq?.terminal.pos, hq?.powerSpawn.pos ]
+            .concat(hq?.towers.map(t => t.pos) ?? [])
+            .filter(isRoomPosition)
+            .flatMap(calculateAdjacentPositions)
+            .filter(pos => squareIsValid(terrain, cm, pos))
+    )
 
     if (!startingPositions) throw new Error('No viable starting position, aborting extensions plan')
 
     // Begin extensions outside HQ, offset diagonally from storage
-    let extensions: RoomPosition[] = [];
-    for (let pos of startingPositions) {
-        extensions = fillExtensionsRecursive(terrain, cm, [pos], count);
-        if (extensions.length === count) break;
-    }
+    let extensions = fillExtensionsRecursive(terrain, cm, Array.from(startingPositions), count);
+
     if (extensions.length < count) {
         throw new Error('Not enough room to fill extensions')
     }

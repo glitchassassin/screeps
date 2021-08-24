@@ -20,7 +20,7 @@ const LABS_ORDER = [
     [0, 1], [0, 2], [1, 0], [2, 0]
 ]
 
-const LABS_MIRRORED_ORDER = LABS_ORDER.map(([x, y]) => ([LABS_STAMP[0].length - x, y]));
+const LABS_MIRRORED_ORDER = LABS_ORDER.map(([x, y]) => ([LABS_STAMP[0].length - 1 - x, y]));
 
 const PATHABLE_STAMP: (boolean)[][] = [
     [true,  false, false, true ],
