@@ -1,10 +1,10 @@
 import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
-import { spawns } from "Selectors/roomPlans";
+import { getSpawns } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 
 export const runSpawns = profiler.registerFN((office: string) => {
-    spawns(office).forEach(s => {
-        if (s.spawning && !adjacentWalkablePositions(s.pos).length) {
+    getSpawns(office).forEach(s => {
+        if (s.spawning && s.spawning.remainingTime < 2 && !adjacentWalkablePositions(s.pos).length) {
             _.sample(s.pos.findInRange(FIND_MY_CREEPS, 1))?.giveWay();
         }
     })

@@ -8,6 +8,8 @@ import profiler from "utils/profiler";
 export class Route {
     lastPos?: RoomPosition;
     path?: RoomPosition[];
+    pathRoom?: string;
+    rooms: string[] = [];
     stuckForTicks: number = 0;
     recalculatedPath: number = 0;
 
@@ -16,22 +18,18 @@ export class Route {
         public pos: RoomPosition,
         public range: number = 1
     ) {
-        this.calculatePath(creep);
+        this.calculateRoute(creep);
+        this.calculatePathToRoom(creep);
     }
 
-    calculatePath(creep: Creep, avoidCreeps = false) {
-        let positionsInRange = calculateNearbyPositions(this.pos, this.range, true)
-                                         .filter(pos => isPositionWalkable(pos, true));
-        // console.log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
-        if (positionsInRange.length === 0) throw new Error('No valid targets for path');
-        // Calculate path in rooms first
-        let rooms = [creep.pos.roomName];
+    calculateRoute(creep: Creep) {
+        this.rooms = [creep.pos.roomName];
         if (creep.pos.roomName !== this.pos.roomName) {
             let roomsRoute = Game.map.findRoute(
                 creep.pos.roomName,
                 this.pos.roomName,
                 {
-                    routeCallback: (roomName, fromRoomName) => {
+                    routeCallback: (roomName) => {
                         if (
                             roomName !== this.pos.roomName &&
                             getTerritoryIntent(roomName) === TerritoryIntent.AVOID
@@ -40,22 +38,50 @@ export class Route {
                     }
                 }
             )
-            if (roomsRoute === ERR_NO_PATH) {
-                this.path = [];
-                return;
-            }
-            rooms.push(...roomsRoute.map(r => r.room));
+            if (roomsRoute === ERR_NO_PATH) throw new Error('No valid room path');
+            this.rooms = this.rooms.concat(roomsRoute.map(r => r.room));
+            this.pathRoom = this.rooms[1];
         }
+    }
 
+    calculatePathToRoom(creep: Creep, avoidCreeps = false, recalculated = false) {
+        const nextRoom = this.rooms[this.rooms.indexOf(creep.room.name) + 1];
+        if (!nextRoom) {
+            // We are in the target room
+            let positionsInRange = calculateNearbyPositions(this.pos, this.range, true)
+                                         .filter(pos =>
+                                            isPositionWalkable(pos, true) &&
+                                            pos.x > 0 && pos.x < 49 &&
+                                            pos.y > 0 && pos.y < 49
+                                        );
+            // console.log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
+            if (positionsInRange.length === 0) throw new Error('No valid targets for path');
+            this.calculatePath(creep, positionsInRange, avoidCreeps);
+            return;
+        }
+        const exit = creep.room.findExitTo(nextRoom);
+        if (exit === ERR_NO_PATH || exit === ERR_INVALID_ARGS) {
+            if (!recalculated) {
+                this.calculateRoute(creep);
+                this.calculatePathToRoom(creep, avoidCreeps, true)
+                return;
+            } else {
+                throw new Error('Unable to follow route')
+            }
+        }
+        this.pathRoom = nextRoom;
+        this.calculatePath(creep, creep.room.find(exit), avoidCreeps);
+    }
 
+    calculatePath(creep: Creep, positionsInRange: RoomPosition[], avoidCreeps = false) {
         let route = PathFinder.search(creep.pos, positionsInRange, {
             roomCallback: (room) => {
-                if (!rooms.includes(room)) return false;
+                if (!this.rooms?.includes(room)) return false;
                 return getCostMatrix(room, avoidCreeps)
             },
             plainCost: 2,
             swampCost: 10,
-            maxOps: 4000 * rooms.length
+            maxRooms: 1,
         })
         if (!route || route.incomplete) throw new Error('Unable to plan route');
 
@@ -64,6 +90,12 @@ export class Route {
     }
 
     run(creep: Creep) {
+        if (creep.pos.inRangeTo(this.pos, this.range)) return OK;
+
+        if (creep.pos.roomName === this.pathRoom) {
+            this.calculatePathToRoom(creep);
+        }
+
         if (this.recalculatedPath > 2 || !this.path) {
             return ERR_NO_PATH;
         }
@@ -72,7 +104,8 @@ export class Route {
         if (this.stuckForTicks > 2) {
             // log(creep.name, `Route.run: stuck for ${this.stuckForTicks}, recalculating`);
             this.recalculatedPath += 1;
-            this.calculatePath(creep, true);
+            this.calculatePathToRoom(creep, true);
+            this.stuckForTicks = 0;
         }
         this.lastPos = creep.pos;
         let result = creep.moveByPath(this.path);
@@ -113,17 +146,18 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
     return (creep: Creep) => {
         if (!pos) return BehaviorResult.FAILURE;
 
-        // Set target position for excuseMe
-        creep.memory.movePos = packPos(pos);
-        creep.memory.moveRange = range;
-
         // If we're in range, move is done
         if (creep.pos.inRangeTo(pos, range)) {
+            delete Routes[creep.name]
             return BehaviorResult.SUCCESS;
         }
 
+        // Set target position for excuseMe
+        Memory.creeps[creep.name].movePos = packPos(pos);
+        Memory.creeps[creep.name].moveRange = range;
+
         // Plan route, if necessary
-        if (!Routes[creep.name]) {
+        if (!Routes[creep.name] || !Routes[creep.name].pos.isEqualTo(pos)) {
             try {
                 Routes[creep.name] = new Route(creep, pos, range);
             } catch (e) {
@@ -148,6 +182,7 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
                     creep.memory.movePos = undefined;
                     creep.memory.moveRange = undefined;
                     delete Routes[creep.name];
+                    // console.log('ERR_NOT_FOUND')
                     return BehaviorResult.FAILURE;
                 }
                 return BehaviorResult.INPROGRESS;

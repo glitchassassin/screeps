@@ -3,6 +3,9 @@ import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
+import { getStorageBudget } from "Selectors/getStorageBudget";
+import { rcl } from "Selectors/rcl";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { heapMetrics } from "./heapMetrics";
@@ -18,7 +21,7 @@ declare global {
             cpu: {
                 bucket: number,
                 limit: number,
-                used: number
+                used: number,
             },
             offices: {
                 [id: string]: {
@@ -29,6 +32,9 @@ declare global {
                     energyCapacityAvailable: number,
                     franchiseIncome: number,
                     storageLevel: number,
+                    storageLevelTarget: number,
+                    terminalLevel: number,
+                    terminalLevelTarget: number,
                     facilitiesCosts: number,
                     objectives: {
                         [id: string]: {
@@ -39,7 +45,10 @@ declare global {
                     }
                 }
             },
+            profiling: Record<string, number>,
             time: number,
+            creepCount: number,
+            officeCount: number,
         }
     }
 }
@@ -57,11 +66,14 @@ export const recordMetrics = profiler.registerFN(() => {
             limit: Game.cpu.limit,
             used: Game.cpu.getUsed(),
         },
+        creepCount: Object.keys(Game.creeps).length,
+        officeCount: Object.keys(Memory.offices).length
     }
 
     // Initialize, if necessary
     Memory.stats ??= {
         ...stats,
+        profiling: {},
         offices: {}
     }
     Memory.stats = {
@@ -71,9 +83,10 @@ export const recordMetrics = profiler.registerFN(() => {
 
     for (let office in Memory.offices) {
         heapMetrics[office] ??= {
-            roomEnergy: Metrics.newTimeseries()
+            roomEnergy: Metrics.newTimeseries(),
+            buildEfficiency: Metrics.newTimeseries()
         }
-        Metrics.update(heapMetrics[office].roomEnergy, Game.rooms[office].energyAvailable ?? 0, 300);
+        Metrics.update(heapMetrics[office].roomEnergy, getActualEnergyAvailable(office), 300);
 
         const objectives = PrioritizedObjectives
             .filter(o => !(o instanceof FranchiseObjective) || (!o.disabled && o.office === office))
@@ -87,15 +100,22 @@ export const recordMetrics = profiler.registerFN(() => {
             }, {} as Record<string, {energy: number, assigned: number, priority: number}>);
 
         let facilitiesCosts = Memory.stats.offices[office]?.facilitiesCosts ?? 0;
+        let buildEvents = 0;
         if (isNaN(facilitiesCosts)) facilitiesCosts = 0;
-        for (let event of Game.rooms[office]?.getEventLog() ?? []) {
+        for (let event of Game.rooms[office]?.getEventLog?.() ?? []) {
             if (
                 (event.event === EVENT_BUILD || event.event === EVENT_REPAIR) &&
-                !isNaN(event.data.energySpent)
+                !isNaN(event.data.amount)
             ) {
-                facilitiesCosts += event.data.energySpent;
+                facilitiesCosts += event.data.amount;
+                buildEvents += 1;
+            }
+            if (event.event === EVENT_UPGRADE_CONTROLLER && rcl(office) < 4) {
+                buildEvents += 1;
             }
         }
+        // Metrics.update(heapMetrics[office].buildEfficiency, (buildEvents / Objectives['FacilitiesObjective'].assigned.length) ?? 0, 300);
+        // console.log('efficiency', Metrics.avg(heapMetrics[office].buildEfficiency))
 
 
         Memory.stats.offices[office] = {
@@ -107,6 +127,9 @@ export const recordMetrics = profiler.registerFN(() => {
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
+            storageLevelTarget: getStorageBudget(Game.rooms[office].controller?.level ?? 0),
+            terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
+            terminalLevelTarget: Memory.offices[office].resourceQuotas[RESOURCE_ENERGY] ?? 2000,
             facilitiesCosts,
             objectives
         }

@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1628625254284,
+  "iteration": 1630075683573,
   "links": [],
   "panels": [
     {
@@ -320,13 +320,217 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "editable": true,
+      "error": false,
+      "fill": 0,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "hiddenSeries": false,
+      "id": 290,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "aliasByMetric(stats.gauges.profiling.*)",
+          "textEditor": false
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU Usage",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:306",
+          "format": "ms",
+          "label": "Usage",
+          "logBase": 1,
+          "max": null,
+          "min": 0,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:307",
+          "format": "short",
+          "label": "Bucket",
+          "logBase": 1,
+          "max": 10000,
+          "min": 0,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 8
+      },
+      "id": 422,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "stats.gauges.creepCount"
+        }
+      ],
+      "title": "Creeps",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 8
+      },
+      "id": 423,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "refId": "A",
+          "target": "stats.gauges.officeCount"
+        }
+      ],
+      "title": "Offices",
+      "type": "stat"
+    },
+    {
       "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 15
       },
       "id": 166,
       "panels": [],
@@ -373,7 +577,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 9
+        "y": 16
       },
       "id": 4,
       "interval": null,
@@ -446,7 +650,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 9
+        "y": 16
       },
       "id": 6,
       "interval": null,
@@ -520,7 +724,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 9
+        "y": 16
       },
       "id": 7,
       "interval": null,
@@ -576,7 +780,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 9
+        "y": 16
       },
       "hiddenSeries": false,
       "id": 5,
@@ -686,7 +890,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 9
+        "y": 16
       },
       "hiddenSeries": false,
       "id": 164,
@@ -796,7 +1000,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 24
       },
       "id": 167,
       "panels": [],
@@ -848,7 +1052,7 @@
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 18
+        "y": 25
       },
       "id": 8,
       "interval": null,
@@ -922,7 +1126,7 @@
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 18
+        "y": 25
       },
       "id": 16,
       "interval": null,
@@ -997,7 +1201,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 18
+        "y": 25
       },
       "id": 31,
       "interval": null,
@@ -1055,7 +1259,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 18
+        "y": 25
       },
       "hiddenSeries": false,
       "id": 53,
@@ -1166,7 +1370,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 18
+        "y": 25
       },
       "hiddenSeries": false,
       "id": 197,
@@ -1186,7 +1390,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "alertThreshold": true
       },
@@ -1197,9 +1401,14 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "Total",
-          "lines": false,
-          "stack": false
+          "$$hashKey": "object:227",
+          "alias": "Terminal level",
+          "yaxis": 2
+        },
+        {
+          "$$hashKey": "object:491",
+          "alias": "Terminal target",
+          "yaxis": 2
         }
       ],
       "spaceLength": 10,
@@ -1210,6 +1419,24 @@
           "refCount": 0,
           "refId": "B",
           "target": "alias(stats.gauges.offices.$office.storageLevel, 'Storage level')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage target')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(stats.gauges.offices.$office.terminalLevel, 'Terminal level')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(stats.gauges.offices.$office.terminalLevelTarget, 'Terminal target')"
         }
       ],
       "thresholds": [],
@@ -1233,6 +1460,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:236",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1241,6 +1469,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:237",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1270,7 +1499,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 178,
@@ -1374,7 +1603,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 209,
@@ -1403,13 +1632,13 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "alias": "1hr Moving Average",
-          "fill": 0,
-          "steppedLine": false
+          "$$hashKey": "object:195",
+          "alias": "Total",
+          "hiddenSeries": true
         }
       ],
       "spaceLength": 10,
-      "stack": true,
+      "stack": false,
       "steppedLine": true,
       "targets": [
         {
@@ -1440,6 +1669,13 @@
           "refCount": 1,
           "refId": "C",
           "target": "derivative(stats.gauges.time)"
+        },
+        {
+          "hide": false,
+          "refCount": 2,
+          "refId": "B",
+          "target": "alias(sumSeries(#A, #D, #E), 'Total')",
+          "targetFull": "alias(sumSeries(alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), 'Facilities'), alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), 'Upgrade'), alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.energyAvailable), derivative(stats.gauges.time)), 'Spawn')), 'Total')"
         }
       ],
       "thresholds": [],
@@ -1463,6 +1699,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:204",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1471,6 +1708,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:205",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1499,7 +1737,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 208,
@@ -1519,7 +1757,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "alertThreshold": true
       },
@@ -1530,6 +1768,7 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
+          "$$hashKey": "object:445",
           "alias": "Total",
           "lines": false,
           "stack": false
@@ -1566,6 +1805,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:454",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1574,6 +1814,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:455",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1602,7 +1843,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 26
+        "y": 33
       },
       "hiddenSeries": false,
       "id": 82,
@@ -1622,7 +1863,7 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "connected",
       "options": {
         "alertThreshold": true
       },
@@ -1634,6 +1875,7 @@
       "repeatIteration": 1473912580654,
       "seriesOverrides": [
         {
+          "$$hashKey": "object:326",
           "alias": "Total",
           "lines": false,
           "stack": false
@@ -1683,6 +1925,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:335",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1691,6 +1934,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:336",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1771,5 +2015,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 3
+  "version": 12
 }

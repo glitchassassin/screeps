@@ -1,4 +1,5 @@
-import { roomPlans } from "./roomPlans";
+import { MINERAL_PRIORITIES } from "config";
+import { ownedMinerals } from "./ownedMinerals";
 
 let cachedAcquireTarget: string|undefined;
 let cachedAcquiringOffice: string|undefined;
@@ -87,6 +88,7 @@ const shouldPostponeAcquire = (roomName: string) => {
 
 export const acquireTargetIsValid = (roomName: string) => {
     return (
+        Memory.rooms[roomName].eligibleForOffice &&
         (
             !Memory.rooms[roomName].owner ||
             (
@@ -98,7 +100,7 @@ export const acquireTargetIsValid = (roomName: string) => {
             !Memory.rooms[roomName].reserver ||
             Memory.rooms[roomName].reserver === 'LordGreywether'
         ) &&
-        roomPlans(roomName)?.office
+        Memory.roomPlans[roomName]?.office
     )
 }
 
@@ -108,15 +110,31 @@ export const officeShouldAcquireTarget = (officeName: string) => {
 
     if (cachedAcquiringOffice) return (officeName === cachedAcquiringOffice);
 
+    const minerals = ownedMinerals();
+
     let bestTarget: string|undefined;
+    let bestMineral: number = Infinity;
     let bestTargetDistance: number = Infinity;
     for (const o in Memory.offices) {
         if (Game.rooms[o].energyCapacityAvailable < 850) continue;
 
         const distance = Game.map.getRoomLinearDistance(o, room)
+        const mineralType = Memory.rooms[o].mineralType
 
-        if (!bestTarget || distance < bestTargetDistance) {
+        // Mineral ranking: Lower is better
+        // If we already have one of the given mineral, rank it as
+        // less important than any other mineral we don't have
+        const mineralRanking = (mineralType ?
+            MINERAL_PRIORITIES.indexOf(mineralType) + (minerals.has(mineralType) ? MINERAL_PRIORITIES.length : 0) :
+            Infinity
+        );
+
+        // If no target, pick the first eligible one
+        // If the target has a better mineral, pick that one
+        // If the target's mineral ranking is the same but it's closer, pick that one
+        if (!bestTarget || mineralRanking < bestMineral || (distance < bestTargetDistance && mineralRanking === bestMineral)) {
             bestTarget = o;
+            bestMineral = mineralRanking
             bestTargetDistance = distance;
         }
     }

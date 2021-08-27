@@ -23,7 +23,7 @@ export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
     }
     if (Memory.rooms[roomName]?.owner && !Game.rooms[roomName]?.controller?.my) {
         return TerritoryIntent.AVOID;
-    } else if (roomPlan?.office) {
+    } else if (Memory.roomPlans[roomName]?.office) {
         if (hostiles && Memory.offices[roomName]) {
             // Owned Office has hostiles present, recently
             return TerritoryIntent.DEFEND;

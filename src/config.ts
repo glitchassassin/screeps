@@ -13,8 +13,8 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 0 : 2;
     4: 1e+4,
     5: 5e+4,
     6: 1e+5,
-    7: 5e+5,
-    8: 9e+5,
+    7: 3e+5,
+    8: 5e+5,
 }
 
 /**
@@ -69,5 +69,15 @@ export const CACHED_STRUCTURES: StructureConstant[] = [
 ]
 
 export const FEATURES = {
-    MINING: Game.shard.name.startsWith('shard') ? true: false
+    MINING: true //Game.shard.name.startsWith('shard') ? true: false
 }
+
+export const MINERAL_PRIORITIES: MineralConstant[] = [
+    RESOURCE_CATALYST,
+    RESOURCE_UTRIUM,
+    RESOURCE_KEANIUM,
+    RESOURCE_LEMERGIUM,
+    RESOURCE_ZYNTHIUM,
+    RESOURCE_HYDROGEN,
+    RESOURCE_OXYGEN
+]

@@ -25,6 +25,23 @@ global.purge = () => {
   Memory.powerCreeps = {};
   Memory.offices = {};
   Memory.roomPlans = {};
+  Memory.stats = {
+    time: Game.time,
+    gcl: {
+      progress: Game.gcl.progress,
+      progressTotal: Game.gcl.progressTotal,
+      level: Game.gcl.level,
+    },
+    cpu: {
+      bucket: Game.cpu.bucket,
+      limit: Game.cpu.limit,
+      used: Game.cpu.getUsed(),
+    },
+    creepCount: Object.keys(Game.creeps).length,
+    officeCount: Object.keys(Memory.offices).length,
+    profiling: {},
+    offices: {}
+  }
 }
 
 // If respawning, wipe memory clean

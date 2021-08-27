@@ -2,22 +2,17 @@ import { memoize, memoizeByTick } from "utils/memoizeFunction";
 import { packPos } from "utils/packrat";
 import { mineralPosition, sourcePositions } from "./roomCache";
 
-
-let flatMap = (arr: any[], f: (x: any, i: number) => any) => {
-    return [].concat(...arr.map(f))
-}
-
-
 export const calculateAdjacencyMatrix = memoize(
     (proximity: number) => ('' + proximity),
     (proximity=1): {x: number, y: number}[] => {
-        let adjacencies = [...(new Array(proximity * 2 + 1))].map((v, i) => i - proximity)
-        return flatMap(adjacencies, (x, i) => adjacencies.map( y => ({x, y})))
+        let adjacencies = (new Array(proximity * 2 + 1).fill(0)).map((v, i) => i - proximity)
+
+        return adjacencies.flatMap((x) => adjacencies.map( y => ({x, y})))
             .filter((a: {x: number, y: number}) => !(a.x === 0 && a.y === 0));
     }
 );
 export const calculateAdjacentPositions = memoize(
-    (pos: RoomPosition) => (`[${pos.x}, ${pos.y}]`),
+    (pos: RoomPosition) => (pos.toString()),
     (pos: RoomPosition) => {
         return calculateNearbyPositions(pos, 1);
     }
@@ -26,7 +21,7 @@ export const calculateAdjacentPositions = memoize(
 export const adjacentWalkablePositions = (pos: RoomPosition, ignoreCreeps = false) => calculateAdjacentPositions(pos).filter(p => isPositionWalkable(p, ignoreCreeps));
 
 export const calculateNearbyPositions = memoize(
-    (pos: RoomPosition, proximity: number, includeCenter = false) => (`[${pos.x}, ${pos.y}: ${pos.roomName}]x${proximity} ${includeCenter}`),
+    (pos: RoomPosition, proximity: number, includeCenter = false) => (`${pos}x${proximity} ${includeCenter}`),
     (pos: RoomPosition, proximity: number, includeCenter = false) => {
         let adjacent: RoomPosition[] = [];
         adjacent = calculateAdjacencyMatrix(proximity)
@@ -61,7 +56,7 @@ export const calculateNearbyRooms = memoize(
                 if (n === null) return false;
                 try {
                     let status = Game.map.getRoomStatus(n);
-                    if (roomStatus === roomStatus || status.status === 'normal') {
+                    if (roomStatus.status === status.status || status.status === 'normal') {
                         return true;
                     }
                     return false;
@@ -74,7 +69,7 @@ export const calculateNearbyRooms = memoize(
     }
 )
 export const isPositionWalkable = memoizeByTick(
-    (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => packPos(pos) + ignoreCreeps + ignoreStructures,
+    (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => pos.toString() + ignoreCreeps + ignoreStructures,
     (pos: RoomPosition, ignoreCreeps: boolean = false, ignoreStructures: boolean = false) => {
         let terrain;
         try {

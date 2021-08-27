@@ -5,7 +5,7 @@ import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
 
 
 export const destroyUnplannedStructures = (room: string) => {
-    if (!Game.rooms[room]) return; // No visibility here, can't destroy
+    if (!Game.rooms[room]?.controller?.my || !Memory.roomPlans?.[room]?.office) return;
     const allPlannedStructures = plannedStructuresByRcl(room, 8)
     // Destroy all controller-limited structures
     Game.rooms[room].find(FIND_STRUCTURES).forEach(s => {
@@ -51,7 +51,7 @@ export const facilitiesWorkToDo = (officeName: string) => {
         .filter(structure => plannedStructureNeedsWork(structure))
 
     // Only re-scan work to do every 500 ticks unless structure count changes
-    if (!Game.rooms[officeName]) return [...cache[officeName].work];
+    if (!Game.rooms[officeName]) return cache[officeName].work.slice();
 
     const foundStructures = Game.rooms[officeName].find(FIND_STRUCTURES).length
     const foundRcl = Game.rooms[officeName].controller?.level;
@@ -60,6 +60,7 @@ export const facilitiesWorkToDo = (officeName: string) => {
         (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
         Game.time % 500 === 0
     ) {
+        console.log('Recalculating facilities cache')
         cache[officeName] = {
             work: plannedStructuresByRcl(officeName)
                 .filter(structure => plannedStructureNeedsWork(structure))
@@ -69,7 +70,7 @@ export const facilitiesWorkToDo = (officeName: string) => {
         }
     }
 
-    return [...cache[officeName].work];
+    return cache[officeName].work.slice();
 }
 
 export const plannedStructureNeedsWork = (structure: PlannedStructure) => {

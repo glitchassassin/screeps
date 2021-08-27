@@ -1,53 +1,11 @@
+import { FranchisePlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
-import { deserializePlannedStructures, serializePlannedStructures } from "Selectors/plannedStructures";
 import { posById } from "Selectors/posById";
+import { validateFranchisePlan } from "./validateFranchisePlan";
 
+export const EMPTY_ID = '                        '
 
-export interface FranchisePlan {
-    sourceId: Id<Source>;
-    spawn: PlannedStructure;
-    link: PlannedStructure;
-    container: PlannedStructure;
-    extensions: PlannedStructure[];
-    ramparts: PlannedStructure[];
-}
-
-const EMPTY_ID = '                        '
-
-export const serializeFranchisePlan = (plan: FranchisePlan) => {
-    const {sourceId, ...structures} = plan;
-    return sourceId + EMPTY_ID.slice(sourceId.length) + serializePlannedStructures(Object.values(structures).flat())
-}
-
-export const deserializeFranchisePlan = (serialized: string) => {
-    const plan: Partial<FranchisePlan> = {
-        sourceId: serialized.slice(0, 24).trim() as Id<Source>,
-        spawn: undefined,
-        link: undefined,
-        container: undefined,
-        extensions: [],
-        ramparts: [],
-    }
-    for (const s of deserializePlannedStructures(serialized.slice(24))) {
-        if (s.structureType === STRUCTURE_SPAWN) plan.spawn = s;
-        if (s.structureType === STRUCTURE_LINK) plan.link = s;
-        if (s.structureType === STRUCTURE_CONTAINER) plan.container = s;
-        if (s.structureType === STRUCTURE_RAMPART) plan.ramparts?.push(s);
-        if (s.structureType === STRUCTURE_EXTENSION) plan.extensions?.push(s);
-    }
-    return validateFranchisePlan(plan);
-}
-
-const validateFranchisePlan = (plan: Partial<FranchisePlan>) => {
-    if (
-        !plan.sourceId || !plan.spawn || !plan.link || !plan.container // || !plan.ramparts?.length
-    ) {
-        throw new Error(`Incomplete FranchisePlan`)
-    } else {
-        return plan as FranchisePlan;
-    }
-}
 export const planFranchise = (sourceId: Id<Source>) => {
     const plan: Partial<FranchisePlan> = {
         sourceId,
@@ -79,10 +37,12 @@ export const planFranchise = (sourceId: Id<Source>) => {
     if (route.incomplete) throw new Error('Unable to calculate path between source and controller');
     plan.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);
 
-    // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller.
+    // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller,
+    // and not too close to an edge (to make room for exit ramparts, if needed)
     let adjacents = calculateAdjacentPositions(plan.container.pos).filter(pos => (
         isPositionWalkable(pos, true, true) &&
-        !pos.isEqualTo(route.path[1])
+        !pos.isEqualTo(route.path[1]) &&
+        (pos.x > 1 && pos.x < 48 && pos.y > 1 && pos.y < 48)
     ))
     if (spawn) {
         plan.spawn = new PlannedStructure(spawn.pos, STRUCTURE_SPAWN)

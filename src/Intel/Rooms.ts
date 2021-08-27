@@ -1,6 +1,7 @@
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
 import { findHostileCreeps } from "Selectors/findHostileCreeps";
+import { ownedMinerals } from "Selectors/ownedMinerals";
 import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
 import { cityNames } from "utils/CityNames";
 import { packPos } from "utils/packrat";
@@ -10,7 +11,8 @@ declare global {
     interface RoomMemory {
         controllerId?: Id<StructureController>,
         sourceIds?: Id<Source>[],
-        mineralId?: Id<Mineral>
+        mineralId?: Id<Mineral>,
+        mineralType?: MineralConstant,
         rcl?: number,
         owner?: string,
         reserver?: string,
@@ -30,7 +32,7 @@ export const scanRooms = profiler.registerFN(() => {
 
     // Purge dead offices
     for (let office in Memory.offices) {
-        if (!Game.rooms[office]) {
+        if (!Game.rooms[office]?.controller?.my) {
             delete Memory.offices[office];
         }
     }
@@ -46,16 +48,17 @@ export const scanRooms = profiler.registerFN(() => {
                 Memory.positions[s.id] = packPos(s.pos);
                 return s.id
             });
-            const mineralId = Game.rooms[room].find(FIND_MINERALS).map(m => {
+            const { mineralId, mineralType } = Game.rooms[room].find(FIND_MINERALS).map(m => {
                 Memory.positions[m.id] = packPos(m.pos);
-                return m.id;
-            })[0];
+                return {mineralId: m.id, mineralType: m.mineralType};
+            })[0] ?? {};
             const eligibleForOffice = roomIsEligibleForOffice(room)
 
             Memory.rooms[room] = {
                 controllerId,
                 sourceIds,
                 mineralId,
+                mineralType,
                 eligibleForOffice,
             }
         }
@@ -78,10 +81,27 @@ export const scanRooms = profiler.registerFN(() => {
             if (!Memory.offices[room]) {
                 // Initialize new office
                 Memory.offices[room] = {
-                    city: cityNames.find(name => !Object.values(Memory.offices).some(r => r.city === name)) ?? room
+                    city: cityNames.find(name => !Object.values(Memory.offices).some(r => r.city === name)) ?? room,
+                    resourceQuotas: {
+                        [RESOURCE_ENERGY]: 10000,
+                    },
+                    labOrders: []
                 }
                 destroyUnplannedStructures(room);
             }
+            Memory.offices[room].labOrders ??= [{
+                ingredient1: RESOURCE_ZYNTHIUM,
+                ingredient2: RESOURCE_KEANIUM,
+                output: RESOURCE_ZYNTHIUM_KEANITE,
+                amount: 3000
+            }]
+            Memory.offices[room].resourceQuotas = {
+                [RESOURCE_ENERGY]: 10000
+            }
+            for (let m of ownedMinerals()) {
+                Memory.offices[room].resourceQuotas[m as ResourceConstant] = 3000
+            }
+
         }
 
         scanRoomPlanStructures(room);

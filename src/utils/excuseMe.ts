@@ -24,12 +24,12 @@ const alwaysNudge = true;
  */
 declare global {
   interface Creep {
-    giveWay(): void;
+    giveWay(nudgeDirection?: DirectionConstant): void;
     move(direction: DirectionConstant | Creep, excuse?: boolean): CreepMoveReturnCode;
   }
 
   interface PowerCreep {
-    giveWay(): void;
+    giveWay(nudgeDirection?: DirectionConstant): void;
     move(direction: DirectionConstant | Creep, excuse?: boolean): CreepMoveReturnCode;
   }
   interface CreepMemory {
@@ -163,23 +163,20 @@ function excuseMe(pos: RoomPosition, direction: DirectionConstant) {
   const room = Game.rooms[pos.roomName];
   const creeps = room.lookForAt(LOOK_CREEPS, nextX, nextY);
   if (creeps.length > 0 && creeps[0].my) {
-    creeps[0].memory.excuseMe = getOppositeDir(direction);
-    creeps[0].giveWay();
+    creeps[0].giveWay(getOppositeDir(direction));
   }
   const powerCreeps = room.lookForAt(LOOK_POWER_CREEPS, nextX, nextY);
   if (powerCreeps.length > 0 && powerCreeps[0].my)
-    powerCreeps[0].memory.excuseMe = getOppositeDir(direction);
+    powerCreeps[0].giveWay(getOppositeDir(direction));
 }
 
 /*
  *
  */
-let creepsThatTriedToMove: { [key: string]: RoomPosition; } = {};
-let movingThisTick: Id<Creep|PowerCreep>[] = [];
+let movingThisTick = new Set<Id<Creep|PowerCreep>>();
 const move = Creep.prototype.move;
 Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Creep, nudge?: boolean) {
-  creepsThatTriedToMove[this.name] = this.pos;
-  movingThisTick.push(this.id);
+  movingThisTick.add(this.id);
   if ((alwaysNudge || nudge) && _.isNumber(direction))
     excuseMe(this.pos, direction);
   return move.call(this, direction);
@@ -190,12 +187,12 @@ Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Cr
  * Returns false if already moving out of the way or refused
  * to be nudged
  */
-function giveWay(creep: AnyCreep) {
+function giveWay(creep: AnyCreep, nudgeDirection?: DirectionConstant) {
   let pos = creep.memory.movePos && unpackPos(creep.memory.movePos);
   let range = creep.memory.moveRange ?? 1;
-  if (!movingThisTick.includes(creep.id)) {
-    if (!pos && creep.memory.excuseMe) {
-      creep.move(creep.memory.excuseMe, true);
+  if (!movingThisTick.has(creep.id)) {
+    if (!pos && nudgeDirection) {
+      creep.move(nudgeDirection, true);
     } else if (pos) {
       const dir = getNudgeDirection_KeepRange(creep.pos, { pos, range })
       if (dir) {
@@ -211,11 +208,11 @@ function giveWay(creep: AnyCreep) {
   }
   return true;
 }
-Creep.prototype.giveWay = function () {
-  giveWay(this);
+Creep.prototype.giveWay = function (nudgeDirection?: DirectionConstant) {
+  giveWay(this, nudgeDirection);
 };
-PowerCreep.prototype.giveWay = function () {
-  giveWay(this);
+PowerCreep.prototype.giveWay = function (nudgeDirection?: DirectionConstant) {
+  giveWay(this, nudgeDirection);
 };
 
 /*
@@ -223,19 +220,5 @@ PowerCreep.prototype.giveWay = function () {
  * call on tick start
  */
 export const clearNudges = profiler.registerFN(() => {
-  movingThisTick = [];
-  for (let creepName in creepsThatTriedToMove) {
-    const creep = Game.creeps[creepName];
-    const powerCreep = Game.powerCreeps?.[creepName];
-    const prevPos = creepsThatTriedToMove[creepName];
-    if ((!creep || !creep.pos.isEqualTo(prevPos)) && (!powerCreep || !powerCreep.pos.isEqualTo(prevPos))) {
-      const creepMemory = Memory.creeps[creepName];
-      if (creepMemory)
-        creepMemory.excuseMe = undefined;
-      const powerCreepMemory = Memory.powerCreeps?.[creepName];
-      if (powerCreepMemory)
-        powerCreepMemory.excuseMe = undefined;
-      delete creepsThatTriedToMove[creepName];
-    }
-  }
+  movingThisTick = new Set();
 }, 'clearNudges')

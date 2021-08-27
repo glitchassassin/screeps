@@ -8,7 +8,7 @@ export const planRooms = profiler.registerFN(() => {
     Memory.roomPlans ??= {};
 
     for (let room in Memory.rooms) {
-        if (Memory.roomPlans[room] !== undefined) continue; // Already planned
+        if (Memory.roomPlans[room]?.complete) continue; // Already planned
         if (Game.cpu.getUsed() - start <= 5) {
             generateRoomPlans(room);
         }

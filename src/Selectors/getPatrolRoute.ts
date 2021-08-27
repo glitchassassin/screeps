@@ -14,6 +14,7 @@ export const getPatrolRoute = profiler.registerFN((creep: Creep) => {
  * Generates a naive patrol route sorted by proximity to the central room
  */
 const generatePatrolRoute = (office: string) => {
+    console.log('generating patrol route for', office)
     let surveyRadius = (Game.rooms[office]?.controller?.level !== 8) ? 5 : 20
     let rooms = calculateNearbyRooms(office, surveyRadius, false).sort((a, b) =>
         Game.map.getRoomLinearDistance(a, office) - Game.map.getRoomLinearDistance(b, office)

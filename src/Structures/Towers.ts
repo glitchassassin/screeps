@@ -17,8 +17,8 @@ export const towerDamage = (tower?: StructureTower, pos?: RoomPosition) => {
 }
 
 export const runTowers = profiler.registerFN((roomName: string) => {
-    const plan = roomPlans(roomName)?.office;
-    if (!plan || !Game.rooms[roomName]) return;
+    const plan = roomPlans(roomName);
+    if (!plan?.headquarters || !Game.rooms[roomName]) return;
 
     // Count active towers
 

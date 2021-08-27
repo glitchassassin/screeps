@@ -1,51 +1,17 @@
+import { ExtensionsPlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { getCostMatrix, getRangeTo, isPositionWalkable, sortByDistanceTo } from "Selectors/MapCoordinates";
-import { deserializePlannedStructures } from "Selectors/plannedStructures";
-import { FranchisePlan } from "./FranchisePlan";
-import { HeadquartersPlan } from "./HeadquartersPlan";
-import { MinePlan } from "./MinePlan";
+import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
+import { calculateAdjacentPositions, getCostMatrix, getRangeTo, isPositionWalkable } from "Selectors/MapCoordinates";
+import { roomPlans } from "Selectors/roomPlans";
+import { isRoomPosition } from "Selectors/typeguards";
+import { validateExtensionsPlan } from "./validateExtensionsPlan";
 
-
-export interface ExtensionsPlan {
-    extensions: PlannedStructure[];
-    ramparts: PlannedStructure[];
-}
-
-export const deserializeExtensionsPlan = (serialized: string) => {
+export const planExtensions = (roomName: string) => {
     const plan: Partial<ExtensionsPlan> = {
         extensions: [],
         ramparts: [],
     }
-    for (const s of deserializePlannedStructures(serialized)) {
-        if (s.structureType === STRUCTURE_EXTENSION) plan.extensions?.push(s);
-        if (s.structureType === STRUCTURE_RAMPART) plan.ramparts?.push(s);
-    }
-    return validateExtensionsPlan(plan);
-}
-
-const validateExtensionsPlan = (plan: Partial<ExtensionsPlan>) => {
-    if (plan.extensions?.length !== 60) {
-        throw new Error(`Incomplete ExtensionsPlan`)
-    } else {
-        return plan as ExtensionsPlan;
-    }
-}
-
-export const planExtensions = (roomName: string, franchise1: FranchisePlan, franchise2: FranchisePlan, mine: MinePlan, headquarters: HeadquartersPlan) => {
-    const plan: Partial<ExtensionsPlan> = {
-        extensions: [],
-        ramparts: [],
-    }
-    let roomPlan: PlannedStructure[] = []
-    const {sourceId: s1, ...franchise1structures} = franchise1
-    const {sourceId: s2, ...franchise2structures} = franchise2
-    roomPlan.push(
-        ...Object.values(franchise1structures).flat(),
-        ...Object.values(franchise2structures).flat(),
-        ...Object.values(mine).flat(),
-        ...Object.values(headquarters).flat(),
-    )
-    plan.extensions = sortExtensions(fillExtensions(roomName, roomPlan, CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8]));
+    plan.extensions = sortExtensions(fillExtensions(roomName, CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][8]));
     // plan.ramparts = outlineExtensions(roomName, plan.extensions)
     //     .filter(pos => isPositionWalkable(pos, true))
     //     .map(pos => new PlannedStructure(pos, STRUCTURE_RAMPART));
@@ -53,27 +19,29 @@ export const planExtensions = (roomName: string, franchise1: FranchisePlan, fran
 }
 
 
-export function fillExtensions(roomName: string, structures: PlannedStructure[], count: number) {
+export function fillExtensions(roomName: string, count: number) {
     if (count <= 0) return [];
 
     let terrain = Game.map.getRoomTerrain(roomName);
-    let cm = new PathFinder.CostMatrix();
-    let storagePos: RoomPosition|undefined = undefined;
+    const cm = costMatrixFromRoomPlan(roomName);
+    const hq = roomPlans(roomName)?.headquarters;
 
-    for (let struct of structures) {
-        if (struct.structureType === STRUCTURE_STORAGE) storagePos = struct.pos;
-        if (struct.structureType === STRUCTURE_EXTENSION) count--;
-        if (!([STRUCTURE_ROAD, STRUCTURE_RAMPART] as string[]).includes(struct.structureType)) cm.set(struct.pos.x, struct.pos.y, 255);
-    }
+    let startingPositions = new Set(
+        [ hq?.terminal.pos, hq?.powerSpawn.pos ]
+            .concat(hq?.towers.map(t => t.pos) ?? [])
+            .filter(isRoomPosition)
+            .flatMap(calculateAdjacentPositions)
+            .filter(pos => squareIsValid(terrain, cm, pos))
+    )
 
-    if (!storagePos) throw new Error('No storage in room plan, aborting extensions plan')
+    if (!startingPositions) throw new Error('No viable starting position, aborting extensions plan')
 
     // Begin extensions outside HQ, offset diagonally from storage
-    let extensions = fillExtensionsRecursive(terrain, cm, [storagePos], count);
+    let extensions = fillExtensionsRecursive(terrain, cm, Array.from(startingPositions), count);
 
-    if (extensions.length < count) throw new Error('Not enough room to fill extensions')
-
-    extensions.sort(sortByDistanceTo(storagePos));
+    if (extensions.length < count) {
+        throw new Error('Not enough room to fill extensions')
+    }
 
     return extensions.map(pos => new PlannedStructure(pos, STRUCTURE_EXTENSION));
 }
@@ -97,7 +65,7 @@ function fillExtensionsRecursive(terrain: RoomTerrain, costMatrix: CostMatrix, s
         if (nextIterationCount <= 0) break;
     }
     if (nextIterationCount > 0 && extensions.length > 0) {
-        extensions.push(...fillExtensionsRecursive(terrain, costMatrix, extensions, nextIterationCount))
+        extensions = extensions.concat(fillExtensionsRecursive(terrain, costMatrix, extensions, nextIterationCount))
     }
     return extensions;
 }
@@ -109,10 +77,10 @@ function getNeighboringExtensionSquares(pos: RoomPosition) {
     // X O X
 
     let valid = [];
-    if (pos.x > 2 && pos.y > 2) valid.push(new RoomPosition(pos.x - 1, pos.y - 1, pos.roomName));
-    if (pos.x > 2 && pos.y < 47) valid.push(new RoomPosition(pos.x - 1, pos.y + 1, pos.roomName));
-    if (pos.x < 47 && pos.y > 2) valid.push(new RoomPosition(pos.x + 1, pos.y - 1, pos.roomName));
-    if (pos.x < 47 && pos.y < 47) valid.push(new RoomPosition(pos.x + 1, pos.y + 1, pos.roomName));
+    if (pos.x > 5 && pos.y > 5) valid.push(new RoomPosition(pos.x - 1, pos.y - 1, pos.roomName));
+    if (pos.x > 5 && pos.y < 44) valid.push(new RoomPosition(pos.x - 1, pos.y + 1, pos.roomName));
+    if (pos.x < 44 && pos.y > 5) valid.push(new RoomPosition(pos.x + 1, pos.y - 1, pos.roomName));
+    if (pos.x < 44 && pos.y < 44) valid.push(new RoomPosition(pos.x + 1, pos.y + 1, pos.roomName));
     return valid;
 }
 
@@ -134,7 +102,7 @@ function sortExtensions(extensions: PlannedStructure[]) {
     // Start with first extension
     let route: PlannedStructure[] = []
 
-    let nodes = [...extensions];
+    let nodes = extensions.slice();
 
     let lastPoint = extensions[0].pos;
     while (nodes.length > 0) {

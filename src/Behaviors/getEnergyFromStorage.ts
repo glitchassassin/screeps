@@ -8,8 +8,10 @@ import { moveTo } from "./moveTo";
 export const getEnergyFromStorage = profiler.registerFN((creep: Creep): BehaviorResult => {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.SUCCESS;
 
-    const storage = roomPlans(creep.memory.office)?.office?.headquarters.storage;
-    if (!storage || storageEnergyAvailable(creep.memory.office) === 0) return BehaviorResult.FAILURE;
+    const storage = roomPlans(creep.memory.office)?.headquarters?.storage;
+    if (!storage || storageEnergyAvailable(creep.memory.office) === 0) {
+        return BehaviorResult.FAILURE;
+    }
 
     if (storage.structure) {
         moveTo(storage.pos, 1)(creep);

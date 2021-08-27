@@ -32,15 +32,22 @@ declare global {
 }
 
 export const onRespawn = (callback: Function) => {
-    if (hasRespawned()) {
+    if (!respawned && hasRespawned()) {
+        respawned = true;
         console.log('Respawn detected');
         callback();
     }
 }
 
+let respawned = false;
+
  function hasRespawned(){
     // check for multiple calls on same tick
     if(Memory.respawnTick && Memory.respawnTick === Game.time) {
+        return true;
+    }
+
+    if (!Memory.offices || !Memory.stats) {
         return true;
     }
 
@@ -64,7 +71,7 @@ export const onRespawn = (callback: Function) => {
     // check for controller, progress and safe mode
     const room = Game.rooms[rNames[0]];
     if(!room.controller || !room.controller.my || room.controller.level !== 1 || room.controller.progress ||
-       !room.controller.safeMode || room.controller.safeMode <= SAFE_MODE_DURATION-1) {
+       !room.controller.safeMode || room.controller.safeMode <= SAFE_MODE_DURATION-10) {
         return false;
     }
 
