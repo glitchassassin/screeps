@@ -15,6 +15,9 @@ export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
     let roomPlan = roomPlans(roomName);
     let sources = sourceIds(roomName);
     const hostiles = (Game.time - (Memory.rooms[roomName]?.lastHostileSeen ?? 0) <= 10)
+    const invaderCore = Memory.rooms[roomName]?.scanned && Memory.rooms[roomName].invaderCore === Memory.rooms[roomName].scanned
+    if (invaderCore) return TerritoryIntent.AVOID;
+
     if (!controller) {
         return TerritoryIntent.IGNORE;
     }
