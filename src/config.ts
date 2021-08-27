@@ -61,7 +61,7 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
 export const REPAIR_THRESHOLD = 0.5;
 
 export const WHITELIST = [
-    'CrAzYDubC'
+    // 'CrAzYDubC' // No whitelist for botarena
 ]
 
 export const CACHED_STRUCTURES: StructureConstant[] = [
@@ -69,7 +69,9 @@ export const CACHED_STRUCTURES: StructureConstant[] = [
 ]
 
 export const FEATURES = {
-    MINING: true //Game.shard.name.startsWith('shard') ? true: false
+    MINING: false, //Game.shard.name.startsWith('shard') ? true: false
+    LABS: false
+
 }
 
 export const MINERAL_PRIORITIES: MineralConstant[] = [

@@ -1,3 +1,4 @@
+import { FEATURES } from "config";
 import { scanRooms } from "Intel/Rooms";
 import { recordMetrics } from "Metrics/recordMetrics";
 import { runSpawns } from "Minions/runSpawns";
@@ -33,7 +34,7 @@ export const gameLoop = () => {
         runSpawns(room);
         runTowers(room);
         planLabOrders(room);
-        runLabs(room);
+        if (FEATURES.LABS) runLabs(room);
     }
     debugCPU('Offices', true);
 

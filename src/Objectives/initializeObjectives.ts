@@ -44,13 +44,14 @@ initialize(
     new TowerLogisticsObjective(8.5),
     // FranchiseObjectives are 8
     new FacilitiesObjective(6),
-    new ScienceObjective(5),
     new ExploreObjective(4),
     new AcquireObjective(4),
     new UpgradeObjective(3),
     new ReserveObjective(2.5),
     // Remote FranchiseObjectives are 2
 );
+
+if (FEATURES.LABS) initialize(new ScienceObjective(5));
 if (FEATURES.MINING) initialize(new MineObjective(5));
 
 global.Objectives = Objectives;
