@@ -1,6 +1,6 @@
 import { MinePlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { getCostMatrix } from "Selectors/MapCoordinates";
+import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
 import { controllerPosition, mineralPosition } from "Selectors/roomCache";
 import { validateMinePlan } from "./validateMinePlan";
 
@@ -19,9 +19,14 @@ export const planMine = (room: string) => {
     let route = PathFinder.search(
         mineralPos,
         {pos: controllerPos, range: 1},
-        {roomCallback: (roomName) => {
-            return getCostMatrix(roomName);
-        }});
+        {
+            maxRooms: 1,
+            roomCallback: (roomName) => {
+                if (roomName !== room) return false;
+                return costMatrixFromRoomPlan(roomName)
+            }
+        }
+    );
     if (route.incomplete) throw new Error('Unable to calculate path between source and controller');
 
     plan.container = new PlannedStructure(route.path[0], STRUCTURE_CONTAINER);

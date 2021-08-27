@@ -62,6 +62,7 @@ export const planHeadquarters = (roomName: string) => {
         let orientation: (BuildableStructureConstant|undefined)[][]|undefined = undefined;
         let anchor: {x: number, y: number}|undefined = undefined;
         if (space.horizontal) {
+            new RoomVisual(roomName).rect(space.x, space.y, HQ_UPGRADE_BOTTOM[0].length - 1, HQ_UPGRADE_BOTTOM.length - 1, { fill: 'transparent', stroke: 'white' })
             if (new RoomPosition(space.x + ANCHOR_BOTTOM.x, space.y + ANCHOR_BOTTOM.y, controllerPos.roomName).inRangeTo(controllerPos, 3)) {
                 orientation = HQ_UPGRADE_BOTTOM;
                 anchor = ANCHOR_BOTTOM;
@@ -70,6 +71,7 @@ export const planHeadquarters = (roomName: string) => {
                 anchor = ANCHOR_TOP;
             }
         } else {
+            new RoomVisual(roomName).rect(space.x, space.y, HQ_UPGRADE_RIGHT[0].length - 1, HQ_UPGRADE_RIGHT.length - 1, { fill: 'transparent', stroke: 'white' })
             if (new RoomPosition(space.x + ANCHOR_RIGHT.x, space.y + ANCHOR_RIGHT.y, controllerPos.roomName).inRangeTo(controllerPos, 3)) {
                 orientation = HQ_UPGRADE_RIGHT;
                 anchor = ANCHOR_RIGHT;
@@ -187,15 +189,17 @@ function generateRampartPositions(roomName: string, space: {x: number, y: number
 
 function *findSpaces(controllerPos: RoomPosition, currentRoomPlan: CostMatrix) {
     // Lay out the grid, cropping for edges
-    let x = Math.max(1, controllerPos.x - 5);
-    let y = Math.max(1, controllerPos.y - 5);
-    let width = Math.min(48, controllerPos.x + 5) - x + 1;
-    let height = Math.min(48, controllerPos.y + 5) - y + 1;
+    let x = Math.max(2, controllerPos.x - 5);
+    let y = Math.max(2, controllerPos.y - 5);
+    let width = Math.min(47, controllerPos.x + 5) - x + 1;
+    let height = Math.min(47, controllerPos.y + 5) - y + 1;
 
     let stamp = {
-        x: HQ_UPGRADE_LEFT.length,
-        y: HQ_UPGRADE_LEFT[0].length,
+        x: HQ_UPGRADE_LEFT[0].length,
+        y: HQ_UPGRADE_LEFT.length,
     }
+
+    console.log('stamp', JSON.stringify(stamp));
 
     let grid: {x: number, y: number}[][] = [];
     let terrain = Game.map.getRoomTerrain(controllerPos.roomName);
@@ -220,6 +224,8 @@ function *findSpaces(controllerPos: RoomPosition, currentRoomPlan: CostMatrix) {
                 x: 1 + (grid[yGrid]?.[xGrid-1]?.x ?? 0),
                 y: 1 + (grid[yGrid-1]?.[xGrid]?.y ?? 0)
             };
+
+            new RoomVisual(controllerPos.roomName).text(`${grid[yGrid][xGrid].x} ${grid[yGrid][xGrid].y}`, x + xGrid, y + yGrid, { font: 0.2 })
 
             // If the values are greater than (3,5), and opposite corners agree, there is room for a vertical HQ
             if (

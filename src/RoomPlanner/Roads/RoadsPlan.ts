@@ -21,7 +21,10 @@ export const planRoads = (office: string) => {
         const route = PathFinder.search(
             franchise1,
             {pos: storage, range: 1},
-            {roomCallback: () => cm}
+            {
+                roomCallback: (room) => room === office ? cm : false,
+                maxRooms: 1,
+            }
         );
         if (route.incomplete) throw new Error('Unable to path between franchise1 and storage');
         for (let pos of route.path) {
@@ -33,7 +36,10 @@ export const planRoads = (office: string) => {
         const route = PathFinder.search(
             franchise2,
             {pos: storage, range: 1},
-            {roomCallback: () => cm}
+            {
+                roomCallback: (room) => room === office ? cm : false,
+                maxRooms: 1,
+            }
         );
         if (route.incomplete) throw new Error('Unable to path between franchise2 and storage');
         for (let pos of route.path) {
@@ -47,7 +53,10 @@ export const planRoads = (office: string) => {
         const route = PathFinder.search(
             labs,
             {pos: storage, range: 1},
-            {roomCallback: () => cm}
+            {
+                roomCallback: (room) => room === office ? cm : false,
+                maxRooms: 1,
+            }
         );
         if (route.incomplete) throw new Error('Unable to path between labs and storage');
         for (let pos of route.path) {
@@ -61,7 +70,10 @@ export const planRoads = (office: string) => {
         const route = PathFinder.search(
             mine,
             {pos: storage, range: 1},
-            {roomCallback: () => cm}
+            {
+                roomCallback: (room) => room === office ? cm : false,
+                maxRooms: 1,
+            }
         );
         if (route.incomplete) throw new Error('Unable to path between mine and storage');
         for (let pos of route.path) {

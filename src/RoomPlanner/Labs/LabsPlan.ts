@@ -157,10 +157,10 @@ export const planLabs = (room: string) => {
 
 function *findSpaces(headquartersPos: RoomPosition, currentRoomPlan: CostMatrix) {
     // Lay out the grid, cropping for edges
-    let x = Math.max(1, headquartersPos.x - 10);
-    let y = Math.max(1, headquartersPos.y - 10);
-    let width = Math.min(48, headquartersPos.x + 10) - x + 1;
-    let height = Math.min(48, headquartersPos.y + 10) - y + 1;
+    let x = Math.max(2, headquartersPos.x - 10);
+    let y = Math.max(2, headquartersPos.y - 10);
+    let width = Math.min(47, headquartersPos.x + 10) - x + 1;
+    let height = Math.min(47, headquartersPos.y + 10) - y + 1;
 
     let stamp = {
         x: LABS_STAMP.length,

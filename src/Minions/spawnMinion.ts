@@ -18,6 +18,7 @@ export const spawnMinion = (
     preferredSpaces?: RoomPosition[],
     allowOtherSpaces?: boolean, // Default: true
 } = {}) => {
+    // console.log(office, objective, 'spawning', minionType);
     // check parameters
     if (body.length === 0) return ERR_NO_BODYPART;
     // select spawn
@@ -34,8 +35,8 @@ export const spawnMinion = (
                 }
             }
         }
-        if (directions.length === 0 && opts.allowOtherSpaces !== false) {
-            directions = defaultDirectionsForSpawn(office, spawn)
+        if (opts.allowOtherSpaces !== false) {
+            directions = directions.concat(defaultDirectionsForSpawn(office, spawn))
         }
     } else if (opts.allowOtherSpawns !== false) {
         spawn = getSpawns(office).find(s => !s.spawning && spawningCache.get(s.id) !== Game.time && !s.spawning)

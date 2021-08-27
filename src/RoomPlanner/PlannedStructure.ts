@@ -32,6 +32,7 @@ const PackedStructureTypesLookup: Record<string, BuildableStructureConstant> = O
 const EMPTY_ID = '                        ';
 
 let plannedStructures: Record<string, PlannedStructure> = {};
+let deserializedPlannedStructures = new Map<string, PlannedStructure>();
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
     private lastSurveyed = 0;
@@ -53,6 +54,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     get structure() {
         if (Game.time !== this.lastGet) {
             this._structure = byId(this.structureId);
+            this.lastGet = Game.time;
         }
         return this._structure;
     }
@@ -67,11 +69,17 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
                (this.structureId ? this.structureId as string : EMPTY_ID);
     }
     static deserialize(serialized: string) {
+        const existing = deserializedPlannedStructures.get(serialized.slice(0, 3));
+        if (existing) return existing;
+
         let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
         let pos = unpackPos(serialized.slice(1, 3));
         let id = serialized.slice(3, 27) as Id<Structure<BuildableStructureConstant>> | undefined;
         if (id === EMPTY_ID) id = undefined;
-        return new PlannedStructure(pos, structureType, id);
+
+        const result = new PlannedStructure(pos, structureType, id);
+        deserializedPlannedStructures.set(serialized.slice(0, 3), result);
+        return result;
     }
     survey() {
         if (Game.time === this.lastSurveyed) return !!byId(this.structureId); // Only survey once per tick

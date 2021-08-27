@@ -60,6 +60,7 @@ export const facilitiesWorkToDo = (officeName: string) => {
         (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
         Game.time % 500 === 0
     ) {
+        console.log('Recalculating facilities cache')
         cache[officeName] = {
             work: plannedStructuresByRcl(officeName)
                 .filter(structure => plannedStructureNeedsWork(structure))

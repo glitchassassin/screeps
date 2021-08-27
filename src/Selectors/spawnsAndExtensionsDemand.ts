@@ -13,6 +13,19 @@ export const getExtensions = (room: string) => {
     )
 }
 
+export const getExtensionsAndSpawns = (room: string) => {
+    const plan = roomPlans(room);
+    if (!plan) return [];
+    return ([] as PlannedStructure[]).concat(
+        plan.extensions?.extensions ?? [],
+        plan.franchise1?.extensions ?? [],
+        plan.franchise2?.extensions ?? [],
+        plan.headquarters?.spawn ?? [],
+        plan.franchise1?.spawn ?? [],
+        plan.franchise2?.spawn ?? [],
+    )
+}
+
 export const getEnergyStructures = memoizeByTick(
     room => room,
     (room: string) => {

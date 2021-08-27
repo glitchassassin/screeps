@@ -5,6 +5,7 @@ import { byId } from "Selectors/byId";
 import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
 import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
 import { getStorageBudget } from "Selectors/getStorageBudget";
+import { rcl } from "Selectors/rcl";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { heapMetrics } from "./heapMetrics";
@@ -82,7 +83,8 @@ export const recordMetrics = profiler.registerFN(() => {
 
     for (let office in Memory.offices) {
         heapMetrics[office] ??= {
-            roomEnergy: Metrics.newTimeseries()
+            roomEnergy: Metrics.newTimeseries(),
+            buildEfficiency: Metrics.newTimeseries()
         }
         Metrics.update(heapMetrics[office].roomEnergy, getActualEnergyAvailable(office), 300);
 
@@ -98,15 +100,22 @@ export const recordMetrics = profiler.registerFN(() => {
             }, {} as Record<string, {energy: number, assigned: number, priority: number}>);
 
         let facilitiesCosts = Memory.stats.offices[office]?.facilitiesCosts ?? 0;
+        let buildEvents = 0;
         if (isNaN(facilitiesCosts)) facilitiesCosts = 0;
         for (let event of Game.rooms[office]?.getEventLog?.() ?? []) {
             if (
                 (event.event === EVENT_BUILD || event.event === EVENT_REPAIR) &&
-                !isNaN(event.data.energySpent)
+                !isNaN(event.data.amount)
             ) {
-                facilitiesCosts += event.data.energySpent;
+                facilitiesCosts += event.data.amount;
+                buildEvents += 1;
+            }
+            if (event.event === EVENT_UPGRADE_CONTROLLER && rcl(office) < 4) {
+                buildEvents += 1;
             }
         }
+        // Metrics.update(heapMetrics[office].buildEfficiency, (buildEvents / Objectives['FacilitiesObjective'].assigned.length) ?? 0, 300);
+        // console.log('efficiency', Metrics.avg(heapMetrics[office].buildEfficiency))
 
 
         Memory.stats.offices[office] = {

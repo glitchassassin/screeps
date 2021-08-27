@@ -1,6 +1,5 @@
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
-import { getEnergyFromFranchise } from "./getEnergyFromFranchise";
 import { getEnergyFromRuin } from "./getEnergyFromRuin";
 import { getEnergyFromSource } from "./getEnergyFromSource";
 import { getEnergyFromStorage } from "./getEnergyFromStorage";
@@ -44,28 +43,28 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?:
                 return BehaviorResult.SUCCESS;
             } else if (result === BehaviorResult.FAILURE) {
                 delete creep.memory.depositSource;
-                creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE
-            } else {
-                return BehaviorResult.INPROGRESS;
-            }
-        }
-    }
-    if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {
-        if (facilitiesTarget !== creep.memory.office) {
-            delete creep.memory.franchiseTarget;
-            creep.memory.getEnergyState = States.GET_ENERGY_SOURCE // For work outside the Office, harvest locally
-        } else {
-            let result = getEnergyFromFranchise(creep);
-            if (result === BehaviorResult.SUCCESS) {
-                return BehaviorResult.SUCCESS;
-            } else if (result === BehaviorResult.FAILURE) {
-                delete creep.memory.franchiseTarget;
                 creep.memory.getEnergyState = States.GET_ENERGY_SOURCE
             } else {
                 return BehaviorResult.INPROGRESS;
             }
         }
     }
+    // if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {
+    //     if (facilitiesTarget !== creep.memory.office) {
+    //         delete creep.memory.franchiseTarget;
+    //         creep.memory.getEnergyState = States.GET_ENERGY_SOURCE // For work outside the Office, harvest locally
+    //     } else {
+    //         let result = getEnergyFromFranchise(creep);
+    //         if (result === BehaviorResult.SUCCESS) {
+    //             return BehaviorResult.SUCCESS;
+    //         } else if (result === BehaviorResult.FAILURE) {
+    //             delete creep.memory.franchiseTarget;
+    //             creep.memory.getEnergyState = States.GET_ENERGY_SOURCE
+    //         } else {
+    //             return BehaviorResult.INPROGRESS;
+    //         }
+    //     }
+    // }
     if (creep.memory.getEnergyState === States.GET_ENERGY_SOURCE) {
         let result = getEnergyFromSource(creep, facilitiesTarget);
         if (result === BehaviorResult.SUCCESS) {

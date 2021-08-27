@@ -25,6 +25,7 @@ declare global {
 
 export class ReserveObjective extends Objective {
     spawnTarget(office: string) {
+        if (spawnEnergyAvailable(office) < 850) return 0;
         // One for each room with two active remote franchises
         const rooms = new Set<string>();
         for (let o of Object.values(Objectives)) {
@@ -42,6 +43,7 @@ export class ReserveObjective extends Objective {
     }
     energyValue(office: string) {
         // Minus minion cost, plus average of 30
+        if (spawnEnergyAvailable(office) < 850) return 0;
         const minionCost = minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
         const reserveBonus = (SOURCE_ENERGY_CAPACITY - SOURCE_ENERGY_NEUTRAL_CAPACITY) * 2 / ENERGY_REGEN_TIME
         return reserveBonus - (minionCost * this.spawnTarget(office))

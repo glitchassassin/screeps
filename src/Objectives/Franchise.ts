@@ -124,7 +124,8 @@ export class FranchiseObjective extends Objective {
         const targetCarry = this.targetCarryParts * (reserved ? 2 : 1)
         const carryPartsPerAccountant = Math.min(32, Math.floor((spawnEnergyAvailable(this.office) * 2/3) / 50))
         const plan = getFranchisePlanBySourceId(this.sourceId);
-        const link = plan?.link.structure
+        const link = plan?.link.structure;
+        const container = plan?.container.structure;
         // const surplus = franchiseEnergyAvailable(this.sourceId);
         let targetAccountants = 0; // No need for Accountants if there is a link
         if (!link) targetAccountants = Math.ceil(targetCarry / carryPartsPerAccountant);
@@ -137,16 +138,7 @@ export class FranchiseObjective extends Objective {
         const containerSpace = plan?.container.pos
         const preferredSalesmenSpaces = preferredSpawn ? [containerSpace].concat(adjacentWalkablePositions(preferredSpawn.pos)).filter(pos => pos?.inRangeTo(franchisePos, 1)) as RoomPosition[] : undefined
 
-        if (accountantPressure < 1 && accountantPressure < salesmenPressure) {
-            result = spawnMinion(
-                this.office,
-                this.id,
-                MinionTypes.ACCOUNTANT,
-                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(this.office), targetCarry)
-            )({
-                preferredSpawn,
-            })
-        } else if (salesmenPressure < 1) {
+        if (salesmenPressure < 1) {
             spawnMinion(
                 this.office,
                 this.id,
@@ -155,6 +147,15 @@ export class FranchiseObjective extends Objective {
             )({
                 preferredSpawn,
                 preferredSpaces: preferredSalesmenSpaces
+            })
+        } else if (accountantPressure < 1) {
+            result = spawnMinion(
+                this.office,
+                this.id,
+                MinionTypes.ACCOUNTANT,
+                MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(this.office), targetCarry)
+            )({
+                preferredSpawn,
             })
         }
     }
@@ -174,7 +175,7 @@ export class FranchiseObjective extends Objective {
         [MinionTypes.SALESMAN]: profiler.registerFN((creep: Creep) => {
             harvestEnergyFromFranchise(creep, this.sourceId);
 
-            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.8) {
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.5) {
                 const franchisePos = posById(this.sourceId);
                 if (creep.memory.office === franchisePos?.roomName) {
                     // Local franchise
@@ -187,13 +188,14 @@ export class FranchiseObjective extends Objective {
                         result = creep.transfer(plan.spawn.structure, RESOURCE_ENERGY)
                     }
                     // Try to build (or repair) container
-                    // if (!plan.container.structure) {
+                    // if (result !== OK && !plan.container.structure) {
                     //     if (!plan.container.constructionSite) {
                     //         plan.container.pos.createConstructionSite(plan.container.structureType);
                     //     } else {
-                    //         creep.build(plan.container.constructionSite);
+                    //         result = creep.build(plan.container.constructionSite);
                     //     }
-                    // } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
+                    // }
+                    // if (result !== OK && plan.container.structure && plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
                     //     creep.repair(plan.container.structure);
                     // }
                     // Try to deposit at link
@@ -207,8 +209,7 @@ export class FranchiseObjective extends Objective {
                 } else {
                     // Remote franchise
                     const plan = getFranchisePlanBySourceId(this.sourceId)
-                    const rcl = Game.rooms[creep.memory.office].controller?.level ?? 0;
-                    if (!plan || !Game.rooms[plan.container.pos.roomName] || rcl < 4) return;
+                    if (!plan || !Game.rooms[plan.container.pos.roomName] || rcl(creep.memory.office) < 4) return;
 
                     // Try to build or repair container
                     if (!plan.container.structure) {

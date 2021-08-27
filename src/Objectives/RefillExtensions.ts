@@ -8,7 +8,7 @@ import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { getExtensions } from "Selectors/spawnsAndExtensionsDemand";
+import { getExtensionsAndSpawns } from "Selectors/spawnsAndExtensionsDemand";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
@@ -88,8 +88,8 @@ export class RefillExtensionsObjective extends Objective {
             if (Game.rooms[creep.memory.office]?.energyAvailable === Game.rooms[creep.memory.office]?.energyCapacityAvailable) return;
 
             if (!creep.memory.refillTarget) {
-                for (let s of getExtensions(creep.memory.office)) {
-                    if (((s.structure as StructureExtension)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0) {
+                for (let s of getExtensionsAndSpawns(creep.memory.office)) {
+                    if (((s.structure as StructureExtension|StructureSpawn)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0) {
                         creep.memory.refillTarget = s.serialize();
                         break;
                     }
@@ -101,8 +101,7 @@ export class RefillExtensionsObjective extends Objective {
                 return
             }
 
-            const target = cachedRefillTargets.get(creep.memory.refillTarget) ?? PlannedStructure.deserialize(creep.memory.refillTarget);
-            cachedRefillTargets.set(creep.memory.refillTarget, target)
+            const target = PlannedStructure.deserialize(creep.memory.refillTarget);
 
             if (!target.structure || (target.structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                 // Re-target
@@ -115,9 +114,15 @@ export class RefillExtensionsObjective extends Objective {
             if (tombstone) creep.withdraw(tombstone, RESOURCE_ENERGY)
             const res = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, { filter: RESOURCE_ENERGY }).shift()
             if (res) creep.pickup(res)
+            const extension = creep.pos.findInRange(
+                FIND_MY_STRUCTURES,
+                1,
+                { filter: s => (s instanceof StructureSpawn || s instanceof StructureExtension) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0}
+            )[0] as StructureSpawn|StructureExtension|undefined;
+
+            if (extension) creep.transfer(extension, RESOURCE_ENERGY);
 
             if (moveTo(target.pos, 1)(creep) === BehaviorResult.SUCCESS) {
-                creep.transfer(target.structure, RESOURCE_ENERGY);
                 creep.memory.refillTarget = undefined;
                 return;
             }

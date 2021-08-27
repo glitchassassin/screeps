@@ -2,7 +2,6 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
-import { UPGRADE_CONTROLLER_COST } from "gameConstants";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { getStorageBudget } from "Selectors/getStorageBudget";
@@ -35,7 +34,7 @@ export class UpgradeObjective extends Objective {
         // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
         let paralegals = Math.min(2, Math.ceil(
             storageSurplus /
-            (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME)
+            (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal * CREEP_LIFE_TIME)
         ))
         return Math.max(emergencyUpgraders, paralegals);
     }
@@ -43,7 +42,7 @@ export class UpgradeObjective extends Objective {
         const paralegals = this.spawnTarget(office);
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
         const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))) * paralegals;
-        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_COST;
+        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_POWER;
         return -(workCosts + minionCosts);
     }
     spawn() {

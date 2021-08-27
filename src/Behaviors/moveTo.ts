@@ -49,7 +49,11 @@ export class Route {
         if (!nextRoom) {
             // We are in the target room
             let positionsInRange = calculateNearbyPositions(this.pos, this.range, true)
-                                         .filter(pos => isPositionWalkable(pos, true));
+                                         .filter(pos =>
+                                            isPositionWalkable(pos, true) &&
+                                            pos.x > 0 && pos.x < 49 &&
+                                            pos.y > 0 && pos.y < 49
+                                        );
             // console.log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
             if (positionsInRange.length === 0) throw new Error('No valid targets for path');
             this.calculatePath(creep, positionsInRange, avoidCreeps);
@@ -153,7 +157,7 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
         Memory.creeps[creep.name].moveRange = range;
 
         // Plan route, if necessary
-        if (!Routes[creep.name]) {
+        if (!Routes[creep.name] || !Routes[creep.name].pos.isEqualTo(pos)) {
             try {
                 Routes[creep.name] = new Route(creep, pos, range);
             } catch (e) {
