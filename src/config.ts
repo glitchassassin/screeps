@@ -1,3 +1,11 @@
+
+
+export const FEATURES = {
+    MINING: false, //Game.shard.name.startsWith('shard') ? true: false
+    LABS: false,
+    WHITELIST: false,
+}
+
 /**
  * Rooms around an Office to control as remote territories
  */
@@ -60,19 +68,13 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
  */
 export const REPAIR_THRESHOLD = 0.5;
 
-export const WHITELIST = [
-    // 'CrAzYDubC' // No whitelist for botarena
-]
+export const WHITELIST = FEATURES.WHITELIST ? [
+    'CrAzYDubC'
+] : [];
 
 export const CACHED_STRUCTURES: StructureConstant[] = [
     STRUCTURE_CONTAINER
 ]
-
-export const FEATURES = {
-    MINING: false, //Game.shard.name.startsWith('shard') ? true: false
-    LABS: false
-
-}
 
 export const MINERAL_PRIORITIES: MineralConstant[] = [
     RESOURCE_CATALYST,
