@@ -32,13 +32,14 @@ export class Route {
                     routeCallback: (roomName) => {
                         if (
                             roomName !== this.pos.roomName &&
+                            roomName !== creep.pos.roomName &&
                             getTerritoryIntent(roomName) === TerritoryIntent.AVOID
                         ) return Infinity;
                         return 1;
                     }
                 }
             )
-            if (roomsRoute === ERR_NO_PATH) throw new Error('No valid room path');
+            if (roomsRoute === ERR_NO_PATH) throw new Error(`No valid room path ${creep.pos.roomName} - ${this.pos.roomName}`);
             this.rooms = this.rooms.concat(roomsRoute.map(r => r.room));
             this.pathRoom = this.rooms[1];
         }
@@ -83,7 +84,7 @@ export class Route {
             swampCost: 10,
             maxRooms: 1,
         })
-        if (!route || route.incomplete) throw new Error('Unable to plan route');
+        if (!route || route.incomplete) throw new Error(`Unable to plan route ${creep.pos} ${positionsInRange}`);
 
         this.path = route.path;
         this.lastPos = creep.pos;
@@ -146,6 +147,20 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
     return (creep: Creep) => {
         if (!pos) return BehaviorResult.FAILURE;
 
+        if (creep.pos.x === 0) {
+            creep.move(RIGHT);
+            return BehaviorResult.INPROGRESS;
+        } else if (creep.pos.x === 49) {
+            creep.move(LEFT);
+            return BehaviorResult.INPROGRESS;
+        } else if (creep.pos.y === 0) {
+            creep.move(BOTTOM);
+            return BehaviorResult.INPROGRESS;
+        } else if (creep.pos.y === 49) {
+            creep.move(TOP);
+            return BehaviorResult.INPROGRESS;
+        }
+
         // If we're in range, move is done
         if (creep.pos.inRangeTo(pos, range)) {
             delete Routes[creep.name]
@@ -161,7 +176,7 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
             try {
                 Routes[creep.name] = new Route(creep, pos, range);
             } catch (e) {
-                // console.log(e)
+                console.log(e)
                 return BehaviorResult.FAILURE;
             }
         }
@@ -170,33 +185,19 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
         try {
             let result = Routes[creep.name].run(creep);
             if (result === ERR_NOT_FOUND) {
-                if (creep.pos.x === 0) {
-                    creep.move(RIGHT);
-                } else if (creep.pos.x === 49) {
-                    creep.move(LEFT);
-                } else if (creep.pos.y === 0) {
-                    creep.move(BOTTOM);
-                } else if (creep.pos.y === 49) {
-                    creep.move(TOP);
-                } else {
-                    creep.memory.movePos = undefined;
-                    creep.memory.moveRange = undefined;
-                    delete Routes[creep.name];
-                    // console.log('ERR_NOT_FOUND')
-                    return BehaviorResult.FAILURE;
-                }
+                creep.memory.movePos = undefined;
+                creep.memory.moveRange = undefined;
+                delete Routes[creep.name];
+                console.log('ERR_NOT_FOUND')
+                return BehaviorResult.FAILURE;
+            } else if (result === OK) {
                 return BehaviorResult.INPROGRESS;
-            }
-            else if (result === OK) {
-                return BehaviorResult.INPROGRESS;
-            }
-            else {
+            } else {
                 throw new Error(`Error running route: ${result}`);
             }
-        }
-        catch (e) {
+        } catch (e) {
             // Whether error encountered or execution fell through, the path failed
-            // console.log(e);
+            console.log(e);
             creep.memory.movePos = undefined;
             creep.memory.moveRange = undefined;
             delete Routes[creep.name];

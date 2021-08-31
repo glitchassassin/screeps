@@ -48,4 +48,4 @@ register('terminals', TerminalsReport);
 register('balance', BalanceReport);
 register('labs', LabsReport);
 
-global.d('labs')
+global.d('territories')

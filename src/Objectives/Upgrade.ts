@@ -19,6 +19,8 @@ declare global {
     }
 }
 
+const UPGRADE_CONTROLLER_COST = 1
+
 export class UpgradeObjective extends Objective {
     spawnTarget(office: string) {
         const rcl = Game.rooms[office]?.controller?.level ?? 0
@@ -34,7 +36,7 @@ export class UpgradeObjective extends Objective {
         // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
         let paralegals = Math.min(2, Math.ceil(
             storageSurplus /
-            (UPGRADE_CONTROLLER_POWER * workPartsPerParalegal * CREEP_LIFE_TIME)
+            (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME)
         ))
         return Math.max(emergencyUpgraders, paralegals);
     }
@@ -42,7 +44,7 @@ export class UpgradeObjective extends Objective {
         const paralegals = this.spawnTarget(office);
         const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
         const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))) * paralegals;
-        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_POWER;
+        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_COST;
         return -(workCosts + minionCosts);
     }
     spawn() {
