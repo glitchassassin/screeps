@@ -1,7 +1,8 @@
-import { BARRIER_LEVEL, BARRIER_TYPES, BUILD_PRIORITIES, REPAIR_THRESHOLD } from "config";
+import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from "config";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { calculateAdjacentPositions } from "./MapCoordinates";
+import { calculateAdjacentPositions, getRangeTo } from "./MapCoordinates";
 import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
+import { roomPlans } from "./roomPlans";
 
 
 export const destroyUnplannedStructures = (room: string) => {
@@ -41,14 +42,56 @@ interface FacilitiesCache {
 }
 
 let cache: Record<string, FacilitiesCache> = {};
+let rangeCache = new Map<string, number>();
+
+/**
+ * Cache is actually populated by
+ */
+export function facilitiesWorkToDoAverageRange(office: string) {
+    if (!rangeCache.has(office)) {
+        let ranges = 0;
+        let count = 0;
+        let storagePos = roomPlans(office)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, office);
+        for (let structure of cache[office]?.work || []) {
+            // Also populate range cache
+            if (plannedStructureNeedsWork(structure)) {
+                ranges += getRangeTo(structure.pos, storagePos);
+                count += 1;
+            }
+        }
+        // console.log(storagePos, ranges, count)
+        rangeCache.set(office, count ? ranges / count : 0)
+    }
+    return rangeCache.get(office) ?? 0;
+}
+
+export function facilitiesEfficiency(office: string) {
+    const range = facilitiesWorkToDoAverageRange(office)
+    if (range === 0) return 1;
+    return Math.max(0, Math.min(1, 1 / (range / 10)))
+}
 
 export const facilitiesWorkToDo = (officeName: string) => {
     // Initialize cache
     cache[officeName] ??= { work: [] };
 
     // Filter out completed work
-    cache[officeName].work = cache[officeName].work
-        .filter(structure => plannedStructureNeedsWork(structure))
+    let ranges = 0;
+    let count = 0;
+    let work = [];
+    let storagePos = roomPlans(officeName)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, officeName);
+    for (let structure of cache[officeName].work) {
+        // Also populate range cache
+        if (plannedStructureNeedsWork(structure)) {
+            work.push(structure);
+            ranges += getRangeTo(structure.pos, storagePos);
+            count += 1;
+        }
+    }
+    // console.log(storagePos, ranges, count)
+    rangeCache.set(officeName, count ? ranges / count : 0)
+
+    cache[officeName].work = work;
 
     // Only re-scan work to do every 500 ticks unless structure count changes
     if (!Game.rooms[officeName]) return cache[officeName].work.slice();
@@ -60,11 +103,11 @@ export const facilitiesWorkToDo = (officeName: string) => {
         (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
         Game.time % 500 === 0
     ) {
-        console.log('Recalculating facilities cache')
+        // console.log('Recalculating facilities cache')
         cache[officeName] = {
             work: plannedStructuresByRcl(officeName)
-                .filter(structure => plannedStructureNeedsWork(structure))
-                .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
+                .filter(structure => plannedStructureNeedsWork(structure)),
+                // .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
             structureCount: foundStructures,
             rcl: foundRcl,
         }

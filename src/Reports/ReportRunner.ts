@@ -5,6 +5,7 @@ import MilestonesReport from "Reports/MilestonesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
 import profiler from "utils/profiler";
 import BalanceReport from "./BalanceReport";
+import BudgetReport from "./BudgetReport";
 import LabsReport from "./LabsReport";
 import ObjectivesReport from "./ObjectivesReport";
 import TerminalsReport from "./TerminalsReport";
@@ -27,7 +28,9 @@ export const register = (key: string, runner: CallableFunction) => {
 }
 
 export const run = profiler.registerFN(() => {
+    // const start = Game.cpu.getUsed();
     allReports[activeReport]?.();
+    // console.log('Ran report', activeReport, 'with', Game.cpu.getUsed() - start, 'cpu')
 }, 'runReports')
 
 global.d = (key: string) => {
@@ -47,5 +50,6 @@ register('objectives', ObjectivesReport);
 register('terminals', TerminalsReport);
 register('balance', BalanceReport);
 register('labs', LabsReport);
+register('budget', BudgetReport);
 
-global.d('territories')
+global.d('franchises')

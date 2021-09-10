@@ -47,6 +47,10 @@ let respawned = false;
         return true;
     }
 
+    if (Game.spawns['auto']) {
+        return true;
+    }
+
     if (!Memory.offices || !Memory.stats) {
         return true;
     }

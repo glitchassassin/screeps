@@ -1,18 +1,17 @@
-import { FranchiseObjective } from "Objectives/Franchise";
-import { Objectives } from "Objectives/Objective";
+import { FranchiseObjectives } from "Objectives/Franchise";
 import { posById } from "./posById";
 
 export const findReserveTargets = (office: string) => {
-    const franchises = new Set<FranchiseObjective>();
-    for (let o of Object.values(Objectives)) {
+    const franchises = new Set<string>();
+    for (let o of Object.values(FranchiseObjectives)) {
+        const room = posById(o.sourceId)?.roomName;
         if (
-            o instanceof FranchiseObjective &&
+            room &&
             o.office === office &&
-            o.assigned.length > 1 &&
-            !Memory.offices[posById(o.sourceId)?.roomName ?? ''] &&
-            Memory.rooms[posById(o.sourceId)?.roomName ?? '']?.sourceIds?.length === 2
+            o.assigned.length >= 1 &&
+            !Memory.offices[room]
         ) {
-            franchises.add(o);
+            franchises.add(room);
         }
     }
     return franchises;

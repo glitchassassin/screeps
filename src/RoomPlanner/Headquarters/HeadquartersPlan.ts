@@ -8,11 +8,11 @@ import { validateHeadquartersPlan } from "./validateHeadquartersPlan";
 
 
 const HQ_UPGRADE_LEFT: (BuildableStructureConstant|undefined)[][] = [
-    [undefined,         STRUCTURE_TOWER,    STRUCTURE_TOWER,    STRUCTURE_TOWER],
-    [STRUCTURE_ROAD,    STRUCTURE_TOWER,    undefined,          STRUCTURE_TOWER],
-    [STRUCTURE_ROAD,    STRUCTURE_STORAGE,  STRUCTURE_SPAWN,    STRUCTURE_TOWER],
-    [STRUCTURE_ROAD,    STRUCTURE_ROAD,     undefined,          STRUCTURE_LINK],
-    [undefined,         STRUCTURE_TERMINAL, STRUCTURE_FACTORY,  STRUCTURE_POWER_SPAWN],
+    [undefined,         STRUCTURE_TOWER,    STRUCTURE_TOWER,        STRUCTURE_TOWER],
+    [STRUCTURE_ROAD,    STRUCTURE_TOWER,    undefined,              STRUCTURE_TOWER],
+    [STRUCTURE_ROAD,    STRUCTURE_STORAGE,  STRUCTURE_SPAWN,        STRUCTURE_TOWER],
+    [STRUCTURE_ROAD,    STRUCTURE_ROAD,     STRUCTURE_CONTAINER,    STRUCTURE_LINK],
+    [undefined,         STRUCTURE_TERMINAL, STRUCTURE_FACTORY,      STRUCTURE_POWER_SPAWN],
 ]
 
 const HQ_UPGRADE_RIGHT = HQ_UPGRADE_LEFT.map(row => row.slice().reverse());
@@ -53,6 +53,7 @@ export const planHeadquarters = (roomName: string) => {
             powerSpawn: undefined,
             storage: undefined,
             terminal: undefined,
+            container: undefined,
             towers: [],
             roads: [],
             walls: [],
@@ -147,6 +148,9 @@ export const planHeadquarters = (roomName: string) => {
                     case STRUCTURE_STORAGE:
                         plan.storage = new PlannedStructure(pos, STRUCTURE_STORAGE);
                         break;
+                    case STRUCTURE_CONTAINER:
+                        plan.container = new PlannedStructure(pos, STRUCTURE_CONTAINER);
+                        break;
                     case STRUCTURE_TERMINAL:
                         plan.terminal = new PlannedStructure(pos, STRUCTURE_TERMINAL);
                         break;
@@ -199,7 +203,7 @@ function *findSpaces(controllerPos: RoomPosition, currentRoomPlan: CostMatrix) {
         y: HQ_UPGRADE_LEFT.length,
     }
 
-    console.log('stamp', JSON.stringify(stamp));
+    // console.log('stamp', JSON.stringify(stamp));
 
     let grid: {x: number, y: number}[][] = [];
     let terrain = Game.map.getRoomTerrain(controllerPos.roomName);

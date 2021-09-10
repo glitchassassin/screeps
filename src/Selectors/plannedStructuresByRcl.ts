@@ -1,4 +1,5 @@
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { plannedTerritoryRoads } from "./plannedTerritoryRoads";
 import { roomPlans } from "./roomPlans";
 import { isPlannedStructure } from "./typeguards";
 
@@ -31,6 +32,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         plans.franchise2?.extensions ?? [],
         plans.extensions?.extensions ?? []
     );
+    let territoryRoads = plannedTerritoryRoads(officeName);
     // Sort already constructed structures to the top
     plannedExtensions = plannedExtensions.filter(e => e.structure)
         .concat(plannedExtensions.filter(e => !e.structure));
@@ -44,20 +46,21 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     }
     if (rcl >= 1) {
         plannedStructures = plannedStructures.concat(
-            [plans.franchise1?.spawn],
+            plans.headquarters?.spawn,
         )
     }
     if (rcl >= 2) {
         plannedStructures = plannedStructures.concat(
+            plans.headquarters?.container,
             plannedExtensions.slice(0, 5),
-            [plans.franchise1?.container],
-            [plans.franchise2?.container],
+            plans.franchise1?.container,
+            plans.franchise2?.container,
         )
     }
     if (rcl >= 3) {
         plannedStructures = plannedStructures.concat(
             plannedExtensions.slice(5, 10),
-            plannedTowers.slice(0, 1),
+            plannedTowers.slice(0, 1)
         )
     }
     if (rcl >= 4) {
@@ -68,8 +71,6 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
             plans.perimeter?.ramparts ?? [],
             plans.extensions?.ramparts ?? [],
             plans.franchise2?.ramparts ?? [],
-            plans.headquarters?.roads ?? [],
-            plans.roads?.roads ?? []
         )
     }
     if (rcl >= 5) {
@@ -93,7 +94,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     if (rcl >= 7) {
         plannedStructures = plannedStructures.concat(
             plannedExtensions.slice(40, 50),
-            [plans.headquarters?.spawn],
+            [plans.franchise2?.spawn],
             plannedTowers.slice(2, 3),
             plans.labs?.labs.slice(3, 6) ?? [],
             [plans.headquarters?.factory],
@@ -102,10 +103,19 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     if (rcl === 8) {
         plannedStructures = plannedStructures.concat(
             plannedExtensions.slice(50, 60),
-            [plans.franchise2?.spawn],
+            [plans.franchise1?.spawn],
             plannedTowers.slice(3, 6),
             plans.labs?.labs.slice(6, 10) ?? [],
             [plans.headquarters?.powerSpawn],
+        )
+    }
+
+    // Roads are always at the end of the priority queue
+    if (rcl >= 3) {
+        plannedStructures = plannedStructures.concat(
+            plans.headquarters?.roads ?? [],
+            plans.roads?.roads ?? [],
+            territoryRoads,
         )
     }
     // if (rcl >= 4) {

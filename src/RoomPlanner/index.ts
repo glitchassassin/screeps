@@ -23,6 +23,7 @@ export interface HeadquartersPlan {
     powerSpawn: PlannedStructure<STRUCTURE_POWER_SPAWN>;
     link: PlannedStructure<STRUCTURE_LINK>;
     storage: PlannedStructure<STRUCTURE_STORAGE>;
+    container: PlannedStructure<STRUCTURE_CONTAINER>;
     terminal: PlannedStructure<STRUCTURE_TERMINAL>;
     factory: PlannedStructure<STRUCTURE_FACTORY>;
     towers: PlannedStructure<STRUCTURE_TOWER>[];

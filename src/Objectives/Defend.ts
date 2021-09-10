@@ -2,6 +2,7 @@ import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { Budgets } from "Selectors/budgets";
 import { findClosestHostileCreepByRange, findHostileCreeps } from "Selectors/findHostileCreeps";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -20,16 +21,28 @@ declare global {
 }
 
 export class DefendObjective extends Objective {
-    energyValue(office: string) {
-        return -(this.spawnTarget(office) * minionCostPerTick(MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office))));
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(body);
+        let count = Math.min(findHostileCreeps(office).length, Math.floor(energy / cost));
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
     }
-    spawnTarget(office: string) {
-        return findHostileCreeps(office).length
+    spawnTarget(office: string, budget: number) {
+        let body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(body);
+        return Math.round(budget / cost)
     }
     spawn() {
         for (let office in Memory.offices) {
-            const target = this.spawnTarget(office);
+            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const target = this.spawnTarget(office, budget);
             const actual = this.minions(office).length
+
+            this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: actual})
 
             let spawnQueue = [];
 

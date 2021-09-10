@@ -11,6 +11,7 @@ export function deserializeHeadquartersPlan(serialized: string) {
         factory: undefined,
         storage: undefined,
         terminal: undefined,
+        container: undefined,
         towers: [],
         roads: [],
         walls: [],
@@ -26,6 +27,8 @@ export function deserializeHeadquartersPlan(serialized: string) {
             plan.factory = s;
         if (isPlannedStructure(STRUCTURE_STORAGE)(s))
             plan.storage = s;
+        if (isPlannedStructure(STRUCTURE_CONTAINER)(s))
+            plan.container = s;
         if (isPlannedStructure(STRUCTURE_TERMINAL)(s))
             plan.terminal = s;
         if (isPlannedStructure(STRUCTURE_TOWER)(s))

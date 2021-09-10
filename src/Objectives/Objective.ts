@@ -1,3 +1,4 @@
+import { Budget } from "Selectors/budgets";
 import { byId } from "Selectors/byId";
 import { isCreep } from "Selectors/typeguards";
 
@@ -7,6 +8,12 @@ declare global {
     interface CreepMemory {
         objective?: string;
     }
+}
+
+export interface ObjectiveMetrics {
+    energyBudget?: number;
+    spawnQuota: number;
+    minions: number;
 }
 
 export abstract class Objective {
@@ -22,6 +29,8 @@ export abstract class Objective {
         this.id = this.constructor.name;
     }
 
+    public metrics = new Map<string, ObjectiveMetrics>()
+
     /**
      * The BehaviorTree for all creeps (regardless of office)
      */
@@ -35,9 +44,17 @@ export abstract class Objective {
     abstract spawn(): void;
 
     /**
-     * Returns estimated energy/tick to run this objective (positive if net income, negative if net loss)
+     * Returns estimated energy/cpu/spawn for a given energy budget
      */
-    abstract energyValue(officeName: string): number;
+    abstract budget(office: string, energy: number): Budget
+
+    public active(office: string) {
+        return (this.budget(office, 1000).energy !== 0);
+    }
+
+    public budgetIsCapped(office: string) {
+        return !(this.budget(office, 1000).energy < this.budget(office, 2000).energy);
+    }
 
     private _minions = new Map<string, Id<Creep>[]>();
     private _lastMinionCount = 0;

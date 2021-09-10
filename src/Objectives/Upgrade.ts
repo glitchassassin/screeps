@@ -2,13 +2,16 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
+import { Metrics } from "screeps-viz";
+import { Budgets } from "Selectors/budgets";
+import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -22,39 +25,43 @@ declare global {
 const UPGRADE_CONTROLLER_COST = 1
 
 export class UpgradeObjective extends Objective {
-    spawnTarget(office: string) {
-        const rcl = Game.rooms[office]?.controller?.level ?? 0
-        if (rcl < 4) return 0; // Engineers will handle early upgrades
-
-        const storageSurplus = (storageEnergyAvailable(office) - getStorageBudget(rcl))
-        const emergencyUpgraders = ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 10000) ? 1 : 0
-
-        if (rcl === 8) return emergencyUpgraders; // Upgrading is capped at RCL8
-
+    shouldSpawn(office: string, budget: number) {
         // Spawn based on maximizing use of available energy
-        const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
-        // const engineerEfficiency = Math.min(0.8, (workPartsPerEngineer * 0.2));
-        let paralegals = Math.min(2, Math.ceil(
-            storageSurplus /
-            (UPGRADE_CONTROLLER_COST * workPartsPerParalegal * CREEP_LIFE_TIME)
-        ))
-        return Math.max(emergencyUpgraders, paralegals);
+        let target = Math.floor(budget / this.cost(office));
+        let storageSurplus = heapMetrics[office]?.storageLevel ? (Metrics.avg(heapMetrics[office].storageLevel) > getStorageBudget(office)) : false
+        const minions = this.minions(office);
+        target += ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 10000) ? 1 : 0
+
+        // Spawn a new upgrader if the 100-tick average storage level is higher than the budget
+        if (storageSurplus && !minions.some(creep => creep.ticksToLive && creep.ticksToLive > (CREEP_LIFE_TIME - 100))) {
+            target += 1;
+        }
+
+        this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: minions.length})
+
+        return minions.length < target; // Upgrading is capped at RCL8, spawn only one
     }
-    energyValue(office: string) {
-        const paralegals = this.spawnTarget(office);
-        const workPartsPerParalegal = Math.min(15, Math.floor(((spawnEnergyAvailable(office) - 50) * 3/4) / 100))
-        const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))) * paralegals;
-        const workCosts = (workPartsPerParalegal * paralegals) * UPGRADE_CONTROLLER_COST;
-        return -(workCosts + minionCosts);
+    cost(office: string) {
+        let body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(body) + body.filter(p => p === WORK).length;
+        return cost;
+    }
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(body) + body.filter(p => p === WORK).length;
+        let constructionToDo = facilitiesWorkToDo(office).filter(s => !s.structure).length > 0;
+        let downgradeImminent = (Game.rooms[office].controller?.ticksToDowngrade ?? 0) < 10000
+        let count = constructionToDo ? (downgradeImminent ? 1 : 0) : Math.min(energy / cost);
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
     }
     spawn() {
         for (let office in Memory.offices) {
-            const target = this.spawnTarget(office);
-            // Calculate prespawn time based on time to spawn next minion
-            const prespawnTime = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
-            const actual = this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > prespawnTime).length
-
-            if (target > actual) {
+            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            if (this.shouldSpawn(office, budget)) {
                 spawnMinion(
                     office,
                     this.id,

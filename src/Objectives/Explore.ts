@@ -2,6 +2,9 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
+import { Budgets } from "Selectors/budgets";
+import { calculateLogisticsThroughput } from "Selectors/calculateLogisticsThroughput";
+import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
 import { getPatrolRoute } from "Selectors/getPatrolRoute";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
@@ -20,14 +23,26 @@ declare global {
 }
 
 export class ExploreObjective extends Objective {
-    energyValue(office: string) {
-        return -minionCostPerTick(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office)));
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(body);
+        return {
+            cpu: 0.5,
+            spawn: body.length * CREEP_SPAWN_TIME,
+            energy: cost,
+        }
     }
     spawn() {
         for (const office in Memory.offices) {
+            const budget = Budgets.get(office)?.get(this.id) ?? 0;
             if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return;
-            const target = 1;
-            const actual = this.minions(office).length
+            if (franchiseIncomePerTick(office) <= 0 || calculateLogisticsThroughput(office) <= 0) return;
+            let body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office));
+            let cost = minionCostPerTick(body);
+            const target = (budget >= cost) ? 1 : 0;
+            const actual = this.minions(office).length;
+
+            this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: actual})
 
             let spawnQueue = [];
 
@@ -75,7 +90,7 @@ export class ExploreObjective extends Objective {
         if (creep.memory.exploreTarget) {
             if (!Game.rooms[creep.memory.exploreTarget]) {
                 if (moveTo(new RoomPosition(25, 25, creep.memory.exploreTarget), 20)(creep) === BehaviorResult.FAILURE) {
-                    console.log('Failed to path', creep.pos, creep.memory.exploreTarget);
+                    // console.log('Failed to path', creep.pos, creep.memory.exploreTarget);
                     Memory.rooms[creep.memory.exploreTarget] ??= { }; // Unable to path
                     Memory.rooms[creep.memory.exploreTarget].scanned = Game.time;
                     delete creep.memory.exploreTarget;

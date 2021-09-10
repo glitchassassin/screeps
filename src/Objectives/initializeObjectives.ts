@@ -4,8 +4,10 @@ import { DefendObjective } from "./Defend";
 import { ExploreObjective } from "./Explore";
 import { FacilitiesObjective } from "./Facilities";
 import { HeadquartersLogisticsObjective } from "./HeadquartersLogistics";
+import { LogisticsObjective } from "./Logistics";
 import { MineObjective } from "./Mine";
 import { Objective, Objectives } from "./Objective";
+import { PriorityLogisticsObjective } from "./PriorityLogistics";
 import { RefillExtensionsObjective } from "./RefillExtensions";
 import { ReserveObjective } from "./Reserve";
 import { ScienceObjective } from "./Science";
@@ -39,16 +41,18 @@ export const initialize = (...args: Objective[]) => {
 
 initialize(
     new HeadquartersLogisticsObjective(10),
-    new RefillExtensionsObjective(9),
-    new DefendObjective(8.5),
-    new TowerLogisticsObjective(8.5),
-    // FranchiseObjectives are 8
-    new FacilitiesObjective(6),
-    new ExploreObjective(4),
-    new AcquireObjective(4),
-    new UpgradeObjective(3),
-    new ReserveObjective(2.5),
-    // Remote FranchiseObjectives are 2
+    new PriorityLogisticsObjective(9.2),
+    new RefillExtensionsObjective(9.1),
+    // FranchiseObjectives are 8.5
+    // Remote FranchiseObjectives are 8
+    new ReserveObjective(7.5),
+    new LogisticsObjective(7),
+    new ExploreObjective(6.7),
+    new DefendObjective(6.6),
+    new TowerLogisticsObjective(6.5),
+    new FacilitiesObjective(5.1),
+    new UpgradeObjective(5),
+    new AcquireObjective(3),
 );
 
 if (FEATURES.LABS) initialize(new ScienceObjective(5));

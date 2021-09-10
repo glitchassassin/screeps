@@ -50,6 +50,9 @@ export const stateIsEmpty = () => {
 export const setState = (state: States) => {
     return (creep: Creep) => {
         creep.memory.state = state;
+        // Also clear move history when state changes
+        delete creep.memory.movePos;
+        delete creep.memory.moveRange;
         return BehaviorResult.SUCCESS;
     }
 }
