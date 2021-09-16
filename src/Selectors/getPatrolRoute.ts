@@ -3,11 +3,11 @@ import { calculateNearbyRooms } from "./MapCoordinates";
 
 let patrols = new Map<string, string[]>();
 
-export const getPatrolRoute = profiler.registerFN((creep: Creep) => {
-    if (!patrols.has(creep.memory.office)) {
-        patrols.set(creep.memory.office, generatePatrolRoute(creep.memory.office));
+export const getPatrolRoute = profiler.registerFN((office: string) => {
+    if (!patrols.has(office)) {
+        patrols.set(office, generatePatrolRoute(office));
     }
-    return patrols.get(creep.memory.office) as string[];
+    return patrols.get(office) as string[];
 }, 'getPatrolRoute')
 
 /**

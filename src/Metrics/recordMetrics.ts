@@ -1,7 +1,7 @@
+import { BaseBudgetConstraints, Budget, Budgets, TotalBudgetConstraints } from "Budgets";
 import { FranchiseObjective } from "Objectives/Franchise";
 import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { Metrics } from "screeps-viz";
-import { BaseBudgetConstraints, Budget, FranchiseBudgetConstraints, LogisticsBudgetConstraints, NetBudgetConstraints, ObjectiveBudgetConstraints } from "Selectors/budgets";
 import { byId } from "Selectors/byId";
 import { calculateLogisticsThroughput } from "Selectors/calculateLogisticsThroughput";
 import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
@@ -17,10 +17,11 @@ import { heapMetrics } from "./heapMetrics";
 declare global {
     interface Memory {
         stats: {
+            gclMilestones?: Record<number, number>,
             gcl: {
                 progress: number,
                 progressTotal: number,
-                level: number
+                level: number,
             },
             cpu: {
                 bucket: number,
@@ -74,6 +75,7 @@ declare global {
 export const recordMetrics = profiler.registerFN(() => {
     let stats = {
         time: Game.time,
+        gclMilestones: {},
         gcl: {
             progress: Game.gcl.progress,
             progressTotal: Game.gcl.progressTotal,
@@ -98,6 +100,8 @@ export const recordMetrics = profiler.registerFN(() => {
         ...Memory.stats,
         ...stats
     }
+    Memory.stats.gclMilestones ??= {};
+    Memory.stats.gclMilestones[Game.gcl.level] ??= Game.time;
 
     for (let office in Memory.offices) {
         heapMetrics[office] ??= {
@@ -149,13 +153,12 @@ export const recordMetrics = profiler.registerFN(() => {
 
         const budgets = {
             baseline: BaseBudgetConstraints.get(office),
-            franchises: FranchiseBudgetConstraints.get(office),
-            logistics: LogisticsBudgetConstraints.get(office),
             objectives: {} as Record<string, Budget>,
-            total: NetBudgetConstraints.get(office)
+            total: TotalBudgetConstraints.get(office)
         }
-        for (let [id, budget] of ObjectiveBudgetConstraints.get(office) ?? []) {
-            budgets.objectives[id] = budget
+        for (let [id, budget] of Budgets.get(office) ?? []) {
+            let label = id.replace('Objective', '').split('|')[0]
+            budgets.objectives[label] = budget
         }
 
         Memory.stats.offices[office] = {

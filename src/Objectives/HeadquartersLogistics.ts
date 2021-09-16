@@ -1,9 +1,9 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
 import { getHeadquarterLogisticsLocation } from "Selectors/getHqLocations";
 import { getStorageBudget } from "Selectors/getStorageBudget";
@@ -34,9 +34,12 @@ export class HeadquartersLogisticsObjective extends Objective {
             energy: cost,
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
 
             // Only needed if we have central HQ structures
             const hq = roomPlans(office)?.headquarters;

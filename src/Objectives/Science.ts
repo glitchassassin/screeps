@@ -2,9 +2,9 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { renewAtSpawn } from "Behaviors/renewAtSpawn";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { byId } from "Selectors/byId";
 import { getLabs } from "Selectors/getLabs";
 import { ingredientsNeededForLabOrder } from "Selectors/ingredientsNeededForLabOrder";
@@ -42,9 +42,12 @@ export class ScienceObjective extends Objective {
             energy: cost,
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             if (
                 rcl(office) < 6 || roomPlans(office)?.labs?.labs.every(e => !e.structure) || // No labs
                 budget < this.cost(office)

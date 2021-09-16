@@ -1,11 +1,10 @@
 import { TERRITORY_RADIUS } from "config";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { logCpuStart } from "utils/logCPU";
 import { costMatrixFromRoomPlan } from "./costMatrixFromRoomPlan";
 import { calculateNearbyRooms, isSourceKeeperRoom } from "./MapCoordinates";
 import { serializePlannedStructures } from "./plannedStructures";
 import { sourcePositions } from "./roomCache";
-import { roomPlans } from "./roomPlans";
+import { getSpawns, roomPlans } from "./roomPlans";
 
 interface TerritoryData {
     office: string,
@@ -16,7 +15,8 @@ interface TerritoryData {
     targetCarry: number,
     targetCarryReserved: number,
     roadsPlan: string,
-    disabled?: number
+    disabled?: number,
+    score: number
 }
 declare global {
     interface RoomMemory {
@@ -30,11 +30,12 @@ declare global {
 const MAX_TERRITORY_SPAWN_CAPACITY = 1200;
 let lastProcessedOffices = '';
 
+let lastCalculatedTick = 0;
+
 export const getTerritoriesByOffice = (office: string) => {
-    logCpuStart()
-    if (shouldRecalculateTerritories()) {
-        recalculateTerritories()
-        // console.log('recalculating territories', Memory.offices[office].territories);
+    if (lastCalculatedTick !== Game.time) {
+        recalculateTerritories();
+        lastCalculatedTick = Game.time;
     }
     return Memory.offices[office].territories ?? [];
 }
@@ -42,23 +43,26 @@ export const getTerritoriesByOffice = (office: string) => {
 let lastTerritoriesCount = 0;
 function shouldRecalculateTerritories() {
     let territories = new Set<string>();
-    let offices = Object.keys(Memory.offices)
+    let offices = Object.keys(Memory.offices).sort()
     const processedOffices = offices.join('-');
     if (lastProcessedOffices !== processedOffices) {
         lastProcessedOffices = processedOffices;
+        console.log('Offices are different', processedOffices)
         return true;
     }
     for (const office of offices) {
         if (!Memory.offices[office].territories || Memory.offices[office].territories?.some(t => Memory.rooms[t].owner)) {
+            console.log('Office territories invalid', Memory.offices[office].territories)
             return true;
         }
         calculateNearbyRooms(office, TERRITORY_RADIUS, false).forEach(t => {
-            if (!isSourceKeeperRoom(t) && Memory.rooms[t]) territories.add(t)
+            if (!isSourceKeeperRoom(t) && Memory.rooms[t] && !Memory.offices[t]) territories.add(t)
         })
 
     }
     // console.log('known territories', lastTerritoriesCount, territories.size)
     if (territories.size !== lastTerritoriesCount) {
+        console.log('Territories are different', territories.size, lastTerritoriesCount)
         return true;
     }
     return false;
@@ -66,91 +70,26 @@ function shouldRecalculateTerritories() {
 
 function recalculateTerritories() {
     if (Game.cpu.bucket < 500) return; // don't recalculate with low bucket
-    let territories = new Set<string>();
-    const offices = Object.keys(Memory.offices);
-    const officeSpawnCapacity = new Map<string, number>();
 
-    const candidates = new Map<string, Set<string>>();
-    for (const office of offices) {
-        officeSpawnCapacity.set(office, 0)
-        Memory.offices[office].territories = [];
-        // Add surrounding rooms to the list of potential territories
-        calculateNearbyRooms(office, TERRITORY_RADIUS, false).forEach(t => {
-            if (!isSourceKeeperRoom(t) && Memory.rooms[t]) territories.add(t)
-        })
-    }
-    lastTerritoriesCount = territories.size;
-
-    for (const territory of territories) {
-        const officeList = new Set<string>();
-        candidates.set(territory, officeList);
-        for (const office of offices) {
-            const route = Game.map.findRoute(territory, office);
-            if (route === ERR_NO_PATH || route.length > TERRITORY_RADIUS) continue;
-            officeList.add(office);
-        }
-        if (officeList.size === 1) {
-            // Only one viable office! Skip remaining distribution
-            const [office, ..._] = officeList;
-            const territoryData = calculateTerritoryData(office, territory);
-            // console.log('Assigning to', office, JSON.stringify(territoryData, null, 2))
-            if (territoryData) {
-                Memory.offices[office].territories ??= []
-                Memory.offices[office].territories?.push(territory)
-                Memory.rooms[territory].territory = territoryData
-
-                const capacity = territoryData.spawnCapacity
-
-                officeSpawnCapacity.set(office, officeSpawnCapacity.get(office)! + capacity)
-            }
-            candidates.delete(territory);
-        }
-    }
-
-    // Prune offices with too many territories
-    for (let [office, capacity] of officeSpawnCapacity) {
-        let currentCapacity = capacity;
-        while (currentCapacity > MAX_TERRITORY_SPAWN_CAPACITY) {
-            // Find worst territory
-            const territory = (Memory.offices[office].territories ?? []).reduce((furthest, current) => {
-                const territoryData = Memory.rooms[current]?.territory;
-                if (!territoryData || territoryData.spawnCapacity / territoryData.sources < furthest.capacity) return furthest;
-                return {
-                    capacity: territoryData.spawnCapacity / territoryData.sources,
-                    name: current
+    for (const office of Object.keys(Memory.offices)) {
+        const targets = (calculateNearbyRooms(office, TERRITORY_RADIUS, false)
+            .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t] && !Memory.offices[t]))
+            .map(t => {
+                if (!Memory.rooms[t].territory) {
+                    Memory.rooms[t].territory = calculateTerritoryData(office, t);
                 }
-            }, {capacity: 0, name: ''})
-            if (!territory) continue;
-            Memory.offices[office].territories = Memory.offices[office].territories?.filter(t => t !== territory.name)
-            candidates.set(territory.name, new Set<string>());
-            const capacity = Memory.rooms[territory.name].territory?.spawnCapacity
-            currentCapacity -= capacity ?? 0;
-            delete Memory.rooms[territory.name].territory;
-        }
-        officeSpawnCapacity.set(office, currentCapacity);
-    }
+                const data = Memory.rooms[t].territory
+                return [t, data]
+            }) as [string, TerritoryData][])
+            .filter(([t, data]) => data)
+            .sort(([_1, data1], [_2, data2]) => data2.score - data1.score);
 
-    // Find an available office for remaining candidate territories
-    for (const [territory, offices] of candidates) {
-        if (offices.size === 0) continue;
-        let parentOffice = undefined;
-        for (const office of offices) {
-            parentOffice ??= office;
-            if ((Memory.offices[office]?.territories?.length ?? 0) < (Memory.offices[parentOffice]?.territories?.length ?? 0)) {
-                parentOffice = office;
-            }
-        }
-        if (!parentOffice) continue; // No viable offices
-
-        const territoryData = calculateTerritoryData(parentOffice, territory);
-        if (territoryData) {
-            Memory.offices[parentOffice].territories ??= []
-            Memory.offices[parentOffice].territories?.push(territory)
-            Memory.rooms[territory].territory = territoryData
-
-            const capacity = territoryData.spawnCapacity
-
-            officeSpawnCapacity.set(parentOffice, officeSpawnCapacity.get(parentOffice)! + capacity)
+        let spawnCapacity = CREEP_LIFE_TIME * getSpawns(office).length;
+        Memory.offices[office].territories = [];
+        for (let [territory, data] of targets) {
+            Memory.offices[office].territories?.push(territory);
+            spawnCapacity -= data.spawnCapacityReserved;
+            if (spawnCapacity <= 0) break;
         }
     }
 }
@@ -200,6 +139,12 @@ function calculateTerritoryData(office: string, territory: string): TerritoryDat
 
     const roadsPlan = serializePlannedStructures(Array.from(roads));
 
+    // To score, each criteria is mapped to a number between one and zero. The higher the better.
+    const score = (
+        (sourcePaths.length / 2) + // Ideally two sources
+        (1 / spawnCapacityReserved) // As little spawn capacity as possible
+    );
+
     return {
         office,
         sources: sourcePaths.length,
@@ -209,5 +154,6 @@ function calculateTerritoryData(office: string, territory: string): TerritoryDat
         targetCarry,
         targetCarryReserved,
         roadsPlan,
+        score
     }
 }

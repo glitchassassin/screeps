@@ -1,8 +1,8 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { calculateLogisticsThroughput } from "Selectors/calculateLogisticsThroughput";
 import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
 import { getPatrolRoute } from "Selectors/getPatrolRoute";
@@ -32,9 +32,12 @@ export class ExploreObjective extends Objective {
             energy: cost,
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
     spawn() {
         for (const office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return;
             if (franchiseIncomePerTick(office) <= 0 || calculateLogisticsThroughput(office) <= 0) return;
             let body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office));
@@ -67,7 +70,7 @@ export class ExploreObjective extends Objective {
             // Ignore aggression on scouts
             creep.notifyWhenAttacked(false);
 
-            let rooms = getPatrolRoute(creep).map(room => ({
+            let rooms = getPatrolRoute(creep.memory.office).map(room => ({
                 name: room,
                 scanned: Memory.rooms[room]?.scanned
             }));
@@ -78,7 +81,7 @@ export class ExploreObjective extends Objective {
                 .reduce((last, match) => {
                     // Ignore rooms we've already scanned for now
                     if (last === undefined) return match;
-                    if ((match.scanned ?? 0) > (last.scanned ?? 0)) {
+                    if ((match.scanned ?? 0) >= (last.scanned ?? 0)) {
                         return last;
                     }
                     return match;

@@ -1,9 +1,9 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { byId } from "Selectors/byId";
 import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -78,7 +78,7 @@ export class AcquireObjective extends Objective {
         for (let office in Memory.offices) {
             let spawnQueue = [];
 
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
 
             if (officeShouldClaimAcquireTarget(office)) {
                 const lawyersTarget = this.spawnLawyersTarget(office, budget);

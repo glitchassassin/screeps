@@ -46,13 +46,13 @@ initialize(
     // FranchiseObjectives are 8.5
     // Remote FranchiseObjectives are 8
     new ReserveObjective(7.5),
-    new LogisticsObjective(7),
     new ExploreObjective(6.7),
     new DefendObjective(6.6),
     new TowerLogisticsObjective(6.5),
     new FacilitiesObjective(5.1),
     new UpgradeObjective(5),
     new AcquireObjective(3),
+    new LogisticsObjective(1),
 );
 
 if (FEATURES.LABS) initialize(new ScienceObjective(5));

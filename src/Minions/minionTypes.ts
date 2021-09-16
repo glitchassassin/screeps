@@ -44,7 +44,7 @@ export const MinionBuilders = {
         }
         else {
             // Try to maintain WORK/CARRY/MOVE ratio
-            const segment = [WORK, MOVE, CARRY, CARRY]
+            const segment = [WORK, MOVE, CARRY]
             const segmentCost = segment.reduce((sum, p) => sum + BODYPART_COST[p], 0)
             const segments = Math.min(Math.floor(50 / segment.length), Math.floor(energy / segmentCost))
 

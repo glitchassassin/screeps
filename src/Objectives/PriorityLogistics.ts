@@ -4,7 +4,6 @@ import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
-import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
 import { FranchiseObjectives } from "./Franchise";
@@ -27,6 +26,7 @@ export class PriorityLogisticsObjective extends Objective {
     targetCarry(office: string) {
         // For each office/franchise, calculate distance and cache
         let energyCapacity = 0;
+        let minDistance = Infinity;
         for (let id in FranchiseObjectives) {
             const franchise = FranchiseObjectives[id];
             if (franchise.office !== office || franchise.assigned.length === 0) continue;
@@ -34,13 +34,16 @@ export class PriorityLogisticsObjective extends Objective {
             const pos = posById(franchise.sourceId);
             if (!pos) continue;
 
-            const plan = getFranchisePlanBySourceId(franchise.sourceId);
             let salesmanCostPerTick = 650 / 1500;
 
             energyCapacity += salesmanCostPerTick * franchise.distance * 2;
+            minDistance = Math.min(franchise.distance, minDistance);
         }
 
-        return Math.ceil(energyCapacity / CARRY_CAPACITY)
+        const sourceCapacity = energyCapacity > 0 ? Math.ceil(minDistance / 5) : 0
+
+        // Utilize half the closest source, or supply all franchises, whichever costs more
+        return Math.max(sourceCapacity, Math.ceil(energyCapacity / CARRY_CAPACITY))
     }
 
     spawn() {

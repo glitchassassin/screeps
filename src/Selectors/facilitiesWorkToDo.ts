@@ -66,9 +66,12 @@ export function facilitiesWorkToDoAverageRange(office: string) {
 }
 
 export function facilitiesEfficiency(office: string) {
+    const work = facilitiesWorkToDo(office);
     const range = facilitiesWorkToDoAverageRange(office)
+    const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
     if (range === 0) return 1;
-    return Math.max(0, Math.min(1, 1 / (range / 10)))
+    const efficiency = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
+    return Math.max(0, Math.min(efficiency, efficiency / (range / 10)))
 }
 
 export const facilitiesWorkToDo = (officeName: string) => {

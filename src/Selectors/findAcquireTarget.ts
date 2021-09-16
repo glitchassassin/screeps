@@ -1,4 +1,4 @@
-import { MINERAL_PRIORITIES } from "config";
+import { MINERAL_PRIORITIES, TERRITORY_RADIUS } from "config";
 import { ownedMinerals } from "./ownedMinerals";
 
 let cachedAcquireTarget: string|undefined;
@@ -100,7 +100,8 @@ export const acquireTargetIsValid = (roomName: string) => {
             !Memory.rooms[roomName].reserver ||
             Memory.rooms[roomName].reserver === 'LordGreywether'
         ) &&
-        Memory.roomPlans[roomName]?.office
+        Memory.roomPlans[roomName]?.office &&
+        Object.keys(Memory.offices).every(office => Game.map.getRoomLinearDistance(office, roomName) > TERRITORY_RADIUS)
     )
 }
 

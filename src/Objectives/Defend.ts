@@ -1,8 +1,8 @@
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { Budgets } from "Selectors/budgets";
 import { findClosestHostileCreepByRange, findHostileCreeps } from "Selectors/findHostileCreeps";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -38,7 +38,7 @@ export class DefendObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             const target = this.spawnTarget(office, budget);
             const actual = this.minions(office).length
 

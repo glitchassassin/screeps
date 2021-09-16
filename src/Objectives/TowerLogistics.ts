@@ -2,9 +2,9 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { getTowerRefillerLocation } from "Selectors/getHqLocations";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -40,9 +40,12 @@ export class TowerLogisticsObjective extends Objective {
             energy: cost * count,
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             const hq = roomPlans(office)?.headquarters;
 
             const towersNeedRefilled = hq?.towers.some(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > CARRY_CAPACITY * 3)

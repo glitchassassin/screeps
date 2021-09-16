@@ -36,6 +36,9 @@ export class ReserveObjective extends Objective {
             energy: cost * count,
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
     spawn() {
         for (let office in Memory.offices) {
             const target = this.spawnTarget(office);

@@ -1,4 +1,5 @@
 import { Dashboard, Rectangle, Table } from "screeps-viz";
+import { getPatrolRoute } from "Selectors/getPatrolRoute";
 import { getTerritoriesByOffice } from "Selectors/getTerritoriesByOffice";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 
@@ -20,6 +21,11 @@ export default () => {
         // territories.forEach(territory => {
         //     Game.map.visual.line(new RoomPosition(25, 25, office), new RoomPosition(25, 25, territory), { color: '#ffffff', width: 5 })
         // })
+
+        // Patrol route
+        getPatrolRoute(office).forEach((room, index) => {
+            Game.map.visual.text(index.toFixed(0), new RoomPosition(25, 25, room), { fontSize: 3 })
+        })
 
         Dashboard({
             config: { room: office },

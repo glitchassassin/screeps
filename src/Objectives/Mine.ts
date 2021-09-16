@@ -2,9 +2,9 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineContainer";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { byId } from "Selectors/byId";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { officeShouldMine } from "Selectors/officeShouldMine";
@@ -29,6 +29,9 @@ export class MineObjective extends Objective {
             energy: this.cost(office),
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
     targetForemen(office: string) {
         const mine = roomPlans(office)?.mine;
         // Only spawn Foreman/Accountant if mine structures are built
@@ -48,7 +51,7 @@ export class MineObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
 
             // Check local reserves
             if (!officeShouldMine(office) || budget < this.cost(office)) continue;

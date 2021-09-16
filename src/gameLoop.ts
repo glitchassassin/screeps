@@ -1,3 +1,4 @@
+import { calculateBudgets } from "Budgets/calculateBudgets";
 import { FEATURES } from "config";
 import { scanRooms } from "Intel/Rooms";
 import { recordMetrics } from "Metrics/recordMetrics";
@@ -7,7 +8,6 @@ import { runCreepObjective } from "Objectives/runCreepObjective";
 import { spawnObjectives } from "Objectives/spawnObjectives";
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
-import { calculateObjectiveBudgets } from "Selectors/calculateBudgets";
 import { roomPlans } from "Selectors/roomPlans";
 import { runLabs } from "Structures/Labs/Labs";
 import { planLabOrders } from "Structures/Labs/planLabOrders";
@@ -25,18 +25,20 @@ export const gameLoop = () => {
     debugCPU('gameLoop setup', true);
     // Cache data where needed
     scanRooms();
-    calculateObjectiveBudgets();
     debugCPU('scanRooms', true);
 
     // Office loop
     for (const room in Memory.offices) {
         if (!roomPlans(room)?.franchise1) continue; // Skip office until it's (at least partly) planned
         initializeDynamicObjectives(room);
+        calculateBudgets(room);
         runLinks(room);
         runSpawns(room);
         runTowers(room);
-        planLabOrders(room);
-        if (FEATURES.LABS) runLabs(room);
+        if (FEATURES.LABS) {
+            planLabOrders(room);
+            runLabs(room);
+        }
     }
     debugCPU('Offices', true);
 

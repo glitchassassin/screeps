@@ -92,7 +92,9 @@ export const isPositionWalkable = memoizeByTick(
     }
 )
 interface getCostMatrixOptions {
-    ignoreSourceKeepers?: boolean
+    ignoreSourceKeepers?: boolean,
+    avoidCreeps?: boolean,
+    ignoreStructures?: boolean,
 }
 export const getCostMatrix = memoizeByTick(
     (roomName: string, avoidCreeps: boolean = false, opts = {}) => `${roomName} ${avoidCreeps ? 'Y' : 'N'} ${JSON.stringify(opts)}`,
@@ -116,23 +118,24 @@ export const getCostMatrix = memoizeByTick(
         }
 
         if (!room) return costs;
+        if (!opts?.ignoreStructures) {
+            for (let struct of room.find(FIND_STRUCTURES)) {
+            if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
+                // Can't walk through non-walkable buildings
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+            } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
+                // Favor roads over plain tiles
+                costs.set(struct.pos.x, struct.pos.y, 1);
+            }
+            }
 
-        for (let struct of room.find(FIND_STRUCTURES)) {
-          if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
-            // Can't walk through non-walkable buildings
-            costs.set(struct.pos.x, struct.pos.y, 0xff);
-          } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
-            // Favor roads over plain tiles
-            costs.set(struct.pos.x, struct.pos.y, 1);
-          }
-        }
-
-        for (let struct of room.find(FIND_MY_CONSTRUCTION_SITES)) {
-            if (struct.structureType !== STRUCTURE_ROAD &&
-                struct.structureType !== STRUCTURE_CONTAINER &&
-                struct.structureType !== STRUCTURE_RAMPART) {
-              // Can't walk through non-walkable construction sites
-              costs.set(struct.pos.x, struct.pos.y, 0xff);
+            for (let struct of room.find(FIND_MY_CONSTRUCTION_SITES)) {
+                if (struct.structureType !== STRUCTURE_ROAD &&
+                    struct.structureType !== STRUCTURE_CONTAINER &&
+                    struct.structureType !== STRUCTURE_RAMPART) {
+                // Can't walk through non-walkable construction sites
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+                }
             }
         }
 

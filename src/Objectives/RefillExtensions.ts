@@ -2,10 +2,10 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { Budgets } from "Selectors/budgets";
 import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
@@ -32,7 +32,7 @@ export class RefillExtensionsObjective extends Objective {
         return minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
     }
     budget(office: string, energy: number) {
-        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, true);
         let cost = minionCostPerTick(body);
         let targetCarry = this.targetCarry(office);
         let count = Math.min(Math.floor(energy / cost), Math.ceil(targetCarry / body.filter(p => p === CARRY).length))
@@ -41,6 +41,9 @@ export class RefillExtensionsObjective extends Objective {
             spawn: body.length * CREEP_SPAWN_TIME * count,
             energy: cost * count,
         }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     targetCarry(office: string) {
         // Calculate extensions capacity
@@ -55,7 +58,7 @@ export class RefillExtensionsObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             if (storageEnergyAvailable(office) === 0 || !roomHasExtensions(office)) {
                 this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
                 continue; // Only spawn refillers if we have energy available

@@ -52,4 +52,4 @@ register('balance', BalanceReport);
 register('labs', LabsReport);
 register('budget', BudgetReport);
 
-global.d('franchises')
+global.d('territories')

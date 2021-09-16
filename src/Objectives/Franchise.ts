@@ -100,6 +100,9 @@ export class FranchiseObjective extends Objective {
             energy: cost,
         }
     }
+    public hasFixedBudget(office: string) {
+        return true;
+    }
 
     spawn() {
         if (!this.checkOffice()) return; // No office

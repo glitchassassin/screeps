@@ -2,15 +2,14 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { Budgets } from "Selectors/budgets";
 import { byId } from "Selectors/byId";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { franchiseCount, franchiseDistances } from "Selectors/franchiseStatsPerTick";
-import { getStorageBudget } from "Selectors/getStorageBudget";
 import { lookNear } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
@@ -30,18 +29,30 @@ declare global {
 const logisticsObjectives = new Map<string, Set<Id<Creep>>>();
 
 export class LogisticsObjective extends Objective {
+    budgetThroughput(office: string, energy: number) {
+        // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
+        const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
+            .filter(s => !s.structure && s.structureType === STRUCTURE_ROAD).length < 10
+
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
+        let cost = minionCostPerTick(body);
+        let distance = (franchiseDistances(office) / franchiseCount(office)) * 2;
+        let targetCarry = (distance * energy) / CARRY_CAPACITY;
+        let count = Math.ceil(targetCarry / body.filter(c => c === CARRY).length);
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
+    }
     budget(office: string, energy: number) {
         // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
         const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
             .filter(s => !s.structure && s.structureType === STRUCTURE_ROAD).length < 10
 
-        // Increase budget if Storage is low, decrease if there is a surplus
         let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
-        let surplus = Math.max(-2, Math.min(2, Math.floor((storageEnergyAvailable(office) - getStorageBudget(office)) / CONTAINER_CAPACITY))) // (body.filter(p => p === CARRY).length * CARRY_CAPACITY)
         let cost = minionCostPerTick(body);
-        let distance = (franchiseDistances(office) / franchiseCount(office)) * 2;
-        let targetCarry = (distance * energy) / CARRY_CAPACITY;
-        let count = Math.ceil(targetCarry / body.filter(c => c === CARRY).length) - surplus;
+        let count = Math.floor(energy / cost);
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,
@@ -65,7 +76,7 @@ export class LogisticsObjective extends Objective {
 
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
 
             // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
             const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
@@ -171,7 +182,8 @@ export class LogisticsObjective extends Objective {
                     if (opp.creep) {
                         if (
                             opp.creep.memory.objective === 'FacilitiesObjective' &&
-                            opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+                            opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+                            storageEnergyAvailable(creep.memory.office) >= Game.rooms[creep.memory.office].energyCapacityAvailable
                         ) {
                             creep.transfer(opp.creep, RESOURCE_ENERGY);
                             energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining)

@@ -2,14 +2,15 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { Metrics } from "screeps-viz";
-import { Budgets } from "Selectors/budgets";
 import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
+import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
@@ -47,6 +48,13 @@ export class UpgradeObjective extends Objective {
         return cost;
     }
     budget(office: string, energy: number) {
+        if (rcl(office) < 2) {
+            return {
+                cpu: 0,
+                spawn: 0,
+                energy: 0,
+            }
+        }
         let body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office));
         let cost = minionCostPerTick(body) + body.filter(p => p === WORK).length;
         let constructionToDo = facilitiesWorkToDo(office).filter(s => !s.structure).length > 0;
@@ -60,7 +68,7 @@ export class UpgradeObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            const budget = Budgets.get(office)?.get(this.id) ?? 0;
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             if (this.shouldSpawn(office, budget)) {
                 spawnMinion(
                     office,

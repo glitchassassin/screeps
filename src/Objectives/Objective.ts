@@ -1,4 +1,4 @@
-import { Budget } from "Selectors/budgets";
+import { Budget } from "Budgets";
 import { byId } from "Selectors/byId";
 import { isCreep } from "Selectors/typeguards";
 
@@ -47,6 +47,9 @@ export abstract class Objective {
      * Returns estimated energy/cpu/spawn for a given energy budget
      */
     abstract budget(office: string, energy: number): Budget
+    public hasFixedBudget(office: string) {
+        return false;
+    }
 
     public active(office: string) {
         return (this.budget(office, 1000).energy !== 0);
