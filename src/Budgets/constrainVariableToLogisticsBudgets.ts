@@ -12,6 +12,9 @@ export function constrainVariableToLogisticsBudgets(office: string, constraints:
     let logisticsBudget = calculateLogistics(sumBudgets(...expenseBudgets.values()));
     let totalBudget = sumBudgets(...expenseBudgets.values(), logisticsBudget);
     for (let i = 0; i < MAX_TRIES; i += 1) {
+        // console.log(office, 'budgets', JSON.stringify([...expenseBudgets.entries()], null, 2))
+        // console.log(office, 'logistics', JSON.stringify(logisticsBudget, null, 2))
+        // console.log(office, 'total', JSON.stringify(totalBudget, null, 2))
         // Calculate how far over budget we are
         let differential = Math.max(
             totalBudget.energy / testConstraints.energy,
@@ -20,7 +23,7 @@ export function constrainVariableToLogisticsBudgets(office: string, constraints:
         );
 
         // Under budget? Great! We'll return here
-        if (differential <= 1) break;
+        if (isNaN(differential) || differential <= 1) break;
 
         // Otherwise, reduce the energy proportionally to how far over we are and try again
         testConstraints.energy /= differential;

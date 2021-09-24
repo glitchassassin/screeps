@@ -27,9 +27,10 @@ export class ReserveObjective extends Objective {
         return findReserveTargets(office).size;
     }
     budget(office: string, energy: number) {
-        let body = MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office));
+        let body = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable);
         let cost = minionCostPerTick(body);
         let count = Math.min(Math.floor(energy / cost), this.spawnTarget(office))
+        count = isNaN(count) ? 0 : count;
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,

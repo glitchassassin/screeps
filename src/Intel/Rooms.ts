@@ -16,6 +16,7 @@ declare global {
         rcl?: number,
         owner?: string,
         reserver?: string,
+        reservation?: number,
         rclMilestones?: Record<number, number>,
         eligibleForOffice?: boolean,
         lastHostileSeen?: number,
@@ -39,7 +40,7 @@ export const scanRooms = profiler.registerFN(() => {
 
     for (let room in Game.rooms) {
         // Only need to store this once
-        if (!Memory.rooms[room]) {
+        if (Memory.rooms[room]?.eligibleForOffice === undefined) {
             const controllerId = Game.rooms[room].controller?.id;
             if (Game.rooms[room].controller) {
                 Memory.positions[Game.rooms[room].controller!.id] = packPos(Game.rooms[room].controller!.pos)
@@ -67,6 +68,7 @@ export const scanRooms = profiler.registerFN(() => {
         Memory.rooms[room].rcl = Game.rooms[room].controller?.level
         Memory.rooms[room].owner = Game.rooms[room].controller?.owner?.username
         Memory.rooms[room].reserver = Game.rooms[room].controller?.reservation?.username
+        Memory.rooms[room].reservation = Game.rooms[room].controller?.reservation?.ticksToEnd
         Memory.rooms[room].scanned = Game.time
 
         if (findHostileCreeps(room).length) Memory.rooms[room].lastHostileSeen = Game.time

@@ -3,13 +3,16 @@ import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
+import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
+import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
-import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { franchiseCount, franchiseDistances } from "Selectors/franchiseStatsPerTick";
+import { getStorageBudget } from "Selectors/getStorageBudget";
 import { lookNear } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
@@ -31,28 +34,50 @@ const logisticsObjectives = new Map<string, Set<Id<Creep>>>();
 export class LogisticsObjective extends Objective {
     budgetThroughput(office: string, energy: number) {
         // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
-        const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
-            .filter(s => !s.structure && s.structureType === STRUCTURE_ROAD).length < 10
+        const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10
 
-        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable, 50, roads);
         let cost = minionCostPerTick(body);
         let distance = (franchiseDistances(office) / franchiseCount(office)) * 2;
-        let targetCarry = (distance * energy) / CARRY_CAPACITY;
+
+        // Adjust for storage surplus
+        const storageBudget = getStorageBudget(office);
+
+        // 2 = 0% of budget
+        // 1 = 100% of budget
+        // 0.25 = 200% of budget
+        // 0.25 = 300% of budget
+        // Etc.
+        let storageLevel = heapMetrics[office]?.storageLevel ? Metrics.avg(heapMetrics[office].storageLevel) : storageEnergyAvailable(office)
+        let storageAdjustment = Math.max(0, (-1 * ((
+            storageLevel / storageBudget
+        ) - 1) + 1))
+
+        // console.log(office, storageAdjustment);
+
+        let targetCarry = (distance * energy * storageAdjustment) / CARRY_CAPACITY;
+
         let count = Math.ceil(targetCarry / body.filter(c => c === CARRY).length);
-        return {
+        count = isNaN(count) ? 0 : count;
+
+        const budget = {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,
             energy: cost * count,
         }
+
+        // console.log(storageLevel, storageBudget, storageAdjustment, distance, energy, targetCarry, cost, count, JSON.stringify(budget))
+        return budget
     }
     budget(office: string, energy: number) {
         // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
-        const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
-            .filter(s => !s.structure && s.structureType === STRUCTURE_ROAD).length < 10
+        const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10
 
-        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable, 50, roads);
         let cost = minionCostPerTick(body);
         let count = Math.floor(energy / cost);
+        count = isNaN(count) || !isFinite(count) ? 0 : count;
+        // console.log(energy, cost, count)
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,
@@ -79,8 +104,7 @@ export class LogisticsObjective extends Objective {
             const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
 
             // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
-            const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
-                .filter(s => !s.structure && s.structureType === STRUCTURE_ROAD).length < 10
+            const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10
 
             let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
             let cost = minionCostPerTick(body);
@@ -179,7 +203,7 @@ export class LogisticsObjective extends Objective {
                 const opportunityTargets = lookNear(creep.pos);
                 let energyRemaining = creep.store.getUsedCapacity(RESOURCE_ENERGY);
                 for (const opp of opportunityTargets) {
-                    if (opp.creep) {
+                    if (opp.creep?.my) {
                         if (
                             opp.creep.memory.objective === 'FacilitiesObjective' &&
                             opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
@@ -190,20 +214,20 @@ export class LogisticsObjective extends Objective {
                             if (opp.creep.memory.state === States.GET_ENERGY) {
                                 setState(States.WORKING)(opp.creep)
                             }
-                        } else if (
-                            opp.creep.memory.objective === 'LogisticsObjective' &&
-                            opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-                            opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) <= energyRemaining &&
-                            target &&
-                            opp.creep.pos.getRangeTo(target) < creep.pos.getRangeTo(target)
-                        ) {
-                            creep.transfer(opp.creep, RESOURCE_ENERGY);
-                            energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining)
-                            if (opp.creep.memory.state === States.WITHDRAW) {
-                                moveTo(target.pos, 1)(opp.creep)
-                                setState(States.DEPOSIT)(opp.creep)
-                            }
-                        }
+                        } //else if (
+                        //     opp.creep.memory.objective === 'LogisticsObjective' &&
+                        //     opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+                        //     opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) <= energyRemaining &&
+                        //     target &&
+                        //     opp.creep.pos.getRangeTo(target) < creep.pos.getRangeTo(target)
+                        // ) {
+                        //     creep.transfer(opp.creep, RESOURCE_ENERGY);
+                        //     energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining)
+                        //     if (opp.creep.memory.state === States.WITHDRAW) {
+                        //         moveTo(target.pos, 1)(opp.creep)
+                        //         setState(States.DEPOSIT)(opp.creep)
+                        //     }
+                        // }
                     }
                 }
                 if (energyRemaining === 0) {

@@ -5,7 +5,6 @@ import { resourcesNearPos } from "Selectors/resourcesNearPos";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
-import { getEnergyFromSource } from "./getEnergyFromSource";
 import { moveTo } from "./moveTo";
 
 export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, franchise?: Id<Source>) => {
@@ -44,9 +43,6 @@ export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, franchi
                     creep.pickup(res)
                 }
             }
-        } else {
-            creep.memory.franchiseTarget = creep.memory.depositSource
-            getEnergyFromSource(creep)
         }
     }
 

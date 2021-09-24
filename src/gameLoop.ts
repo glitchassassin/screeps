@@ -28,17 +28,24 @@ export const gameLoop = () => {
     debugCPU('scanRooms', true);
 
     // Office loop
+    // logCpuStart()
     for (const room in Memory.offices) {
         if (!roomPlans(room)?.franchise1) continue; // Skip office until it's (at least partly) planned
         initializeDynamicObjectives(room);
+        // logCpu('initializeDynamicObjectives')
         calculateBudgets(room);
+        // logCpu('calculateBudgets')
         runLinks(room);
+        // logCpu('runLinks')
         runSpawns(room);
+        // logCpu('runSpawns')
         runTowers(room);
+        // logCpu('runTowers')
         if (FEATURES.LABS) {
             planLabOrders(room);
             runLabs(room);
         }
+        // logCpu('runLabs')
     }
     debugCPU('Offices', true);
 

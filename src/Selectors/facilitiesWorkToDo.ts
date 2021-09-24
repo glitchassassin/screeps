@@ -1,5 +1,6 @@
 import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from "config";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { memoizeByTick } from "utils/memoizeFunction";
 import { calculateAdjacentPositions, getRangeTo } from "./MapCoordinates";
 import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
 import { roomPlans } from "./roomPlans";
@@ -65,18 +66,26 @@ export function facilitiesWorkToDoAverageRange(office: string) {
     return rangeCache.get(office) ?? 0;
 }
 
-export function facilitiesEfficiency(office: string) {
-    const work = facilitiesWorkToDo(office);
-    const range = facilitiesWorkToDoAverageRange(office)
-    const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
-    if (range === 0) return 1;
-    const efficiency = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
-    return Math.max(0, Math.min(efficiency, efficiency / (range / 10)))
-}
+export const facilitiesEfficiency = memoizeByTick(
+    office => office,
+    (office: string) => {
+        const work = facilitiesWorkToDo(office);
+        const range = facilitiesWorkToDoAverageRange(office)
+        const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
+        if (range === 0) return 1;
+        const efficiency = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
+        return Math.max(0, Math.min(efficiency, efficiency / (range / 10)))
+    }
+)
 
+let cacheReviewed = 0;
 export const facilitiesWorkToDo = (officeName: string) => {
     // Initialize cache
     cache[officeName] ??= { work: [] };
+
+    if (cacheReviewed === Game.time) {
+        return cache[officeName].work.slice();
+    }
 
     // Filter out completed work
     let ranges = 0;
@@ -93,8 +102,8 @@ export const facilitiesWorkToDo = (officeName: string) => {
     }
     // console.log(storagePos, ranges, count)
     rangeCache.set(officeName, count ? ranges / count : 0)
-
     cache[officeName].work = work;
+    cacheReviewed = Game.time;
 
     // Only re-scan work to do every 500 ticks unless structure count changes
     if (!Game.rooms[officeName]) return cache[officeName].work.slice();
@@ -132,3 +141,17 @@ export const plannedStructureNeedsWork = (structure: PlannedStructure) => {
     }
     return false;
 }
+
+export const constructionToDo = memoizeByTick(
+    office => office,
+    (office: string) => {
+        return facilitiesWorkToDo(office).filter(s => !s.structure)
+    }
+)
+
+export const roadConstructionToDo = memoizeByTick(
+    office => office,
+    (office: string) => {
+        return facilitiesWorkToDo(office).filter(s => s.structureType === STRUCTURE_ROAD && !s.structure)
+    }
+)

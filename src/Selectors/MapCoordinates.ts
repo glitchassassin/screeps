@@ -280,3 +280,15 @@ export function lookNear(pos: RoomPosition, range = 1) {
         true
     )
 }
+export function getClosestOffice(roomName: string) {
+    let closest: string|undefined = undefined;
+    let range = Infinity;
+    for (let office of Object.keys(Memory.offices)) {
+        let newRange = Game.map.getRoomLinearDistance(roomName, office)
+        if (!closest || newRange < range) {
+            closest = office;
+            range = newRange;
+        }
+    }
+    return closest;
+}

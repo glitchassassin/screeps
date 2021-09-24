@@ -1,18 +1,13 @@
 import { heapMetrics } from "Metrics/heapMetrics";
-import { LogisticsObjective } from "Objectives/Logistics";
-import { Objectives } from "Objectives/Objective";
 import { Metrics } from "screeps-viz";
-import { franchiseCount, franchiseDistances } from "./franchiseStatsPerTick";
+import { franchiseIncomePerTick } from "./franchiseStatsPerTick";
 import { getStorageBudget } from "./getStorageBudget";
 import { storageEnergyAvailable } from "./storageEnergyAvailable";
 
-export function calculateLogisticsThroughput(office: string) {
-    const carry = (Objectives['LogisticsObjective'] as LogisticsObjective).actualCarry(office) * CARRY_CAPACITY
-    const averageDistance = franchiseDistances(office) / franchiseCount(office);
-
+export function calculateBaselineEnergy(office: string) {
+    const base = (Game.rooms[office].energyAvailable < 300 ? 1 : 0) + franchiseIncomePerTick(office)
     // Adjust for storage surplus
     const storageBudget = getStorageBudget(office);
-
     // 1 = 100% of budget
     // 2 = 200% of budget
     // 3 = 300% of budget
@@ -21,8 +16,5 @@ export function calculateLogisticsThroughput(office: string) {
     let storageAdjustment = Math.max(1,
         storageLevel / storageBudget
     )
-
-    // console.log('calculateLogisticsThroughput', storageAdjustment)
-
-    return (carry / (averageDistance * 2)) * storageAdjustment;
+    return base * storageAdjustment;
 }

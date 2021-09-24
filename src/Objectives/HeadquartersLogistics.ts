@@ -26,7 +26,7 @@ declare global {
  */
 export class HeadquartersLogisticsObjective extends Objective {
     budget(office: string, energy: number) {
-        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable);
         let cost = minionCostPerTick(body);
         return {
             cpu: 0.5,

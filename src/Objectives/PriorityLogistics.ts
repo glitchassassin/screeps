@@ -1,6 +1,6 @@
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
@@ -16,6 +16,7 @@ export class PriorityLogisticsObjective extends Objective {
         let cost = minionCostPerTick(body);
         let targetCarry = this.targetCarry(office);
         let count = Math.min(Math.floor(energy / cost), Math.floor(targetCarry / body.filter(p => p === CARRY).length))
+        count = isNaN(count) ? 0 : count;
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,
@@ -55,8 +56,7 @@ export class PriorityLogisticsObjective extends Objective {
             // console.log(actualCarry, targetCarry);
             const cpuLimit = (0.8 * Game.cpu.limit) / 0.5
             // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
-            const roads = rcl(office) > 3 && facilitiesWorkToDo(office)
-                .filter(s => !s.structure && s.structureType === STRUCTURE_ROAD).length < 10
+            const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10
             // console.log('actual', actualCarry, 'target', targetCarry, 'cpuLimit', cpuLimit)
             // Pre-spawn accountants
 

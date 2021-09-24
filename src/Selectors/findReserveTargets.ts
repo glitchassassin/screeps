@@ -9,7 +9,11 @@ export const findReserveTargets = (office: string) => {
             room &&
             o.office === office &&
             o.assigned.length >= 1 &&
-            !Memory.offices[room]
+            !Memory.offices[room] &&
+            (
+                (Memory.rooms[room].reservation ?? 0) < 2000 ||
+                Memory.rooms[room].reserver !== 'LordGreywether'
+            )
         ) {
             franchises.add(room);
         }

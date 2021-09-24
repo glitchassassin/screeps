@@ -36,6 +36,7 @@ export class RefillExtensionsObjective extends Objective {
         let cost = minionCostPerTick(body);
         let targetCarry = this.targetCarry(office);
         let count = Math.min(Math.floor(energy / cost), Math.ceil(targetCarry / body.filter(p => p === CARRY).length))
+        count = isNaN(count) ? 0 : count;
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,

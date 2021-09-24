@@ -101,7 +101,7 @@ export const acquireTargetIsValid = (roomName: string) => {
             Memory.rooms[roomName].reserver === 'LordGreywether'
         ) &&
         Memory.roomPlans[roomName]?.office &&
-        Object.keys(Memory.offices).every(office => Game.map.getRoomLinearDistance(office, roomName) > TERRITORY_RADIUS)
+        Object.keys(Memory.offices).every(office => office === roomName || Game.map.getRoomLinearDistance(office, roomName) > TERRITORY_RADIUS)
     )
 }
 

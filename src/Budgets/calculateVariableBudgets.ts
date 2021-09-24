@@ -20,5 +20,6 @@ export function calculateVariableBudgets(office: string) {
             variableBudgetGenerators.set(objective.id, fromObjective(objective, office))
         }
     }
+    // console.log('budgetGenerators', ...variableBudgetGenerators.entries())
     return (constraints: Budget) => fitBudgets(constraints, variableBudgetGenerators);
 }

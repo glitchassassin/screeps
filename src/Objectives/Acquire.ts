@@ -41,7 +41,7 @@ export class AcquireObjective extends Objective {
     }
     budget(office: string, energy: number) {
         if (officeShouldClaimAcquireTarget(office)) {
-            let body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office));
+            let body = MinionBuilders[MinionTypes.LAWYER](Game.rooms[office].energyCapacityAvailable);
             let cost = minionCostPerTick(body)
             return {
                 cpu: 0.5,
@@ -49,9 +49,10 @@ export class AcquireObjective extends Objective {
                 energy: cost,
             }
         } else if (officeShouldSupportAcquireTarget(office)) {
-            let body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
+            let body = MinionBuilders[MinionTypes.ENGINEER](Game.rooms[office].energyCapacityAvailable);
             let cost = minionCostPerTick(body)
             let count = Math.floor(energy / cost)
+            count = isNaN(count) ? 0 : count;
             return {
                 cpu: 0.5 * count,
                 spawn: body.length * CREEP_SPAWN_TIME * count,

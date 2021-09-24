@@ -1,3 +1,4 @@
+import { memoize } from "utils/memoizeFunction";
 
 declare global {
     interface CreepMemory {
@@ -25,7 +26,9 @@ export enum MinionTypes {
 }
 
 export const MinionBuilders = {
-    [MinionTypes.ACCOUNTANT]: (energy: number, maxSegments = 25, roads = false) => {
+    [MinionTypes.ACCOUNTANT]: memoize( // Memoizes at 50-energy increments
+        (energy: number, maxSegments = 25, roads = false) => `${Math.round(energy * 2 / 100)} ${maxSegments} ${roads}`,
+        (energy: number, maxSegments = 25, roads = false) => {
         if (energy < 200 || maxSegments === 0) {
             return [];
         } else if (energy <= 300) {
@@ -37,7 +40,7 @@ export const MinionBuilders = {
             const segments = Math.min(16, maxSegments, Math.floor((energy / 2) / 150))
             return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
         }
-    },
+    }),
     [MinionTypes.ENGINEER]: (energy: number) => {
         if (energy < 200) {
             return [];
@@ -105,11 +108,12 @@ export const MinionBuilders = {
         }
         else {
             // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
-            let workParts = Math.min(15, Math.floor(((energy - 50) * 3/4) / 100))
-            let moveParts = Math.min(2, Math.floor(((energy - 50) * 1/4) / 50))
+            let workParts = Math.max(1, Math.min(15, Math.floor(((energy) * 10/13) / 100)))
+            let carryParts = Math.max(1, Math.min(3, Math.floor(((energy) * 1/13) / 50)))
+            let moveParts = Math.max(1, Math.min(6, Math.floor(((energy) * 2/13) / 50)))
             return ([] as BodyPartConstant[]).concat(
                 Array(workParts).fill(WORK),
-                [CARRY],
+                Array(carryParts).fill(CARRY),
                 Array(moveParts).fill(MOVE)
             )
         }

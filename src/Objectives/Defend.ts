@@ -22,9 +22,10 @@ declare global {
 
 export class DefendObjective extends Objective {
     budget(office: string, energy: number) {
-        let body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office));
+        let body = MinionBuilders[MinionTypes.GUARD](Game.rooms[office].energyCapacityAvailable);
         let cost = minionCostPerTick(body);
         let count = Math.min(findHostileCreeps(office).length, Math.floor(energy / cost));
+        count = isNaN(count) ? 0 : count;
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,

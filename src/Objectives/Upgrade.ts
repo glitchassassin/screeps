@@ -7,7 +7,7 @@ import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { Metrics } from "screeps-viz";
-import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { constructionToDo } from "Selectors/facilitiesWorkToDo";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { rcl } from "Selectors/rcl";
@@ -55,11 +55,13 @@ export class UpgradeObjective extends Objective {
                 energy: 0,
             }
         }
-        let body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office));
+        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable);
         let cost = minionCostPerTick(body) + body.filter(p => p === WORK).length;
-        let constructionToDo = facilitiesWorkToDo(office).filter(s => !s.structure).length > 0;
+        let construction = constructionToDo(office).length > 0;
         let downgradeImminent = (Game.rooms[office].controller?.ticksToDowngrade ?? 0) < 10000
-        let count = constructionToDo ? (downgradeImminent ? 1 : 0) : Math.min(energy / cost);
+        let storageSurplus = heapMetrics[office]?.storageLevel ? (Metrics.avg(heapMetrics[office].storageLevel) > getStorageBudget(office)) : false
+        let count = construction ? ((downgradeImminent || storageSurplus) ? 1 : 0) : Math.min(energy / cost);
+        count = isNaN(count) ? 0 : count;
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,
