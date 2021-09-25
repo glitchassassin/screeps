@@ -75,7 +75,6 @@ declare global {
 export const recordMetrics = profiler.registerFN(() => {
     let stats = {
         time: Game.time,
-        gclMilestones: {},
         gcl: {
             progress: Game.gcl.progress,
             progressTotal: Game.gcl.progressTotal,
@@ -94,6 +93,7 @@ export const recordMetrics = profiler.registerFN(() => {
     Memory.stats ??= {
         ...stats,
         profiling: {},
+        gclMilestones: {},
         offices: {}
     }
     Memory.stats = {
