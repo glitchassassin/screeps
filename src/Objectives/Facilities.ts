@@ -2,15 +2,15 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
-import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { profitPerTick } from "Selectors/profitPerTick";
+import { costPerEngineer } from "Selectors/costPerEngineer";
+import { constructionToDo, facilitiesEfficiency, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { repairCostsPerTick } from "Selectors/repairCostsPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -21,52 +21,63 @@ declare global {
     }
 }
 
-const CONSTRUCTION_EFFICIENCY = 0.8;
+const CONSTRUCTION_EFFICIENCY = 0.5;
 const UPGRADE_EFFICIENCY = 1;
 
 export class FacilitiesObjective extends Objective {
-    spawnTarget(office: string) {
-        const rcl = Game.rooms[office]?.controller?.level ?? 0
-        let surplusIncome = Math.max(0, profitPerTick(office, this));
+    spawnTarget(office: string, budget: number) {
         const work = facilitiesWorkToDo(office);
-        const constructionToDo = work.some(s => !s.structure);
-        const efficiency = (work.length ? CONSTRUCTION_EFFICIENCY : UPGRADE_EFFICIENCY)
-        const engineerCostPerTick = minionCostPerTick(MinionBuilders[MinionTypes.ENGINEER](Game.rooms[office].energyCapacityAvailable));
-        // Spawn based on maximizing use of available energy
-        const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * Game.rooms[office].energyCapacityAvailable / 100))
-        const engineersForRepairing = Math.floor(surplusIncome / (REPAIR_COST * REPAIR_POWER * workPartsPerEngineer * efficiency + engineerCostPerTick));
-        const engineersForBuilding = Math.max(1, Math.floor(surplusIncome / (BUILD_POWER * workPartsPerEngineer * efficiency + engineerCostPerTick)));
+        const cost = costPerEngineer(Game.rooms[office].energyCapacityAvailable, Math.round(facilitiesEfficiency(office)));
+        // const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * Game.rooms[office].energyCapacityAvailable / 100))
 
-        const engineers = constructionToDo ? engineersForBuilding : engineersForRepairing;
+        const construction = constructionToDo(office).length > 0;
+        const repairs = repairCostsPerTick(office);
 
-        const storageSurplus = Math.floor(storageEnergyAvailable(office) / (CREEP_LIFE_TIME * 0.3));
+        const constructionEngineers = Math.floor(budget / cost)
+        const engineers = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs * 10))
 
-        // console.log(efficiency, storageSurplus, engineers + storageSurplus)
+        // console.log(surplusIncome, cost, engineers)
 
-        if (rcl < 4) return engineers + storageSurplus; // Surplus engineer lifespan will go to upgrading
-        if (!work.length) return 0;
+        // let storageSurplus = Math.floor((storageEnergyAvailable(office) * 1.5 * workPartsPerEngineer) / (cost * CREEP_LIFE_TIME));
 
-        return engineers;
+        // if (rcl(office) < 3) return engineers + storageSurplus; // Surplus engineer lifespan will go to upgrading
+        // if (rcl(office) > 1 && work.length === 0) return 0;
+
+        return Math.max(1, engineers);
     }
-    energyValue(office: string) {
-        const engineers = this.minions(office).length;
-        const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * Game.rooms[office].energyCapacityAvailable / 100))
-        const minionCosts = minionCostPerTick(MinionBuilders[MinionTypes.ENGINEER](Game.rooms[office].energyCapacityAvailable)) * engineers;
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.ENGINEER](Game.rooms[office].energyCapacityAvailable);
+        let cost = costPerEngineer(Game.rooms[office].energyCapacityAvailable, Math.round(facilitiesEfficiency(office)));
 
-        const work = facilitiesWorkToDo(office);
-        const constructionToDo = work.some(s => !s.structure);
-        const efficiency = (work.length ? CONSTRUCTION_EFFICIENCY : UPGRADE_EFFICIENCY)
-        const workCosts = (workPartsPerEngineer * engineers) * (constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER) * efficiency;
-        return -(workCosts + minionCosts);
+        const construction = constructionToDo(office).length > 0;
+        const repairs = repairCostsPerTick(office);
+
+        const constructionEngineers = Math.floor(energy / cost)
+        // console.log(construction, repairs, constructionEngineers, energy, cost)
+        let count = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs * 10))
+        count = isNaN(count) ? 0 : count;
+
+        // if (rcl(office) > 1 && facilitiesWorkToDo(office).length === 0) count = 0;
+        // console.log(office, body.length, cost, count)
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
     }
     spawn() {
         for (const office in Memory.offices) {
-            const target = this.spawnTarget(office);
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+            const target = this.spawnTarget(office, budget);
             // Calculate prespawn time based on time to spawn next minion
             const prespawnTime = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME
             const actual = this.minions(office).filter(c => (
                     !c.ticksToLive || c.ticksToLive > prespawnTime
             )).length
+
+            // console.log('facilities', office, target, actual)
+
+            this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: actual})
 
             if (target > actual) {
                 spawnMinion(
@@ -141,6 +152,7 @@ export class FacilitiesObjective extends Objective {
                             creep.build(plan.constructionSite);
                         }
                     }
+                    plan.survey()
                 }
             }
         }

@@ -1,5 +1,4 @@
 import { getStorageBudget } from "Selectors/getStorageBudget";
-import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
@@ -12,7 +11,7 @@ export default () => {
 
         const terminalTargetLevel = Memory.offices[office].resourceQuotas[RESOURCE_ENERGY] ?? 2000
         const terminalPressure = terminal ? terminal.store.getUsedCapacity(RESOURCE_ENERGY) / terminalTargetLevel : undefined;
-        const storageTargetLevel = getStorageBudget(rcl(office));
+        const storageTargetLevel = getStorageBudget(office);
         const storagePressure = storage ? storageEnergyAvailable(office) / storageTargetLevel : undefined;
 
         if (storagePressure !== undefined && terminalPressure !== undefined) {

@@ -1,63 +1,145 @@
 import { TERRITORY_RADIUS } from "config";
-import { calculateNearbyRooms } from "./MapCoordinates";
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { logCpu, logCpuStart } from "utils/logCPU";
+import { costMatrixFromRoomPlan } from "./costMatrixFromRoomPlan";
+import { calculateNearbyRooms, getClosestOffice, isSourceKeeperRoom } from "./MapCoordinates";
+import { serializePlannedStructures } from "./plannedStructures";
+import { sourcePositions } from "./roomCache";
+import { getSpawns, roomPlans } from "./roomPlans";
 import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
 
-const officeTerritoryMap = new Map<string, string[]>();
-let lastProcessedOffices = '';
-
-export const getTerritoriesByOffice = (office: string) => {
-    return getOfficeTerritoryMap().get(office)?.filter(room => {
-        return (
-            (getTerritoryIntent(room) === TerritoryIntent.EXPLOIT ||
-            getTerritoryIntent(room) === TerritoryIntent.ACQUIRE) &&
-            !Memory.offices[room]
-        )
-    }) ?? [];
+interface TerritoryData {
+    office: string,
+    sources: number,
+    spawnCapacity: number,
+    spawnCapacityRoads: number,
+    spawnCapacityReserved: number,
+    targetCarry: number,
+    targetCarryReserved: number,
+    roadsPlan: string,
+    disabled?: number,
+    score: number
+}
+declare global {
+    interface RoomMemory {
+        territory?: TerritoryData
+    }
+    interface OfficeMemory {
+        territories?: string[]
+    }
 }
 
-export const getOfficeTerritoryMap = () => {
-    let territories: string[] = [];
-    const offices = Object.keys(Memory.offices);
-    const processedOffices = offices.join('-');
-    if (lastProcessedOffices === processedOffices) return officeTerritoryMap
+const MAX_TERRITORY_SPAWN_CAPACITY = 1200;
+let lastProcessedOffices = '';
 
-    if (Game.cpu.bucket < 500) return officeTerritoryMap; // Don't recalculate with low bucket
+let lastCalculatedTick = 0;
 
-    // Cache no longer valid, recalculate
-    const candidates = new Map<string, string[]>();
-    for (const office of offices) {
-        officeTerritoryMap.set(office, []);
-        // Add surrounding rooms to the list of potential territories
-        territories = territories.concat(calculateNearbyRooms(office, TERRITORY_RADIUS, false))
+export const getTerritoriesByOffice = (office: string) => {
+    // logCpuStart()
+    if (lastCalculatedTick !== Game.time) {
+        recalculateTerritories();
+        lastCalculatedTick = Game.time;
+        // logCpu('Recalculated territories')
     }
-    // Get viable offices in range of each territory
-    for (const territory of territories) {
-        const officeList: string[] = [];
-        candidates.set(territory, officeList);
-        for (const office of offices) {
-            const route = Game.map.findRoute(territory, office);
-            if (route === ERR_NO_PATH || route.length > TERRITORY_RADIUS) continue;
-            officeList.push(office);
+    return Memory.offices[office].territories ?? [];
+}
+
+function recalculateTerritories() {
+    if (Game.cpu.bucket < 500) return; // don't recalculate with low bucket
+
+    logCpuStart()
+    for (const office of Object.keys(Memory.offices)) {
+        const targets = (calculateNearbyRooms(office, TERRITORY_RADIUS, false)
+            .filter(t => (
+                !isSourceKeeperRoom(t) &&
+                Memory.rooms[t] &&
+                !Memory.offices[t] &&
+                getClosestOffice(t) === office &&
+                getTerritoryIntent(t) !== TerritoryIntent.AVOID
+            ))
+            .map(t => {
+                if (Memory.rooms[t].territory?.office !== office) {
+                    Memory.rooms[t].territory = calculateTerritoryData(office, t);
+                    logCpu('Calculating territory data')
+                }
+                const data = Memory.rooms[t].territory
+                return [t, data]
+            }) as [string, TerritoryData][])
+            .filter(([t, data]) => data?.office === office)
+            .sort(([_1, data1], [_2, data2]) => data2.score - data1.score);
+
+        let spawnCapacity = CREEP_LIFE_TIME * getSpawns(office).length;
+        Memory.offices[office].territories = [];
+        for (let [territory, data] of targets) {
+            if (data.sources === 0) continue;
+            Memory.offices[office].territories?.push(territory);
+            spawnCapacity -= data.spawnCapacityReserved;
+            if (spawnCapacity <= 0) break;
         }
-        if (officeList.length === 1) {
-            // Only one viable office! Skip remaining distribution
-            officeTerritoryMap.get(officeList[0])?.push(territory)
-            candidates.delete(territory);
+    }
+}
+
+function calculateTerritoryData(office: string, territory: string): TerritoryData|undefined {
+    const data: TerritoryData = {
+        office,
+        sources: 0,
+        spawnCapacity: 0,
+        spawnCapacityRoads: 0,
+        spawnCapacityReserved: 0,
+        targetCarry: 0,
+        targetCarryReserved: 0,
+        roadsPlan: '',
+        score: 0
+    }
+    const storage = roomPlans(office)?.headquarters?.storage.pos
+    if (!storage) return undefined;
+    let sources = sourcePositions(territory);
+    data.sources = sources.length;
+    if (data.sources === 0) return data;
+    const sourcePaths: PathFinderPath[] = [];
+    const roads = new Set<PlannedStructure>();
+    for (let pos of sources) {
+        let route = PathFinder.search(storage, {pos, range: 1}, {
+            roomCallback: (room) => {
+                const cm = costMatrixFromRoomPlan(room);
+                for (let road of roads) {
+                    if (road.pos.roomName === room && cm.get(road.pos.x, road.pos.y) !== 255) {
+                        cm.set(road.pos.x, road.pos.y, 1);
+                    }
+                }
+                return cm;
+            },
+            plainCost: 2,
+            swampCost: 10,
+            maxOps: 100000,
+        })
+        if (!route.incomplete) {
+            sourcePaths.push(route);
+            route.path.forEach(p => {
+                if (p.x !== 0 && p.x !== 49 && p.y !== 0 && p.y !== 49) {
+                    roads.add(new PlannedStructure(p, STRUCTURE_ROAD))
+                }
+            })
         }
     }
-    // Each candidate Territory now has two or more potential offices.
-    for (const [territory, offices] of candidates) {
-        const parentOffice = offices.reduce((min, office) => {
-            if (min === '') return office;
-            if ((officeTerritoryMap.get(office)?.length ?? 0) < (officeTerritoryMap.get(min)?.length ?? 0)) {
-                return office;
-            }
-            return min;
-        }, '')
-        if (parentOffice === '') continue; // No viable offices
-        officeTerritoryMap.get(parentOffice)?.push(territory);
+    if (sourcePaths.length === 0) return data;
+
+    for (let path of sourcePaths) {
+        data.targetCarry += Math.round(((SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME) * path.cost * 2) / CARRY_CAPACITY)
+        data.targetCarryReserved += Math.round(((SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME) * path.cost * 2) / CARRY_CAPACITY)
     }
 
-    lastProcessedOffices = processedOffices;
-    return officeTerritoryMap;
+    const SALESMAN_SIZE = (5 + 2 + 1)
+    data.spawnCapacity = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarry * 2);
+    data.spawnCapacityRoads = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarry * 1.5);
+    data.spawnCapacityReserved = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarryReserved * 1.5);
+
+    data.roadsPlan = serializePlannedStructures(Array.from(roads));
+
+    // To score, each criteria is mapped to a number between one and zero. The higher the better.
+    data.score = (
+        (sourcePaths.length / data.spawnCapacityReserved) // As little spawn capacity as possible
+    );
+
+    return data;
 }

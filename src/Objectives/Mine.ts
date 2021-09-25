@@ -2,6 +2,7 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineContainer";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
@@ -14,12 +15,22 @@ import { Objective } from "./Objective";
 
 
 export class MineObjective extends Objective {
-    energyValue(office: string) {
-        const carry = this.targetCarry(office);
-        return -(
-            (carry ? minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), carry)) : 0) +
-            this.targetForemen(office) * minionCostPerTick(MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)))
-        )
+    cost(office: string) {
+        let body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
+            .concat(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)));
+        return minionCostPerTick(body);
+    }
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
+            .concat(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)));
+        return {
+            cpu: 0.5 * 2,
+            spawn: body.length * CREEP_SPAWN_TIME,
+            energy: this.cost(office),
+        }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     targetForemen(office: string) {
         const mine = roomPlans(office)?.mine;
@@ -40,12 +51,16 @@ export class MineObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+
             // Check local reserves
-            if (!officeShouldMine(office)) continue;
+            if (!officeShouldMine(office) || budget < this.cost(office)) continue;
             const targetForemen = this.targetForemen(office);
             const targetCarry = this.targetCarry(office);
             const foremen = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.FOREMAN).length
             const accountants = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.ACCOUNTANT).length
+
+            this.metrics.set(office, {spawnQuota: targetForemen + 1, energyBudget: budget, minions: this.minions(office).length})
 
             let spawnQueue = [];
 

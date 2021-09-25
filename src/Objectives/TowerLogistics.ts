@@ -2,6 +2,7 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { getTowerRefillerLocation } from "Selectors/getHqLocations";
@@ -23,18 +24,36 @@ declare global {
  * Picks up energy from Storage and transfers it to Towers
  */
 export class TowerLogisticsObjective extends Objective {
-    energyValue(office: string) {
-        return -minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 3));
+    cost(office: string) {
+        return minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 3));
+    }
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 3);
+        let cost = minionCostPerTick(body);
+
+        const hq = roomPlans(office)?.headquarters;
+        const towersNeedRefilled = hq?.towers.some(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > CARRY_CAPACITY * 3)
+        const count = (towersNeedRefilled && storageEnergyAvailable(office) !== 0) ? 1 : 0
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     spawn() {
         for (let office in Memory.offices) {
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             const hq = roomPlans(office)?.headquarters;
 
             const towersNeedRefilled = hq?.towers.some(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > CARRY_CAPACITY * 3)
-            if (!towersNeedRefilled) {
+            if (budget < this.cost(office) || !towersNeedRefilled || storageEnergyAvailable(office) === 0) {
+                this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
                 continue
             }
-            if (storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
+            this.metrics.set(office, {spawnQuota: 1, energyBudget: budget, minions: this.minions(office).length})
 
             // Maintain one small Accountant to fill towers
             let preferredSpace = getTowerRefillerLocation(office);

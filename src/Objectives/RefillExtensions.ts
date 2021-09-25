@@ -2,10 +2,12 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
+import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getExtensionsAndSpawns } from "Selectors/spawnsAndExtensionsDemand";
@@ -26,8 +28,23 @@ const cachedRefillTargets = new Map<string, PlannedStructure>();
  * Picks up energy from Sources and transfers it to Storage
  */
 export class RefillExtensionsObjective extends Objective {
-    energyValue(office: string) {
-        return -(this.targetCarry(office) * 1.5 * BODYPART_COST[CARRY]) / CREEP_LIFE_TIME
+    minionCost(office: string) {
+        return minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
+    }
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, true);
+        let cost = minionCostPerTick(body);
+        let targetCarry = this.targetCarry(office);
+        let count = Math.min(Math.floor(energy / cost), Math.ceil(targetCarry / body.filter(p => p === CARRY).length))
+        count = isNaN(count) ? 0 : count;
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     targetCarry(office: string) {
         // Calculate extensions capacity
@@ -42,26 +59,29 @@ export class RefillExtensionsObjective extends Objective {
     }
     spawn() {
         for (let office in Memory.offices) {
-            if (storageEnergyAvailable(office) === 0) continue; // Only spawn refillers if we have energy available
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+            if (storageEnergyAvailable(office) === 0 || !roomHasExtensions(office)) {
+                this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
+                continue; // Only spawn refillers if we have energy available
+            }
+            const target = Math.floor(budget / this.minionCost(office))
 
-            if (!roomHasExtensions(office)) continue; // No extensions
-            const targetCarry = this.targetCarry(office);
-            const actualCarry = this.getCarryCapacityByOffice(office);
+            this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: this.minions(office).length})
 
-            if (actualCarry === 0 && Game.rooms[office].energyAvailable >= 300) {
+            if (this.minions(office).length === 0 && Game.rooms[office].energyAvailable >= 300) {
                 // Emergency refiller
                 spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
-                    MinionBuilders[MinionTypes.ACCOUNTANT](300, targetCarry)
+                    MinionBuilders[MinionTypes.ACCOUNTANT](300, 3)
                 )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
-            } else if (actualCarry < targetCarry) {
+            } else if (this.minions(office).length < target) {
                 spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
-                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), targetCarry)
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
                 )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
             }
         }
@@ -76,7 +96,7 @@ export class RefillExtensionsObjective extends Objective {
         }
 
         if (creep.memory.state === States.WITHDRAW) {
-            const result = getEnergyFromStorage(creep)
+            const result = getEnergyFromStorage(creep, 0)
             if (result === BehaviorResult.SUCCESS) {
                 setState(States.DEPOSIT)(creep);
             } else if (result === BehaviorResult.FAILURE) {

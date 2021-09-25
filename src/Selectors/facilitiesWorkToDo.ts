@@ -1,7 +1,9 @@
-import { BARRIER_LEVEL, BARRIER_TYPES, BUILD_PRIORITIES, REPAIR_THRESHOLD } from "config";
+import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from "config";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { calculateAdjacentPositions } from "./MapCoordinates";
+import { memoizeByTick } from "utils/memoizeFunction";
+import { calculateAdjacentPositions, getRangeTo } from "./MapCoordinates";
 import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
+import { roomPlans } from "./roomPlans";
 
 
 export const destroyUnplannedStructures = (room: string) => {
@@ -41,14 +43,67 @@ interface FacilitiesCache {
 }
 
 let cache: Record<string, FacilitiesCache> = {};
+let rangeCache = new Map<string, number>();
 
+/**
+ * Cache is actually populated by
+ */
+export function facilitiesWorkToDoAverageRange(office: string) {
+    if (!rangeCache.has(office)) {
+        let ranges = 0;
+        let count = 0;
+        let storagePos = roomPlans(office)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, office);
+        for (let structure of cache[office]?.work || []) {
+            // Also populate range cache
+            if (plannedStructureNeedsWork(structure)) {
+                ranges += getRangeTo(structure.pos, storagePos);
+                count += 1;
+            }
+        }
+        // console.log(storagePos, ranges, count)
+        rangeCache.set(office, count ? ranges / count : 0)
+    }
+    return rangeCache.get(office) ?? 0;
+}
+
+export const facilitiesEfficiency = memoizeByTick(
+    office => office,
+    (office: string) => {
+        const work = facilitiesWorkToDo(office);
+        const range = facilitiesWorkToDoAverageRange(office)
+        const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
+        if (range === 0) return 1;
+        const efficiency = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
+        return Math.max(0, Math.min(efficiency, efficiency / (range / 10)))
+    }
+)
+
+let cacheReviewed = 0;
 export const facilitiesWorkToDo = (officeName: string) => {
     // Initialize cache
     cache[officeName] ??= { work: [] };
 
+    if (cacheReviewed === Game.time) {
+        return cache[officeName].work.slice();
+    }
+
     // Filter out completed work
-    cache[officeName].work = cache[officeName].work
-        .filter(structure => plannedStructureNeedsWork(structure))
+    let ranges = 0;
+    let count = 0;
+    let work = [];
+    let storagePos = roomPlans(officeName)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, officeName);
+    for (let structure of cache[officeName].work) {
+        // Also populate range cache
+        if (plannedStructureNeedsWork(structure)) {
+            work.push(structure);
+            ranges += getRangeTo(structure.pos, storagePos);
+            count += 1;
+        }
+    }
+    // console.log(storagePos, ranges, count)
+    rangeCache.set(officeName, count ? ranges / count : 0)
+    cache[officeName].work = work;
+    cacheReviewed = Game.time;
 
     // Only re-scan work to do every 500 ticks unless structure count changes
     if (!Game.rooms[officeName]) return cache[officeName].work.slice();
@@ -60,11 +115,11 @@ export const facilitiesWorkToDo = (officeName: string) => {
         (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
         Game.time % 500 === 0
     ) {
-        console.log('Recalculating facilities cache')
+        // console.log('Recalculating facilities cache')
         cache[officeName] = {
             work: plannedStructuresByRcl(officeName)
-                .filter(structure => plannedStructureNeedsWork(structure))
-                .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
+                .filter(structure => plannedStructureNeedsWork(structure)),
+                // .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
             structureCount: foundStructures,
             rcl: foundRcl,
         }
@@ -86,3 +141,17 @@ export const plannedStructureNeedsWork = (structure: PlannedStructure) => {
     }
     return false;
 }
+
+export const constructionToDo = memoizeByTick(
+    office => office,
+    (office: string) => {
+        return facilitiesWorkToDo(office).filter(s => !s.structure)
+    }
+)
+
+export const roadConstructionToDo = memoizeByTick(
+    office => office,
+    (office: string) => {
+        return facilitiesWorkToDo(office).filter(s => s.structureType === STRUCTURE_ROAD && !s.structure)
+    }
+)

@@ -2,15 +2,12 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { byId } from "Selectors/byId";
 import { findReserveTargets } from "Selectors/findReserveTargets";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { posById } from "Selectors/posById";
 import { controllerPosition } from "Selectors/roomCache";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
-import { FranchiseObjective } from "./Franchise";
-import { Objective, Objectives } from "./Objective";
+import { Objective } from "./Objective";
 
 
 declare global {
@@ -25,35 +22,32 @@ declare global {
 
 export class ReserveObjective extends Objective {
     spawnTarget(office: string) {
-        if (spawnEnergyAvailable(office) < 850) return 0;
-        // One for each room with two active remote franchises
-        const rooms = new Set<string>();
-        for (let o of Object.values(Objectives)) {
-            if (
-                o instanceof FranchiseObjective &&
-                o.office === office &&
-                o.assigned.length > 1 &&
-                !Memory.offices[posById(o.sourceId)?.roomName ?? ''] &&
-                Memory.rooms[posById(o.sourceId)?.roomName ?? '']?.sourceIds?.length === 2
-            ) {
-                rooms.add(posById(o.sourceId)!.roomName)
-            }
-        }
-        return rooms.size;
+        if (Game.rooms[office].energyCapacityAvailable < 650) return 0;
+        // One for each room with an active remote franchise
+        return findReserveTargets(office).size;
     }
-    energyValue(office: string) {
-        // Minus minion cost, plus average of 30
-        if (spawnEnergyAvailable(office) < 850) return 0;
-        const minionCost = minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
-        const reserveBonus = (SOURCE_ENERGY_CAPACITY - SOURCE_ENERGY_NEUTRAL_CAPACITY) * 2 / ENERGY_REGEN_TIME
-        return reserveBonus - (minionCost * this.spawnTarget(office))
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable);
+        let cost = minionCostPerTick(body);
+        let count = Math.min(Math.floor(energy / cost), this.spawnTarget(office))
+        count = isNaN(count) ? 0 : count;
+        return {
+            cpu: 0.5 * count,
+            spawn: body.length * CREEP_SPAWN_TIME * count,
+            energy: cost * count,
+        }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     spawn() {
         for (let office in Memory.offices) {
             const target = this.spawnTarget(office);
-            const marketers = this.minions(office).length
+            const marketers = this.minions(office).length;
 
             let spawnQueue = [];
+
+            this.metrics.set(office, {spawnQuota: target, minions: marketers})
 
             if (target > marketers) {
                 spawnQueue.push(spawnMinion(
@@ -74,20 +68,18 @@ export class ReserveObjective extends Objective {
         // Select target controller
         if (!creep.memory.reserveTarget) {
             const reserved = new Set<string>();
-            for (let id of this.assigned) {
-                const creep = byId(id);
+            for (let c of this.minions(creep.memory.office)) {
                 if (
-                    creep?.memory.reserveTarget &&
+                    c?.memory.reserveTarget &&
                     (
-                        (!creep.ticksToLive || !creep.memory.arrived) ||
-                        (creep.ticksToLive < creep.memory.arrived)
+                        (!c.ticksToLive || !c.memory.arrived) ||
+                        (c.ticksToLive < c.memory.arrived)
                     )
                 ) {
-                    reserved.add(creep.memory.reserveTarget)
+                    reserved.add(c.memory.reserveTarget)
                 }
             }
-            for (let franchise of findReserveTargets(creep.memory.office)) {
-                let room = posById(franchise.sourceId)?.roomName
+            for (let room of findReserveTargets(creep.memory.office)) {
                 if (room && !reserved.has(room)) {
                     creep.memory.reserveTarget = room;
                     break;

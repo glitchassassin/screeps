@@ -1,5 +1,4 @@
 import { memoize, memoizeByTick } from "utils/memoizeFunction";
-import { packPos } from "utils/packrat";
 import { mineralPosition, sourcePositions } from "./roomCache";
 
 export const calculateAdjacencyMatrix = memoize(
@@ -93,7 +92,9 @@ export const isPositionWalkable = memoizeByTick(
     }
 )
 interface getCostMatrixOptions {
-    ignoreSourceKeepers?: boolean
+    ignoreSourceKeepers?: boolean,
+    avoidCreeps?: boolean,
+    ignoreStructures?: boolean,
 }
 export const getCostMatrix = memoizeByTick(
     (roomName: string, avoidCreeps: boolean = false, opts = {}) => `${roomName} ${avoidCreeps ? 'Y' : 'N'} ${JSON.stringify(opts)}`,
@@ -117,23 +118,24 @@ export const getCostMatrix = memoizeByTick(
         }
 
         if (!room) return costs;
+        if (!opts?.ignoreStructures) {
+            for (let struct of room.find(FIND_STRUCTURES)) {
+            if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
+                // Can't walk through non-walkable buildings
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+            } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
+                // Favor roads over plain tiles
+                costs.set(struct.pos.x, struct.pos.y, 1);
+            }
+            }
 
-        for (let struct of room.find(FIND_STRUCTURES)) {
-          if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
-            // Can't walk through non-walkable buildings
-            costs.set(struct.pos.x, struct.pos.y, 0xff);
-          } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
-            // Favor roads over plain tiles
-            costs.set(struct.pos.x, struct.pos.y, 1);
-          }
-        }
-
-        for (let struct of room.find(FIND_MY_CONSTRUCTION_SITES)) {
-            if (struct.structureType !== STRUCTURE_ROAD &&
-                struct.structureType !== STRUCTURE_CONTAINER &&
-                struct.structureType !== STRUCTURE_RAMPART) {
-              // Can't walk through non-walkable construction sites
-              costs.set(struct.pos.x, struct.pos.y, 0xff);
+            for (let struct of room.find(FIND_MY_CONSTRUCTION_SITES)) {
+                if (struct.structureType !== STRUCTURE_ROAD &&
+                    struct.structureType !== STRUCTURE_CONTAINER &&
+                    struct.structureType !== STRUCTURE_RAMPART) {
+                // Can't walk through non-walkable construction sites
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+                }
             }
         }
 
@@ -147,7 +149,7 @@ export const getCostMatrix = memoizeByTick(
         return costs;
     }
 )
-export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: number) => {
+export const getPath = (from: RoomPosition, to: RoomPosition, range: number, ignoreRoads = false) => {
     let positionsInRange = calculateNearbyPositions(to, range, true)
                                          .filter(pos => isPositionWalkable(pos, true));
     if (positionsInRange.length === 0) return;
@@ -156,12 +158,16 @@ export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: numb
         roomCallback: (room) => {
             return getCostMatrix(room, false)
         },
-        plainCost: 2,
-        swampCost: 10,
+        plainCost: ignoreRoads ? 1 : 2,
+        swampCost: ignoreRoads ? 5 : 10,
+        maxOps: 100000,
     })
     if (!route || route.incomplete) return;
 
-    return route.cost;
+    return route;
+}
+export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: number, ignoreRoads = false) => {
+    return getPath(from, to, range, ignoreRoads)?.cost;
 }
 export const getRangeTo = memoize(
     (from: RoomPosition, to: RoomPosition) => (`${from} ${to}`),
@@ -196,7 +202,8 @@ export const isSourceKeeperRoom = (roomName: string) => {
     if (!parsed) throw new Error('Invalid room name')
     let fmod = Number(parsed[1]) % 10;
     let smod = Number(parsed[2]) % 10;
-    return !(fmod === 5 && smod === 5) && (fmod <= 4 && fmod >= 6) && (smod <= 4 && smod >= 6);
+    // return !(fmod === 5 && smod === 5) && (fmod >= 4 && fmod <= 6) && (smod >= 4 && smod <= 6);
+    return (fmod >= 4 && fmod <= 6) && (smod >= 4 && smod <= 6);
 }
 export const roomNameToCoords = (roomName: string) => {
     let match = roomName.match(/^([WE])([0-9]+)([NS])([0-9]+)$/);
@@ -263,4 +270,25 @@ export const sortByDistanceToRoom = <T extends ({name: string}|string)>(roomName
         )
         return (distance.get(aName) as number) - (distance.get(bName) as number)
     }
+}
+export function lookNear(pos: RoomPosition, range = 1) {
+    return Game.rooms[pos.roomName].lookAtArea(
+        Math.max(1, Math.min(49, pos.y - range)),
+        Math.max(1, Math.min(49, pos.x - range)),
+        Math.max(1, Math.min(49, pos.y + range)),
+        Math.max(1, Math.min(49, pos.x + range)),
+        true
+    )
+}
+export function getClosestOffice(roomName: string) {
+    let closest: string|undefined = undefined;
+    let range = Infinity;
+    for (let office of Object.keys(Memory.offices)) {
+        let newRange = Game.map.getRoomLinearDistance(roomName, office)
+        if (!closest || newRange < range) {
+            closest = office;
+            range = newRange;
+        }
+    }
+    return closest;
 }

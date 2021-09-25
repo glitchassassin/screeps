@@ -6,7 +6,7 @@ import { initialize } from "./initializeObjectives"
 
 export const initializeDynamicObjectives = profiler.registerFN((room: string) => {
     initialize(
-        ...sourceIds(room).map(id => new FranchiseObjective(8, room, id)),
-        ...remoteFranchises(room).map(id => new FranchiseObjective(2, room, id)),
+        ...sourceIds(room).map(id => new FranchiseObjective(8.5, room, id)),
+        ...remoteFranchises(room).map(id => new FranchiseObjective(8, room, id)),
     )
 }, 'initializeDynamicObjectives')

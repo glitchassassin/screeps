@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1630075683573,
+  "iteration": 1631105442958,
   "links": [],
   "panels": [
     {
@@ -1289,6 +1289,7 @@
       "repeatIteration": 1473912580654,
       "seriesOverrides": [
         {
+          "$$hashKey": "object:763",
           "alias": "1hr Moving Average",
           "fill": 0,
           "steppedLine": false
@@ -1334,6 +1335,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:772",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1342,6 +1344,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:773",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1529,6 +1532,7 @@
       "repeatDirection": "h",
       "seriesOverrides": [
         {
+          "$$hashKey": "object:159",
           "alias": "1hr Moving Average",
           "fill": 0,
           "steppedLine": false
@@ -1540,9 +1544,21 @@
       "targets": [
         {
           "hide": false,
-          "refCount": 1,
+          "refCount": 0,
           "refId": "A",
           "target": "alias(stats.gauges.offices.$office.franchiseIncome, 'Energy Income')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(stats.gauges.offices.$office.logisticsThroughput, 'Logistics Throughput')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(movingAverage(stats.gauges.offices.$office.logisticsOutput, '10min'), 'Logistics Output')"
         }
       ],
       "thresholds": [],
@@ -1566,6 +1582,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:168",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1574,6 +1591,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:169",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1643,39 +1661,38 @@
       "targets": [
         {
           "hide": false,
-          "refCount": 2,
+          "refCount": 0,
           "refId": "D",
-          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), #C), 'Upgrade')",
-          "targetFull": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), 'Upgrade')",
+          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), #C), '10min'), 'Upgrade')",
+          "targetFull": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), '10min'), 'Upgrade')",
           "textEditor": false
         },
         {
-          "refCount": 2,
+          "refCount": 0,
           "refId": "A",
-          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), #C), 'Facilities')",
-          "targetFull": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), 'Facilities')",
+          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), #C), '10min'), 'Facilities')",
+          "targetFull": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), '10min'), 'Facilities')",
           "textEditor": false
         },
         {
           "hide": false,
-          "refCount": 2,
+          "refCount": 0,
           "refId": "E",
-          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.energyAvailable), #C), 'Spawn')",
-          "targetFull": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.energyAvailable), derivative(stats.gauges.time)), 'Spawn')",
+          "target": "alias(movingAverage(stats.gauges.offices.$office.spawnCost, '10min'), 'Spawn')",
           "textEditor": false
         },
         {
           "hide": true,
-          "refCount": 1,
+          "refCount": -1,
           "refId": "C",
           "target": "derivative(stats.gauges.time)"
         },
         {
           "hide": false,
-          "refCount": 2,
+          "refCount": 1,
           "refId": "B",
           "target": "alias(sumSeries(#A, #D, #E), 'Total')",
-          "targetFull": "alias(sumSeries(alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), 'Facilities'), alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), 'Upgrade'), alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.energyAvailable), derivative(stats.gauges.time)), 'Spawn')), 'Total')"
+          "targetFull": "alias(sumSeries(alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), '10min'), 'Facilities'), alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), '10min'), 'Upgrade'), alias(movingAverage(stats.gauges.offices.$office.spawnCost, '10min'), 'Spawn')), 'Total')"
         }
       ],
       "thresholds": [],
@@ -1781,7 +1798,7 @@
         {
           "refCount": 0,
           "refId": "B",
-          "target": "aliasByNode(stats.gauges.offices.$office.objectives.*.assigned, 5)"
+          "target": "aliasByNode(stats.gauges.offices.$office.objectives.*.minions, 5)"
         }
       ],
       "thresholds": [],
@@ -1947,6 +1964,504 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 41
+      },
+      "hiddenSeries": false,
+      "id": 504,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:326",
+          "alias": "Total",
+          "lines": false,
+          "stack": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refCount": 1,
+          "refId": "B",
+          "target": "alias(stats.gauges.offices.$office.spawnUptime, 'Spawn uptime')"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Spawn Uptime",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:335",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:336",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 41
+      },
+      "hiddenSeries": false,
+      "id": 593,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:326",
+          "alias": "Total",
+          "lines": false,
+          "stack": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(stats.gauges.offices.$office.budgets.baseline.cpu, 'CPU Available')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(stats.gauges.offices.$office.budgets.total.cpu, 'Total')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(stats.gauges.offices.$office.budgets.franchises.cpu, 'Franchises')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(stats.gauges.offices.$office.budgets.logistics.cpu, 'Logistics')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "E",
+          "target": "aliasByNode(stats.gauges.offices.$office.budgets.objectives.*.cpu, 6)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU Budget",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:335",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:336",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 41
+      },
+      "hiddenSeries": false,
+      "id": 690,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:326",
+          "alias": "Total",
+          "lines": false,
+          "stack": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(stats.gauges.offices.$office.budgets.baseline.spawn, 'Spawn Available')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(stats.gauges.offices.$office.budgets.total.spawn, 'Total')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(stats.gauges.offices.$office.budgets.franchises.spawn, 'Franchises')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(stats.gauges.offices.$office.budgets.logistics.spawn, 'Logistics')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "E",
+          "target": "aliasByNode(stats.gauges.offices.$office.budgets.objectives.*.spawn, 6)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Spawn Budget",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:335",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:336",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 41
+      },
+      "hiddenSeries": false,
+      "id": 691,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:326",
+          "alias": "Total",
+          "lines": false,
+          "stack": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(stats.gauges.offices.$office.budgets.baseline.energy, 'Spawn Available')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "alias(stats.gauges.offices.$office.budgets.total.energy, 'Total')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "C",
+          "target": "alias(stats.gauges.offices.$office.budgets.franchises.energy, 'Franchises')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(stats.gauges.offices.$office.budgets.logistics.energy, 'Logistics')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "E",
+          "target": "aliasByNode(stats.gauges.offices.$office.budgets.objectives.*.energy, 6)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Energy Budget",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:335",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:336",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "5s",
@@ -1984,7 +2499,7 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {
@@ -2015,5 +2530,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 12
+  "version": 19
 }

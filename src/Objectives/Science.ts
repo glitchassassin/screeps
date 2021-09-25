@@ -2,6 +2,7 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
 import { renewAtSpawn } from "Behaviors/renewAtSpawn";
 import { setState, States } from "Behaviors/states";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
@@ -29,16 +30,37 @@ declare global {
  * Transfers resources between Terminal and Labs
  */
 export class ScienceObjective extends Objective {
-    energyValue(office: string) {
-        return -(minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))))
+    cost(office: string) {
+        return minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
+    }
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
+        let cost = minionCostPerTick(body);
+        return {
+            cpu: 0.5,
+            spawn: body.length * CREEP_SPAWN_TIME,
+            energy: cost,
+        }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     spawn() {
         for (let office in Memory.offices) {
-            if (rcl(office) < 6 || roomPlans(office)?.labs?.labs.every(e => !e.structure)) continue; // No labs
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+            if (
+                rcl(office) < 6 || roomPlans(office)?.labs?.labs.every(e => !e.structure) || // No labs
+                budget < this.cost(office)
+            ) {
+                this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
+                continue;
+            }
             const scientists = this.assigned.map(byId).filter(c =>
                 c?.memory.office === office &&
                 (!c.ticksToLive || c.ticksToLive > 100)
             ).length
+
+            this.metrics.set(office, {spawnQuota: 1, energyBudget: budget, minions: scientists})
 
             if (scientists < 1) {
                 spawnMinion(

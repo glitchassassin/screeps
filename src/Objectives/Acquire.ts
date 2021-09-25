@@ -1,13 +1,13 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
 import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
-import { profitPerTick } from "Selectors/profitPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective, Objectives } from "./Objective";
@@ -23,23 +23,48 @@ declare global {
 }
 
 export class AcquireObjective extends Objective {
-    spawnLawyersTarget(office: string) {
+    spawnLawyersTarget(office: string, budget: number) {
         // No need to spawn more than one Lawyer
-        return officeShouldClaimAcquireTarget(office) ? 1 : 0
+        return (officeShouldClaimAcquireTarget(office) &&
+            minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))) <= budget) ?
+            1 :
+            0
     }
-    spawnEngineersTarget(office: string) {
+    spawnEngineersTarget(office: string, budget: number) {
         // Use surplus energy to generate Engineers
         if (!officeShouldSupportAcquireTarget(office)) return 0;
-        let surplusIncome = profitPerTick(office, this);
         let build = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
         let cost = minionCostPerTick(build);
         let fill = (build.filter(p => p === CARRY).length * CARRY_CAPACITY) / CREEP_LIFE_TIME;
 
-        return Math.floor(surplusIncome / (cost + fill))
+        return Math.floor(budget / (cost + fill))
     }
-    energyValue(office: string) {
-        if (!officeShouldClaimAcquireTarget(office)) return 0;
-        return -minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)));
+    budget(office: string, energy: number) {
+        if (officeShouldClaimAcquireTarget(office)) {
+            let body = MinionBuilders[MinionTypes.LAWYER](Game.rooms[office].energyCapacityAvailable);
+            let cost = minionCostPerTick(body)
+            return {
+                cpu: 0.5,
+                spawn: body.length * CREEP_SPAWN_TIME,
+                energy: cost,
+            }
+        } else if (officeShouldSupportAcquireTarget(office)) {
+            let body = MinionBuilders[MinionTypes.ENGINEER](Game.rooms[office].energyCapacityAvailable);
+            let cost = minionCostPerTick(body)
+            let count = Math.floor(energy / cost)
+            count = isNaN(count) ? 0 : count;
+            return {
+                cpu: 0.5 * count,
+                spawn: body.length * CREEP_SPAWN_TIME * count,
+                energy: cost * count,
+            }
+        } else {
+            return {
+                cpu: 0,
+                spawn: 0,
+                energy: 0
+            }
+        }
     }
     _indexer(creep: Creep) {
         return creep.memory.office + creep.memory.type
@@ -54,9 +79,13 @@ export class AcquireObjective extends Objective {
         for (let office in Memory.offices) {
             let spawnQueue = [];
 
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+
             if (officeShouldClaimAcquireTarget(office)) {
-                const lawyersTarget = this.spawnLawyersTarget(office);
+                const lawyersTarget = this.spawnLawyersTarget(office, budget);
                 const lawyers = this.minions(office + MinionTypes.LAWYER).length
+
+                this.metrics.set(office, {spawnQuota: lawyersTarget, energyBudget: budget, minions: lawyers})
 
                 if (lawyersTarget > lawyers) {
                     spawnQueue.push(spawnMinion(
@@ -66,11 +95,13 @@ export class AcquireObjective extends Objective {
                         MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))
                     ))
                 }
-            }
-            if (officeShouldSupportAcquireTarget(office)) {
-                const engineersTarget = this.spawnEngineersTarget(office);
+            } else if (officeShouldSupportAcquireTarget(office)) {
+                const engineersTarget = this.spawnEngineersTarget(office, budget);
                 const engineers = this.minions(office + MinionTypes.ENGINEER).length +
                     Objectives['FacilitiesObjective'].minions(acquireTarget).length
+
+                this.metrics.set(office, {spawnQuota: engineersTarget, energyBudget: budget, minions: engineers})
+
                 if (engineersTarget > engineers) {
                     spawnQueue.push(spawnMinion(
                         office,
@@ -79,6 +110,8 @@ export class AcquireObjective extends Objective {
                         MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
                     ))
                 }
+            } else {
+                this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
             }
 
             spawnQueue.forEach((spawner, i) => spawner());

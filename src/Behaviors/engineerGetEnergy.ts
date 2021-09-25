@@ -1,5 +1,10 @@
+import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
+import { franchiseIsFull } from "Selectors/franchiseIsFull";
+import { roomPlans } from "Selectors/roomPlans";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
+import { getEnergyFromFranchise } from "./getEnergyFromFranchise";
 import { getEnergyFromRuin } from "./getEnergyFromRuin";
 import { getEnergyFromSource } from "./getEnergyFromSource";
 import { getEnergyFromStorage } from "./getEnergyFromStorage";
@@ -11,67 +16,71 @@ declare global {
     }
 }
 
+// Energy sources
+
+// Ruins
+// Sources (franchise or self-harvest)
+// Storage (go based on storage pos, then collect by hierarchy)
+
 export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?: string) => {
     const facilitiesTarget = targetRoom ?? creep.memory.office;
     if (!creep.memory.getEnergyState) {
-        creep.memory.getEnergyState = States.GET_ENERGY_RUINS
+        // Find nearest target
+        const ruin = creep.pos.findClosestByRange(FIND_RUINS, { filter: ruin => ruin.store.getUsedCapacity(RESOURCE_ENERGY) !== 0});
+        const ruinRange = ruin?.pos.getRangeTo(creep.pos) ?? Infinity;
+        const source = creep.pos.findClosestByRange(FIND_SOURCES, { filter: source => !franchiseIsFull(creep, source.id) || franchiseEnergyAvailable(source.id) > 0});
+        const sourceRange = source?.pos.getRangeTo(creep.pos) ?? Infinity;
+        const storage = roomPlans(creep.memory.office)?.headquarters?.storage.pos;
+        const storageRange = (storageEnergyAvailable(facilitiesTarget) > 0) ? storage?.getRangeTo(creep.pos) ?? Infinity : Infinity;
+        const minRange = Math.min(ruinRange, sourceRange, storageRange);
+
+        // console.log(creep.name, 'ruin', ruinRange, 'source', sourceRange, 'storage', storageRange, 'min', minRange)
+
+        if (minRange === Infinity) {
+            return;
+        } else if (ruin && minRange === ruinRange) {
+            creep.memory.getEnergyState = States.GET_ENERGY_RUINS;
+            creep.memory.targetRuin = ruin.id
+        } else if (source && minRange === sourceRange) {
+            if (franchiseIsFull(creep, source.id)) {
+                creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE;
+                creep.memory.depositSource = source.id;
+            } else {
+                creep.memory.getEnergyState = States.GET_ENERGY_SOURCE;
+                creep.memory.franchiseTarget = source.id;
+            }
+        } else if (minRange === storageRange) {
+            creep.memory.getEnergyState = States.GET_ENERGY_STORAGE;
+        } else {
+            return; // no sources
+        }
     }
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        delete creep.memory.getEnergyState;
         return BehaviorResult.SUCCESS;
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_RUINS) {
-        // Get energy from legal container, or storage if that doesn't exist
-        const result = getEnergyFromRuin(creep);
-
-        if (result === BehaviorResult.SUCCESS) {
-            return BehaviorResult.SUCCESS;
-        } else if (result === BehaviorResult.FAILURE) {
-            creep.memory.getEnergyState = States.GET_ENERGY_STORAGE;
-        } else {
-            return BehaviorResult.INPROGRESS;
+        let result = getEnergyFromRuin(creep);
+        if (result !== BehaviorResult.INPROGRESS) {
+            delete creep.memory.getEnergyState;
         }
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_STORAGE) {
-        if (facilitiesTarget !== creep.memory.office) {
-            delete creep.memory.franchiseTarget;
-            creep.memory.getEnergyState = States.GET_ENERGY_SOURCE // For work outside the Office, harvest locally
-        } else {
-            // Get energy from legal container, or storage if that doesn't exist
-            let result = getEnergyFromStorage(creep);
-
-            if (result === BehaviorResult.SUCCESS) {
-                return BehaviorResult.SUCCESS;
-            } else if (result === BehaviorResult.FAILURE) {
-                delete creep.memory.depositSource;
-                creep.memory.getEnergyState = States.GET_ENERGY_SOURCE
-            } else {
-                return BehaviorResult.INPROGRESS;
-            }
+        let result = getEnergyFromStorage(creep);
+        if (result !== BehaviorResult.INPROGRESS) {
+            delete creep.memory.getEnergyState;
         }
     }
-    // if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {
-    //     if (facilitiesTarget !== creep.memory.office) {
-    //         delete creep.memory.franchiseTarget;
-    //         creep.memory.getEnergyState = States.GET_ENERGY_SOURCE // For work outside the Office, harvest locally
-    //     } else {
-    //         let result = getEnergyFromFranchise(creep);
-    //         if (result === BehaviorResult.SUCCESS) {
-    //             return BehaviorResult.SUCCESS;
-    //         } else if (result === BehaviorResult.FAILURE) {
-    //             delete creep.memory.franchiseTarget;
-    //             creep.memory.getEnergyState = States.GET_ENERGY_SOURCE
-    //         } else {
-    //             return BehaviorResult.INPROGRESS;
-    //         }
-    //     }
-    // }
-    if (creep.memory.getEnergyState === States.GET_ENERGY_SOURCE) {
-        let result = getEnergyFromSource(creep, facilitiesTarget);
+    if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {
+        let result = getEnergyFromFranchise(creep);
         if (result === BehaviorResult.SUCCESS) {
-            return BehaviorResult.SUCCESS;
-        } else if (result === BehaviorResult.FAILURE) {
-            creep.memory.getEnergyState = States.GET_ENERGY_STORAGE
-            return BehaviorResult.INPROGRESS;
+            delete creep.memory.getEnergyState;
+        }
+    }
+    if (creep.memory.getEnergyState === States.GET_ENERGY_SOURCE) {
+        let result = getEnergyFromSource(creep);
+        if (result === BehaviorResult.SUCCESS) {
+            delete creep.memory.getEnergyState;
         }
     }
     return BehaviorResult.INPROGRESS;

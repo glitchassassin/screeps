@@ -1,13 +1,13 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromLink } from "Behaviors/getEnergyFromLink";
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { franchiseIncomePerTick } from "Selectors/franchiseIncomePerTick";
+import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
 import { getHeadquarterLogisticsLocation } from "Selectors/getHqLocations";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
@@ -25,11 +25,22 @@ declare global {
  * Picks up energy from Links and transfers it to Storage
  */
 export class HeadquartersLogisticsObjective extends Objective {
-    energyValue(office: string) {
-        return -minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
+    budget(office: string, energy: number) {
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable);
+        let cost = minionCostPerTick(body);
+        return {
+            cpu: 0.5,
+            spawn: body.length * CREEP_SPAWN_TIME,
+            energy: cost,
+        }
+    }
+    public hasFixedBudget(office: string) {
+        return true;
     }
     spawn() {
         for (let office in Memory.offices) {
+            const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+
             // Only needed if we have central HQ structures
             const hq = roomPlans(office)?.headquarters;
             if (!(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure)) {
@@ -38,8 +49,17 @@ export class HeadquartersLogisticsObjective extends Objective {
 
             if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn logistics minions if we have active Franchises
 
+            let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
+            let cost = minionCostPerTick(body);
+            let actual = this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > 100).length;
+            if (cost >= budget) {
+                this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: actual})
+                continue;
+            }
+            this.metrics.set(office, {spawnQuota: 1, energyBudget: budget, minions: actual})
+
             // Maintain one max-sized Accountant
-            if (this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > 100).length === 0) {
+            if (actual === 0) {
                 const preferredSpace = getHeadquarterLogisticsLocation(office);
                 spawnMinion(
                     office,
@@ -75,7 +95,7 @@ export class HeadquartersLogisticsObjective extends Objective {
 
         const terminalTargetLevel = Memory.offices[creep.memory.office].resourceQuotas[RESOURCE_ENERGY] ?? 2000
         const terminalPressure = terminal ? terminal.store.getUsedCapacity(RESOURCE_ENERGY) / terminalTargetLevel : undefined;
-        const storageTargetLevel = getStorageBudget(rcl(creep.memory.office));
+        const storageTargetLevel = getStorageBudget(creep.memory.office);
         const storagePressure = storage ? storageEnergyAvailable(creep.memory.office) / storageTargetLevel : undefined;
 
         const spawnCapacity = spawn?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0

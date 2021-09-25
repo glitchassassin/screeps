@@ -176,7 +176,7 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
             try {
                 Routes[creep.name] = new Route(creep, pos, range);
             } catch (e) {
-                console.log(e)
+                // console.log(e)
                 return BehaviorResult.FAILURE;
             }
         }
@@ -188,7 +188,7 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
                 creep.memory.movePos = undefined;
                 creep.memory.moveRange = undefined;
                 delete Routes[creep.name];
-                console.log('ERR_NOT_FOUND')
+                // console.log('ERR_NOT_FOUND')
                 return BehaviorResult.FAILURE;
             } else if (result === OK) {
                 return BehaviorResult.INPROGRESS;
@@ -197,7 +197,7 @@ export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
             }
         } catch (e) {
             // Whether error encountered or execution fell through, the path failed
-            console.log(e);
+            // console.log(e);
             creep.memory.movePos = undefined;
             creep.memory.moveRange = undefined;
             delete Routes[creep.name];
