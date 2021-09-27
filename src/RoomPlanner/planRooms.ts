@@ -9,8 +9,10 @@ export const planRooms = profiler.registerFN(() => {
 
     for (let room in Memory.rooms) {
         if (Memory.roomPlans[room]?.complete) continue; // Already planned
+        if (!Memory.rooms[room].controllerId) continue; // No controller or room hasn't been properly scanned yet
         if (Game.cpu.getUsed() - start <= 5) {
             generateRoomPlans(room);
         }
+        Game.rooms[room].visual.circle
     }
 }, 'planRooms')

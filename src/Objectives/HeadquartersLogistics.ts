@@ -40,19 +40,14 @@ export class HeadquartersLogisticsObjective extends Objective {
     spawn() {
         for (let office in Memory.offices) {
             const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
+            let actual = this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > 100).length;
 
             // Only needed if we have central HQ structures
             const hq = roomPlans(office)?.headquarters;
-            if (!(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure)) {
-                continue;
-            }
-
-            if (franchiseIncomePerTick(office) <= 0 ) continue; // Only spawn logistics minions if we have active Franchises
-
-            let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
-            let cost = minionCostPerTick(body);
-            let actual = this.minions(office).filter(c => !c.ticksToLive || c.ticksToLive > 100).length;
-            if (cost >= budget) {
+            if (
+                !(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure) ||
+                (franchiseIncomePerTick(office) <= 0 && (hq.storage.structure as StructureStorage).store.getUsedCapacity(RESOURCE_ENERGY) === 0) ||
+                budget === 0) {
                 this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: actual})
                 continue;
             }

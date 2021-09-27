@@ -11,7 +11,7 @@ export default () => {
                 if (!s.structure) {
                     s.visualize();
                 } else {
-                    new RoomVisual(room).rect(s.pos.x - 1, s.pos.y - 1, 2, 2, { stroke: 'yellow', fill: 'transparent', lineStyle: 'dashed' })
+                    new RoomVisual(s.pos.roomName).rect(s.pos.x - 1, s.pos.y - 1, 2, 2, { stroke: 'yellow', fill: 'transparent', lineStyle: 'dashed' })
                 }
             });
     }
