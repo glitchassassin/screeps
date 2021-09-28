@@ -29,14 +29,7 @@ export class UpgradeObjective extends Objective {
     shouldSpawn(office: string, budget: number) {
         // Spawn based on maximizing use of available energy
         let target = Math.floor(budget / this.cost(office));
-        let storageSurplus = heapMetrics[office]?.storageLevel ? (Metrics.avg(heapMetrics[office].storageLevel) > getStorageBudget(office)) : false
         const minions = this.minions(office);
-        target += ((Game.rooms[office]?.controller?.ticksToDowngrade ?? Infinity) < 10000) ? 1 : 0
-
-        // Spawn a new upgrader if the 100-tick average storage level is higher than the budget
-        if (storageSurplus && !minions.some(creep => creep.ticksToLive && creep.ticksToLive > (CREEP_LIFE_TIME - 100))) {
-            target += 1;
-        }
 
         this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: minions.length})
 

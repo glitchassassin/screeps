@@ -68,7 +68,8 @@ function recalculateTerritories() {
             .filter(([t, data]) => data?.office === office)
             .sort(([_1, data1], [_2, data2]) => data2.score - data1.score);
 
-        let spawnCapacity = CREEP_LIFE_TIME * getSpawns(office).length;
+        let efficiency = 0.75;
+        let spawnCapacity = CREEP_LIFE_TIME * getSpawns(office).length * efficiency;
         Memory.offices[office].territories = [];
         for (let [territory, data] of targets) {
             if (data.sources === 0) continue;

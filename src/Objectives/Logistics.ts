@@ -21,6 +21,7 @@ import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
 import profiler from "utils/profiler";
+import { FranchiseObjectives } from "./Franchise";
 import { Objective } from "./Objective";
 
 declare global {
@@ -50,7 +51,7 @@ export class LogisticsObjective extends Objective {
         // Etc.
         let storageLevel = heapMetrics[office]?.storageLevel ? Metrics.avg(heapMetrics[office].storageLevel) : storageEnergyAvailable(office)
         let storageAdjustment = Math.max(0, (-1 * ((
-            storageLevel / storageBudget
+            1.5 * (storageLevel / storageBudget)
         ) - 1) + 1))
 
         // console.log(office, storageAdjustment);
@@ -148,6 +149,7 @@ export class LogisticsObjective extends Objective {
                     // Get energy from a franchise
                     let bestTarget = undefined;
                     let bestAmount = 0;
+                    let bestDistance = Infinity;
                     for (let id of franchisesByOffice(creep.memory.office)) {
                         let capacity = 0;
                         let assigned = logisticsObjectives.get(id) ?? new Set();
@@ -158,12 +160,11 @@ export class LogisticsObjective extends Objective {
                             capacity += byId(creepId)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0
                         }
                         const amount = franchiseEnergyAvailable(id) - capacity;
-                        if (amount > bestAmount) {
+                        const distance = FranchiseObjectives[`FranchiseObjective|${id}`].distance;
+                        if ((distance < bestDistance && bestAmount >= creep.store.getFreeCapacity(RESOURCE_ENERGY)) || (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))) {
                             bestTarget = id;
                             bestAmount = amount;
-                        }
-                        if (amount >= creep.store.getFreeCapacity(RESOURCE_ENERGY)) {
-                            break;
+                            bestDistance = distance;
                         }
                     }
                     if (bestTarget) {
