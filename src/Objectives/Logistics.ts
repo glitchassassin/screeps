@@ -161,7 +161,10 @@ export class LogisticsObjective extends Objective {
                         }
                         const amount = franchiseEnergyAvailable(id) - capacity;
                         const distance = FranchiseObjectives[`FranchiseObjective|${id}`].distance;
-                        if ((distance < bestDistance && bestAmount >= creep.store.getFreeCapacity(RESOURCE_ENERGY)) || (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))) {
+                        if (
+                            (distance < bestDistance && amount >= Math.min(bestAmount, creep.store.getFreeCapacity(RESOURCE_ENERGY))) ||
+                            (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))
+                        ) {
                             bestTarget = id;
                             bestAmount = amount;
                             bestDistance = distance;

@@ -126,7 +126,7 @@ export class FacilitiesObjective extends Objective {
             }
         }
         if (creep.memory.state === States.WORKING) {
-            if (!creep.memory.facilitiesTarget && (Game.rooms[creep.memory.office].controller?.level ?? 0) < 4) {
+            if (!creep.memory.facilitiesTarget) {
                 // No construction - upgrade instead
                 const controller = Game.rooms[creep.memory.office]?.controller
                 if (!controller) return;

@@ -36,7 +36,7 @@ export class UpgradeObjective extends Objective {
         return minions.length < target; // Upgrading is capped at RCL8, spawn only one
     }
     cost(office: string) {
-        let body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office));
+        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
         let cost = minionCostPerTick(body) + body.filter(p => p === WORK).length;
         return cost;
     }
@@ -69,7 +69,7 @@ export class UpgradeObjective extends Objective {
                     office,
                     this.id,
                     MinionTypes.PARALEGAL,
-                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))
+                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office) / 2)
                 )({
                     preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn
                 })
