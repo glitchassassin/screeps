@@ -1,9 +1,9 @@
 
 
 export const FEATURES = {
-    MINING: false, //Game.shard.name.startsWith('shard') ? true: false
-    LABS: false,
-    WHITELIST: false,
+    MINING: true,
+    LABS: true,
+    WHITELIST: true,
 }
 
 /**
