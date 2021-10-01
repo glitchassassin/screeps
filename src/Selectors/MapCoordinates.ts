@@ -106,13 +106,13 @@ export const getCostMatrix = memoizeByTick(
             // Block out radius of 5 around protected sources
             for (let source of sourcePositions(roomName)) {
                 for (let pos of calculateNearbyPositions(source, 5, true)) {
-                    costs.set(pos.x, pos.y, 255)
+                    costs.set(pos.x, pos.y, 254)
                 }
             }
             const mineral = mineralPosition(roomName);
             if (mineral) {
                 for (let pos of calculateNearbyPositions(mineral, 5, true)) {
-                    costs.set(pos.x, pos.y, 255)
+                    costs.set(pos.x, pos.y, 254)
                 }
             }
         }
@@ -291,4 +291,18 @@ export function getClosestOffice(roomName: string) {
         }
     }
     return closest;
+}
+export function terrainCosts(creep: Creep) {
+    const ignoreCarryParts = (creep.store.getUsedCapacity() === 0)
+    const moveParts = creep.getActiveBodyparts(MOVE);
+    const bodyLength = creep.body.filter(p => p.type !== MOVE && (ignoreCarryParts || p.type !== CARRY)).length;
+    const efficiency = 1 / (moveParts / bodyLength);
+    const ignoreRoads = (efficiency <= 0.5);
+    const plainsBase = ignoreRoads ? 1 : 2;
+    const swampBase = ignoreRoads ? 5 : 10;
+    const costs = {
+        plainCost: Math.max(1, Math.min(plainsBase, Math.ceil(plainsBase * efficiency))),
+        swampCost: Math.max(1, Math.min(swampBase, Math.ceil(swampBase * efficiency))),
+    }
+    return costs;
 }

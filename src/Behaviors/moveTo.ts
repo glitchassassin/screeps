@@ -1,5 +1,5 @@
 import { BehaviorResult } from "Behaviors/Behavior";
-import { calculateNearbyPositions, getCostMatrix, isPositionWalkable } from "Selectors/MapCoordinates";
+import { calculateNearbyPositions, getCostMatrix, isPositionWalkable, terrainCosts } from "Selectors/MapCoordinates";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import { packPos } from "utils/packrat";
 import profiler from "utils/profiler";
@@ -80,8 +80,7 @@ export class Route {
                 if (!this.rooms?.includes(room)) return false;
                 return getCostMatrix(room, avoidCreeps)
             },
-            plainCost: 2,
-            swampCost: 10,
+            ...terrainCosts(creep),
             maxRooms: 1,
         })
         if (!route || route.incomplete) throw new Error(`Unable to plan route ${creep.pos} ${positionsInRange}`);
