@@ -12,6 +12,7 @@ import { labsShouldBeEmptied } from "Selectors/labsShouldBeEmptied";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
+import { boostLabsToEmpty, boostLabsToFill, boostsNeededForLab, shouldHandleBoosts } from "Selectors/shouldHandleBoosts";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getAvailableResourcesFromTerminal, getLabOrderDependencies } from "Structures/Labs/getLabOrderDependencies";
 import { LabOrder } from "Structures/Labs/LabOrder";
@@ -34,6 +35,13 @@ export class ScienceObjective extends Objective {
         return minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
     }
     budget(office: string, energy: number) {
+        if (!roomPlans(office)?.labs?.labs.some(l => l.structure) || !roomPlans(office)?.headquarters?.terminal.structure) {
+            return {
+                cpu: 0,
+                spawn: 0,
+                energy: 0
+            }
+        }
         let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
         let cost = minionCostPerTick(body);
         return {
@@ -50,7 +58,7 @@ export class ScienceObjective extends Objective {
             const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             if (
                 rcl(office) < 6 || roomPlans(office)?.labs?.labs.every(e => !e.structure) || // No labs
-                budget < this.cost(office)
+                budget === 0
             ) {
                 this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
                 continue;
@@ -74,7 +82,92 @@ export class ScienceObjective extends Objective {
     }
 
     action(creep: Creep) {
-        const order = Memory.offices[creep.memory.office].labOrders?.find(o => o.amount > 0) as LabOrder|undefined;
+        if (shouldHandleBoosts(creep.memory.office)) {
+            this.handleBoosts(creep);
+        } else {
+            this.handleLabOrders(creep);
+        }
+    }
+
+    handleBoosts(creep: Creep) {
+        if ((creep.ticksToLive ?? 1500) < 200) {
+            setState(States.RENEW)(creep)
+        } else if (boostLabsToEmpty(creep.memory.office).length > 0 && creep.memory.state !== States.DEPOSIT) {
+            setState(States.EMPTY_LABS)(creep)
+        } else if (!creep.memory.state) {
+            setState(States.DEPOSIT)(creep)
+        }
+
+        if (creep.memory.state === States.RENEW) {
+            if (renewAtSpawn(creep) === BehaviorResult.SUCCESS) {
+                setState(States.DEPOSIT)(creep);
+            }
+            return;
+        }
+
+        const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure
+        if (!terminal) return;
+
+        if (creep.memory.state === States.DEPOSIT) {
+            if (moveTo(terminal.pos)(creep) === BehaviorResult.SUCCESS) {
+                const toDeposit = Object.keys(creep.store)[0] as ResourceConstant|undefined;
+                if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
+                    return; // Other resources deposited
+                } else {
+                    // Nothing further to deposit
+                    setState(States.WITHDRAW)(creep)
+                }
+            }
+        }
+        if (creep.memory.state === States.WITHDRAW) {
+            if (moveTo(terminal.pos)(creep) === BehaviorResult.SUCCESS) {
+                if (creep.store.getFreeCapacity() > 0) {
+                    for (const lab of boostLabsToFill(creep.memory.office)) {
+                        const [resource, needed] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
+                        if (!resource || !needed || creep.store.getUsedCapacity(resource) >= needed) continue;
+                        // Need to get some of this resource
+                        creep.withdraw(terminal, resource, Math.min(needed, creep.store.getFreeCapacity()));
+                        return;
+                    }
+                    // No more resources to get
+                    setState(States.FILL_LABS)(creep)
+                }
+            }
+        }
+        if (creep.memory.state === States.EMPTY_LABS) {
+            const target = boostLabsToEmpty(creep.memory.office)[0];
+            const resource = Object.keys(((target.structure as StructureLab)?.store ?? {}))[0] as ResourceConstant|undefined
+            if (!target.structure || !resource || creep.store.getFreeCapacity() === 0) {
+                setState(States.DEPOSIT)(creep);
+                return;
+            }
+            if (moveTo(target.pos)(creep) === BehaviorResult.SUCCESS) {
+                creep.withdraw(target.structure, resource);
+            }
+        }
+        if (creep.memory.state === States.FILL_LABS) {
+            const target = boostLabsToFill(creep.memory.office).find(lab => {
+                const [resource] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
+                return creep.store.getUsedCapacity(resource) > 0;
+            })
+
+            if (!target?.structure) {
+                setState(States.DEPOSIT)(creep);
+                return;
+            }
+            const [resource, amount] = boostsNeededForLab(creep.memory.office, target.structureId as Id<StructureLab>|undefined);
+            if (!resource || !amount) {
+                setState(States.DEPOSIT)(creep);
+                return;
+            }
+            if (moveTo(target.pos)(creep) === BehaviorResult.SUCCESS) {
+                creep.transfer(target.structure, resource, amount);
+            }
+        }
+    }
+
+    handleLabOrders(creep: Creep) {
+        const order = Memory.offices[creep.memory.office].lab.orders.find(o => o.amount > 0) as LabOrder|undefined;
 
         if ((creep.ticksToLive ?? 1500) < 200) {
             setState(States.RENEW)(creep)
@@ -136,9 +229,9 @@ export class ScienceObjective extends Objective {
                     return; // Ingredients withdrawn
                 } else if (target1 > 0 || target2 > 0) {
                     // No ingredients available, recalculate lab orders
-                    const orders = Memory.offices[creep.memory.office].labOrders;
+                    const orders = Memory.offices[creep.memory.office].lab.orders;
                     const targetOrder = orders[orders.length - 1]
-                    Memory.offices[creep.memory.office].labOrders = getLabOrderDependencies(
+                    Memory.offices[creep.memory.office].lab.orders = getLabOrderDependencies(
                         targetOrder,
                         getAvailableResourcesFromTerminal(terminal)
                     ).concat(targetOrder);

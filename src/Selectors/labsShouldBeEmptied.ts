@@ -2,7 +2,7 @@ import { LabOrder } from "Structures/Labs/LabOrder";
 import { getLabs } from "./getLabs";
 
 export function labsShouldBeEmptied(office: string) {
-    const order = Memory.offices[office].labOrders?.find(o => o.amount > 0) as LabOrder|undefined;
+    const order = Memory.offices[office].lab.orders?.find(o => o.amount > 0) as LabOrder|undefined;
     if (!order) return true;
     const { inputs, outputs } = getLabs(office);
     const [lab1, lab2] = inputs.map(s => s.structure) as (StructureLab|undefined)[];

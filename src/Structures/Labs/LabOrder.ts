@@ -4,9 +4,20 @@ export interface LabOrder {
     output: ResourceConstant,
     amount: number,
 }
+export interface BoostOrder {
+    id: Id<Creep>,
+    boosts: {type: MineralBoostConstant, count: number}[],
+}
 
 declare global {
     interface OfficeMemory {
-        labOrders: LabOrder[]
+        lab: {
+            orders: LabOrder[],
+            boosts: BoostOrder[]
+            boostingLabs: {
+                id: Id<StructureLab>,
+                resource: MineralBoostConstant
+            }[]
+        }
     }
 }

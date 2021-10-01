@@ -17,6 +17,7 @@ import { lookNear } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
+import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
@@ -37,6 +38,13 @@ export class LogisticsObjective extends Objective {
         // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
         const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10
 
+        // If we have franchise links, assume they'll handle 10e/t each
+        const netEnergy = Math.max(0,
+            energy -
+            (roomPlans(office)?.franchise1?.link.structure ? 10 : 0) -
+            (roomPlans(office)?.franchise2?.link.structure ? 10 : 0)
+        )
+
         let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable, 50, roads);
         let cost = minionCostPerTick(body);
         let distance = (franchiseDistances(office) / franchiseCount(office)) * 2;
@@ -56,7 +64,7 @@ export class LogisticsObjective extends Objective {
 
         // console.log(office, storageAdjustment);
 
-        let targetCarry = (distance * energy * storageAdjustment) / CARRY_CAPACITY;
+        let targetCarry = (distance * netEnergy * storageAdjustment) / CARRY_CAPACITY;
 
         let count = Math.ceil(targetCarry / body.filter(c => c === CARRY).length);
         count = isNaN(count) ? 0 : count;

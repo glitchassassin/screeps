@@ -49,7 +49,7 @@ export class TowerLogisticsObjective extends Objective {
             const hq = roomPlans(office)?.headquarters;
 
             const towersNeedRefilled = hq?.towers.some(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > CARRY_CAPACITY * 3)
-            if (budget < this.cost(office) || !towersNeedRefilled || storageEnergyAvailable(office) === 0) {
+            if (budget === 0 || !towersNeedRefilled || storageEnergyAvailable(office) === 0) {
                 this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
                 continue
             }

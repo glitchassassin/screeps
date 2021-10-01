@@ -42,6 +42,8 @@ export function getLabOrderDependencies(order: LabOrder, availableResources: Map
 
 export function getLabOrders(ingredient: ResourceConstant, amount: number, terminal: StructureTerminal) {
     const available = getAvailableResourcesFromTerminal(terminal);
+    // Don't count existing quantity of this ingredient
+    available.set(ingredient, 0);
     const target = getOrderForIngredient(ingredient, amount, available);
     if (target) {
         return getLabOrderDependencies(target, available).concat(target);

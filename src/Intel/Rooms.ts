@@ -1,3 +1,4 @@
+import { MINERALS } from "gameConstants";
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
 import { findHostileCreeps } from "Selectors/findHostileCreeps";
@@ -91,21 +92,35 @@ export const scanRooms = profiler.registerFN(() => {
                     resourceQuotas: {
                         [RESOURCE_ENERGY]: 10000,
                     },
-                    labOrders: []
+                    lab: {
+                        orders: [],
+                        boosts: [],
+                        boostingLabs: [],
+                    }
                 }
                 destroyUnplannedStructures(room);
             }
-            Memory.offices[room].labOrders ??= [{
-                ingredient1: RESOURCE_ZYNTHIUM,
-                ingredient2: RESOURCE_KEANIUM,
-                output: RESOURCE_ZYNTHIUM_KEANITE,
-                amount: 3000
-            }]
+            Memory.offices[room].lab ??= {
+                orders: [],
+                boosts: [],
+                boostingLabs: [],
+            }
+            // TODO Remove patch
+            Memory.offices[room].lab.boostingLabs ??= [];
+
             Memory.offices[room].resourceQuotas = {
                 [RESOURCE_ENERGY]: 10000
             }
             for (let m of ownedMinerals()) {
                 Memory.offices[room].resourceQuotas[m as ResourceConstant] = 3000
+            }
+            for (let o of Memory.offices[room].lab.orders) {
+                if (MINERALS.includes(o.ingredient1)) {
+                    Memory.offices[room].resourceQuotas[o.ingredient1] = 3000
+                }
+                if (MINERALS.includes(o.ingredient2)) {
+                    Memory.offices[room].resourceQuotas[o.ingredient2] = 3000
+                }
             }
 
         }

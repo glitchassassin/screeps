@@ -54,7 +54,7 @@ export class MineObjective extends Objective {
             const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
 
             // Check local reserves
-            if (!officeShouldMine(office) || budget < this.cost(office)) continue;
+            if (!officeShouldMine(office) || budget === 0) continue;
             const targetForemen = this.targetForemen(office);
             const targetCarry = this.targetCarry(office);
             const foremen = this.assigned.map(byId).filter(c => c?.memory.office === office && c.memory.type === MinionTypes.FOREMAN).length

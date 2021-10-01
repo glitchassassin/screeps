@@ -77,7 +77,7 @@ export class FranchiseObjective extends Objective {
 
         const workParts = this.assigned.map(byId)
             .filter(c => (!c?.ticksToLive || !c.memory.arrivedAtFranchise) ||
-                        (c.ticksToLive < c.memory.arrivedAtFranchise))
+                        (c.ticksToLive > c.memory.arrivedAtFranchise))
             .reduce((sum, c) => sum + (c?.getActiveBodyparts(WORK) ?? 0), 0)
         const efficiency = Math.min(1, (workParts / 5))
 
@@ -122,6 +122,13 @@ export class FranchiseObjective extends Objective {
             (Game.cpu.limit / Object.keys(Memory.offices).length) < 12 // Or when available CPU drops below 12/room
         )) return;
 
+        // Maintain enough Salesman to capitalize the source
+        const salesmanBody = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(this.office));
+        const workPartsPerSalesman = salesmanBody.filter(p => p === WORK).length;
+        const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
+        const maxSalesmen = adjacentWalkablePositions(franchisePos, true).length;
+        const target = Math.min(maxSalesmen, salesmenPerFranchise);
+
         let salesmen = 0;
         for (let a of this.assigned) {
             const c = byId(a);
@@ -129,16 +136,10 @@ export class FranchiseObjective extends Objective {
             if (
                 c.memory.type === MinionTypes.SALESMAN && (
                     (!c.ticksToLive || !c.memory.arrivedAtFranchise) ||
-                    (c.ticksToLive < c.memory.arrivedAtFranchise)
+                    (c.ticksToLive > (c.memory.arrivedAtFranchise + (salesmanBody.length * CREEP_SPAWN_TIME)))
                 )
             ) salesmen += 1;
         }
-
-        // Maintain enough Salesman to capitalize the source
-        const workPartsPerSalesman = Math.min(5, Math.floor((spawnEnergyAvailable(this.office) - 50) / 100));
-        const salesmenPerFranchise = Math.ceil(5 / workPartsPerSalesman);
-        const maxSalesmen = adjacentWalkablePositions(franchisePos, true).length;
-        const target = Math.min(maxSalesmen, salesmenPerFranchise);
         // Pre-spawn salesmen
 
         let result: ScreepsReturnCode = OK;

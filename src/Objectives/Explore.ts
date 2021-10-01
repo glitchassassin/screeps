@@ -40,9 +40,7 @@ export class ExploreObjective extends Objective {
             const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
             if (getTerritoryIntent(office) === TerritoryIntent.DEFEND) return;
             if (franchiseIncomePerTick(office) <= 0 || calculateLogisticsThroughput(office) <= 0) return;
-            let body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office));
-            let cost = minionCostPerTick(body);
-            const target = (budget >= cost) ? 1 : 0;
+            const target = (budget > 0) ? 1 : 0;
             const actual = this.minions(office).length;
 
             this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: actual})

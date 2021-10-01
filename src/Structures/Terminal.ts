@@ -1,4 +1,5 @@
 import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
+import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 
@@ -30,24 +31,46 @@ export const runTerminals = profiler.registerFN(function runTerminals() {
         }
     }
     for (let [resource, [office, amount]] of maxSurpluses) {
-        if (terminalsUsed.has(office)) continue; // Already sent resources this tick
+        const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal|undefined;
+        if (terminalsUsed.has(office) || !terminal || terminal?.cooldown) continue; // Already sent resources this tick
+        if (resource === RESOURCE_ENERGY && rcl(office) !== 8) continue; // Surplus energy should go to upgrading this room
 
         const [targetOffice, targetAmount] = maxDeficits.get(resource) ?? [];
-        if (targetOffice && targetAmount) {
+        if (targetOffice && targetAmount && targetAmount > TERMINAL_SEND_THRESHOLD) {
             // Office should transfer resource to targetOffice
             const transferAmount = Math.min(Math.abs(amount), Math.abs(targetAmount));
-            const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal;
-            if (terminal && transferAmount > TERMINAL_SEND_THRESHOLD) {
+            if (transferAmount > TERMINAL_SEND_THRESHOLD) {
                 if (terminal.send(resource, transferAmount, targetOffice, 'BalancingResources') === OK) {
                     terminalsUsed.add(office);
                 }
             }
         } else if (resource !== RESOURCE_ENERGY && amount > TERMINAL_SEND_THRESHOLD) {
             // Do not sell surplus energy
-            const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal;
-            if (terminal) {
-                const order = _.max(Game.market.getAllOrders(o => o.resourceType === resource && o.type === ORDER_BUY), o => o.price)
-                if (order) Game.market.deal(order.id, amount, office)
+            const order = _.max(Game.market.getAllOrders(o => o.resourceType === resource && o.type === ORDER_BUY && o.amount > 0), o => o.price)
+
+            if (order) {
+                Game.market.deal(order.id, Math.min(amount, order.amount), office)
+            }
+        }
+    }
+    for (let [resource, [office, amount]] of maxDeficits) {
+        const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal|undefined;
+        if (terminalsUsed.has(office) || !terminal || terminal?.cooldown) continue; // Already sent resources this tick
+        if (resource === RESOURCE_ENERGY) continue; // don't buy energy
+
+        const [targetOffice] = maxSurpluses.get(resource) ?? [];
+        if (!targetOffice && Math.abs(amount) > TERMINAL_SEND_THRESHOLD) {
+            // No surplus of this product available, buy it on the market
+            const order = _.min(Game.market.getAllOrders(o => o.resourceType === resource && o.type === ORDER_SELL && o.amount > 0 && o.price < Game.market.credits), o => o.price)
+            if (order) {
+                const result = Game.market.deal(order.id, Math.min(Math.abs(amount), order.amount), office)
+                // console.log(
+                //     result,
+                //     JSON.stringify(order, null, 2),
+                //     Math.min(Math.abs(amount), order.amount),
+                //     office,
+                //     order.roomName ? Game.market.calcTransactionCost(Math.min(Math.abs(amount), order.amount), office, order.roomName) : 0
+                // )
             }
         }
     }

@@ -59,9 +59,9 @@ export const MinionBuilders = {
             return [];
         }
         else {
-            // Maintain 5-1 WORK-MOVE ratio
-            let workParts = Math.min(40, Math.floor((10/11 * energy) / 100))
-            let moveParts = Math.min(8, Math.floor((1/11 * energy) / 50))
+            // Maintain 4-1 WORK-MOVE ratio
+            let workParts = Math.min(40, Math.floor((8/9 * energy) / 100))
+            let moveParts = Math.min(10, Math.floor((1/9 * energy) / 50))
             return ([] as BodyPartConstant[]).concat(
                 Array(workParts).fill(WORK),
                 Array(moveParts).fill(MOVE)

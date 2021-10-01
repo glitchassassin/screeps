@@ -25,8 +25,7 @@ declare global {
 export class AcquireObjective extends Objective {
     spawnLawyersTarget(office: string, budget: number) {
         // No need to spawn more than one Lawyer
-        return (officeShouldClaimAcquireTarget(office) &&
-            minionCostPerTick(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))) <= budget) ?
+        return (officeShouldClaimAcquireTarget(office) && budget > 0) ?
             1 :
             0
     }

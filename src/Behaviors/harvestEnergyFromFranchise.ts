@@ -37,7 +37,7 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
     }
 
     // Prefer to work from container position, fall back to adjacent position
-    let result;
+    let result = BehaviorResult.SUCCESS;
     if (
         plan &&
         !creep.pos.isEqualTo(plan.container.pos) &&
