@@ -6,6 +6,9 @@ export const runCreepObjective = profiler.registerFN((creep: Creep) => {
     if (!Objectives[creep.memory.objective].assigned.includes(creep.id)) {
         Objectives[creep.memory.objective].assigned.push(creep.id);
     }
-    if (creep.spawning) return;
-    Objectives[creep.memory.objective].action(creep);
+    if (creep.spawning) {
+        Objectives[creep.memory.objective].preSpawnAction(creep);
+    } else {
+        Objectives[creep.memory.objective].action(creep);
+    }
 }, 'runCreepObjective')

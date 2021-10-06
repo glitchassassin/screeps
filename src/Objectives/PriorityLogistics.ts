@@ -1,9 +1,11 @@
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
+import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import profiler from "utils/profiler";
 import { FranchiseObjectives } from "./Franchise";
@@ -35,9 +37,17 @@ export class PriorityLogisticsObjective extends Objective {
             const pos = posById(franchise.sourceId);
             if (!pos) continue;
 
-            let salesmanCostPerTick = 650 / 1500;
+            if (getFranchisePlanBySourceId(franchise.sourceId)?.link.structure) {
+                continue; // Ignore franchises that have a link
+            }
 
-            energyCapacity += salesmanCostPerTick * franchise.distance * 2;
+            let salesmanCostPerTick = 650 / CREEP_LIFE_TIME;
+            // Since multiple CLAIM parts let us space out spawning,
+            // we'll count the baseline as a constant 1CLAIM/1M minion
+            let reserverCostPerTick = (rcl(office) > 2) ? (650 / CREEP_CLAIM_LIFE_TIME) : 0;
+
+            energyCapacity += (salesmanCostPerTick + reserverCostPerTick) * franchise.distance * 2;
+
             minDistance = Math.min(franchise.distance, minDistance);
         }
 
@@ -62,16 +72,16 @@ export class PriorityLogisticsObjective extends Objective {
 
             const targetMinions = Math.ceil(targetCarry / MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 25, roads).filter(p => p === CARRY).length)
 
-            this.metrics.set(office, {spawnQuota: targetMinions, minions: this.minions(office).length})
+            this.metrics.set(office, {spawnQuota: targetMinions, energyBudget: Budgets.get(office)?.get(this.id)?.energy, minions: Objectives['LogisticsObjective'].minions(office).length})
 
             let result: ScreepsReturnCode = OK;
             if (actualCarry < targetCarry && accountants < cpuLimit) {
-                spawnMinion(
+                this.recordEnergyUsed(office, spawnMinion(
                     office,
-                    this.id,
+                    'LogisticsObjective',
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 25, roads)
-                )()
+                )())
             }
         }
     }

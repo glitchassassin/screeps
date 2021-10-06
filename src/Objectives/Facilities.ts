@@ -9,8 +9,11 @@ import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { costPerEngineer } from "Selectors/costPerEngineer";
 import { constructionToDo, facilitiesEfficiency, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { getStorageBudget } from "Selectors/getStorageBudget";
+import { rcl } from "Selectors/rcl";
 import { repairCostsPerTick } from "Selectors/repairCostsPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -80,12 +83,12 @@ export class FacilitiesObjective extends Objective {
             this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: actual})
 
             if (target > actual) {
-                spawnMinion(
+                this.recordEnergyUsed(office, spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ENGINEER,
                     MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office))
-                )()
+                )())
             }
         }
     }
@@ -126,7 +129,13 @@ export class FacilitiesObjective extends Objective {
             }
         }
         if (creep.memory.state === States.WORKING) {
-            if (!creep.memory.facilitiesTarget) {
+            if (
+                !creep.memory.facilitiesTarget &&
+                (
+                    rcl(creep.memory.office) < 4 ||
+                    storageEnergyAvailable(creep.memory.office) > getStorageBudget(creep.memory.office)
+                )
+            ) {
                 // No construction - upgrade instead
                 const controller = Game.rooms[creep.memory.office]?.controller
                 if (!controller) return;
@@ -140,7 +149,9 @@ export class FacilitiesObjective extends Objective {
 
                 if (moveTo(plan.pos, 3)(creep) === BehaviorResult.SUCCESS) {
                     if (plan.structure) {
-                        creep.repair(plan.structure);
+                        if (creep.repair(plan.structure) === OK) {
+                            this.recordEnergyUsed(creep.memory.office, (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length);
+                        }
                     } else {
                         // Create construction site if needed
                         plan.pos.createConstructionSite(plan.structureType)
@@ -149,7 +160,9 @@ export class FacilitiesObjective extends Objective {
                             plan.pos.lookFor(LOOK_CREEPS)[0]?.giveWay();
                         }
                         if (plan.constructionSite) {
-                            creep.build(plan.constructionSite);
+                            if (creep.build(plan.constructionSite) === OK) {
+                                this.recordEnergyUsed(creep.memory.office, BUILD_POWER * creep.body.filter(p => p.type === WORK).length);
+                            }
                         }
                     }
                     plan.survey()

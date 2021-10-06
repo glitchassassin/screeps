@@ -84,7 +84,7 @@ export class MineObjective extends Objective {
 
             // For each available spawn, up to the target number of minions,
             // try to spawn a new minion
-            spawnQueue.forEach((spawner, i) => spawner());
+            spawnQueue.forEach((spawner, i) => this.recordEnergyUsed(office, spawner()));
         }
     }
 

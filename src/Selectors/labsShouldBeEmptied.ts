@@ -1,4 +1,4 @@
-import { LabOrder } from "Structures/Labs/LabOrder";
+import { LabOrder } from "Objectives/Labs/LabOrder";
 import { getLabs } from "./getLabs";
 
 export function labsShouldBeEmptied(office: string) {
@@ -9,8 +9,8 @@ export function labsShouldBeEmptied(office: string) {
 
     // Return true if input labs have foreign ingredients, or output labs have an old product
     return (
-        Object.keys(lab1?.store ?? {}).some(k => k !== order.ingredient1) ||
-        Object.keys(lab2?.store ?? {}).some(k => k !== order.ingredient2) ||
-        outputs.some(l => Object.keys((l.structure as StructureLab)?.store ?? {}).some(k => k !== order.output))
+        (lab1?.mineralType && lab1?.mineralType !== order.ingredient1) ||
+        (lab2?.mineralType && lab2?.mineralType !== order.ingredient2) ||
+        outputs.some(l => (l.structure as StructureLab|undefined)?.mineralType && (l.structure as StructureLab|undefined)?.mineralType !== order.output)
     )
 }

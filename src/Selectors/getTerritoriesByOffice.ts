@@ -5,7 +5,7 @@ import { costMatrixFromRoomPlan } from "./costMatrixFromRoomPlan";
 import { calculateNearbyRooms, getClosestOffice, isSourceKeeperRoom } from "./MapCoordinates";
 import { serializePlannedStructures } from "./plannedStructures";
 import { sourcePositions } from "./roomCache";
-import { getSpawns, roomPlans } from "./roomPlans";
+import { roomPlans } from "./roomPlans";
 import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
 
 interface TerritoryData {
@@ -69,7 +69,7 @@ function recalculateTerritories() {
             .sort(([_1, data1], [_2, data2]) => data2.score - data1.score);
 
         let efficiency = 0.75;
-        let spawnCapacity = CREEP_LIFE_TIME * getSpawns(office).length * efficiency;
+        let spawnCapacity = CREEP_LIFE_TIME * efficiency; // Only count one spawn towards remote territories
         Memory.offices[office].territories = [];
         for (let [territory, data] of targets) {
             if (data.sources === 0) continue;

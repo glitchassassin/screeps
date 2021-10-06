@@ -295,7 +295,7 @@ export function getClosestOffice(roomName: string) {
 export function terrainCosts(creep: Creep) {
     const ignoreCarryParts = (creep.store.getUsedCapacity() === 0)
     const moveParts = creep.getActiveBodyparts(MOVE);
-    const bodyLength = creep.body.filter(p => p.type !== MOVE && (ignoreCarryParts || p.type !== CARRY)).length;
+    const bodyLength = creep.body.filter(p => p.type !== MOVE && (!ignoreCarryParts || p.type !== CARRY)).length;
     const efficiency = 1 / (moveParts / bodyLength);
     const ignoreRoads = (efficiency <= 0.5);
     const plainsBase = ignoreRoads ? 1 : 2;

@@ -1,22 +1,36 @@
+import { States } from "Behaviors/states";
+import { byId } from "Selectors/byId";
 import { getLabs } from "Selectors/getLabs";
 
 export function runLabs(roomName: string) {
     // Set boosting labs for all queued resources
+    const newBoostingLabs: {
+        id: Id<StructureLab>;
+        resource: MineralBoostConstant;
+    }[] = [];
     set_boosting_labs:
     for (const order of Memory.offices[roomName].lab.boosts) {
+        if (byId(order.id)?.memory.state !== States.GET_BOOSTED) {
+            Memory.offices[roomName].lab.boosts = Memory.offices[roomName].lab.boosts.filter(o => o.id !== order.id);
+            continue;
+        }
         for (let boost of order.boosts) {
-            if (!Memory.offices[roomName].lab.boostingLabs.some(l => l.resource === boost.type)) {
+            const boostingLab = Memory.offices[roomName].lab.boostingLabs.find(l => l.resource === boost.type)
+            if (boostingLab && !newBoostingLabs.includes(boostingLab)) {
+                newBoostingLabs.push(boostingLab);
+            } else if (!newBoostingLabs.some(l => l.resource === boost.type)){
                 // dedicate an available lab
                 const labs = getLabs(roomName);
                 const availableLab = labs.inputs.concat(labs.outputs).filter(l => l.structureId).slice(-1)[0];
                 if (!availableLab) break set_boosting_labs;
-                Memory.offices[roomName].lab.boostingLabs.push({
+                newBoostingLabs.push({
                     id: availableLab.structureId as Id<StructureLab>,
                     resource: boost.type
                 })
             }
         }
     }
+    Memory.offices[roomName].lab.boostingLabs = newBoostingLabs;
 
     // Run reaction orders
     const order = Memory.offices[roomName].lab.orders[0];

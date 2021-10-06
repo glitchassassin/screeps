@@ -13,6 +13,7 @@ import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { franchiseCount, franchiseDistances } from "Selectors/franchiseStatsPerTick";
 import { getStorageBudget } from "Selectors/getStorageBudget";
+import { linkUsedCapacity } from "Selectors/linkUsedCapacity";
 import { lookNear } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
@@ -38,13 +39,6 @@ export class LogisticsObjective extends Objective {
         // If RCL > 3, and we have fewer than ten roads to construct, use beefier Accountants
         const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10
 
-        // If we have franchise links, assume they'll handle 10e/t each
-        const netEnergy = Math.max(0,
-            energy -
-            (roomPlans(office)?.franchise1?.link.structure ? 10 : 0) -
-            (roomPlans(office)?.franchise2?.link.structure ? 10 : 0)
-        )
-
         let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable, 50, roads);
         let cost = minionCostPerTick(body);
         let distance = (franchiseDistances(office) / franchiseCount(office)) * 2;
@@ -52,19 +46,24 @@ export class LogisticsObjective extends Objective {
         // Adjust for storage surplus
         const storageBudget = getStorageBudget(office);
 
-        // 2 = 0% of budget
+        // 3 = 0% of budget
         // 1 = 100% of budget
-        // 0.25 = 200% of budget
-        // 0.25 = 300% of budget
+        // 0 = 150% of budget
+        // 0 = 200% of budget
         // Etc.
         let storageLevel = heapMetrics[office]?.storageLevel ? Metrics.avg(heapMetrics[office].storageLevel) : storageEnergyAvailable(office)
         let storageAdjustment = Math.max(0, (-1 * ((
-            1.5 * (storageLevel / storageBudget)
+            (storageLevel / storageBudget)
         ) - 1) + 1))
 
-        // console.log(office, storageAdjustment);
+        // If we have franchise links, assume they'll handle 97% of 10e/t each
+        const netEnergy = Math.max(0,
+            (distance * energy * storageAdjustment) -
+            (roomPlans(office)?.franchise1?.link.structure ? 9.7 : 0) -
+            (roomPlans(office)?.franchise2?.link.structure ? 9.7 : 0)
+        )
 
-        let targetCarry = (distance * netEnergy * storageAdjustment) / CARRY_CAPACITY;
+        let targetCarry = netEnergy / CARRY_CAPACITY;
 
         let count = Math.ceil(targetCarry / body.filter(c => c === CARRY).length);
         count = isNaN(count) ? 0 : count;
@@ -75,7 +74,9 @@ export class LogisticsObjective extends Objective {
             energy: cost * count,
         }
 
-        // console.log(storageLevel, storageBudget, storageAdjustment, distance, energy, targetCarry, cost, count, JSON.stringify(budget))
+        // console.log(netEnergy, targetCarry)
+
+        // if (office === 'W2N2') console.log(storageLevel, storageBudget, storageAdjustment, distance, energy, targetCarry, cost, count, JSON.stringify(budget))
         return budget
     }
     budget(office: string, energy: number) {
@@ -84,7 +85,7 @@ export class LogisticsObjective extends Objective {
 
         let body = MinionBuilders[MinionTypes.ACCOUNTANT](Game.rooms[office].energyCapacityAvailable, 50, roads);
         let cost = minionCostPerTick(body);
-        let count = Math.floor(energy / cost);
+        let count = Math.ceil(energy / cost);
         count = isNaN(count) || !isFinite(count) ? 0 : count;
         // console.log(energy, cost, count)
         return {
@@ -108,6 +109,24 @@ export class LogisticsObjective extends Objective {
         return this._actualCarry.get(office) ?? 0;
     }
 
+    structures() {
+        for (let office in Memory.offices) {
+            const plan = roomPlans(office);
+            if (!plan?.headquarters?.link.structure) return;
+
+            const hqlink = plan.headquarters.link.structure as StructureLink;
+            const franchise1link = plan.franchise1?.link.structure as StructureLink|undefined;
+            const franchise2link = plan.franchise2?.link.structure as StructureLink|undefined;
+
+            if (linkUsedCapacity(franchise1link) > 0.8) {
+                franchise1link!.transferEnergy(hqlink);
+            }
+            if (linkUsedCapacity(franchise2link) > 0.8) {
+                franchise2link!.transferEnergy(hqlink);
+            }
+        }
+    }
+
     spawn() {
         for (let office in Memory.offices) {
             const budget = Budgets.get(office)?.get(this.id)?.energy ?? 0;
@@ -117,7 +136,7 @@ export class LogisticsObjective extends Objective {
 
             let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
             let cost = minionCostPerTick(body);
-            let target = Math.floor(budget / cost);
+            let target = Math.ceil(budget / cost);
 
             // Maintain one appropriately-sized Accountant
             // Pre-spawn accountants
@@ -126,12 +145,12 @@ export class LogisticsObjective extends Objective {
 
             let result: ScreepsReturnCode = OK;
             if (this.minions(office).length < target) {
-                spawnMinion(
+                this.recordEnergyUsed(office, spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads)
-                )()
+                )())
             }
         }
     }
@@ -197,7 +216,7 @@ export class LogisticsObjective extends Objective {
                     setState(States.DEPOSIT)(creep);
                 } else if (posById(creep.memory.logisticsTarget)) {
                     const result = getEnergyFromFranchise(creep, creep.memory.logisticsTarget as Id<Source>);
-                    if (result === BehaviorResult.SUCCESS) {
+                    if (result === BehaviorResult.SUCCESS || franchiseEnergyAvailable(creep.memory.logisticsTarget as Id<Source>) <= 50) {
                         delete creep.memory.logisticsTarget;
                         setState(States.DEPOSIT)(creep);
                     }

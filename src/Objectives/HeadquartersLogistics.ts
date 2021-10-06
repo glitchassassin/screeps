@@ -56,7 +56,7 @@ export class HeadquartersLogisticsObjective extends Objective {
             // Maintain one max-sized Accountant
             if (actual === 0) {
                 const preferredSpace = getHeadquarterLogisticsLocation(office);
-                spawnMinion(
+                this.recordEnergyUsed(office, spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
@@ -65,7 +65,7 @@ export class HeadquartersLogisticsObjective extends Objective {
                     preferredSpawn: hq.spawn.structure as StructureSpawn,
                     preferredSpaces: preferredSpace ? [preferredSpace] : [],
                     allowOtherSpaces: false
-                })
+                }))
             }
         }
     }
@@ -100,7 +100,9 @@ export class HeadquartersLogisticsObjective extends Objective {
         // Emergency provision for over-full Storage
         if (storage && storage.store.getFreeCapacity() < 5000) {
             creep.withdraw(storage, RESOURCE_ENERGY);
-            creep.drop(RESOURCE_ENERGY);
+            if (creep.drop(RESOURCE_ENERGY) === OK) {
+                this.recordEnergyUsed(creep.memory.office, creep.store.getUsedCapacity(RESOURCE_ENERGY));
+            }
             return;
         }
 

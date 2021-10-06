@@ -12,6 +12,7 @@ import { RefillExtensionsObjective } from "./RefillExtensions";
 import { ReserveObjective } from "./Reserve";
 import { ScienceObjective } from "./Science";
 import { TowerLogisticsObjective } from "./TowerLogistics";
+import { TradeObjective } from "./Trade";
 import { UpgradeObjective } from "./Upgrade";
 
 
@@ -53,6 +54,7 @@ initialize(
     new UpgradeObjective(5),
     new AcquireObjective(3),
     new LogisticsObjective(1),
+    new TradeObjective(1),
 );
 
 if (FEATURES.LABS) initialize(new ScienceObjective(5));

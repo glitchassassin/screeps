@@ -58,7 +58,7 @@ export const findAcquireTarget = () => {
         }
     }
 
-    if (bestTarget && bestTargetDistance <= 10) {
+    if (bestTarget && bestTargetDistance <= 9) {
         Memory.rooms[bestTarget].acquire = true;
         delete Memory.rooms[bestTarget].lastAcquireAttempt;
         cachedAcquireTarget = bestTarget;

@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1631105442958,
+  "iteration": 1633438856902,
   "links": [],
   "panels": [
     {
@@ -1660,39 +1660,16 @@
       "steppedLine": true,
       "targets": [
         {
-          "hide": false,
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), #C), '10min'), 'Upgrade')",
-          "targetFull": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), '10min'), 'Upgrade')",
-          "textEditor": false
-        },
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), #C), '10min'), 'Facilities')",
-          "targetFull": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), '10min'), 'Facilities')",
-          "textEditor": false
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "E",
-          "target": "alias(movingAverage(stats.gauges.offices.$office.spawnCost, '10min'), 'Spawn')",
-          "textEditor": false
-        },
-        {
           "hide": true,
-          "refCount": -1,
+          "refCount": 0,
           "refId": "C",
           "target": "derivative(stats.gauges.time)"
         },
         {
           "hide": false,
-          "refCount": 1,
-          "refId": "B",
-          "target": "alias(sumSeries(#A, #D, #E), 'Total')",
-          "targetFull": "alias(sumSeries(alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.facilitiesCosts), derivative(stats.gauges.time)), '10min'), 'Facilities'), alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), derivative(stats.gauges.time)), '10min'), 'Upgrade'), alias(movingAverage(stats.gauges.offices.$office.spawnCost, '10min'), 'Spawn')), 'Total')"
+          "refCount": 0,
+          "refId": "A",
+          "target": "aliasByNode(movingAverage(nonNegativeDerivative(stats.gauges.offices.$office.objectives.*.energyUsed), '1hour'), 5)"
         }
       ],
       "thresholds": [],
@@ -2115,14 +2092,7 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:326",
-          "alias": "Total",
-          "lines": false,
-          "stack": false
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -2246,14 +2216,7 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:326",
-          "alias": "Total",
-          "lines": false,
-          "stack": false
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -2377,14 +2340,7 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:326",
-          "alias": "Total",
-          "lines": false,
-          "stack": false
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -2464,7 +2420,7 @@
       }
     }
   ],
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 30,
   "style": "dark",
   "tags": [
@@ -2499,7 +2455,7 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -2530,5 +2486,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "ZwzM_hM7z",
-  "version": 19
+  "version": 26
 }

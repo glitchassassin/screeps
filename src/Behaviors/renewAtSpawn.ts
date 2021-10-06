@@ -1,4 +1,6 @@
+import { Objectives } from "Objectives/Objective";
 import { byId } from "Selectors/byId";
+import { minionCost } from "Selectors/minionCostPerTick";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 
@@ -10,7 +12,12 @@ export function renewAtSpawn(creep: Creep) {
     if (!spawn) return BehaviorResult.FAILURE;
     targets.set(creep.id, spawn.id);
     if (moveTo(spawn.pos)(creep) === BehaviorResult.SUCCESS) {
-        spawn.renewCreep(creep);
+        if (spawn.renewCreep(creep) === OK && creep.memory.objective) {
+            // Record energy used for renewing on the creep's parent objective
+            const cost = Math.ceil(minionCost(creep.body.map(p => p.type))/2.5/creep.body.length);
+            console.log('Renewing', creep.name, cost)
+            Objectives[creep.memory.objective].recordEnergyUsed(creep.memory.office, cost);
+        }
     }
     return BehaviorResult.INPROGRESS;
 }

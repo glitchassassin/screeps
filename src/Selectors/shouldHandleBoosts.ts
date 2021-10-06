@@ -6,15 +6,14 @@ import { roomPlans } from "./roomPlans";
 export function boostLabsToEmpty(office: string) {
     return getLabs(office).boosts.filter(lab => {
         const target = Memory.offices[office].lab.boostingLabs.find(o => o.resource)?.resource;
-        const actual = Object.keys(((lab.structure as StructureLab|undefined)?.store ?? {}))[0]
+        const actual = (lab.structure as StructureLab|undefined)?.mineralType
         return actual && actual !== target
     })
 }
 
 export function boostLabsToFill(office: string) {
     return getLabs(office).boosts.filter(lab => {
-        const store = (lab.structure as StructureLab|undefined)?.store;
-        return (store?.getFreeCapacity() ?? 0) > 0 && Object.keys((store ?? {}))[0] === undefined
+        return !(lab.structure as StructureLab|undefined)?.mineralType
     })
 }
 
@@ -44,20 +43,24 @@ export function boostsNeededForLab(office: string, labId: Id<StructureLab>|undef
 
     boostCount = Math.max(boostCount, Math.floor(boostsAvailable(office, resource) / 30))
 
-    return [resource, boostCount * LAB_BOOST_MINERAL];
+    return [resource, boostCount];
 }
 
 export function shouldHandleBoosts(office: string) {
-    return boostLabsToEmpty(office) || boostLabsToFill(office);
+    return boostLabsToEmpty(office).length > 0 || boostLabsToFill(office).length > 0;
 }
 
 /**
  * Sum of boosts in labs, Scientist inventories, and Terminal
  */
-export function boostsAvailable(office: string, boost: MineralBoostConstant) {
-    return (
+export function boostsAvailable(office: string, boost: MineralBoostConstant, countReserved = true) {
+    let total = (
         getLabs(office).boosts.reduce((sum, lab) => (((lab.structure) as StructureLab)?.store.getUsedCapacity(boost) ?? 0) + sum, 0) +
         ((roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal)?.store.getUsedCapacity(boost) ?? 0) +
         Objectives['ScienceObjective'].minions(office).reduce((sum, c) => sum + c.store.getUsedCapacity(boost), 0)
     );
+    if (!countReserved) {
+        total -= Memory.offices[office].lab.boosts.reduce((sum, o) => sum + (o.boosts.find(b => b.type === boost)?.count ?? 0), 0)
+    }
+    return total;
 }

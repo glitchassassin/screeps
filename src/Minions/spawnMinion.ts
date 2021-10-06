@@ -1,5 +1,6 @@
 import { defaultDirectionsForSpawn } from "Selectors/defaultDirectionsForSpawn";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
+import { minionCost } from "Selectors/minionCostPerTick";
 import { getSpawns } from "Selectors/roomPlans";
 import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
 import { MinionTypes } from "./minionTypes";
@@ -7,6 +8,9 @@ import { MinionTypes } from "./minionTypes";
 
 let spawningCache = new Map<Id<StructureSpawn>, number>();
 
+/**
+ * @returns Energy used to spawn minion
+ */
 export const spawnMinion = (
     office: string,
     objective: string,
@@ -20,7 +24,7 @@ export const spawnMinion = (
 } = {}) => {
     // console.log(office, objective, 'spawning', minionType);
     // check parameters
-    if (body.length === 0) return ERR_NO_BODYPART;
+    if (body.length === 0) return 0;
     // select spawn
     let spawn: StructureSpawn|undefined;
     let directions: DirectionConstant[] = [];
@@ -42,7 +46,7 @@ export const spawnMinion = (
         spawn = getSpawns(office).find(s => !s.spawning && spawningCache.get(s.id) !== Game.time && !s.spawning)
         directions = spawn ? defaultDirectionsForSpawn(office, spawn) : []
     }
-    if (!spawn) return ERR_BUSY; // No valid spawn available
+    if (!spawn) return 0; // No valid spawn available
 
     // try to spawn minion
     const r = spawn.spawnCreep(
@@ -59,6 +63,7 @@ export const spawnMinion = (
         }
     )
     if (r === OK || r === ERR_NOT_ENOUGH_ENERGY || r === ERR_BUSY) spawningCache.set(spawn.id, Game.time)
-    // if (spawn.name === 'Spawn6') console.log(spawn, r, objective, body);
-    return r;
+    // console.log(office, minionType, r, JSON.stringify(body))
+    const cost = (r === OK) ? minionCost(body) : 0;
+    return cost;
 }

@@ -34,9 +34,9 @@ export const BARRIER_LEVEL: Record<number, number> = {
     3: 1e+4,
     4: 5e+4,
     5: 1e+5,
-    6: 1e+5,
-    7: 1e+5,
-    8: 1e+5,
+    6: 5e+5,
+    7: 1e+6,
+    8: 1e+7,
 }
 export const BARRIER_TYPES: StructureConstant[] = [
     STRUCTURE_WALL,

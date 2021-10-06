@@ -13,10 +13,11 @@ export const getExtensions = (room: string) => {
     )
 }
 
-export const getExtensionsAndSpawns = (room: string) => {
+export const getRefillTargets = (room: string) => {
     const plan = roomPlans(room);
     if (!plan) return [];
     return ([] as PlannedStructure[]).concat(
+        plan.labs?.labs ?? [],
         plan.extensions?.extensions ?? [],
         plan.franchise1?.extensions ?? [],
         plan.franchise2?.extensions ?? [],

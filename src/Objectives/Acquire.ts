@@ -113,7 +113,7 @@ export class AcquireObjective extends Objective {
                 this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: this.minions(office).length})
             }
 
-            spawnQueue.forEach((spawner, i) => spawner());
+            spawnQueue.forEach((spawner, i) => this.recordEnergyUsed(office, spawner()));
         }
     }
 
@@ -159,6 +159,7 @@ export class AcquireObjective extends Objective {
             if (!room) return;
             // Fill up with energy at home office and then reassign
             if (engineerGetEnergy(creep) === BehaviorResult.SUCCESS) {
+                this.recordEnergyUsed(creep.memory.office, creep.store.getCapacity());
                 creep.memory.office = room;
                 creep.memory.objective = 'FacilitiesObjective';
             }

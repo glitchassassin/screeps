@@ -1,5 +1,6 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { findReserveTargets } from "Selectors/findReserveTargets";
@@ -47,7 +48,7 @@ export class ReserveObjective extends Objective {
 
             let spawnQueue = [];
 
-            this.metrics.set(office, {spawnQuota: target, minions: marketers})
+            this.metrics.set(office, {spawnQuota: target, energyBudget: Budgets.get(office)?.get(this.id)?.energy, minions: marketers})
 
             if (target > marketers) {
                 spawnQueue.push(spawnMinion(
@@ -60,7 +61,7 @@ export class ReserveObjective extends Objective {
 
             // For each available spawn, up to the target number of minions,
             // try to spawn a new minion
-            spawnQueue.forEach((spawner, i) => spawner());
+            spawnQueue.forEach((spawner, i) => this.recordEnergyUsed(office, spawner()));
         }
     }
 

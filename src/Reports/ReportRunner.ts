@@ -56,4 +56,4 @@ register('labs', LabsReport);
 register('budget', BudgetReport);
 register('market', MarketReport);
 
-global.d('acquire')
+global.d('objectives')

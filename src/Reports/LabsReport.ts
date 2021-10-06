@@ -1,6 +1,10 @@
 import { RES_COLORS } from "gameConstants";
 import { Dashboard, Rectangle, Table } from "screeps-viz";
 
+function drawLab(lab: StructureLab, position: RoomPosition) {
+
+}
+
 export default () => {
     for (let office in Memory.offices) {
         if (Memory.offices[office].lab.orders.length === 0) {
@@ -16,6 +20,8 @@ export default () => {
             Game.map.visual.text(order.output, new RoomPosition(37, 7 * (i + 1), office), { fontSize: 7, color: RES_COLORS[order.output] });
         })
 
+        // Labs
+
         // detail view
         Dashboard({
             config: { room: office },
@@ -23,7 +29,7 @@ export default () => {
                 {
                     pos: { x: 1, y: 1 },
                     width: 25,
-                    height: 25,
+                    height: 10,
                     widget: Rectangle({ data: Table({
                         config: {
                             headers: ['Ingredient1', 'Ingredient2', 'Output', 'Amount']

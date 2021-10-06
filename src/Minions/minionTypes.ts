@@ -97,8 +97,8 @@ export const MinionBuilders = {
             return [];
         }
         else {
-            // Equal claim and move parts
-            let segments = Math.floor(energy / (BODYPART_COST[CLAIM] + BODYPART_COST[MOVE]));
+            // Equal claim and move parts, max 5
+            let segments = Math.min(5, Math.floor(energy / (BODYPART_COST[CLAIM] + BODYPART_COST[MOVE])));
             return Array(segments).fill([CLAIM, MOVE]).flat()
         }
     },

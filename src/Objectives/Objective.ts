@@ -17,6 +17,12 @@ export interface ObjectiveMetrics {
 }
 
 export abstract class Objective {
+    public initialized = Game.time;
+    public energyUsed = new Map<string, number>();
+    public recordEnergyUsed(office: string, amount: number) {
+        if (amount < 0) throw new Error('Invalid energy used amount')
+        this.energyUsed.set(office, (this.energyUsed.get(office) ?? 0) + amount);
+    }
     public id: string;
     /**
      * Search indexer for `assigned` creeps: default implementation
@@ -32,6 +38,13 @@ export abstract class Objective {
     public metrics = new Map<string, ObjectiveMetrics>()
 
     /**
+     * Runs only while the creep is still spawning
+     */
+    public preSpawnAction(creep: Creep) {
+        // Default implementation does nothing
+    }
+
+    /**
      * The BehaviorTree for all creeps (regardless of office)
      */
     abstract action(creep: Creep): void;
@@ -42,6 +55,13 @@ export abstract class Objective {
      * more of the provided list of spawns.
      */
     abstract spawn(): void;
+
+    /**
+     * Executes logic for the structures (towers, labs, etc)
+     */
+    public structures() {
+        // Does nothing by default
+    }
 
     /**
      * Returns estimated energy/cpu/spawn for a given energy budget

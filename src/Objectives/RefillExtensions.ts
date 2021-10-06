@@ -10,7 +10,7 @@ import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getE
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { getExtensionsAndSpawns } from "Selectors/spawnsAndExtensionsDemand";
+import { getRefillTargets } from "Selectors/spawnsAndExtensionsDemand";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
@@ -70,19 +70,19 @@ export class RefillExtensionsObjective extends Objective {
 
             if (this.minions(office).length === 0 && Game.rooms[office].energyAvailable >= 300) {
                 // Emergency refiller
-                spawnMinion(
+                this.recordEnergyUsed(office, spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](300, 3)
-                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
+                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn }))
             } else if (this.minions(office).length < target) {
-                spawnMinion(
+                this.recordEnergyUsed(office, spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
-                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn })
+                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn }))
             }
         }
     }
@@ -108,7 +108,7 @@ export class RefillExtensionsObjective extends Objective {
             if (Game.rooms[creep.memory.office]?.energyAvailable === Game.rooms[creep.memory.office]?.energyCapacityAvailable) return;
 
             if (!creep.memory.refillTarget) {
-                for (let s of getExtensionsAndSpawns(creep.memory.office)) {
+                for (let s of getRefillTargets(creep.memory.office)) {
                     if (((s.structure as StructureExtension|StructureSpawn)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0) {
                         creep.memory.refillTarget = s.serialize();
                         break;
@@ -137,7 +137,7 @@ export class RefillExtensionsObjective extends Objective {
             const extension = creep.pos.findInRange(
                 FIND_MY_STRUCTURES,
                 1,
-                { filter: s => (s instanceof StructureSpawn || s instanceof StructureExtension) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0}
+                { filter: s => (s instanceof StructureSpawn || s instanceof StructureExtension || s instanceof StructureLab) && ((s.store as GenericStore).getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0}
             )[0] as StructureSpawn|StructureExtension|undefined;
 
             if (extension) creep.transfer(extension, RESOURCE_ENERGY);

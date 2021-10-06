@@ -1,4 +1,5 @@
 import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise";
+import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
@@ -118,7 +119,7 @@ export class FranchiseObjective extends Objective {
 
         if (franchisePos.roomName !== this.office && (
             getTerritoryIntent(this.office) === TerritoryIntent.DEFEND || // Skip spawning for remote Franchises during a crisis
-            rcl(this.office) === 8 || // Skip spawning for remote franchises at RCL 8
+            // rcl(this.office) === 8 || // Skip spawning for remote franchises at RCL 8
             (Game.cpu.limit / Object.keys(Memory.offices).length) < 12 // Or when available CPU drops below 12/room
         )) return;
 
@@ -148,10 +149,10 @@ export class FranchiseObjective extends Objective {
         const containerSpace = plan?.container.pos
         const preferredSalesmenSpaces = preferredSpawn ? [containerSpace].concat(adjacentWalkablePositions(preferredSpawn.pos)).filter(pos => pos?.inRangeTo(franchisePos, 1)) as RoomPosition[] : undefined
 
-        this.metrics.set(this.office, {spawnQuota: target, minions: salesmen})
+        this.metrics.set(this.office, {spawnQuota: target, energyBudget: Budgets.get(this.office)?.get(this.id)?.energy, minions: salesmen})
 
         if (salesmen < target) {
-            spawnMinion(
+            this.recordEnergyUsed(this.office, spawnMinion(
                 this.office,
                 this.id,
                 MinionTypes.SALESMAN,
@@ -159,7 +160,7 @@ export class FranchiseObjective extends Objective {
             )({
                 preferredSpawn,
                 preferredSpaces: preferredSalesmenSpaces
-            })
+            }))
         }
     }
 
@@ -209,10 +210,14 @@ export class FranchiseObjective extends Objective {
                     if (!plan.container.constructionSite) {
                         plan.container.pos.createConstructionSite(plan.container.structureType);
                     } else {
-                        creep.build(plan.container.constructionSite);
+                        if (creep.build(plan.container.constructionSite) === OK) {
+                            this.recordEnergyUsed(creep.memory.office, BUILD_POWER * creep.body.filter(p => p.type === WORK).length);
+                        }
                     }
                 } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
-                    creep.repair(plan.container.structure);
+                    if (creep.repair(plan.container.structure) === OK) {
+                        this.recordEnergyUsed(creep.memory.office, (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length);
+                    }
                 }
             }
         }

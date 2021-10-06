@@ -11,7 +11,7 @@ export const findReserveTargets = (office: string) => {
             o.assigned.length >= 1 &&
             !Memory.offices[room] &&
             (
-                (Memory.rooms[room].reservation ?? 0) < 4000 ||
+                (Memory.rooms[room].reservation ?? 0) < 1000 ||
                 Memory.rooms[room].reserver !== 'LordGreywether'
             )
         ) {
