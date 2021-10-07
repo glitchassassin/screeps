@@ -105,9 +105,15 @@ export const recordMetrics = profiler.registerFN(() => {
             roomEnergy: Metrics.newTimeseries(),
             buildEfficiency: Metrics.newTimeseries(),
             storageLevel: Metrics.newTimeseries(),
+            objectiveEnergy: {},
         }
         Metrics.update(heapMetrics[office].roomEnergy, getActualEnergyAvailable(office), 300);
         Metrics.update(heapMetrics[office].storageLevel, storageEnergyAvailable(office), 100);
+
+        PrioritizedObjectives.forEach(o => {
+            heapMetrics[office].objectiveEnergy[o.id] ??= Metrics.newTimeseries()
+            Metrics.updateNonNegativeDelta(heapMetrics[office].objectiveEnergy[o.id], o.energyUsed.get(office) ?? 0, 1500)
+        })
 
         const objectives = PrioritizedObjectives
             .filter(o => !(o instanceof FranchiseObjective) || (!o.disabled && o.office === office))
@@ -115,7 +121,7 @@ export const recordMetrics = profiler.registerFN(() => {
                 const metrics = o.metrics.get(office) ?? {};
                 sum[o.id] = {
                     priority: o.priority,
-                    energyUsed: (o.energyUsed.get(office) ?? 0) / (Game.time - o.initialized),
+                    energyUsed: Metrics.avg(heapMetrics[office].objectiveEnergy[o.id]),
                     ...metrics,
                 }
                 return sum;

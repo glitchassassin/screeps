@@ -1,5 +1,6 @@
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
+import { getRangeTo } from "Selectors/MapCoordinates";
 import { roomPlans } from "Selectors/roomPlans";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
@@ -31,7 +32,7 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?:
         const source = creep.pos.findClosestByRange(FIND_SOURCES, { filter: source => !franchiseIsFull(creep, source.id) || franchiseEnergyAvailable(source.id) > 0});
         const sourceRange = source?.pos.getRangeTo(creep.pos) ?? Infinity;
         const storage = roomPlans(creep.memory.office)?.headquarters?.storage.pos;
-        const storageRange = (storageEnergyAvailable(facilitiesTarget) > 0) ? storage?.getRangeTo(creep.pos) ?? Infinity : Infinity;
+        const storageRange = (storage && storageEnergyAvailable(facilitiesTarget) > 0) ? getRangeTo(storage, creep.pos) ?? Infinity : Infinity;
         const minRange = Math.min(ruinRange, sourceRange, storageRange);
 
         // console.log(creep.name, 'ruin', ruinRange, 'source', sourceRange, 'storage', storageRange, 'min', minRange)

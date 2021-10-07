@@ -21,6 +21,13 @@ export class MineObjective extends Objective {
         return minionCostPerTick(body);
     }
     budget(office: string, energy: number) {
+        if (this.targetForemen(office) === 0) {
+            return {
+                cpu: 0,
+                spawn: 0,
+                energy: 0,
+            }
+        }
         let body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
             .concat(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)));
         return {

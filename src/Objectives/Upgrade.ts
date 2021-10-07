@@ -32,6 +32,7 @@ export class UpgradeObjective extends Objective {
     shouldSpawn(office: string, budget: number) {
         // Spawn based on maximizing use of available energy
         let target = Math.round(budget / this.cost(office));
+        target = isNaN(target) ? 0 : target;
         const minions = this.minions(office);
 
         this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: minions.length})
@@ -51,7 +52,7 @@ export class UpgradeObjective extends Objective {
                 energy: 0,
             }
         }
-        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable);
+        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
         const boostCost = (terminalBalance(office, RESOURCE_GHODIUM_ACID) >= workParts) ? (workParts * 20) : 0
