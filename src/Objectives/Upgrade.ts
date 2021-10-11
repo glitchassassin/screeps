@@ -55,7 +55,8 @@ export class UpgradeObjective extends Objective {
         let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
-        const boostCost = (terminalBalance(office, RESOURCE_GHODIUM_ACID) >= workParts) ? (workParts * 20) : 0
+        const ghodiumAcid = terminalBalance(office, RESOURCE_GHODIUM_ACID)
+        const boostCost = ((ghodiumAcid >= workParts * 30) ? (workParts * 20) : 0) / CREEP_LIFE_TIME
         let cost = minionCostPerTick(body) + workParts + boostCost;
 
         let construction = constructionToDo(office).length > 0;
@@ -106,9 +107,11 @@ export class UpgradeObjective extends Objective {
     }
     action(creep: Creep) {
         if (
-            creep.memory.state === States.GET_BOOSTED &&
-            getBoosted(creep) === BehaviorResult.INPROGRESS
+            creep.memory.state === States.GET_BOOSTED
         ) {
+            if (getBoosted(creep) === BehaviorResult.INPROGRESS) {
+                return;
+            }
             setState(States.GET_ENERGY)(creep);
         }
         // Do work

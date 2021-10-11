@@ -1,6 +1,5 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
-import { renewAtSpawn } from "Behaviors/renewAtSpawn";
 import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
@@ -99,22 +98,30 @@ export class ScienceObjective extends Objective {
 
     handleBoosts(creep: Creep) {
         if ((creep.ticksToLive ?? 1500) < 200) {
-            setState(States.RENEW)(creep)
+            setState(States.RECYCLE)(creep)
         } else if (boostLabsToEmpty(creep.memory.office).length > 0 && creep.store.getUsedCapacity() === 0) {
             setState(States.EMPTY_LABS)(creep)
         } else if (!creep.memory.state) {
             setState(States.DEPOSIT)(creep)
         }
 
-        if (creep.memory.state === States.RENEW) {
-            if (renewAtSpawn(creep) === BehaviorResult.SUCCESS) {
-                setState(States.DEPOSIT)(creep);
-            }
-            return;
-        }
-
         const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure
         if (!terminal) return;
+
+        if (creep.memory.state === States.RECYCLE) {
+            if (creep.store.getUsedCapacity() === 0) {
+                // Go to spawn and recycle
+                const spawn = roomPlans(creep.memory.office)?.headquarters?.spawn.structure as StructureSpawn|undefined;
+                if (spawn && moveTo(spawn.pos)(creep) === BehaviorResult.SUCCESS) {
+                    spawn.recycleCreep(creep);
+                }
+            } else if (moveTo(terminal.pos)(creep) === BehaviorResult.SUCCESS) {
+                const toDeposit = Object.keys(creep.store)[0] as ResourceConstant|undefined;
+                if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
+                    return; // Other resources deposited
+                }
+            }
+        }
 
         if (creep.memory.state === States.DEPOSIT) {
             if (creep.store.getUsedCapacity() === 0) {
@@ -134,20 +141,22 @@ export class ScienceObjective extends Objective {
             if (moveTo(terminal.pos)(creep) === BehaviorResult.SUCCESS) {
                 if (creep.store.getFreeCapacity() > 0) {
                     for (const lab of boostLabsToFill(creep.memory.office)) {
-                        const [resource, needed] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
-                        if (!resource || !needed || creep.store.getUsedCapacity(resource) >= needed) continue;
+                        let [resource, needed] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
+                        if (!resource || !needed || needed <= 0) continue;
                         // Need to get some of this resource
                         creep.withdraw(terminal, resource, Math.min(needed, creep.store.getFreeCapacity()));
                         return;
                     }
                     // No more resources to get
                     setState(States.FILL_LABS)(creep)
+                } else {
+                    setState(States.FILL_LABS)(creep)
                 }
             }
         }
         if (creep.memory.state === States.EMPTY_LABS) {
             const target = boostLabsToEmpty(creep.memory.office)[0];
-            const resource = (target.structure as StructureLab|undefined)?.mineralType
+            const resource = (target?.structure as StructureLab|undefined)?.mineralType
             if (!target?.structure || !resource || creep.store.getFreeCapacity() === 0) {
                 setState(States.DEPOSIT)(creep);
                 return;
@@ -172,7 +181,7 @@ export class ScienceObjective extends Objective {
                 return;
             }
             if (moveTo(target.pos)(creep) === BehaviorResult.SUCCESS) {
-                creep.transfer(target.structure, resource, amount);
+                creep.transfer(target.structure, resource, Math.min(amount, creep.store.getUsedCapacity(resource)));
             }
         }
     }
@@ -181,21 +190,29 @@ export class ScienceObjective extends Objective {
         const order = Memory.offices[creep.memory.office].lab.orders.find(o => o.amount > 0) as LabOrder|undefined;
 
         if ((creep.ticksToLive ?? 1500) < 200) {
-            setState(States.RENEW)(creep)
+            setState(States.RECYCLE)(creep)
         } else if (labsShouldBeEmptied(creep.memory.office) && creep.store.getUsedCapacity() === 0) {
             setState(States.EMPTY_LABS)(creep)
         } else if (!creep.memory.state) {
             setState(States.DEPOSIT)(creep)
         }
+        const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure
 
-        if (creep.memory.state === States.RENEW) {
-            if (renewAtSpawn(creep) === BehaviorResult.SUCCESS) {
-                setState(States.DEPOSIT)(creep);
+        if (creep.memory.state === States.RECYCLE) {
+            if (creep.store.getUsedCapacity() === 0) {
+                // Go to spawn and recycle
+                const spawn = roomPlans(creep.memory.office)?.headquarters?.spawn.structure as StructureSpawn|undefined;
+                if (spawn && moveTo(spawn.pos)(creep) === BehaviorResult.SUCCESS) {
+                    spawn.recycleCreep(creep);
+                }
+            } else if (terminal && moveTo(terminal.pos)(creep) === BehaviorResult.SUCCESS) {
+                const toDeposit = Object.keys(creep.store)[0] as ResourceConstant|undefined;
+                if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
+                    return; // Other resources deposited
+                }
             }
-            return;
         }
         if (creep.memory.state === States.DEPOSIT) {
-            const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure
             if (!terminal) return;
             if (moveTo(terminal.pos)(creep) === BehaviorResult.SUCCESS) {
                 const toDeposit = Object.keys(creep.store)[0] as ResourceConstant|undefined;
@@ -219,8 +236,14 @@ export class ScienceObjective extends Objective {
             const {ingredient1, ingredient2} = ingredientsNeededForLabOrder(creep.memory.office, order);
 
             const ingredientQuantity = (i: number) => Math.min(Math.floor(creep.store.getCapacity() / 2), i)
-            const target1 = Math.max(0, ingredientQuantity(ingredient1) - creep.store.getUsedCapacity(order.ingredient1));
-            const target2 = Math.max(0, ingredientQuantity(ingredient2) - creep.store.getUsedCapacity(order.ingredient2));
+            const target1 = Math.min(
+                Math.max(0, ingredientQuantity(ingredient1) - creep.store.getUsedCapacity(order.ingredient1)),
+                creep.store.getFreeCapacity()
+            );
+            const target2 = Math.min(
+                Math.max(0, ingredientQuantity(ingredient2) - creep.store.getUsedCapacity(order.ingredient2)),
+                creep.store.getFreeCapacity()
+            );
 
             // if (creep.memory.office === 'W8N3') console.log(creep.memory.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
 
@@ -296,12 +319,12 @@ export class ScienceObjective extends Objective {
                     creep.withdraw(nextOutputLab, outputLabIngredient)
                 }
                 return; // Getting available product
-            } else if (lab1 && lab1Ingredient && creep.store.getFreeCapacity() > 0) {
+            } else if (lab1 && lab1Ingredient && lab1Ingredient !== order?.ingredient1 && creep.store.getFreeCapacity() > 0) {
                 if (moveTo(lab1.pos, 1)(creep) === BehaviorResult.SUCCESS) {
                     creep.withdraw(lab1, lab1Ingredient)
                 }
                 return; // Getting available product
-            } else if (lab2 && lab2Ingredient && creep.store.getFreeCapacity() > 0) {
+            } else if (lab2 && lab2Ingredient && lab2Ingredient !== order?.ingredient2 && creep.store.getFreeCapacity() > 0) {
                 if (moveTo(lab2.pos, 1)(creep) === BehaviorResult.SUCCESS) {
                     creep.withdraw(lab2, lab2Ingredient)
                 }

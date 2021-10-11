@@ -56,7 +56,7 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
     [STRUCTURE_OBSERVER]:       5,
     [STRUCTURE_POWER_SPAWN]:    5,
     [STRUCTURE_RAMPART]:        3,
-    [STRUCTURE_ROAD]:           2,
+    [STRUCTURE_ROAD]:           4,
     [STRUCTURE_SPAWN]:          7,
     [STRUCTURE_STORAGE]:        6,
     [STRUCTURE_TERMINAL]:       3,

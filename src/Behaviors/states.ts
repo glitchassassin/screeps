@@ -17,6 +17,7 @@ export enum States {
     EMPTY_LABS = 'EMPTY_LABS',
     RENEW = 'RENEW',
     GET_BOOSTED = 'GET_BOOSTED',
+    RECYCLE = 'RECYCLE',
 }
 
 declare global {

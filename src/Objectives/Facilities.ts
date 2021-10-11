@@ -3,12 +3,11 @@ import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
-import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { costPerEngineer } from "Selectors/costPerEngineer";
-import { constructionToDo, facilitiesEfficiency, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { constructionToDo, facilitiesEfficiency, facilitiesWorkToDo, plannedStructureNeedsWork } from "Selectors/facilitiesWorkToDo";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { rcl } from "Selectors/rcl";
 import { repairCostsPerTick } from "Selectors/repairCostsPerTick";
@@ -98,12 +97,8 @@ export class FacilitiesObjective extends Objective {
         // Check target for completion
         if (creep.memory.facilitiesTarget) {
             facilitiesTarget = PlannedStructure.deserialize(creep.memory.facilitiesTarget)
-            if (facilitiesTarget.structure) {
-                const rcl = Game.rooms[creep.memory.office]?.controller?.level ?? 0;
-                const maxHits = BARRIER_TYPES.includes(facilitiesTarget.structureType) ? BARRIER_LEVEL[rcl] : facilitiesTarget.structure.hitsMax;
-                if (facilitiesTarget.structure.hits >= maxHits) {
-                    creep.memory.facilitiesTarget = undefined;
-                }
+            if (!plannedStructureNeedsWork(facilitiesTarget, 1.0)) {
+                creep.memory.facilitiesTarget = undefined;
             }
         }
 

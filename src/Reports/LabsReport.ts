@@ -1,5 +1,6 @@
 import { RES_COLORS } from "gameConstants";
 import { Dashboard, Rectangle, Table } from "screeps-viz";
+import { byId } from "Selectors/byId";
 
 function drawLab(lab: StructureLab, position: RoomPosition) {
 
@@ -41,7 +42,21 @@ export default () => {
                             order.amount
                         ]))
                     })})
-                }
+                },
+                {
+                    pos: { x: 1, y: 12 },
+                    width: 25,
+                    height: 10,
+                    widget: Rectangle({ data: Table({
+                        config: {
+                            headers: ['Creep', 'Boosts']
+                        },
+                        data: Memory.offices[office].lab.boosts.map(order => ([
+                            byId(order.id)?.name ?? '??',
+                            order.boosts.length,
+                        ]))
+                    })})
+                },
             ]
         })
     }

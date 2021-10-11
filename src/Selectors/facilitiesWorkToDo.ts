@@ -78,12 +78,12 @@ export const facilitiesEfficiency = memoizeByTick(
     }
 )
 
-let cacheReviewed = 0;
+let cacheReviewed = new Map<string, number>();
 export const facilitiesWorkToDo = (officeName: string) => {
     // Initialize cache
     cache[officeName] ??= { work: [] };
 
-    if (cacheReviewed === Game.time) {
+    if (cacheReviewed.get(officeName) === Game.time) {
         return cache[officeName].work.slice();
     }
 
@@ -103,7 +103,7 @@ export const facilitiesWorkToDo = (officeName: string) => {
     // console.log(storagePos, ranges, count)
     rangeCache.set(officeName, count ? ranges / count : 0)
     cache[officeName].work = work;
-    cacheReviewed = Game.time;
+    cacheReviewed.set(officeName, Game.time);
 
     // Only re-scan work to do every 500 ticks unless structure count changes
     if (!Game.rooms[officeName]) return cache[officeName].work.slice();
@@ -111,7 +111,7 @@ export const facilitiesWorkToDo = (officeName: string) => {
     const foundStructures = Game.rooms[officeName].find(FIND_STRUCTURES).length
     const foundRcl = Game.rooms[officeName].controller?.level;
     if (
-        (foundStructures !== undefined && foundStructures !== cache[officeName].structureCount) ||
+        (foundStructures !== cache[officeName].structureCount) ||
         (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
         Game.time % 500 === 0
     ) {
@@ -128,14 +128,14 @@ export const facilitiesWorkToDo = (officeName: string) => {
     return cache[officeName].work.slice();
 }
 
-export const plannedStructureNeedsWork = (structure: PlannedStructure) => {
+export const plannedStructureNeedsWork = (structure: PlannedStructure, threshold = REPAIR_THRESHOLD) => {
     if (!structure.structure) {
         // Structure needs to be built
         return true;
     } else {
         const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
         const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
-        if (structure.structure.hits < (maxHits * REPAIR_THRESHOLD)) {
+        if (structure.structure.hits < (maxHits * threshold)) {
             return true;
         }
     }
