@@ -1,3 +1,5 @@
+import { controllerPosition, sourceIds } from 'Selectors/roomCache';
+
 import { RoomPlan } from 'RoomPlanner';
 import { planExtensions } from 'RoomPlanner/Extensions/ExtensionsPlan';
 import { planFranchise } from 'RoomPlanner/Franchise/FranchisePlan';
@@ -5,12 +7,10 @@ import { planHeadquarters } from 'RoomPlanner/Headquarters/HeadquartersPlan';
 import { planLabs } from 'RoomPlanner/Labs/LabsPlan';
 import { planMine } from 'RoomPlanner/Mine/MinePlan';
 import { planPerimeter } from 'RoomPlanner/Perimeter/PerimeterPlan';
-import { serializePlannedStructures } from 'Selectors/plannedStructures';
-import { posById } from 'Selectors/posById';
-import { controllerPosition, sourceIds } from 'Selectors/roomCache';
-import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
 import { planRoads } from './Roads/RoadsPlan';
-
+import { posById } from 'Selectors/posById';
+import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
+import { serializePlannedStructures } from 'Selectors/plannedStructures';
 
 declare global {
     interface Memory {
@@ -61,7 +61,16 @@ export const generateRoomPlans = (roomName: string)  => {
     if (Memory.roomPlans[roomName].complete) return;
 
     const controllerPos = controllerPosition(roomName)!;
-    const [franchise1, franchise2] = sourceIds(roomName).sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
+    // Make sure that if exactly one Franchise already has a spawn, it becomes franchise1;
+    // otherwise, they are sorted in order of distance to controller
+    const populatedSources = sourceIds(roomName)
+        .filter(s => Game.rooms[roomName] && posById(s)!.findInRange(FIND_MY_SPAWNS, 3).length)
+        .sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
+    const franchiseSources = (populatedSources.length) ?
+        populatedSources.concat(sourceIds(roomName).filter(id => !populatedSources.includes(id))) :
+        sourceIds(roomName).sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
+    const [franchise1, franchise2] = franchiseSources;
+
     const steps = [
         roomSectionPlanner(roomName, 'franchise1', () => planFranchise(franchise1), serializeFranchisePlan),
         roomSectionPlanner(roomName, 'franchise2', () => planFranchise(franchise2), serializeFranchisePlan),

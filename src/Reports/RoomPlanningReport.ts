@@ -10,12 +10,16 @@ export default () => {
                 (b.structureType === STRUCTURE_RAMPART ? -1 : 0)
             ))
             .forEach(s => {
-                if (room !== s.pos.roomName) console.log(room, s.pos)
                 s.visualize()
             });
 
         const route = roomPlans(room)?.extensions?.extensions.map(e => e.pos) ?? [];
         new RoomVisual(room).poly(route, {stroke: 'magenta', fill: 'transparent'});
+
+        const franchise1pos = roomPlans(room)?.franchise1?.spawn.pos;
+        if (franchise1pos) new RoomVisual(room).text('Franchise1', franchise1pos.x, franchise1pos.y);
+        const franchise2pos = roomPlans(room)?.franchise2?.spawn.pos;
+        if (franchise2pos) new RoomVisual(room).text('Franchise2', franchise2pos.x, franchise2pos.y);
 
         const fill = Memory.roomPlans[room].office ? '#00aa00' : Memory.roomPlans[room].headquarters ? '#aaaa00' : '#333333'
 
