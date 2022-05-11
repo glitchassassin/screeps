@@ -74,6 +74,8 @@ export class FranchiseObjective extends Objective {
         const franchisePos = posById(this.sourceId);
         if (!franchisePos) return 0; // No idea where this source is
         const reserved = Game.rooms[franchisePos.roomName]?.controller?.reservation?.username === 'LordGreywether';
+        const reservedByEnemy = Boolean(!reserved && Game.rooms[franchisePos.roomName]?.controller?.reservation?.username);
+        if (reservedByEnemy) return 0; // Energy value is 0 if someone else has the room reserved
         const income = ((this.office === franchisePos.roomName || reserved) ? SOURCE_ENERGY_CAPACITY : SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
 
         const workParts = this.assigned.map(byId)
