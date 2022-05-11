@@ -1,7 +1,7 @@
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { isPlannedStructure } from "./typeguards";
 import { plannedTerritoryRoads } from "./plannedTerritoryRoads";
 import { roomPlans } from "./roomPlans";
+import { isPlannedStructure } from "./typeguards";
 
 export const plannedStructuresByRcl = (roomName: string, targetRcl?: number) => {
     if (Memory.offices[roomName]) {
@@ -45,8 +45,9 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         plannedStructures = []
     }
     if (rcl >= 1) {
+        // Handle case where franchise1 spawn is manually placed before HQ spawn
         plannedStructures = plannedStructures.concat(
-            plans.franchise1?.spawn ?? plans.headquarters?.spawn,
+            (plans.franchise1?.spawn.structure && !plans.headquarters?.spawn.structure) ? plans.franchise1?.spawn : plans.headquarters?.spawn,
         )
     }
     if (rcl >= 2) {

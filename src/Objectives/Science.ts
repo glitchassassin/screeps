@@ -10,6 +10,7 @@ import { runLabs } from "Objectives/Labs/Labs";
 import { planLabOrders } from "Objectives/Labs/planLabOrders";
 import { byId } from "Selectors/byId";
 import { getLabs } from "Selectors/getLabs";
+import { getPrimarySpawn } from "Selectors/getPrimarySpawn";
 import { ingredientsNeededForLabOrder } from "Selectors/ingredientsNeededForLabOrder";
 import { labsShouldBeEmptied } from "Selectors/labsShouldBeEmptied";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
@@ -83,7 +84,7 @@ export class ScienceObjective extends Objective {
                     this.id,
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
-                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn }))
+                )({ preferredSpawn: getPrimarySpawn(office) }))
             }
         }
     }
@@ -111,7 +112,7 @@ export class ScienceObjective extends Objective {
         if (creep.memory.state === States.RECYCLE) {
             if (creep.store.getUsedCapacity() === 0) {
                 // Go to spawn and recycle
-                const spawn = roomPlans(creep.memory.office)?.headquarters?.spawn.structure as StructureSpawn|undefined;
+                const spawn = getPrimarySpawn(creep.memory.office);
                 if (spawn && moveTo(spawn.pos)(creep) === BehaviorResult.SUCCESS) {
                     spawn.recycleCreep(creep);
                 }
@@ -201,7 +202,7 @@ export class ScienceObjective extends Objective {
         if (creep.memory.state === States.RECYCLE) {
             if (creep.store.getUsedCapacity() === 0) {
                 // Go to spawn and recycle
-                const spawn = roomPlans(creep.memory.office)?.headquarters?.spawn.structure as StructureSpawn|undefined;
+                const spawn = getPrimarySpawn(creep.memory.office);
                 if (spawn && moveTo(spawn.pos)(creep) === BehaviorResult.SUCCESS) {
                     spawn.recycleCreep(creep);
                 }

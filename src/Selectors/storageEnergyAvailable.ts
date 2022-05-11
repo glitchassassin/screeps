@@ -1,3 +1,4 @@
+import { getPrimarySpawn } from "./getPrimarySpawn";
 import { roomPlans } from "./roomPlans";
 
 export const storageEnergyAvailable = (roomName: string) => {
@@ -5,5 +6,5 @@ export const storageEnergyAvailable = (roomName: string) => {
     if (!plan?.headquarters) return 0;
     return (plan.headquarters.storage.structure as StructureStorage)?.store.getUsedCapacity(RESOURCE_ENERGY) ??
            (plan.headquarters.container.structure as StructureContainer)?.store.getUsedCapacity(RESOURCE_ENERGY) ??
-           (plan.headquarters.spawn.structure as StructureSpawn)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0
+           getPrimarySpawn(roomName)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0
 }

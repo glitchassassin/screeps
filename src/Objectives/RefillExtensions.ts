@@ -7,8 +7,8 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
+import { getPrimarySpawn } from "Selectors/getPrimarySpawn";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { getRefillTargets } from "Selectors/spawnsAndExtensionsDemand";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
@@ -75,14 +75,14 @@ export class RefillExtensionsObjective extends Objective {
                     this.id,
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](300, 3)
-                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn }))
+                )({ preferredSpawn: getPrimarySpawn(office) as StructureSpawn }))
             } else if (this.minions(office).length < target) {
                 this.recordEnergyUsed(office, spawnMinion(
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
                     MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
-                )({ preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn }))
+                )({ preferredSpawn: getPrimarySpawn(office) as StructureSpawn }))
             }
         }
     }

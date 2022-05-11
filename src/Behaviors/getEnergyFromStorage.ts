@@ -1,3 +1,4 @@
+import { getPrimarySpawn } from "Selectors/getPrimarySpawn";
 import { roomPlans } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
@@ -9,7 +10,7 @@ export const getEnergyFromStorage = profiler.registerFN((creep: Creep, limit?: n
     const hq = roomPlans(creep.memory.office)?.headquarters;
     const storage = hq?.storage.structure as StructureStorage|undefined;
     const container = hq?.container.structure as StructureContainer|undefined;
-    const spawn = hq?.spawn.structure as StructureSpawn|undefined;
+    const spawn = getPrimarySpawn(creep.memory.office) as StructureSpawn|undefined;
 
     const withdrawLimit = limit ?? Game.rooms[creep.memory.office]?.energyCapacityAvailable
 

@@ -225,8 +225,8 @@ function *findSpaces(controllerPos: RoomPosition, currentRoomPlan: CostMatrix) {
             // Otherwise, increment it based on the value of
             // its top and left neighbors
             grid[yGrid][xGrid] = {
-                x: 1 + (grid[yGrid]?.[xGrid-1]?.x ?? 0),
-                y: 1 + (grid[yGrid-1]?.[xGrid]?.y ?? 0)
+                x: Math.min(1 + (grid[yGrid]?.[xGrid-1]?.x ?? 0), (grid[yGrid-1]?.[xGrid]?.x ?? Infinity)),
+                y: Math.min(1 + (grid[yGrid-1]?.[xGrid]?.y ?? 0), (grid[yGrid]?.[xGrid-1]?.x ?? Infinity))
             };
 
             new RoomVisual(controllerPos.roomName).text(`${grid[yGrid][xGrid].x} ${grid[yGrid][xGrid].y}`, x + xGrid, y + yGrid, { font: 0.2 })

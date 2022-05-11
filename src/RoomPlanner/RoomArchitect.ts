@@ -1,5 +1,3 @@
-import { controllerPosition, sourceIds } from 'Selectors/roomCache';
-
 import { RoomPlan } from 'RoomPlanner';
 import { planExtensions } from 'RoomPlanner/Extensions/ExtensionsPlan';
 import { planFranchise } from 'RoomPlanner/Franchise/FranchisePlan';
@@ -7,10 +5,12 @@ import { planHeadquarters } from 'RoomPlanner/Headquarters/HeadquartersPlan';
 import { planLabs } from 'RoomPlanner/Labs/LabsPlan';
 import { planMine } from 'RoomPlanner/Mine/MinePlan';
 import { planPerimeter } from 'RoomPlanner/Perimeter/PerimeterPlan';
-import { planRoads } from './Roads/RoadsPlan';
-import { posById } from 'Selectors/posById';
-import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
+import { posById } from 'Selectors/posById';
+import { controllerPosition, sourceIds } from 'Selectors/roomCache';
+import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
+import { planRoads } from './Roads/RoadsPlan';
+
 
 declare global {
     interface Memory {
@@ -70,6 +70,8 @@ export const generateRoomPlans = (roomName: string)  => {
         populatedSources.concat(sourceIds(roomName).filter(id => !populatedSources.includes(id))) :
         sourceIds(roomName).sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
     const [franchise1, franchise2] = franchiseSources;
+
+    console.log('franchises', franchise1, franchise2)
 
     const steps = [
         roomSectionPlanner(roomName, 'franchise1', () => planFranchise(franchise1), serializeFranchisePlan),
