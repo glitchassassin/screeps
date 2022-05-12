@@ -74,13 +74,13 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?:
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {
         let result = getEnergyFromFranchise(creep);
-        if (result === BehaviorResult.SUCCESS) {
+        if (result !== BehaviorResult.INPROGRESS) {
             delete creep.memory.getEnergyState;
         }
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_SOURCE) {
         let result = getEnergyFromSource(creep);
-        if (result === BehaviorResult.SUCCESS) {
+        if (result !== BehaviorResult.INPROGRESS) {
             delete creep.memory.getEnergyState;
         }
     }

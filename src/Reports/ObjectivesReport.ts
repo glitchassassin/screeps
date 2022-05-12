@@ -19,7 +19,7 @@ export default () => {
             totalValue += Memory.stats.offices[room].objectives[o].energyBudget ?? 0;
             totalUsed += Memory.stats.offices[room].objectives[o].energyUsed ?? 0;
             totalAssigned += Memory.stats.offices[room].objectives[o].minions ?? 0;
-            totalQuota += Memory.stats.offices[room].objectives[o].minions ?? 0;
+            totalQuota += Memory.stats.offices[room].objectives[o].spawnQuota ?? 0;
         }
         table.push(['---', '---', '---', '---', '---', '---'])
         table.push([

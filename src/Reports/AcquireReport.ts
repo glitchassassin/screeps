@@ -8,11 +8,8 @@ export default () => {
         if (Memory.rooms[room].eligibleForOffice) {
             Game.map.visual.text('Eligible', new RoomPosition(25, 5, room), { fontSize: 3 })
         }
-        if (Memory.rooms[room].owner) {
-            Game.map.visual.text(Memory.rooms[room].owner!, new RoomPosition(25, 8, room), { fontSize: 3 })
-        }
-        if (Memory.rooms[room].reserver) {
-            Game.map.visual.text(Memory.rooms[room].reserver!, new RoomPosition(25, 11, room), { fontSize: 3 })
+        if (Memory.rooms[room].owner || Memory.rooms[room].reserver) {
+            Game.map.visual.text(Memory.rooms[room].owner ?? Memory.rooms[room].reserver!, new RoomPosition(25, 8, room), { fontSize: 3 })
         }
         if (Memory.roomPlans[room]?.office) {
             Game.map.visual.text('Planned', new RoomPosition(25, 14, room), { fontSize: 3 })

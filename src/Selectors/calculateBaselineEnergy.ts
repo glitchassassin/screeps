@@ -2,10 +2,12 @@ import { heapMetrics } from "Metrics/heapMetrics";
 import { Metrics } from "screeps-viz";
 import { franchiseIncomePerTick } from "./franchiseStatsPerTick";
 import { getStorageBudget } from "./getStorageBudget";
+import { roomPlans } from "./roomPlans";
 import { storageEnergyAvailable } from "./storageEnergyAvailable";
 
 export function calculateBaselineEnergy(office: string) {
     const base = (Game.rooms[office].energyAvailable < 300 ? 1 : 0) + franchiseIncomePerTick(office)
+    if (!roomPlans(office)?.headquarters?.storage.structure) return base;
     // Adjust for storage surplus
     const storageBudget = getStorageBudget(office);
     // 1 = 100% of budget

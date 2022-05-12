@@ -2,6 +2,7 @@ import { BaseBudgetConstraints, Budget, BudgetGenerator, Budgets, TotalBudgetCon
 import { Objectives } from "Objectives/Objective"
 import { calculateBaselineEnergy } from "Selectors/calculateBaselineEnergy"
 import { getSpawns } from "Selectors/roomPlans"
+import { fromLogisticsObjective } from "./BudgetGenerators/fromLogisticsObjective"
 import { fromObjective } from "./BudgetGenerators/fromObjective"
 import { calculateFixedBudgets } from "./calculateFixedBudgets"
 import { constrainVariableToLogisticsBudgets } from "./constrainVariableToLogisticsBudgets"
@@ -38,9 +39,20 @@ export function calculateBudgets(office: string) {
         ledger.set(id, budget);
     }
 
+    // Cap logistics budget to actual max throughput
+    const maxLogisticsBudget = fromLogisticsObjective(office)({
+        energy: calculateBaselineEnergy(office),
+        cpu: 0,
+        spawn: 0
+    });
+
     // console.log('variableExpenses', JSON.stringify(sumBudgets(...variableExpenses.values()), null, 2))
     const logisticsGenerator = new Map<string, BudgetGenerator>();
-    logisticsGenerator.set('LogisticsObjective', fromObjective(Objectives['LogisticsObjective'], office))
+    logisticsGenerator.set('LogisticsObjective', (constraints: Budget) => {
+        const budget = fromObjective(Objectives['LogisticsObjective'], office)(constraints);
+        if (budget.energy < maxLogisticsBudget.energy) return budget;
+        return maxLogisticsBudget;
+    })
     const logisticsExpenses = fitBudgets(
         subtractBudgets(netBaseline, ...variableExpenses.values()),
         logisticsGenerator

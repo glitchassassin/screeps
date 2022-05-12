@@ -1,31 +1,31 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { States, setState } from "Behaviors/states";
-import { franchiseCount, franchiseDistances } from "Selectors/franchiseStatsPerTick";
-
 import { BehaviorResult } from "Behaviors/Behavior";
+import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
+import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
-import { FranchiseObjectives } from "./Franchise";
+import { heapMetrics } from "Metrics/heapMetrics";
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
+import { spawnMinion } from "Minions/spawnMinion";
 import { Metrics } from "screeps-viz";
-import { Objective } from "./Objective";
 import { byId } from "Selectors/byId";
+import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
-import { getEnergyFromFranchise } from "Behaviors/getEnergyFromFranchise";
+import { franchiseCount, franchiseDistances } from "Selectors/franchiseStatsPerTick";
 import { getStorageBudget } from "Selectors/getStorageBudget";
-import { heapMetrics } from "Metrics/heapMetrics";
 import { linkUsedCapacity } from "Selectors/linkUsedCapacity";
 import { lookNear } from "Selectors/MapCoordinates";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
-import { moveTo } from "Behaviors/moveTo";
 import { posById } from "Selectors/posById";
-import profiler from "utils/profiler";
 import { rcl } from "Selectors/rcl";
-import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { spawnMinion } from "Minions/spawnMinion";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
+import profiler from "utils/profiler";
+import { FranchiseObjectives } from "./Franchise";
+import { Objective } from "./Objective";
+
 
 declare global {
     interface CreepMemory {
@@ -74,6 +74,8 @@ export class LogisticsObjective extends Objective {
             spawn: body.length * CREEP_SPAWN_TIME * count,
             energy: cost * count,
         }
+
+        console.log(energy, netEnergy, storageBudget, storageLevel, storageAdjustment, targetCarry, count, JSON.stringify(budget));
 
         // console.log(netEnergy, targetCarry)
 
