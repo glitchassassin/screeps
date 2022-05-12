@@ -75,11 +75,7 @@ export class LogisticsObjective extends Objective {
             energy: cost * count,
         }
 
-        console.log(energy, netEnergy, storageBudget, storageLevel, storageAdjustment, targetCarry, count, JSON.stringify(budget));
-
-        // console.log(netEnergy, targetCarry)
-
-        // if (office === 'W2N2') console.log(storageLevel, storageBudget, storageAdjustment, distance, energy, targetCarry, cost, count, JSON.stringify(budget))
+        // console.log(energy, netEnergy, storageBudget, storageLevel, storageAdjustment, targetCarry, count, JSON.stringify(budget));
         return budget
     }
     budget(office: string, energy: number) {
