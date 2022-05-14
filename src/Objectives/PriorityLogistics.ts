@@ -1,12 +1,16 @@
 import { Budgets } from "Budgets";
+import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
+import { Metrics } from "screeps-viz";
 import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
+import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
 import { FranchiseObjectives } from "./Franchise";
 import { LogisticsObjective } from "./Logistics";
@@ -50,6 +54,11 @@ export class PriorityLogisticsObjective extends Objective {
 
             minDistance = Math.min(franchise.distance, minDistance);
         }
+
+        // Switch off priority logistics when we have a storage surplus
+        const storageBudget = getStorageBudget(office);
+        let storageLevel = heapMetrics[office]?.storageLevel ? Metrics.avg(heapMetrics[office].storageLevel) : storageEnergyAvailable(office)
+        if (storageLevel > storageBudget) energyCapacity = 0;
 
         const sourceCapacity = energyCapacity > 0 ? Math.ceil(minDistance / 5) : 0
 

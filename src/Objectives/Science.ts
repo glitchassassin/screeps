@@ -106,7 +106,7 @@ export class ScienceObjective extends Objective {
             setState(States.DEPOSIT)(creep)
         }
 
-        const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure
+        const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure as StructureTerminal|undefined
         if (!terminal) return;
 
         if (creep.memory.state === States.RECYCLE) {
@@ -143,7 +143,7 @@ export class ScienceObjective extends Objective {
                 if (creep.store.getFreeCapacity() > 0) {
                     for (const lab of boostLabsToFill(creep.memory.office)) {
                         let [resource, needed] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
-                        if (!resource || !needed || needed <= 0) continue;
+                        if (!resource || !needed || needed <= 0 || !terminal.store.getUsedCapacity(resource)) continue;
                         // Need to get some of this resource
                         creep.withdraw(terminal, resource, Math.min(needed, creep.store.getFreeCapacity()));
                         return;
