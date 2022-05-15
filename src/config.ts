@@ -70,7 +70,8 @@ export const REPAIR_THRESHOLD = 0.5;
 
 export const WHITELIST = FEATURES.WHITELIST ? [
     'CrAzYDubC',
-    'thmsn'
+    'thmsn',
+    'Joboe',
 ] : [];
 
 export const CACHED_STRUCTURES: StructureConstant[] = [
