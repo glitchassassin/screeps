@@ -21,6 +21,8 @@ const timeSince = (time: number|undefined) => Game.time - (time ?? 0)
 export const findAcquireTarget = () => {
     const offices = Object.keys(Memory.offices);
 
+    if (Game.cpu.limit / offices.length <= 5) return undefined; // Don't spread ourselves out too thin
+
     if (cachedAcquireTarget && acquireTargetIsValid(cachedAcquireTarget) && !shouldPostponeAcquire(cachedAcquireTarget)) {
         return cachedAcquireTarget;
     } else {

@@ -48,7 +48,8 @@ export class RefillExtensionsObjective extends Objective {
     }
     targetCarry(office: string) {
         // Calculate extensions capacity
-        let capacity = approximateExtensionsCapacity(office)
+        const SCALING_FACTOR = 0.8;
+        let capacity = approximateExtensionsCapacity(office) * SCALING_FACTOR;
 
         // When spawn capacity demands are low, decrease target carry
         const baseSpawn = Memory.stats.offices[office]?.budgets.baseline?.spawn ?? 1;
