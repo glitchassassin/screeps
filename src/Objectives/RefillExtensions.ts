@@ -32,7 +32,7 @@ export class RefillExtensionsObjective extends Objective {
         return minionCostPerTick(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)));
     }
     budget(office: string, energy: number) {
-        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, true);
+        let body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
         let cost = minionCostPerTick(body);
         let targetCarry = this.targetCarry(office);
         let count = Math.min(Math.floor(energy / cost), Math.ceil(targetCarry / body.filter(p => p === CARRY).length))
@@ -49,6 +49,16 @@ export class RefillExtensionsObjective extends Objective {
     targetCarry(office: string) {
         // Calculate extensions capacity
         let capacity = approximateExtensionsCapacity(office)
+
+        // When spawn capacity demands are low, decrease target carry
+        const baseSpawn = Memory.stats.offices[office]?.budgets.baseline?.spawn ?? 1;
+        const totalSpawn = Memory.stats.offices[office]?.budgets.total?.spawn ?? baseSpawn;
+        let spawnCapacityModifier = totalSpawn / baseSpawn
+        spawnCapacityModifier = isNaN(spawnCapacityModifier) ? 1 : Math.min(1, spawnCapacityModifier);
+
+        console.log(office, baseSpawn, totalSpawn, capacity, spawnCapacityModifier);
+
+        capacity *= spawnCapacityModifier;
 
         // Maintain up to three Accountants (at max level) to refill extensions
         return Math.min(32 * 3, Math.ceil(capacity / CARRY_CAPACITY));
@@ -81,7 +91,7 @@ export class RefillExtensionsObjective extends Objective {
                     office,
                     this.id,
                     MinionTypes.ACCOUNTANT,
-                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
+                    MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, true)
                 )({ preferredSpawn: getPrimarySpawn(office) as StructureSpawn }))
             }
         }
