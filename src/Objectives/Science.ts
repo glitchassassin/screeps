@@ -145,7 +145,7 @@ export class ScienceObjective extends Objective {
                         let [resource, needed] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
                         if (!resource || !needed || needed <= 0 || !terminal.store.getUsedCapacity(resource)) continue;
                         // Need to get some of this resource
-                        creep.withdraw(terminal, resource, Math.min(needed, creep.store.getFreeCapacity()));
+                        creep.withdraw(terminal, resource, Math.min(needed, creep.store.getFreeCapacity(), terminal.store.getUsedCapacity(resource)));
                         return;
                     }
                     // No more resources to get

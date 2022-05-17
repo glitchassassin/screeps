@@ -166,8 +166,8 @@ export const recordMetrics = profiler.registerFN(() => {
             storageLevelTarget: getStorageBudget(office),
             terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
             terminalLevelTarget: Game.rooms[office].terminal ? (Memory.offices[office].resourceQuotas[RESOURCE_ENERGY] ?? 2000) : 0,
-            objectives,
-            budgets
+            // objectives,
+            // budgets
         }
     }
 }, 'recordMetrics')

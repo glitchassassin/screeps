@@ -4,6 +4,9 @@ import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 
 export function getBoosted(creep: Creep) {
+    // If no Scientists are on duty, skip
+    if (!Objectives['ScienceObjective'].assigned.length) return BehaviorResult.FAILURE;
+
     // Check if boosts are completed
     const boosts = creep.body.reduce((map, part) => {
         if (part.boost) map.set(part.boost as MineralBoostConstant, (map.get(part.boost as MineralBoostConstant) ?? 0) + 1);
