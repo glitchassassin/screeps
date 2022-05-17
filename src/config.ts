@@ -69,7 +69,9 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
 export const REPAIR_THRESHOLD = 0.5;
 
 export const WHITELIST = FEATURES.WHITELIST ? [
-    'CrAzYDubC'
+    'CrAzYDubC',
+    'thmsn',
+    'Joboe',
 ] : [];
 
 export const CACHED_STRUCTURES: StructureConstant[] = [
