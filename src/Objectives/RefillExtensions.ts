@@ -56,8 +56,6 @@ export class RefillExtensionsObjective extends Objective {
         let spawnCapacityModifier = totalSpawn / baseSpawn
         spawnCapacityModifier = isNaN(spawnCapacityModifier) ? 1 : Math.min(1, spawnCapacityModifier);
 
-        console.log(office, baseSpawn, totalSpawn, capacity, spawnCapacityModifier);
-
         capacity *= spawnCapacityModifier;
 
         // Maintain up to three Accountants (at max level) to refill extensions
