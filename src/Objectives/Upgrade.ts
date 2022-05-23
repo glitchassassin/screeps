@@ -4,6 +4,7 @@ import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
+import { FEATURES } from "config";
 import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
@@ -90,7 +91,7 @@ export class UpgradeObjective extends Objective {
         if (Memory.offices[creep.memory.office].lab.boosts.some(o => o.id === creep.id)) {
             return; // BoostOrder already exists
         }
-        let available = boostsAvailable(creep.memory.office, RESOURCE_GHODIUM_ACID, false);
+        let available = FEATURES.LABS && boostsAvailable(creep.memory.office, RESOURCE_GHODIUM_ACID, false);
         const workParts = creep.body.filter(p => p.type === WORK).length
         const target = workParts * LAB_BOOST_MINERAL;
         if (available && available >= target) {

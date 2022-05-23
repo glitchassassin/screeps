@@ -157,6 +157,7 @@ export class ScienceObjective extends Objective {
         }
         if (creep.memory.state === States.EMPTY_LABS) {
             const target = boostLabsToEmpty(creep.memory.office)[0];
+            console.log(target);
             const resource = (target?.structure as StructureLab|undefined)?.mineralType
             if (!target?.structure || !resource || creep.store.getFreeCapacity() === 0) {
                 setState(States.DEPOSIT)(creep);

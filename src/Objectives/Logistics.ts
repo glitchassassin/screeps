@@ -57,11 +57,13 @@ export class LogisticsObjective extends Objective {
             (storageLevel / storageBudget)
         ) - 1) + 1))
 
-        // If we have franchise links, assume they'll handle 97% of 10e/t each
+        // If we have franchise links, assume they'll handle 10e/t each
         const netEnergy = Math.max(0,
-            (distance * energy * storageAdjustment) -
-            (roomPlans(office)?.franchise1?.link.structure ? 9.7 : 0) -
-            (roomPlans(office)?.franchise2?.link.structure ? 9.7 : 0)
+            distance * storageAdjustment * (
+                energy -
+                (roomPlans(office)?.franchise1?.link.structure ? 10 : 0) -
+                (roomPlans(office)?.franchise2?.link.structure ? 10 : 0)
+            )
         )
 
         let targetCarry = netEnergy / CARRY_CAPACITY;
@@ -75,7 +77,7 @@ export class LogisticsObjective extends Objective {
             energy: cost * count,
         }
 
-        // console.log(energy, netEnergy, storageBudget, storageLevel, storageAdjustment, targetCarry, count, JSON.stringify(budget));
+        // console.log(office, energy, netEnergy, storageBudget, storageLevel, storageAdjustment, targetCarry, count, JSON.stringify(budget));
         return budget
     }
     budget(office: string, energy: number) {

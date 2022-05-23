@@ -1,6 +1,7 @@
 import { BaseBudgetConstraints, Budget, BudgetGenerator, Budgets, TotalBudgetConstraints } from "Budgets"
 import { Objectives } from "Objectives/Objective"
 import { calculateBaselineEnergy } from "Selectors/calculateBaselineEnergy"
+import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick"
 import { getSpawns } from "Selectors/roomPlans"
 import { fromLogisticsObjective } from "./BudgetGenerators/fromLogisticsObjective"
 import { fromObjective } from "./BudgetGenerators/fromObjective"
@@ -41,7 +42,7 @@ export function calculateBudgets(office: string) {
 
     // Cap logistics budget to actual max throughput
     const maxLogisticsBudget = fromLogisticsObjective(office)({
-        energy: calculateBaselineEnergy(office),
+        energy: franchiseIncomePerTick(office),
         cpu: 0,
         spawn: 0
     });
