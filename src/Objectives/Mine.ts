@@ -16,23 +16,24 @@ import { Objective } from "./Objective";
 
 export class MineObjective extends Objective {
     cost(office: string) {
-        let body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
-            .concat(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)));
+        let foremanBody = this.targetForemen(office) ? MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)) : [];
+        let accountantBody = this.targetAccountants(office) ? MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)) : [];
+        let body = foremanBody.concat(accountantBody);
         return minionCostPerTick(body);
     }
     budget(office: string, energy: number) {
-        if (this.targetForemen(office) === 0) {
+        if (!this.targetForemen(office) && !this.targetAccountants(office)) {
             return {
                 cpu: 0,
                 spawn: 0,
                 energy: 0,
             }
         }
-        let body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
-            .concat(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)));
+        let foremanBody = this.targetForemen(office) ? MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)) : [];
+        let accountantBody =  this.targetAccountants(office) ? MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)) : [];
         return {
             cpu: 0.5 * 2,
-            spawn: body.length * CREEP_SPAWN_TIME,
+            spawn: foremanBody.concat(accountantBody).length * CREEP_SPAWN_TIME,
             energy: this.cost(office),
         }
     }
@@ -45,6 +46,12 @@ export class MineObjective extends Objective {
         if (!mine?.extractor.structure || !mine?.container.structure) return 0;
         const mineral = byId(Memory.rooms[office].mineralId)
         return mineral?.mineralAmount ? 1 : 0;
+    }
+    targetAccountants(office: string) {
+        return (
+            this.targetForemen(office) ||
+            (roomPlans(office)?.mine?.container.structure as StructureContainer)?.store.getUsedCapacity()
+        ) ? 1 : 0;
     }
     targetCarry(office: string) {
         const mine = roomPlans(office)?.mine;

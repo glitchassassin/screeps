@@ -9,6 +9,7 @@ import BudgetReport from "./BudgetReport";
 import LabsReport from "./LabsReport";
 import MarketReport from "./MarketReport";
 import ObjectivesReport from "./ObjectivesReport";
+import OfficeReport from "./OfficeReport";
 import TerminalsReport from "./TerminalsReport";
 import TerritoriesReport from "./TerritoriesReport";
 
@@ -55,5 +56,6 @@ register('balance', BalanceReport);
 register('labs', LabsReport);
 register('budget', BudgetReport);
 register('market', MarketReport);
+register('office', OfficeReport);
 
-// global.d('facilities')
+global.d('office')

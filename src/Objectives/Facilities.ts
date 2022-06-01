@@ -59,7 +59,7 @@ export class FacilitiesObjective extends Objective {
         let count = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs * 10))
         count = isNaN(count) ? 0 : count;
 
-        // if (rcl(office) > 1 && facilitiesWorkToDo(office).length === 0) count = 0;
+        if (rcl(office) > 1 && facilitiesWorkToDo(office).length === 0) count = 0;
         // console.log(office, body.length, cost, count)
         return {
             cpu: 0.5 * count,

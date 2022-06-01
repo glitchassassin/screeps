@@ -41,7 +41,7 @@ export class TowerLogisticsObjective extends Objective {
 
         // Energy for structures
         const towers = roomPlans(office)?.headquarters?.towers.filter(t => t.structure).length ?? 0;
-        const towerCost = (findHostileCreeps(office).length > 0) ? towers * TOWER_ENERGY_COST : 0
+        const towerCost = (findHostileCreeps(office).length > 0) ? towers : 0
         return {
             cpu: 0.5 * count,
             spawn: body.length * CREEP_SPAWN_TIME * count,

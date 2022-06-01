@@ -282,12 +282,13 @@ export function lookNear(pos: RoomPosition, range = 1) {
 }
 export function getClosestOffice(roomName: string) {
     let closest: string|undefined = undefined;
-    let range = Infinity;
+    let route: {exit: ExitConstant, room: string}[] | undefined = undefined;
     for (let office of Object.keys(Memory.offices)) {
-        let newRange = Game.map.getRoomLinearDistance(roomName, office)
-        if (!closest || newRange < range) {
+        const newRoute = Game.map.findRoute(office, roomName);
+        if (newRoute === -2) continue;
+        if (!closest || newRoute.length < (route?.length ?? Infinity)) {
             closest = office;
-            range = newRange;
+            route = newRoute;
         }
     }
     return closest;

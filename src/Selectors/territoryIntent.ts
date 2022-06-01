@@ -21,7 +21,7 @@ export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
     if (!controller) {
         return TerritoryIntent.IGNORE;
     }
-    if (Memory.rooms[roomName]?.owner && !Game.rooms[roomName]?.controller?.my) {
+    if ((Memory.rooms[roomName]?.owner && !Game.rooms[roomName]?.controller?.my) || (Memory.rooms[roomName]?.reserver && Memory.rooms[roomName]?.reserver !== 'LordGreywether')) {
         return TerritoryIntent.AVOID;
     } else if (Memory.roomPlans[roomName]?.office) {
         if (hostiles && Memory.offices[roomName]) {

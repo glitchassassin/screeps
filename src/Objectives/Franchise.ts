@@ -120,9 +120,9 @@ export class FranchiseObjective extends Objective {
 
 
         if (franchisePos.roomName !== this.office && (
-            getTerritoryIntent(this.office) === TerritoryIntent.DEFEND || // Skip spawning for remote Franchises during a crisis
+            getTerritoryIntent(this.office) === TerritoryIntent.DEFEND // || // Skip spawning for remote Franchises during a crisis
             // rcl(this.office) === 8 || // Skip spawning for remote franchises at RCL 8
-            (Game.cpu.limit / Object.keys(Memory.offices).length) < 12 // Or when available CPU drops below 12/room
+            // (Game.cpu.limit / Object.keys(Memory.offices).length) < 12 // Or when available CPU drops below 12/room
         )) return;
 
         // Maintain enough Salesman to capitalize the source

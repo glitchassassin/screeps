@@ -13,6 +13,5 @@ export const planRooms = profiler.registerFN(() => {
         if (Game.cpu.getUsed() - start <= 5) {
             generateRoomPlans(room);
         }
-        Game.rooms[room].visual.circle
     }
 }, 'planRooms')

@@ -12,6 +12,7 @@ interface TerritoryData {
     office: string,
     sources: number,
     spawnCapacity: number,
+    cpuCapacity: number,
     spawnCapacityRoads: number,
     spawnCapacityReserved: number,
     targetCarry: number,
@@ -70,12 +71,14 @@ function recalculateTerritories() {
 
         let efficiency = 0.75;
         let spawnCapacity = CREEP_LIFE_TIME * efficiency; // Only count one spawn towards remote territories
+        let cpuCapacity = (Game.cpu.limit / Object.keys(Memory.offices).length) - 4; // Approximate 4 cpu for normal operations
         Memory.offices[office].territories = [];
         for (let [territory, data] of targets) {
             if (data.sources === 0) continue;
             Memory.offices[office].territories?.push(territory);
             spawnCapacity -= data.spawnCapacityReserved;
-            if (spawnCapacity <= 0) break;
+            cpuCapacity -= data.cpuCapacity;
+            if (spawnCapacity <= 0 || cpuCapacity <= 0) break;
         }
     }
 }
@@ -85,6 +88,7 @@ function calculateTerritoryData(office: string, territory: string): TerritoryDat
         office,
         sources: 0,
         spawnCapacity: 0,
+        cpuCapacity: 0,
         spawnCapacityRoads: 0,
         spawnCapacityReserved: 0,
         targetCarry: 0,
@@ -134,6 +138,7 @@ function calculateTerritoryData(office: string, territory: string): TerritoryDat
     data.spawnCapacity = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarry * 2);
     data.spawnCapacityRoads = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarry * 1.5);
     data.spawnCapacityReserved = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarryReserved * 1.5);
+    data.cpuCapacity = 0.5 + 0.5 * Math.ceil((data.targetCarry * BODYPART_COST[CARRY] * 2) / Game.rooms[office].energyCapacityAvailable);
 
     data.roadsPlan = serializePlannedStructures(Array.from(roads));
 
