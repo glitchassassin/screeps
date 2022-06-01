@@ -34,6 +34,7 @@ export class UpgradeObjective extends Objective {
         // Spawn based on maximizing use of available energy
         let target = Math.round(budget / this.cost(office));
         target = isNaN(target) ? 0 : target;
+        if (rcl(office) === 8) target = Math.min(1, target); // Cap at one minion at RCL8
         const minions = this.minions(office);
 
         this.metrics.set(office, {spawnQuota: target, energyBudget: budget, minions: minions.length})
@@ -42,7 +43,11 @@ export class UpgradeObjective extends Objective {
     }
     cost(office: string) {
         let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
-        let cost = minionCostPerTick(body) + body.filter(p => p === WORK).length;
+        let workParts = body.filter(p => p === WORK).length;
+        // Calculate boost costs
+        const ghodiumAcid = terminalBalance(office, RESOURCE_GHODIUM_ACID)
+        const boostCost = FEATURES.LABS ? ((ghodiumAcid >= workParts * 30) ? (workParts * 20) : 0) / CREEP_LIFE_TIME : 0;
+        let cost = minionCostPerTick(body) + workParts + boostCost;
         return cost;
     }
     budget(office: string, energy: number) {
@@ -57,13 +62,14 @@ export class UpgradeObjective extends Objective {
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
         const ghodiumAcid = terminalBalance(office, RESOURCE_GHODIUM_ACID)
-        const boostCost = ((ghodiumAcid >= workParts * 30) ? (workParts * 20) : 0) / CREEP_LIFE_TIME
+        const boostCost = FEATURES.LABS ? ((ghodiumAcid >= workParts * 30) ? (workParts * 20) : 0) / CREEP_LIFE_TIME : 0;
         let cost = minionCostPerTick(body) + workParts + boostCost;
 
         let construction = constructionToDo(office).length > 0;
         let downgradeImminent = (Game.rooms[office].controller?.ticksToDowngrade ?? 0) < 10000
         let storageSurplus = heapMetrics[office]?.storageLevel ? (Metrics.avg(heapMetrics[office].storageLevel) > getStorageBudget(office)) : false
         let count = construction ? ((downgradeImminent || storageSurplus) ? 1 : 0) : Math.floor(energy / cost);
+        if (rcl(office) === 8) count = Math.min(1, count); // Cap at one minion at RCL8
         count = isNaN(count) ? 0 : count;
         return {
             cpu: 0.5 * count,

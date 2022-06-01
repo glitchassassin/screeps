@@ -29,6 +29,7 @@ const UPGRADE_EFFICIENCY = 1;
 export class FacilitiesObjective extends Objective {
     spawnTarget(office: string, budget: number) {
         const work = facilitiesWorkToDo(office);
+        console.log(office, work.length);
         const cost = costPerEngineer(Game.rooms[office].energyCapacityAvailable, Math.round(facilitiesEfficiency(office)));
         // const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * Game.rooms[office].energyCapacityAvailable / 100))
 
@@ -55,8 +56,8 @@ export class FacilitiesObjective extends Objective {
         const repairs = repairCostsPerTick(office);
 
         const constructionEngineers = Math.floor(energy / cost)
-        // console.log(construction, repairs, constructionEngineers, energy, cost)
-        let count = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs * 10))
+        console.log(office, construction, repairs, constructionEngineers, energy, cost)
+        let count = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs))
         count = isNaN(count) ? 0 : count;
 
         if (rcl(office) > 1 && facilitiesWorkToDo(office).length === 0) count = 0;
