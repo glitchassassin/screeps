@@ -6,7 +6,7 @@ import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { costPerEngineer } from "Selectors/costPerEngineer";
+import { costPerEngineer, costPerEngineerConstruction } from "Selectors/costPerEngineer";
 import { constructionToDo, facilitiesEfficiency, facilitiesWorkToDo, plannedStructureNeedsWork } from "Selectors/facilitiesWorkToDo";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { rcl } from "Selectors/rcl";
@@ -27,40 +27,36 @@ const CONSTRUCTION_EFFICIENCY = 0.5;
 const UPGRADE_EFFICIENCY = 1;
 
 export class FacilitiesObjective extends Objective {
+    public hasFixedBudget(office: string): boolean {
+        return constructionToDo(office).length === 0;
+    }
     spawnTarget(office: string, budget: number) {
-        const work = facilitiesWorkToDo(office);
-        console.log(office, work.length);
-        const cost = costPerEngineer(Game.rooms[office].energyCapacityAvailable, Math.round(facilitiesEfficiency(office)));
-        // const workPartsPerEngineer = Math.min(16, Math.floor((1/2) * Game.rooms[office].energyCapacityAvailable / 100))
-
         const construction = constructionToDo(office).length > 0;
         const repairs = repairCostsPerTick(office);
+        console.log(office, repairs);
 
-        const constructionEngineers = Math.floor(budget / cost)
-        const engineers = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs * 10))
-
-        // console.log(surplusIncome, cost, engineers)
-
-        // let storageSurplus = Math.floor((storageEnergyAvailable(office) * 1.5 * workPartsPerEngineer) / (cost * CREEP_LIFE_TIME));
-
-        // if (rcl(office) < 3) return engineers + storageSurplus; // Surplus engineer lifespan will go to upgrading
-        // if (rcl(office) > 1 && work.length === 0) return 0;
-
-        return Math.max(1, engineers);
+        if (construction) {
+            // Spawn as many as we can afford for construction tasks
+            const cost = costPerEngineerConstruction(Game.rooms[office].energyCapacityAvailable, facilitiesEfficiency(office));
+            const constructionEngineers = Math.floor(budget / cost);
+            return Math.max(constructionEngineers, Math.ceil(repairs))
+        } else {
+            // Spawn a fixed group for repair tasks
+            return Math.ceil(repairs / 2);
+        }
     }
     budget(office: string, energy: number) {
         let body = MinionBuilders[MinionTypes.ENGINEER](Game.rooms[office].energyCapacityAvailable);
-        let cost = costPerEngineer(Game.rooms[office].energyCapacityAvailable, Math.round(facilitiesEfficiency(office)));
-
         const construction = constructionToDo(office).length > 0;
         const repairs = repairCostsPerTick(office);
 
-        const constructionEngineers = Math.floor(energy / cost)
-        console.log(office, construction, repairs, constructionEngineers, energy, cost)
-        let count = Math.min(constructionEngineers, construction ? constructionEngineers : Math.ceil(repairs))
-        count = isNaN(count) ? 0 : count;
+        let cost = construction ?
+            costPerEngineerConstruction(Game.rooms[office].energyCapacityAvailable, Math.round(facilitiesEfficiency(office))) :
+            costPerEngineer(Game.rooms[office].energyCapacityAvailable, repairs);
 
-        if (rcl(office) > 1 && facilitiesWorkToDo(office).length === 0) count = 0;
+        let count = this.spawnTarget(office, energy);
+
+        // if (rcl(office) > 1 && facilitiesWorkToDo(office).length === 0) count = 0;
         // console.log(office, body.length, cost, count)
         return {
             cpu: 0.5 * count,

@@ -58,4 +58,4 @@ register('budget', BudgetReport);
 register('market', MarketReport);
 register('office', OfficeReport);
 
-global.d('office')
+global.d('objectives')
