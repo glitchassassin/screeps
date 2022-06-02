@@ -2,7 +2,7 @@
 
 export const FEATURES = {
     MINING: true,
-    LABS: false,
+    LABS: true,
     WHITELIST: true,
 }
 

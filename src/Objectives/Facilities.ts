@@ -38,10 +38,10 @@ export class FacilitiesObjective extends Objective {
             // Spawn as many as we can afford for construction tasks
             const cost = costPerEngineerConstruction(Game.rooms[office].energyCapacityAvailable, facilitiesEfficiency(office));
             const constructionEngineers = Math.floor(budget / cost);
-            return Math.max(constructionEngineers, Math.ceil(repairs / 4))
+            return Math.max(constructionEngineers, Math.ceil(repairs / 3))
         } else {
             // Spawn a fixed group for repair tasks
-            return Math.ceil(repairs / 4);
+            return Math.ceil(repairs / 3);
         }
     }
     budget(office: string, energy: number) {
