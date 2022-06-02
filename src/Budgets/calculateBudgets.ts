@@ -16,8 +16,9 @@ export function calculateBudgets(office: string) {
     const ledger = new Map<string, Budget>();
     // Set baseline
     const SPAWN_EFFICIENCY = 0.85;
+    const RESTORE_CPU = Game.cpu.bucket > (10000 / 2) ? 1 : 0.8;
     const baseline: Budget = {
-        cpu: Game.cpu.limit / Object.keys(Memory.offices).length,
+        cpu: (Game.cpu.limit / Object.keys(Memory.offices).length) * RESTORE_CPU,
         spawn: getSpawns(office).length * CREEP_LIFE_TIME * SPAWN_EFFICIENCY,
         energy: calculateBaselineEnergy(office),
     };

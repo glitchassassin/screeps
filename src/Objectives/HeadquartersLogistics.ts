@@ -46,7 +46,7 @@ export class HeadquartersLogisticsObjective extends Objective {
             const hq = roomPlans(office)?.headquarters;
             if (
                 !(hq?.terminal.structure || hq?.link.structure || hq?.factory.structure) ||
-                (franchiseIncomePerTick(office) <= 0 && (hq.storage.structure as StructureStorage).store.getUsedCapacity(RESOURCE_ENERGY) === 0) ||
+                ((hq.storage.structure as StructureStorage).store.getUsedCapacity(RESOURCE_ENERGY) === 0 && franchiseIncomePerTick(office) <= 0) ||
                 budget === 0) {
                 this.metrics.set(office, {spawnQuota: 0, energyBudget: budget, minions: actual})
                 continue;

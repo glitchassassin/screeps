@@ -33,16 +33,15 @@ export class FacilitiesObjective extends Objective {
     spawnTarget(office: string, budget: number) {
         const construction = constructionToDo(office).length > 0;
         const repairs = repairCostsPerTick(office);
-        console.log(office, repairs);
 
         if (construction) {
             // Spawn as many as we can afford for construction tasks
             const cost = costPerEngineerConstruction(Game.rooms[office].energyCapacityAvailable, facilitiesEfficiency(office));
             const constructionEngineers = Math.floor(budget / cost);
-            return Math.max(constructionEngineers, Math.ceil(repairs))
+            return Math.max(constructionEngineers, Math.ceil(repairs / 4))
         } else {
             // Spawn a fixed group for repair tasks
-            return Math.ceil(repairs / 2);
+            return Math.ceil(repairs / 4);
         }
     }
     budget(office: string, energy: number) {
