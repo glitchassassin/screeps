@@ -9,7 +9,7 @@ export const FEATURES = {
 /**
  * Rooms around an Office to control as remote territories
  */
-export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 1 : 2;
+export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 0 : 2;
 
 /**
  * Storage level targets by RCL
