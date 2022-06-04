@@ -5,7 +5,7 @@ export interface LabOrder {
     amount: number,
 }
 export interface BoostOrder {
-    id: Id<Creep>,
+    name: string,
     boosts: {type: MineralBoostConstant, count: number}[],
 }
 

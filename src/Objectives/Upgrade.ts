@@ -4,19 +4,17 @@ import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
-import { FEATURES } from "config";
 import { heapMetrics } from "Metrics/heapMetrics";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { Metrics } from "screeps-viz";
+import { costToBoostMinion } from "Selectors/costToBoostMinion";
 import { constructionToDo } from "Selectors/facilitiesWorkToDo";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
-import { boostsAvailable } from "Selectors/shouldHandleBoosts";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { terminalBalance } from "Selectors/terminalBalance";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -45,8 +43,7 @@ export class UpgradeObjective extends Objective {
         let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
-        const ghodiumAcid = terminalBalance(office, RESOURCE_GHODIUM_ACID)
-        const boostCost = FEATURES.LABS ? ((ghodiumAcid >= workParts * 30) ? (workParts * 20) : 0) / CREEP_LIFE_TIME : 0;
+        const boostCost = costToBoostMinion(office, workParts, RESOURCE_GHODIUM_ACID);
         let cost = minionCostPerTick(body) + workParts + boostCost;
         return cost;
     }
@@ -61,8 +58,7 @@ export class UpgradeObjective extends Objective {
         let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
-        const ghodiumAcid = terminalBalance(office, RESOURCE_GHODIUM_ACID)
-        const boostCost = FEATURES.LABS ? ((ghodiumAcid >= workParts * 30) ? (workParts * 20) : 0) / CREEP_LIFE_TIME : 0;
+        const boostCost = costToBoostMinion(office, workParts, RESOURCE_GHODIUM_ACID);
         let cost = minionCostPerTick(body) + workParts + boostCost;
 
         let construction = constructionToDo(office).length > 0;
@@ -85,7 +81,8 @@ export class UpgradeObjective extends Objective {
                     office,
                     this.id,
                     MinionTypes.PARALEGAL,
-                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office) / 2)
+                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office) / 2),
+                    [RESOURCE_GHODIUM_ACID]
                 )({
                     preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn
                 }))
@@ -93,25 +90,6 @@ export class UpgradeObjective extends Objective {
         }
     }
 
-    preSpawnAction(creep: Creep) {
-        if (Memory.offices[creep.memory.office].lab.boosts.some(o => o.id === creep.id)) {
-            return; // BoostOrder already exists
-        }
-        let available = FEATURES.LABS && boostsAvailable(creep.memory.office, RESOURCE_GHODIUM_ACID, false);
-        const workParts = creep.body.filter(p => p.type === WORK).length
-        const target = workParts * LAB_BOOST_MINERAL;
-        if (available && available >= target) {
-            // We have enough minerals, enter a boost order
-            Memory.offices[creep.memory.office].lab.boosts.push({
-                boosts: [{
-                    type: RESOURCE_GHODIUM_ACID,
-                    count: target
-                }],
-                id: creep.id
-            })
-            setState(States.GET_BOOSTED)(creep);
-        }
-    }
     action(creep: Creep) {
         if (
             creep.memory.state === States.GET_BOOSTED

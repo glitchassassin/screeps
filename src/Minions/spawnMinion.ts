@@ -1,7 +1,10 @@
+import { States } from "Behaviors/states";
+import { FEATURES } from "config";
 import { defaultDirectionsForSpawn } from "Selectors/defaultDirectionsForSpawn";
 import { isPositionWalkable } from "Selectors/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { getSpawns } from "Selectors/roomPlans";
+import { boostsAvailable } from "Selectors/shouldHandleBoosts";
 import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
 import { MinionTypes } from "./minionTypes";
 
@@ -15,7 +18,8 @@ export const spawnMinion = (
     office: string,
     objective: string,
     minionType: MinionTypes,
-    body: BodyPartConstant[]
+    body: BodyPartConstant[],
+    boosts: MineralBoostConstant[] = []
 ) => (opts: {
     preferredSpawn?: StructureSpawn,
     allowOtherSpawns?: boolean, // Default: true
@@ -48,15 +52,39 @@ export const spawnMinion = (
     }
     if (!spawn) return 0; // No valid spawn available
 
+    const name = `${minionType}-${office}-${Game.time % 10000}-${spawn.id.slice(23)}`;
+
+    // Schedule boosts, if applicable
+    let state: States | undefined = undefined;
+    for (const resource of boosts) {
+        const part = Object.entries(BOOSTS).find(([k, v]) => resource in v)?.[0] as BodyPartConstant | undefined;
+        if (!part) continue;
+        let available = FEATURES.LABS && boostsAvailable(office, resource, false);
+        const workParts = body.filter(p => p === part).length
+        const target = workParts * LAB_BOOST_MINERAL;
+        if (available && available >= target) {
+            // We have enough minerals, enter a boost order
+            Memory.offices[office].lab.boosts.push({
+                boosts: [{
+                    type: resource,
+                    count: target
+                }],
+                name
+            })
+            state = States.GET_BOOSTED;
+        }
+    }
+
     // try to spawn minion
     const r = spawn.spawnCreep(
         body,
-        `${minionType}-${office}-${Game.time % 10000}-${spawn.id.slice(23)}`,
+        name,
         {
             memory: {
                 type: minionType,
                 office,
-                objective
+                objective,
+                state
             },
             energyStructures: getEnergyStructures(office),
             directions

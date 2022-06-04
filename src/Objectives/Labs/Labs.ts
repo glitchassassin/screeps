@@ -1,5 +1,4 @@
 import { States } from "Behaviors/states";
-import { byId } from "Selectors/byId";
 import { getLabs } from "Selectors/getLabs";
 
 export function runLabs(roomName: string) {
@@ -10,10 +9,13 @@ export function runLabs(roomName: string) {
     }[] = [];
     set_boosting_labs:
     for (const order of Memory.offices[roomName].lab.boosts) {
-        if (byId(order.id)?.memory.state !== States.GET_BOOSTED) {
-            Memory.offices[roomName].lab.boosts = Memory.offices[roomName].lab.boosts.filter(o => o.id !== order.id);
+        if (Memory.creeps[order.name]?.state !== States.GET_BOOSTED) {
+            // either undefined, if creep is dead, or something else, if state changed
+            // either way, scrap the boost order
+            Memory.offices[roomName].lab.boosts = Memory.offices[roomName].lab.boosts.filter(o => o.name !== order.name);
             continue;
         }
+        if (Game.creeps[order.name]?.spawning) continue; // creep is not dead, so is still spawning
         for (let boost of order.boosts) {
             const boostingLab = Memory.offices[roomName].lab.boostingLabs.find(l => l.resource === boost.type)
             if (boostingLab && !newBoostingLabs.includes(boostingLab)) {

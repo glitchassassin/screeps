@@ -6,6 +6,7 @@ import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
 import { byId } from "Selectors/byId";
+import { costToBoostMinion } from "Selectors/costToBoostMinion";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { officeShouldMine } from "Selectors/officeShouldMine";
 import { roomPlans } from "Selectors/roomPlans";
@@ -19,7 +20,8 @@ export class MineObjective extends Objective {
         let foremanBody = this.targetForemen(office) ? MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)) : [];
         let accountantBody = this.targetAccountants(office) ? MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)) : [];
         let body = foremanBody.concat(accountantBody);
-        return minionCostPerTick(body);
+        const boostCost = costToBoostMinion(office, foremanBody.filter(p => p === WORK).length, RESOURCE_CATALYZED_UTRIUM_ALKALIDE);
+        return minionCostPerTick(body) + boostCost;
     }
     budget(office: string, energy: number) {
         if (!this.targetForemen(office) && !this.targetAccountants(office)) {
@@ -83,7 +85,8 @@ export class MineObjective extends Objective {
                     office,
                     this.id,
                     MinionTypes.FOREMAN,
-                    MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office))
+                    MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)),
+                    [RESOURCE_CATALYZED_UTRIUM_ALKALIDE]
                 ))
             }
 

@@ -1,5 +1,4 @@
 import { Objectives } from "Objectives/Objective";
-import { byId } from "./byId";
 import { getLabs } from "./getLabs";
 import { roomPlans } from "./roomPlans";
 
@@ -27,7 +26,7 @@ export function boostsNeededForLab(office: string, labId: Id<StructureLab>|undef
 
     for (const order of boostOrders) {
         // Subtract any already-boosted parts from the orders
-        const c = byId(order.id);
+        const c = Game.creeps[order.name];
         let orderResources = order.boosts.reduce((sum, boost) =>
             boost.type === resource ? boost.count : 0
         , 0)

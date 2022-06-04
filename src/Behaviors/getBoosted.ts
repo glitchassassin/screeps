@@ -13,11 +13,11 @@ export function getBoosted(creep: Creep) {
         if (part.boost) map.set(part.boost as MineralBoostConstant, (map.get(part.boost as MineralBoostConstant) ?? 0) + 1);
         return map;
     }, new Map<MineralBoostConstant, number>())
-    const outstanding = Memory.offices[creep.memory.office].lab.boosts.find(o => o.id === creep.id)?.boosts.filter(b => !boosts.has(b.type)) ?? [];
+    const outstanding = Memory.offices[creep.memory.office].lab.boosts.find(o => o.name === creep.name)?.boosts.filter(b => !boosts.has(b.type)) ?? [];
     // We don't need to check count, only completeness
     if (outstanding.length === 0) {
         // All boosts accounted for, we're done
-        Memory.offices[creep.memory.office].lab.boosts = Memory.offices[creep.memory.office].lab.boosts.filter(o => o.id !== creep.id)
+        Memory.offices[creep.memory.office].lab.boosts = Memory.offices[creep.memory.office].lab.boosts.filter(o => o.name !== creep.name)
         return BehaviorResult.SUCCESS;
     }
 
