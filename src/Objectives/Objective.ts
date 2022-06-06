@@ -44,6 +44,10 @@ export abstract class Objective {
         // Default implementation does nothing
     }
 
+    public boostQuotas(office: string): { boost: MineralBoostConstant, amount: number }[] {
+        return [];
+    }
+
     /**
      * The BehaviorTree for all creeps (regardless of office)
      */

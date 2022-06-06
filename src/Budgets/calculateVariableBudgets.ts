@@ -1,6 +1,6 @@
 import { Budget, BudgetGenerator } from "Budgets";
+import { PrioritizedObjectives } from "Objectives";
 import { FranchiseObjective } from "Objectives/Franchise";
-import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { LogisticsObjective } from "Objectives/Logistics";
 import { PriorityLogisticsObjective } from "Objectives/PriorityLogistics";
 import { ReserveObjective } from "Objectives/Reserve";

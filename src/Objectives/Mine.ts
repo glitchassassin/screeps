@@ -1,4 +1,5 @@
 import { BehaviorResult } from "Behaviors/Behavior";
+import { getBoosted } from "Behaviors/getBoosted";
 import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineContainer";
 import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
@@ -9,18 +10,27 @@ import { byId } from "Selectors/byId";
 import { costToBoostMinion } from "Selectors/costToBoostMinion";
 import { minionCostPerTick } from "Selectors/minionCostPerTick";
 import { officeShouldMine } from "Selectors/officeShouldMine";
+import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { terminalBalance } from "Selectors/terminalBalance";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
 
 export class MineObjective extends Objective {
+    public boostQuotas(office: string): { boost: MineralBoostConstant; amount: number; }[] {
+        if (rcl(office) < 6) return [];
+        return [{ // Store at least enough to boost one creep
+            boost: RESOURCE_UTRIUM_ALKALIDE,
+            amount: 30 * 50
+        }]
+    }
     cost(office: string) {
         let foremanBody = this.targetForemen(office) ? MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)) : [];
         let accountantBody = this.targetAccountants(office) ? MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), this.targetCarry(office)) : [];
         let body = foremanBody.concat(accountantBody);
-        const boostCost = costToBoostMinion(office, foremanBody.filter(p => p === WORK).length, RESOURCE_CATALYZED_UTRIUM_ALKALIDE);
+        const boostCost = costToBoostMinion(office, foremanBody.filter(p => p === WORK).length, RESOURCE_UTRIUM_ALKALIDE);
         return minionCostPerTick(body) + boostCost;
     }
     budget(office: string, energy: number) {
@@ -58,7 +68,8 @@ export class MineObjective extends Objective {
     targetCarry(office: string) {
         const mine = roomPlans(office)?.mine;
         const workParts = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)).filter(p => p === WORK).length;
-        const minedPerTick = (HARVEST_MINERAL_POWER * workParts) / EXTRACTOR_COOLDOWN;
+        const boosted = terminalBalance(office, RESOURCE_UTRIUM_ALKALIDE) ? BOOSTS[WORK][RESOURCE_UTRIUM_ALKALIDE].harvest : 1
+        const minedPerTick = (HARVEST_MINERAL_POWER * workParts * boosted) / EXTRACTOR_COOLDOWN;
         const estimatedPerTrip = 50 * minedPerTick
         const estimatedCarry = Math.ceil(estimatedPerTrip / CARRY_CAPACITY)
         // Only spawn Foreman/Accountant if mine structures are built
@@ -86,7 +97,7 @@ export class MineObjective extends Objective {
                     this.id,
                     MinionTypes.FOREMAN,
                     MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office)),
-                    [RESOURCE_CATALYZED_UTRIUM_ALKALIDE]
+                    [RESOURCE_UTRIUM_ALKALIDE]
                 ))
             }
 
@@ -113,6 +124,14 @@ export class MineObjective extends Objective {
 
     actions = {
         [MinionTypes.FOREMAN]: (creep: Creep) => {
+            if (
+                creep.memory.state === States.GET_BOOSTED
+            ) {
+                if (getBoosted(creep) === BehaviorResult.INPROGRESS) {
+                    return;
+                }
+                creep.memory.state = undefined;
+            }
             const mine = byId(Memory.rooms[creep.memory.office].mineralId);
             if (!mine) return;
             const plan = roomPlans(creep.memory.office)?.mine;

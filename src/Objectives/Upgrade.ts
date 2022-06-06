@@ -28,6 +28,12 @@ declare global {
 const UPGRADE_CONTROLLER_COST = 1
 
 export class UpgradeObjective extends Objective {
+    public boostQuotas(office: string): { boost: MineralBoostConstant; amount: number; }[] {
+        return [{ // Store at least enough to boost one creep
+            boost: RESOURCE_GHODIUM_ACID,
+            amount: 30 * 50
+        }]
+    }
     shouldSpawn(office: string, budget: number) {
         // Spawn based on maximizing use of available energy
         let target = Math.round(budget / this.cost(office));

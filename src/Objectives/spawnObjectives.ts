@@ -1,7 +1,7 @@
 import { byId } from "Selectors/byId";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import profiler from "utils/profiler";
-import { PrioritizedObjectives } from "./initializeObjectives";
+import { PrioritizedObjectives } from ".";
 
 
 const DEBUG = false;

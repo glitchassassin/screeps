@@ -1,4 +1,4 @@
-import { PrioritizedObjectives } from "./initializeObjectives";
+import { PrioritizedObjectives } from ".";
 
 export const assignCreepObjective = (creep: Creep) => {
     if (!creep.memory.objective) {

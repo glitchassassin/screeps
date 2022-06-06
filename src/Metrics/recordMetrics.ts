@@ -1,6 +1,6 @@
 import { BaseBudgetConstraints, Budget, Budgets, TotalBudgetConstraints } from "Budgets";
+import { PrioritizedObjectives } from "Objectives";
 import { FranchiseObjective } from "Objectives/Franchise";
-import { PrioritizedObjectives } from "Objectives/initializeObjectives";
 import { Metrics } from "screeps-viz";
 import { byId } from "Selectors/byId";
 import { calculateLogisticsThroughput } from "Selectors/calculateLogisticsThroughput";

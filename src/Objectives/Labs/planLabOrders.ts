@@ -1,3 +1,4 @@
+import { PrioritizedObjectives } from "Objectives";
 import { roomPlans } from "Selectors/roomPlans";
 import { getLabOrders } from "./getLabOrderDependencies";
 
@@ -8,10 +9,15 @@ export function planLabOrders(office: string) {
     const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal|undefined;
     if (!terminal) return;
 
-    // Maintain quota of ghodium acid for now
+    // Maintain quotas
     if (Memory.offices[office].lab.orders.length === 0) {
-        if (terminal.store.getUsedCapacity(RESOURCE_GHODIUM_ACID) < 10000) {
-            Memory.offices[office].lab.orders = getLabOrders(RESOURCE_GHODIUM_ACID, 3000, terminal)
+        for (const objective of PrioritizedObjectives) {
+            for (const {boost, amount} of objective.boostQuotas(office)) {
+                const difference = amount - terminal.store.getUsedCapacity(boost);
+                if (difference > 0) {
+                    Memory.offices[office].lab.orders = getLabOrders(boost, difference, terminal)
+                }
+            }
         }
     }
 }

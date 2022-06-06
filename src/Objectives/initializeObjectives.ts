@@ -1,4 +1,5 @@
 import { FEATURES } from "config";
+import { PrioritizedObjectives } from "Objectives";
 import { AcquireObjective } from "./Acquire";
 import { DefendObjective } from "./Defend";
 import { ExploreObjective } from "./Explore";
@@ -23,12 +24,6 @@ declare global {
         }
     }
 }
-
-
-/**
- * Objectives sorted by priority descending
- */
-export const PrioritizedObjectives: Objective[] = []
 
 export const initialize = (...args: Objective[]) => {
     for (let objective of args) {
