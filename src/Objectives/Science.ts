@@ -157,7 +157,6 @@ export class ScienceObjective extends Objective {
         }
         if (creep.memory.state === States.EMPTY_LABS) {
             const target = boostLabsToEmpty(creep.memory.office)[0];
-            console.log(target);
             const resource = (target?.structure as StructureLab|undefined)?.mineralType
             if (!target?.structure || !resource || creep.store.getFreeCapacity() === 0) {
                 setState(States.DEPOSIT)(creep);
@@ -170,8 +169,8 @@ export class ScienceObjective extends Objective {
         if (creep.memory.state === States.FILL_LABS) {
             const target = boostLabsToFill(creep.memory.office).find(lab => {
                 const [resource] = boostsNeededForLab(creep.memory.office, lab.structureId as Id<StructureLab>|undefined);
-                return creep.store.getUsedCapacity(resource) > 0;
-            })
+                    return creep.store.getUsedCapacity(resource) > 0;
+                })
 
             if (!target?.structure) {
                 setState(States.DEPOSIT)(creep);
@@ -193,7 +192,7 @@ export class ScienceObjective extends Objective {
 
         if ((creep.ticksToLive ?? 1500) < 200) {
             setState(States.RECYCLE)(creep)
-        } else if (labsShouldBeEmptied(creep.memory.office) && creep.store.getUsedCapacity() === 0) {
+        } else if (labsShouldBeEmptied(creep.memory.office) && creep.store.getFreeCapacity() > 0) {
             setState(States.EMPTY_LABS)(creep)
         } else if (!creep.memory.state) {
             setState(States.DEPOSIT)(creep)

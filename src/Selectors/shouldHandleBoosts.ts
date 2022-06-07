@@ -12,7 +12,16 @@ export function boostLabsToEmpty(office: string) {
 
 export function boostLabsToFill(office: string) {
     return getLabs(office).boosts.filter(lab => {
-        return !(lab.structure as StructureLab|undefined)?.mineralType
+        if (!lab.structure) return false;
+        const structure = lab.structure as StructureLab
+        const boost = structure.mineralType;
+        const [boostNeeded, quantity] = boostsNeededForLab(office, structure.id);
+        return (
+            !boost || (
+                boost == boostNeeded &&
+                structure.store.getUsedCapacity(boostNeeded) < (quantity ?? 0)
+            )
+        )
     })
 }
 

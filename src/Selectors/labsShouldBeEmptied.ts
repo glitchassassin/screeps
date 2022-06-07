@@ -3,9 +3,15 @@ import { getLabs } from "./getLabs";
 
 export function labsShouldBeEmptied(office: string) {
     const order = Memory.offices[office].lab.orders?.find(o => o.amount > 0) as LabOrder|undefined;
-    if (!order) return true;
     const { inputs, outputs } = getLabs(office);
     const [lab1, lab2] = inputs.map(s => s.structure) as (StructureLab|undefined)[];
+
+    // if no order, and there are resources in labs, then labs should be emptied
+    if (!order && [...inputs, ...outputs].some(l => (l.structure as StructureLab|undefined)?.mineralType)) {
+        return true;
+    } else if (!order) {
+        return false
+    }
 
     // Return true if input labs have foreign ingredients, or output labs have an old product
     return (

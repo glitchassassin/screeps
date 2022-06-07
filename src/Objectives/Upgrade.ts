@@ -36,7 +36,7 @@ export class UpgradeObjective extends Objective {
     }
     shouldSpawn(office: string, budget: number) {
         // Spawn based on maximizing use of available energy
-        let target = Math.round(budget / this.cost(office));
+        let target = Math.round(budget / this.cost(office, budget));
         target = isNaN(target) ? 0 : target;
         if (rcl(office) === 8) target = Math.min(1, target); // Cap at one minion at RCL8
         const minions = this.minions(office);
@@ -45,8 +45,8 @@ export class UpgradeObjective extends Objective {
 
         return minions.length < target; // Upgrading is capped at RCL8, spawn only one
     }
-    cost(office: string) {
-        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
+    cost(office: string, budget: number) {
+        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable, budget - 1);
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
         const boostCost = costToBoostMinion(office, workParts, RESOURCE_GHODIUM_ACID);
@@ -61,16 +61,18 @@ export class UpgradeObjective extends Objective {
                 energy: 0,
             }
         }
-        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable / 2);
+        let body = MinionBuilders[MinionTypes.PARALEGAL](Game.rooms[office].energyCapacityAvailable, energy - 1);
         let workParts = body.filter(p => p === WORK).length;
         // Calculate boost costs
         const boostCost = costToBoostMinion(office, workParts, RESOURCE_GHODIUM_ACID);
         let cost = minionCostPerTick(body) + workParts + boostCost;
+        // console.log(office, workParts, boostCost, cost)
 
         let construction = constructionToDo(office).length > 0;
         let downgradeImminent = (Game.rooms[office].controller?.ticksToDowngrade ?? 0) < 10000
         let storageSurplus = heapMetrics[office]?.storageLevel ? (Metrics.avg(heapMetrics[office].storageLevel) > getStorageBudget(office)) : false
-        let count = construction ? ((downgradeImminent || storageSurplus) ? 1 : 0) : Math.floor(energy / cost);
+        let count = construction ? ((downgradeImminent || storageSurplus) ? 1 : 0) : Math.ceil(energy / cost);
+        // console.log(office, construction, downgradeImminent, storageSurplus, energy, cost, count);
         if (rcl(office) === 8) count = Math.min(1, count); // Cap at one minion at RCL8
         count = isNaN(count) ? 0 : count;
         return {

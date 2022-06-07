@@ -45,14 +45,14 @@ initialize(
     new ExploreObjective(6.7),
     new DefendObjective(6.6),
     new TowerLogisticsObjective(6.5),
-    new FacilitiesObjective(5.1),
+    new FacilitiesObjective(5.2),
     new UpgradeObjective(5),
     new AcquireObjective(3),
     new LogisticsObjective(1),
     new TradeObjective(1),
 );
 
-if (FEATURES.LABS) initialize(new ScienceObjective(5));
+if (FEATURES.LABS) initialize(new ScienceObjective(5.1));
 if (FEATURES.MINING) initialize(new MineObjective(5));
 
 global.Objectives = Objectives;

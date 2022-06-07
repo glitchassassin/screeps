@@ -30,8 +30,11 @@ export const findAcquireTarget = () => {
         cachedAcquiringOffice = undefined;
     }
 
+    const minerals = ownedMinerals();
+
     // No cached target, scan for an acceptable one
     let bestTarget: string|undefined;
+    let bestMineral: number = Infinity;
     let bestTargetDistance: number = Infinity;
 
     // Look for acquire/support target in Offices if GCL = offices count
@@ -53,9 +56,22 @@ export const findAcquireTarget = () => {
         }
 
         const distance = Math.min(...offices.filter(r => Game.rooms[r].energyCapacityAvailable >= 850).map(r => Game.map.getRoomLinearDistance(r, room)), Infinity)
+        const mineralType = Memory.rooms[room].mineralType
 
-        if (!bestTarget || distance < bestTargetDistance) {
+        // Mineral ranking: Lower is better
+        // If we already have one of the given mineral, rank it as
+        // less important than any other mineral we don't have
+        const mineralRanking = (mineralType ?
+            MINERAL_PRIORITIES.indexOf(mineralType) + (minerals.has(mineralType) ? MINERAL_PRIORITIES.length : 0) :
+            Infinity
+        );
+
+        // If no target, pick the first eligible one
+        // If the target has a better mineral, pick that one
+        // If the target's mineral ranking is the same but it's closer, pick that one
+        if (!bestTarget || mineralRanking < bestMineral || (distance < bestTargetDistance && mineralRanking === bestMineral)) {
             bestTarget = room;
+            bestMineral = mineralRanking
             bestTargetDistance = distance;
         }
     }
@@ -116,28 +132,14 @@ export const officeShouldAcquireTarget = (officeName: string) => {
     const minerals = ownedMinerals();
 
     let bestTarget: string|undefined;
-    let bestMineral: number = Infinity;
     let bestTargetDistance: number = Infinity;
     for (const o in Memory.offices) {
         if (Game.rooms[o].energyCapacityAvailable < 850) continue;
 
-        const distance = Game.map.getRoomLinearDistance(o, room)
-        const mineralType = Memory.rooms[o].mineralType
+        const distance = Game.map.getRoomLinearDistance(o, room);
 
-        // Mineral ranking: Lower is better
-        // If we already have one of the given mineral, rank it as
-        // less important than any other mineral we don't have
-        const mineralRanking = (mineralType ?
-            MINERAL_PRIORITIES.indexOf(mineralType) + (minerals.has(mineralType) ? MINERAL_PRIORITIES.length : 0) :
-            Infinity
-        );
-
-        // If no target, pick the first eligible one
-        // If the target has a better mineral, pick that one
-        // If the target's mineral ranking is the same but it's closer, pick that one
-        if (!bestTarget || mineralRanking < bestMineral || (distance < bestTargetDistance && mineralRanking === bestMineral)) {
+        if (distance < bestTargetDistance) {
             bestTarget = o;
-            bestMineral = mineralRanking
             bestTargetDistance = distance;
         }
     }

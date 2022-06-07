@@ -102,15 +102,16 @@ export const MinionBuilders = {
             return Array(segments).fill([CLAIM, MOVE]).flat()
         }
     },
-    [MinionTypes.PARALEGAL]: (energy: number) => {
-        if (energy < 250) {
+    [MinionTypes.PARALEGAL]: (energy: number, maxWorkParts = 15) => {
+        if (energy < 250 || maxWorkParts <= 0) {
             return [];
         }
         else {
             // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
-            let workParts = Math.max(1, Math.min(15, Math.floor(((energy) * 10/13) / 100)))
+            let workParts = Math.max(1, Math.min(Math.floor(maxWorkParts), Math.floor(((energy) * 10/13) / 100)))
             let carryParts = Math.max(1, Math.min(3, Math.floor(((energy) * 1/13) / 50)))
             let moveParts = Math.max(1, Math.min(6, Math.floor(((energy) * 2/13) / 50)))
+            // console.log(energy, maxWorkParts, workParts)
             return ([] as BodyPartConstant[]).concat(
                 Array(workParts).fill(WORK),
                 Array(carryParts).fill(CARRY),
