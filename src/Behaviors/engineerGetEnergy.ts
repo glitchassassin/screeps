@@ -29,7 +29,7 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, targetRoom?:
         // Find nearest target
         const ruin = creep.pos.findClosestByRange(FIND_RUINS, { filter: ruin => ruin.store.getUsedCapacity(RESOURCE_ENERGY) !== 0});
         const ruinRange = ruin?.pos.getRangeTo(creep.pos) ?? Infinity;
-        const source = creep.pos.findClosestByRange(FIND_SOURCES, { filter: source => !franchiseIsFull(creep, source.id) || franchiseEnergyAvailable(source.id) > 0});
+        const source = creep.pos.findClosestByRange(FIND_SOURCES, { filter: source => (!franchiseIsFull(creep, source.id) && source.energy > 0) || franchiseEnergyAvailable(source.id) > 0});
         const sourceRange = source?.pos.getRangeTo(creep.pos) ?? Infinity;
         const storage = roomPlans(creep.memory.office)?.headquarters?.storage.pos;
         const storageRange = (storage && storageEnergyAvailable(facilitiesTarget) > 0) ? getRangeTo(storage, creep.pos) ?? Infinity : Infinity;
