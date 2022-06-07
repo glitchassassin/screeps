@@ -138,6 +138,14 @@ export class FacilitiesObjective extends Objective {
                 const plan = PlannedStructure.deserialize(creep.memory.facilitiesTarget)
                 // console.log(creep.name, plan.pos, plan.structureType)
 
+                if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
+                    const obstacle = plan.pos.lookFor(LOOK_STRUCTURES)
+                        .find(s => s.structureType !== STRUCTURE_CONTAINER && s.structureType !== STRUCTURE_ROAD)
+                    if (obstacle && moveTo(plan.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+                        creep.dismantle(obstacle);
+                    }
+                }
+
                 if (moveTo(plan.pos, 3)(creep) === BehaviorResult.SUCCESS) {
                     if (plan.structure) {
                         if (creep.repair(plan.structure) === OK) {
