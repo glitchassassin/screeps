@@ -1,5 +1,4 @@
 import { controllerId, sourceIds } from "./roomCache";
-import { roomPlans } from "./roomPlans";
 
 
 export enum TerritoryIntent {
@@ -12,16 +11,16 @@ export enum TerritoryIntent {
 
 export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
     let controller = controllerId(roomName);
-    let roomPlan = roomPlans(roomName);
     let sources = sourceIds(roomName);
     const hostiles = (Game.time - (Memory.rooms[roomName]?.lastHostileSeen ?? 0) <= 10)
-    const invaderCore = Memory.rooms[roomName]?.scanned && Memory.rooms[roomName].invaderCore === Memory.rooms[roomName].scanned
-    if (invaderCore) return TerritoryIntent.AVOID;
 
     if (!controller) {
         return TerritoryIntent.IGNORE;
     }
-    if ((Memory.rooms[roomName]?.owner && !Game.rooms[roomName]?.controller?.my) || (Memory.rooms[roomName]?.reserver && Memory.rooms[roomName]?.reserver !== 'LordGreywether')) {
+    if (
+        (Memory.rooms[roomName]?.owner && !Game.rooms[roomName]?.controller?.my) ||
+        (Memory.rooms[roomName]?.reserver && Memory.rooms[roomName]?.reserver !== 'LordGreywether' && Memory.rooms[roomName]?.reserver !== 'Invader')
+    ) {
         return TerritoryIntent.AVOID;
     } else if (Memory.roomPlans[roomName]?.office) {
         if (hostiles && Memory.offices[roomName]) {

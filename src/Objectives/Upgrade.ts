@@ -89,7 +89,7 @@ export class UpgradeObjective extends Objective {
                     office,
                     this.id,
                     MinionTypes.PARALEGAL,
-                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office) / 2),
+                    MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office) / 2, budget - 1),
                     [RESOURCE_GHODIUM_ACID]
                 )({
                     preferredSpawn: roomPlans(office)?.headquarters?.spawn.structure as StructureSpawn

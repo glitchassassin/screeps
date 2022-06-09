@@ -23,6 +23,7 @@ export enum MinionTypes {
     PARALEGAL = 'PARALEGAL',
     SALESMAN = 'SALESMAN',
     MARKETER = 'MARKETER',
+    JANITOR = 'JANITOR',
 }
 
 export const MinionBuilders = {
@@ -133,6 +134,23 @@ export const MinionBuilders = {
                 Array(moveParts).fill(MOVE),
                 Array(carryParts).fill(CARRY),
             )
+        }
+    },
+    [MinionTypes.JANITOR]: (energy: number) => {
+        if (energy < 200) {
+            return [];
+        } else if (energy < 600) {
+            let parts = (energy <= 550) ? 1 : 2;
+            return ([] as BodyPartConstant[]).concat(
+                Array(parts).fill(RANGED_ATTACK),
+                Array(parts).fill(MOVE),
+            )
+        } else {
+            const segment = [RANGED_ATTACK, MOVE, MOVE, HEAL]
+            const segmentCost = segment.reduce((sum, p) => sum + BODYPART_COST[p], 0)
+            const segments = Math.min(Math.floor(50 / segment.length), Math.floor(energy / segmentCost))
+
+            return Array(segments).fill(segment).flat().sort().reverse();
         }
     }
 }

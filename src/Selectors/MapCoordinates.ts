@@ -181,6 +181,18 @@ export const getRangeTo = memoize(
         return Math.max( Math.abs((fromGlobal.x-toGlobal.x)), Math.abs((fromGlobal.y-toGlobal.y)) );
     }
 )
+export const getClosestByRange = <T extends _HasRoomPosition>(from: RoomPosition, targets: T[]) => {
+    let closest: T|undefined;
+    let closestRange = Infinity;
+    for (const target of targets) {
+        const range = getRangeTo(from, target.pos);
+        if (range < closestRange) {
+            closest = target;
+            closestRange = range;
+        }
+    }
+    return closest;
+}
 export const globalPosition = (pos: RoomPosition) => {
     let {x,y,roomName} = pos;
     if(!_.inRange(x, 0, 50)) throw new RangeError('x value ' + x + ' not in range');
