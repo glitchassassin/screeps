@@ -10,6 +10,7 @@ const colors = {
     [TerritoryIntent.DEFEND]: '#0000ff',
     [TerritoryIntent.EXPLOIT]: '#ffff00',
     [TerritoryIntent.IGNORE]: '#333333',
+    [TerritoryIntent.PLUNDER]: '#00ffff',
 }
 
 export default () => {

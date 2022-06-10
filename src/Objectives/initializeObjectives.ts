@@ -8,6 +8,7 @@ import { HeadquartersLogisticsObjective } from "./HeadquartersLogistics";
 import { LogisticsObjective } from "./Logistics";
 import { MineObjective } from "./Mine";
 import { Objective, Objectives } from "./Objective";
+import { PlunderObjective } from "./Plunder";
 import { PriorityLogisticsObjective } from "./PriorityLogistics";
 import { RefillExtensionsObjective } from "./RefillExtensions";
 import { ReserveObjective } from "./Reserve";
@@ -47,6 +48,7 @@ initialize(
     new TowerLogisticsObjective(6.5),
     new FacilitiesObjective(5.2),
     new UpgradeObjective(5),
+    new PlunderObjective(3),
     new AcquireObjective(3),
     new LogisticsObjective(1),
     new TradeObjective(1),

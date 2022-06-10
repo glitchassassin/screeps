@@ -239,14 +239,16 @@ export class ScienceObjective extends Objective {
             const ingredientQuantity = (i: number) => Math.min(Math.floor(creep.store.getCapacity() / 2), i)
             const target1 = Math.min(
                 Math.max(0, ingredientQuantity(ingredient1) - creep.store.getUsedCapacity(order.ingredient1)),
-                creep.store.getFreeCapacity()
+                creep.store.getFreeCapacity(),
+                terminal.store.getUsedCapacity(order.ingredient1)
             );
             const target2 = Math.min(
                 Math.max(0, ingredientQuantity(ingredient2) - creep.store.getUsedCapacity(order.ingredient2)),
-                creep.store.getFreeCapacity()
+                creep.store.getFreeCapacity(),
+                terminal.store.getUsedCapacity(order.ingredient2)
             );
 
-            // if (creep.memory.office === 'W8N3') console.log(creep.memory.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
+            // if (creep.memory.office === 'E15N12') console.log(creep.memory.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
 
             if (
                 ingredient1 + ingredient2 === 0 &&

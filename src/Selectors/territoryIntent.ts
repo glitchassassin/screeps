@@ -6,7 +6,8 @@ export enum TerritoryIntent {
     ACQUIRE = 'ACQUIRE',
     DEFEND = 'DEFEND',
     EXPLOIT = 'EXPLOIT',
-    IGNORE = 'IGNORE'
+    IGNORE = 'IGNORE',
+    PLUNDER = 'PLUNDER',
 }
 
 export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
@@ -17,6 +18,11 @@ export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
     if (!controller) {
         return TerritoryIntent.IGNORE;
     }
+
+    if (Memory.rooms[roomName]?.hasLootEnergy || Memory.rooms[roomName]?.hasLootResources) {
+        return TerritoryIntent.PLUNDER;
+    }
+
     if (
         (Memory.rooms[roomName]?.owner && !Game.rooms[roomName]?.controller?.my) ||
         (Memory.rooms[roomName]?.reserver && Memory.rooms[roomName]?.reserver !== 'LordGreywether' && Memory.rooms[roomName]?.reserver !== 'Invader')
