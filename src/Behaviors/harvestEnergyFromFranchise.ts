@@ -41,7 +41,8 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
     if (
         plan &&
         !creep.pos.isEqualTo(plan.container.pos) &&
-        (!Game.rooms[plan.container.pos.roomName] || plan.container.pos.lookFor(LOOK_CREEPS).length === 0)
+        (!Game.rooms[plan.container.pos.roomName] || plan.container.pos.lookFor(LOOK_CREEPS).length === 0) &&
+        !plan.link.structure
     ) {
         result = moveTo(plan.container.pos, 0)(creep);
     } else if (!creep.pos.isNearTo(sourcePos!)) {

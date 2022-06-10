@@ -102,7 +102,7 @@ export class PlunderObjective extends Objective {
             }
         }
         if (creep.memory.state === States.DEPOSIT) {
-            if (creep.store.getUsedCapacity() === 0) creep.memory.state = States.DEPOSIT;
+            if (creep.store.getUsedCapacity() === 0) creep.memory.state = States.WITHDRAW;
             const storage = storageStructureThatNeedsEnergy(creep.memory.office);
             const terminal = roomPlans(creep.memory.office)?.headquarters?.terminal.structure;
             const nonEnergyResource = Object.keys(creep.store).find(c => c !== RESOURCE_ENERGY) as ResourceConstant;

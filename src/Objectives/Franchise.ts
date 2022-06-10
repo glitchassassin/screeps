@@ -1,4 +1,5 @@
 import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise";
+import { moveTo } from "Behaviors/moveTo";
 import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
@@ -182,6 +183,7 @@ export class FranchiseObjective extends Objective {
                 let result: ScreepsReturnCode = ERR_FULL
                 if (plan.spawn.structure) {
                     result = creep.transfer(plan.spawn.structure, RESOURCE_ENERGY)
+                    if (result === ERR_NOT_IN_RANGE) moveTo(plan.spawn.pos)(creep)
                 }
                 // Try to build (or repair) container
                 // if (result !== OK && !plan.container.structure) {
@@ -195,11 +197,12 @@ export class FranchiseObjective extends Objective {
                 //     creep.repair(plan.container.structure);
                 // }
                 // Try to deposit at link
-                if (result !== OK && plan.link.structure) {
+                if (result === ERR_FULL && plan.link.structure) {
                     result = creep.transfer(plan.link.structure, RESOURCE_ENERGY)
+                    if (result === ERR_NOT_IN_RANGE) moveTo(plan.spawn.pos)(creep)
                 }
 
-                if (result !== OK) {
+                if (result === ERR_FULL) {
                     creep.drop(RESOURCE_ENERGY)
                 }
             } else {
