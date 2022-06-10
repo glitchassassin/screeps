@@ -48,7 +48,7 @@ initialize(
     new TowerLogisticsObjective(6.5),
     new FacilitiesObjective(5.2),
     new UpgradeObjective(5),
-    new PlunderObjective(3),
+    new PlunderObjective(4),
     new AcquireObjective(3),
     new LogisticsObjective(1),
     new TradeObjective(1),

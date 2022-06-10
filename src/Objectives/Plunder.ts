@@ -66,6 +66,8 @@ export class PlunderObjective extends Objective {
     }
 
     action(creep: Creep) {
+        creep.memory.state ??= States.WITHDRAW;
+
         if (creep.memory.state === States.WITHDRAW) {
             if (creep.store.getFreeCapacity() === 0) creep.memory.state = States.DEPOSIT;
 
