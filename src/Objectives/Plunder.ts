@@ -86,13 +86,16 @@ export class PlunderObjective extends Objective {
                 )[0]?.id as Id<AnyStoreStructure>
 
             if (!creep.memory.plunderTarget) {
-                creep.memory.targetRoom = undefined;
+                delete creep.memory.targetRoom;
                 if (creep.store.getUsedCapacity() > 0) creep.memory.state = States.DEPOSIT;
                 return;
             }
 
             const target = byId(creep.memory.plunderTarget);
             const targetResource = target && Object.keys(target.store)[0] as ResourceConstant|undefined;
+            if (!targetResource) {
+                delete creep.memory.plunderTarget;
+            }
             if (targetResource && creep.withdraw(target, targetResource) === ERR_NOT_IN_RANGE) {
                 moveTo(target.pos)(creep);
                 return;
