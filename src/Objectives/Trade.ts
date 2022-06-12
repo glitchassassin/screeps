@@ -48,7 +48,7 @@ export class TradeObjective extends Objective {
         for (let [resource, [office, amount]] of maxSurpluses) {
             const terminal = roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal|undefined;
             if (terminalsUsed.has(office) || !terminal || terminal?.cooldown) continue; // Already sent resources this tick
-            if (resource === RESOURCE_ENERGY && rcl(office) !== 8) continue; // Surplus energy should go to upgrading this room
+            // if (resource === RESOURCE_ENERGY && rcl(office) !== 8) continue; // Surplus energy should go to upgrading this room
 
             const [targetOffice, targetAmount] = maxDeficits.get(resource) ?? [];
             if (targetOffice && targetAmount && Math.abs(targetAmount) > TERMINAL_SEND_THRESHOLD) {
