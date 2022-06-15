@@ -50,7 +50,7 @@ export function runMissionControl() {
 
       const missions = Memory.offices[office].pendingMissions.filter(o => o.priority === priority);
       const sortedMissions = [
-        ...missions.filter(o => o.startTime === Game.time),
+        ...missions.filter(o => o.startTime && o.startTime <= Game.time + CREEP_LIFE_TIME),
         ...missions.filter(o => o.startTime === undefined)
       ];
 
@@ -67,7 +67,7 @@ export function runMissionControl() {
         Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions.filter(m => m !== mission)
         Memory.offices[office].activeMissions.push(mission);
         // Update mission status and remaining budgets
-        mission.status = MissionStatus.RUNNING;
+        mission.status = mission.startTime && mission.startTime !== Game.time ? MissionStatus.SCHEDULED : MissionStatus.RUNNING;
         remainingCpu -= mission.estimate.cpu;
         remainingEnergy -= mission.estimate.energy;
       }
