@@ -18,9 +18,6 @@ interface SpawnOrder {
     spawn?: PreferredSpawnData,
     data: SpawnOrderData
 }
-interface ScheduledSpawnOrder extends SpawnOrder {
-    startTime: number,
-}
 declare global {
     interface OfficeMemory {
         spawnQueue: SpawnOrder[],
@@ -37,6 +34,11 @@ export function scheduleSpawn(
     Memory.offices[office].spawnQueue ??= [];
 
     const duration = data.body.length * CREEP_SPAWN_TIME;
+
+    if (startTime && !spawn) {
+        console.log('ERROR: Must specify a spawn if startTime is provided', office, data.name)
+        return;
+    }
 
     const order: SpawnOrder = {
         startTime,
@@ -61,11 +63,13 @@ export function spawnFromQueues() {
             if (availableSpawns.length === 0) break; // No more available spawns
 
             const orders = Memory.offices[office].spawnQueue.filter(o => o.priority === priority);
-            const scheduledOrders = orders.filter(o => o.startTime === Game.time);
-            const unscheduledOrders = orders.filter(o => o.startTime === undefined);
+            const sortedOrders = [
+                ...orders.filter(o => o.startTime === Game.time),
+                ...orders.filter(o => o.startTime === undefined)
+            ];
 
             const nextScheduledOrders = new Map<StructureSpawn, SpawnOrder>();
-            // Set orders specific to each spawn
+            // Get next scheduled order per spawn
             for (const order of Memory.offices[office].spawnQueue) {
                 if (order.priority >= priority && order.startTime && order.spawn?.spawn) {
                     const spawn = byId(order.spawn.spawn);
@@ -75,9 +79,9 @@ export function spawnFromQueues() {
                 }
             }
 
-            // Handle scheduled orders first
-            while (scheduledOrders.length) {
-                const order = scheduledOrders.shift();
+            // Handles scheduled orders first
+            while (sortedOrders.length) {
+                const order = sortedOrders.shift();
                 if (!order) break;
                 const spawn = availableSpawns.find(s => {
                     if (order.spawn?.spawn) {
@@ -107,67 +111,6 @@ export function spawnFromQueues() {
                     // Spawn failed, postpone order
                     order.startTime = undefined;
                 }
-            }
-
-            // Now add other scheduled orders to nextScheduledOrders
-            const otherScheduledOrdersInReverseOrder = Memory.offices[office].spawnQueue.filter(o => o.startTime && !o.spawn).sort((a, b) => (b.startTime! + b.duration) - (a.startTime! + a.duration))
-            const allSpawns = getSpawns(office);
-            for (const order of otherScheduledOrdersInReverseOrder) {
-                let bestSpawn: StructureSpawn|undefined = undefined;
-                let bestScore = Infinity;
-                for (const spawn of allSpawns) {
-                    const score = (nextScheduledOrders.get(spawn)?.startTime ?? Infinity) - (order.startTime! + order.duration);
-                    if (score > 0 && score < bestScore) {
-                        bestScore = score;
-                        bestSpawn = spawn;
-                    }
-                }
-                if (bestSpawn) {
-                    nextScheduledOrders.set(bestSpawn, order);
-                }
-            }
-
-            // Calculate time to next scheduled order,
-            const nextScheduledOrder = orders.filter(o => o.priority >= priority && o.startTime).sort((a, b) => a.startTime! - b.startTime!).slice(0, availableSpawns.length).pop();
-
-        }
-        // orders scheduled to begin spawning this tick
-        const scheduledOrders = Memory.offices[office].spawnQueues.scheduled.filter(o => o.startTime === Game.time);
-
-        for (const order of scheduledOrders) {
-            if (availableSpawns.length === 0 || order.priority !== priorities[0]) {
-                // Not the highest priority - Bump this order to the unscheduled spawn queue
-                Memory.offices[office].spawnQueues.scheduled.filter(o => o !== order);
-                Memory.offices[office].spawnQueues.unscheduled.push(order);
-            }
-        }
-
-        for (const spawnId in Memory.offices[office].spawnQueues) {
-            const spawn = byId(spawnId as Id<StructureSpawn>);
-            if (!spawn) {
-                delete Memory.offices[office].spawnQueues[spawnId];
-                continue;
-            }
-            const order = Memory.offices[office].spawnQueues[spawnId][0];
-            if (Game.time !== order.startTime) continue;
-            const result = spawn.spawnCreep(order.body, order.name, {
-                directions: order.directions,
-                memory: order.memory,
-                energyStructures: getEnergyStructures(office)
-            });
-            if (result === ERR_BUSY || result === ERR_NOT_ENOUGH_ENERGY) {
-                console.log('SPAWN ERROR', result, office, spawnId, JSON.stringify(order));
-                // Delay the order until next tick, or cancel if that would cause a conflict
-                const nextOrderWithPriority = Memory.offices[office].spawnQueues[spawnId].slice(1).find(o => o.priority >= order.priority)
-                if (!nextOrderWithPriority || order.startTime + order.duration < nextOrderWithPriority.startTime) {
-                    order.startTime += 1;
-                    console.log('Delaying spawn order');
-                } else {
-                    console.log('Canceling spawn order');
-                    Memory.offices[office].spawnQueues[spawnId].shift();
-                }
-            } else {
-                Memory.offices[office].spawnQueues[spawnId].shift(); // discard completed order
             }
         }
     }

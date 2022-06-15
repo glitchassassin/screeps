@@ -26,4 +26,5 @@
     },
     "typescript.tsdk": "./node_modules/typescript/lib",
     "eslint.enable": true,
+    "editor.tabSize": 2,
 }
