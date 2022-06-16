@@ -5,10 +5,9 @@ import MilestonesReport from "Reports/MilestonesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
 import profiler from "utils/profiler";
 import BalanceReport from "./BalanceReport";
-import BudgetReport from "./BudgetReport";
 import LabsReport from "./LabsReport";
 import MarketReport from "./MarketReport";
-import ObjectivesReport from "./ObjectivesReport";
+import MissionsReport from "./MissionsReport";
 import OfficeReport from "./OfficeReport";
 import TerminalsReport from "./TerminalsReport";
 import TerritoriesReport from "./TerritoriesReport";
@@ -50,12 +49,11 @@ register('facilities', FacilitiesReport);
 register('acquire', AcquireReport);
 register('milestones', MilestonesReport);
 register('territories', TerritoriesReport);
-register('objectives', ObjectivesReport);
 register('terminals', TerminalsReport);
 register('balance', BalanceReport);
 register('labs', LabsReport);
-register('budget', BudgetReport);
 register('market', MarketReport);
 register('office', OfficeReport);
+register('missions', MissionsReport);
 
-global.d('territories')
+global.d('missions')

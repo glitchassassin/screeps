@@ -82,6 +82,7 @@ export function spawnFromQueues() {
             // Handles scheduled orders first
             while (sortedOrders.length) {
                 const order = sortedOrders.shift();
+                // console.log('spawn order', JSON.stringify(order));
                 if (!order) break;
                 const spawn = availableSpawns.find(s => {
                     if (order.spawn?.spawn) {
@@ -89,9 +90,11 @@ export function spawnFromQueues() {
                         return (s.id === order.spawn.spawn);
                     } else {
                         // Order should go to a spawn with room before the next spawn-specific order
-                        return (nextScheduledOrders.get(s)?.startTime ?? Infinity) > order.startTime! + order.duration
+                        console.log(nextScheduledOrders.get(s)?.startTime, )
+                        return (nextScheduledOrders.get(s)?.startTime ?? Infinity) > (order.startTime ?? Game.time) + order.duration
                     }
                 });
+                // console.log('spawn', spawn)
                 if (order.spawn?.spawn && !spawn) {
                     // Requested Spawn was not available, postpone order
                     order.startTime = undefined;
@@ -106,10 +109,17 @@ export function spawnFromQueues() {
                     memory: order.data.memory,
                     energyStructures: getEnergyStructures(office)
                 });
-                availableSpawns = availableSpawns.filter(s => s !== spawn);
-                if (result !== OK) {
+                // console.log('spawn result', result)
+                if (result === OK) {
+                    availableSpawns = availableSpawns.filter(s => s !== spawn);
+                    Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
+                } else if (result === ERR_BUSY || result === ERR_NOT_ENOUGH_ENERGY) {
                     // Spawn failed, postpone order
                     order.startTime = undefined;
+                } else {
+                    // Spawn failed un-recoverably, abandon order
+                    console.log('Unrecoverable spawn error', result);
+                    Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
                 }
             }
         }

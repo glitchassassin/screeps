@@ -57,4 +57,4 @@ initialize(
 if (FEATURES.LABS) initialize(new ScienceObjective(5.1));
 if (FEATURES.MINING) initialize(new MineObjective(5));
 
-global.Objectives = Objectives;
+// global.Objectives = Objectives;

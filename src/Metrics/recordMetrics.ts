@@ -1,9 +1,4 @@
-import { BaseBudgetConstraints, Budget, Budgets, TotalBudgetConstraints } from "Budgets";
-import { PrioritizedObjectives } from "Objectives";
-import { FranchiseObjective } from "Objectives/Franchise";
 import { Metrics } from "screeps-viz";
-import { byId } from "Selectors/byId";
-import { calculateLogisticsThroughput } from "Selectors/calculateLogisticsThroughput";
 import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
 import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
 import { getStorageBudget } from "Selectors/getStorageBudget";
@@ -35,30 +30,10 @@ declare global {
                     energyCapacityAvailable: number,
                     spawnUptime: number,
                     franchiseIncome: number,
-                    logisticsThroughput: number,
-                    logisticsOutput: number,
                     storageLevel: number,
                     storageLevelTarget: number,
                     terminalLevel: number,
                     terminalLevelTarget: number,
-                    objectives: {
-                        [id: string]: {
-                            priority: number,
-                            energyBudget?: number,
-                            spawnQuota?: number,
-                            minions?: number,
-                            energyUsed?: number,
-                        }
-                    },
-                    budgets: {
-                        baseline?: Budget,
-                        franchises?: Budget,
-                        logistics?: Budget,
-                        objectives: {
-                            [id: string]: Budget
-                        },
-                        total?: Budget
-                    }
                 }
             },
             profiling: Record<string, number>,
@@ -105,52 +80,9 @@ export const recordMetrics = profiler.registerFN(() => {
             roomEnergy: Metrics.newTimeseries(),
             buildEfficiency: Metrics.newTimeseries(),
             storageLevel: Metrics.newTimeseries(),
-            objectiveEnergy: {},
         }
         Metrics.update(heapMetrics[office].roomEnergy, getActualEnergyAvailable(office), 300);
         Metrics.update(heapMetrics[office].storageLevel, storageEnergyAvailable(office), 100);
-
-        PrioritizedObjectives.forEach(o => {
-            heapMetrics[office].objectiveEnergy[o.id] ??= Metrics.newTimeseries()
-            Metrics.updateNonNegativeDelta(heapMetrics[office].objectiveEnergy[o.id], o.energyUsed.get(office) ?? 0, 1500)
-        })
-
-        const objectives = PrioritizedObjectives
-            .filter(o => !(o instanceof FranchiseObjective) || (!o.disabled && o.office === office))
-            .reduce((sum, o) => {
-                const metrics = o.metrics.get(office) ?? {};
-                sum[o.id] = {
-                    priority: o.priority,
-                    energyUsed: Metrics.avg(heapMetrics[office].objectiveEnergy[o.id]),
-                    ...metrics,
-                }
-                return sum;
-            }, {} as Record<string, {priority: number, energyBudget?: number, spawnQuota?: number, minions?: number, energyUsed: number}>);
-
-        let logisticsOutput = 0;
-        for (let event of Game.rooms[office]?.getEventLog?.() ?? []) {
-            if (event.event === EVENT_TRANSFER) {
-                const target = byId(event.data.targetId as Id<Creep|AnyStoreStructure>);
-                if (
-                    (target instanceof StructureSpawn ||
-                    target instanceof StructureStorage ||
-                    target instanceof StructureContainer) &&
-                    byId(event.objectId as Id<Creep>)?.memory?.objective === 'LogisticsObjective'
-                ) {
-                    logisticsOutput += event.data.amount;
-                }
-            }
-        }
-
-        const budgets = {
-            baseline: BaseBudgetConstraints.get(office),
-            objectives: {} as Record<string, Budget>,
-            total: TotalBudgetConstraints.get(office)
-        }
-        for (let [id, budget] of Budgets.get(office) ?? []) {
-            let label = id.replace('Objective', '').split('|')[0]
-            budgets.objectives[label] = budget
-        }
 
         Memory.stats.offices[office] = {
             ...Memory.stats.offices[office],
@@ -161,13 +93,10 @@ export const recordMetrics = profiler.registerFN(() => {
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             spawnUptime: getSpawns(office).filter(s => s.spawning).length,
             franchiseIncome: franchiseIncomePerTick(office),
-            logisticsThroughput: calculateLogisticsThroughput(office),
             storageLevel: storageEnergyAvailable(office),
             storageLevelTarget: getStorageBudget(office),
             terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
             terminalLevelTarget: Game.rooms[office].terminal ? (Memory.offices[office].resourceQuotas[RESOURCE_ENERGY] ?? 2000) : 0,
-            objectives,
-            budgets
         }
     }
 }, 'recordMetrics')

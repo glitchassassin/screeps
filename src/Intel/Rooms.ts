@@ -110,7 +110,10 @@ export const scanRooms = profiler.registerFN(() => {
                         orders: [],
                         boosts: [],
                         boostingLabs: [],
-                    }
+                    },
+                    spawnQueue: [],
+                    pendingMissions: [],
+                    activeMissions: [],
                 }
                 destroyUnplannedStructures(room);
             }
