@@ -1,4 +1,4 @@
-import { PrioritizedObjectives } from "Objectives";
+import { PrioritizedObjectives } from "OldObjectives";
 import { roomPlans } from "Selectors/roomPlans";
 import { getLabOrders } from "./getLabOrderDependencies";
 

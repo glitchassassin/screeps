@@ -1,5 +1,3 @@
-import { MinionTypes } from "Minions/minionTypes";
-import { Objectives } from "Objectives/Objective";
 import { acquireTargetIsValid, findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
 
 export default () => {
@@ -33,9 +31,6 @@ export default () => {
         if (officeShouldClaimAcquireTarget(room)) {
             console.log(room, 'should claim', target);
             Game.map.visual.line(new RoomPosition(25, 25, target), new RoomPosition(25, 25, room), {color: '#00ff00', width: 1, lineStyle: 'solid', opacity: 0.5});
-            Objectives['AcquireObjective'].minions(room + MinionTypes.LAWYER).forEach(creep => {
-                Game.map.visual.line(new RoomPosition(25, 25, target), creep.pos, {color: '#00ffff', width: 1, lineStyle: 'solid', opacity: 0.5});
-            })
         } else if (officeShouldSupportAcquireTarget(room)) {
             console.log(room, 'should support', target);
             Game.map.visual.line(new RoomPosition(25, 25, target), new RoomPosition(25, 25, room), {color: '#00ff00', width: 1, lineStyle: 'dashed', opacity: 0.5});

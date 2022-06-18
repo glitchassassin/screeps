@@ -1,6 +1,6 @@
 import { heapMetrics } from "Metrics/heapMetrics";
-import { LogisticsObjective } from "Objectives/Logistics";
-import { Objectives } from "Objectives/Objective";
+import { LogisticsObjective } from "OldObjectives/Logistics";
+import { Objectives } from "OldObjectives/Objective";
 import { Metrics } from "screeps-viz";
 import { memoizeByTick } from "utils/memoizeFunction";
 import { franchiseCount, franchiseDistances } from "./franchiseStatsPerTick";

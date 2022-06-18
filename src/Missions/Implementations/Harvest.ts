@@ -104,7 +104,7 @@ export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionD
         let result: ScreepsReturnCode = ERR_FULL
         if (plan.spawn.structure) {
           result = creep.transfer(plan.spawn.structure, RESOURCE_ENERGY)
-          if (result === ERR_NOT_IN_RANGE) moveTo(plan.spawn.pos)(creep)
+          if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.spawn.pos)
         }
         // Try to build (or repair) container
         // if (result !== OK && !plan.container.structure) {
@@ -120,7 +120,7 @@ export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionD
         // Try to deposit at link
         if (result === ERR_FULL && plan.link.structure) {
           result = creep.transfer(plan.link.structure, RESOURCE_ENERGY)
-          if (result === ERR_NOT_IN_RANGE) moveTo(plan.spawn.pos)(creep)
+          if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.spawn.pos)
         }
 
         if (result === ERR_FULL) {

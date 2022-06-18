@@ -1,9 +1,9 @@
 import { Budget, BudgetGenerator } from "Budgets";
-import { PrioritizedObjectives } from "Objectives";
-import { FranchiseObjective } from "Objectives/Franchise";
-import { LogisticsObjective } from "Objectives/Logistics";
-import { PriorityLogisticsObjective } from "Objectives/PriorityLogistics";
-import { ReserveObjective } from "Objectives/Reserve";
+import { PrioritizedObjectives } from "OldObjectives";
+import { FranchiseObjective } from "OldObjectives/Franchise";
+import { LogisticsObjective } from "OldObjectives/Logistics";
+import { PriorityLogisticsObjective } from "OldObjectives/PriorityLogistics";
+import { ReserveObjective } from "OldObjectives/Reserve";
 import { fromObjective } from "./BudgetGenerators/fromObjective";
 import { fitBudgets } from "./fit";
 

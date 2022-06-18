@@ -1,4 +1,4 @@
-import { Objectives } from "Objectives/Objective";
+import { Objectives } from "OldObjectives/Objective";
 import { byId } from "Selectors/byId";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { BehaviorResult } from "./Behavior";

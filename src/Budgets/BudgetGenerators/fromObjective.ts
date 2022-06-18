@@ -1,5 +1,5 @@
 import { Budget, BudgetGenerator } from "Budgets";
-import { Objective } from "Objectives/Objective";
+import { Objective } from "OldObjectives/Objective";
 
 export function fromObjective(objective: Objective, office: string): BudgetGenerator {
     return (constraints: Budget) => {

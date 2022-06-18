@@ -1,4 +1,4 @@
-import { FranchiseObjectives } from "Objectives/Franchise";
+import { FranchiseObjectives } from "OldObjectives/Franchise";
 import { byId } from "./byId";
 import { adjacentWalkablePositions } from "./MapCoordinates";
 import { posById } from "./posById";

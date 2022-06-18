@@ -1,5 +1,5 @@
-import { LabOrder } from "Objectives/Labs/LabOrder";
-import { Objectives } from "Objectives/Objective";
+import { LabOrder } from "OldObjectives/Labs/LabOrder";
+import { Objectives } from "OldObjectives/Objective";
 import { getLabs } from "./getLabs";
 
 export function ingredientsNeededForLabOrder(office: string, order: LabOrder) {

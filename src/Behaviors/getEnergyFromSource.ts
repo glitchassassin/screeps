@@ -1,4 +1,4 @@
-import { Objectives } from "Objectives/Objective";
+import { Objectives } from "OldObjectives/Objective";
 import { byId } from "Selectors/byId";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
 import { posById } from "Selectors/posById";

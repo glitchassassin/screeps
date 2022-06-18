@@ -1,5 +1,5 @@
 import { BaseBudgetConstraints, Budget, BudgetGenerator, Budgets, TotalBudgetConstraints } from "Budgets"
-import { Objectives } from "Objectives/Objective"
+import { Objectives } from "OldObjectives/Objective"
 import { calculateBaselineEnergy } from "Selectors/calculateBaselineEnergy"
 import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick"
 import { getSpawns } from "Selectors/roomPlans"

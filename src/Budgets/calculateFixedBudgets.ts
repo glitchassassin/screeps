@@ -1,8 +1,8 @@
 import { Budget } from "Budgets";
-import { PrioritizedObjectives } from "Objectives";
-import { FranchiseObjective } from "Objectives/Franchise";
-import { PriorityLogisticsObjective } from "Objectives/PriorityLogistics";
-import { ReserveObjective } from "Objectives/Reserve";
+import { PrioritizedObjectives } from "OldObjectives";
+import { FranchiseObjective } from "OldObjectives/Franchise";
+import { PriorityLogisticsObjective } from "OldObjectives/PriorityLogistics";
+import { ReserveObjective } from "OldObjectives/Reserve";
 import { fromObjective } from "./BudgetGenerators/fromObjective";
 
 export function calculateFixedBudgets(office: string) {

@@ -1,5 +1,5 @@
 import { FEATURES } from "config";
-import { PrioritizedObjectives } from "Objectives";
+import { PrioritizedObjectives } from "OldObjectives";
 import { AcquireObjective } from "./Acquire";
 import { DefendObjective } from "./Defend";
 import { ExploreObjective } from "./Explore";

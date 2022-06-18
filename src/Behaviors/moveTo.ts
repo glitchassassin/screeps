@@ -1,5 +1,5 @@
 import { BehaviorResult } from "Behaviors/Behavior";
-import { calculateNearbyPositions, getCostMatrix, isPositionWalkable, terrainCosts } from "Selectors/MapCoordinates";
+import { getCostMatrix, terrainCosts } from "Selectors/MapCoordinates";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import { packPos } from "utils/packrat";
 
@@ -24,19 +24,19 @@ export class Route {
 
     calculateRoute(creep: Creep) {
         this.rooms = [creep.pos.roomName];
-        const bestRoute = undefined;
-        const bestRouteLength = Infinity;
+        let bestRoute: string[]|undefined = undefined;
+        let bestRouteLength = Infinity;
         for (const target of this.targets) {
             if (creep.pos.roomName === target.pos.roomName) {
                 return; // At least one target is in this room
             }
             let roomsRoute = Game.map.findRoute(
                 creep.pos.roomName,
-                this.pos.roomName,
+                target.pos.roomName,
                 {
                     routeCallback: (roomName) => {
                         if (
-                            roomName !== this.pos.roomName &&
+                            roomName !== target.pos.roomName &&
                             roomName !== creep.pos.roomName &&
                             getTerritoryIntent(roomName) === TerritoryIntent.AVOID
                         ) return Infinity;
@@ -44,25 +44,21 @@ export class Route {
                     }
                 }
             )
-            if (roomsRoute === ERR_NO_PATH) throw new Error(`No valid room path ${creep.pos.roomName} - ${this.pos.roomName}`);
-            this.rooms = this.rooms.concat(roomsRoute.map(r => r.room));
-            this.pathRoom = this.rooms[1];
+            if (roomsRoute === ERR_NO_PATH) continue;
+            if (roomsRoute.length < bestRouteLength) {
+                bestRoute = roomsRoute.map(r => r.room);
+                bestRouteLength = roomsRoute.length;
+            }
         }
+        if (!bestRoute) throw new Error(`No valid room path ${creep.pos.roomName} - [${this.targets.map(t => t.pos.roomName).join(',')}]`);
+        this.rooms = this.rooms.concat(bestRoute);
+        this.pathRoom = this.rooms[1];
     }
 
     calculatePathToRoom(creep: Creep, avoidCreeps = false, recalculated = false) {
         const nextRoom = this.rooms[this.rooms.indexOf(creep.room.name) + 1];
         if (!nextRoom) {
-            // We are in the target room
-            let positionsInRange = calculateNearbyPositions(this.pos, this.range, true)
-                .filter(pos =>
-                    isPositionWalkable(pos, true) &&
-                    pos.x > 0 && pos.x < 49 &&
-                    pos.y > 0 && pos.y < 49
-                );
-            // console.log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
-            if (positionsInRange.length === 0) throw new Error('No valid targets for path');
-            this.calculatePath(creep, positionsInRange, avoidCreeps);
+            this.calculatePath(creep, this.targets, avoidCreeps);
             return;
         }
         const exit = creep.room.findExitTo(nextRoom);
@@ -76,10 +72,10 @@ export class Route {
             }
         }
         this.pathRoom = nextRoom;
-        this.calculatePath(creep, creep.room.find(exit), avoidCreeps);
+        this.calculatePath(creep, creep.room.find(exit).map(pos => ({pos, range: 0})), avoidCreeps);
     }
 
-    calculatePath(creep: Creep, positionsInRange: RoomPosition[], avoidCreeps = false) {
+    calculatePath(creep: Creep, positionsInRange: MoveTarget[], avoidCreeps = false) {
         let route = PathFinder.search(creep.pos, positionsInRange, {
             roomCallback: (room) => {
                 if (!this.rooms?.includes(room)) return false;
@@ -95,7 +91,7 @@ export class Route {
     }
 
     run(creep: Creep) {
-        if (creep.pos.inRangeTo(this.pos, this.range)) return OK;
+        if (this.targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range)) return OK;
 
         if (creep.pos.roomName === this.pathRoom) {
             this.calculatePathToRoom(creep);

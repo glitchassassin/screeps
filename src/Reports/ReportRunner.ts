@@ -1,6 +1,5 @@
 import AcquireReport from "Reports/AcquireReport";
 import FacilitiesReport from "Reports/FacilitiesReport";
-import FranchiseReport from "Reports/FranchiseReport";
 import MilestonesReport from "Reports/MilestonesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
 import profiler from "utils/profiler";
@@ -43,7 +42,6 @@ global.d = (key: string, opts?: any) => {
     }
 }
 
-register('franchises', FranchiseReport);
 register('planning', RoomPlanningReport);
 register('facilities', FacilitiesReport);
 register('acquire', AcquireReport);

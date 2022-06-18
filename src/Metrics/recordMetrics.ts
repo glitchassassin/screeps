@@ -1,5 +1,4 @@
 import { Metrics } from "screeps-viz";
-import { franchiseIncomePerTick } from "Selectors/franchiseStatsPerTick";
 import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
 import { getStorageBudget } from "Selectors/getStorageBudget";
 import { getSpawns } from "Selectors/roomPlans";
@@ -92,7 +91,6 @@ export const recordMetrics = profiler.registerFN(() => {
             energyAvailable: Game.rooms[office].energyAvailable,
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             spawnUptime: getSpawns(office).filter(s => s.spawning).length,
-            franchiseIncome: franchiseIncomePerTick(office),
             storageLevel: storageEnergyAvailable(office),
             storageLevelTarget: getStorageBudget(office),
             terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,

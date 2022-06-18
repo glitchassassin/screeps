@@ -1,4 +1,4 @@
-import { Objectives } from "Objectives/Objective";
+import { Objectives } from "OldObjectives/Objective";
 import { getLabs } from "./getLabs";
 import { roomPlans } from "./roomPlans";
 
