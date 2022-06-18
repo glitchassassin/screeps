@@ -1,7 +1,6 @@
-import { sourceIds } from "Selectors/roomCache";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import HarvestDispatcher from "./Controllers/Harvest";
 import { Missions } from "./Implementations";
-import { createHarvestMission, HarvestMission } from "./Implementations/Harvest";
 import { Mission, MissionStatus, MissionType } from "./Mission";
 
 declare global {
@@ -43,20 +42,17 @@ function executeMissions() {
 }
 
 function generateMissions() {
+  const dispatchers = [
+    HarvestDispatcher
+  ]
+  // Run per-tick dispatchers
+  for (const dispatcher of dispatchers) {
+    dispatcher.byTick();
+  }
+  // Run per-office dispatchers
   for (const office in Memory.offices) {
-    // Create new harvest mission for source, if it doesn't exist
-    for (const source of sourceIds(office)) {
-      if (![
-        ...Memory.offices[office].activeMissions,
-        ...Memory.offices[office].pendingMissions
-      ].some(m =>
-        m.type === MissionType.HARVEST &&
-        (m as HarvestMission).data.source === source
-      )) {
-        Memory.offices[office].pendingMissions.push(
-          createHarvestMission(office, source)
-        )
-      }
+    for (const dispatcher of dispatchers) {
+      dispatcher.byOffice(office);
     }
   }
 }

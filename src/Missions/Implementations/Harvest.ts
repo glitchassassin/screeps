@@ -12,19 +12,20 @@ import { MissionImplementation } from "./MissionImplementation";
 
 interface HarvestMissionData {
   source: Id<Source>,
+  arrived?: number,
 }
 export type HarvestMission = Mission<MissionType.HARVEST, HarvestMissionData>;
 
-export function createHarvestMission(office: string, source: Id<Source>): HarvestMission {
-  // Assume working full time
+export function createHarvestMission(office: string, source: Id<Source>, startTime?: number): HarvestMission {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office)))
+    energy: minionCost(MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office))),
   }
   return createMission({
     office,
     priority: 10,
     type: MissionType.HARVEST,
+    startTime,
     data: {
       source,
     },
@@ -37,10 +38,16 @@ export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionD
   spawn(mission: HarvestMission) {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
+    // Calculate harvester spawn preference
     const franchisePlan = getFranchisePlanBySourceId(mission.data.source);
     const franchiseSpawn = franchisePlan?.spawn.structure as StructureSpawn | undefined;
     const franchiseContainer = franchisePlan?.container.pos;
+    const spawnPreference = (franchiseSpawn && franchiseContainer) ? {
+      spawn: franchiseSpawn.id,
+      directions: [franchiseSpawn.pos.getDirectionTo(franchiseContainer.x, franchiseContainer.y)]
+    } : undefined;
 
+    // Set name
     const name = `HARVEST-${mission.office}-${Game.time % 10000}-${mission.data.source.slice(mission.data.source.length - 1)}`
 
     scheduleSpawn(
@@ -51,10 +58,7 @@ export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionD
         body: MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(mission.office)),
       },
       mission.startTime,
-      (franchiseSpawn && franchiseContainer) ? {
-        spawn: franchiseSpawn.id,
-        directions: [franchiseSpawn.pos.getDirectionTo(franchiseContainer.x, franchiseContainer.y)]
-      } : undefined
+      spawnPreference
     )
 
     mission.creepNames.push(name);
@@ -78,8 +82,19 @@ export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionD
     // Mission behavior
     harvestEnergyFromFranchise(creep, mission.data.source);
 
+    const franchisePos = posById(mission.data.source);
+    if (
+      !mission.data.arrived &&
+      creep.ticksToLive &&
+      (franchisePos?.getRangeTo(creep.pos) ?? Infinity) <= 1
+    ) {
+      mission.data.arrived =
+        (CREEP_LIFE_TIME - creep.ticksToLive) + // creep life time
+        (creep.body.length * CREEP_SPAWN_TIME); // creep spawn time
+    }
+
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.5) {
-      const franchisePos = posById(mission.data.source);
+
       if (mission.office === franchisePos?.roomName) {
         // Local franchise
         const plan = getFranchisePlanBySourceId(mission.data.source)

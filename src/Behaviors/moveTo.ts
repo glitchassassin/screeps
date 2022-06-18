@@ -2,7 +2,6 @@ import { BehaviorResult } from "Behaviors/Behavior";
 import { calculateNearbyPositions, getCostMatrix, isPositionWalkable, terrainCosts } from "Selectors/MapCoordinates";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import { packPos } from "utils/packrat";
-import profiler from "utils/profiler";
 
 
 export class Route {
@@ -15,8 +14,9 @@ export class Route {
 
     constructor(
         creep: Creep,
-        public pos: RoomPosition,
-        public range: number = 1
+        public key: string,
+        public targets: MoveTarget[],
+        public opts?: MoveToOpts
     ) {
         this.calculateRoute(creep);
         this.calculatePathToRoom(creep);
@@ -24,7 +24,12 @@ export class Route {
 
     calculateRoute(creep: Creep) {
         this.rooms = [creep.pos.roomName];
-        if (creep.pos.roomName !== this.pos.roomName) {
+        const bestRoute = undefined;
+        const bestRouteLength = Infinity;
+        for (const target of this.targets) {
+            if (creep.pos.roomName === target.pos.roomName) {
+                return; // At least one target is in this room
+            }
             let roomsRoute = Game.map.findRoute(
                 creep.pos.roomName,
                 this.pos.roomName,
@@ -50,11 +55,11 @@ export class Route {
         if (!nextRoom) {
             // We are in the target room
             let positionsInRange = calculateNearbyPositions(this.pos, this.range, true)
-                                         .filter(pos =>
-                                            isPositionWalkable(pos, true) &&
-                                            pos.x > 0 && pos.x < 49 &&
-                                            pos.y > 0 && pos.y < 49
-                                        );
+                .filter(pos =>
+                    isPositionWalkable(pos, true) &&
+                    pos.x > 0 && pos.x < 49 &&
+                    pos.y > 0 && pos.y < 49
+                );
             // console.log(creep.name, `calculatePath: ${positionsInRange.length} squares in range ${this.range} of ${this.pos}`);
             if (positionsInRange.length === 0) throw new Error('No valid targets for path');
             this.calculatePath(creep, positionsInRange, avoidCreeps);
@@ -119,14 +124,14 @@ export class Route {
         if (!this.path) return;
         let rooms = this.path.reduce((r, pos) => (r.includes(pos.roomName) ? r : [...r, pos.roomName]), [] as string[])
         if (rooms.length > 1) {
-            Game.map.visual.poly(this.path, {lineStyle: 'dotted', stroke: '#fff'});
+            Game.map.visual.poly(this.path, { lineStyle: 'dotted', stroke: '#fff' });
         }
         rooms.forEach(room => {
             // Technically this could cause weirdness if the road loops out of a room
             // and then back into it. If that happens, we'll just need to parse this
             // into segments a little more intelligently
             if (!this.path) return;
-            new RoomVisual(room).poly(this.path.filter(pos => pos.roomName === room), {lineStyle: 'dotted', stroke: '#fff'});
+            new RoomVisual(room).poly(this.path.filter(pos => pos.roomName === room), { lineStyle: 'dotted', stroke: '#fff' });
         })
     }
 }
@@ -135,72 +140,99 @@ export class Route {
 
 declare global {
     interface CreepMemory {
-        movePos?: string,
-        moveRange?: number,
+        moveTargets?: {
+            pos: string,
+            range: number
+        }[]
     }
 }
 
 let Routes: Record<string, Route> = {};
 
-export const moveTo = profiler.registerFN((pos?: RoomPosition, range = 1) => {
-    return (creep: Creep) => {
-        if (!pos) return BehaviorResult.FAILURE;
+interface MoveTarget {
+    pos: RoomPosition,
+    range: number
+}
+interface MoveToOpts extends globalThis.MoveToOpts {
+    flee?: boolean,
+}
 
-        if (creep.pos.x === 0) {
-            creep.move(RIGHT);
-            return BehaviorResult.INPROGRESS;
-        } else if (creep.pos.x === 49) {
-            creep.move(LEFT);
-            return BehaviorResult.INPROGRESS;
-        } else if (creep.pos.y === 0) {
-            creep.move(BOTTOM);
-            return BehaviorResult.INPROGRESS;
-        } else if (creep.pos.y === 49) {
-            creep.move(TOP);
-            return BehaviorResult.INPROGRESS;
-        }
+export function moveTo(creep: Creep, targetOrTargets: _HasRoomPosition | RoomPosition | MoveTarget | MoveTarget[], opts?: MoveToOpts | undefined) {
+    const targets: MoveTarget[] = [];
+    if ('range' in targetOrTargets) { // MoveTarget
+        targets.push(targetOrTargets);
+    } else if ('pos' in targetOrTargets) { // _HasRoomPosition
+        targets.push({
+            pos: targetOrTargets.pos,
+            range: opts?.range ?? 0 // default range
+        })
+    } else if ('x' in targetOrTargets) { // RoomPosition
+        targets.push({
+            pos: targetOrTargets,
+            range: opts?.range ?? 0 // default range
+        })
+    } else { // MoveTarget[]
+        targets.push(...targetOrTargets);
+    }
 
-        // If we're in range, move is done
-        if (creep.pos.inRangeTo(pos, range)) {
-            delete Routes[creep.name]
-            return BehaviorResult.SUCCESS;
-        }
+    // If the creep is in range of a move target, it does not need to move
+    // If target has exactly one target, it is there, and it has range 0, then it does "need to move" to avoid being shoved
+    const needsToMove = !targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range) || targets.every(target => target.range === 0 && creep.pos.isEqualTo(target));
+    if (!targets) return BehaviorResult.FAILURE;
 
-        // Set target position for excuseMe
-        Memory.creeps[creep.name].movePos = packPos(pos);
-        Memory.creeps[creep.name].moveRange = range;
+    if (creep.pos.x === 0) {
+        creep.move(RIGHT);
+        return BehaviorResult.INPROGRESS;
+    } else if (creep.pos.x === 49) {
+        creep.move(LEFT);
+        return BehaviorResult.INPROGRESS;
+    } else if (creep.pos.y === 0) {
+        creep.move(BOTTOM);
+        return BehaviorResult.INPROGRESS;
+    } else if (creep.pos.y === 49) {
+        creep.move(TOP);
+        return BehaviorResult.INPROGRESS;
+    }
 
-        // Plan route, if necessary
-        if (!Routes[creep.name] || !Routes[creep.name].pos.isEqualTo(pos)) {
-            try {
-                Routes[creep.name] = new Route(creep, pos, range);
-            } catch (e) {
-                // console.log(e)
-                return BehaviorResult.FAILURE;
-            }
-        }
+    // If we're in range, move is done
+    if (!needsToMove) {
+        delete Routes[creep.name]
+        return BehaviorResult.SUCCESS;
+    }
 
-        // Move along route
+    // Set target position for excuseMe
+    Memory.creeps[creep.name].moveTargets = targets.map(t => ({ pos: packPos(t.pos), range: t.range }));
+
+    const key = targets.map(t => packPos(t.pos)).join();
+
+    // Plan route, if necessary
+    if (!Routes[creep.name] || Routes[creep.name].key !== key) {
         try {
-            let result = Routes[creep.name].run(creep);
-            if (result === ERR_NOT_FOUND) {
-                creep.memory.movePos = undefined;
-                creep.memory.moveRange = undefined;
-                delete Routes[creep.name];
-                // console.log('ERR_NOT_FOUND')
-                return BehaviorResult.FAILURE;
-            } else if (result === OK) {
-                return BehaviorResult.INPROGRESS;
-            } else {
-                throw new Error(`Error running route: ${result}`);
-            }
+            Routes[creep.name] = new Route(creep, key, targets, opts);
         } catch (e) {
-            // Whether error encountered or execution fell through, the path failed
-            // console.log(e);
-            creep.memory.movePos = undefined;
-            creep.memory.moveRange = undefined;
-            delete Routes[creep.name];
+            // console.log(e)
             return BehaviorResult.FAILURE;
         }
     }
-}, 'moveTo')
+
+    // Move along route
+    try {
+        let result = Routes[creep.name].run(creep);
+        if (result === ERR_NOT_FOUND) {
+            creep.memory.moveTargets = undefined;
+            delete Routes[creep.name];
+            // console.log('ERR_NOT_FOUND')
+            return BehaviorResult.FAILURE;
+        } else if (result === OK) {
+            return BehaviorResult.INPROGRESS;
+        } else {
+            throw new Error(`Error running route: ${result}`);
+        }
+    } catch (e) {
+        // Whether error encountered or execution fell through, the path failed
+        // console.log(e);
+        creep.memory.moveTargets = undefined;
+        delete Routes[creep.name];
+        return BehaviorResult.FAILURE;
+    }
+}

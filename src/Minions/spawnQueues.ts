@@ -1,4 +1,5 @@
 import { byId } from "Selectors/byId";
+import { calculateAdjacentPositions } from "Selectors/MapCoordinates";
 import { getSpawns } from "Selectors/roomPlans";
 import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
 
@@ -50,6 +51,25 @@ export function scheduleSpawn(
 
     Memory.offices[office].spawnQueue.push(order);
     Memory.offices[office].spawnQueue.sort((a, b) => a.priority - b.priority);
+}
+
+function vacateSpawns(office: string) {
+    for (const spawn of getSpawns(office)) {
+        if (spawn.spawning && spawn.spawning.remainingTime < 2) {
+            const spawningSquares = calculateAdjacentPositions(spawn.pos)
+                .filter(pos =>
+                    !spawn.spawning?.directions ||
+                    spawn.spawning.directions.includes(spawn.pos.getDirectionTo(pos))
+                );
+            if (spawningSquares.every(pos => pos.lookFor(LOOK_CREEPS).length)) {
+                for (const pos of spawningSquares) {
+                    for (const creep of pos.lookFor(LOOK_CREEPS)) {
+
+                    }
+                }
+            }
+        }
+    }
 }
 
 export function spawnFromQueues() {

@@ -149,6 +149,26 @@ export const getCostMatrix = memoizeByTick(
         return costs;
     }
 )
+let costMatrixWithPaths;
+export const pathsCostMatrix = memoizeByTick(
+    () => 'pathsCostMatrix',
+    () => {
+        costMatrixWithPaths = new PathFinder.CostMatrix();
+        return costMatrixWithPaths;
+    }
+)
+export const blockSquare = (pos: RoomPosition) => pathsCostMatrix().set(pos.x, pos.y, 255);
+export const setMove = (pos: RoomPosition, weight = 3) => {
+    const cached = pathsCostMatrix();
+    if (cached.get(pos.x, pos.y) !== 255) {
+        cached.set(
+             pos.x,
+              pos.y,
+            Math.max(0, Math.min(255, (cached.get(pos.x, pos.y) ?? terrainCostAt(pos)) + weight))
+        )
+    }
+}
+
 export const getPath = (from: RoomPosition, to: RoomPosition, range: number, ignoreRoads = false) => {
     let positionsInRange = calculateNearbyPositions(to, range, true)
                                          .filter(pos => isPositionWalkable(pos, true));
@@ -305,6 +325,12 @@ export function getClosestOffice(roomName: string) {
     }
     return closest;
 }
+export const terrainCostAt = (pos: RoomPosition) => {
+    const terrain = Game.map.getRoomTerrain(pos.roomName).get(pos.x, pos.y);
+    if (terrain === TERRAIN_MASK_SWAMP) return 5;
+    if (terrain === TERRAIN_MASK_WALL) return 255;
+    return 1;
+  }
 export function terrainCosts(creep: Creep) {
     const ignoreCarryParts = (creep.store.getUsedCapacity() === 0)
     const moveParts = creep.getActiveBodyparts(MOVE);
