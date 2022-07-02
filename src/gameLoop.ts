@@ -6,6 +6,7 @@ import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { clearNudges } from 'utils/excuseMe';
+import { initializeSpawn } from "utils/initializeSpawns";
 import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
 
 export const gameLoop = () => {
@@ -31,4 +32,7 @@ export const gameLoop = () => {
     recordMetrics();
 
     runReports();
+
+    // Setup first spawn if needed
+    initializeSpawn();
 }

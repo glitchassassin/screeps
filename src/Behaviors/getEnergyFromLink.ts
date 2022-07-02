@@ -9,7 +9,7 @@ export const getEnergyFromLink = profiler.registerFN((creep: Creep): BehaviorRes
     const link = roomPlans(creep.memory.office)?.headquarters?.link.structure as StructureLink|undefined;
     if (!link || link.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.FAILURE;
 
-    moveTo(link.pos, 1)(creep);
+    moveTo(creep, { pos: link.pos, range: 1 });
     if (creep.withdraw(link, RESOURCE_ENERGY) === OK) {
         return BehaviorResult.SUCCESS;
     }

@@ -30,7 +30,7 @@ export function getBoosted(creep: Creep) {
     const targetLab = Memory.offices[creep.memory.office].lab.boostingLabs.find(l => outstanding.some(o => o.type === l.resource));
     const lab = byId(targetLab?.id)
     const targetBoostCount = (outstanding.find(b => b.type === targetLab?.resource)?.count ?? 0)
-    if (lab && moveTo(lab.pos)(creep) === BehaviorResult.SUCCESS && lab.mineralType && lab.store.getUsedCapacity(lab.mineralType) >= targetBoostCount) {
+    if (lab && moveTo(creep, { pos: lab.pos, range: 1 }) === BehaviorResult.SUCCESS && lab.mineralType && lab.store.getUsedCapacity(lab.mineralType) >= targetBoostCount) {
         const result = lab.boostCreep(creep);
         if (result === OK && creep.memory.objective) {
             const boostCost = Math.round(targetBoostCount * 2/3)

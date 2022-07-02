@@ -4,10 +4,13 @@ import MilestonesReport from "Reports/MilestonesReport";
 import RoomPlanningReport from "Reports/RoomPlanningReport";
 import profiler from "utils/profiler";
 import BalanceReport from "./BalanceReport";
+import EstimatesReport from "./EstimatesReport";
+import FranchiseReport from "./FranchiseReport";
 import LabsReport from "./LabsReport";
 import MarketReport from "./MarketReport";
 import MissionsReport from "./MissionsReport";
 import OfficeReport from "./OfficeReport";
+import SpawnReport from "./SpawnReport";
 import TerminalsReport from "./TerminalsReport";
 import TerritoriesReport from "./TerritoriesReport";
 
@@ -53,5 +56,8 @@ register('labs', LabsReport);
 register('market', MarketReport);
 register('office', OfficeReport);
 register('missions', MissionsReport);
+register('spawns', SpawnReport);
+register('franchise', FranchiseReport);
+register('estimates', EstimatesReport);
 
-global.d('missions')
+global.d('facilities')

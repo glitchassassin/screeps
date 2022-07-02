@@ -71,8 +71,6 @@ export const generateRoomPlans = (roomName: string)  => {
         sourceIds(roomName).sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
     const [franchise1, franchise2] = franchiseSources;
 
-    console.log('franchises', franchise1, franchise2)
-
     const steps = [
         roomSectionPlanner(roomName, 'franchise1', () => planFranchise(franchise1), serializeFranchisePlan),
         roomSectionPlanner(roomName, 'franchise2', () => planFranchise(franchise2), serializeFranchisePlan),

@@ -24,7 +24,7 @@ export const getEnergyFromRuin = profiler.registerFN((creep: Creep) => {
         creep.memory.targetRuin = undefined; // Creep full
         return BehaviorResult.SUCCESS;
     } else {
-        if (moveTo(ruin.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+        if (moveTo(creep, { pos: ruin.pos, range: 1 }) === BehaviorResult.SUCCESS) {
             creep.withdraw(ruin, RESOURCE_ENERGY);
         }
     }

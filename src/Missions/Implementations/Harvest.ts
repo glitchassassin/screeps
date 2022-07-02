@@ -2,82 +2,100 @@ import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionStatus, MissionType } from "Missions/Mission";
+import { createMission, Mission, MissionType } from "Missions/Mission";
+import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
+import { getClosestByRange } from "Selectors/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
-import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
+import { getFranchisePlanBySourceId, getSpawns, roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { MissionImplementation } from "./MissionImplementation";
 
-interface HarvestMissionData {
-  source: Id<Source>,
-  arrived?: number,
+export interface HarvestMission extends Mission<MissionType.HARVEST> {
+  data: {
+    source: Id<Source>,
+    arrived?: number,
+    distance?: number,
+    harvestRate: number
+  }
 }
-export type HarvestMission = Mission<MissionType.HARVEST, HarvestMissionData>;
 
 export function createHarvestMission(office: string, source: Id<Source>, startTime?: number): HarvestMission {
+  const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office))
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office))),
+    energy: minionCost(body),
   }
+
+  // Make sure that if room plans aren't finished we still prioritize the closest source
+  const franchise1 = roomPlans(office)?.franchise1?.sourceId ?? getSpawns(office)[0]?.pos.findClosestByRange(FIND_SOURCES)?.id;
+
+  // set priority differently for remote sources
+  const remote = (office !== posById(source)?.roomName);
+  const distance = getFranchiseDistance(office, source);
+  let priority = 10;
+  if (remote) {
+    priority = 5;
+    if (distance) {
+      // Increase priority for closer franchises, up to 1 point for closer than 50 squares
+      // Round priority to two places
+      priority += Math.round(100 * (Math.min(50, distance) / distance)) / 100;
+    }
+  }  else {
+    if (franchise1 === source) priority += 0.1;
+  }
+
+
   return createMission({
     office,
-    priority: 10,
+    priority,
     type: MissionType.HARVEST,
     startTime,
     data: {
       source,
+      distance,
+      harvestRate: body.filter(t => t === WORK).length * HARVEST_POWER
     },
     estimate,
   })
 }
 
-export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionData> = {
-  type: MissionType.HARVEST,
-  spawn(mission: HarvestMission) {
+export class Harvest extends MissionImplementation {
+  static spawn(mission: HarvestMission) {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Calculate harvester spawn preference
     const franchisePlan = getFranchisePlanBySourceId(mission.data.source);
-    const franchiseSpawn = franchisePlan?.spawn.structure as StructureSpawn | undefined;
     const franchiseContainer = franchisePlan?.container.pos;
-    const spawnPreference = (franchiseSpawn && franchiseContainer) ? {
-      spawn: franchiseSpawn.id,
-      directions: [franchiseSpawn.pos.getDirectionTo(franchiseContainer.x, franchiseContainer.y)]
+    const spawn = franchiseContainer ? getClosestByRange(franchiseContainer, getSpawns(mission.office)) : getSpawns(mission.office)[0];
+
+    const spawnPreference = spawn ? {
+      spawn: spawn.id
     } : undefined;
 
     // Set name
     const name = `HARVEST-${mission.office}-${Game.time % 10000}-${mission.data.source.slice(mission.data.source.length - 1)}`
+    const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(
       mission.office,
       mission.priority,
       {
         name,
-        body: MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(mission.office)),
+        body,
       },
-      mission.startTime,
+      spawnPreference ? mission.startTime : undefined,
       spawnPreference
     )
 
     mission.creepNames.push(name);
-  },
-  run(mission: HarvestMission) {
-    const creep = Game.creeps[mission.creepNames[0]];
-    if (mission.status === MissionStatus.RUNNING && !creep) {
-      // creep is dead
-      mission.status = MissionStatus.DONE;
-      return;
-    }
-    if (!creep || creep.spawning) return; // wait for creep
+  }
 
-    if (mission.status === MissionStatus.SCHEDULED || mission.status === MissionStatus.STARTING) {
-      mission.status = MissionStatus.RUNNING;
-      // Record spawning expenses
-      mission.actual.cpu += 0.2 // Spawning intent
-      mission.actual.energy += minionCost(creep.body.map(p => p.type))
-    }
+  static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
+    // Set some additional data on the mission
+    mission.data.harvestRate ??= creep.body.filter(p => p.type === WORK).length * HARVEST_POWER;
+    mission.data.distance ??= getFranchiseDistance(mission.office, mission.data.source);
 
     // Mission behavior
     harvestEnergyFromFranchise(creep, mission.data.source);
@@ -147,5 +165,5 @@ export const Harvest: MissionImplementation<MissionType.HARVEST, HarvestMissionD
         }
       }
     }
-  },
+  }
 }

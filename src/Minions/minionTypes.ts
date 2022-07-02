@@ -2,7 +2,6 @@ import { memoize } from "utils/memoizeFunction";
 
 declare global {
     interface CreepMemory {
-        type: MinionTypes,
         office: string,
     }
 }
@@ -33,7 +32,7 @@ export const MinionBuilders = {
         if (energy < 200 || maxSegments === 0) {
             return [];
         } else if (energy <= 300) {
-            return [CARRY, MOVE]
+            return [CARRY, MOVE, CARRY, MOVE]
         } else if (!roads) {
             const segments = Math.min(25, maxSegments, Math.floor((energy / 2) / 100))
             return Array(segments).fill([CARRY, MOVE]).flat();
@@ -86,10 +85,15 @@ export const MinionBuilders = {
         return [TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE];
     },
     [MinionTypes.LAWYER]:  (energy: number) => {
-        if (energy < 850) {
+        if (energy < 650) {
             return [];
-        }
-        else {
+        } else if (energy < 850) {
+            const moveParts = Math.floor((energy - BODYPART_COST[CLAIM]) / BODYPART_COST[MOVE]);
+            return ([] as BodyPartConstant[]).concat(
+                [CLAIM],
+                Array(moveParts).fill(MOVE),
+            )
+        } else {
             return [CLAIM, MOVE, MOVE, MOVE, MOVE, MOVE]
         }
     },
@@ -123,17 +127,15 @@ export const MinionBuilders = {
     [MinionTypes.SALESMAN]: (energy: number) => {
         if (energy < 200) {
             return [];
-        } else if (energy <= 300) {
+        } else if (energy < 550) {
             return [WORK, WORK, MOVE]
+        } else if (energy < 650) {
+            return [WORK, WORK, WORK, WORK, WORK, MOVE]
+        } else if (energy < 1250) {
+            return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE]
         } else {
-            let moveParts = (energy <= 550) ? 1 : 2;
-            let carryParts = (energy <= 550) ? 0 : 1;
-            let workParts = Math.min(5, Math.floor((energy - (moveParts + carryParts) * 50) / 100));
-            return ([] as BodyPartConstant[]).concat(
-                Array(workParts).fill(WORK),
-                Array(moveParts).fill(MOVE),
-                Array(carryParts).fill(CARRY),
-            )
+            // At higher RCL, use bigger harvesters to reduce CPU
+            return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE]
         }
     },
     [MinionTypes.JANITOR]: (energy: number) => {

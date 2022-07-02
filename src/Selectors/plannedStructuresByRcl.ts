@@ -48,11 +48,11 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         // Handle case where franchise1 spawn is manually placed before HQ spawn
         plannedStructures = plannedStructures.concat(
             (plans.franchise1?.spawn.structure && !plans.headquarters?.spawn.structure) ? plans.franchise1?.spawn : plans.headquarters?.spawn,
+            plans.headquarters?.container,
         )
     }
     if (rcl >= 2) {
         plannedStructures = plannedStructures.concat(
-            plans.headquarters?.container,
             plannedExtensions.slice(0, 5),
             plans.franchise1?.container,
             plans.franchise2?.container,
@@ -129,5 +129,5 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     //         }
     //     }
     // }
-    return plannedStructures.filter(isPlannedStructure())
+    return [...new Set(plannedStructures.filter(isPlannedStructure()))]
 }

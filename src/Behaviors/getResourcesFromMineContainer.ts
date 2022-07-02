@@ -22,14 +22,14 @@ export const getResourcesFromMineContainer = profiler.registerFN((creep: Creep) 
         // First, pick up from container
         const resourceType = Object.keys(container.store)[0] as ResourceConstant|undefined
         if (resourceType && container.store.getUsedCapacity(resourceType) > 0) {
-            if (moveTo(container.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+            if (moveTo(creep, { pos: container.pos, range: 1 }) === BehaviorResult.SUCCESS) {
                 creep.withdraw(container, resourceType)
             }
         } else {
             // Otherwise, pick up loose resources
             const res = resourcesNearPos(plan.extractor.pos, 1).shift();
             if (res) {
-                if (moveTo(res.pos, 1)(creep) === BehaviorResult.SUCCESS) {
+                if (moveTo(creep, { pos: res.pos, range: 1 }) === BehaviorResult.SUCCESS) {
                     creep.pickup(res)
                 }
             }

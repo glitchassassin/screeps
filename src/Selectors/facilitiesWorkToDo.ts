@@ -39,7 +39,8 @@ export const destroyUnplannedStructures = (room: string) => {
 interface FacilitiesCache {
     work: PlannedStructure[],
     structureCount?: number,
-    rcl?: number
+    rcl?: number,
+    cost: number,
 }
 
 let cache: Record<string, FacilitiesCache> = {};
@@ -73,40 +74,58 @@ export const facilitiesEfficiency = memoizeByTick(
         const range = facilitiesWorkToDoAverageRange(office)
         const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
         if (range === 0) return 1;
-        const efficiency = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
-        return Math.max(0, Math.min(efficiency, efficiency / (range / 10)))
+        const energyUsed = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
+        const workTime = (CARRY_CAPACITY / energyUsed);
+        const travelTime = Math.max(0, range - 3) * 2;
+        const efficiency = workTime / (workTime + travelTime)
+        console.log('range', range, 'energyUsed', energyUsed, 'workTime', workTime, 'travelTime', travelTime, 'efficiency', efficiency);
+        return efficiency
     }
 )
 
-let cacheReviewed = new Map<string, number>();
-export const facilitiesWorkToDo = (officeName: string) => {
-    // Initialize cache
-    cache[officeName] ??= { work: [] };
+export const facilitiesEfficiencyByStructure = (office: string, structure: PlannedStructure) => {
+    const storage = roomPlans(office)?.headquarters?.storage.pos;
+    const range = storage ? getRangeTo(storage, structure.pos) : 25;
+    const energyUsed = structure.structure ? REPAIR_COST * REPAIR_POWER : BUILD_POWER
+    const workTime = (CARRY_CAPACITY / energyUsed);
+    const travelTime = Math.max(0, range - 3) * 2;
+    const efficiency = workTime / (workTime + travelTime)
+    return efficiency;
+}
 
-    if (cacheReviewed.get(officeName) === Game.time) {
-        return cache[officeName].work.slice();
-    }
+let cacheReviewed = new Map<string, number>();
+
+export const refreshFacilitiesWorkCache = (officeName: string) => {
+    // Initialize cache
+    cache[officeName] ??= { work: [], cost: 0 };
+
+    if (cacheReviewed.get(officeName) === Game.time) return;
 
     // Filter out completed work
     let ranges = 0;
     let count = 0;
+    let cost = 0;
     let work = [];
     let storagePos = roomPlans(officeName)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, officeName);
     for (let structure of cache[officeName].work) {
         // Also populate range cache
-        if (plannedStructureNeedsWork(structure)) {
+        const range = getRangeTo(structure.pos, storagePos);
+        const energyNeeded = adjustedEnergyForPlannedStructure(structure, range);
+        if (!structure.structure || energyNeeded > CARRY_CAPACITY) {
             work.push(structure);
-            ranges += getRangeTo(structure.pos, storagePos);
+            ranges += range;
             count += 1;
+            cost += energyNeeded;
         }
     }
     // console.log(storagePos, ranges, count)
     rangeCache.set(officeName, count ? ranges / count : 0)
     cache[officeName].work = work;
+    cache[officeName].cost = cost;
     cacheReviewed.set(officeName, Game.time);
 
     // Only re-scan work to do every 500 ticks unless structure count changes
-    if (!Game.rooms[officeName]) return cache[officeName].work.slice();
+    if (!Game.rooms[officeName]) return;
 
     const foundStructures = Game.rooms[officeName].find(FIND_STRUCTURES).length
     const foundRcl = Game.rooms[officeName].controller?.level;
@@ -117,21 +136,39 @@ export const facilitiesWorkToDo = (officeName: string) => {
     ) {
         // console.log('Recalculating facilities cache')
         cache[officeName] = {
-            work: plannedStructuresByRcl(officeName)
-                .filter(structure => plannedStructureNeedsWork(structure)),
+            work: [],
                 // .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
             structureCount: foundStructures,
             rcl: foundRcl,
+            cost: 0,
         }
+        plannedStructuresByRcl(officeName).forEach(structure => {
+            const range = getRangeTo(structure.pos, storagePos);
+            const energyNeeded = adjustedEnergyForPlannedStructure(structure, range);
+            if (energyNeeded > 0) {
+                cache[officeName].work.push(structure);
+                cache[officeName].cost += energyNeeded;
+            }
+        })
     }
-
+}
+export const facilitiesWorkToDo = (officeName: string) => {
+    refreshFacilitiesWorkCache(officeName);
     return cache[officeName].work.slice();
+}
+
+export const facilitiesCostPending = (officeName: string) => {
+    refreshFacilitiesWorkCache(officeName);
+    return cache[officeName].cost;
 }
 
 export const plannedStructureNeedsWork = (structure: PlannedStructure, threshold = REPAIR_THRESHOLD) => {
     if (!structure.structure) {
-        // Structure needs to be built
-        return true;
+        // Structure needs to be built; check if we can place a construction site
+        return !(
+            (Memory.rooms[structure.pos.roomName].owner && Memory.rooms[structure.pos.roomName].owner !== 'LordGreywether') ||
+            (Memory.rooms[structure.pos.roomName].reserver && Memory.rooms[structure.pos.roomName].reserver !== 'LordGreywether')
+        );
     } else {
         const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
         const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
@@ -140,6 +177,84 @@ export const plannedStructureNeedsWork = (structure: PlannedStructure, threshold
         }
     }
     return false;
+}
+
+export const costForPlannedStructure = (structure: PlannedStructure, office: string) => {
+    const cost = {
+        efficiency: 0,
+        cost: 0
+    }
+
+    const distance = getRangeTo(
+        roomPlans(office)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, office),
+        structure.pos
+    );
+
+    // Calculation assumes Engineers have equal WORK and CARRY and can move 1 sq/tick (generally true with roads)
+    if (structure.structure) {
+        const workTime = (CARRY_CAPACITY / (REPAIR_COST * REPAIR_POWER));
+        cost.efficiency = workTime / (workTime + (distance * 2));
+        const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
+        const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
+        if (structure.structure.hits > (maxHits * REPAIR_THRESHOLD)) {
+            return cost;
+        }
+        const repairNeeded = maxHits - structure.structure.hits;
+        cost.cost = (repairNeeded * REPAIR_COST);
+    } else if (structure.constructionSite) {
+        // Structure needs to be finished
+        const workTime = (CARRY_CAPACITY / BUILD_POWER);
+        cost.efficiency = workTime / (workTime + (distance * 2));
+        cost.cost = (structure.constructionSite.progressTotal - structure.constructionSite.progress);
+    } else {
+        if (!(
+            (Memory.rooms[structure.pos.roomName].owner && Memory.rooms[structure.pos.roomName].owner !== 'LordGreywether') ||
+            (Memory.rooms[structure.pos.roomName].reserver && Memory.rooms[structure.pos.roomName].reserver !== 'LordGreywether')
+        )) {
+            // Structure needs to be built
+            const workTime = (CARRY_CAPACITY / BUILD_POWER);
+            cost.efficiency = workTime / (workTime + (distance * 2));
+            cost.cost = CONSTRUCTION_COST[structure.structureType];
+        } else {
+            // Hostile territory, cannot build
+            return cost;
+        }
+    }
+
+    return cost;
+}
+
+const adjustedEnergyForPlannedStructure = (structure: PlannedStructure, distance: number, threshold = REPAIR_THRESHOLD) => {
+    // Calculation assumes Engineers have equal WORK and CARRY and can move 1 sq/tick (generally true with roads)
+    if (structure.structure) {
+        const workTime = (CARRY_CAPACITY / (REPAIR_COST * REPAIR_POWER));
+        const efficiency = workTime / (workTime + (distance * 2));
+        const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
+        const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
+        if (structure.structure.hits > (maxHits * threshold)) {
+            return 0;
+        }
+        const repairNeeded = maxHits - structure.structure.hits;
+        return (repairNeeded * REPAIR_COST) / efficiency;
+    } else if (structure.constructionSite) {
+        // Structure needs to be finished
+        const workTime = (CARRY_CAPACITY / BUILD_POWER);
+        const efficiency = workTime / (workTime + (distance * 2));
+        return (structure.constructionSite.progressTotal - structure.constructionSite.progress) / efficiency
+    } else {
+        if (!(
+            (Memory.rooms[structure.pos.roomName].owner && Memory.rooms[structure.pos.roomName].owner !== 'LordGreywether') ||
+            (Memory.rooms[structure.pos.roomName].reserver && Memory.rooms[structure.pos.roomName].reserver !== 'LordGreywether')
+        )) {
+            // Structure needs to be built
+            const workTime = (CARRY_CAPACITY / BUILD_POWER);
+            const efficiency = workTime / (workTime + (distance * 2));
+            return CONSTRUCTION_COST[structure.structureType] / efficiency;
+        } else {
+            // Hostile territory, cannot build
+            return 0;
+        }
+    }
 }
 
 export const constructionToDo = memoizeByTick(

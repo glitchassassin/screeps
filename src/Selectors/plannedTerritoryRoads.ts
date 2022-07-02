@@ -1,16 +1,21 @@
-import { PlannedStructure } from "RoomPlanner/PlannedStructure"
-import { deserializePlannedStructures } from "./plannedStructures"
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { deserializePlannedStructures } from "./plannedStructures";
 
 const cachedPlans = new Map<string, PlannedStructure[]>()
+const MAX_TERRITORY_ROADS = 6;
 
 export function plannedTerritoryRoads(office: string) {
-    return (Memory.offices[office]?.territories ?? []).flatMap(t => {
-        const plan = Memory.rooms[t].territory?.roadsPlan
-        if (plan) {
-            const structures = cachedPlans.get(plan) ?? deserializePlannedStructures(plan);
-            cachedPlans.set(plan, structures);
+    return [...new Set((Memory.offices[office]?.territories ?? [])
+        .flatMap(t =>
+            Object.values(Memory.rooms[t].territory?.sources ?? {})
+                .map(({ roads }) => roads)
+            )
+        .sort((a, b) => a.length - b.length)
+        .slice(0, MAX_TERRITORY_ROADS)
+        .flatMap(roads => {
+            const structures = cachedPlans.get(roads) ?? deserializePlannedStructures(roads);
+            cachedPlans.set(roads, structures);
             return structures;
-        }
-        return [];
-    })
+        })
+    )]
 }

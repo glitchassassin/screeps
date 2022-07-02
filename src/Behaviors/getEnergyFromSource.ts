@@ -1,4 +1,3 @@
-import { Objectives } from "OldObjectives/Objective";
 import { byId } from "Selectors/byId";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
 import { posById } from "Selectors/posById";
@@ -16,11 +15,10 @@ declare global {
 /**
  * harvest energy from the closest source
  */
-export const getEnergyFromSource = profiler.registerFN((creep: Creep, roomName?: string) => {
+export const getEnergyFromSource = profiler.registerFN((creep: Creep, office: string, roomName?: string) => {
     const franchiseTarget = byId(creep.memory.franchiseTarget);
     if (
         franchiseTarget?.energy === 0 ||
-        Objectives[`FranchiseObjective|${creep.memory.franchiseTarget}`]?.assigned.length > 0 ||
         (franchiseIsFull(creep, creep.memory.franchiseTarget) && !franchiseTarget?.pos.inRangeTo(creep.pos, 1))
     ) {
         delete creep.memory.franchiseTarget;
@@ -31,10 +29,10 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, roomName?:
 
     if (!creep.memory.franchiseTarget) {
         // Look for an available target (with energy, if visible)
-        const targetRoom = roomName ?? creep.memory.office;
+        const targetRoom = roomName ?? office;
         const [source1, source2] = sourceIds(targetRoom)
             .map(id => ({pos: posById(id), id, source: byId(id)}))
-            .filter(s => !s.source || (s.source.energy > 0 && !franchiseIsFull(creep, s.id) && !Objectives[`FranchiseObjective|${s.id}`]?.assigned.length))
+            .filter(s => !s.source || (s.source.energy > 0 && !franchiseIsFull(creep, s.id)))
 
         if (!source1) return BehaviorResult.FAILURE // No known sources in room
 
@@ -50,7 +48,7 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, roomName?:
     const source = byId(creep.memory.franchiseTarget);
     const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
 
-    if (moveTo(sourcePos, 1)(creep) === BehaviorResult.SUCCESS) {
+    if (sourcePos && moveTo(creep, { pos: sourcePos, range: 1 }) === BehaviorResult.SUCCESS) {
         if (creep.harvest(source!) === OK) {
             return BehaviorResult.INPROGRESS;
         } else {

@@ -114,6 +114,7 @@ export const scanRooms = profiler.registerFN(() => {
                     spawnQueue: [],
                     pendingMissions: [],
                     activeMissions: [],
+                    missionResults: {}
                 }
                 destroyUnplannedStructures(room);
             }

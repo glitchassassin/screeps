@@ -22,7 +22,6 @@ export default () => {
         const territories = getTerritoriesByOffice(office);
         const allTerritories = calculateNearbyRooms(office, TERRITORY_RADIUS, false)
             .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t]?.territory?.office === office && !Memory.offices[t]))
-            .sort((a, b) => (Memory.rooms[b].territory?.score ?? 0) - (Memory.rooms[a].territory?.score ?? 0))
         territories.forEach(territory => {
             Game.map.visual.line(new RoomPosition(25, 25, office), new RoomPosition(25, 25, territory), { color: '#ffffff', width: 5 })
         })
@@ -43,18 +42,14 @@ export default () => {
                         data: allTerritories.map(t => {
                             const data = Memory.rooms[t].territory;
                             const reserved = Memory.rooms[t].reserver === 'LordGreywether'
-                            if (!data) return [t, '--', '--', '--', '--']
+                            if (!data) return [t, '--']
                             return [
                                 t + (territories.includes(t) ? ' ✓' : ''),
-                                data.sources,
-                                reserved ? data.spawnCapacityReserved : data.spawnCapacity,
-                                reserved ? data.targetCarryReserved: data.targetCarry,
-                                data.disabled ? data.disabled - Game.time : '',
-                                data.score,
+                                Object.keys(data.sources).length
                             ]
                         }),
                         config: {
-                            headers: ['Territory', 'Sources', 'Spawn Capacity (ticks)', 'Target Carry', 'Disabled', 'Score']
+                            headers: ['Territory', 'Sources']
                         }
                     })})
                 }

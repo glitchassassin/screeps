@@ -4,22 +4,17 @@ import { logCpu, logCpuStart } from "utils/logCPU";
 import { costMatrixFromRoomPlan } from "./costMatrixFromRoomPlan";
 import { calculateNearbyRooms, getClosestOffice, isSourceKeeperRoom } from "./MapCoordinates";
 import { serializePlannedStructures } from "./plannedStructures";
-import { sourcePositions } from "./roomCache";
+import { posById } from "./posById";
+import { sourceIds } from "./roomCache";
 import { roomPlans } from "./roomPlans";
 import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
 
 interface TerritoryData {
     office: string,
-    sources: number,
-    spawnCapacity: number,
-    cpuCapacity: number,
-    spawnCapacityRoads: number,
-    spawnCapacityReserved: number,
-    targetCarry: number,
-    targetCarryReserved: number,
-    roadsPlan: string,
-    disabled?: number,
-    score: number
+    sources: Record<string, SourceData>
+}
+interface SourceData {
+    roads: string,
 }
 declare global {
     interface RoomMemory {
@@ -67,18 +62,11 @@ function recalculateTerritories() {
                 return [t, data]
             }) as [string, TerritoryData][])
             .filter(([t, data]) => data?.office === office)
-            .sort(([_1, data1], [_2, data2]) => data2.score - data1.score);
 
-        let efficiency = 0.75;
-        let spawnCapacity = CREEP_LIFE_TIME * efficiency; // Only count one spawn towards remote territories
-        let cpuCapacity = (Game.cpu.limit / Object.keys(Memory.offices).length) - 4; // Approximate 4 cpu for normal operations
         Memory.offices[office].territories = [];
         for (let [territory, data] of targets) {
-            if (data.sources === 0) continue;
+            if (Object.keys(data.sources).length === 0) continue;
             Memory.offices[office].territories?.push(territory);
-            spawnCapacity -= data.spawnCapacityReserved;
-            cpuCapacity -= data.cpuCapacity;
-            if (spawnCapacity <= 0 || cpuCapacity <= 0) break;
         }
     }
 }
@@ -86,24 +74,17 @@ function recalculateTerritories() {
 function calculateTerritoryData(office: string, territory: string): TerritoryData|undefined {
     const data: TerritoryData = {
         office,
-        sources: 0,
-        spawnCapacity: 0,
-        cpuCapacity: 0,
-        spawnCapacityRoads: 0,
-        spawnCapacityReserved: 0,
-        targetCarry: 0,
-        targetCarryReserved: 0,
-        roadsPlan: '',
-        score: 0
+        sources: {}
     }
     const storage = roomPlans(office)?.headquarters?.storage.pos
     if (!storage) return undefined;
-    let sources = sourcePositions(territory);
-    data.sources = sources.length;
-    if (data.sources === 0) return data;
+    let sources = sourceIds(territory);
+    if (sources.length === 0) return data;
     const sourcePaths: PathFinderPath[] = [];
     const roads = new Set<PlannedStructure>();
-    for (let pos of sources) {
+    for (const sourceId of sources) {
+        const pos = posById(sourceId);
+        if (!pos) continue;
         let route = PathFinder.search(storage, {pos, range: 1}, {
             roomCallback: (room) => {
                 const cm = costMatrixFromRoomPlan(room);
@@ -120,32 +101,18 @@ function calculateTerritoryData(office: string, territory: string): TerritoryDat
         })
         if (!route.incomplete) {
             sourcePaths.push(route);
+            const sourceRoads = new Set<PlannedStructure>();
             route.path.forEach(p => {
                 if (p.x !== 0 && p.x !== 49 && p.y !== 0 && p.y !== 49) {
                     roads.add(new PlannedStructure(p, STRUCTURE_ROAD))
+                    sourceRoads.add(new PlannedStructure(p, STRUCTURE_ROAD))
                 }
             })
+            data.sources[sourceId] = {
+                roads: serializePlannedStructures(Array.from(sourceRoads))
+            };
         }
     }
-    if (sourcePaths.length === 0) return data;
-
-    for (let path of sourcePaths) {
-        data.targetCarry += Math.round(((SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME) * path.cost * 2) / CARRY_CAPACITY)
-        data.targetCarryReserved += Math.round(((SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME) * path.cost * 2) / CARRY_CAPACITY)
-    }
-
-    const SALESMAN_SIZE = (5 + 2 + 1)
-    data.spawnCapacity = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarry * 2);
-    data.spawnCapacityRoads = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarry * 1.5);
-    data.spawnCapacityReserved = CREEP_SPAWN_TIME * (SALESMAN_SIZE + data.targetCarryReserved * 1.5);
-    data.cpuCapacity = 0.5 + 0.5 * Math.ceil((data.targetCarry * BODYPART_COST[CARRY] * 2) / Game.rooms[office].energyCapacityAvailable);
-
-    data.roadsPlan = serializePlannedStructures(Array.from(roads));
-
-    // To score, each criteria is mapped to a number between one and zero. The higher the better.
-    data.score = (
-        (sourcePaths.length / data.spawnCapacityReserved) // As little spawn capacity as possible
-    );
 
     return data;
 }

@@ -9,7 +9,7 @@ export const getEnergyFromLegalContainer = profiler.registerFN((creep: Creep): B
     const container = roomPlans(creep.memory.office)?.headquarters?.container.structure as StructureContainer|undefined;
     if (!container || container.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.FAILURE;
 
-    moveTo(container.pos, 1)(creep);
+    moveTo(creep, { pos: container.pos, range: 1 });
     if (creep.withdraw(container, RESOURCE_ENERGY) === OK) {
         return BehaviorResult.SUCCESS;
     }

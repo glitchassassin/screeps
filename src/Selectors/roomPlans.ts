@@ -54,11 +54,14 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
 export const getSpawns = memoizeByTick(
     roomName => roomName,
     (roomName: string) => {
-        return [
-            roomPlans(roomName)?.franchise1?.spawn.structure,
-            roomPlans(roomName)?.franchise2?.spawn.structure,
-            roomPlans(roomName)?.headquarters?.spawn.structure,
-        ].filter(s => s && s.isActive()) as StructureSpawn[];
+        const plan = roomPlans(roomName);
+        return plan ?
+        [
+            plan?.franchise1?.spawn.structure,
+            plan?.franchise2?.spawn.structure,
+            plan?.headquarters?.spawn.structure,
+        ].filter(s => s && s.isActive()) as StructureSpawn[] :
+        Game.rooms[roomName]?.find(FIND_MY_SPAWNS);
     }
 )
 

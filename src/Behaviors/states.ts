@@ -53,8 +53,7 @@ export const setState = (state: States) => {
     return (creep: Creep) => {
         creep.memory.state = state;
         // Also clear move history when state changes
-        delete creep.memory.movePos;
-        delete creep.memory.moveRange;
+        delete creep.memory.moveTargets;
         return BehaviorResult.SUCCESS;
     }
 }

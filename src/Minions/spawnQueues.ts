@@ -49,6 +49,8 @@ export function scheduleSpawn(
         spawn
     }
 
+    // console.log('Spawn scheduled', order.data.name, order.priority, order.startTime);
+
     Memory.offices[office].spawnQueue.push(order);
     Memory.offices[office].spawnQueue.sort((a, b) => a.priority - b.priority);
 }
@@ -64,7 +66,7 @@ function vacateSpawns(office: string) {
             if (spawningSquares.every(pos => pos.lookFor(LOOK_CREEPS).length)) {
                 for (const pos of spawningSquares) {
                     for (const creep of pos.lookFor(LOOK_CREEPS)) {
-
+                        creep.giveWay();
                     }
                 }
             }
@@ -72,8 +74,10 @@ function vacateSpawns(office: string) {
     }
 }
 
+const orderAttempted = new WeakMap<SpawnOrder, number>();
 export function spawnFromQueues() {
     for (const office in Memory.offices) {
+        vacateSpawns(office);
         let availableSpawns = getSpawns(office).filter(s => !s.spawning);
 
         const priorities = [...new Set(Memory.offices[office].spawnQueue.map(o => o.priority))].sort((a, b) => b - a);
@@ -91,6 +95,10 @@ export function spawnFromQueues() {
             const nextScheduledOrders = new Map<StructureSpawn, SpawnOrder>();
             // Get next scheduled order per spawn
             for (const order of Memory.offices[office].spawnQueue) {
+                if (order.startTime && order.startTime <= Game.time) {
+                    delete order.startTime;
+                    continue;
+                }
                 if (order.priority >= priority && order.startTime && order.spawn?.spawn) {
                     const spawn = byId(order.spawn.spawn);
                     if (!spawn) continue;
@@ -110,7 +118,6 @@ export function spawnFromQueues() {
                         return (s.id === order.spawn.spawn);
                     } else {
                         // Order should go to a spawn with room before the next spawn-specific order
-                        console.log(nextScheduledOrders.get(s)?.startTime, )
                         return (nextScheduledOrders.get(s)?.startTime ?? Infinity) > (order.startTime ?? Game.time) + order.duration
                     }
                 });
@@ -124,9 +131,13 @@ export function spawnFromQueues() {
                     break;
                 }
                 // Spawn is available
+                // console.log(order.data.body, order.data.name);
                 const result = spawn.spawnCreep(order.data.body, order.data.name, {
                     directions: order.spawn?.directions,
-                    memory: order.data.memory,
+                    memory: {
+                        office,
+                        ...order.data.memory,
+                    },
                     energyStructures: getEnergyStructures(office)
                 });
                 // console.log('spawn result', result)
@@ -136,6 +147,13 @@ export function spawnFromQueues() {
                 } else if (result === ERR_BUSY || result === ERR_NOT_ENOUGH_ENERGY) {
                     // Spawn failed, postpone order
                     order.startTime = undefined;
+                    const firstTry = orderAttempted.get(order) ?? Game.time;
+                    if (firstTry < Game.time - 151) {
+                        // Give up after 151 ticks
+                        console.log('Unable to resolve spawn error', result);
+                        Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
+                    }
+                    orderAttempted.set(order, firstTry);
                 } else {
                     // Spawn failed un-recoverably, abandon order
                     console.log('Unrecoverable spawn error', result);
