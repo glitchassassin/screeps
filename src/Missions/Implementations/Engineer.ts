@@ -7,24 +7,29 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { plannedStructureNeedsWork } from "Selectors/facilitiesWorkToDo";
+import { facilitiesEfficiency, facilitiesWorkToDo, plannedStructureNeedsWork } from "Selectors/facilitiesWorkToDo";
+import { getStorageBudget } from "Selectors/getStorageBudget";
 import { minionCost } from "Selectors/minionCostPerTick";
+import { rcl } from "Selectors/rcl";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { MissionImplementation } from "./MissionImplementation";
 
 export interface EngineerMission extends Mission<MissionType.ENGINEER> {
   data: {
-    facilitiesTargets: {target: string, capacity: number}[],
+    facilitiesTarget?: string | undefined,
     workParts: number,
   }
 }
 
-export function createEngineerMission(office: string, facilitiesTargets: {target: string, capacity: number}[] = [], estimatedCost = 0): EngineerMission {
+export function createEngineerMission(office: string): EngineerMission {
   const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
+
+  const workEfficiency = body.filter(p => p === WORK).length * facilitiesEfficiency(office);
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.6,
-    energy: minionCost(body) + estimatedCost,
+    energy: minionCost(body) + (workEfficiency * CREEP_LIFE_TIME),
   }
 
   const workParts = body.filter(p => p === WORK).length;
@@ -34,8 +39,7 @@ export function createEngineerMission(office: string, facilitiesTargets: {target
     priority: 9,
     type: MissionType.ENGINEER,
     data: {
-      workParts,
-      facilitiesTargets
+      workParts
     },
     estimate,
   })
@@ -66,10 +70,19 @@ export class Engineer extends MissionImplementation {
   static minionLogic(mission: EngineerMission, creep: Creep) {
     let facilitiesTarget;
     // Check target for completion
-    if (mission.data.facilitiesTargets[0]) {
-      facilitiesTarget = PlannedStructure.deserialize(mission.data.facilitiesTargets[0].target)
+    if (mission.data.facilitiesTarget) {
+      facilitiesTarget = PlannedStructure.deserialize(mission.data.facilitiesTarget)
       if (!plannedStructureNeedsWork(facilitiesTarget, 1.0)) {
-        mission.data.facilitiesTargets.shift();
+        mission.data.facilitiesTarget = undefined;
+      }
+    }
+
+    // Select a target
+    if (!mission.data.facilitiesTarget) {
+      const workToDo = facilitiesWorkToDo(mission.office);
+      facilitiesTarget = workToDo.shift();
+      if (facilitiesTarget) {
+        mission.data.facilitiesTarget = facilitiesTarget.serialize();
       }
     }
 
@@ -86,7 +99,13 @@ export class Engineer extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.WORKING) {
-      if (!mission.data.facilitiesTargets[0]) {
+      if (
+        !mission.data.facilitiesTarget &&
+        (
+          rcl(mission.office) < 4 ||
+          storageEnergyAvailable(mission.office) > getStorageBudget(mission.office)
+        )
+      ) {
         // No construction - upgrade instead
         const controller = Game.rooms[mission.office]?.controller
         if (!controller) return;
@@ -97,8 +116,8 @@ export class Engineer extends MissionImplementation {
         } else if (result === OK) {
           mission.actual.energy += (UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER) * creep.body.filter(p => p.type === WORK).length
         }
-      } else if (mission.data.facilitiesTargets[0]) {
-        const plan = PlannedStructure.deserialize(mission.data.facilitiesTargets[0].target)
+      } else if (mission.data.facilitiesTarget) {
+        const plan = PlannedStructure.deserialize(mission.data.facilitiesTarget)
         // console.log(creep.name, plan.pos, plan.structureType);
 
         if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
@@ -112,15 +131,14 @@ export class Engineer extends MissionImplementation {
         if (moveTo(creep, { pos: plan.pos, range: 3 }) === BehaviorResult.SUCCESS) {
           if (plan.structure) {
             if (creep.repair(plan.structure) === OK) {
-              mission.data.facilitiesTargets[0].capacity = Math.max(0, mission.data.facilitiesTargets[0].capacity - (REPAIR_COST * REPAIR_POWER) * mission.data.workParts);
-              mission.actual.energy += (REPAIR_COST * REPAIR_POWER) * mission.data.workParts;
+              mission.actual.energy += (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
             }
           } else {
             // Create construction site if needed
             const result = plan.pos.createConstructionSite(plan.structureType);
             if (result === ERR_NOT_OWNER) {
               // room reserved or claimed by a hostile actor
-              mission.data.facilitiesTargets.shift();
+              delete mission.data.facilitiesTarget;
               return;
             }
             // Shove creeps out of the way if needed
@@ -129,8 +147,7 @@ export class Engineer extends MissionImplementation {
             }
             if (plan.constructionSite) {
               if (creep.build(plan.constructionSite) === OK) {
-                mission.data.facilitiesTargets[0].capacity = Math.max(0, mission.data.facilitiesTargets[0].capacity - BUILD_POWER * mission.data.workParts);
-                mission.actual.energy += BUILD_POWER * mission.data.workParts;
+                mission.actual.energy += BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
               }
             }
           }
