@@ -81,21 +81,21 @@ export class Plunder extends MissionImplementation {
         return;
       }
 
-      creep.memory.plunderTarget ??= Game.rooms[mission.data.targetRoom]
+      mission.data.plunderTarget ??= Game.rooms[mission.data.targetRoom]
         .find(
           FIND_HOSTILE_STRUCTURES,
           { filter: s => 'store' in s && Object.keys(s.store).length }
         )[0]?.id as Id<AnyStoreStructure>
 
-      if (!creep.memory.plunderTarget) {
+      if (!mission.data.plunderTarget) {
         mission.status = MissionStatus.DONE;
         return;
       }
 
-      const target = byId(creep.memory.plunderTarget);
+      const target = byId(mission.data.plunderTarget);
       const targetResource = target && Object.keys(target.store)[0] as ResourceConstant | undefined;
       if (!targetResource) {
-        delete creep.memory.plunderTarget;
+        delete mission.data.plunderTarget;
       }
       if (targetResource && creep.withdraw(target, targetResource) === ERR_NOT_IN_RANGE) {
         moveTo(creep, target.pos);

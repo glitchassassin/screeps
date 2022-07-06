@@ -60,4 +60,4 @@ register('spawns', SpawnReport);
 register('franchise', FranchiseReport);
 register('estimates', EstimatesReport);
 
-global.d('office')
+global.d('missions')

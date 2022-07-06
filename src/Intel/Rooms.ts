@@ -10,6 +10,7 @@ import profiler from "utils/profiler";
 
 declare global {
     interface RoomMemory {
+        scanned?: number
         controllerId?: Id<StructureController>,
         sourceIds?: Id<Source>[],
         mineralId?: Id<Mineral>,
@@ -21,6 +22,7 @@ declare global {
         rclMilestones?: Record<number, number>,
         eligibleForOffice?: boolean,
         lastHostileSeen?: number,
+        lastAcquireAttempt?: number,
         invaderCore?: number,
         lootEnergy?: number,
         lootResources?: number,

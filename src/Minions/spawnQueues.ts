@@ -67,6 +67,7 @@ function vacateSpawns(office: string) {
             if (spawningSquares.every(pos => pos.lookFor(LOOK_CREEPS).length)) {
                 for (const pos of spawningSquares) {
                     for (const creep of pos.lookFor(LOOK_CREEPS)) {
+                        console.log('Telling', creep, 'to move');
                         moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
                     }
                 }
