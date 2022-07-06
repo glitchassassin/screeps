@@ -1,4 +1,4 @@
-import { PrioritizedObjectives } from "OldObjectives";
+import { boostQuotas } from "Selectors/boostQuotas";
 import { roomPlans } from "Selectors/roomPlans";
 import { getLabOrders } from "./getLabOrderDependencies";
 
@@ -11,12 +11,10 @@ export function planLabOrders(office: string) {
 
     // Maintain quotas
     if (Memory.offices[office].lab.orders.length === 0) {
-        for (const objective of PrioritizedObjectives) {
-            for (const {boost, amount} of objective.boostQuotas(office)) {
-                const difference = amount - terminal.store.getUsedCapacity(boost);
-                if (difference > 0) {
-                    Memory.offices[office].lab.orders = getLabOrders(boost, difference, terminal)
-                }
+        for (const {boost, amount} of boostQuotas(office)) {
+            const difference = amount - terminal.store.getUsedCapacity(boost);
+            if (difference > 0) {
+                Memory.offices[office].lab.orders = getLabOrders(boost, difference, terminal)
             }
         }
     }

@@ -51,6 +51,7 @@ export class Upgrade extends MissionImplementation {
       {
         name,
         body,
+        boosts: [RESOURCE_GHODIUM_ACID]
       }
     )
 

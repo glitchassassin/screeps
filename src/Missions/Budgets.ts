@@ -39,12 +39,12 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     } else if (mission.type === MissionType.UPGRADE && !mission.data.emergency) {
       return {
         cpu: 2400,
-        energy: 15000,
+        energy: 55000,
       }
     } else {
       return {
         cpu: 1200,
-        energy: 10000,
+        energy: 40000,
       }
     }
   }

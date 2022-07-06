@@ -45,7 +45,6 @@ export const runTerminal = () => {
 
       if (order) {
         const cost = order.roomName ? Game.market.calcTransactionCost(Math.min(Math.abs(amount), order.amount), office, order.roomName) : 0
-        console.log('cost', cost);
         Game.market.deal(order.id, Math.min(amount, order.amount), office);
       }
     }

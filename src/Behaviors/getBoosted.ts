@@ -33,7 +33,7 @@ export function getBoosted(creep: Creep, mission: Mission<MissionType>) {
     const targetBoostCount = (outstanding.find(b => b.type === targetLab?.resource)?.count ?? 0)
     if (lab && moveTo(creep, { pos: lab.pos, range: 1 }) === BehaviorResult.SUCCESS && lab.mineralType && lab.store.getUsedCapacity(lab.mineralType) >= targetBoostCount) {
         const result = lab.boostCreep(creep);
-        if (result === OK && creep.memory.objective) {
+        if (result === OK) {
             const boostCost = Math.round(targetBoostCount * 2/3)
             mission.actual.energy += boostCost;
         }

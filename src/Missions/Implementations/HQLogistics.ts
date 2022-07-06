@@ -91,7 +91,8 @@ export class HQLogistics extends MissionImplementation {
     // First, try to get energy from link
     if (link && linkAmountAvailable > 0) {
       creep.withdraw(link, RESOURCE_ENERGY);
-      creepEnergy += Math.min(linkAmountAvailable, creep.store.getFreeCapacity());
+      creepEnergy += linkAmountAvailable;
+      // console.log(creep.name, 'withdrawing', linkAmountAvailable, 'from link')
     }
 
     // Balance energy from Storage to Terminal
@@ -102,19 +103,23 @@ export class HQLogistics extends MissionImplementation {
       const amount = Math.min(spawnAmountNeeded, creep.store.getUsedCapacity());
       creep.transfer(spawn, RESOURCE_ENERGY, amount);
       creepEnergy -= amount;
+      // console.log(creep.name, 'transferring', amount, 'to spawn')
     }
 
     if (terminal && terminalAmountNeeded && terminalAmountNeeded > 0) {
       const amount = Math.min(terminalAmountNeeded, creep.store.getUsedCapacity());
       creep.transfer(terminal, RESOURCE_ENERGY, amount);
       creepEnergy -= amount;
+      // console.log(creep.name, 'transferring', amount, 'to terminal')
     }
 
     if (storage && creepEnergy < creep.store.getCapacity()) {
       creep.withdraw(storage, RESOURCE_ENERGY);
-    } else if (storage && creepEnergy < creep.store.getCapacity()) {
+      // console.log(creep.name, 'withdrawing extra from storage')
+    } else if (storage && creepEnergy > creep.store.getCapacity()) {
       const amount = creepEnergy - creep.store.getCapacity();
       creep.transfer(storage, RESOURCE_ENERGY, amount);
+      // console.log(creep.name, 'transferring', amount, 'to storage')
     }
   }
 }

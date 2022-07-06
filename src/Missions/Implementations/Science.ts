@@ -81,6 +81,7 @@ export class Science extends MissionImplementation {
   }
 
   static minionLogic(mission: ScienceMission, creep: Creep) {
+    creep.say('🔬');
     if (shouldHandleBoosts(mission.office)) {
       this.handleBoosts(mission, creep);
     } else {
@@ -104,10 +105,10 @@ export class Science extends MissionImplementation {
       if (creep.store.getUsedCapacity() === 0) {
         // Go to spawn and recycle
         const spawn = getPrimarySpawn(mission.office);
-        if (spawn && moveTo(creep, spawn.pos) === BehaviorResult.SUCCESS) {
+        if (spawn && moveTo(creep, { pos: spawn.pos, range: 1 }) === BehaviorResult.SUCCESS) {
           spawn.recycleCreep(creep);
         }
-      } else if (moveTo(creep, terminal.pos) === BehaviorResult.SUCCESS) {
+      } else if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           return; // Other resources deposited
@@ -119,7 +120,7 @@ export class Science extends MissionImplementation {
       if (creep.store.getUsedCapacity() === 0) {
         setState(States.WITHDRAW)(creep)
       }
-      if (moveTo(creep, terminal.pos) === BehaviorResult.SUCCESS) {
+      if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           return; // Other resources deposited
@@ -130,7 +131,7 @@ export class Science extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.WITHDRAW) {
-      if (moveTo(creep, terminal.pos) === BehaviorResult.SUCCESS) {
+      if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         if (creep.store.getFreeCapacity() > 0) {
           for (const lab of boostLabsToFill(mission.office)) {
             let [resource, needed] = boostsNeededForLab(mission.office, lab.structureId as Id<StructureLab> | undefined);
@@ -153,7 +154,7 @@ export class Science extends MissionImplementation {
         setState(States.DEPOSIT)(creep);
         return;
       }
-      if (moveTo(creep, target.pos) === BehaviorResult.SUCCESS) {
+      if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         creep.withdraw(target.structure, resource);
       }
     }
@@ -172,7 +173,7 @@ export class Science extends MissionImplementation {
         setState(States.DEPOSIT)(creep);
         return;
       }
-      if (moveTo(creep, target.pos) === BehaviorResult.SUCCESS) {
+      if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         creep.transfer(target.structure, resource, Math.min(amount, creep.store.getUsedCapacity(resource)));
       }
     }
@@ -191,13 +192,14 @@ export class Science extends MissionImplementation {
     const terminal = roomPlans(mission.office)?.headquarters?.terminal.structure
 
     if (creep.memory.state === States.RECYCLE) {
+      // console.log(creep.name, 'recycling');
       if (creep.store.getUsedCapacity() === 0) {
         // Go to spawn and recycle
         const spawn = getPrimarySpawn(mission.office);
-        if (spawn && moveTo(creep, spawn.pos) === BehaviorResult.SUCCESS) {
+        if (spawn && moveTo(creep, { pos: spawn.pos, range: 1 }) === BehaviorResult.SUCCESS) {
           spawn.recycleCreep(creep);
         }
-      } else if (terminal && moveTo(creep, terminal.pos) === BehaviorResult.SUCCESS) {
+      } else if (terminal && moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           return; // Other resources deposited
@@ -206,7 +208,9 @@ export class Science extends MissionImplementation {
     }
     if (creep.memory.state === States.DEPOSIT) {
       if (!terminal) return;
-      if (moveTo(creep, terminal.pos) === BehaviorResult.SUCCESS) {
+      const result = moveTo(creep, { pos: terminal.pos, range: 1 });
+      // console.log(creep.name, 'depositing', creep.pos, terminal.pos, result);
+      if (result === BehaviorResult.SUCCESS) {
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           if (order && toDeposit === order.output) {
@@ -223,6 +227,7 @@ export class Science extends MissionImplementation {
       }
     }
     if (order && creep.memory.state === States.WITHDRAW) {
+      // console.log(creep.name, 'withdrawing');
       const terminal = roomPlans(mission.office)?.headquarters?.terminal.structure as StructureTerminal | undefined
       if (!terminal) return;
       const { ingredient1, ingredient2 } = ingredientsNeededForLabOrder(mission.office, order);
@@ -239,7 +244,7 @@ export class Science extends MissionImplementation {
         terminal.store.getUsedCapacity(order.ingredient2)
       );
 
-      // if (mission.office === 'E15N12') console.log(mission.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
+      if (mission.office === 'E15N12') console.log(mission.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
 
       if (
         ingredient1 + ingredient2 === 0 &&
@@ -250,7 +255,7 @@ export class Science extends MissionImplementation {
       } else if (creep.store.getUsedCapacity(order.ingredient1) >= target1 && creep.store.getUsedCapacity(order.ingredient2) >= target2) {
         // Creep is already full of ingredients
         setState(States.FILL_LABS)(creep)
-      } else if (moveTo(creep, terminal.pos) === BehaviorResult.SUCCESS) {
+      } else if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         if (target1 > 0 && creep.withdraw(terminal, order.ingredient1, target1) === OK) {
           return; // Ingredients withdrawn
         } else if (target2 > 0 && creep.withdraw(terminal, order.ingredient2, target2) === OK) {
@@ -271,12 +276,13 @@ export class Science extends MissionImplementation {
       }
     }
     if (order && creep.memory.state === States.FILL_LABS) {
+      // console.log(creep.name, 'filling');
       const { inputs, outputs } = getLabs(mission.office);
       const [lab1, lab2] = inputs.map(s => s.structure) as (StructureLab | undefined)[];
       const nextOutputLab = outputs.map(s => s.structure).find(s => ((s as StructureLab)?.store.getUsedCapacity(order.output) ?? 0) > 100) as StructureLab | undefined;
 
-      // if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', order.ingredient1, creep.store.getUsedCapacity(order.ingredient1), order.ingredient2, creep.store.getUsedCapacity(order.ingredient2))
-      // if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', lab1?.store.getFreeCapacity(order.ingredient1), lab2?.store.getFreeCapacity(order.ingredient2))
+      if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', order.ingredient1, creep.store.getUsedCapacity(order.ingredient1), order.ingredient2, creep.store.getUsedCapacity(order.ingredient2))
+      if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', lab1?.store.getFreeCapacity(order.ingredient1), lab2?.store.getFreeCapacity(order.ingredient2))
 
       if (lab1 && (lab1?.store.getFreeCapacity(order.ingredient1) ?? 0) > 0 && creep.store.getUsedCapacity(order.ingredient1) > 0) {
         if (moveTo(creep, { pos: lab1.pos, range: 1 }) === BehaviorResult.SUCCESS) {
@@ -299,6 +305,7 @@ export class Science extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.EMPTY_LABS) {
+      // console.log(creep.name, 'emptying');
       const { inputs, outputs } = getLabs(mission.office);
       const nextOutputLab = outputs.map(s => s.structure).find(s => !!(s as StructureLab)?.mineralType) as StructureLab | undefined;
       const outputLabIngredient = nextOutputLab?.mineralType;
@@ -306,7 +313,7 @@ export class Science extends MissionImplementation {
       const lab1Ingredient = lab1?.mineralType;
       const lab2Ingredient = lab2?.mineralType;
 
-      // if (mission.office === 'W6N8') console.log(mission.office, 'EMPTY_LABS', outputLabIngredient, lab1Ingredient, lab2Ingredient)
+      if (mission.office === 'W6N8') console.log(mission.office, 'EMPTY_LABS', outputLabIngredient, lab1Ingredient, lab2Ingredient)
 
       if (nextOutputLab && outputLabIngredient && creep.store.getFreeCapacity() > 0) {
         if (moveTo(creep, { pos: nextOutputLab.pos, range: 1 }) === BehaviorResult.SUCCESS) {

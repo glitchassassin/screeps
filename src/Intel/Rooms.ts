@@ -23,6 +23,7 @@ declare global {
         eligibleForOffice?: boolean,
         lastHostileSeen?: number,
         lastAcquireAttempt?: number,
+        acquireAttempts?: number,
         invaderCore?: number,
         lootEnergy?: number,
         lootResources?: number,

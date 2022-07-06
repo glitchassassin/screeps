@@ -1,12 +1,15 @@
 import { moveTo } from "Behaviors/moveTo";
+import { FEATURES } from "config";
 import { byId } from "Selectors/byId";
 import { calculateAdjacentPositions } from "Selectors/MapCoordinates";
 import { getSpawns } from "Selectors/roomPlans";
+import { boostsAvailable } from "Selectors/shouldHandleBoosts";
 import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
 
 interface SpawnOrderData {
     name: string,
     body: BodyPartConstant[],
+    boosts?: MineralBoostConstant[],
     memory?: CreepMemory
 }
 interface PreferredSpawnData {
@@ -144,6 +147,7 @@ export function spawnFromQueues() {
                 // console.log('spawn result', result)
                 if (result === OK) {
                     availableSpawns = availableSpawns.filter(s => s !== spawn);
+                    orderBoosts(office, order);
                     Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
                 } else if (result === ERR_BUSY || result === ERR_NOT_ENOUGH_ENERGY) {
                     // Spawn failed, postpone order
@@ -162,6 +166,26 @@ export function spawnFromQueues() {
                     Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
                 }
             }
+        }
+    }
+}
+
+const orderBoosts = (office: string, order: SpawnOrder) => {
+    for (const resource of (order.data.boosts ?? [])) {
+        const part = Object.entries(BOOSTS).find(([k, v]) => resource in v)?.[0] as BodyPartConstant | undefined;
+        if (!part) continue;
+        let available = FEATURES.LABS && boostsAvailable(office, resource, false);
+        const workParts = order.data.body.filter(p => p === part).length
+        const target = workParts * LAB_BOOST_MINERAL;
+        if (available && available >= target) {
+            // We have enough minerals, enter a boost order
+            Memory.offices[office].lab.boosts.push({
+                boosts: [{
+                    type: resource,
+                    count: target
+                }],
+                name: order.data.name
+            });
         }
     }
 }

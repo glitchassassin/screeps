@@ -13,6 +13,7 @@ export default {
         ].some(m => m.type === MissionType.DEFEND_REMOTE)) {
           const mission = createDefendRemoteMission(office);
           Memory.offices[office].pendingMissions.push(mission);
+          break;
         }
       }
     }

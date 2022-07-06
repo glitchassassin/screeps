@@ -149,7 +149,6 @@ export class Logistics extends MissionImplementation {
     }
     if (creep.memory.state === States.DEPOSIT) {
       const target = storageStructureThatNeedsEnergy(mission.office);
-      if (mission.office === 'W7N3') console.log(creep.name, target);
 
       if (!target || creep.pos.getRangeTo(target) > 1) {
         // Check for nearby targets of opportunity

@@ -17,6 +17,7 @@ import { States } from "./states";
 declare global {
     interface CreepMemory {
         getEnergyState?: States
+        depositSource?: Id<Source>
     }
 }
 

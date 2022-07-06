@@ -52,7 +52,8 @@ export class MineForeman extends MissionImplementation {
       {
         name,
         body,
-        memory: { state: States.GET_BOOSTED }
+        memory: { state: States.GET_BOOSTED },
+        boosts: [RESOURCE_UTRIUM_ALKALIDE]
       }
     )
 
