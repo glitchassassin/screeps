@@ -70,7 +70,7 @@ export function facilitiesWorkToDoAverageRange(office: string) {
 export const facilitiesEfficiency = memoizeByTick(
     office => office,
     (office: string) => {
-        const work = facilitiesWorkToDo(office);
+        const work = facilitiesWorkToDo(office).slice(0, 20);
         const range = facilitiesWorkToDoAverageRange(office)
         const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
         if (range === 0) return 1;

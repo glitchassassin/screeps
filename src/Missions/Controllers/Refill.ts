@@ -3,6 +3,7 @@ import { createRefillMission, RefillMission } from "Missions/Implementations/Ref
 import { MissionStatus, MissionType } from "Missions/Mission";
 import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
 /**
  * Maintain a quota of refillers, with pre-spawning
@@ -12,8 +13,9 @@ export default {
   byOffice: (office: string) => {
     if (
       Memory.offices[office].pendingMissions.some(m => m.type === MissionType.REFILL) ||
-      !roomHasExtensions(office)
-    ) return; // Only one pending mission needed at a time
+      !roomHasExtensions(office) ||
+      storageEnergyAvailable(office) < SPAWN_ENERGY_CAPACITY
+    ) return; // Only one pending mission needed at a time; skip if we have no extensions or very low energy
 
     // Maintain up to three Accountants (at max level) to refill extensions
     const SCALING_FACTOR = 0.8;

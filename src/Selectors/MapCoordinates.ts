@@ -187,7 +187,8 @@ export const getPath = (from: RoomPosition, to: RoomPosition, range: number, ign
     return route;
 }
 export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: number, ignoreRoads = false) => {
-    return getPath(from, to, range, ignoreRoads)?.cost;
+    const path = getPath(from, to, range, ignoreRoads);
+    return !path || path?.incomplete ? undefined : path.cost;
 }
 export const getRangeTo = memoize(
     (from: RoomPosition, to: RoomPosition) => (`${from} ${to}`),

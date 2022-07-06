@@ -36,7 +36,7 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
   const distance = getFranchiseDistance(office, source);
   let priority = 10;
   if (remote) {
-    priority = 5;
+    priority = 1;
     if (distance) {
       // Increase priority for closer franchises, up to 1 point for closer than 50 squares
       // Round priority to two places

@@ -1,5 +1,4 @@
 import { byId } from "Selectors/byId";
-import { findFranchiseTarget } from "Selectors/findFranchiseTarget";
 import { posById } from "Selectors/posById";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
@@ -14,13 +13,8 @@ declare global {
     }
 }
 
-export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, franchiseTarget?: Id<Source>) => {
+export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, franchiseTarget: Id<Source>) => {
     creep.memory.franchiseTarget ??= franchiseTarget;
-
-    if (!creep.memory.franchiseTarget) {
-        // Look for an available target
-        creep.memory.franchiseTarget = findFranchiseTarget(creep);
-    }
 
     if (!creep.memory.franchiseTarget) {
         return BehaviorResult.FAILURE;

@@ -21,10 +21,13 @@ declare global {
   }
 }
 
-global.resetMissions = (office: string) => {
-  Memory.offices[office].activeMissions.forEach(m => m.creepNames.forEach(n => Game.creeps[n]?.suicide()));
-  Memory.offices[office].activeMissions = [];
-  Memory.offices[office].pendingMissions = [];
+global.resetMissions = (office: string, missionType?: MissionType) => {
+  Memory.offices[office].activeMissions.forEach(m => {
+    if (missionType && m.type !== missionType) return;
+    m.creepNames.forEach(n => Game.creeps[n]?.suicide())
+  });
+  Memory.offices[office].activeMissions = Memory.offices[office].activeMissions.filter(m => missionType && m.type !== missionType);
+  Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions.filter(m => missionType && m.type !== missionType);
 }
 global.resetPendingMissions = (office: string) => {
   Memory.offices[office].pendingMissions = [];

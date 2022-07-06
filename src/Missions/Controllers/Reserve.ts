@@ -2,12 +2,13 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createReserveMission, ReserveMission } from "Missions/Implementations/Reserve";
 import { MissionStatus, MissionType } from "Missions/Mission";
 import { posById } from "Selectors/posById";
+import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
     // Make sure we can afford reservers
-    if (!MinionBuilders[MinionTypes.LAWYER](Game.rooms[office].energyCapacityAvailable).length) return;
+    if (!MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)).length) return;
 
     const reserveMissions = [
       ...Memory.offices[office].pendingMissions.filter(m => m.type === MissionType.RESERVE),

@@ -9,5 +9,5 @@ export const missionEnergyAvailable = (office: string) => {
   const storage = roomPlans(office)?.headquarters?.storage.structure;
   return storageEnergyAvailable(office) +
   // prospective future energy from room sources, if we don't have a storage yet
-  (storage ? 0 : futureEnergy);
+  futureEnergy;
 }

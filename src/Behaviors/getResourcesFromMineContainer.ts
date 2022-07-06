@@ -4,9 +4,9 @@ import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 
-export const getResourcesFromMineContainer = profiler.registerFN((creep: Creep) => {
+export const getResourcesFromMineContainer = profiler.registerFN((creep: Creep, office: string) => {
     // Default to specified franchise
-    const plan = roomPlans(creep.memory.office)?.mine;
+    const plan = roomPlans(office)?.mine;
     const container = plan?.container.structure as StructureContainer|undefined
     if (!plan || !container) return BehaviorResult.FAILURE;
 

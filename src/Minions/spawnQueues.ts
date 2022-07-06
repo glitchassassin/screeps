@@ -1,3 +1,4 @@
+import { moveTo } from "Behaviors/moveTo";
 import { byId } from "Selectors/byId";
 import { calculateAdjacentPositions } from "Selectors/MapCoordinates";
 import { getSpawns } from "Selectors/roomPlans";
@@ -66,7 +67,7 @@ function vacateSpawns(office: string) {
             if (spawningSquares.every(pos => pos.lookFor(LOOK_CREEPS).length)) {
                 for (const pos of spawningSquares) {
                     for (const creep of pos.lookFor(LOOK_CREEPS)) {
-                        creep.giveWay();
+                        moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
                     }
                 }
             }
@@ -135,7 +136,6 @@ export function spawnFromQueues() {
                 const result = spawn.spawnCreep(order.data.body, order.data.name, {
                     directions: order.spawn?.directions,
                     memory: {
-                        office,
                         ...order.data.memory,
                     },
                     energyStructures: getEnergyStructures(office)
@@ -157,6 +157,7 @@ export function spawnFromQueues() {
                 } else {
                     // Spawn failed un-recoverably, abandon order
                     console.log('Unrecoverable spawn error', result);
+                    console.log(order.data.name, order.data.body.length);
                     Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
                 }
             }

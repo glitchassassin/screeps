@@ -1,7 +1,7 @@
 import { States } from "Behaviors/states";
 import { getLabs } from "Selectors/getLabs";
 
-export function runLabs(roomName: string) {
+export function runLabLogic(roomName: string) {
     // Set boosting labs for all queued resources
     const newBoostingLabs: {
         id: Id<StructureLab>;

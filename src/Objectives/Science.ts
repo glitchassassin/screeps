@@ -4,10 +4,6 @@ import { setState, States } from "Behaviors/states";
 import { Budgets } from "Budgets";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { spawnMinion } from "Minions/spawnMinion";
-import { getAvailableResourcesFromTerminal, getLabOrderDependencies } from "OldObjectives/Labs/getLabOrderDependencies";
-import { LabOrder } from "OldObjectives/Labs/LabOrder";
-import { runLabs } from "OldObjectives/Labs/Labs";
-import { planLabOrders } from "OldObjectives/Labs/planLabOrders";
 import { byId } from "Selectors/byId";
 import { getLabs } from "Selectors/getLabs";
 import { getPrimarySpawn } from "Selectors/getPrimarySpawn";
@@ -18,6 +14,8 @@ import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { boostLabsToEmpty, boostLabsToFill, boostsNeededForLab, shouldHandleBoosts } from "Selectors/shouldHandleBoosts";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { getAvailableResourcesFromTerminal, getLabOrderDependencies } from "Structures/Labs/getLabOrderDependencies";
+import { LabOrder } from "Structures/Labs/LabOrder";
 import profiler from "utils/profiler";
 import { Objective } from "./Objective";
 
@@ -56,10 +54,6 @@ export class ScienceObjective extends Objective {
         return true;
     }
     structures() {
-        for (let office in Memory.offices) {
-            planLabOrders(office);
-            runLabs(office);
-        }
     }
     spawn() {
         for (let office in Memory.offices) {

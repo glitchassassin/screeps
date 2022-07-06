@@ -2,8 +2,8 @@ import { franchisesByOffice } from "./franchisesByOffice";
 import { adjacentWalkablePositions } from "./MapCoordinates";
 import { posById } from "./posById";
 
-export const findFranchiseTarget = (creep: Creep) => {
-    const sources = franchisesByOffice(creep.memory.office);
+export const findFranchiseTarget = (creep: Creep, office: string) => {
+    const sources = franchisesByOffice(office);
     const salesmen = Object.values(Game.creeps).filter(c => c.name.startsWith('HARVEST-'));
     return sources.find(({source}) => {
         const pos = posById(source);

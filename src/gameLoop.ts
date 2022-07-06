@@ -4,6 +4,7 @@ import { spawnFromQueues } from "Minions/spawnQueues";
 import { runMissionControl } from "Missions/Control";
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
+import { runStructures } from "Structures";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { clearNudges } from 'utils/excuseMe';
 import { initializeSpawn } from "utils/initializeSpawns";
@@ -25,6 +26,9 @@ export const gameLoop = () => {
 
     spawnFromQueues();
     debugCPU('Spawns', true);
+
+    runStructures();
+    debugCPU('Structures', true);
 
     planRooms();
     debugCPU('planRooms', true);

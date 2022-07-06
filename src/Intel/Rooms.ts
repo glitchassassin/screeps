@@ -22,8 +22,8 @@ declare global {
         eligibleForOffice?: boolean,
         lastHostileSeen?: number,
         invaderCore?: number,
-        hasLootEnergy?: boolean,
-        hasLootResources?: boolean,
+        lootEnergy?: number,
+        lootResources?: number,
     }
     interface Memory {
         positions: Record<string, string>
@@ -84,12 +84,12 @@ export const scanRooms = profiler.registerFN(() => {
         if (!Game.rooms[room].controller?.owner?.username) {
             const lootStructures = Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, { filter: s => 'store' in s && Object.keys(s.store).length }) as AnyStoreStructure[];
 
-            Memory.rooms[room].hasLootEnergy = false;
-            Memory.rooms[room].hasLootResources = false;
+            Memory.rooms[room].lootEnergy = 0;
+            Memory.rooms[room].lootResources = 0;
 
             lootStructures.forEach(s => {
-                Memory.rooms[room].hasLootEnergy ||= s.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
-                Memory.rooms[room].hasLootResources ||= Object.keys(s.store).filter(s => s !== RESOURCE_ENERGY).length > 0
+                Memory.rooms[room].lootEnergy! += s.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
+                Memory.rooms[room].lootResources! += (s.store.getUsedCapacity() ?? 0) - (s.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0);
             });
         }
 

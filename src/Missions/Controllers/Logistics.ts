@@ -1,6 +1,7 @@
 import { createLogisticsMission } from "Missions/Implementations/Logistics";
 import { MissionType } from "Missions/Mission";
 import { posById } from "Selectors/posById";
+import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
 export default {
   byTick: () => {},
@@ -9,7 +10,7 @@ export default {
     const remoteLogisticsMissions = [];
     for (const mission of Memory.offices[office].pendingMissions) {
       if (mission.type !== MissionType.LOGISTICS) continue;
-      if (mission.priority === 7) remoteLogisticsMissions.push(mission);
+      if (mission.priority === 2) remoteLogisticsMissions.push(mission);
       if (mission.priority === 11) inRoomLogisticsMissions.push(mission);
     }
 
@@ -32,6 +33,11 @@ export default {
       }
     }
 
+    // If we have some logistics minions, wait to spawn another
+    // until demand is at least half the capacity of a hauler
+    const carrierCapacity = ((spawnEnergyAvailable(office) / 2) / BODYPART_COST[CARRY]) * CARRY_CAPACITY;
+    if (actualCapacity) actualCapacity += carrierCapacity / 2;
+
     const inRoomPendingMissions = [];
     const remotePendingMissions = [];
 
@@ -44,7 +50,7 @@ export default {
 
     let remoteMissionCapacity = inRoomMissionCapacity;
     while (remoteMissionCapacity < remoteCapacity) {
-      const mission = remoteLogisticsMissions.shift() ?? createLogisticsMission(office, 7);
+      const mission = remoteLogisticsMissions.shift() ?? createLogisticsMission(office, 2);
       remotePendingMissions.push(mission);
       remoteMissionCapacity += mission.data.capacity;
     }

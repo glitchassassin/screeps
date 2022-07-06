@@ -149,6 +149,7 @@ export class Logistics extends MissionImplementation {
     }
     if (creep.memory.state === States.DEPOSIT) {
       const target = storageStructureThatNeedsEnergy(mission.office);
+      if (mission.office === 'W7N3') console.log(creep.name, target);
 
       if (!target || creep.pos.getRangeTo(target) > 1) {
         // Check for nearby targets of opportunity
@@ -157,7 +158,7 @@ export class Logistics extends MissionImplementation {
         for (const opp of opportunityTargets) {
           if (opp.creep?.my) {
             if (
-              opp.creep.name.startsWith('ENGINEER') &&
+              (opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('PARALEGAL')) &&
               opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
               storageEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable
             ) {

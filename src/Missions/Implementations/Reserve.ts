@@ -18,7 +18,7 @@ export interface ReserveMission extends Mission<MissionType.RESERVE> {
 export function createReserveMission(office: string, reserveTarget: string, priority: number): ReserveMission {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office))),
+    energy: minionCost(MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office))),
   }
 
   return createMission({
@@ -37,8 +37,8 @@ export class Reserve extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `LAWYER-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
-    const body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(mission.office));
+    const name = `MARKETER-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const body = MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(
       mission.office,

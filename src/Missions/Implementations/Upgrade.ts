@@ -81,7 +81,9 @@ export class Upgrade extends MissionImplementation {
     if (creep.memory.state === States.WORKING) {
       const controller = Game.rooms[mission.office]?.controller
       if (!controller) return;
-      moveTo(creep, { pos: controller.pos, range: 3 });
+      // Move out of the way of other upgraders if needed
+      const range = (Memory.offices[mission.office].activeMissions.filter(m => m.type === MissionType.UPGRADE).length > 3) ? 1 : 3;
+      moveTo(creep, { pos: controller.pos, range });
       const result = creep.upgradeController(controller)
       if (result === ERR_NOT_ENOUGH_ENERGY) {
         setState(States.GET_ENERGY)(creep);

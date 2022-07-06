@@ -1,11 +1,5 @@
 import { memoize } from "utils/memoizeFunction";
 
-declare global {
-    interface CreepMemory {
-        office: string,
-    }
-}
-
 export interface Minion {
     body: BodyPartConstant[],
     name: string,
@@ -14,6 +8,7 @@ export interface Minion {
 
 export enum MinionTypes {
     ACCOUNTANT = 'ACCOUNTANT',
+    CLERK = 'CLERK',
     ENGINEER = 'ENGINEER',
     FOREMAN = 'FOREMAN',
     GUARD = 'GUARD',
@@ -26,6 +21,9 @@ export enum MinionTypes {
 }
 
 export const MinionBuilders = {
+    [MinionTypes.CLERK]: (energy: number, limit = 50) => {
+        return Array(Math.min(limit, Math.floor(energy / CARRY_CAPACITY))).fill(CARRY);
+    },
     [MinionTypes.ACCOUNTANT]: memoize( // Memoizes at 50-energy increments
         (energy: number, maxSegments = 25, roads = false) => `${Math.round(energy * 2 / 100)} ${maxSegments} ${roads}`,
         (energy: number, maxSegments = 25, roads = false) => {
@@ -85,14 +83,8 @@ export const MinionBuilders = {
         return [TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE];
     },
     [MinionTypes.LAWYER]:  (energy: number) => {
-        if (energy < 650) {
+        if (energy < 850) {
             return [];
-        } else if (energy < 850) {
-            const moveParts = Math.floor((energy - BODYPART_COST[CLAIM]) / BODYPART_COST[MOVE]);
-            return ([] as BodyPartConstant[]).concat(
-                [CLAIM],
-                Array(moveParts).fill(MOVE),
-            )
         } else {
             return [CLAIM, MOVE, MOVE, MOVE, MOVE, MOVE]
         }

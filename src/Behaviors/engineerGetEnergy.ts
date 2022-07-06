@@ -26,7 +26,7 @@ declare global {
 // Sources (franchise or self-harvest)
 // Storage (go based on storage pos, then collect by hierarchy)
 
-export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: string, targetRoom?: string) => {
+export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: string, targetRoom?: string, withdrawLimit = Game.rooms[office].energyCapacityAvailable) => {
     const facilitiesTarget = targetRoom ?? office;
     if (!creep.memory.getEnergyState) {
         // Find nearest target
@@ -36,11 +36,11 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: stri
             creep.pos,
             franchisesByOffice(office)
                 .map(({source}) => ({ id: source, energy: byId(source)?.energy ?? SOURCE_ENERGY_NEUTRAL_CAPACITY, pos: posById(source)! }))
-                .filter((source) => (!franchiseIsFull(creep, source.id) && source.energy > 0) || franchiseEnergyAvailable(source.id) > 0)
+                .filter((source) => (!franchiseIsFull(creep, office, source.id) && source.energy > 0) || franchiseEnergyAvailable(source.id) > 0)
         )
         const sourceRange = source ? getRangeTo(creep.pos, source.pos) : Infinity;
         const storage = roomPlans(office)?.headquarters?.storage.pos;
-        const storageRange = (storage && storageEnergyAvailable(facilitiesTarget) > Game.rooms[office].energyCapacityAvailable) ? getRangeTo(storage, creep.pos) ?? Infinity : Infinity;
+        const storageRange = (storage && storageEnergyAvailable(facilitiesTarget) > withdrawLimit) ? getRangeTo(storage, creep.pos) ?? Infinity : Infinity;
         const minRange = Math.min(ruinRange, sourceRange, storageRange);
 
         // console.log(creep.name, 'ruin', ruinRange, 'source', sourceRange, 'storage', storageRange, 'min', minRange)
@@ -51,9 +51,11 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: stri
             creep.memory.getEnergyState = States.GET_ENERGY_RUINS;
             creep.memory.targetRuin = ruin.id
         } else if (source && minRange === sourceRange) {
-            if (franchiseIsFull(creep, source.id)) {
-                creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE;
-                creep.memory.depositSource = source.id;
+            if (franchiseIsFull(creep, office, source.id)) {
+                if (storageEnergyAvailable(facilitiesTarget) > withdrawLimit) {
+                    creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE;
+                    creep.memory.depositSource = source.id;
+                }
             } else {
                 creep.memory.getEnergyState = States.GET_ENERGY_SOURCE;
                 creep.memory.franchiseTarget = source.id;
@@ -75,7 +77,7 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: stri
         }
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_STORAGE) {
-        let result = getEnergyFromStorage(creep, office);
+        let result = getEnergyFromStorage(creep, office, withdrawLimit);
         if (result !== BehaviorResult.INPROGRESS) {
             delete creep.memory.getEnergyState;
         }
