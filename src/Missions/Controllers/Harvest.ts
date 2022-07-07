@@ -16,6 +16,10 @@ export default {
 
     // Create new harvest mission for source, if it doesn't exist
     for (const {source, remote} of franchises) {
+      if (Memory.rooms[posById(source)?.roomName ?? '']?.reserver && Memory.rooms[posById(source)?.roomName ?? '']?.reserver !== 'LordGreywether') {
+        // room is reserved by hostile, ignore
+        continue;
+      }
       const ticksToLive = (name: string) => Game.creeps[name]?.ticksToLive ?? 0;
       // sort active missions by ticks to live, so we only schedule spawns for the youngest
       const activeMissions = Memory.offices[office].activeMissions.filter(m =>

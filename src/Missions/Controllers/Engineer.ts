@@ -1,8 +1,7 @@
 import { createEngineerMission, EngineerMission } from "Missions/Implementations/Engineer";
-import { HarvestMission } from "Missions/Implementations/Harvest";
-import { LogisticsMission } from "Missions/Implementations/Logistics";
 import { MissionStatus, MissionType } from "Missions/Mission";
 import { facilitiesCostPending } from "Selectors/facilitiesWorkToDo";
+import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { rcl } from "Selectors/rcl";
 
 export default {
@@ -32,10 +31,7 @@ export default {
 
     // console.log('queuedMissions', queuedMissions.length, 'workPending', workPending, 'pendingCost', pendingCost);
 
-    const harvestMissions = Memory.offices[office].activeMissions.filter(m => m.type === MissionType.HARVEST && m.status === MissionStatus.RUNNING) as HarvestMission[];
-    const logisticsMissions = Memory.offices[office].activeMissions.filter(m => m.type === MissionType.LOGISTICS && m.status === MissionStatus.RUNNING) as LogisticsMission[];
-
-    if (harvestMissions.length && logisticsMissions.length && pendingCost > workPending) {
+    if (hasEnergyIncome(office) && pendingCost > workPending) {
       Memory.offices[office].pendingMissions.push(createEngineerMission(office));
     }
   }

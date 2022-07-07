@@ -31,10 +31,15 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     }
   } else {
      // Storage allows more fine-grained capacity management
-     if (mission.type === MissionType.HARVEST || mission.type === MissionType.LOGISTICS) {
+     if (mission.type === MissionType.HARVEST || mission.type === MissionType.LOGISTICS || mission.type === MissionType.RESERVE) {
       return {
         cpu: 0,
         energy: 0,
+      }
+    } else if (mission.type === MissionType.DEFEND_REMOTE) {
+      return {
+        cpu: 0,
+        energy: 1500,
       }
     } else if (mission.type === MissionType.UPGRADE && !mission.data.emergency) {
       return {

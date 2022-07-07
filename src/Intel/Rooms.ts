@@ -78,7 +78,7 @@ export const scanRooms = profiler.registerFN(() => {
         Memory.rooms[room].scanned = Game.time
 
         if (findHostileCreeps(room).length) Memory.rooms[room].lastHostileSeen = Game.time
-        if (Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, { filter: STRUCTURE_INVADER_CORE }).length > 0) {
+        if (Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, { filter: s => s.structureType === STRUCTURE_INVADER_CORE }).length > 0) {
             Memory.rooms[room].invaderCore = Game.time
         } else {
             delete Memory.rooms[room].invaderCore

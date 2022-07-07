@@ -155,12 +155,12 @@ export class Harvest extends MissionImplementation {
             plan.container.pos.createConstructionSite(plan.container.structureType);
           } else {
             if (creep.build(plan.container.constructionSite) === OK) {
-              mission.actual.energy += BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
+              // mission.actual.energy += BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
             }
           }
         } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
           if (creep.repair(plan.container.structure) === OK) {
-            mission.actual.energy += (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
+            // mission.actual.energy += (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
           }
         }
       }

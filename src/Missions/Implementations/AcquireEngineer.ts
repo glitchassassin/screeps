@@ -67,10 +67,11 @@ export class AcquireEngineer extends MissionImplementation {
     if (!mission.data.initialized) {
       // Load up with energy from sponsor office
       if (getEnergyFromStorage(creep, mission.office) === BehaviorResult.SUCCESS) {
+        mission.actual.energy += creep.store.getUsedCapacity(RESOURCE_ENERGY);
         mission.data.initialized = true;
       }
     } else {
-      mission.actual.energy += engineerLogic(creep, mission.data.targetOffice, mission);
+      engineerLogic(creep, mission.data.targetOffice, mission);
     }
   }
 }

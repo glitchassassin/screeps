@@ -1,6 +1,7 @@
 import { createLogisticsMission } from "Missions/Implementations/Logistics";
 import { MissionType } from "Missions/Mission";
 import { posById } from "Selectors/posById";
+import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
 export default {
@@ -27,7 +28,7 @@ export default {
         const capacity = mission.data.distance * 2 * Math.min(10, mission.data.harvestRate);
         if (remote) {
           remoteCapacity += capacity;
-        } else {
+        } else if (!getFranchisePlanBySourceId(mission.data.source)?.link.structure) {
           inRoomCapacity += capacity;
         }
       }

@@ -98,7 +98,7 @@ function allocateMissions() {
         remaining -= Math.max(0, mission.estimate.energy - mission.actual.energy),
         missionEnergyAvailable(office)
       )
-    // console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy)
+    if (office === 'W7N3') console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy)
     const priorities = [...new Set(Memory.offices[office].pendingMissions.map(o => o.priority))].sort((a, b) => b - a);
 
     // loop through priorities, highest to lowest
@@ -141,12 +141,14 @@ function allocateMissions() {
         remainingEnergy -= mission.estimate.energy;
       }
 
-      // if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
-      //   console.log(startFailures);
-      //   console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');
-      // } else {
-      //   console.log('priority', priority, 'done');
-      // }
+      if (office === 'W7N3') {
+        if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
+          console.log(startFailures);
+          console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');
+        } else {
+          console.log('priority', priority, 'done');
+        }
+      }
     }
   }
 }

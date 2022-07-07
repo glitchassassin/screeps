@@ -1,4 +1,4 @@
-import { blinkyKill } from "Behaviors/blinkyKill";
+import { guardKill } from "Behaviors/guardKill";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
@@ -17,7 +17,7 @@ export interface DefendRemoteMission extends Mission<MissionType.DEFEND_REMOTE> 
 }
 
 export function createDefendRemoteMission(office: string): DefendRemoteMission {
-  const body = MinionBuilders[MinionTypes.JANITOR](spawnEnergyAvailable(office));
+  const body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office));
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.6,
@@ -38,8 +38,8 @@ export class DefendRemote extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `JANITOR-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
-    const body = MinionBuilders[MinionTypes.JANITOR](spawnEnergyAvailable(mission.office));
+    const name = `GUARD-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(
       mission.office,
@@ -83,6 +83,6 @@ export class DefendRemote extends MissionImplementation {
     // Clear room
     const target = findClosestHostileCreepByRange(creep.pos) ?? findInvaderStructures(mission.data.roomTarget)[0];
 
-    blinkyKill(creep, target);
+    guardKill(creep, target);
   }
 }

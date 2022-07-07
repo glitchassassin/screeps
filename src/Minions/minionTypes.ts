@@ -69,13 +69,21 @@ export const MinionBuilders = {
     [MinionTypes.GUARD]: (energy: number) => {
         if (energy < 200) {
             return [];
-        }
-        else {
+        } else if (energy <= 550) {
             // Try to maintain ATTACK/MOVE ratio
             let attackParts = Math.min(25, Math.floor(((80/130) * energy) / 80))
             return ([] as BodyPartConstant[]).concat(
                 Array(attackParts).fill(ATTACK),
                 Array(attackParts).fill(MOVE),
+            )
+        } else {
+            // Add a heal part
+            let attackEnergy = (energy - BODYPART_COST[HEAL] - BODYPART_COST[MOVE])
+            let attackParts = Math.min(24, Math.floor(((80/130) * attackEnergy) / 80))
+            return ([] as BodyPartConstant[]).concat(
+                Array(attackParts).fill(ATTACK),
+                Array(attackParts + 1).fill(MOVE),
+                [HEAL]
             )
         }
     },

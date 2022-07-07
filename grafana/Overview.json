@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
-  "iteration": 1633438856902,
+  "id": 1,
+  "iteration": 1657219884061,
   "links": [],
   "panels": [
     {
@@ -534,7 +534,7 @@
       },
       "id": 166,
       "panels": [],
-      "title": "New row",
+      "title": "Global",
       "type": "row"
     },
     {
@@ -1005,7 +1005,7 @@
       "id": 167,
       "panels": [],
       "repeat": "office",
-      "title": "Offices",
+      "title": "Office $office",
       "type": "row"
     },
     {
@@ -1426,20 +1426,8 @@
         {
           "hide": false,
           "refCount": 0,
-          "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.storageLevelTarget, 'Storage target')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
           "refId": "C",
           "target": "alias(stats.gauges.offices.$office.terminalLevel, 'Terminal level')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(stats.gauges.offices.$office.terminalLevelTarget, 'Terminal target')"
         }
       ],
       "thresholds": [],
@@ -1611,7 +1599,6 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": null,
-      "description": "",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -1624,117 +1611,7 @@
         "y": 33
       },
       "hiddenSeries": false,
-      "id": 209,
-      "isNew": true,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": true,
-        "min": true,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "connected",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "8.0.0",
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:195",
-          "alias": "Total",
-          "hiddenSeries": true
-        }
-      ],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": true,
-      "targets": [
-        {
-          "hide": true,
-          "refCount": 0,
-          "refId": "C",
-          "target": "derivative(stats.gauges.time)"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "A",
-          "target": "aliasByNode(movingAverage(nonNegativeDerivative(stats.gauges.offices.$office.objectives.*.energyUsed), '1hour'), 5)"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Energy Expenses",
-      "tooltip": {
-        "msResolution": false,
-        "shared": true,
-        "sort": 1,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:204",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:205",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "editable": true,
-      "error": false,
-      "fill": 1,
-      "fillGradient": 0,
-      "grid": {},
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 33
-      },
-      "hiddenSeries": false,
-      "id": 208,
+      "id": 593,
       "isNew": true,
       "legend": {
         "alignAsTable": true,
@@ -1760,14 +1637,7 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:445",
-          "alias": "Total",
-          "lines": false,
-          "stack": false
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -1775,19 +1645,19 @@
         {
           "refCount": 0,
           "refId": "B",
-          "target": "aliasByNode(stats.gauges.offices.$office.objectives.*.minions, 5)"
+          "target": "aliasByNode(stats.gauges.offices.$office.missions.*.cpuAccuracy, 5)"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Minions",
+      "title": "CPU Surplus",
       "tooltip": {
         "msResolution": false,
         "shared": true,
-        "sort": 2,
-        "value_type": "individual"
+        "sort": 0,
+        "value_type": "cumulative"
       },
       "type": "graph",
       "xaxis": {
@@ -1799,7 +1669,7 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:454",
+          "$$hashKey": "object:335",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -1808,7 +1678,107 @@
           "show": true
         },
         {
-          "$$hashKey": "object:455",
+          "$$hashKey": "object:336",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 33
+      },
+      "hiddenSeries": false,
+      "id": 690,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refCount": 0,
+          "refId": "B",
+          "target": "aliasByNode(stats.gauges.offices.$office.missions.*.energyAccuracy, 5)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Energy Surplus",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:335",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:336",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -2054,6 +2024,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": null,
+      "description": "",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -2066,16 +2037,14 @@
         "y": 41
       },
       "hiddenSeries": false,
-      "id": 593,
+      "id": 209,
       "isNew": true,
       "legend": {
         "alignAsTable": true,
         "avg": true,
         "current": true,
-        "hideEmpty": false,
-        "hideZero": false,
-        "max": false,
-        "min": false,
+        "max": true,
+        "min": true,
         "show": true,
         "total": false,
         "values": true
@@ -2092,50 +2061,39 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:195",
+          "alias": "Total",
+          "hiddenSeries": true
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
-      "steppedLine": false,
+      "steppedLine": true,
       "targets": [
         {
+          "hide": true,
           "refCount": 0,
-          "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.budgets.baseline.cpu, 'CPU Available')"
+          "refId": "C",
+          "target": "derivative(stats.gauges.time)"
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.budgets.total.cpu, 'Total')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "C",
-          "target": "alias(stats.gauges.offices.$office.budgets.franchises.cpu, 'Franchises')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(stats.gauges.offices.$office.budgets.logistics.cpu, 'Logistics')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "E",
-          "target": "aliasByNode(stats.gauges.offices.$office.budgets.objectives.*.cpu, 6)"
+          "target": "aliasByNode(stats.gauges.offices.$office.missions.*.count, 5)"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "CPU Budget",
+      "title": "Running Missions",
       "tooltip": {
         "msResolution": false,
         "shared": true,
-        "sort": 0,
+        "sort": 2,
         "value_type": "cumulative"
       },
       "type": "graph",
@@ -2148,7 +2106,7 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:335",
+          "$$hashKey": "object:204",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -2157,255 +2115,7 @@
           "show": true
         },
         {
-          "$$hashKey": "object:336",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "description": "",
-      "editable": true,
-      "error": false,
-      "fill": 1,
-      "fillGradient": 0,
-      "grid": {},
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 41
-      },
-      "hiddenSeries": false,
-      "id": 690,
-      "isNew": true,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "hideEmpty": false,
-        "hideZero": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "connected",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "8.0.0",
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.budgets.baseline.spawn, 'Spawn Available')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.budgets.total.spawn, 'Total')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "C",
-          "target": "alias(stats.gauges.offices.$office.budgets.franchises.spawn, 'Franchises')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(stats.gauges.offices.$office.budgets.logistics.spawn, 'Logistics')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "E",
-          "target": "aliasByNode(stats.gauges.offices.$office.budgets.objectives.*.spawn, 6)"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Spawn Budget",
-      "tooltip": {
-        "msResolution": false,
-        "shared": true,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:335",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:336",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "description": "",
-      "editable": true,
-      "error": false,
-      "fill": 1,
-      "fillGradient": 0,
-      "grid": {},
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 18,
-        "y": 41
-      },
-      "hiddenSeries": false,
-      "id": 691,
-      "isNew": true,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "hideEmpty": false,
-        "hideZero": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "connected",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "8.0.0",
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.budgets.baseline.energy, 'Spawn Available')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.budgets.total.energy, 'Total')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "C",
-          "target": "alias(stats.gauges.offices.$office.budgets.franchises.energy, 'Franchises')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(stats.gauges.offices.$office.budgets.logistics.energy, 'Logistics')"
-        },
-        {
-          "hide": false,
-          "refCount": 0,
-          "refId": "E",
-          "target": "aliasByNode(stats.gauges.offices.$office.budgets.objectives.*.energy, 6)"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Energy Budget",
-      "tooltip": {
-        "msResolution": false,
-        "shared": true,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:335",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:336",
+          "$$hashKey": "object:205",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -2420,7 +2130,7 @@
       }
     }
   ],
-  "refresh": "30s",
+  "refresh": "",
   "schemaVersion": 30,
   "style": "dark",
   "tags": [
@@ -2485,6 +2195,6 @@
   },
   "timezone": "browser",
   "title": "Overview",
-  "uid": "ZwzM_hM7z",
-  "version": 26
+  "uid": "N-SgkXqnz",
+  "version": 5
 }

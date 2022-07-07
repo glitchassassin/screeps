@@ -1,8 +1,7 @@
-import { HarvestMission } from "Missions/Implementations/Harvest";
-import { LogisticsMission } from "Missions/Implementations/Logistics";
 import { createUpgradeMission } from "Missions/Implementations/Upgrade";
-import { MissionStatus, MissionType } from "Missions/Mission";
+import { MissionType } from "Missions/Mission";
 import { constructionToDo } from "Selectors/facilitiesWorkToDo";
+import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { rcl } from "Selectors/rcl";
 
 export default {
@@ -18,10 +17,7 @@ export default {
       return;
     }; // Only one pending upgrade mission at a time, post RCL 1; only one active, if we have construction to do too
 
-    const harvestMissions = Memory.offices[office].activeMissions.filter(m => m.type === MissionType.HARVEST && m.status === MissionStatus.RUNNING) as HarvestMission[];
-    const logisticsMissions = Memory.offices[office].activeMissions.filter(m => m.type === MissionType.LOGISTICS && m.status === MissionStatus.RUNNING) as LogisticsMission[];
-
-    if (harvestMissions.length && logisticsMissions.length) {
+    if (hasEnergyIncome(office)) {
       Memory.offices[office].pendingMissions.push(createUpgradeMission(office));
     }
   }
