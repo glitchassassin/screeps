@@ -313,19 +313,23 @@ export function lookNear(pos: RoomPosition, range = 1) {
         true
     )
 }
-export function getClosestOffice(roomName: string) {
-    let closest: string|undefined = undefined;
-    let route: {exit: ExitConstant, room: string}[] | undefined = undefined;
-    for (let office of Object.keys(Memory.offices)) {
-        const newRoute = Game.map.findRoute(office, roomName);
-        if (newRoute === -2) continue;
-        if (!closest || newRoute.length < (route?.length ?? Infinity)) {
-            closest = office;
-            route = newRoute;
+export const getClosestOffice = memoize(
+    (roomName: string) => roomName + Object.keys(Memory.offices).join(''),
+    (roomName: string) => {
+        let closest: string|undefined = undefined;
+        let route: {exit: ExitConstant, room: string}[] | undefined = undefined;
+        for (let office of Object.keys(Memory.offices)) {
+            const newRoute = Game.map.findRoute(office, roomName);
+            if (newRoute === -2) continue;
+            if (!closest || newRoute.length < (route?.length ?? Infinity)) {
+                closest = office;
+                route = newRoute;
+            }
         }
+        return closest;
     }
-    return closest;
-}
+)
+
 export const terrainCostAt = (pos: RoomPosition) => {
     const terrain = Game.map.getRoomTerrain(pos.roomName).get(pos.x, pos.y);
     if (terrain === TERRAIN_MASK_SWAMP) return 5;

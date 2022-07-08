@@ -244,7 +244,7 @@ export class Science extends MissionImplementation {
         terminal.store.getUsedCapacity(order.ingredient2)
       );
 
-      if (mission.office === 'E15N12') console.log(mission.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
+      // if (mission.office === 'E15N12') console.log(mission.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
 
       if (
         ingredient1 + ingredient2 === 0 &&
@@ -281,8 +281,8 @@ export class Science extends MissionImplementation {
       const [lab1, lab2] = inputs.map(s => s.structure) as (StructureLab | undefined)[];
       const nextOutputLab = outputs.map(s => s.structure).find(s => ((s as StructureLab)?.store.getUsedCapacity(order.output) ?? 0) > 100) as StructureLab | undefined;
 
-      if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', order.ingredient1, creep.store.getUsedCapacity(order.ingredient1), order.ingredient2, creep.store.getUsedCapacity(order.ingredient2))
-      if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', lab1?.store.getFreeCapacity(order.ingredient1), lab2?.store.getFreeCapacity(order.ingredient2))
+      // if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', order.ingredient1, creep.store.getUsedCapacity(order.ingredient1), order.ingredient2, creep.store.getUsedCapacity(order.ingredient2))
+      // if (mission.office === 'W8N2') console.log(mission.office, 'fill_labs', lab1?.store.getFreeCapacity(order.ingredient1), lab2?.store.getFreeCapacity(order.ingredient2))
 
       if (lab1 && (lab1?.store.getFreeCapacity(order.ingredient1) ?? 0) > 0 && creep.store.getUsedCapacity(order.ingredient1) > 0) {
         if (moveTo(creep, { pos: lab1.pos, range: 1 }) === BehaviorResult.SUCCESS) {
@@ -313,7 +313,7 @@ export class Science extends MissionImplementation {
       const lab1Ingredient = lab1?.mineralType;
       const lab2Ingredient = lab2?.mineralType;
 
-      if (mission.office === 'W6N8') console.log(mission.office, 'EMPTY_LABS', outputLabIngredient, lab1Ingredient, lab2Ingredient)
+      // if (mission.office === 'W6N8') console.log(mission.office, 'EMPTY_LABS', outputLabIngredient, lab1Ingredient, lab2Ingredient)
 
       if (nextOutputLab && outputLabIngredient && creep.store.getFreeCapacity() > 0) {
         if (moveTo(creep, { pos: nextOutputLab.pos, range: 1 }) === BehaviorResult.SUCCESS) {

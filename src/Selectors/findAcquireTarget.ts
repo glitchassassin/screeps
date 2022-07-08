@@ -30,6 +30,8 @@ export const findAcquireTarget = () => {
         cachedAcquireTarget = undefined;
     }
 
+    if ((Game.time + 25) % 50 !== 0) return undefined;
+
     const minerals = ownedMinerals();
 
     // No cached target, scan for an acceptable one

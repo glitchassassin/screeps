@@ -1,5 +1,8 @@
+import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createLogisticsMission } from "Missions/Implementations/Logistics";
 import { MissionType } from "Missions/Mission";
+import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
+import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
@@ -7,6 +10,12 @@ import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    // Scale down if needed to fit energy
+    if (!Memory.offices[office].activeMissions.some(m => m.type === MissionType.LOGISTICS)) {
+      Memory.offices[office].pendingMissions
+        .filter(m => m.type === MissionType.LOGISTICS)
+        .forEach(m => m.estimate.energy = minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))));
+    }
     const inRoomLogisticsMissions = [];
     const remoteLogisticsMissions = [];
     for (const mission of Memory.offices[office].pendingMissions) {
@@ -28,7 +37,9 @@ export default {
         const capacity = mission.data.distance * 2 * Math.min(10, mission.data.harvestRate);
         if (remote) {
           remoteCapacity += capacity;
-        } else if (!getFranchisePlanBySourceId(mission.data.source)?.link.structure) {
+        } else if (!getFranchisePlanBySourceId(mission.data.source)?.link.structure || franchiseEnergyAvailable(mission.data.source) > CONTAINER_CAPACITY) {
+          // If we don't have a link, or if energy is piling up behind the link for some
+          // reason, dispatch logistics
           inRoomCapacity += capacity;
         }
       }

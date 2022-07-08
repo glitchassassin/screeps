@@ -42,6 +42,7 @@ export const getTerritoriesByOffice = (office: string) => {
 
 function recalculateTerritories() {
     if (Game.cpu.bucket < 500) return; // don't recalculate with low bucket
+    if (Game.time % 50 !== 0) return; // run once every 50 ticks
 
     logCpuStart()
     for (const office of Object.keys(Memory.offices)) {
@@ -56,12 +57,12 @@ function recalculateTerritories() {
             .map(t => {
                 if (Memory.rooms[t].territory?.office !== office) {
                     Memory.rooms[t].territory = calculateTerritoryData(office, t);
-                    logCpu('Calculating territory data')
                 }
                 const data = Memory.rooms[t].territory
                 return [t, data]
             }) as [string, TerritoryData][])
             .filter(([t, data]) => data?.office === office)
+        logCpu('Checking territories')
 
         Memory.offices[office].territories = [];
         for (let [territory, data] of targets) {

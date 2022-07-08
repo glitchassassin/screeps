@@ -30,13 +30,17 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
       }
     }
   } else {
-     // Storage allows more fine-grained capacity management
-     if (mission.type === MissionType.HARVEST || mission.type === MissionType.LOGISTICS || mission.type === MissionType.RESERVE) {
+    // Storage allows more fine-grained capacity management
+    if (
+      mission.type === MissionType.HARVEST ||
+      mission.type === MissionType.LOGISTICS ||
+      mission.type === MissionType.REFILL
+    ) {
       return {
         cpu: 0,
         energy: 0,
       }
-    } else if (mission.type === MissionType.DEFEND_REMOTE) {
+    } else if (mission.type === MissionType.RESERVE || mission.type === MissionType.DEFEND_REMOTE || mission.type === MissionType.HQ_LOGISTICS) {
       return {
         cpu: 0,
         energy: 1500,

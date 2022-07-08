@@ -2,8 +2,8 @@ import { createHarvestMission, HarvestMission } from "Missions/Implementations/H
 import { MissionStatus, MissionType } from "Missions/Mission";
 import { byId } from "Selectors/byId";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
-import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
+// import { logCpu, logCpuStart } from "utils/logCPU";
 
 // TODO - We need to track replacement missions more atomically.
 // We can give missions a unique ID, which can feed the creep name as well.
@@ -12,7 +12,9 @@ import { posById } from "Selectors/posById";
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    // logCpuStart()
     const franchises = franchisesByOffice(office);
+    // logCpu('get franchises')
 
     // Create new harvest mission for source, if it doesn't exist
     for (const {source, remote} of franchises) {
@@ -30,7 +32,6 @@ export default {
         m.type === MissionType.HARVEST &&
         (m as HarvestMission).data.source === source
       ) as HarvestMission[];
-      const maxPositions = adjacentWalkablePositions(posById(source)!, true).length;
       const maxHarvestPower = (byId(source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME
       const immediateMissions = [
         ...activeMissions.filter(m => m.status !== MissionStatus.SCHEDULED),
@@ -41,6 +42,7 @@ export default {
         ...pendingMissions.filter(m => Boolean(m.startTime))
       ]
       let actualHarvestPower = immediateMissions.reduce((sum, m) => sum + m.data.harvestRate, 0);
+      // logCpu('analyzing existing missions')
 
       // If we need more missions now, try to bring forward a scheduled missions
       if (maxHarvestPower > actualHarvestPower) {
@@ -55,6 +57,7 @@ export default {
           Memory.offices[office].pendingMissions.push(mission);
         }
       }
+      // logCpu('checking to reschedule mission')
 
       if (scheduledMissions.length) continue; // no more than one extra scheduled mission
 
@@ -76,6 +79,7 @@ export default {
           }
         }
       }
+      // logCpu('scheduling mission')
     }
 
     // Clean up any pending missions that don't belong to a franchise

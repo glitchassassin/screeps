@@ -3,6 +3,7 @@ import { createRefillMission, RefillMission } from "Missions/Implementations/Ref
 import { MissionType } from "Missions/Mission";
 import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
+import { minionCost } from "Selectors/minionCostPerTick";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
 /**
@@ -11,6 +12,12 @@ import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    // Scale refill down if needed to fit energy
+    if (!Memory.offices[office].activeMissions.some(m => m.type === MissionType.REFILL)) {
+      Memory.offices[office].pendingMissions
+        .filter(m => m.type === MissionType.REFILL)
+        .forEach(m => m.estimate.energy = minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))));
+    }
     if (
       Memory.offices[office].pendingMissions.some(m => m.type === MissionType.REFILL) ||
       !roomHasExtensions(office) ||

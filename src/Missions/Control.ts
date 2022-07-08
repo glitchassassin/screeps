@@ -1,6 +1,7 @@
 import { missionCpuAvailable } from "Selectors/missionCpuAvailable";
 import { missionEnergyAvailable } from "Selectors/missionEnergyAvailable";
 import { getSpawns, roomPlans } from "Selectors/roomPlans";
+import { debugCPU } from "utils/debugCPU";
 import { getBudgetAdjustment } from "./Budgets";
 import { Dispatchers } from "./Controllers";
 import { Missions } from "./Implementations";
@@ -36,9 +37,19 @@ global.resetPendingMissions = (office: string) => {
 const MISSION_HISTORY_LIMIT = 50;
 
 export function runMissionControl() {
+
+  // for (const office in Memory.offices) {
+  //   Memory.offices[office].activeMissions ??= [];
+  //   Memory.offices[office].pendingMissions ??= [];
+  //   Memory.offices[office].missionResults ??= {};
+  //   Memory.offices[office].spawnQueue ??= [];
+  // }
   generateMissions();
+  debugCPU('generateMissions', true);
   allocateMissions();
+  debugCPU('allocateMissions', true);
   executeMissions();
+  debugCPU('executeMissions', true);
 }
 
 function executeMissions() {
@@ -76,6 +87,7 @@ function generateMissions() {
   for (const office in Memory.offices) {
     for (const dispatcher of Dispatchers) {
       dispatcher.byOffice(office);
+      debugCPU('dispatcher' + Dispatchers.indexOf(dispatcher), true);
     }
   }
 }
@@ -98,7 +110,7 @@ function allocateMissions() {
         remaining -= Math.max(0, mission.estimate.energy - mission.actual.energy),
         missionEnergyAvailable(office)
       )
-    if (office === 'W7N3') console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy)
+    // if (office === 'W7N3') console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy)
     const priorities = [...new Set(Memory.offices[office].pendingMissions.map(o => o.priority))].sort((a, b) => b - a);
 
     // loop through priorities, highest to lowest
@@ -141,14 +153,14 @@ function allocateMissions() {
         remainingEnergy -= mission.estimate.energy;
       }
 
-      if (office === 'W7N3') {
-        if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
-          console.log(startFailures);
-          console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');
-        } else {
-          console.log('priority', priority, 'done');
-        }
-      }
+      // if (office === 'W7N3') {
+      //   if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
+      //     console.log(startFailures);
+      //     console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');
+      //   } else {
+      //     console.log('priority', priority, 'done');
+      //   }
+      // }
     }
   }
 }

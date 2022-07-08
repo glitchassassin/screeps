@@ -27,7 +27,7 @@ export function createRefillMission(office: string): RefillMission {
 
   return createMission({
     office,
-    priority: 15,
+    priority: 16,
     type: MissionType.REFILL,
     data: {
       carryCapacity: body.filter(p => p === CARRY).length * CARRY_CAPACITY,

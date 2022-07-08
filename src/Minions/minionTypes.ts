@@ -124,13 +124,15 @@ export const MinionBuilders = {
             )
         }
     },
-    [MinionTypes.SALESMAN]: (energy: number) => {
+    [MinionTypes.SALESMAN]: (energy: number, carry = false) => {
         if (energy < 200) {
             return [];
         } else if (energy < 550) {
-            return [WORK, WORK, MOVE]
+            return carry ? [WORK, WORK, CARRY, MOVE] : [WORK, WORK, MOVE]
+        } else if (energy < 600 && carry) {
+            return [WORK, WORK, WORK, CARRY, MOVE];
         } else if (energy < 650) {
-            return [WORK, WORK, WORK, WORK, WORK, MOVE]
+            return carry ? [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE] : [WORK, WORK, WORK, WORK, WORK, MOVE]
         } else if (energy < 1250) {
             return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE]
         } else {

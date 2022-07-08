@@ -69,6 +69,7 @@ export class Harvest extends MissionImplementation {
     const franchisePlan = getFranchisePlanBySourceId(mission.data.source);
     const franchiseContainer = franchisePlan?.container.pos;
     const spawn = franchiseContainer ? getClosestByRange(franchiseContainer, getSpawns(mission.office)) : getSpawns(mission.office)[0];
+    const link = franchisePlan?.link.structure;
 
     const spawnPreference = spawn ? {
       spawn: spawn.id
@@ -76,7 +77,7 @@ export class Harvest extends MissionImplementation {
 
     // Set name
     const name = `HARVEST-${mission.office}-${Game.time % 10000}-${mission.data.source.slice(mission.data.source.length - 1)}`
-    const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(mission.office));
+    const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(mission.office), !!link);
 
     scheduleSpawn(
       mission.office,

@@ -16,6 +16,6 @@ export const franchiseIncome = (office: string) => {
       Math.min(maxIncome, (income.get(mission.data.source) ?? 0) + mission.data.harvestRate)
     );
   }
-  const totalIncome = [...income.values()].reduce((a, b) => a + b);
+  const totalIncome = [...income.values()].reduce((a, b) => a + b, 0);
   return totalIncome;
 }

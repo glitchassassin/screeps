@@ -135,4 +135,10 @@ export const recordMetrics = profiler.registerFN(() => {
             missions
         }
     }
+    for (let office in Memory.stats.offices) {
+        if (!Memory.offices[office]) {
+            // Office is dead
+            delete Memory.stats.offices[office];
+        }
+    }
 }, 'recordMetrics')

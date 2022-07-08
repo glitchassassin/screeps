@@ -3,6 +3,7 @@ import { createTowerLogisticsMission } from "Missions/Implementations/TowerLogis
 import { MissionStatus, MissionType } from "Missions/Mission";
 import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 
 export default {
   byTick: () => {},
@@ -11,7 +12,7 @@ export default {
     // Maintain Tower Logistics minion, as needed
     const hq = roomPlans(office)?.headquarters;
     const towersNeedRefilled = hq?.towers.some(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > CARRY_CAPACITY * 3);
-    if (towersNeedRefilled && ![
+    if (towersNeedRefilled && storageEnergyAvailable(office) > SPAWN_ENERGY_CAPACITY && ![
       ...Memory.offices[office].pendingMissions,
       ...Memory.offices[office].activeMissions
     ].some(m => m.type === MissionType.TOWER_LOGISTICS)) {
