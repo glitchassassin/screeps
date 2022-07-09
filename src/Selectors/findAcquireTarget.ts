@@ -1,5 +1,5 @@
 import { MINERAL_PRIORITIES } from "config";
-import { getOfficeDistanceByPath } from "./getOfficeDistance";
+import { getOfficeDistanceByRoomPath } from "./getOfficeDistance";
 import { ownedMinerals } from "./ownedMinerals";
 import { rcl } from "./rcl";
 
@@ -53,7 +53,7 @@ export const findAcquireTarget = () => {
         const distance = Math.min(
             ...offices
                 .filter(r => Game.rooms[r].energyCapacityAvailable >= 850)
-                .map(r => getOfficeDistanceByPath(r, room) ?? Infinity),
+                .map(r => getOfficeDistanceByRoomPath(r, room) ?? Infinity),
             Infinity
             )
         if (distance > CREEP_CLAIM_LIFE_TIME) {
@@ -137,7 +137,7 @@ export const officeShouldAcquireTarget = (officeName: string) => {
 
     if (officeName === room || rcl(officeName) < 5) return false;
 
-    const distance = getOfficeDistanceByPath(officeName, room);
+    const distance = getOfficeDistanceByRoomPath(officeName, room);
 
     return (distance && distance < CREEP_CLAIM_LIFE_TIME);
 }

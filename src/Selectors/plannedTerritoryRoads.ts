@@ -6,10 +6,7 @@ const MAX_TERRITORY_ROADS = 6;
 
 export function plannedTerritoryRoads(office: string) {
     return [...new Set((Memory.offices[office]?.territories ?? [])
-        .flatMap(t =>
-            Object.values(Memory.rooms[t].territory?.sources ?? {})
-                .map(({ roads }) => roads)
-            )
+        .flatMap(t => Object.values(Memory.rooms[t]?.officePaths[office] ?? {}))
         .sort((a, b) => a.length - b.length)
         .slice(0, MAX_TERRITORY_ROADS)
         .flatMap(roads => {

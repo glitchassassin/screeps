@@ -20,6 +20,7 @@ export class Route {
     ) {
         this.calculateRoute(creep);
         this.calculatePathToRoom(creep);
+        if (opts?.flee) console.log(creep.name, 'fleeing');
     }
 
     calculateRoute(creep: Creep) {
@@ -83,6 +84,7 @@ export class Route {
             },
             ...terrainCosts(creep),
             maxRooms: 1,
+            flee: this.opts?.flee,
         })
         if (!route || route.incomplete) throw new Error(`Unable to plan route ${creep.pos} ${positionsInRange}`);
 
@@ -90,8 +92,15 @@ export class Route {
         this.lastPos = creep.pos;
     }
 
+    pathComplete(creep: Creep) {
+        if (this.opts?.flee) {
+            return !this.targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range)
+        }
+        return this.targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range)
+    }
+
     run(creep: Creep) {
-        if (this.targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range)) return OK;
+        if (this.pathComplete(creep)) return OK;
 
         if (creep.pos.roomName === this.pathRoom) {
             this.calculatePathToRoom(creep);
@@ -173,7 +182,9 @@ export function moveTo(creep: Creep, targetOrTargets: _HasRoomPosition | RoomPos
 
     // If the creep is in range of a move target, it does not need to move
     // If target has exactly one target, it is there, and it has range 0, then it does "need to move" to avoid being shoved
-    const needsToMove = !targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range) || targets.every(target => target.range === 0 && creep.pos.isEqualTo(target));
+    const needsToMove = opts?.flee ?
+        targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range) :
+        !targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range)
     if (!targets) return BehaviorResult.FAILURE;
 
     if (creep.pos.x === 0) {

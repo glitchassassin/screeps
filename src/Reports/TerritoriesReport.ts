@@ -21,7 +21,7 @@ export default () => {
     for (let office in Memory.offices) {
         const territories = getTerritoriesByOffice(office);
         const allTerritories = calculateNearbyRooms(office, TERRITORY_RADIUS, false)
-            .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t]?.territory?.office === office && !Memory.offices[t]))
+            .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t]?.office === office && !Memory.offices[t]))
         territories.forEach(territory => {
             Game.map.visual.line(new RoomPosition(25, 25, office), new RoomPosition(25, 25, territory), { color: '#ffffff', width: 5 })
         })
@@ -40,12 +40,12 @@ export default () => {
                     height: 47,
                     widget: Rectangle({ data: Table({
                         data: allTerritories.map(t => {
-                            const data = Memory.rooms[t].territory;
+                            const data = Memory.rooms[t].officePaths[Memory.rooms[t].office ?? ''];
                             const reserved = Memory.rooms[t].reserver === 'LordGreywether'
                             if (!data) return [t, '--']
                             return [
                                 t + (territories.includes(t) ? ' ✓' : ''),
-                                Object.keys(data.sources).length
+                                Object.keys(data).length
                             ]
                         }),
                         config: {

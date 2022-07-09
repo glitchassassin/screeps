@@ -1,10 +1,20 @@
+import { TERRITORY_RADIUS } from "config";
 import { MINERALS } from "gameConstants";
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
+import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
 import { findHostileCreeps } from "Selectors/findHostileCreeps";
+import { getOfficeDistanceByRange } from "Selectors/getOfficeDistance";
+import { getRoomPathDistance } from "Selectors/MapCoordinates";
 import { ownedMinerals } from "Selectors/ownedMinerals";
+import { serializePlannedStructures } from "Selectors/plannedStructures";
+import { posById } from "Selectors/posById";
+import { sourceIds } from "Selectors/roomCache";
 import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
+import { roomPlans } from "Selectors/roomPlans";
 import { cityNames } from "utils/CityNames";
+import { logCpuStart } from "utils/logCPU";
 import { packPos } from "utils/packrat";
 import profiler from "utils/profiler";
 
@@ -27,11 +37,16 @@ declare global {
         invaderCore?: number,
         lootEnergy?: number,
         lootResources?: number,
+        office?: string,
+        officesInRange: string,
+        officePaths: Record<string, Record<Id<Source>, string>>
     }
     interface Memory {
         positions: Record<string, string>
     }
 }
+
+let offices: string;
 
 export const scanRooms = profiler.registerFN(() => {
     Memory.positions ??= {};
@@ -41,8 +56,10 @@ export const scanRooms = profiler.registerFN(() => {
     for (let office in Memory.offices) {
         if (!Game.rooms[office]?.controller?.my) {
             delete Memory.offices[office];
+            delete Memory.stats.offices[office];
         }
     }
+
 
     for (let room in Game.rooms) {
         // Only need to store this once
@@ -67,7 +84,12 @@ export const scanRooms = profiler.registerFN(() => {
                 mineralId,
                 mineralType,
                 eligibleForOffice,
+                officesInRange: '',
+                officePaths: {}
             }
+
+            // Calculate nearby offices and assign
+            recalculateTerritoryOffices(room);
         }
 
         // Refresh this when visible
@@ -148,4 +170,92 @@ export const scanRooms = profiler.registerFN(() => {
 
         scanRoomPlanStructures(room);
     }
+
+    // Recalculate territory assignments, if needed
+    const currentOffices = Object.keys(Memory.offices).sort().join('_');
+    if (offices !== currentOffices) {
+        // Offices have changed
+        console.log('Offices have changed, recalculating territories')
+        offices = currentOffices;
+        const startingCpu = Game.cpu.getUsed();
+        for (const room in Memory.rooms) {
+            Memory.rooms[room].officesInRange ??= '';
+            Memory.rooms[room].officePaths ??= {};
+            if (room in Memory.offices) continue; // skip check for existing offices
+            recalculateTerritoryOffices(room);
+            // console.log(room, '->', Memory.rooms[room].office);
+
+            if (Game.cpu.getUsed() - startingCpu > 200) {
+                // continue next tick if we take more than 200 CPU
+                offices = '';
+                break;
+            }
+        }
+    }
 }, 'scanRooms');
+
+function recalculateTerritoryOffices(room: string) {
+    logCpuStart()
+    const officesInRange = Object.keys(Memory.offices)
+        .filter(o => {
+            const range = getOfficeDistanceByRange(o, room);
+            if (range > TERRITORY_RADIUS) return false;
+            const distance = getRoomPathDistance(o, room);
+            if (!distance || distance > TERRITORY_RADIUS) return false;
+            return true;
+        })
+        .sort()
+    const key = officesInRange.join('_');
+    if (Memory.rooms[room].officesInRange !== key) {
+        console.log('Offices in range of', room, 'have changed, recalculating paths')
+        Memory.rooms[room].officesInRange = key;
+        // Offices in range of this room have changed; recalculate paths, if needed
+        for (const office in officesInRange) {
+            if (!Memory.rooms[room].officePaths[office]) {
+                Memory.rooms[room].officePaths[office] ??= calculateTerritoryData(office, room);
+            }
+        }
+    }
+}
+
+function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, string> {
+    const data: Record<Id<Source>, string> = { };
+
+    const storage = roomPlans(office)?.headquarters?.storage.pos
+    if (!storage) return data;
+    let sources = sourceIds(territory);
+    if (sources.length === 0) return data;
+    const sourcePaths: PathFinderPath[] = [];
+    const roads = new Set<PlannedStructure>();
+    for (const sourceId of sources) {
+        const pos = posById(sourceId);
+        if (!pos) continue;
+        let route = PathFinder.search(storage, {pos, range: 1}, {
+            roomCallback: (room) => {
+                const cm = costMatrixFromRoomPlan(room);
+                for (let road of roads) {
+                    if (road.pos.roomName === room && cm.get(road.pos.x, road.pos.y) !== 255) {
+                        cm.set(road.pos.x, road.pos.y, 1);
+                    }
+                }
+                return cm;
+            },
+            plainCost: 2,
+            swampCost: 10,
+            maxOps: 100000,
+        })
+        if (!route.incomplete) {
+            sourcePaths.push(route);
+            const sourceRoads = new Set<PlannedStructure>();
+            route.path.forEach(p => {
+                if (p.x !== 0 && p.x !== 49 && p.y !== 0 && p.y !== 49) {
+                    roads.add(new PlannedStructure(p, STRUCTURE_ROAD))
+                    sourceRoads.add(new PlannedStructure(p, STRUCTURE_ROAD))
+                }
+            })
+            data[sourceId] = serializePlannedStructures(Array.from(sourceRoads));
+        }
+    }
+
+    return data;
+}

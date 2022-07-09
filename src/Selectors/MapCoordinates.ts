@@ -173,7 +173,6 @@ export const getPath = (from: RoomPosition, to: RoomPosition, range: number, ign
     let positionsInRange = calculateNearbyPositions(to, range, true)
                                          .filter(pos => isPositionWalkable(pos, true));
     if (positionsInRange.length === 0) return;
-
     let route = PathFinder.search(from, positionsInRange, {
         roomCallback: (room) => {
             return getCostMatrix(room, false)
@@ -329,6 +328,40 @@ export const getClosestOffice = memoize(
         return closest;
     }
 )
+export const getRoomPathDistance = memoize(
+    (room1: string, room2: string) => [room1, room2].sort().join(''),
+    (room1: string, room2: string) => {
+        const newRoute = Game.map.findRoute(room1, room2);
+        if (newRoute === -2) return undefined;
+        return newRoute.length;
+    }
+)
+export const getClosestOfficeFromMemory = (roomName: string) => {
+    let closest: string|undefined = undefined;
+    let length = Infinity;
+    for (let office in Memory.rooms[roomName].officePaths) {
+        for (let path of Object.values(Memory.rooms[roomName].officePaths[office])) {
+            if (path.length < length) {
+                length = path.length;
+                closest = office;
+            }
+        }
+    }
+    return closest;
+}
+export const getOfficeDistanceFromMemory = (roomName: string) => {
+    let closest: string|undefined = undefined;
+    let length = Infinity;
+    for (let office in Memory.rooms[roomName].officePaths) {
+        for (let path of Object.values(Memory.rooms[roomName].officePaths[office])) {
+            if (path.length < length) {
+                length = path.length;
+                closest = office;
+            }
+        }
+    }
+    return closest;
+}
 
 export const terrainCostAt = (pos: RoomPosition) => {
     const terrain = Game.map.getRoomTerrain(pos.roomName).get(pos.x, pos.y);
