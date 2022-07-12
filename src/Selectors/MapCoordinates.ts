@@ -342,10 +342,10 @@ export const getRoomPathDistance = memoize(
 export const getClosestOfficeFromMemory = (roomName: string) => {
     let closest: string|undefined = undefined;
     let length = Infinity;
-    for (let office in Memory.rooms[roomName].officePaths) {
-        for (let path of Object.values(Memory.rooms[roomName].officePaths[office])) {
-            if (path.length < length) {
-                length = path.length;
+    for (let office in Memory.rooms[roomName].franchises) {
+        for (let franchise of Object.values(Memory.rooms[roomName].franchises[office])) {
+            if (franchise.path.length < length) {
+                length = franchise.path.length;
                 closest = office;
             }
         }
@@ -355,10 +355,10 @@ export const getClosestOfficeFromMemory = (roomName: string) => {
 export const getOfficeDistanceFromMemory = (roomName: string) => {
     let closest: string|undefined = undefined;
     let length = Infinity;
-    for (let office in Memory.rooms[roomName].officePaths) {
-        for (let path of Object.values(Memory.rooms[roomName].officePaths[office])) {
-            if (path.length < length) {
-                length = path.length;
+    for (let office in Memory.rooms[roomName].franchises) {
+        for (let franchise of Object.values(Memory.rooms[roomName].franchises[office])) {
+            if (franchise.path.length < length) {
+                length = franchise.path.length;
                 closest = office;
             }
         }

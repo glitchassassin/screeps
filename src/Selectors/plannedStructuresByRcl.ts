@@ -33,6 +33,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         plans.extensions?.extensions ?? []
     );
     let territoryRoads = plannedTerritoryRoads(officeName);
+
     // Sort already constructed structures to the top
     plannedExtensions = plannedExtensions.filter(e => e.structure)
         .concat(plannedExtensions.filter(e => !e.structure));

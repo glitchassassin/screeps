@@ -8,7 +8,7 @@ export default {
   byTick: () => {},
   byOffice: (office: string) => {
     // Make sure we can afford reservers
-    if (!MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office)).length) return;
+    if (!MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office)).length) return;
 
     const reserveMissions = [
       ...Memory.offices[office].pendingMissions.filter(m => m.type === MissionType.RESERVE),

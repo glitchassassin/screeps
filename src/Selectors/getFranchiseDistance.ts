@@ -6,7 +6,7 @@ export const getFranchiseDistance = memoize(
   (office: string, sourceId: Id<Source>) => office + posById(sourceId) + roomPlans(office)?.headquarters?.storage.pos,
   (office: string, sourceId: Id<Source>) => {
     const sourcePos = posById(sourceId);
-    const path = Memory.rooms[sourcePos?.roomName ?? '']?.officePaths[office]?.[sourceId];
-    return path ? (path.length / 27) : undefined;
+    const franchise = Memory.rooms[sourcePos?.roomName ?? '']?.franchises[office]?.[sourceId];
+    return franchise ? (franchise.path.length / 27) : undefined;
   }
 )

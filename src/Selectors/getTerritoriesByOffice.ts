@@ -28,7 +28,7 @@ function recalculateTerritories() {
         const targets = calculateNearbyRooms(office, TERRITORY_RADIUS, false)
             .filter(t => (
                 !isSourceKeeperRoom(t) &&
-                Memory.rooms[t]?.officePaths[office] &&
+                Memory.rooms[t]?.franchises[office] &&
                 !Memory.offices[t] &&
                 getClosestOfficeFromMemory(t) === office &&
                 getTerritoryIntent(t) !== TerritoryIntent.AVOID

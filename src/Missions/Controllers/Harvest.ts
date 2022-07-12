@@ -72,7 +72,7 @@ export default {
       let actualHarvestPower = immediateMissions.reduce((sum, m) => sum + m.data.harvestRate, 0);
       // logCpu('analyzing existing missions')
 
-      if (!remote) console.log(office, remote, source, maxHarvestPower, actualHarvestPower);
+      // if (!remote) console.log(office, remote, source, maxHarvestPower, actualHarvestPower);
 
       // If we need more missions now, try to bring forward a scheduled missions
       if (maxHarvestPower > actualHarvestPower) {

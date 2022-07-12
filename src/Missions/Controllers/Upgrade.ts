@@ -1,5 +1,6 @@
 import { createUpgradeMission } from "Missions/Implementations/Upgrade";
 import { MissionType } from "Missions/Mission";
+import { constructionToDo } from "Selectors/facilitiesWorkToDo";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { rcl } from "Selectors/rcl";
 
@@ -10,7 +11,8 @@ export default {
       Memory.offices[office].pendingMissions.some(m => m.type === MissionType.UPGRADE) ||
       rcl(office) < 2 ||
       (Memory.offices[office].activeMissions.some(m => m.type === MissionType.UPGRADE) && (
-        rcl(office) === 8
+        rcl(office) === 8 ||
+        constructionToDo(office).length
       ))
     ) {
       const pendingMission = Memory.offices[office].pendingMissions.find(m => m.type === MissionType.UPGRADE);

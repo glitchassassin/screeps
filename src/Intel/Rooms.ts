@@ -39,7 +39,10 @@ declare global {
         lootResources?: number,
         office?: string,
         officesInRange: string,
-        officePaths: Record<string, Record<Id<Source>, string>>
+        franchises: Record<string, Record<Id<Source>, {
+            path: string,
+            lastHarvested?: number
+        }>>
     }
     interface Memory {
         positions: Record<string, string>
@@ -60,6 +63,10 @@ export const scanRooms = profiler.registerFN(() => {
         }
     }
 
+    // for (let room in Memory.rooms) {
+    //     Memory.rooms[room].officesInRange = '';
+    //     Memory.rooms[room].franchises ??= {};
+    // }
 
     for (let room in Game.rooms) {
         // Only need to store this once
@@ -85,7 +92,7 @@ export const scanRooms = profiler.registerFN(() => {
                 mineralType,
                 eligibleForOffice,
                 officesInRange: '',
-                officePaths: {}
+                franchises: {}
             }
 
             // Calculate nearby offices and assign
@@ -93,7 +100,7 @@ export const scanRooms = profiler.registerFN(() => {
         }
 
         // Recalculate territory paths when room planning is complete
-        if (room in Memory.offices && roomPlans(room)?.headquarters && Object.keys(Memory.rooms[room].officePaths[room] ?? {}).length === 0) {
+        if (room in Memory.offices && roomPlans(room)?.headquarters && Object.keys(Memory.rooms[room].franchises[room] ?? {}).length === 0) {
             console.log('Recalculating internal franchise paths for office', room)
             Memory.rooms[room].officesInRange = '';
             recalculateTerritoryOffices(room);
@@ -187,7 +194,7 @@ export const scanRooms = profiler.registerFN(() => {
         const startingCpu = Game.cpu.getUsed();
         for (const room in Memory.rooms) {
             Memory.rooms[room].officesInRange ??= '';
-            Memory.rooms[room].officePaths ??= {};
+            Memory.rooms[room].franchises ??= {};
             // if (room in Memory.offices) continue; // skip check for existing offices
             recalculateTerritoryOffices(room);
             // console.log(room, '->', Memory.rooms[room].office);
@@ -218,13 +225,13 @@ function recalculateTerritoryOffices(room: string) {
         // Offices in range of this room have changed; recalculate paths, if needed
         for (const office of officesInRange) {
             const data = calculateTerritoryData(office, room)
-            if (data) Memory.rooms[room].officePaths[office] = data;
+            if (data) Memory.rooms[room].franchises[office] = data;
         }
     }
 }
 
-function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, string>|undefined {
-    const data: Record<Id<Source>, string> = { };
+function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, { path: string }>|undefined {
+    const data: Record<Id<Source>, { path: string }> = { };
 
     const storage = roomPlans(office)?.headquarters?.storage.pos
     if (!storage) return undefined;
@@ -259,7 +266,7 @@ function calculateTerritoryData(office: string, territory: string): Record<Id<So
                     sourceRoads.add(new PlannedStructure(p, STRUCTURE_ROAD))
                 }
             })
-            data[sourceId] = serializePlannedStructures(Array.from(sourceRoads));
+            data[sourceId] = { path: serializePlannedStructures(Array.from(sourceRoads)) };
         }
     }
 

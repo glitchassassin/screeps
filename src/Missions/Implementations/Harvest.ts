@@ -105,14 +105,17 @@ export class Harvest extends MissionImplementation {
     harvestEnergyFromFranchise(creep, mission.data.source);
 
     const franchisePos = posById(mission.data.source);
-    if (
-      !mission.data.arrived &&
-      creep.ticksToLive &&
-      (franchisePos?.getRangeTo(creep.pos) ?? Infinity) <= 1
-    ) {
-      mission.data.arrived =
-        (CREEP_LIFE_TIME - creep.ticksToLive) + // creep life time
-        (creep.body.length * CREEP_SPAWN_TIME); // creep spawn time
+
+    if ((franchisePos?.getRangeTo(creep.pos) ?? Infinity) <= 1) {
+      Memory.rooms[franchisePos!.roomName].franchises[mission.office][mission.data.source].lastHarvested = Game.time;
+      if (
+        !mission.data.arrived &&
+        creep.ticksToLive
+      ) {
+        mission.data.arrived =
+          (CREEP_LIFE_TIME - creep.ticksToLive) + // creep life time
+          (creep.body.length * CREEP_SPAWN_TIME); // creep spawn time
+      }
     }
 
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.5) {

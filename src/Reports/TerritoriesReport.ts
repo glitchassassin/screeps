@@ -40,7 +40,7 @@ export default () => {
                     height: 47,
                     widget: Rectangle({ data: Table({
                         data: allTerritories.map(t => {
-                            const data = Memory.rooms[t].officePaths[Memory.rooms[t].office ?? ''];
+                            const data = Memory.rooms[t].franchises[Memory.rooms[t].office ?? ''];
                             const reserved = Memory.rooms[t].reserver === 'LordGreywether'
                             if (!data) return [t, '--']
                             return [

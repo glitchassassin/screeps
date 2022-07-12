@@ -2,6 +2,7 @@ import { HarvestMission } from "Missions/Implementations/Harvest";
 import { MissionType } from "Missions/Mission";
 import { Bar, Dashboard } from "screeps-viz";
 import { byId } from "Selectors/byId";
+import { franchiseActive } from "Selectors/franchiseActive";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
@@ -21,13 +22,14 @@ export default () => {
             let sourcePos = posById(franchise.source);
             let storagePos = roomPlans(office)?.headquarters?.storage.pos;
             let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
-            let disabled = !Boolean(assigned);
+            let disabled = !franchiseActive(office, franchise.source);
 
             if (sourcePos && storagePos) {
                 Game.map.visual.line(sourcePos, storagePos, {
                     color: disabled ? '#cccccc' : '#ffff00',
                     lineStyle: disabled ? 'dashed' : 'solid',
                 });
+
                 Game.map.visual.text((getFranchiseDistance(office, franchise.source)?.toFixed(0) ?? '--') + '🦶', new RoomPosition(Math.max(0, sourcePos.x), Math.min(49, sourcePos.y + 4), sourcePos.roomName), { fontSize: 5 });
                 if (!disabled) {
                     Game.map.visual.text(`${assigned}⛏`, new RoomPosition(sourcePos.x, Math.max(0, sourcePos.y - 5), sourcePos.roomName), { fontSize: 5 });
