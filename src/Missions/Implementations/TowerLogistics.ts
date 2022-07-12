@@ -46,7 +46,7 @@ export class TowerLogistics extends MissionImplementation {
     const body = MinionBuilders[storage ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     // Set name
-    const name = `CLERK-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const name = `CLERK-${mission.office}-${mission.id}`
 
     scheduleSpawn(
       mission.office,

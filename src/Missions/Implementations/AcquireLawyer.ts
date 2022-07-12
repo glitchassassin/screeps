@@ -40,7 +40,7 @@ export class AcquireLawyer extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `LAWYER-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const name = `LAWYER-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(mission.office));
 
     console.log(name, body);

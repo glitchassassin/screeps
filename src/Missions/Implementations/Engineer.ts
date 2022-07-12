@@ -54,7 +54,7 @@ export class Engineer extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `ENGINEER-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const name = `ENGINEER-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(mission.office));
 
     mission.data.workParts = body.filter(p => p === WORK).length;

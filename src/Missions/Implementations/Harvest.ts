@@ -79,7 +79,7 @@ export class Harvest extends MissionImplementation {
     const energy = hasEnergyIncome(mission.office) ? Game.rooms[mission.office].energyCapacityAvailable : spawnEnergyAvailable(mission.office)
 
     // Set name
-    const name = `HARVEST-${mission.office}-${Game.time % 10000}-${mission.data.source.slice(mission.data.source.length - 1)}`
+    const name = `HARVEST-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.SALESMAN](energy, !!link);
 
     scheduleSpawn(

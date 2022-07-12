@@ -41,7 +41,7 @@ export class Refill extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `REFILL-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const name = `REFILL-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(

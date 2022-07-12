@@ -78,7 +78,7 @@ export class Logistics extends MissionImplementation {
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, roads);
 
     // Set name
-    const name = `ACCOUNTANT-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random()*100)}`
+    const name = `ACCOUNTANT-${mission.office}-${mission.id}`
 
     mission.data.capacity ??= body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 

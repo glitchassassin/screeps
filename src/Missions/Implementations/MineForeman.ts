@@ -43,7 +43,7 @@ export class MineForeman extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `FOREMAN-${mission.office}-${Game.time % 10000}-${mission.data.mineral.slice(mission.data.mineral.length - 1)}`
+    const name = `FOREMAN-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(

@@ -49,7 +49,7 @@ export class AcquireLogistics extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `ACCOUNTANT-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const name = `ACCOUNTANT-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(

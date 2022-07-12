@@ -60,7 +60,7 @@ export class Science extends MissionImplementation {
     const directions = defaultDirectionsForSpawn(mission.office, spawn)
 
     // Set name
-    const name = `SCIENTIST-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`
+    const name = `SCIENTIST-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(

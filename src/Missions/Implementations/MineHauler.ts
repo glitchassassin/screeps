@@ -39,7 +39,7 @@ export class MineHauler extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `ACCOUNTANT-${mission.office}-${Game.time % 10000}-${mission.data.mineral.slice(mission.data.mineral.length - 1)}`
+    const name = `ACCOUNTANT-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(
