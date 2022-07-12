@@ -63,11 +63,6 @@ export const scanRooms = profiler.registerFN(() => {
         }
     }
 
-    // for (let room in Memory.rooms) {
-    //     Memory.rooms[room].officesInRange = '';
-    //     Memory.rooms[room].franchises ??= {};
-    // }
-
     for (let room in Game.rooms) {
         // Only need to store this once
         if (Memory.rooms[room]?.eligibleForOffice === undefined) {

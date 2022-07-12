@@ -38,13 +38,6 @@ global.resetPendingMissions = (office: string) => {
 const MISSION_HISTORY_LIMIT = 50;
 
 export function runMissionControl() {
-
-  // for (const office in Memory.offices) {
-  //   Memory.offices[office].activeMissions ??= [];
-  //   Memory.offices[office].pendingMissions ??= [];
-  //   Memory.offices[office].missionResults ??= {};
-  //   Memory.offices[office].spawnQueue ??= [];
-  // }
   generateMissions();
   debugCPU('generateMissions', true);
   allocateMissions();

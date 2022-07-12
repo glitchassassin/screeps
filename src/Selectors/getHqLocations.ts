@@ -17,7 +17,7 @@ export const getHeadquarterLogisticsLocation = (office: string) => {
     if (logisticsLocationCache.has(office)) return logisticsLocationCache.get(office);
     const plan = roomPlans(office)?.headquarters
     if (!plan) return;
-    const pos = calculateAdjacentPositions(plan.spawn.pos).find(pos => pos.inRangeTo(plan.terminal.pos, 1) && pos.inRangeTo(plan.powerSpawn.pos, 1));
+    const pos = plan.container.pos;
     if (!pos) return;
     logisticsLocationCache.set(office, pos);
     return pos;
