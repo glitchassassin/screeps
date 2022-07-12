@@ -5,23 +5,10 @@ import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 
-
-declare global {
-    interface CreepMemory {
-        franchiseTarget?: Id<Source>
-        arrivedAtFranchise?: number
-    }
-}
-
 export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, franchiseTarget: Id<Source>) => {
-    creep.memory.franchiseTarget ??= franchiseTarget;
-
-    if (!creep.memory.franchiseTarget) {
-        return BehaviorResult.FAILURE;
-    }
-    const source = byId(creep.memory.franchiseTarget);
-    const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
-    const plan = getFranchisePlanBySourceId(creep.memory.franchiseTarget);
+    const source = byId(franchiseTarget);
+    const sourcePos = source?.pos ?? posById(franchiseTarget);
+    const plan = getFranchisePlanBySourceId(franchiseTarget);
 
     if (
         !sourcePos ||
@@ -41,10 +28,6 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
         result = moveTo(creep, [{pos: plan.container.pos, range: 0}]);
     } else if (!creep.pos.isNearTo(sourcePos!)) {
         result = moveTo(creep, [{ pos: sourcePos, range: 1}]);
-    }
-
-    if (result === BehaviorResult.SUCCESS) {
-        creep.memory.arrivedAtFranchise ??= CREEP_LIFE_TIME - (creep.ticksToLive ?? 0);
     }
 
     creep.harvest(source!)

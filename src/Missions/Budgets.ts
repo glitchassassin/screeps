@@ -13,14 +13,14 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
   if (!roomPlans(mission.office)?.headquarters?.container.structure) {
     // No HQ container yet - capacities not enforced
     return {
-      cpu: 0,
+      cpu: 5000,
       energy: 0,
     }
   } else if (!roomPlans(mission.office)?.headquarters?.storage.structure) {
     // No storage yet - minimal capacities enforced, except for income missions
     if (mission.type === MissionType.HARVEST || mission.type === MissionType.LOGISTICS) {
       return {
-        cpu: 0,
+        cpu: 5000,
         energy: 0,
       }
     } else {
@@ -37,22 +37,22 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
       mission.type === MissionType.REFILL
     ) {
       return {
-        cpu: 0,
+        cpu: 5000,
         energy: 0,
       }
     } else if (mission.type === MissionType.RESERVE || mission.type === MissionType.DEFEND_REMOTE || mission.type === MissionType.HQ_LOGISTICS) {
       return {
-        cpu: 0,
+        cpu: 5000,
         energy: 1500,
       }
     } else if (mission.type === MissionType.UPGRADE && !mission.data.emergency) {
       return {
-        cpu: 2400,
+        cpu: 5000,
         energy: 55000,
       }
     } else {
       return {
-        cpu: 1200,
+        cpu: 5000,
         energy: 40000,
       }
     }

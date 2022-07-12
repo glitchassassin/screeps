@@ -20,7 +20,7 @@ export function createDefendRemoteMission(office: string): DefendRemoteMission {
   const body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office));
 
   const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.6,
+    cpu: CREEP_LIFE_TIME * 0.4,
     energy: minionCost(body),
   }
 

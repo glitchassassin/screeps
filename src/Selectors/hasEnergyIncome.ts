@@ -9,6 +9,6 @@ export const hasEnergyIncome = memoizeByTick(
   (office: string) => {
     const harvestMissions = Memory.offices[office].activeMissions.filter(m => m.type === MissionType.HARVEST && m.status === MissionStatus.RUNNING) as HarvestMission[];
     const logisticsMissions = Memory.offices[office].activeMissions.filter(m => m.type === MissionType.LOGISTICS && m.status === MissionStatus.RUNNING) as LogisticsMission[];
-    return ((harvestMissions.length && logisticsMissions.length) || storageEnergyAvailable(office) > SPAWN_ENERGY_CAPACITY)
+    return ((harvestMissions.length && logisticsMissions.length) || storageEnergyAvailable(office) > Game.rooms[office].energyCapacityAvailable)
   }
 );

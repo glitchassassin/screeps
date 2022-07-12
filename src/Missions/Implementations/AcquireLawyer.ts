@@ -20,7 +20,7 @@ export function createAcquireLawyerMission(office: string, targetOffice: string)
   const body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office));
 
   const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.6,
+    cpu: CREEP_CLAIM_LIFE_TIME * 0.4,
     energy: minionCost(body),
   }
 

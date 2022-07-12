@@ -16,7 +16,7 @@ export interface ExploreMission extends Mission<MissionType.EXPLORE> {
 
 export function createExploreMission(office: string): ExploreMission {
   const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.4,
+    cpu: CREEP_LIFE_TIME * 0.3,
     energy: minionCost(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office))),
   }
 

@@ -19,7 +19,7 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, office: st
     const franchiseTarget = byId(creep.memory.franchiseTarget);
     if (
         franchiseTarget?.energy === 0 ||
-        (franchiseIsFull(creep, office, creep.memory.franchiseTarget) && !franchiseTarget?.pos.inRangeTo(creep.pos, 1))
+        (creep.memory.franchiseTarget && franchiseIsFull(office, creep.memory.franchiseTarget) && !franchiseTarget?.pos.inRangeTo(creep.pos, 1))
     ) {
         delete creep.memory.franchiseTarget;
         return BehaviorResult.FAILURE;
@@ -32,7 +32,7 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, office: st
         const targetRoom = roomName ?? office;
         const [source1, source2] = sourceIds(targetRoom)
             .map(id => ({pos: posById(id), id, source: byId(id)}))
-            .filter(s => !s.source || (s.source.energy > 0 && !franchiseIsFull(creep, office, s.id)))
+            .filter(s => !s.source || (s.source.energy > 0 && !franchiseIsFull(office, s.id)))
 
         if (!source1) return BehaviorResult.FAILURE // No known sources in room
 

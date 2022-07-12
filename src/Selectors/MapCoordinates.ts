@@ -1,5 +1,6 @@
 import { memoize, memoizeByTick } from "utils/memoizeFunction";
 import { mineralPosition, sourcePositions } from "./roomCache";
+import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
 
 export const calculateAdjacencyMatrix = memoize(
     (proximity: number) => ('' + proximity),
@@ -331,7 +332,9 @@ export const getClosestOffice = memoize(
 export const getRoomPathDistance = memoize(
     (room1: string, room2: string) => [room1, room2].sort().join(''),
     (room1: string, room2: string) => {
-        const newRoute = Game.map.findRoute(room1, room2);
+        const newRoute = Game.map.findRoute(room1, room2, {
+            routeCallback: (room) => getTerritoryIntent(room) === TerritoryIntent.AVOID ? Infinity : 0
+        });
         if (newRoute === -2) return undefined;
         return newRoute.length;
     }

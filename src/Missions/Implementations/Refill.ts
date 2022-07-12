@@ -59,7 +59,7 @@ export class Refill extends MissionImplementation {
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
     if (!creep.memory.state || creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
       setState(States.WITHDRAW)(creep);
-    } else if (!creep.memory.state) {
+    } else if (!creep.memory.state || creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
       setState(States.DEPOSIT)(creep);
     }
 

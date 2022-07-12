@@ -152,10 +152,13 @@ export const refreshFacilitiesWorkCache = (officeName: string) => {
         })
     }
 }
-export const facilitiesWorkToDo = (officeName: string) => {
-    refreshFacilitiesWorkCache(officeName);
-    return cache[officeName].work.slice();
-}
+export const facilitiesWorkToDo = memoizeByTick(
+    officeName => officeName,
+    (officeName: string) => {
+        refreshFacilitiesWorkCache(officeName);
+        return cache[officeName].work.slice();
+    }
+)
 
 export const facilitiesCostPending = (officeName: string) => {
     refreshFacilitiesWorkCache(officeName);

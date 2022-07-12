@@ -27,7 +27,7 @@ const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
         const entry = missionsList.get(key) ?? {
             count: 0,
             priority: mission.priority,
-            status: mission.status,
+            status: mission.startTime && mission.status === MissionStatus.PENDING ? MissionStatus.SCHEDULED : mission.status,
             type: mission.type,
             actual: {
                 cpu: 0,

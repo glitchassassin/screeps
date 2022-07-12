@@ -4,6 +4,7 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
 import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
+import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { getClosestByRange } from "Selectors/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
@@ -75,9 +76,11 @@ export class Harvest extends MissionImplementation {
       spawn: spawn.id
     } : undefined;
 
+    const energy = hasEnergyIncome(mission.office) ? Game.rooms[mission.office].energyCapacityAvailable : spawnEnergyAvailable(mission.office)
+
     // Set name
     const name = `HARVEST-${mission.office}-${Game.time % 10000}-${mission.data.source.slice(mission.data.source.length - 1)}`
-    const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(mission.office), !!link);
+    const body = MinionBuilders[MinionTypes.SALESMAN](energy, !!link);
 
     scheduleSpawn(
       mission.office,

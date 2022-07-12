@@ -13,8 +13,8 @@ import { posById } from "Selectors/posById";
 import { sourceIds } from "Selectors/roomCache";
 import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
 import { roomPlans } from "Selectors/roomPlans";
+import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import { cityNames } from "utils/CityNames";
-import { logCpuStart } from "utils/logCPU";
 import { packPos } from "utils/packrat";
 import profiler from "utils/profiler";
 
@@ -89,6 +89,13 @@ export const scanRooms = profiler.registerFN(() => {
             }
 
             // Calculate nearby offices and assign
+            recalculateTerritoryOffices(room);
+        }
+
+        // Recalculate territory paths when room planning is complete
+        if (room in Memory.offices && roomPlans(room)?.headquarters && Object.keys(Memory.rooms[room].officePaths[room] ?? {}).length === 0) {
+            console.log('Recalculating internal franchise paths for office', room)
+            Memory.rooms[room].officesInRange = '';
             recalculateTerritoryOffices(room);
         }
 
@@ -181,7 +188,7 @@ export const scanRooms = profiler.registerFN(() => {
         for (const room in Memory.rooms) {
             Memory.rooms[room].officesInRange ??= '';
             Memory.rooms[room].officePaths ??= {};
-            if (room in Memory.offices) continue; // skip check for existing offices
+            // if (room in Memory.offices) continue; // skip check for existing offices
             recalculateTerritoryOffices(room);
             // console.log(room, '->', Memory.rooms[room].office);
 
@@ -195,13 +202,12 @@ export const scanRooms = profiler.registerFN(() => {
 }, 'scanRooms');
 
 function recalculateTerritoryOffices(room: string) {
-    logCpuStart()
     const officesInRange = Object.keys(Memory.offices)
         .filter(o => {
             const range = getOfficeDistanceByRange(o, room);
             if (range > TERRITORY_RADIUS) return false;
             const distance = getRoomPathDistance(o, room);
-            if (!distance || distance > TERRITORY_RADIUS) return false;
+            if (distance === undefined || distance > TERRITORY_RADIUS) return false;
             return true;
         })
         .sort()
@@ -210,21 +216,20 @@ function recalculateTerritoryOffices(room: string) {
         console.log('Offices in range of', room, 'have changed, recalculating paths')
         Memory.rooms[room].officesInRange = key;
         // Offices in range of this room have changed; recalculate paths, if needed
-        for (const office in officesInRange) {
-            if (!Memory.rooms[room].officePaths[office]) {
-                Memory.rooms[room].officePaths[office] ??= calculateTerritoryData(office, room);
-            }
+        for (const office of officesInRange) {
+            const data = calculateTerritoryData(office, room)
+            if (data) Memory.rooms[room].officePaths[office] = data;
         }
     }
 }
 
-function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, string> {
+function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, string>|undefined {
     const data: Record<Id<Source>, string> = { };
 
     const storage = roomPlans(office)?.headquarters?.storage.pos
-    if (!storage) return data;
+    if (!storage) return undefined;
     let sources = sourceIds(territory);
-    if (sources.length === 0) return data;
+    if (sources.length === 0) return undefined;
     const sourcePaths: PathFinderPath[] = [];
     const roads = new Set<PlannedStructure>();
     for (const sourceId of sources) {
@@ -232,6 +237,7 @@ function calculateTerritoryData(office: string, territory: string): Record<Id<So
         if (!pos) continue;
         let route = PathFinder.search(storage, {pos, range: 1}, {
             roomCallback: (room) => {
+                if (getTerritoryIntent(room) === TerritoryIntent.AVOID) return false;
                 const cm = costMatrixFromRoomPlan(room);
                 for (let road of roads) {
                     if (road.pos.roomName === room && cm.get(road.pos.x, road.pos.y) !== 255) {

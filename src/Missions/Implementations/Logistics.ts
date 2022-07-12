@@ -17,6 +17,7 @@ import { rcl } from "Selectors/rcl";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
+import { memoizeByTick } from "utils/memoizeFunction";
 import { MissionImplementation } from "./MissionImplementation";
 
 export interface LogisticsMission extends Mission<MissionType.LOGISTICS> {
@@ -26,19 +27,26 @@ export interface LogisticsMission extends Mission<MissionType.LOGISTICS> {
   }
 }
 
-const assignedLogisticsCapacity = (office: string) => {
-  const assignments = new Map<Id<Tombstone|Source>, number>();
+const assignedLogisticsCapacity = memoizeByTick(
+  office => office,
+  (office: string) => {
+    const assignments = new Map<Id<Source>, number>();
 
-  for (const mission of Memory.offices[office].activeMissions) {
-    if (mission.type !== MissionType.LOGISTICS || !mission.data.logisticsTarget) continue;
-    assignments.set(
-      mission.data.logisticsTarget,
-      (assignments.get(mission.data.logisticsTarget) ?? 0) + mission.data.capacity
-    );
+    for (let { source } of franchisesByOffice(office)) {
+      assignments.set(source, 0);
+    }
+
+    for (const mission of Memory.offices[office].activeMissions) {
+      if (mission.type !== MissionType.LOGISTICS || !mission.data.logisticsTarget || !assignments.has(mission.data.logisticsTarget)) continue;
+      assignments.set(
+        mission.data.logisticsTarget,
+        (assignments.get(mission.data.logisticsTarget) ?? 0) + mission.data.capacity
+      );
+    }
+
+    return assignments
   }
-
-  return assignments
-}
+)
 
 export function createLogisticsMission(office: string, priority = 11): LogisticsMission {
   const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10;
@@ -46,7 +54,7 @@ export function createLogisticsMission(office: string, priority = 11): Logistics
   const capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
   const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.4,
+    cpu: CREEP_LIFE_TIME * 0.8,
     energy: minionCost(body),
   }
 
@@ -92,6 +100,12 @@ export class Logistics extends MissionImplementation {
     } else if (!creep.memory.state) {
       setState(States.DEPOSIT)(creep);
     }
+
+    // Opportunity targets
+    const resources = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, { filter: r => r.resourceType === RESOURCE_ENERGY });
+    if (resources.length && creep.store.getFreeCapacity()) {
+      resources.forEach(resource => creep.pickup(resource));
+    }
     // logCpu('initialize state')
     if (creep.memory.state === States.WITHDRAW) {
       // Select target
@@ -104,12 +118,11 @@ export class Logistics extends MissionImplementation {
           mission.data.logisticsTarget = tombstone.id;
         } else {
           // Get energy from a franchise
-          const assigned = assignedLogisticsCapacity(mission.office);
+          const franchiseCapacity = assignedLogisticsCapacity(mission.office);
           let bestTarget = undefined;
           let bestAmount = 0;
           let bestDistance = Infinity;
-          for (let { source, room } of franchisesByOffice(mission.office)) {
-            const capacity = assigned.get(source) ?? 0;
+          for (const [ source, capacity ] of franchiseCapacity) {
             const amount = franchiseEnergyAvailable(source) - capacity;
             const distance = getFranchiseDistance(mission.office, source) ?? Infinity;
             if (
@@ -122,6 +135,7 @@ export class Logistics extends MissionImplementation {
             }
           }
           if (bestTarget) {
+            franchiseCapacity.set(bestTarget, (franchiseCapacity.get(bestTarget) ?? 0) + mission.data.capacity)
             mission.data.logisticsTarget = bestTarget;
           }
           // logCpu('check franchises')
@@ -156,11 +170,13 @@ export class Logistics extends MissionImplementation {
         let energyRemaining = creep.store.getUsedCapacity(RESOURCE_ENERGY);
         for (const opp of opportunityTargets) {
           if (opp.creep?.my) {
-            if (
-              (opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('PARALEGAL')) &&
-              opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-              storageEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable
-            ) {
+            if (opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && (
+              (
+                (opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('PARALEGAL')) &&
+                storageEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable
+              ) ||
+              opp.creep.name.startsWith('REFILL')
+            )) {
               creep.transfer(opp.creep, RESOURCE_ENERGY);
               energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining)
               if (opp.creep.memory.state === States.GET_ENERGY) {
@@ -196,4 +212,8 @@ export class Logistics extends MissionImplementation {
       // logCpu('deposit')
     }
   }
+}
+
+function selectLogisticsTarget(creep: Creep, mission: LogisticsMission) {
+
 }

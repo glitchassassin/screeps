@@ -41,8 +41,9 @@ export class TowerLogistics extends MissionImplementation {
     const pos = getTowerRefillerLocation(mission.office);
     const spawn = roomPlans(mission.office)?.headquarters?.spawn.structure as StructureSpawn;
     if (!pos || !spawn) return;
+    const storage = roomPlans(mission.office)?.headquarters?.storage.structure;
 
-    const body = MinionBuilders[MinionTypes.CLERK](spawnEnergyAvailable(mission.office));
+    const body = MinionBuilders[storage ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     // Set name
     const name = `CLERK-${mission.office}-${Game.time % 10000}-${Math.floor(Math.random() * 100)}`

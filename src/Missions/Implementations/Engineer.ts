@@ -88,8 +88,7 @@ export const engineerLogic = (creep: Creep, office: string, mission: Mission<Mis
 
   // Select a target
   if (!mission.data.facilitiesTarget) {
-    const workToDo = facilitiesWorkToDo(office);
-    facilitiesTarget = workToDo.shift();
+    facilitiesTarget = facilitiesWorkToDo(office)[0];
     if (facilitiesTarget) {
       mission.data.facilitiesTarget = facilitiesTarget.serialize();
     }
@@ -103,7 +102,7 @@ export const engineerLogic = (creep: Creep, office: string, mission: Mission<Mis
     setState(States.WORKING)(creep);
   }
   if (creep.memory.state === States.GET_ENERGY) {
-    if (engineerGetEnergy(creep, office, facilitiesTarget?.pos.roomName, getWithdrawLimit(mission)) === BehaviorResult.SUCCESS) {
+    if (engineerGetEnergy(creep, office, getWithdrawLimit(mission)) === BehaviorResult.SUCCESS) {
       setState(States.WORKING)(creep);
     }
   }

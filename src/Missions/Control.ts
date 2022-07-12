@@ -1,3 +1,4 @@
+import { recordMissionCpu } from "Selectors/cpuOverhead";
 import { missionCpuAvailable } from "Selectors/missionCpuAvailable";
 import { missionEnergyAvailable } from "Selectors/missionEnergyAvailable";
 import { getSpawns, roomPlans } from "Selectors/roomPlans";
@@ -48,7 +49,9 @@ export function runMissionControl() {
   debugCPU('generateMissions', true);
   allocateMissions();
   debugCPU('allocateMissions', true);
+  const before = Game.cpu.getUsed();
   executeMissions();
+  recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
   debugCPU('executeMissions', true);
 }
 
@@ -87,7 +90,7 @@ function generateMissions() {
   for (const office in Memory.offices) {
     for (const dispatcher of Dispatchers) {
       dispatcher.byOffice(office);
-      debugCPU('dispatcher' + Dispatchers.indexOf(dispatcher), true);
+      // debugCPU('dispatcher' + Dispatchers.indexOf(dispatcher), true);
     }
   }
 }

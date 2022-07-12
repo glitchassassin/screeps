@@ -4,6 +4,7 @@ import { spawnFromQueues } from "Minions/spawnQueues";
 import { runMissionControl } from "Missions/Control";
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
+import { recordOverhead } from "Selectors/cpuOverhead";
 import { runStructures } from "Structures";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { clearNudges } from 'utils/excuseMe';
@@ -39,4 +40,6 @@ export const gameLoop = () => {
 
     // Setup first spawn if needed
     initializeSpawn();
+
+    recordOverhead();
 }
