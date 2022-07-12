@@ -5,6 +5,7 @@ import { byId } from "Selectors/byId";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 // import { logCpu, logCpuStart } from "utils/logCPU";
 
 // TODO - We need to track replacement missions more atomically.
@@ -14,6 +15,8 @@ import { posById } from "Selectors/posById";
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    // If storage is at least half full, don't worry about spawning more harvesters
+    if (storageEnergyAvailable(office) > (STORAGE_CAPACITY / 2)) return;
     // logCpuStart()
     const franchises = franchisesByOffice(office);
     // logCpu('get franchises')

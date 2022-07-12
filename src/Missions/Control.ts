@@ -149,7 +149,7 @@ function allocateMissions() {
         remainingEnergy -= mission.estimate.energy;
       }
 
-      // if (office === 'W7N3') {
+      // if (office === 'W7S8') {
       //   if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
       //     console.log(startFailures);
       //     console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');

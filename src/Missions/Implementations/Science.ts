@@ -236,15 +236,15 @@ export class Science extends MissionImplementation {
       const target1 = Math.min(
         Math.max(0, ingredientQuantity(ingredient1) - creep.store.getUsedCapacity(order.ingredient1)),
         creep.store.getFreeCapacity(),
-        terminal.store.getUsedCapacity(order.ingredient1)
+        // terminal.store.getUsedCapacity(order.ingredient1)=
       );
       const target2 = Math.min(
         Math.max(0, ingredientQuantity(ingredient2) - creep.store.getUsedCapacity(order.ingredient2)),
         creep.store.getFreeCapacity(),
-        terminal.store.getUsedCapacity(order.ingredient2)
+        // terminal.store.getUsedCapacity(order.ingredient2)
       );
 
-      // if (mission.office === 'E15N12') console.log(mission.office, 'withdraw', order.ingredient1, target1, ingredient1, order.ingredient2, ingredient2, target2)
+      // if (mission.office === 'W7S7') console.log(mission.office, 'withdraw', order.ingredient1, ingredient1, target1, order.ingredient2, ingredient2, target2)
 
       if (
         ingredient1 + ingredient2 === 0 &&
@@ -268,6 +268,7 @@ export class Science extends MissionImplementation {
             targetOrder,
             getAvailableResourcesFromTerminal(terminal)
           ).concat(targetOrder);
+          if (mission.office === 'W7S7') console.log('Recalculating order', JSON.stringify(Memory.offices[mission.office].lab.orders))
           return;
         } else {
           // No ingredients needed, or no more available

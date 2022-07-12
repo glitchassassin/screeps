@@ -32,7 +32,7 @@ export function createEngineerMission(office: string): EngineerMission {
   const workEfficiency = body.filter(p => p === WORK).length * efficiencyAdjustment;
 
   const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.6,
+    cpu: CREEP_LIFE_TIME * 0.4,
     energy: minionCost(body) + (workEfficiency * CREEP_LIFE_TIME),
   }
 
