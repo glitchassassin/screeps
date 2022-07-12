@@ -19,7 +19,7 @@ export const getTerritoryIntent = (roomName: string): TerritoryIntent => {
         return TerritoryIntent.IGNORE;
     }
 
-    if (Memory.rooms[roomName]?.hasLootEnergy || Memory.rooms[roomName]?.hasLootResources) {
+    if (Memory.rooms[roomName]?.lootEnergy || Memory.rooms[roomName]?.lootResources) {
         return TerritoryIntent.PLUNDER;
     }
 

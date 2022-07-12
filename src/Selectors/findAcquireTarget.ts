@@ -1,8 +1,9 @@
-import { MINERAL_PRIORITIES, TERRITORY_RADIUS } from "config";
+import { MINERAL_PRIORITIES } from "config";
+import { getOfficeDistanceByRoomPath } from "./getOfficeDistance";
 import { ownedMinerals } from "./ownedMinerals";
+import { rcl } from "./rcl";
 
 let cachedAcquireTarget: string|undefined;
-let cachedAcquiringOffice: string|undefined;
 
 declare global {
     interface RoomMemory {
@@ -27,8 +28,9 @@ export const findAcquireTarget = () => {
         return cachedAcquireTarget;
     } else {
         cachedAcquireTarget = undefined;
-        cachedAcquiringOffice = undefined;
     }
+
+    if ((Game.time + 25) % 50 !== 0) return undefined;
 
     const minerals = ownedMinerals();
 
@@ -48,14 +50,22 @@ export const findAcquireTarget = () => {
             continue;
         }
 
+        const distance = Math.min(
+            ...offices
+                .filter(r => Game.rooms[r].energyCapacityAvailable >= 850)
+                .map(r => getOfficeDistanceByRoomPath(r, room) ?? Infinity),
+            Infinity
+            )
+        if (distance > CREEP_CLAIM_LIFE_TIME) {
+            delete Memory.rooms[room].acquire;
+            continue;
+        }
+
         if (Memory.rooms[room].acquire) {
             delete Memory.rooms[room].lastAcquireAttempt;
             cachedAcquireTarget = room;
-            cachedAcquiringOffice = undefined;
             return room;
         }
-
-        const distance = Math.min(...offices.filter(r => Game.rooms[r].energyCapacityAvailable >= 850).map(r => Game.map.getRoomLinearDistance(r, room)), Infinity)
         const mineralType = Memory.rooms[room].mineralType
 
         // Mineral ranking: Lower is better
@@ -76,11 +86,10 @@ export const findAcquireTarget = () => {
         }
     }
 
-    if (bestTarget && bestTargetDistance <= 9) {
+    if (bestTarget) {
         Memory.rooms[bestTarget].acquire = true;
         delete Memory.rooms[bestTarget].lastAcquireAttempt;
         cachedAcquireTarget = bestTarget;
-        cachedAcquiringOffice = undefined;
     }
 
     return cachedAcquireTarget;
@@ -118,8 +127,7 @@ export const acquireTargetIsValid = (roomName: string) => {
             !Memory.rooms[roomName].reserver ||
             Memory.rooms[roomName].reserver === 'LordGreywether'
         ) &&
-        Memory.roomPlans[roomName]?.office &&
-        Object.keys(Memory.offices).every(office => office === roomName || Game.map.getRoomLinearDistance(office, roomName) > TERRITORY_RADIUS)
+        Memory.roomPlans[roomName]?.office
     )
 }
 
@@ -127,28 +135,11 @@ export const officeShouldAcquireTarget = (officeName: string) => {
     const room = findAcquireTarget();
     if (!room) return false;
 
-    if (cachedAcquiringOffice) return (officeName === cachedAcquiringOffice);
+    if (officeName === room || rcl(officeName) < 5) return false;
 
-    const minerals = ownedMinerals();
+    const distance = getOfficeDistanceByRoomPath(officeName, room);
 
-    let bestTarget: string|undefined;
-    let bestTargetDistance: number = Infinity;
-    for (const o in Memory.offices) {
-        if (Game.rooms[o].energyCapacityAvailable < 850) continue;
-
-        const distance = Game.map.getRoomLinearDistance(o, room);
-
-        if (distance < bestTargetDistance) {
-            bestTarget = o;
-            bestTargetDistance = distance;
-        }
-    }
-
-    if (bestTargetDistance <= 10) {
-        cachedAcquiringOffice = bestTarget
-    }
-
-    return (officeName === cachedAcquiringOffice);
+    return (distance && distance < CREEP_CLAIM_LIFE_TIME);
 }
 
 export const officeShouldClaimAcquireTarget = (officeName: string) => {
@@ -166,7 +157,7 @@ export const officeShouldSupportAcquireTarget = (officeName: string) => {
     // support, we should not claim either.
     if (!officeShouldAcquireTarget(officeName)) return false;
 
-    // Evaluate further if claiming is actually necessary
+    // Evaluate further if claiming or support are necessary
     if (!cachedAcquireTarget) return false;
     const controller = Game.rooms[cachedAcquireTarget]?.controller
     if (!controller) return false;

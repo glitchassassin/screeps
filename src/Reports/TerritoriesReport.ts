@@ -21,8 +21,7 @@ export default () => {
     for (let office in Memory.offices) {
         const territories = getTerritoriesByOffice(office);
         const allTerritories = calculateNearbyRooms(office, TERRITORY_RADIUS, false)
-            .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t]?.territory?.office === office && !Memory.offices[t]))
-            .sort((a, b) => (Memory.rooms[b].territory?.score ?? 0) - (Memory.rooms[a].territory?.score ?? 0))
+            .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t]?.office === office && !Memory.offices[t]))
         territories.forEach(territory => {
             Game.map.visual.line(new RoomPosition(25, 25, office), new RoomPosition(25, 25, territory), { color: '#ffffff', width: 5 })
         })
@@ -41,20 +40,16 @@ export default () => {
                     height: 47,
                     widget: Rectangle({ data: Table({
                         data: allTerritories.map(t => {
-                            const data = Memory.rooms[t].territory;
+                            const data = Memory.rooms[t].franchises[Memory.rooms[t].office ?? ''];
                             const reserved = Memory.rooms[t].reserver === 'LordGreywether'
-                            if (!data) return [t, '--', '--', '--', '--']
+                            if (!data) return [t, '--']
                             return [
                                 t + (territories.includes(t) ? ' ✓' : ''),
-                                data.sources,
-                                reserved ? data.spawnCapacityReserved : data.spawnCapacity,
-                                reserved ? data.targetCarryReserved: data.targetCarry,
-                                data.disabled ? data.disabled - Game.time : '',
-                                data.score,
+                                Object.keys(data).length
                             ]
                         }),
                         config: {
-                            headers: ['Territory', 'Sources', 'Spawn Capacity (ticks)', 'Target Carry', 'Disabled', 'Score']
+                            headers: ['Territory', 'Sources']
                         }
                     })})
                 }

@@ -1,5 +1,5 @@
-import { Objectives } from "Objectives/Objective";
 import { getLabs } from "./getLabs";
+import { getScientists } from "./getScientists";
 import { roomPlans } from "./roomPlans";
 
 export function boostLabsToEmpty(office: string) {
@@ -65,7 +65,7 @@ export function boostsAvailable(office: string, boost: MineralBoostConstant, cou
     let total = (
         (countLabs ? getLabs(office).boosts.reduce((sum, lab) => (((lab.structure) as StructureLab)?.store.getUsedCapacity(boost) ?? 0) + sum, 0) : 0) +
         ((roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal)?.store.getUsedCapacity(boost) ?? 0) +
-        (countMinions ? Objectives['ScienceObjective'].minions(office).reduce((sum, c) => sum + c.store.getUsedCapacity(boost), 0) : 0)
+        (countMinions ? getScientists(office).reduce((sum, c) => sum + c.store.getUsedCapacity(boost), 0) : 0)
     );
     if (!countReserved) {
         total -= Memory.offices[office].lab.boosts.reduce((sum, o) => sum + (o.boosts.find(b => b.type === boost)?.count ?? 0), 0)

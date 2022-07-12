@@ -3,5 +3,5 @@ import { sourceIds } from "./roomCache";
 
 export const remoteFranchises = (office: string) => {
     const territories = getTerritoriesByOffice(office);
-    return territories.flatMap(room => sourceIds(room))
+    return territories.flatMap(room => sourceIds(room).map(source => ({ source, room })))
 }

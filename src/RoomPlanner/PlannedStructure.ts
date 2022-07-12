@@ -60,7 +60,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     }
 
     get constructionSite() {
-        return this.pos.lookFor(LOOK_CONSTRUCTION_SITES).find(c => c.structureType === this.structureType);
+        return Game.rooms[this.pos.roomName] ? this.pos.lookFor(LOOK_CONSTRUCTION_SITES).find(c => c.structureType === this.structureType) : undefined;
     }
 
     serialize() {

@@ -4,7 +4,11 @@ let current = 0;
 export const resetDebugCPU = (inMemory = false) => {
     start = Game.cpu.getUsed();
     current = start;
-    if (!inMemory) console.log(` -=< Starting CPU debug >=-         [ 0.000 | 0.000 ]`)
+    if (!inMemory) {
+        console.log(` -=< Starting CPU debug >=-         [ 0.000 | 0.000 ]`)
+    } else {
+        Memory.stats.profiling = {};
+    }
 }
 export const debugCPU = (context: string, inMemory = false) => {
     let previous = current;
@@ -14,6 +18,6 @@ export const debugCPU = (context: string, inMemory = false) => {
     } else {
         if (!Memory.stats) return;
         Memory.stats.profiling ??= {};
-        Memory.stats.profiling[context] = current - previous;
+        Memory.stats.profiling[context] = (Memory.stats.profiling[context] ?? 0) + current - previous;
     }
 }

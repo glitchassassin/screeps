@@ -34,13 +34,17 @@ declare global {
   }
   interface CreepMemory {
     excuseMe?: DirectionConstant;
-    movePos?: string;
-    moveRange?: number;
+    moveTargets?: {
+      pos: string,
+      range: number
+  }[]
   }
   interface PowerCreepMemory {
     excuseMe?: DirectionConstant;
-    movePos?: string;
-    moveRange?: number;
+    moveTargets?: {
+      pos: string,
+      range: number
+  }[]
   }
 }
 
@@ -188,12 +192,12 @@ Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Cr
  * to be nudged
  */
 function giveWay(creep: AnyCreep, nudgeDirection?: DirectionConstant) {
-  let pos = creep.memory.movePos && unpackPos(creep.memory.movePos);
-  let range = creep.memory.moveRange ?? 1;
+  let target = creep.memory.moveTargets?.map(t => ({pos: unpackPos(t.pos), range: t.range})).find(({pos, range}) => pos.inRangeTo(creep, range));
+  let { pos, range } = target ?? {};
   if (!movingThisTick.has(creep.id)) {
     if (!pos && nudgeDirection) {
       creep.move(nudgeDirection, true);
-    } else if (pos) {
+    } else if (pos && range) {
       const dir = getNudgeDirection_KeepRange(creep.pos, { pos, range })
       if (dir) {
         creep.move(dir, true);

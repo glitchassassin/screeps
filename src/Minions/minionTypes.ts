@@ -1,12 +1,5 @@
 import { memoize } from "utils/memoizeFunction";
 
-declare global {
-    interface CreepMemory {
-        type: MinionTypes,
-        office: string,
-    }
-}
-
 export interface Minion {
     body: BodyPartConstant[],
     name: string,
@@ -15,6 +8,7 @@ export interface Minion {
 
 export enum MinionTypes {
     ACCOUNTANT = 'ACCOUNTANT',
+    CLERK = 'CLERK',
     ENGINEER = 'ENGINEER',
     FOREMAN = 'FOREMAN',
     GUARD = 'GUARD',
@@ -27,13 +21,16 @@ export enum MinionTypes {
 }
 
 export const MinionBuilders = {
+    [MinionTypes.CLERK]: (energy: number, limit = 50) => {
+        return Array(Math.min(limit, Math.floor(energy / CARRY_CAPACITY))).fill(CARRY);
+    },
     [MinionTypes.ACCOUNTANT]: memoize( // Memoizes at 50-energy increments
         (energy: number, maxSegments = 25, roads = false) => `${Math.round(energy * 2 / 100)} ${maxSegments} ${roads}`,
         (energy: number, maxSegments = 25, roads = false) => {
         if (energy < 200 || maxSegments === 0) {
             return [];
         } else if (energy <= 300) {
-            return [CARRY, MOVE]
+            return [CARRY, MOVE, CARRY, MOVE]
         } else if (!roads) {
             const segments = Math.min(25, maxSegments, Math.floor((energy / 2) / 100))
             return Array(segments).fill([CARRY, MOVE]).flat();
@@ -72,13 +69,21 @@ export const MinionBuilders = {
     [MinionTypes.GUARD]: (energy: number) => {
         if (energy < 200) {
             return [];
-        }
-        else {
+        } else if (energy <= 550) {
             // Try to maintain ATTACK/MOVE ratio
             let attackParts = Math.min(25, Math.floor(((80/130) * energy) / 80))
             return ([] as BodyPartConstant[]).concat(
                 Array(attackParts).fill(ATTACK),
                 Array(attackParts).fill(MOVE),
+            )
+        } else {
+            // Add a heal part
+            let attackEnergy = (energy - BODYPART_COST[HEAL] - BODYPART_COST[MOVE])
+            let attackParts = Math.min(24, Math.floor(((80/130) * attackEnergy) / 80))
+            return ([] as BodyPartConstant[]).concat(
+                Array(attackParts).fill(ATTACK),
+                Array(attackParts + 1).fill(MOVE),
+                [HEAL]
             )
         }
     },
@@ -88,8 +93,7 @@ export const MinionBuilders = {
     [MinionTypes.LAWYER]:  (energy: number) => {
         if (energy < 850) {
             return [];
-        }
-        else {
+        } else {
             return [CLAIM, MOVE, MOVE, MOVE, MOVE, MOVE]
         }
     },
@@ -120,20 +124,20 @@ export const MinionBuilders = {
             )
         }
     },
-    [MinionTypes.SALESMAN]: (energy: number) => {
+    [MinionTypes.SALESMAN]: (energy: number, carry = false) => {
         if (energy < 200) {
             return [];
-        } else if (energy <= 300) {
-            return [WORK, WORK, MOVE]
+        } else if (energy < 550) {
+            return carry ? [WORK, WORK, CARRY, MOVE] : [WORK, WORK, MOVE]
+        } else if (energy < 600 && carry) {
+            return [WORK, WORK, WORK, CARRY, MOVE];
+        } else if (energy < 650) {
+            return carry ? [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE] : [WORK, WORK, WORK, WORK, WORK, MOVE]
+        } else if (energy < 1250) {
+            return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE]
         } else {
-            let moveParts = (energy <= 550) ? 1 : 2;
-            let carryParts = (energy <= 550) ? 0 : 1;
-            let workParts = Math.min(5, Math.floor((energy - (moveParts + carryParts) * 50) / 100));
-            return ([] as BodyPartConstant[]).concat(
-                Array(workParts).fill(WORK),
-                Array(moveParts).fill(MOVE),
-                Array(carryParts).fill(CARRY),
-            )
+            // At higher RCL, use bigger harvesters to reduce CPU
+            return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE]
         }
     },
     [MinionTypes.JANITOR]: (energy: number) => {

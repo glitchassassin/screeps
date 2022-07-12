@@ -1,4 +1,4 @@
-import { LabOrder } from "Objectives/Labs/LabOrder";
+import { LabOrder } from "Structures/Labs/LabOrder";
 import { getLabs } from "./getLabs";
 
 export function labsShouldBeEmptied(office: string) {

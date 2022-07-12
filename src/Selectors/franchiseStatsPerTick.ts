@@ -1,5 +1,5 @@
-import { FranchiseObjective } from "Objectives/Franchise";
-import { Objectives } from "Objectives/Objective";
+import { FranchiseObjective } from "OldObjectives/Franchise";
+import { Objectives } from "OldObjectives/Objective";
 import { memoizeByTick } from "utils/memoizeFunction";
 
 export const franchiseIncomePerTick = (office: string) => {

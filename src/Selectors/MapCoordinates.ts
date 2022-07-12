@@ -1,5 +1,6 @@
 import { memoize, memoizeByTick } from "utils/memoizeFunction";
 import { mineralPosition, sourcePositions } from "./roomCache";
+import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
 
 export const calculateAdjacencyMatrix = memoize(
     (proximity: number) => ('' + proximity),
@@ -149,11 +150,30 @@ export const getCostMatrix = memoizeByTick(
         return costs;
     }
 )
+let costMatrixWithPaths;
+export const pathsCostMatrix = memoizeByTick(
+    () => 'pathsCostMatrix',
+    () => {
+        costMatrixWithPaths = new PathFinder.CostMatrix();
+        return costMatrixWithPaths;
+    }
+)
+export const blockSquare = (pos: RoomPosition) => pathsCostMatrix().set(pos.x, pos.y, 255);
+export const setMove = (pos: RoomPosition, weight = 3) => {
+    const cached = pathsCostMatrix();
+    if (cached.get(pos.x, pos.y) !== 255) {
+        cached.set(
+             pos.x,
+              pos.y,
+            Math.max(0, Math.min(255, (cached.get(pos.x, pos.y) ?? terrainCostAt(pos)) + weight))
+        )
+    }
+}
+
 export const getPath = (from: RoomPosition, to: RoomPosition, range: number, ignoreRoads = false) => {
     let positionsInRange = calculateNearbyPositions(to, range, true)
                                          .filter(pos => isPositionWalkable(pos, true));
     if (positionsInRange.length === 0) return;
-
     let route = PathFinder.search(from, positionsInRange, {
         roomCallback: (room) => {
             return getCostMatrix(room, false)
@@ -167,7 +187,8 @@ export const getPath = (from: RoomPosition, to: RoomPosition, range: number, ign
     return route;
 }
 export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: number, ignoreRoads = false) => {
-    return getPath(from, to, range, ignoreRoads)?.cost;
+    const path = getPath(from, to, range, ignoreRoads);
+    return !path || path?.incomplete ? undefined : path.cost;
 }
 export const getRangeTo = memoize(
     (from: RoomPosition, to: RoomPosition) => (`${from} ${to}`),
@@ -292,19 +313,65 @@ export function lookNear(pos: RoomPosition, range = 1) {
         true
     )
 }
-export function getClosestOffice(roomName: string) {
+export const getClosestOffice = memoize(
+    (roomName: string) => roomName + Object.keys(Memory.offices).join(''),
+    (roomName: string) => {
+        let closest: string|undefined = undefined;
+        let route: {exit: ExitConstant, room: string}[] | undefined = undefined;
+        for (let office of Object.keys(Memory.offices)) {
+            const newRoute = Game.map.findRoute(office, roomName);
+            if (newRoute === -2) continue;
+            if (!closest || newRoute.length < (route?.length ?? Infinity)) {
+                closest = office;
+                route = newRoute;
+            }
+        }
+        return closest;
+    }
+)
+export const getRoomPathDistance = memoize(
+    (room1: string, room2: string) => [room1, room2].sort().join(''),
+    (room1: string, room2: string) => {
+        const newRoute = Game.map.findRoute(room1, room2, {
+            routeCallback: (room) => getTerritoryIntent(room) === TerritoryIntent.AVOID ? Infinity : 0
+        });
+        if (newRoute === -2) return undefined;
+        return newRoute.length;
+    }
+)
+export const getClosestOfficeFromMemory = (roomName: string) => {
     let closest: string|undefined = undefined;
-    let route: {exit: ExitConstant, room: string}[] | undefined = undefined;
-    for (let office of Object.keys(Memory.offices)) {
-        const newRoute = Game.map.findRoute(office, roomName);
-        if (newRoute === -2) continue;
-        if (!closest || newRoute.length < (route?.length ?? Infinity)) {
-            closest = office;
-            route = newRoute;
+    let length = Infinity;
+    for (let office in Memory.rooms[roomName].franchises) {
+        for (let franchise of Object.values(Memory.rooms[roomName].franchises[office])) {
+            if (franchise.path.length < length) {
+                length = franchise.path.length;
+                closest = office;
+            }
         }
     }
     return closest;
 }
+export const getOfficeDistanceFromMemory = (roomName: string) => {
+    let closest: string|undefined = undefined;
+    let length = Infinity;
+    for (let office in Memory.rooms[roomName].franchises) {
+        for (let franchise of Object.values(Memory.rooms[roomName].franchises[office])) {
+            if (franchise.path.length < length) {
+                length = franchise.path.length;
+                closest = office;
+            }
+        }
+    }
+    return closest;
+}
+
+export const terrainCostAt = (pos: RoomPosition) => {
+    const terrain = Game.map.getRoomTerrain(pos.roomName).get(pos.x, pos.y);
+    if (terrain === TERRAIN_MASK_SWAMP) return 5;
+    if (terrain === TERRAIN_MASK_WALL) return 255;
+    return 1;
+  }
 export function terrainCosts(creep: Creep) {
     const ignoreCarryParts = (creep.store.getUsedCapacity() === 0)
     const moveParts = creep.getActiveBodyparts(MOVE);

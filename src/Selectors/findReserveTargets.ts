@@ -1,4 +1,4 @@
-import { FranchiseObjectives } from "Objectives/Franchise";
+import { FranchiseObjectives } from "OldObjectives/Franchise";
 import { posById } from "./posById";
 
 export const findReserveTargets = (office: string) => {
