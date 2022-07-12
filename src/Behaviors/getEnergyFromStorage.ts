@@ -4,7 +4,7 @@ import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
 import { moveTo } from "./moveTo";
 
-export const getEnergyFromStorage = profiler.registerFN((creep: Creep, office: string, limit?: number): BehaviorResult => {
+export const getEnergyFromStorage = profiler.registerFN((creep: Creep, office: string, limit?: number, ignoreSpawn = false): BehaviorResult => {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.SUCCESS;
 
     const hq = roomPlans(office)?.headquarters;
@@ -19,7 +19,7 @@ export const getEnergyFromStorage = profiler.registerFN((creep: Creep, office: s
         target = storage;
     } else if ((container?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) > withdrawLimit) {
         target = container;
-    } else if (!storage && !container && (spawn?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) >= 300) {
+    } else if (!storage && !container && !ignoreSpawn && (spawn?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) >= 300) {
         target = spawn;
     }
 

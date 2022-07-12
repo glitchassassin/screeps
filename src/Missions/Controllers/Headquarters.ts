@@ -19,7 +19,7 @@ export default {
       Memory.offices[office].pendingMissions.push(createTowerLogisticsMission(office));
     }
 
-    if (rcl(office) < 4) return;
+    if (!roomPlans(office)?.headquarters?.storage.structure) return;
     // Maintain one HQ Logistics minion
     const scheduledMissions = [
       ...Memory.offices[office].pendingMissions,
