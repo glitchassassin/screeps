@@ -66,20 +66,25 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     serialize() {
         return PackedStructureTypes[this.structureType] +
                packPos(this.pos) +
-               (this.structureId ? this.structureId as string : EMPTY_ID);
+               (this.structureId ? this.structureId.padEnd(24, ' ') : EMPTY_ID);
     }
     static deserialize(serialized: string) {
-        const existing = deserializedPlannedStructures.get(serialized.slice(0, 3));
-        if (existing) return existing;
+        try {
+            const existing = deserializedPlannedStructures.get(serialized.slice(0, 3));
+            if (existing) return existing;
 
-        let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
-        let pos = unpackPos(serialized.slice(1, 3));
-        let id = serialized.slice(3, 27) as Id<Structure<BuildableStructureConstant>> | undefined;
-        if (id === EMPTY_ID) id = undefined;
+            let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
+            let pos = unpackPos(serialized.slice(1, 3));
+            let id = serialized.slice(3, 27).trim() as Id<Structure<BuildableStructureConstant>> | undefined;
+            if (id === '') id = undefined;
 
-        const result = new PlannedStructure(pos, structureType, id);
-        deserializedPlannedStructures.set(serialized.slice(0, 3), result);
-        return result;
+            const result = new PlannedStructure(pos, structureType, id);
+            deserializedPlannedStructures.set(serialized.slice(0, 3), result);
+            return result;
+        } catch (e) {
+            console.log('Deserializing error', serialized);
+            throw e;
+        }
     }
     survey() {
         if (Game.time === this.lastSurveyed) return !!byId(this.structureId); // Only survey once per tick

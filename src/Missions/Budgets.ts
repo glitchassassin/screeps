@@ -10,22 +10,16 @@ export function getWithdrawLimit(mission: Mission<MissionType>) {
  * missions can spawn only when storage levels are high enough
  */
 export function getBudgetAdjustment(mission: Mission<MissionType>) {
-  if (!roomPlans(mission.office)?.headquarters?.container.structure) {
-    // No HQ container yet - capacities not enforced
-    return {
-      cpu: 2000,
-      energy: 0,
-    }
-  } else if (!roomPlans(mission.office)?.headquarters?.storage.structure) {
+  if (!roomPlans(mission.office)?.headquarters?.storage.structure) {
     // No storage yet - minimal capacities enforced, except for income missions
     if (mission.type === MissionType.HARVEST || mission.type === MissionType.LOGISTICS) {
       return {
         cpu: 2000,
-        energy: 0,
+        energy: -mission.estimate.energy,
       }
     } else {
       return {
-        cpu: 1200,
+        cpu: 2000,
         energy: 500,
       }
     }
@@ -37,7 +31,7 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
       mission.type === MissionType.REFILL
     ) {
       return {
-        cpu: 1200,
+        cpu: 2000,
         energy: 0,
       }
     } else if (mission.type === MissionType.RESERVE || mission.type === MissionType.DEFEND_REMOTE || mission.type === MissionType.HQ_LOGISTICS) {

@@ -5,6 +5,7 @@ import { byId } from "Selectors/byId";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
+import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 // import { logCpu, logCpuStart } from "utils/logCPU";
 
@@ -60,6 +61,15 @@ export default {
       // sort active missions by ticks to live, so we only schedule spawns for the youngest
       const activeMissions = activeMissionsBySource[source] ?? [];
       const pendingMissions = pendingMissionsBySource[source] ?? [];
+
+      // recalculate pending missions estimate, if needed
+      pendingMissions.forEach(m => {
+        if (m.estimate.energy > spawnEnergyAvailable(m.office)) {
+          console.log('re-estimating harvest mission', m.office)
+          m.estimate = createHarvestMission(m.office, m.data.source, m.startTime).estimate;
+        }
+      })
+
       const maxHarvestPower = Math.min(
         (workPartsPerHarvester * maxMissions * HARVEST_POWER),
         (byId(source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME

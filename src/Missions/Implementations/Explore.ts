@@ -1,5 +1,6 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
+import { signRoom } from "Behaviors/signRoom";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
@@ -89,9 +90,7 @@ export class Explore extends MissionImplementation {
         if (creep.pos.roomName === mission.data.exploreTarget && controller && controller.sign?.username !== 'LordGreywether') {
           // Room is visible, creep is in room
           // In room, sign controller
-          const result = moveTo(creep, { pos: controller.pos, range: 1 });
-          creep.signController(controller, 'This sector property of the Grey Company');
-          if (result === BehaviorResult.INPROGRESS) return;
+          if (signRoom(creep, mission.data.exploreTarget) === BehaviorResult.INPROGRESS) return;
           // otherwise, successful or no path found
         }
         delete mission.data.exploreTarget;

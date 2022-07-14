@@ -1,5 +1,6 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
+import { moveTo } from "Behaviors/moveTo";
 import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
@@ -40,10 +41,10 @@ export class TowerLogistics extends MissionImplementation {
 
     const pos = getTowerRefillerLocation(mission.office);
     const spawn = roomPlans(mission.office)?.headquarters?.spawn.structure as StructureSpawn;
-    if (!pos || !spawn) return;
+    if (!pos) return;
     const storage = roomPlans(mission.office)?.headquarters?.storage.structure;
 
-    const body = MinionBuilders[storage ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
+    const body = MinionBuilders[storage && spawn ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     // Set name
     const name = `CLERK-${mission.office}-${mission.id}`
@@ -55,8 +56,8 @@ export class TowerLogistics extends MissionImplementation {
         name,
         body,
       },
-      mission.startTime,
-      {
+      spawn && mission.startTime,
+      spawn && {
         spawn: spawn.id,
         directions: [spawn.pos.getDirectionTo(pos)]
       }
@@ -70,6 +71,10 @@ export class TowerLogistics extends MissionImplementation {
     // Link -> Storage
     // Storage <-> Terminal (energy)
     // If link has energy, GET_ENERGY_LINK and DEPOSIT_STORAGE
+
+    const pos = getTowerRefillerLocation(mission.office);
+    if (!pos) return;
+    moveTo(creep, pos);
 
     // Check HQ state
     const hq = roomPlans(mission.office)?.headquarters;

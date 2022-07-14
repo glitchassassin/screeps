@@ -15,7 +15,7 @@ import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
+import { roomEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
 import { memoizeByTick } from "utils/memoizeFunction";
 import { MissionImplementation } from "./MissionImplementation";
@@ -173,15 +173,12 @@ export class Logistics extends MissionImplementation {
             if (opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && (
               (
                 (opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('PARALEGAL')) &&
-                storageEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable
+                roomEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable
               ) ||
               opp.creep.name.startsWith('REFILL')
             )) {
               creep.transfer(opp.creep, RESOURCE_ENERGY);
               energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining)
-              if (opp.creep.memory.state === States.GET_ENERGY) {
-                setState(States.WORKING)(opp.creep)
-              }
             } //else if (
             //     opp.creep.memory.objective === 'LogisticsObjective' &&
             //     opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
@@ -206,6 +203,10 @@ export class Logistics extends MissionImplementation {
       if (!target) return;
       if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
         creep.transfer(target, RESOURCE_ENERGY);
+        // If target is spawn, is not spawning, and is at capacity, renew this creep
+        if (target instanceof StructureSpawn && !target.spawning && target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)) {
+          console.log('renewing', creep.name, target.renewCreep(creep));
+        }
         // Back away
         creep.move(target.pos.getDirectionTo(creep.pos.x, creep.pos.y))
       }

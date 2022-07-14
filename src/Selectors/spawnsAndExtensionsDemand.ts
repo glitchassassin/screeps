@@ -21,7 +21,8 @@ export const getRefillTargets = (room: string) => {
         plan.extensions?.extensions ?? [],
         plan.franchise1?.extensions ?? [],
         plan.franchise2?.extensions ?? [],
-        plan.headquarters?.spawn ?? [],
+        // If we have no container for some reason, HQ spawn is a fallback source - don't refill
+        (plan.headquarters?.container.structure ? plan.headquarters?.spawn : []) ?? [],
         plan.franchise1?.spawn ?? [],
         plan.franchise2?.spawn ?? [],
     )

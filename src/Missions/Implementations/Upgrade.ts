@@ -19,8 +19,10 @@ export interface UpgradeMission extends Mission<MissionType.UPGRADE> {
 }
 
 export function createUpgradeMission(office: string, emergency = false): UpgradeMission {
-  const body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office))
   const efficiency = roomPlans(office)?.headquarters?.storage.structure ? 1 : 0.5
+  const maxWork = rcl(office) === 8 ? 15 : Math.max(1, Math.floor((Game.rooms[office].energyCapacityAvailable * 5) / (CREEP_LIFE_TIME * efficiency)));
+  console.log(efficiency, maxWork);
+  const body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office), maxWork)
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
     energy: minionCost(body) + (body.filter(p => p === WORK).length * CREEP_LIFE_TIME * efficiency),

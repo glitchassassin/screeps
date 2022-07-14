@@ -8,7 +8,8 @@ export const serializePlannedStructures = (structures: PlannedStructure[]) => {
     return serializedStructures;
 }
 export const deserializePlannedStructures = (serializedStructures: string) => {
-    let structures = [];
+    let structures: PlannedStructure[] = [];
+    if (serializedStructures.length < 27) return structures;
     for (let i = 0; i < serializedStructures.length; i += 27) {
         structures.push(PlannedStructure.deserialize(serializedStructures.slice(i, i+27)))
     }

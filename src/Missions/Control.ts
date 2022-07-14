@@ -111,11 +111,11 @@ function allocateMissions() {
 
     // loop through priorities, highest to lowest
     for (const priority of priorities) {
-      if (startingMissions >= getSpawns(office).length) break;
+      if (startingMissions > getSpawns(office).length) break;
       if (remainingCpu <= 0 || remainingEnergy <= 0) break; // No more available resources
 
       const missions = Memory.offices[office].pendingMissions.filter(o => o.priority === priority);
-      const scheduledStartWindow = hasStorage ? Game.time + CREEP_LIFE_TIME : Game.time;
+      const scheduledStartWindow = hasStorage ? Game.time + (CREEP_SPAWN_TIME * 100) : Game.time;
       const sortedMissions = [
         ...missions.filter(o => o.startTime && o.startTime <= scheduledStartWindow),
         ...missions.filter(o => o.startTime === undefined)
@@ -124,7 +124,7 @@ function allocateMissions() {
       let startFailures = '';
       // Handles scheduled missions first
       while (sortedMissions.length) {
-        if (startingMissions >= getSpawns(office).length) break;
+        if (startingMissions > getSpawns(office).length) break;
         const mission = sortedMissions.shift();
         if (!mission) break;
         const adjustedBudget = getBudgetAdjustment(mission);
@@ -149,14 +149,14 @@ function allocateMissions() {
         remainingEnergy -= mission.estimate.energy;
       }
 
-      // if (office === 'W7S8') {
-      //   if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
-      //     console.log(startFailures);
-      //     console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');
-      //   } else {
-      //     console.log('priority', priority, 'done');
-      //   }
-      // }
+      if (office === 'W8N3') {
+        if (Memory.offices[office].pendingMissions.some(o => o.priority === priority && !o.startTime)) {
+          console.log(startFailures);
+          console.log('Unscheduled missions for priority', priority, 'continuing to next priority anyway');
+        } else {
+          console.log('priority', priority, 'done');
+        }
+      }
     }
   }
 }

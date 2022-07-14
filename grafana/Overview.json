@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1657365233316,
+  "iteration": 1657737735450,
   "links": [],
   "panels": [
     {
@@ -96,17 +96,17 @@
         {
           "hide": false,
           "refId": "A",
-          "target": "alias(stats.gauges.cpu.used, 'Used')",
+          "target": "alias(stats.gauges.$world.cpu.used, 'Used')",
           "textEditor": false
         },
         {
           "refId": "B",
-          "target": "alias(stats.gauges.cpu.bucket, 'Bucket')"
+          "target": "alias(stats.gauges.$world.cpu.bucket, 'Bucket')"
         },
         {
           "hide": false,
           "refId": "C",
-          "target": "alias(stats.gauges.cpu.limit, 'Limit')"
+          "target": "alias(stats.gauges.$world.cpu.limit, 'Limit')"
         }
       ],
       "thresholds": [],
@@ -220,7 +220,7 @@
       "targets": [
         {
           "refId": "A",
-          "target": "stats.gauges.cpu.bucket"
+          "target": "stats.gauges.$world.cpu.bucket"
         }
       ],
       "title": "Current Bucket",
@@ -274,7 +274,7 @@
       "targets": [
         {
           "refId": "A",
-          "target": "alias(derivative(stats.gauges.time), 'Ticks Per Update')"
+          "target": "alias(derivative(stats.gauges.$world.time), 'Ticks Per Update')"
         }
       ],
       "thresholds": [],
@@ -371,7 +371,7 @@
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "sortByTotal(aliasByMetric(stats.gauges.profiling.*))",
+          "target": "sortByTotal(aliasByMetric(stats.gauges.$world.profiling.*))",
           "textEditor": false
         }
       ],
@@ -465,7 +465,7 @@
       "targets": [
         {
           "refId": "A",
-          "target": "stats.gauges.creepCount"
+          "target": "stats.gauges.$world.creepCount"
         }
       ],
       "title": "Creeps",
@@ -517,7 +517,7 @@
       "targets": [
         {
           "refId": "A",
-          "target": "stats.gauges.officeCount"
+          "target": "stats.gauges.$world.officeCount"
         }
       ],
       "title": "Offices",
@@ -602,7 +602,7 @@
       "targets": [
         {
           "refId": "A",
-          "target": "stats.gauges.gcl.level"
+          "target": "stats.gauges.$world.gcl.level"
         }
       ],
       "title": "GCL",
@@ -673,12 +673,12 @@
       "targets": [
         {
           "refId": "A",
-          "target": "divideSeries(stats.gauges.gcl.progress, #B)"
+          "target": "divideSeries(stats.gauges.$world.gcl.progress, #B)"
         },
         {
           "hide": true,
           "refId": "B",
-          "target": "stats.gauges.gcl.progressTotal"
+          "target": "stats.gauges.$world.gcl.progressTotal"
         }
       ],
       "title": "GCL Progress",
@@ -749,17 +749,17 @@
       "targets": [
         {
           "refId": "A",
-          "target": "divideSeries(diffSeries(stats.gauges.gcl.progressTotal, #B), #C)"
+          "target": "divideSeries(diffSeries(stats.gauges.$world.gcl.progressTotal, #B), #C)"
         },
         {
           "hide": true,
           "refId": "B",
-          "target": "stats.gauges.gcl.progress"
+          "target": "stats.gauges.$world.gcl.progress"
         },
         {
           "hide": true,
           "refId": "C",
-          "target": "scaleToSeconds(movingAverage(nonNegativeDerivative(stats.gauges.gcl.progress), '1hour'), 1)"
+          "target": "scaleToSeconds(movingAverage(nonNegativeDerivative(stats.gauges.$world.gcl.progress), '1hour'), 1)"
         }
       ],
       "title": "Time to Next GCL",
@@ -820,17 +820,17 @@
       "targets": [
         {
           "refId": "A",
-          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.gcl.progress), #B), 'GCL per tick')",
+          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.$world.gcl.progress), #B), 'GCL per tick')",
           "textEditor": false
         },
         {
           "hide": true,
           "refId": "B",
-          "target": "derivative(stats.gauges.time)"
+          "target": "derivative(stats.gauges.$world.time)"
         },
         {
           "refId": "C",
-          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.gcl.progress), #B), '1hour'), '1hr Moving Average')"
+          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.$world.gcl.progress), #B), '1hour'), '1hr Moving Average')"
         }
       ],
       "thresholds": [],
@@ -931,18 +931,18 @@
         {
           "hide": false,
           "refId": "B",
-          "target": "alias(sumSeries(stats.gauges.offices.*.energyAvailable), 'Spawns and Extensions')",
+          "target": "alias(sumSeries(stats.gauges.$world.offices.*.energyAvailable), 'Spawns and Extensions')",
           "textEditor": false
         },
         {
           "hide": false,
           "refId": "A",
-          "target": "alias(sumSeries(stats.gauges.offices.*.storageEnergy), 'Storage')"
+          "target": "alias(sumSeries(stats.gauges.$world.offices.*.storageEnergy), 'Storage')"
         },
         {
           "hide": false,
           "refId": "C",
-          "target": "alias(sumSeries(stats.gauges.offices.*.terminalEnergy), 'Terminals')",
+          "target": "alias(sumSeries(stats.gauges.$world.offices.*.terminalEnergy), 'Terminals')",
           "textEditor": false
         },
         {
@@ -1078,7 +1078,7 @@
       "targets": [
         {
           "refId": "A",
-          "target": "stats.gauges.offices.$office.controllerLevel"
+          "target": "stats.gauges.$world.offices.$office.controllerLevel"
         }
       ],
       "title": "RCL",
@@ -1150,12 +1150,12 @@
       "targets": [
         {
           "refId": "A",
-          "target": "divideSeries(stats.gauges.offices.$office.controllerProgress, #B)"
+          "target": "divideSeries(stats.gauges.$world.offices.$office.controllerProgress, #B)"
         },
         {
           "hide": true,
           "refId": "B",
-          "target": "stats.gauges.offices.$office.controllerProgressTotal"
+          "target": "stats.gauges.$world.offices.$office.controllerProgressTotal"
         }
       ],
       "title": "RCL progress",
@@ -1227,18 +1227,18 @@
       "targets": [
         {
           "refId": "A",
-          "target": "divideSeries(diffSeries(stats.gauges.offices.$office.controllerProgressTotal, #B), #C)",
+          "target": "divideSeries(diffSeries(stats.gauges.$world.offices.$office.controllerProgressTotal, #B), #C)",
           "textEditor": false
         },
         {
           "hide": true,
           "refId": "B",
-          "target": "stats.gauges.offices.$office.controllerProgress"
+          "target": "stats.gauges.$world.offices.$office.controllerProgress"
         },
         {
           "hide": true,
           "refId": "C",
-          "target": "scaleToSeconds(movingAverage(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), '1hour'), 1)"
+          "target": "scaleToSeconds(movingAverage(nonNegativeDerivative(stats.gauges.$world.offices.$office.controllerProgress), '1hour'), 1)"
         }
       ],
       "title": "Time to Next RCL",
@@ -1301,17 +1301,17 @@
       "targets": [
         {
           "refId": "A",
-          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), #C), 'RCL per tick')",
+          "target": "alias(divideSeries(nonNegativeDerivative(stats.gauges.$world.offices.$office.controllerProgress), #C), 'RCL per tick')",
           "textEditor": false
         },
         {
           "hide": true,
           "refId": "C",
-          "target": "derivative(stats.gauges.time)"
+          "target": "derivative(stats.gauges.$world.time)"
         },
         {
           "refId": "B",
-          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.offices.$office.controllerProgress), #C), '1hour'), '1hr Moving Average')"
+          "target": "alias(movingAverage(divideSeries(nonNegativeDerivative(stats.gauges.$world.offices.$office.controllerProgress), #C), '1hour'), '1hr Moving Average')"
         }
       ],
       "thresholds": [],
@@ -1421,13 +1421,13 @@
         {
           "refCount": 0,
           "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.storageLevel, 'Storage level')"
+          "target": "alias(stats.gauges.$world.offices.$office.storageLevel, 'Storage level')"
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "C",
-          "target": "alias(stats.gauges.offices.$office.terminalLevel, 'Terminal level')"
+          "target": "alias(stats.gauges.$world.offices.$office.terminalLevel, 'Terminal level')"
         }
       ],
       "thresholds": [],
@@ -1534,19 +1534,19 @@
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "alias(stats.gauges.offices.$office.franchiseIncome, 'Energy Income')"
+          "target": "alias(stats.gauges.$world.offices.$office.franchiseIncome, 'Energy Income')"
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.logisticsThroughput, 'Logistics Throughput')"
+          "target": "alias(stats.gauges.$world.offices.$office.logisticsThroughput, 'Logistics Throughput')"
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "C",
-          "target": "alias(movingAverage(stats.gauges.offices.$office.logisticsOutput, '10min'), 'Logistics Output')"
+          "target": "alias(movingAverage(stats.gauges.$world.offices.$office.logisticsOutput, '10min'), 'Logistics Output')"
         }
       ],
       "thresholds": [],
@@ -1645,7 +1645,7 @@
         {
           "refCount": 0,
           "refId": "B",
-          "target": "aliasByNode(stats.gauges.offices.$office.missions.*.cpuAccuracy, 5)"
+          "target": "aliasByNode(stats.gauges.$world.offices.$office.missions.*.cpuAccuracy, 6)"
         }
       ],
       "thresholds": [],
@@ -1656,7 +1656,7 @@
       "tooltip": {
         "msResolution": false,
         "shared": true,
-        "sort": 0,
+        "sort": 2,
         "value_type": "cumulative"
       },
       "type": "graph",
@@ -1745,7 +1745,7 @@
         {
           "refCount": 0,
           "refId": "B",
-          "target": "aliasByNode(stats.gauges.offices.$office.missions.*.energyAccuracy, 5)"
+          "target": "aliasByNode(stats.gauges.$world.offices.$office.missions.*.energyAccuracy, 6)"
         }
       ],
       "thresholds": [],
@@ -1756,7 +1756,7 @@
       "tooltip": {
         "msResolution": false,
         "shared": true,
-        "sort": 0,
+        "sort": 2,
         "value_type": "cumulative"
       },
       "type": "graph",
@@ -1852,20 +1852,20 @@
         {
           "refCount": -1,
           "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.energyAvailable, 'Spawns and Extensions')"
+          "target": "alias(stats.gauges.$world.offices.$office.energyAvailable, 'Spawns and Extensions')"
         },
         {
           "refCount": 0,
           "refId": "D",
           "target": "alias(sumSeries(#A, #B, #C), \"Total\")",
-          "targetFull": "alias(sumSeries(alias(stats.gauges.offices.$office.storageEnergy, 'Storage'), alias(stats.gauges.offices.$office.energyAvailable, 'Spawns and Extensions'), alias(stats.gauges.offices.$office.terminalEnergy, 'Terminal')), \"Total\")",
+          "targetFull": "alias(sumSeries(alias(stats.gauges.$world.offices.$office.storageEnergy, 'Storage'), alias(stats.gauges.$world.offices.$office.energyAvailable, 'Spawns and Extensions'), alias(stats.gauges.$world.offices.$office.terminalEnergy, 'Terminal')), \"Total\")",
           "textEditor": true
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "E",
-          "target": "alias(stats.gauges.offices.$office.energyCapacityAvailable, 'Spawns and Extensions')"
+          "target": "alias(stats.gauges.$world.offices.$office.energyCapacityAvailable, 'Spawns and Extensions')"
         }
       ],
       "thresholds": [],
@@ -1971,7 +1971,7 @@
         {
           "refCount": 1,
           "refId": "B",
-          "target": "alias(stats.gauges.offices.$office.spawnUptime, 'Spawn uptime')"
+          "target": "alias(stats.gauges.$world.offices.$office.spawnUptime, 'Spawn uptime')"
         }
       ],
       "thresholds": [],
@@ -2076,13 +2076,13 @@
           "hide": true,
           "refCount": 0,
           "refId": "C",
-          "target": "derivative(stats.gauges.time)"
+          "target": "derivative(stats.gauges.$world.time)"
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(stats.gauges.offices.$office.missions.*.count, 5)"
+          "target": "aliasByNode(stats.gauges.$world.offices.$office.missions.*.count, 6)"
         }
       ],
       "thresholds": [],
@@ -2146,7 +2146,7 @@
           "value": "$__all"
         },
         "datasource": null,
-        "definition": "stats.gauges.offices.*",
+        "definition": "stats.gauges.$world.offices.*",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2155,7 +2155,31 @@
         "multi": false,
         "name": "office",
         "options": [],
-        "query": "stats.gauges.offices.*",
+        "query": "stats.gauges.$world.offices.*",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "marvin",
+          "value": "marvin"
+        },
+        "datasource": null,
+        "definition": "stats.gauges.*",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "world",
+        "options": [],
+        "query": "stats.gauges.*",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -2195,6 +2219,6 @@
   },
   "timezone": "browser",
   "title": "Overview",
-  "uid": "hVWIzaenz",
-  "version": 2
+  "uid": "pCNBEqe7z",
+  "version": 6
 }

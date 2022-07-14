@@ -21,6 +21,7 @@ export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, franchi
         creep.memory.depositSource = undefined; // Franchise drained, return to storage
         return BehaviorResult.SUCCESS;
     } else {
+        if (creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, pos, { color: '#ffff00' })
         // First, pick up from container
         const container = getFranchisePlanBySourceId(creep.memory.depositSource)?.container.structure as StructureContainer | undefined
         const resources = resourcesNearPos(pos, 1, RESOURCE_ENERGY);

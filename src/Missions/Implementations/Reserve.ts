@@ -1,5 +1,6 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
+import { signRoom } from "Behaviors/signRoom";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
@@ -63,6 +64,7 @@ export class Reserve extends MissionImplementation {
       // Reserve controller
       const controller = Game.rooms[mission.data.reserveTarget].controller
       if (controller) creep.reserveController(controller);
+      signRoom(creep, mission.data.reserveTarget);
     }
   }
 }

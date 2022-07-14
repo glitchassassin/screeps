@@ -1,3 +1,4 @@
+import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
@@ -36,9 +37,9 @@ export class HQLogistics extends MissionImplementation {
     const pos = getHeadquarterLogisticsLocation(mission.office);
     const spawn = roomPlans(mission.office)?.headquarters?.spawn.structure as StructureSpawn;
 
-    if (!pos || !spawn) return;
+    if (!pos) return;
 
-    const body = MinionBuilders[MinionTypes.CLERK](spawnEnergyAvailable(mission.office));
+    const body = MinionBuilders[spawn ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
     // Set name
     const name = `CLERK-${mission.office}-${mission.id}`
@@ -50,8 +51,8 @@ export class HQLogistics extends MissionImplementation {
         name,
         body,
       },
-      mission.startTime,
-      mission.startTime ? {
+      spawn && mission.startTime,
+      spawn && mission.startTime ? {
         spawn: spawn.id,
         directions: [spawn.pos.getDirectionTo(pos)]
       } : undefined
@@ -65,6 +66,10 @@ export class HQLogistics extends MissionImplementation {
     // Link -> Storage
     // Storage <-> Terminal (energy)
     // If link has energy, GET_ENERGY_LINK and DEPOSIT_STORAGE
+
+    const pos = getHeadquarterLogisticsLocation(mission.office);
+    if (!pos) return;
+    moveTo(creep, pos);
 
     // Check HQ state
     const hq = roomPlans(mission.office)?.headquarters;

@@ -2,6 +2,7 @@ import { byId } from "Selectors/byId";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
+import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { getClosestByRange } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
 import { roomPlans } from "Selectors/roomPlans";
@@ -37,9 +38,10 @@ const energySourcesByOffice = memoizeByTick(
             ?.find(FIND_RUINS, { filter: ruin => ruin.store.getUsedCapacity(RESOURCE_ENERGY) !== 0})
             .forEach(ruin => sources.push(ruin));
         // sources
+        const shouldHarvest = !hasEnergyIncome(office);
         franchisesByOffice(office)
             .map(({source}) => ({ id: source, energy: byId(source)?.energy ?? SOURCE_ENERGY_NEUTRAL_CAPACITY, pos: posById(source)! }))
-            .filter((source) => (!franchiseIsFull(office, source.id) && source.energy > 0) || franchiseEnergyAvailable(source.id) > 0)
+            .filter((source) => (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0) || franchiseEnergyAvailable(source.id) > 50)
             .forEach(source => sources.push(source));
         // storage
         const storage = (
@@ -47,7 +49,7 @@ const energySourcesByOffice = memoizeByTick(
             roomPlans(office)?.headquarters?.container.structure ??
             roomPlans(office)?.headquarters?.spawn.structure
         ) as AnyStoreStructure|undefined
-        if (storage && storageEnergyAvailable(office) > withdrawLimit) {
+        if (storage) {
             sources.push(storage);
         }
         return sources;
@@ -69,7 +71,7 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: stri
         } else if ('structureType' in source) {
             creep.memory.getEnergyState = States.GET_ENERGY_STORAGE;
         } else {
-            if (franchiseIsFull(office, source.id)) {
+            if (franchiseIsFull(office, source.id) || hasEnergyIncome(office)) {
                 if (storageEnergyAvailable(office) > withdrawLimit) {
                     creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE;
                     creep.memory.depositSource = source.id;

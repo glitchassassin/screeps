@@ -55,14 +55,14 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     if (rcl >= 2) {
         plannedStructures = plannedStructures.concat(
             plannedExtensions.slice(0, 5),
-            plans.franchise1?.container,
-            plans.franchise2?.container,
         )
     }
     if (rcl >= 3) {
         plannedStructures = plannedStructures.concat(
             plannedExtensions.slice(5, 10),
-            plannedTowers.slice(0, 1)
+            plannedTowers.slice(0, 1),
+            plans.franchise1?.container,
+            plans.franchise2?.container,
         )
     }
     if (rcl >= 4) {

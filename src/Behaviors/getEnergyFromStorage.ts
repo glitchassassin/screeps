@@ -27,6 +27,8 @@ export const getEnergyFromStorage = profiler.registerFN((creep: Creep, office: s
         return BehaviorResult.FAILURE;
     }
 
+    if (creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, target.pos, { color: '#00ffff' });
+
     moveTo(creep, { pos: target.pos, range: 1 });
     if (creep.withdraw(target, RESOURCE_ENERGY) === OK) {
         return BehaviorResult.SUCCESS;

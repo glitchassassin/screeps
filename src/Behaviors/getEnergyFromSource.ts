@@ -48,6 +48,8 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, office: st
     const source = byId(creep.memory.franchiseTarget);
     const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
 
+    if (sourcePos && creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, sourcePos, { color: '#ff00ff' })
+
     if (sourcePos && moveTo(creep, { pos: sourcePos, range: 1 }) === BehaviorResult.SUCCESS) {
         if (creep.harvest(source!) === OK) {
             return BehaviorResult.INPROGRESS;

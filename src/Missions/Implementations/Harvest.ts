@@ -107,7 +107,8 @@ export class Harvest extends MissionImplementation {
     const franchisePos = posById(mission.data.source);
 
     if ((franchisePos?.getRangeTo(creep.pos) ?? Infinity) <= 1) {
-      Memory.rooms[franchisePos!.roomName].franchises[mission.office][mission.data.source].lastHarvested = Game.time;
+      const franchise = Memory.rooms[franchisePos!.roomName]?.franchises[mission.office]?.[mission.data.source];
+      if (franchise) franchise.lastHarvested = Game.time;
       if (
         !mission.data.arrived &&
         creep.ticksToLive

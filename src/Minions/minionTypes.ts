@@ -39,7 +39,7 @@ export const MinionBuilders = {
             return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
         }
     }),
-    [MinionTypes.ENGINEER]: (energy: number) => {
+    [MinionTypes.ENGINEER]: (energy: number, maxWork = 16) => {
         if (energy < 200) {
             return [];
         }
@@ -47,7 +47,11 @@ export const MinionBuilders = {
             // Try to maintain WORK/CARRY/MOVE ratio
             const segment = [WORK, MOVE, CARRY]
             const segmentCost = segment.reduce((sum, p) => sum + BODYPART_COST[p], 0)
-            const segments = Math.min(Math.floor(50 / segment.length), Math.floor(energy / segmentCost))
+            const segments = Math.min(
+                Math.floor(50 / segment.length),
+                Math.floor(energy / segmentCost),
+                maxWork
+            )
 
             return Array(segments).fill(segment).flat()
         }

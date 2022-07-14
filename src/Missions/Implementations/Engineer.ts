@@ -25,9 +25,11 @@ export interface EngineerMission extends Mission<MissionType.ENGINEER> {
 }
 
 export function createEngineerMission(office: string): EngineerMission {
-  const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
+  // Scale engineer by available room energy
+  const efficiencyAdjustment = facilitiesEfficiency(office);
+  const maxWork = Math.max(1, Math.floor((Game.rooms[office].energyCapacityAvailable * 5) / (CREEP_LIFE_TIME * efficiencyAdjustment)));
 
-  const efficiencyAdjustment = facilitiesEfficiency(office) * 2;
+  const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office), maxWork);
 
   const workEfficiency = body.filter(p => p === WORK).length * efficiencyAdjustment;
 

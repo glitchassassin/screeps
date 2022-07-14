@@ -78,7 +78,7 @@ export const facilitiesEfficiency = memoizeByTick(
         const workTime = (CARRY_CAPACITY / energyUsed);
         const travelTime = Math.max(0, range - 3) * 2;
         const efficiency = workTime / (workTime + travelTime)
-        console.log('range', range, 'energyUsed', energyUsed, 'workTime', workTime, 'travelTime', travelTime, 'efficiency', efficiency);
+        // console.log('range', range, 'energyUsed', energyUsed, 'workTime', workTime, 'travelTime', travelTime, 'efficiency', efficiency);
         return efficiency
     }
 )

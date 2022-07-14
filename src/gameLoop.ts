@@ -5,7 +5,7 @@ import { runMissionControl } from "Missions/Control";
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from "RoomPlanner/planRooms";
 import { recordOverhead } from "Selectors/cpuOverhead";
-import { displayBucket } from "Selectors/displayBucket";
+import { displayBucket, displayGcl } from "Selectors/displayBucket";
 import { runStructures } from "Structures";
 import { debugCPU, resetDebugCPU } from "utils/debugCPU";
 import { clearNudges } from 'utils/excuseMe';
@@ -14,6 +14,7 @@ import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
 
 export const gameLoop = () => {
     displayBucket();
+    displayGcl();
     resetDebugCPU(true);
     purgeDeadCreeps();
     clearNudges();

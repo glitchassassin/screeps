@@ -64,7 +64,7 @@ export class Refill extends MissionImplementation {
     }
 
     if (creep.memory.state === States.WITHDRAW) {
-      const result = getEnergyFromStorage(creep, mission.office, 0, true)
+      const result = getEnergyFromStorage(creep, mission.office, 0)
       if (result === BehaviorResult.SUCCESS) {
         setState(States.DEPOSIT)(creep);
       } else if (result === BehaviorResult.FAILURE) {

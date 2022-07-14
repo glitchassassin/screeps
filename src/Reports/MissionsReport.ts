@@ -57,16 +57,16 @@ const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
         ])
         estimatedCPU += o.estimate.cpu;
         estimatedEnergy += o.estimate.energy;
-        actualCPU += o.actual.cpu;
-        actualEnergy += o.actual.energy;
+        actualCPU += Math.min(o.estimate.cpu, o.actual.cpu);
+        actualEnergy += Math.min(o.estimate.energy, o.actual.energy);
     }
     table.push(['---', '---', '---', '---', '---'])
     table.push([
         'Remaining',
         '',
         '',
-        `${Math.max(0, estimatedCPU - actualCPU).toFixed(2)}`,
-        `${Math.max(0, estimatedEnergy - actualEnergy)}`,
+        `${(estimatedCPU - actualCPU).toFixed(2)}`,
+        `${(estimatedEnergy - actualEnergy)}`,
     ])
     table.push([
         'Available',
