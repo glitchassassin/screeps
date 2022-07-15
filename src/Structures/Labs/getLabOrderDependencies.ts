@@ -1,13 +1,14 @@
 import { RESOURCE_INGREDIENTS } from "gameConstants";
+import { marketEnabled } from "Selectors/marketEnabled";
 import { LabOrder } from "./LabOrder";
 
 /**
  * Decrements availableResources if it can pull from there instead of submitting an order
  */
 function getOrderForIngredient(ingredient: ResourceConstant, amount: number, availableResources: Map<ResourceConstant, number>) {
+    const existing = availableResources.get(ingredient);
     if (ingredient in RESOURCE_INGREDIENTS) {
         // Check for existing resources
-        const existing = availableResources.get(ingredient);
         let reserved = 0;
         if (existing) {
             reserved = Math.min(amount, existing);
@@ -19,6 +20,10 @@ function getOrderForIngredient(ingredient: ResourceConstant, amount: number, ava
             ingredient2: RESOURCE_INGREDIENTS[ingredient as MineralCompoundConstant][1],
             amount: amount - reserved,
             output: ingredient,
+        }
+    } else {
+        if (!marketEnabled() && !existing) {
+            throw new Error('Not enough of ingredient');
         }
     }
     return;

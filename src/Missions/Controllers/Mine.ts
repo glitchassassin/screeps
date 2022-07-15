@@ -2,6 +2,8 @@ import { createMineForemanMission, MineForemanMission } from "Missions/Implement
 import { createMineHaulerMission, MineHaulerMission } from "Missions/Implementations/MineHauler";
 import { MissionType } from "Missions/Mission";
 import { byId } from "Selectors/byId";
+import { marketEnabled } from "Selectors/marketEnabled";
+import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
 import { mineralId } from "Selectors/roomCache";
 import { roomPlans } from "Selectors/roomPlans";
 
@@ -12,6 +14,11 @@ import { roomPlans } from "Selectors/roomPlans";
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    const mineral = byId(mineralId(office))!;
+    const surplus = officeResourceSurplus(office).get(mineral.mineralType) ?? 0;
+
+    if (!marketEnabled() && surplus > 0) return; // don't need to harvest more currently
+
     const foremanMissions: MineForemanMission[] = [];
     const haulerMissions: MineHaulerMission[] = [];
     for (const mission of [...Memory.offices[office].activeMissions, ...Memory.offices[office].pendingMissions]) {
@@ -22,7 +29,6 @@ export default {
       }
     }
 
-    const mineral = byId(mineralId(office));
     if (mineral) {
       if (!mineral.ticksToRegeneration && roomPlans(office)?.mine?.extractor.structure && !foremanMissions.length) {
         Memory.offices[office].pendingMissions.push(createMineForemanMission(office, mineral.id));

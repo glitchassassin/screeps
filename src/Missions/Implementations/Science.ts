@@ -264,11 +264,16 @@ export class Science extends MissionImplementation {
           // No ingredients available, recalculate lab orders
           const orders = Memory.offices[mission.office].lab.orders;
           const targetOrder = orders[orders.length - 1]
-          Memory.offices[mission.office].lab.orders = getLabOrderDependencies(
-            targetOrder,
-            getAvailableResourcesFromTerminal(terminal)
-          ).concat(targetOrder);
-          if (mission.office === 'W7S7') console.log('Recalculating order', JSON.stringify(Memory.offices[mission.office].lab.orders))
+          try {
+            Memory.offices[mission.office].lab.orders = getLabOrderDependencies(
+              targetOrder,
+              getAvailableResourcesFromTerminal(terminal)
+            ).concat(targetOrder);
+          } catch {
+            // No resources for this job
+            Memory.offices[mission.office].lab.orders = [];
+          }
+          // if (mission.office === 'W7S7') console.log('Recalculating order', JSON.stringify(Memory.offices[mission.office].lab.orders))
           return;
         } else {
           // No ingredients needed, or no more available

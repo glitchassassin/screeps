@@ -6,6 +6,10 @@ export default {
   byTick: () => {},
   byOffice: (office: string) => {
     if (!roomPlans(office)?.labs?.labs[0].structure) return;
+    if (
+      Memory.offices[office].lab.orders.length === 0 &&
+      Memory.offices[office].lab.boosts.length === 0
+    ) return;
 
     // Maintain one Scientist
     const scheduledMissions = [

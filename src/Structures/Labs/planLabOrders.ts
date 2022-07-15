@@ -14,7 +14,12 @@ export function planLabOrders(office: string) {
         for (const {boost, amount} of boostQuotas(office)) {
             const difference = amount - terminal.store.getUsedCapacity(boost);
             if (difference > 0) {
-                Memory.offices[office].lab.orders = getLabOrders(boost, difference, terminal)
+                try {
+                    Memory.offices[office].lab.orders = getLabOrders(boost, difference, terminal)
+                } catch {
+                    // No market and not enough ingredients
+                    continue;
+                }
             }
         }
     }
