@@ -73,6 +73,7 @@ export class AcquireLogistics extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.DEPOSIT) {
+      mission.efficiency.working += 1;
       const target = storageStructureThatNeedsEnergy(mission.data.targetOffice);
 
       if (creep.pos.roomName === mission.data.targetOffice && (!target || creep.pos.getRangeTo(target) > 1)) {

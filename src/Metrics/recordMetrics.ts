@@ -2,7 +2,6 @@ import { MissionStatus, MissionType } from "Missions/Mission";
 import { Metrics } from "screeps-viz";
 import { franchiseIncome } from "Selectors/franchiseIncome";
 import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
-import { getStorageBudget } from "Selectors/getStorageBudget";
 import { getSpawns } from "Selectors/roomPlans";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import profiler from "utils/profiler";
@@ -10,8 +9,9 @@ import { heapMetrics } from "./heapMetrics";
 
 type MissionStats = Partial<Record<MissionType, {
     count: number,
-    cpuAccuracy: number,
-    energyAccuracy: number,
+    // cpuAccuracy: number,
+    // energyAccuracy: number,
+    efficiency: number,
 }>>
 
 declare global {
@@ -38,9 +38,7 @@ declare global {
                     spawnUptime: number,
                     franchiseIncome: number,
                     storageLevel: number,
-                    storageLevelTarget: number,
                     terminalLevel: number,
-                    terminalLevelTarget: number,
                     missions: MissionStats
                 }
             },
@@ -97,26 +95,31 @@ export const recordMetrics = profiler.registerFN(() => {
         for (const mission of Memory.offices[office].activeMissions.filter(m => m.status === MissionStatus.RUNNING)) {
             missions[mission.type] ??= {
                 count: 0,
-                cpuAccuracy: 0,
-                energyAccuracy: 0
+                // cpuAccuracy: 0,
+                // energyAccuracy: 0,
+                efficiency: 0,
             }
             missions[mission.type]!.count += 1;
         }
         for (const type in Memory.offices[office].missionResults) {
             missions[type as MissionType] ??= {
                 count: 0,
-                cpuAccuracy: 0,
-                energyAccuracy: 0
+                // cpuAccuracy: 0,
+                // energyAccuracy: 0,
+                efficiency: 0
             }
             const mission = missions[type as MissionType]!;
             let cpu = 0;
             let energy = 0;
+            let efficiency = 0;
             for (const result of Memory.offices[office].missionResults[type as MissionType]!) {
                 cpu += ((result.estimate.cpu - result.actual.cpu) / result.estimate.cpu) * 100;
                 energy += ((result.estimate.energy - result.actual.energy) / result.estimate.energy) * 100;
+                efficiency += result.efficiency * 100;
             }
-            mission.cpuAccuracy = cpu / Memory.offices[office].missionResults[type as MissionType]!.length;
-            mission.energyAccuracy = energy / Memory.offices[office].missionResults[type as MissionType]!.length;
+            // mission.cpuAccuracy = cpu / Memory.offices[office].missionResults[type as MissionType]!.length;
+            // mission.energyAccuracy = energy / Memory.offices[office].missionResults[type as MissionType]!.length;
+            mission.efficiency = efficiency / Memory.offices[office].missionResults[type as MissionType]!.length;
         }
 
         Memory.stats.offices[office] = {
@@ -128,10 +131,8 @@ export const recordMetrics = profiler.registerFN(() => {
             energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
             spawnUptime: getSpawns(office).filter(s => s.spawning).length,
             storageLevel: storageEnergyAvailable(office),
-            storageLevelTarget: getStorageBudget(office),
             franchiseIncome: franchiseIncome(office),
             terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
-            terminalLevelTarget: Game.rooms[office].terminal ? (Memory.offices[office].resourceQuotas[RESOURCE_ENERGY] ?? 2000) : 0,
             missions
         }
     }

@@ -25,6 +25,8 @@ export abstract class MissionImplementation {
       mission.estimate.energy += Math.max(0, mission.actual.energy - mission.estimate.energy);
     }
 
+    mission.efficiency ??= { running: 0, working: 0 };
+    mission.efficiency.running += 1;
     this.minionLogic(mission, creep);
   }
   static minionLogic(mission: Mission<MissionType>, creep: Creep) {

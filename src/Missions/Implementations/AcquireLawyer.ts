@@ -1,5 +1,6 @@
 import { BehaviorResult } from "Behaviors/Behavior";
 import { moveTo } from "Behaviors/moveTo";
+import { signRoom } from "Behaviors/signRoom";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionStatus, MissionType } from "Missions/Mission";
@@ -79,8 +80,9 @@ export class AcquireLawyer extends MissionImplementation {
     if (result === BehaviorResult.SUCCESS) {
       const controller = byId(mission.data.targetController)
       if (!controller) return;
-      creep.signController(controller, 'This sector property of the Grey Company');
+      signRoom(creep, pos.roomName);
       creep.claimController(controller);
+      mission.efficiency.working += 1;
     }
   }
 }

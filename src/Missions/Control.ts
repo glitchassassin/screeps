@@ -12,7 +12,7 @@ declare global {
   interface OfficeMemory {
     pendingMissions: Mission<MissionType>[],
     activeMissions: Mission<MissionType>[],
-    missionResults: Partial<Record<MissionType, { estimate: { cpu: number, energy: number }, actual: { cpu: number, energy: number } }[]>>
+    missionResults: Partial<Record<MissionType, { efficiency: number, estimate: { cpu: number, energy: number }, actual: { cpu: number, energy: number } }[]>>
   }
 
   namespace NodeJS {
@@ -54,10 +54,15 @@ function executeMissions() {
     // console.log('active', office, Memory.offices[office].activeMissions.map(m => m.type));
     for (const mission of Memory.offices[office].activeMissions) {
       const startTime = Game.cpu.getUsed();
-      // console.log('Executing mission', JSON.stringify(mission));
-      Missions[mission.type].spawn(mission);
-      Missions[mission.type].run(mission);
-      // Adjust for random negative values of getUsed
+      try {
+        // console.log('Executing mission', JSON.stringify(mission));
+        Missions[mission.type].spawn(mission);
+        Missions[mission.type].run(mission);
+        // Adjust for random negative values of getUsed
+      } catch (e) {
+        console.log('Error running', mission.type, 'for', office);
+        console.log(e);
+      }
       mission.actual.cpu += Math.max(0, Game.cpu.getUsed() - startTime);
     }
     // Clean up completed missions
@@ -67,6 +72,7 @@ function executeMissions() {
       Memory.offices[office].missionResults[mission.type]?.unshift({
         estimate: mission.estimate,
         actual: mission.actual,
+        efficiency: mission.efficiency.working / mission.efficiency.running,
       })
       Memory.offices[office].missionResults[mission.type] = Memory.offices[office].missionResults[mission.type]!.slice(0, MISSION_HISTORY_LIMIT)
     })

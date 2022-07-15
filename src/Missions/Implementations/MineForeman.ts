@@ -88,6 +88,8 @@ export class MineForeman extends MissionImplementation {
       moveTo(creep, { pos: mine.pos, range: 1 });
     }
 
-    creep.harvest(mine);
+    if (creep.harvest(mine) === OK) {
+      mission.efficiency.working += 1;
+    }
   }
 }

@@ -103,6 +103,7 @@ export class Plunder extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.DEPOSIT) {
+      mission.efficiency.working += 1;
       if (creep.store.getUsedCapacity() === 0) creep.memory.state = States.WITHDRAW;
       const storage = storageStructureThatNeedsEnergy(mission.office);
       const terminal = roomPlans(mission.office)?.headquarters?.terminal.structure;

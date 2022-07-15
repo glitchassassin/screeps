@@ -101,7 +101,11 @@ export class TowerLogistics extends MissionImplementation {
       }
       const towers = hq.towers.filter(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0);
       for (const {structure} of towers) {
-        if (structure) creep.transfer(structure, RESOURCE_ENERGY);
+        if (structure) {
+          if (creep.transfer(structure, RESOURCE_ENERGY) === OK) {
+            mission.efficiency.working += 1;
+          }
+        }
       }
     }
   }

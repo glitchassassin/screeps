@@ -72,6 +72,7 @@ export class Refill extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.DEPOSIT) {
+      mission.efficiency.working += 1;
       // Short-circuit if everything is full
       if (Game.rooms[mission.office]?.energyAvailable === Game.rooms[mission.office]?.energyCapacityAvailable) return;
 

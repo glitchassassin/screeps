@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1657737735450,
+  "iteration": 1657844482856,
   "links": [],
   "panels": [
     {
@@ -2128,6 +2128,117 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "grid": {},
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 41
+      },
+      "hiddenSeries": false,
+      "id": 703,
+      "isNew": true,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.0",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:195",
+          "alias": "Total",
+          "hiddenSeries": true
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "hide": true,
+          "refCount": 0,
+          "refId": "C",
+          "target": "derivative(stats.gauges.$world.time)"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "A",
+          "target": "aliasByNode(stats.gauges.$world.offices.$office.missions.*.efficiency, 6)"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Mission Efficiency",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 2,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:204",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:205",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "30s",
@@ -2165,9 +2276,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "marvin",
-          "value": "marvin"
+          "selected": true,
+          "text": "pserver",
+          "value": "pserver"
         },
         "datasource": null,
         "definition": "stats.gauges.*",
@@ -2220,5 +2331,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "pCNBEqe7z",
-  "version": 6
+  "version": 7
 }

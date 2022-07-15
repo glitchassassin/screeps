@@ -3,8 +3,9 @@ import { moveTo } from "./moveTo";
 
 export const guardKill = (creep: Creep, target?: Creep|Structure) => {
   if (target && moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-    creep.attack(target);
+    return creep.attack(target) === OK;
   } else if (creep.hits < creep.hitsMax) {
-    creep.heal(creep);
+    return creep.heal(creep) === OK;
   }
+  return false;
 }

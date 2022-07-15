@@ -102,7 +102,10 @@ export class Harvest extends MissionImplementation {
     mission.data.distance ??= getFranchiseDistance(mission.office, mission.data.source);
 
     // Mission behavior
-    harvestEnergyFromFranchise(creep, mission.data.source);
+    const harvested = harvestEnergyFromFranchise(creep, mission.data.source);
+    if (harvested || !mission.data.arrived) {
+      mission.efficiency.working += 1;
+    }
 
     const franchisePos = posById(mission.data.source);
 

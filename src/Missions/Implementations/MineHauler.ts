@@ -72,6 +72,7 @@ export class MineHauler extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.DEPOSIT) {
+      mission.efficiency.working += 1;
       // Try to deposit to Terminal, or else Storage
       // const storage = roomPlans(mission.office)?.headquarters?.storage;
       const terminal = roomPlans(mission.office)?.headquarters?.terminal;

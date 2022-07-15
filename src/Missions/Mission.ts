@@ -46,6 +46,10 @@ export interface Mission<T extends MissionType> {
     cpu: number,
     energy: number,
   },
+  efficiency: {
+    running: number,
+    working: number,
+  }
 }
 
 export interface MissionWithoutDefaults<T extends MissionType> {
@@ -58,7 +62,7 @@ export interface MissionWithoutDefaults<T extends MissionType> {
   estimate: {
     cpu: number,
     energy: number,
-  },
+  }
 }
 
 function generateMissionId() {
@@ -73,6 +77,10 @@ export function createMission<T extends MissionType>(mission: MissionWithoutDefa
     actual: {
       cpu: 0,
       energy: 0,
+    },
+    efficiency: {
+      running: 0,
+       working: 0,
     },
     ...mission
   }

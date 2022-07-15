@@ -77,6 +77,7 @@ export class Explore extends MissionImplementation {
 
     // Do work
     if (mission.data.exploreTarget) {
+      mission.efficiency.working += 1;
       if (!Game.rooms[mission.data.exploreTarget]) {
         if (moveTo(creep, {pos: new RoomPosition(25, 25, mission.data.exploreTarget), range: 20}) === BehaviorResult.FAILURE) {
           // console.log('Failed to path', creep.pos, mission.data.exploreTarget);

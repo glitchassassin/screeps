@@ -94,6 +94,7 @@ export class Upgrade extends MissionImplementation {
         let energyUsed = (UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER) * creep.body.filter(p => p.type === WORK).length;
         if (rcl(mission.office) === 8) energyUsed = Math.min(15, energyUsed);
         mission.actual.energy += energyUsed;
+        mission.efficiency.working += 1;
       }
     }
   }

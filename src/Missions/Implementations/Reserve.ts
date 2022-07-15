@@ -63,7 +63,11 @@ export class Reserve extends MissionImplementation {
       mission.data.arrived ??= Game.time;
       // Reserve controller
       const controller = Game.rooms[mission.data.reserveTarget].controller
-      if (controller) creep.reserveController(controller);
+      if (controller) {
+        if (creep.reserveController(controller) === OK) {
+          mission.efficiency.working += 1;
+        }
+      }
       signRoom(creep, mission.data.reserveTarget);
     }
   }

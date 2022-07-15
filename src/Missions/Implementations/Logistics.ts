@@ -162,6 +162,7 @@ export class Logistics extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.DEPOSIT) {
+      mission.efficiency.working += 1;
       const target = storageStructureThatNeedsEnergy(mission.office);
 
       if (!target || creep.pos.getRangeTo(target) > 1) {

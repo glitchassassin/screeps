@@ -71,7 +71,9 @@ export class AcquireEngineer extends MissionImplementation {
         mission.data.initialized = true;
       }
     } else {
-      engineerLogic(creep, mission.data.targetOffice, mission);
+      if (engineerLogic(creep, mission.data.targetOffice, mission)) {
+        mission.efficiency.working += 1;
+      }
     }
   }
 }

@@ -74,7 +74,9 @@ export class Engineer extends MissionImplementation {
   }
 
   static minionLogic(mission: EngineerMission, creep: Creep) {
-    mission.actual.energy += engineerLogic(creep, mission.office, mission);
+    const energyUsed = engineerLogic(creep, mission.office, mission);
+    mission.actual.energy += energyUsed
+    if (energyUsed) mission.efficiency.working += 1;
   }
 }
 

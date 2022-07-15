@@ -83,6 +83,8 @@ export class DefendRemote extends MissionImplementation {
     // Clear room
     const target = findClosestHostileCreepByRange(creep.pos) ?? findInvaderStructures(mission.data.roomTarget)[0];
 
-    guardKill(creep, target);
+    if (guardKill(creep, target)) {
+      mission.efficiency.working += 1;
+    }
   }
 }
