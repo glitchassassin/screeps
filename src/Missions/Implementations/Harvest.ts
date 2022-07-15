@@ -150,6 +150,11 @@ export class Harvest extends MissionImplementation {
         if (result === ERR_FULL && plan.link.structure) {
           result = creep.transfer(plan.link.structure, RESOURCE_ENERGY)
           if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.spawn.pos)
+          if (result === OK) {
+            // If we've dropped any resources, and there's space in the link, try to pick them up
+            const resource = creep.pos.lookFor(LOOK_RESOURCES).find(r => r.resourceType === RESOURCE_ENERGY)
+            if (resource) creep.pickup(resource);
+          }
         }
 
         if (result === ERR_FULL) {
