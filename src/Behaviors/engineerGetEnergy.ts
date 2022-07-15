@@ -1,12 +1,10 @@
 import { byId } from "Selectors/byId";
-import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { getClosestByRange } from "Selectors/MapCoordinates";
 import { posById } from "Selectors/posById";
 import { roomPlans } from "Selectors/roomPlans";
-import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { memoizeByTick } from "utils/memoizeFunction";
 import profiler from "utils/profiler";
 import { BehaviorResult } from "./Behavior";
@@ -41,7 +39,7 @@ const energySourcesByOffice = memoizeByTick(
         const shouldHarvest = !hasEnergyIncome(office);
         franchisesByOffice(office)
             .map(({source}) => ({ id: source, energy: byId(source)?.energy ?? SOURCE_ENERGY_NEUTRAL_CAPACITY, pos: posById(source)! }))
-            .filter((source) => (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0) || franchiseEnergyAvailable(source.id) > 50)
+            .filter((source) => (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0))
             .forEach(source => sources.push(source));
         // storage
         const storage = (
@@ -71,12 +69,7 @@ export const engineerGetEnergy = profiler.registerFN((creep: Creep, office: stri
         } else if ('structureType' in source) {
             creep.memory.getEnergyState = States.GET_ENERGY_STORAGE;
         } else {
-            if (franchiseIsFull(office, source.id) || hasEnergyIncome(office)) {
-                if (storageEnergyAvailable(office) > withdrawLimit) {
-                    creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE;
-                    creep.memory.depositSource = source.id;
-                }
-            } else {
+            if (!(franchiseIsFull(office, source.id) || hasEnergyIncome(office))) {
                 creep.memory.getEnergyState = States.GET_ENERGY_SOURCE;
                 creep.memory.franchiseTarget = source.id;
             }
