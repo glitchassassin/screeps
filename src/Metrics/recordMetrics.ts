@@ -100,27 +100,31 @@ export const recordMetrics = profiler.registerFN(() => {
                 efficiency: 0,
             }
             missions[mission.type]!.count += 1;
+            missions[mission.type]!.efficiency += (mission.efficiency.working / mission.efficiency.running) * 100;
         }
-        for (const type in Memory.offices[office].missionResults) {
-            missions[type as MissionType] ??= {
-                count: 0,
-                // cpuAccuracy: 0,
-                // energyAccuracy: 0,
-                efficiency: 0
-            }
-            const mission = missions[type as MissionType]!;
-            let cpu = 0;
-            let energy = 0;
-            let efficiency = 0;
-            for (const result of Memory.offices[office].missionResults[type as MissionType]!) {
-                cpu += ((result.estimate.cpu - result.actual.cpu) / result.estimate.cpu) * 100;
-                energy += ((result.estimate.energy - result.actual.energy) / result.estimate.energy) * 100;
-                efficiency += result.efficiency * 100;
-            }
-            // mission.cpuAccuracy = cpu / Memory.offices[office].missionResults[type as MissionType]!.length;
-            // mission.energyAccuracy = energy / Memory.offices[office].missionResults[type as MissionType]!.length;
-            mission.efficiency = efficiency / Memory.offices[office].missionResults[type as MissionType]!.length;
+        for (const type in missions) {
+            missions[type as MissionType]!.efficiency /= missions[type as MissionType]!.count;
         }
+        // for (const type in Memory.offices[office].missionResults) {
+        //     missions[type as MissionType] ??= {
+        //         count: 0,
+        //         // cpuAccuracy: 0,
+        //         // energyAccuracy: 0,
+        //         efficiency: 0
+        //     }
+        //     const mission = missions[type as MissionType]!;
+        //     let cpu = 0;
+        //     let energy = 0;
+        //     let efficiency = 0;
+        //     for (const result of Memory.offices[office].missionResults[type as MissionType]!) {
+        //         cpu += ((result.estimate.cpu - result.actual.cpu) / result.estimate.cpu) * 100;
+        //         energy += ((result.estimate.energy - result.actual.energy) / result.estimate.energy) * 100;
+        //         efficiency += result.efficiency * 100;
+        //     }
+        //     // mission.cpuAccuracy = cpu / Memory.offices[office].missionResults[type as MissionType]!.length;
+        //     // mission.energyAccuracy = energy / Memory.offices[office].missionResults[type as MissionType]!.length;
+        //     mission.efficiency = efficiency / Memory.offices[office].missionResults[type as MissionType]!.length;
+        // }
 
         Memory.stats.offices[office] = {
             ...Memory.stats.offices[office],
