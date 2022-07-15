@@ -50,11 +50,11 @@ onRespawn(global.purge);
 // profiler.enable()
 
 export const loop = () => {
-  MemHack.pretick();
   if (Game.cpu.bucket < 200) {
     console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
     return; // If the bucket gets really low, let it rebuild
   }
+  MemHack.pretick();
   // ErrorMapper.wrapLoop(mainLoop)();
   profiler.wrap(gameLoop);
 }

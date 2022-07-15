@@ -100,7 +100,7 @@ export const recordMetrics = profiler.registerFN(() => {
                 efficiency: 0,
             }
             missions[mission.type]!.count += 1;
-            missions[mission.type]!.efficiency += (mission.efficiency.working / mission.efficiency.running) * 100;
+            missions[mission.type]!.efficiency += mission.efficiency.running ? (mission.efficiency.working / mission.efficiency.running) * 100 : 0;
         }
         for (const type in missions) {
             missions[type as MissionType]!.efficiency /= missions[type as MissionType]!.count;

@@ -6,6 +6,7 @@ import HarvestDispatcher from "./Harvest";
 import HeadquartersDispatcher from "./Headquarters";
 import LogisticsDispatcher from "./Logistics";
 import MineDispatcher from "./Mine";
+import PlunderDispatcher from "./Plunder";
 import RefillDispatcher from "./Refill";
 import ReserveDispatcher from "./Reserve";
 import ScienceDispatcher from "./Science";
@@ -23,5 +24,6 @@ export const Dispatchers = [
   MineDispatcher,
   ScienceDispatcher,
   AcquireDispatcher,
-  DefenseDispatcher
+  DefenseDispatcher,
+  PlunderDispatcher
 ]
