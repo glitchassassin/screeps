@@ -1,4 +1,5 @@
 import { MissionType } from "Missions/Mission";
+import { activeMissions } from "Missions/Selectors";
 import { rcl } from "Selectors/rcl";
 
 // Show current priority: building, repairing, filling storage, upgrading, acquiring
@@ -17,7 +18,7 @@ export default () => {
         const meterProgress = Game.rooms[office].controller!.progress / Game.rooms[office].controller!.progressTotal
         const meterMessage = `${(meterProgress * 100).toFixed(0)}%`;
         const meterColor = '#0000ff';
-        for (const mission of Memory.offices[office].activeMissions) {
+        for (const mission of activeMissions(office)) {
             if (mission.type === MissionType.MINE_FOREMAN) mining = true;
             if (mission.type === MissionType.SCIENCE) science = true;
         }

@@ -1,6 +1,7 @@
 import { createMineForemanMission, MineForemanMission } from "Missions/Implementations/MineForeman";
 import { createMineHaulerMission, MineHaulerMission } from "Missions/Implementations/MineHauler";
 import { MissionType } from "Missions/Mission";
+import { isMission, pendingAndActiveMissions, submitMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
 import { marketEnabled } from "Selectors/marketEnabled";
 import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
@@ -21,20 +22,20 @@ export default {
 
     const foremanMissions: MineForemanMission[] = [];
     const haulerMissions: MineHaulerMission[] = [];
-    for (const mission of [...Memory.offices[office].activeMissions, ...Memory.offices[office].pendingMissions]) {
-      if (mission.type === MissionType.MINE_FOREMAN) {
-        foremanMissions.push(mission as MineForemanMission);
-      } else if (mission.type === MissionType.MINE_HAULER) {
-        haulerMissions.push(mission as MineHaulerMission);
+    for (const mission of pendingAndActiveMissions(office)) {
+      if (isMission(MissionType.MINE_FOREMAN)(mission)) {
+        foremanMissions.push(mission);
+      } else if (isMission(MissionType.MINE_HAULER)(mission)) {
+        haulerMissions.push(mission);
       }
     }
 
     if (mineral) {
       if (!mineral.ticksToRegeneration && roomPlans(office)?.mine?.extractor.structure && !foremanMissions.length) {
-        Memory.offices[office].pendingMissions.push(createMineForemanMission(office, mineral.id));
+        submitMission(office, createMineForemanMission(office, mineral.id));
       }
       if ((roomPlans(office)?.mine?.container.structure as StructureContainer|undefined)?.store.getUsedCapacity() && !haulerMissions.length) {
-        Memory.offices[office].pendingMissions.push(createMineHaulerMission(office, mineral.id));
+        submitMission(office, createMineHaulerMission(office, mineral.id));
       }
     }
   }

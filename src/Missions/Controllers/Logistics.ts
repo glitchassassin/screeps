@@ -1,6 +1,7 @@
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createLogisticsMission } from "Missions/Implementations/Logistics";
 import { MissionType } from "Missions/Mission";
+import { activeMissions, isMission, not, pendingMissions } from "Missions/Selectors";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
@@ -11,15 +12,14 @@ export default {
   byTick: () => {},
   byOffice: (office: string) => {
     // Scale down if needed to fit energy
-    if (!Memory.offices[office].activeMissions.some(m => m.type === MissionType.LOGISTICS)) {
+    if (!activeMissions(office).some(isMission(MissionType.LOGISTICS))) {
       Memory.offices[office].pendingMissions
-        .filter(m => m.type === MissionType.LOGISTICS)
+        .filter(isMission(MissionType.LOGISTICS))
         .forEach(m => m.estimate.energy = minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))));
     }
     const inRoomLogisticsMissions = [];
     const remoteLogisticsMissions = [];
-    for (const mission of Memory.offices[office].pendingMissions) {
-      if (mission.type !== MissionType.LOGISTICS) continue;
+    for (const mission of pendingMissions(office).filter(isMission(MissionType.LOGISTICS))) {
       if (mission.priority === 2) remoteLogisticsMissions.push(mission);
       if (mission.priority === 11) inRoomLogisticsMissions.push(mission);
     }
@@ -27,11 +27,11 @@ export default {
     let inRoomCapacity = 0;
     let remoteCapacity = 0;
     let actualCapacity = 0;
-    for (const mission of Memory.offices[office].activeMissions) {
-      if (mission.type === MissionType.LOGISTICS) {
+    for (const mission of activeMissions(office)) {
+      if (isMission(MissionType.LOGISTICS)(mission)) {
         actualCapacity += mission.data.capacity ?? 0;
       }
-      if (mission.type === MissionType.HARVEST) {
+      if (isMission(MissionType.HARVEST)(mission)) {
         if (!mission.data.distance || !mission.data.harvestRate) continue;
         const remote = mission.office !== posById(mission.data.source)?.roomName;
         const capacity = mission.data.distance * 2 * Math.min(10, mission.data.harvestRate);
@@ -67,7 +67,7 @@ export default {
       remoteMissionCapacity += mission.data.capacity;
     }
     Memory.offices[office].pendingMissions = [
-      ...Memory.offices[office].pendingMissions.filter(m => m.type !== MissionType.LOGISTICS),
+      ...pendingMissions(office).filter(not(isMission(MissionType.LOGISTICS))),
       ...inRoomPendingMissions,
       ...remotePendingMissions
     ]

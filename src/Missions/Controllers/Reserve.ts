@@ -1,6 +1,7 @@
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createReserveMission, ReserveMission } from "Missions/Implementations/Reserve";
 import { MissionStatus, MissionType } from "Missions/Mission";
+import { activeMissions, assignedCreep, isMission, isStatus, not, pendingMissions } from "Missions/Selectors";
 import { posById } from "Selectors/posById";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
@@ -11,19 +12,19 @@ export default {
     if (!MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office)).length) return;
 
     const reserveMissions = [
-      ...Memory.offices[office].pendingMissions.filter(m => m.type === MissionType.RESERVE),
-      ...Memory.offices[office].activeMissions.filter(m =>
-        m.type === MissionType.RESERVE &&
+      ...pendingMissions(office).filter(isMission(MissionType.RESERVE)),
+      ...activeMissions(office).filter(m =>
+        isMission(MissionType.RESERVE)(m) &&
         (
           !m.data.arrived ||
-          m.data.arrived > (Game.creeps[m.creepNames[0]]?.ticksToLive ?? 0)
+          m.data.arrived > (assignedCreep(m)?.ticksToLive ?? 0)
         )
       )
     ] as ReserveMission[];
 
-    const pendingMissions: ReserveMission[] = [];
+    const pending: ReserveMission[] = [];
 
-    for (const mission of Memory.offices[office].activeMissions) {
+    for (const mission of activeMissions(office)) {
       const harvestRoom = posById(mission.data.source)?.roomName ?? '';
       if (
         mission.type !== MissionType.HARVEST ||
@@ -32,7 +33,7 @@ export default {
           Memory.rooms[harvestRoom]?.reserver === 'LordGreywether' &&
           (Memory.rooms[harvestRoom]?.reservation ?? 0) > 3000
         ) ||
-        pendingMissions.some(m => m.data.reserveTarget === harvestRoom)
+        pending.some(m => m.data.reserveTarget === harvestRoom)
       ) continue;
 
       // remote harvest missions only
@@ -40,12 +41,12 @@ export default {
         .find(m => m.data.reserveTarget === harvestRoom) ??
         createReserveMission(office, harvestRoom, mission.priority);
 
-      if (reserveMission.status === MissionStatus.PENDING) pendingMissions.push(reserveMission);
+      if (isStatus(MissionStatus.PENDING)(reserveMission)) pending.push(reserveMission);
     }
 
     // Keep only pendingMissions
-    Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions
-      .filter(m => m.type !== MissionType.RESERVE)
-      .concat(pendingMissions);
+    Memory.offices[office].pendingMissions = pendingMissions(office)
+      .filter(not(isMission(MissionType.RESERVE)))
+      .concat(pending);
   }
 }

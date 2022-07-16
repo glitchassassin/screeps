@@ -1,7 +1,7 @@
-import { ScienceMission } from "Missions/Implementations/Science";
 import { MissionType } from "Missions/Mission";
+import { activeMissions, assignedCreep, isMission } from "Missions/Selectors";
 
-export const getScientists = (office: string) => Memory.offices[office].activeMissions
-  .filter((m): m is ScienceMission => m.type === MissionType.SCIENCE)
-  .map(m => Game.creeps[m.creepNames[0]])
+export const getScientists = (office: string) => activeMissions(office)
+  .filter(isMission(MissionType.SCIENCE))
+  .map(assignedCreep)
   .filter((c): c is Creep => Boolean(c));

@@ -1,10 +1,10 @@
 import { MissionType } from "Missions/Mission";
+import { activeMissions, isMission } from "Missions/Selectors";
 import { posById } from "./posById";
 
 export const franchiseIncome = (office: string) => {
   let income = new Map<Id<Source>, number>();
-  for (const mission of Memory.offices[office].activeMissions) {
-    if (mission.type !== MissionType.HARVEST) continue;
+  for (const mission of activeMissions(office).filter(isMission(MissionType.HARVEST))) {
     const sourcePos = posById(mission.data.source);
     const ownedOrReserved = (
       Memory.rooms[sourcePos?.roomName ?? '']?.reserver === 'LordGreywether' ||

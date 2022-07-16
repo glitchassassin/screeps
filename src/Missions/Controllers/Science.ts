@@ -1,5 +1,6 @@
 import { createScienceMission } from "Missions/Implementations/Science";
 import { MissionStatus, MissionType } from "Missions/Mission";
+import { activeMissions, and, assignedCreep, isMission, isStatus, not, pendingAndActiveMissions, submitMission } from "Missions/Selectors";
 import { roomPlans } from "Selectors/roomPlans";
 
 export default {
@@ -12,16 +13,16 @@ export default {
     ) return;
 
     // Maintain one Scientist
-    const scheduledMissions = [
-      ...Memory.offices[office].pendingMissions,
-      ...Memory.offices[office].activeMissions,
-    ].some(m => m.type === MissionType.SCIENCE && m.status !== MissionStatus.RUNNING)
+    const scheduledMissions = pendingAndActiveMissions(office).some(and(
+      isMission(MissionType.SCIENCE),
+      not(isStatus(MissionStatus.RUNNING))
+    ));
     if (!scheduledMissions) {
-      const activeMission = Memory.offices[office].activeMissions.find(m => m.type === MissionType.SCIENCE);
+      const activeMission = activeMissions(office).find(isMission(MissionType.SCIENCE));
       const startTime = activeMission ?
-        Game.time + (Game.creeps[activeMission.creepNames[0]]?.ticksToLive ?? CREEP_LIFE_TIME) :
+        Game.time + (assignedCreep(activeMission)?.ticksToLive ?? CREEP_LIFE_TIME) :
         undefined; // no active mission, start immediately
-      Memory.offices[office].pendingMissions.push(createScienceMission(office, startTime));
+      submitMission(office, createScienceMission(office, startTime));
     }
   }
 }

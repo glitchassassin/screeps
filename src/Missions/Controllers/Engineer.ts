@@ -1,5 +1,6 @@
-import { createEngineerMission, EngineerMission } from "Missions/Implementations/Engineer";
+import { createEngineerMission } from "Missions/Implementations/Engineer";
 import { MissionStatus, MissionType } from "Missions/Mission";
+import { isMission, isStatus, not, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
 import { facilitiesCostPending } from "Selectors/facilitiesWorkToDo";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { rcl } from "Selectors/rcl";
@@ -7,12 +8,9 @@ import { rcl } from "Selectors/rcl";
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
-    const queuedMissions = [
-      ...Memory.offices[office].pendingMissions.filter(m => m.type === MissionType.ENGINEER),
-      ...Memory.offices[office].activeMissions.filter(m => m.type === MissionType.ENGINEER)
-    ] as EngineerMission[];
+    const queuedMissions = pendingAndActiveMissions(office).filter(isMission(MissionType.ENGINEER));
 
-    if (queuedMissions.some(m => m.status !== MissionStatus.RUNNING)) return; // Only one pending Engineer mission at a time
+    if (queuedMissions.some(isStatus(MissionStatus.RUNNING))) return; // Only one pending Engineer mission at a time
 
     // Calculate effective work for active missions
     const workPending = queuedMissions.reduce((sum, m) => sum + (m.data.workParts * CREEP_LIFE_TIME), 0);
@@ -26,13 +24,13 @@ export default {
 
     if (pendingCost === 0) {
       // Clear pending Engineer missions
-      Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions.filter(m => m.type !== MissionType.ENGINEER);
+      Memory.offices[office].pendingMissions = pendingMissions(office).filter(not(isMission(MissionType.ENGINEER)));
     }
 
     // console.log('queuedMissions', queuedMissions.length, 'workPending', workPending, 'pendingCost', pendingCost);
 
     if (hasEnergyIncome(office) && pendingCost > workPending) {
-      Memory.offices[office].pendingMissions.push(createEngineerMission(office));
+      submitMission(office, createEngineerMission(office));
     }
   }
 }

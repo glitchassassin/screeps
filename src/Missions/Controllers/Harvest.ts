@@ -1,6 +1,7 @@
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createHarvestMission, HarvestMission } from "Missions/Implementations/Harvest";
 import { MissionStatus, MissionType } from "Missions/Mission";
+import { activeMissions, and, isMission, not, pendingMissions, submitMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
@@ -22,21 +23,21 @@ export default {
     const franchises = franchisesByOffice(office);
     // logCpu('get franchises')
 
-    const activeMissionsBySource = Memory.offices[office].activeMissions.reduce(
+    const activeMissionsBySource = activeMissions(office).reduce(
       (missions, mission) => {
-        if (mission.type === MissionType.HARVEST) {
+        if (isMission(MissionType.HARVEST)(mission)) {
           missions[mission.data.source] ??= [];
-          missions[mission.data.source].push(mission as HarvestMission);
+          missions[mission.data.source].push(mission);
         }
         return missions;
       },
       {} as Record<Id<Source>, HarvestMission[]>
     )
-    const pendingMissionsBySource = Memory.offices[office].pendingMissions.reduce(
+    const pendingMissionsBySource = pendingMissions(office).reduce(
       (missions, mission) => {
-        if (mission.type === MissionType.HARVEST) {
+        if (isMission(MissionType.HARVEST)(mission)) {
           missions[mission.data.source] ??= [];
-          missions[mission.data.source].push(mission as HarvestMission);
+          missions[mission.data.source].push(mission);
         }
         return missions;
       },
@@ -97,7 +98,7 @@ export default {
           actualHarvestPower += scheduledMissionToRun.data.harvestRate;
         } else {
           const mission = createHarvestMission(office, source);
-          Memory.offices[office].pendingMissions.push(mission);
+          submitMission(office, mission);
         }
       }
       // logCpu('checking to reschedule mission')
@@ -118,7 +119,7 @@ export default {
             const scheduleTime = Game.time + (lifetime - mission.data.arrived!);
             const newMission = createHarvestMission(office, source, scheduleTime);
             mission.replacement = newMission.id;
-            Memory.offices[office].pendingMissions.push(newMission);
+            submitMission(office, newMission);
           }
         }
       }
@@ -126,11 +127,11 @@ export default {
     }
 
     // Clean up any pending missions that don't belong to a franchise
-    Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions.filter(m =>
-      !(
-        m.type === MissionType.HARVEST &&
-        !franchises.some(f => f.source === (m as HarvestMission).data.source)
-      )
+    Memory.offices[office].pendingMissions = pendingMissions(office).filter(
+      not(and(
+        isMission(MissionType.HARVEST),
+        m => !franchises.some(f => f.source === (m as HarvestMission).data.source)
+      ))
     );
   }
 }

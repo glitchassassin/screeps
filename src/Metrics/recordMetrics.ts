@@ -1,4 +1,5 @@
 import { MissionStatus, MissionType } from "Missions/Mission";
+import { activeMissions, isStatus } from "Missions/Selectors";
 import { Metrics } from "screeps-viz";
 import { franchiseIncome } from "Selectors/franchiseIncome";
 import { getActualEnergyAvailable } from "Selectors/getActualEnergyAvailable";
@@ -92,7 +93,7 @@ export const recordMetrics = profiler.registerFN(() => {
 
         // Compute mission data
         const missions: MissionStats = {};
-        for (const mission of Memory.offices[office].activeMissions.filter(m => m.status === MissionStatus.RUNNING)) {
+        for (const mission of activeMissions(office).filter(isStatus(MissionStatus.RUNNING))) {
             missions[mission.type] ??= {
                 count: 0,
                 // cpuAccuracy: 0,

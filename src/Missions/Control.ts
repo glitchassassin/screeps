@@ -7,6 +7,7 @@ import { getBudgetAdjustment } from "./Budgets";
 import { Dispatchers } from "./Controllers";
 import { Missions } from "./Implementations";
 import { Mission, MissionStatus, MissionType } from "./Mission";
+import { activeMissions, assignedCreep, isStatus, not, pendingMissions } from "./Selectors";
 
 declare global {
   interface OfficeMemory {
@@ -24,12 +25,12 @@ declare global {
 }
 
 global.resetMissions = (office: string, missionType?: MissionType) => {
-  Memory.offices[office].activeMissions.forEach(m => {
+  activeMissions(office).forEach(m => {
     if (missionType && m.type !== missionType) return;
-    m.creepNames.forEach(n => Game.creeps[n]?.suicide())
+    assignedCreep(m)?.suicide()
   });
-  Memory.offices[office].activeMissions = Memory.offices[office].activeMissions.filter(m => missionType && m.type !== missionType);
-  Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions.filter(m => missionType && m.type !== missionType);
+  Memory.offices[office].activeMissions = activeMissions(office).filter(m => missionType && m.type !== missionType);
+  Memory.offices[office].pendingMissions = pendingMissions(office).filter(m => missionType && m.type !== missionType);
 }
 global.resetPendingMissions = (office: string) => {
   Memory.offices[office].pendingMissions = [];
@@ -52,7 +53,7 @@ function executeMissions() {
   for (const office in Memory.offices) {
     // console.log('pending', office, Memory.offices[office].pendingMissions.map(m => m.type));
     // console.log('active', office, Memory.offices[office].activeMissions.map(m => m.type));
-    for (const mission of Memory.offices[office].activeMissions) {
+    for (const mission of activeMissions(office)) {
       const startTime = Game.cpu.getUsed();
       try {
         // console.log('Executing mission', JSON.stringify(mission));
@@ -66,7 +67,7 @@ function executeMissions() {
       mission.actual.cpu += Math.max(0, Game.cpu.getUsed() - startTime);
     }
     // Clean up completed missions
-    Memory.offices[office].activeMissions.filter(m => m.status === MissionStatus.DONE && m.actual.energy).forEach(mission => {
+    activeMissions(office).filter(m => isStatus(MissionStatus.DONE)(m) && m.actual.energy).forEach(mission => {
       Memory.offices[office].missionResults ??= {};
       Memory.offices[office].missionResults[mission.type] ??= [];
       Memory.offices[office].missionResults[mission.type]?.unshift({
@@ -76,7 +77,7 @@ function executeMissions() {
       })
       Memory.offices[office].missionResults[mission.type] = Memory.offices[office].missionResults[mission.type]!.slice(0, MISSION_HISTORY_LIMIT)
     })
-    Memory.offices[office].activeMissions = Memory.offices[office].activeMissions.filter(m => m.status !== MissionStatus.DONE);
+    Memory.offices[office].activeMissions = activeMissions(office).filter(not(isStatus(MissionStatus.DONE)));
   }
 }
 
@@ -98,16 +99,16 @@ function allocateMissions() {
   // Calculate already-allocated resources
   for (const office in Memory.offices) {
     // Should have no more STARTING missions than active spawns
-    let startingMissions = Memory.offices[office].activeMissions.filter(m => m.status === MissionStatus.STARTING).length;
+    let startingMissions = activeMissions(office).filter(isStatus(MissionStatus.STARTING)).length;
     if (startingMissions >= getSpawns(office).length) continue;
 
     const hasStorage = Boolean(roomPlans(office)?.headquarters?.storage.structure);
-    let remainingCpu = Memory.offices[office].activeMissions
+    let remainingCpu = activeMissions(office)
       .reduce((remaining, mission) =>
         remaining -= Math.max(0, mission.estimate.cpu - mission.actual.cpu),
         missionCpuAvailable(office)
       );
-    let remainingEnergy = Memory.offices[office].activeMissions
+    let remainingEnergy = activeMissions(office)
       .reduce((remaining, mission) =>
         remaining -= Math.max(0, mission.estimate.energy - mission.actual.energy),
         missionEnergyAvailable(office)

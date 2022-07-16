@@ -1,5 +1,6 @@
 import { createUpgradeMission } from "Missions/Implementations/Upgrade";
 import { MissionType } from "Missions/Mission";
+import { activeMissions, isMission, pendingMissions, submitMission } from "Missions/Selectors";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
 import { rcl } from "Selectors/rcl";
 
@@ -7,14 +8,14 @@ export default {
   byTick: () => {},
   byOffice: (office: string) => {
     if (
-      Memory.offices[office].pendingMissions.filter(m => m.type === MissionType.UPGRADE).length >= 2 ||
+      pendingMissions(office).filter(isMission(MissionType.UPGRADE)).length >= 2 ||
       rcl(office) < 2 ||
-      (Memory.offices[office].activeMissions.some(m => m.type === MissionType.UPGRADE) && (
+      (activeMissions(office).some(isMission(MissionType.UPGRADE)) && (
         rcl(office) === 8 ||
-        Memory.offices[office].pendingMissions.some(m => m.type === MissionType.ENGINEER)
+        pendingMissions(office).some(isMission(MissionType.ENGINEER))
       ))
     ) {
-      const pendingMission = Memory.offices[office].pendingMissions.find(m => m.type === MissionType.UPGRADE);
+      const pendingMission = pendingMissions(office).find(isMission(MissionType.UPGRADE));
       if (pendingMission && Game.rooms[office].controller!.ticksToDowngrade < 10000) pendingMission.data.emergency = true;
       return;
     };
@@ -23,7 +24,7 @@ export default {
     // we have construction to do or we are at RCL8
 
     if (hasEnergyIncome(office)) {
-      Memory.offices[office].pendingMissions.push(createUpgradeMission(office));
+      submitMission(office, createUpgradeMission(office));
     }
   }
 }

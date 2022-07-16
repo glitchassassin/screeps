@@ -5,6 +5,7 @@ import { setState, States } from "Behaviors/states";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
+import { activeMissions, isMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
 import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
@@ -36,11 +37,11 @@ const assignedLogisticsCapacity = memoizeByTick(
       assignments.set(source, 0);
     }
 
-    for (const mission of Memory.offices[office].activeMissions) {
-      if (mission.type !== MissionType.LOGISTICS || !mission.data.logisticsTarget || !assignments.has(mission.data.logisticsTarget)) continue;
+    for (const mission of activeMissions(office).filter(isMission(MissionType.LOGISTICS))) {
+      if (!mission.data.logisticsTarget || !assignments.has(mission.data.logisticsTarget as Id<Source>)) continue;
       assignments.set(
-        mission.data.logisticsTarget,
-        (assignments.get(mission.data.logisticsTarget) ?? 0) + mission.data.capacity
+        mission.data.logisticsTarget as Id<Source>,
+        (assignments.get(mission.data.logisticsTarget as Id<Source>) ?? 0) + mission.data.capacity
       );
     }
 
