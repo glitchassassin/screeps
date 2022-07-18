@@ -1,7 +1,7 @@
 import { createHQLogisticsMission } from "Missions/Implementations/HQLogistics";
 import { createTowerLogisticsMission } from "Missions/Implementations/TowerLogistics";
 import { MissionStatus, MissionType } from "Missions/Mission";
-import { activeMissions, and, isMission, isStatus, pendingAndActiveMissions, submitMission } from "Missions/Selectors";
+import { activeMissions, and, isMission, isStatus, not, pendingAndActiveMissions, submitMission } from "Missions/Selectors";
 import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
@@ -25,7 +25,7 @@ export default {
     // Maintain one HQ Logistics minion
     const scheduledMissions = pendingAndActiveMissions(office).some(and(
       isMission(MissionType.HQ_LOGISTICS),
-      isStatus(MissionStatus.RUNNING)
+      not(isStatus(MissionStatus.RUNNING))
     ));
     if (!scheduledMissions) {
       const activeMission = activeMissions(office).find(isMission(MissionType.HQ_LOGISTICS));

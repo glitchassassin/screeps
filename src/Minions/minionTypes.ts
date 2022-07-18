@@ -27,18 +27,29 @@ export const MinionBuilders = {
     [MinionTypes.ACCOUNTANT]: memoize( // Memoizes at 50-energy increments
         (energy: number, maxSegments = 25, roads = false) => `${Math.round(energy * 2 / 100)} ${maxSegments} ${roads}`,
         (energy: number, maxSegments = 25, roads = false) => {
-        if (energy < 200 || maxSegments === 0) {
-            return [];
-        } else if (energy <= 300) {
-            return [CARRY, MOVE, CARRY, MOVE]
-        } else if (!roads) {
-            const segments = Math.min(25, maxSegments, Math.floor((energy / 2) / 100))
-            return Array(segments).fill([CARRY, MOVE]).flat();
-        } else {
-            const segments = Math.min(16, maxSegments, Math.floor((energy / 2) / 150))
-            return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
+            if (energy < 200 || maxSegments === 0) {
+                return [];
+            } else if (energy <= 300) {
+                return [CARRY, MOVE, CARRY, MOVE]
+            } else if (energy < 5600) { // Before we have two spawns, create smaller haulers
+                if (!roads) {
+                    const segments = Math.min(13, maxSegments, Math.floor((energy / 2) / 100))
+                    return Array(segments).fill([CARRY, MOVE]).flat();
+                } else {
+                    const segments = Math.min(8, maxSegments, Math.floor((energy / 2) / 150))
+                    return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
+                }
+            } else {
+                if (!roads) {
+                    const segments = Math.min(25, maxSegments, Math.floor((energy / 2) / 100))
+                    return Array(segments).fill([CARRY, MOVE]).flat();
+                } else {
+                    const segments = Math.min(16, maxSegments, Math.floor((energy / 2) / 150))
+                    return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
+                }
+            }
         }
-    }),
+    ),
     [MinionTypes.ENGINEER]: (energy: number, maxWork = 16) => {
         if (energy < 200) {
             return [];
@@ -137,7 +148,7 @@ export const MinionBuilders = {
             return [WORK, WORK, WORK, CARRY, MOVE];
         } else if (energy < 650) {
             return carry ? [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE] : [WORK, WORK, WORK, WORK, WORK, MOVE]
-        } else if (energy < 1250) {
+        } else if (energy < 5300) {
             return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE]
         } else {
             // At higher RCL, use bigger harvesters to reduce CPU

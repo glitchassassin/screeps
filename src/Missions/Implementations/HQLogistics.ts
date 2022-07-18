@@ -39,7 +39,7 @@ export class HQLogistics extends MissionImplementation {
 
     if (!pos) return;
 
-    const body = MinionBuilders[spawn ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
+    const body = MinionBuilders[spawn ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 800 / CARRY_CAPACITY);
 
     // Set name
     const name = `CLERK-${mission.office}-${mission.id}`

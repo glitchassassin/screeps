@@ -72,12 +72,16 @@ export class DefendRemote extends MissionImplementation {
       }
     }
 
+    // Try to heal
+    if (creep.hits < creep.hitsMax) {
+      creep.heal(creep);
+    }
+
     if (!mission.data.roomTarget) return; // nothing to do
 
     // Go to room
     if (creep.pos.roomName !== mission.data.roomTarget) {
       moveTo(creep, { pos: new RoomPosition(25, 25, mission.data.roomTarget), range: 20 });
-      return;
     }
 
     // Clear room

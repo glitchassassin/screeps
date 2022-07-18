@@ -50,7 +50,7 @@ onRespawn(global.purge);
 // profiler.enable()
 
 export const loop = () => {
-  if (Game.cpu.bucket < 200) {
+  if (Game.cpu.bucket < 500) {
     console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
     return; // If the bucket gets really low, let it rebuild
   }
