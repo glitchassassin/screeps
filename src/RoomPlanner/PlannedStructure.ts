@@ -29,8 +29,6 @@ const PackedStructureTypesLookup: Record<string, BuildableStructureConstant> = O
     }, {} as Record<string, BuildableStructureConstant>
 )
 
-const EMPTY_ID = '                        ';
-
 let plannedStructures: Record<string, PlannedStructure> = {};
 let deserializedPlannedStructures = new Map<string, PlannedStructure>();
 
@@ -64,9 +62,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     }
 
     serialize() {
-        return PackedStructureTypes[this.structureType] +
-               packPos(this.pos) +
-               (this.structureId ? this.structureId.padEnd(24, ' ') : EMPTY_ID);
+        return PackedStructureTypes[this.structureType] + packPos(this.pos);
     }
     static deserialize(serialized: string) {
         try {
@@ -75,10 +71,8 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
 
             let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
             let pos = unpackPos(serialized.slice(1, 3));
-            let id = serialized.slice(3, 27).trim() as Id<Structure<BuildableStructureConstant>> | undefined;
-            if (id === '') id = undefined;
 
-            const result = new PlannedStructure(pos, structureType, id);
+            const result = new PlannedStructure(pos, structureType);
             deserializedPlannedStructures.set(serialized.slice(0, 3), result);
             return result;
         } catch (e) {
