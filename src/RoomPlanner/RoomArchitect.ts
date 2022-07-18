@@ -25,7 +25,9 @@ declare global {
                 extensions?: string|null,
                 perimeter?: string|null,
                 labs?: string|null,
-                roads?: string|null
+                roads?: string|null,
+                fastFiller?: string|null,
+                towers?: string|null,
             }
         }
     }
