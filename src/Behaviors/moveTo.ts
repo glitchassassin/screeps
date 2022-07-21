@@ -1,5 +1,6 @@
 import { BehaviorResult } from "Behaviors/Behavior";
-import { getCostMatrix, terrainCosts } from "Selectors/MapCoordinates";
+import { terrainCosts } from "Selectors/Map/MapCoordinates";
+import { getCostMatrix } from "Selectors/Map/Pathing";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 import { packPos } from "utils/packrat";
 
@@ -20,7 +21,6 @@ export class Route {
     ) {
         this.calculateRoute(creep);
         this.calculatePathToRoom(creep);
-        if (opts?.flee) console.log(creep.name, 'fleeing');
     }
 
     calculateRoute(creep: Creep) {
@@ -80,11 +80,11 @@ export class Route {
         let route = PathFinder.search(creep.pos, positionsInRange, {
             roomCallback: (room) => {
                 if (!this.rooms?.includes(room)) return false;
-                return getCostMatrix(room, avoidCreeps)
+                return getCostMatrix(room, avoidCreeps, { stayInsidePerimeter: this.opts?.stayInsidePerimeter })
             },
             ...terrainCosts(creep),
             maxRooms: 1,
-            flee: this.opts?.flee,
+            flee: this.opts?.flee
         })
         if (!route || route.incomplete) throw new Error(`Unable to plan route ${creep.pos} ${positionsInRange}`);
 
@@ -160,6 +160,7 @@ interface MoveTarget {
 }
 interface MoveToOpts extends globalThis.MoveToOpts {
     flee?: boolean,
+    stayInsidePerimeter?: boolean,
 }
 
 export function moveTo(creep: Creep, targetOrTargets: _HasRoomPosition | RoomPosition | MoveTarget | MoveTarget[], opts?: MoveToOpts | undefined) {
@@ -217,7 +218,6 @@ export function moveTo(creep: Creep, targetOrTargets: _HasRoomPosition | RoomPos
         try {
             Routes[creep.name] = new Route(creep, key, targets, opts);
         } catch (e) {
-            // console.log(e)
             return BehaviorResult.FAILURE;
         }
     }

@@ -1,29 +1,32 @@
 import { TERRITORY_RADIUS } from "config";
 import { Dashboard, Rectangle, Table } from "screeps-viz";
+import { ThreatLevel } from "Selectors/Combat/threatAnalysis";
 import { getTerritoriesByOffice } from "Selectors/getTerritoriesByOffice";
-import { calculateNearbyRooms, isSourceKeeperRoom } from "Selectors/MapCoordinates";
-import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
+import { calculateNearbyRooms, isSourceKeeperRoom } from "Selectors/Map/MapCoordinates";
 
 const colors = {
-    [TerritoryIntent.ACQUIRE]: '#00ff00',
-    [TerritoryIntent.AVOID]: '#ff0000',
-    [TerritoryIntent.DEFEND]: '#0000ff',
-    [TerritoryIntent.EXPLOIT]: '#ffff00',
-    [TerritoryIntent.IGNORE]: '#333333',
-    [TerritoryIntent.PLUNDER]: '#00ffff',
+    [ThreatLevel.FRIENDLY]: '#00ff00',
+    [ThreatLevel.OWNED]: '#ff0000',
+    [ThreatLevel.REMOTE]: '#0000ff',
+    [ThreatLevel.UNOWNED]: '#ffff00',
+    [ThreatLevel.NONE]: '#333333',
+    [ThreatLevel.UNKNOWN]: '#333333',
+    [ThreatLevel.MIDNIGHT]: '#000000',
 }
 
 export default () => {
     for (let room in Memory.rooms) {
-        const intent = getTerritoryIntent(room);
-        Game.map.visual.rect(new RoomPosition(1, 1, room), 48, 48, {fill: colors[intent], stroke: 'transparent', opacity: 0.5});
+        const [threatLevel, hostileScore] = Memory.rooms[room].threatLevel ?? [ThreatLevel.UNKNOWN, 0]
+        Game.map.visual.rect(new RoomPosition(5, 5, room), 43, 43, {fill: 'transparent', stroke: colors[threatLevel], strokeWidth: 5, opacity: 0.5});
+        Game.map.visual.text(threatLevel, new RoomPosition(25, 45, room), { fontSize: 5 })
+        Game.map.visual.text(hostileScore.toFixed(0), new RoomPosition(25, 25, room), { fontSize: 10 })
     }
     for (let office in Memory.offices) {
         const territories = getTerritoriesByOffice(office);
         const allTerritories = calculateNearbyRooms(office, TERRITORY_RADIUS, false)
             .filter(t => (!isSourceKeeperRoom(t) && Memory.rooms[t]?.office === office && !Memory.offices[t]))
         territories.forEach(territory => {
-            Game.map.visual.line(new RoomPosition(25, 25, office), new RoomPosition(25, 25, territory), { color: '#ffffff', width: 5 })
+            Game.map.visual.line(new RoomPosition(25, 25, office), new RoomPosition(25, 25, territory), { color: '#ffffff', width: 3 })
         })
 
         // Patrol route

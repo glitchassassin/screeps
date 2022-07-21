@@ -1,4 +1,4 @@
-import { getPath, getRoomPathDistance } from "./MapCoordinates";
+import { getPath, getRoomPathDistance } from "./Map/Pathing";
 import { roomPlans } from "./roomPlans";
 
 export const getOfficeDistanceByRange = (office1: string, office2: string) => {

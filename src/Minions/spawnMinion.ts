@@ -1,7 +1,7 @@
 import { States } from "Behaviors/states";
 import { FEATURES } from "config";
 import { defaultDirectionsForSpawn } from "Selectors/defaultDirectionsForSpawn";
-import { isPositionWalkable } from "Selectors/MapCoordinates";
+import { isPositionWalkable } from "Selectors/Map/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { getSpawns } from "Selectors/roomPlans";
 import { boostsAvailable } from "Selectors/shouldHandleBoosts";

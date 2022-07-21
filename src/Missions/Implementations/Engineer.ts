@@ -74,6 +74,14 @@ export class Engineer extends MissionImplementation {
   }
 
   static minionLogic(mission: EngineerMission, creep: Creep) {
+    // Adjust estimate, if needed
+    if (mission.estimate.energy <= mission.actual.energy) {
+      const lifetime = creep.ticksToLive ?? 0;
+      const workParts = creep.body.filter(p => p.type === WORK).length
+      mission.estimate.energy = mission.actual.energy + lifetime * workParts * facilitiesEfficiency(mission.office);
+    }
+
+    // Run logic
     const energyUsed = engineerLogic(creep, mission.office, mission);
     mission.actual.energy += energyUsed
     if (energyUsed) mission.efficiency.working += 1;

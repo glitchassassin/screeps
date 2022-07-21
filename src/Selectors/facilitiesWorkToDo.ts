@@ -1,7 +1,7 @@
 import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from "config";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { memoizeByTick } from "utils/memoizeFunction";
-import { calculateAdjacentPositions, getRangeTo } from "./MapCoordinates";
+import { calculateAdjacentPositions, getRangeTo } from "./Map/MapCoordinates";
 import { plannedStructuresByRcl } from "./plannedStructuresByRcl";
 import { roomPlans } from "./roomPlans";
 

@@ -1,3 +1,4 @@
+import { minionCost } from "Selectors/minionCostPerTick";
 import { memoize } from "utils/memoizeFunction";
 
 export interface Minion {
@@ -17,12 +18,40 @@ export enum MinionTypes {
     PARALEGAL = 'PARALEGAL',
     SALESMAN = 'SALESMAN',
     MARKETER = 'MARKETER',
-    JANITOR = 'JANITOR',
+    BLINKY = 'BLINKY',
+    MEDIC = 'MEDIC'
+}
+
+interface buildFromSegmentOpts {
+    maxSegments: number,
+    sorted: boolean,
+    suffix: BodyPartConstant[]
+}
+
+function buildFromSegment(energy: number, segment: BodyPartConstant[], opts: Partial<buildFromSegmentOpts> = {}) {
+    if (segment.length === 0 || energy === 0) return [];
+    const actualOpts = {
+        maxSegments: Infinity,
+        sorted: false,
+        suffix: [] as BodyPartConstant[],
+        ...opts
+    }
+    energy -= minionCost(actualOpts.suffix);
+    const segmentCost = minionCost(segment);
+    const segmentCount = Math.min(
+        Math.floor(energy / segmentCost),
+        Math.floor(50 / segment.length),
+        actualOpts.maxSegments,
+    )
+    const body = new Array(segmentCount).fill(segment).flat();
+    if (actualOpts.sorted) body.sort().reverse();
+    body.push(...actualOpts.suffix);
+    return body;
 }
 
 export const MinionBuilders = {
-    [MinionTypes.CLERK]: (energy: number, limit = 50) => {
-        return Array(Math.min(limit, Math.floor(energy / CARRY_CAPACITY))).fill(CARRY);
+    [MinionTypes.CLERK]: (energy: number, maxSegments = 50) => {
+        return buildFromSegment(energy, [CARRY], { maxSegments });
     },
     [MinionTypes.ACCOUNTANT]: memoize( // Memoizes at 50-energy increments
         (energy: number, maxSegments = 25, roads = false) => `${Math.round(energy * 2 / 100)} ${maxSegments} ${roads}`,
@@ -33,38 +62,25 @@ export const MinionBuilders = {
                 return [CARRY, MOVE, CARRY, MOVE]
             } else if (energy < 5600) { // Before we have two spawns, create smaller haulers
                 if (!roads) {
-                    const segments = Math.min(13, maxSegments, Math.floor((energy / 2) / 100))
-                    return Array(segments).fill([CARRY, MOVE]).flat();
+                    return buildFromSegment(energy, [CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13) });
                 } else {
-                    const segments = Math.min(8, maxSegments, Math.floor((energy / 2) / 150))
-                    return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
+                    return buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13) });
                 }
             } else {
                 if (!roads) {
-                    const segments = Math.min(25, maxSegments, Math.floor((energy / 2) / 100))
-                    return Array(segments).fill([CARRY, MOVE]).flat();
+                    return buildFromSegment(energy, [CARRY, MOVE], { maxSegments });
                 } else {
-                    const segments = Math.min(16, maxSegments, Math.floor((energy / 2) / 150))
-                    return Array(segments).fill([CARRY, CARRY, MOVE]).flat();
+                    return buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments });
                 }
             }
         }
     ),
-    [MinionTypes.ENGINEER]: (energy: number, maxWork = 16) => {
+    [MinionTypes.ENGINEER]: (energy: number, maxSegments = 16) => {
         if (energy < 200) {
             return [];
         }
         else {
-            // Try to maintain WORK/CARRY/MOVE ratio
-            const segment = [WORK, MOVE, CARRY]
-            const segmentCost = segment.reduce((sum, p) => sum + BODYPART_COST[p], 0)
-            const segments = Math.min(
-                Math.floor(50 / segment.length),
-                Math.floor(energy / segmentCost),
-                maxWork
-            )
-
-            return Array(segments).fill(segment).flat()
+            return buildFromSegment(energy, [WORK, MOVE, CARRY], { maxSegments })
         }
     },
     [MinionTypes.FOREMAN]: (energy: number) => {
@@ -73,37 +89,21 @@ export const MinionBuilders = {
         }
         else {
             // Maintain 4-1 WORK-MOVE ratio
-            let workParts = Math.min(40, Math.floor((8/9 * energy) / 100))
-            let moveParts = Math.min(10, Math.floor((1/9 * energy) / 50))
-            return ([] as BodyPartConstant[]).concat(
-                Array(workParts).fill(WORK),
-                Array(moveParts).fill(MOVE)
-            )
+            return buildFromSegment(energy, [WORK, WORK, WORK, WORK, MOVE])
         }
     },
     [MinionTypes.GUARD]: (energy: number) => {
         if (energy < 200) {
             return [];
         } else if (energy <= 550) {
-            // Try to maintain ATTACK/MOVE ratio
-            let attackParts = Math.min(25, Math.floor(((80/130) * energy) / 80))
-            return ([] as BodyPartConstant[]).concat(
-                Array(attackParts).fill(ATTACK),
-                Array(attackParts).fill(MOVE),
-            )
+            return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true })
         } else {
             // Add a heal part
-            let attackEnergy = (energy - BODYPART_COST[HEAL] - BODYPART_COST[MOVE])
-            let attackParts = Math.min(24, Math.floor(((80/130) * attackEnergy) / 80))
-            return ([] as BodyPartConstant[]).concat(
-                Array(attackParts).fill(ATTACK),
-                Array(attackParts + 1).fill(MOVE),
-                [HEAL]
-            )
+            return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true, suffix: [HEAL] })
         }
     },
     [MinionTypes.AUDITOR]: (energy: number) => {
-        return [TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE];
+        return [MOVE];
     },
     [MinionTypes.LAWYER]:  (energy: number) => {
         if (energy < 850) {
@@ -117,9 +117,7 @@ export const MinionBuilders = {
             return [];
         }
         else {
-            // Equal claim and move parts, max 5
-            let segments = Math.min(5, Math.floor(energy / (BODYPART_COST[CLAIM] + BODYPART_COST[MOVE])));
-            return Array(segments).fill([CLAIM, MOVE]).flat()
+            return buildFromSegment(energy, [CLAIM, MOVE], { maxSegments: 5 })
         }
     },
     [MinionTypes.PARALEGAL]: (energy: number, maxWorkParts = 15) => {
@@ -155,21 +153,20 @@ export const MinionBuilders = {
             return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE]
         }
     },
-    [MinionTypes.JANITOR]: (energy: number) => {
+    [MinionTypes.BLINKY]: (energy: number) => {
         if (energy < 200) {
             return [];
-        } else if (energy < 600) {
-            let parts = (energy <= 550) ? 1 : 2;
-            return ([] as BodyPartConstant[]).concat(
-                Array(parts).fill(RANGED_ATTACK),
-                Array(parts).fill(MOVE),
-            )
+        } else if (energy < 5600) {
+            return buildFromSegment(energy, [RANGED_ATTACK, MOVE], { sorted: true })
         } else {
-            const segment = [RANGED_ATTACK, MOVE, MOVE, HEAL]
-            const segmentCost = segment.reduce((sum, p) => sum + BODYPART_COST[p], 0)
-            const segments = Math.min(Math.floor(50 / segment.length), Math.floor(energy / segmentCost))
-
-            return Array(segments).fill(segment).flat().sort().reverse();
+            return buildFromSegment(energy, [RANGED_ATTACK, MOVE, MOVE, HEAL], { sorted: true })
+        }
+    },
+    [MinionTypes.MEDIC]: (energy: number) => {
+        if (energy < 200) {
+            return [];
+        } else {
+            return buildFromSegment(energy, [HEAL, MOVE], { sorted: true })
         }
     }
 }

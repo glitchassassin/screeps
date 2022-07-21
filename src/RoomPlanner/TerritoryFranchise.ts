@@ -1,7 +1,7 @@
 import { deserializePlannedStructures, serializePlannedStructures } from "Selectors/plannedStructures";
 
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { getCostMatrix } from "Selectors/MapCoordinates";
+import { getCostMatrix } from "Selectors/Map/MapCoordinates";
 import { posById } from "Selectors/posById";
 
 export interface TerritoryFranchisePlan {

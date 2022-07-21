@@ -1,4 +1,4 @@
-import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
+import { adjacentWalkablePositions } from "Selectors/Map/MapCoordinates";
 import { getSpawns, roomPlans } from "Selectors/roomPlans";
 import profiler from "utils/profiler";
 

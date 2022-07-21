@@ -1,3 +1,4 @@
+import { rampartsToRepair } from "Selectors/Combat/defenseRamparts";
 import { roomPlans } from "Selectors/roomPlans";
 import { Mission, MissionType } from "./Mission";
 
@@ -12,10 +13,24 @@ export function getWithdrawLimit(mission: Mission<MissionType>) {
 export function getBudgetAdjustment(mission: Mission<MissionType>) {
   if (!roomPlans(mission.office)?.headquarters?.storage.structure) {
     // No storage yet - minimal capacities enforced, except for income missions
-    if (mission.type === MissionType.HARVEST || mission.type === MissionType.LOGISTICS) {
+    if (
+      mission.type === MissionType.HARVEST ||
+      mission.type === MissionType.LOGISTICS ||
+      mission.type === MissionType.REFILL
+    ) {
       return {
         cpu: 2000,
         energy: -mission.estimate.energy,
+      }
+    } else if (
+      mission.type === MissionType.EXPLORE ||
+      mission.type === MissionType.RESERVE ||
+      mission.type === MissionType.DEFEND_REMOTE ||
+      mission.type === MissionType.DEFEND_OFFICE
+    ) {
+      return {
+        cpu: 2000,
+        energy: 0,
       }
     } else {
       return {
@@ -34,7 +49,15 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
         cpu: 2000,
         energy: 0,
       }
-    } else if (mission.type === MissionType.RESERVE || mission.type === MissionType.DEFEND_REMOTE || mission.type === MissionType.HQ_LOGISTICS) {
+    } else if (
+      [
+        MissionType.RESERVE,
+        MissionType.DEFEND_REMOTE,
+        MissionType.HQ_LOGISTICS,
+        MissionType.DEFEND_OFFICE
+      ].includes(mission.type) ||
+      (mission.type === MissionType.ENGINEER && rampartsToRepair(mission.office).length)
+    ) {
       return {
         cpu: 2000,
         energy: 1500,

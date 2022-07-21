@@ -8,7 +8,6 @@ import LogisticsDispatcher from "./Logistics";
 import MineDispatcher from "./Mine";
 import PlunderDispatcher from "./Plunder";
 import RefillDispatcher from "./Refill";
-import ReserveDispatcher from "./Reserve";
 import ScienceDispatcher from "./Science";
 import UpgradeDispatcher from "./Upgrade";
 
@@ -19,7 +18,6 @@ export const Dispatchers = [
   EngineerDispatcher,
   RefillDispatcher,
   UpgradeDispatcher,
-  ReserveDispatcher,
   HeadquartersDispatcher,
   MineDispatcher,
   ScienceDispatcher,

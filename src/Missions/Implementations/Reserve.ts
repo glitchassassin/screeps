@@ -4,8 +4,9 @@ import { signRoom } from "Behaviors/signRoom";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
+import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
 import { minionCost } from "Selectors/minionCostPerTick";
-import { controllerPosition } from "Selectors/roomCache";
+import { controllerPosition, sourceIds } from "Selectors/roomCache";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { MissionImplementation } from "./MissionImplementation";
 
@@ -16,10 +17,20 @@ export interface ReserveMission extends Mission<MissionType.RESERVE> {
   }
 }
 
-export function createReserveMission(office: string, reserveTarget: string, priority: number): ReserveMission {
+export function createReserveMission(office: string, reserveTarget: string): ReserveMission {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
     energy: minionCost(MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office))),
+  }
+
+  // set priority differently for remote sources
+  const [source] = sourceIds(reserveTarget);
+  const distance = getFranchiseDistance(office, source);
+  let priority = 1;
+  if (distance) {
+    // Increase priority for closer franchises, up to 1 point for closer than 50 squares
+    // Round priority to two places
+    priority += Math.round(100 * (Math.min(50, distance) / distance)) / 100;
   }
 
   return createMission({

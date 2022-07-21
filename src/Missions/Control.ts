@@ -1,3 +1,4 @@
+import { MISSION_HISTORY_LIMIT } from "config";
 import { recordMissionCpu } from "Selectors/cpuOverhead";
 import { missionCpuAvailable } from "Selectors/missionCpuAvailable";
 import { missionEnergyAvailable } from "Selectors/missionEnergyAvailable";
@@ -13,7 +14,7 @@ declare global {
   interface OfficeMemory {
     pendingMissions: Mission<MissionType>[],
     activeMissions: Mission<MissionType>[],
-    missionResults: Partial<Record<MissionType, { efficiency: number, estimate: { cpu: number, energy: number }, actual: { cpu: number, energy: number } }[]>>
+    missionResults: Partial<Record<MissionType, { efficiency: number, estimate: { cpu: number, energy: number }, actual: { cpu: number, energy: number }, completed: number }[]>>
   }
 
   namespace NodeJS {
@@ -36,8 +37,6 @@ global.resetPendingMissions = (office: string) => {
   Memory.offices[office].pendingMissions = [];
 }
 
-const MISSION_HISTORY_LIMIT = 50;
-
 export function runMissionControl() {
   generateMissions();
   debugCPU('generateMissions', true);
@@ -56,7 +55,7 @@ function executeMissions() {
     for (const mission of activeMissions(office)) {
       const startTime = Game.cpu.getUsed();
       try {
-        // console.log('Executing mission', JSON.stringify(mission));
+        // console.log('Executing mission', mission.office, mission.type);
         Missions[mission.type].spawn(mission);
         Missions[mission.type].run(mission);
         // Adjust for random negative values of getUsed
@@ -74,9 +73,12 @@ function executeMissions() {
         estimate: mission.estimate,
         actual: mission.actual,
         efficiency: mission.efficiency.working / mission.efficiency.running,
+        completed: Game.time,
       })
-      Memory.offices[office].missionResults[mission.type] = Memory.offices[office].missionResults[mission.type]!.slice(0, MISSION_HISTORY_LIMIT)
     })
+    for (const type in Memory.offices[office].missionResults) {
+      Memory.offices[office].missionResults[type as MissionType] = Memory.offices[office].missionResults[type as MissionType]!.filter(r => r.completed && r.completed > (Game.time - MISSION_HISTORY_LIMIT))
+    }
     Memory.offices[office].activeMissions = activeMissions(office).filter(not(isStatus(MissionStatus.DONE)));
   }
 }
@@ -103,23 +105,22 @@ function allocateMissions() {
     if (startingMissions >= getSpawns(office).length) continue;
 
     const hasStorage = Boolean(roomPlans(office)?.headquarters?.storage.structure);
-    let remainingCpu = activeMissions(office)
+    let remainingCpu = Math.max(0, activeMissions(office)
       .reduce((remaining, mission) =>
         remaining -= Math.max(0, mission.estimate.cpu - mission.actual.cpu),
         missionCpuAvailable(office)
-      );
-    let remainingEnergy = activeMissions(office)
+      ));
+    let remainingEnergy = Math.max(0, activeMissions(office)
       .reduce((remaining, mission) =>
         remaining -= Math.max(0, mission.estimate.energy - mission.actual.energy),
         missionEnergyAvailable(office)
-      )
-    // if (office === 'W7N3') console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy)
+      ))
+    if (office === 'W8N3') console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy)
     const priorities = [...new Set(Memory.offices[office].pendingMissions.map(o => o.priority))].sort((a, b) => b - a);
 
     // loop through priorities, highest to lowest
     for (const priority of priorities) {
       if (startingMissions > getSpawns(office).length) break;
-      if (remainingCpu <= 0 || remainingEnergy <= 0) break; // No more available resources
 
       const missions = Memory.offices[office].pendingMissions.filter(o => o.priority === priority);
       const scheduledStartWindow = hasStorage ? Game.time + (CREEP_SPAWN_TIME * 100) : Game.time;
@@ -132,10 +133,11 @@ function allocateMissions() {
       // Handles scheduled missions first
       while (sortedMissions.length) {
         if (startingMissions > getSpawns(office).length) break;
+        if (remainingCpu < 0 || remainingEnergy < 0) break;
         const mission = sortedMissions.shift();
         if (!mission) break;
         const adjustedBudget = getBudgetAdjustment(mission);
-        const canStart = mission.estimate.cpu < (remainingCpu - adjustedBudget.cpu) && mission.estimate.energy < (remainingEnergy - adjustedBudget.energy);
+        const canStart = mission.estimate.cpu <= (remainingCpu - adjustedBudget.cpu) && mission.estimate.energy <= (remainingEnergy - adjustedBudget.energy);
         if (!canStart) {
           if (mission.startTime && mission.startTime <= Game.time) {
             mission.startTime = undefined; // Missed start time, if defined

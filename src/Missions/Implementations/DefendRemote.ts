@@ -1,3 +1,4 @@
+import { blinkyKill } from "Behaviors/blinkyKill";
 import { guardKill } from "Behaviors/guardKill";
 import { moveTo } from "Behaviors/moveTo";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
@@ -9,15 +10,16 @@ import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { MissionImplementation } from "./MissionImplementation";
 
 interface DefendRemoteMissionData {
-  roomTarget?: string
+  roomTarget?: string,
+  coreKiller: boolean
 }
 
 export interface DefendRemoteMission extends Mission<MissionType.DEFEND_REMOTE> {
   data: DefendRemoteMissionData
 }
 
-export function createDefendRemoteMission(office: string): DefendRemoteMission {
-  const body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(office));
+export function createDefendRemoteMission(office: string, coreKiller = false): DefendRemoteMission {
+  const body = MinionBuilders[coreKiller ? MinionTypes.GUARD : MinionTypes.BLINKY](spawnEnergyAvailable(office));
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
@@ -26,9 +28,9 @@ export function createDefendRemoteMission(office: string): DefendRemoteMission {
 
   return createMission({
     office,
-    priority: 3,
+    priority: 9.9,
     type: MissionType.DEFEND_REMOTE,
-    data: {},
+    data: { coreKiller },
     estimate,
   })
 }
@@ -38,8 +40,8 @@ export class DefendRemote extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `GUARD-${mission.office}-${mission.id}`
-    const body = MinionBuilders[MinionTypes.GUARD](spawnEnergyAvailable(mission.office));
+    const name = `JANITOR-${mission.office}-${mission.id}`
+    const body = MinionBuilders[mission.data.coreKiller ? MinionTypes.GUARD : MinionTypes.BLINKY](spawnEnergyAvailable(mission.office));
 
     scheduleSpawn(
       mission.office,
@@ -87,8 +89,14 @@ export class DefendRemote extends MissionImplementation {
     // Clear room
     const target = findClosestHostileCreepByRange(creep.pos) ?? findInvaderStructures(mission.data.roomTarget)[0];
 
-    if (guardKill(creep, target)) {
-      mission.efficiency.working += 1;
+    if (mission.data.coreKiller) {
+      if (guardKill(creep, target)) {
+        mission.efficiency.working += 1;
+      }
+    } else {
+      if (blinkyKill(creep, target)) {
+        mission.efficiency.working += 1;
+      }
     }
   }
 }

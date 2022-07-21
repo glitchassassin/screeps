@@ -1,4 +1,4 @@
-import { calculateNearbyPositions, getCostMatrix, isPositionWalkable, terrainCosts } from "Selectors/MapCoordinates";
+import { calculateNearbyPositions, getCostMatrix, isPositionWalkable, terrainCosts } from "Selectors/Map/MapCoordinates";
 import { getTerritoryIntent, TerritoryIntent } from "Selectors/territoryIntent";
 
 export class Route {

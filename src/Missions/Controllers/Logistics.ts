@@ -8,6 +8,9 @@ import { posById } from "Selectors/posById";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
+const REMOTE_LOGISTICS_PRIORITY = 11;
+const INROOM_LOGISTICS_PRIORITY = 11.1;
+
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
@@ -20,8 +23,8 @@ export default {
     const inRoomLogisticsMissions = [];
     const remoteLogisticsMissions = [];
     for (const mission of pendingMissions(office).filter(isMission(MissionType.LOGISTICS))) {
-      if (mission.priority === 2) remoteLogisticsMissions.push(mission);
-      if (mission.priority === 11) inRoomLogisticsMissions.push(mission);
+      if (mission.priority === REMOTE_LOGISTICS_PRIORITY) remoteLogisticsMissions.push(mission);
+      if (mission.priority === INROOM_LOGISTICS_PRIORITY) inRoomLogisticsMissions.push(mission);
     }
 
     let inRoomCapacity = 0;
@@ -34,7 +37,10 @@ export default {
       if (isMission(MissionType.HARVEST)(mission)) {
         if (!mission.data.distance || !mission.data.harvestRate) continue;
         const remote = mission.office !== posById(mission.data.source)?.roomName;
-        const capacity = mission.data.distance * 2 * Math.min(10, mission.data.harvestRate);
+        const harvestRate = (!remote || Game.rooms[posById(mission.data.source)?.roomName ?? '']?.controller?.reservation?.username === 'LordGreywether') ?
+          SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME :
+          SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
+        const capacity = mission.data.distance * 2 * Math.min(harvestRate, mission.data.harvestRate);
         if (remote) {
           remoteCapacity += capacity;
         } else if (!getFranchisePlanBySourceId(mission.data.source)?.link.structure || franchiseEnergyAvailable(mission.data.source) > CONTAINER_CAPACITY) {
@@ -55,14 +61,14 @@ export default {
 
     let inRoomMissionCapacity = actualCapacity;
     while (inRoomMissionCapacity < inRoomCapacity) {
-      const mission = inRoomLogisticsMissions.shift() ?? createLogisticsMission(office);
+      const mission = inRoomLogisticsMissions.shift() ?? createLogisticsMission(office, INROOM_LOGISTICS_PRIORITY);
       inRoomPendingMissions.push(mission);
       inRoomMissionCapacity += mission.data.capacity;
     }
 
     let remoteMissionCapacity = inRoomMissionCapacity;
     while (remoteMissionCapacity < remoteCapacity) {
-      const mission = remoteLogisticsMissions.shift() ?? createLogisticsMission(office, 2);
+      const mission = remoteLogisticsMissions.shift() ?? createLogisticsMission(office, REMOTE_LOGISTICS_PRIORITY);
       remotePendingMissions.push(mission);
       remoteMissionCapacity += mission.data.capacity;
     }

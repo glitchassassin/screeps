@@ -1,5 +1,5 @@
 import { franchisesByOffice } from "./franchisesByOffice";
-import { adjacentWalkablePositions } from "./MapCoordinates";
+import { adjacentWalkablePositions } from "./Map/MapCoordinates";
 import { posById } from "./posById";
 
 export const findFranchiseTarget = (creep: Creep, office: string) => {

@@ -1,4 +1,4 @@
-import { countTerrainTypes } from "./MapCoordinates";
+import { countTerrainTypes } from "./Map/MapCoordinates";
 
 /**
  * Requires vision

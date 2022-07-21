@@ -1,5 +1,5 @@
 import profiler from "utils/profiler";
-import { calculateNearbyRooms } from "./MapCoordinates";
+import { calculateNearbyRooms } from "./Map/MapCoordinates";
 
 let patrols = new Map<string, string[]>();
 

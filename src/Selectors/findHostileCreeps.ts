@@ -1,5 +1,4 @@
 import { WHITELIST } from "config";
-import { getTerritoriesByOffice } from "./getTerritoriesByOffice";
 
 export const findHostileCreeps = (room: string) => {
     if (!Game.rooms[room]) return [];
@@ -19,14 +18,6 @@ export const findInvaderStructures = (room: string) => {
         FIND_HOSTILE_STRUCTURES,
         {filter: structure => structure.structureType === STRUCTURE_INVADER_CORE}
     ) as StructureInvaderCore[]
-}
-
-export const findHostileCreepsInOfficeOrTerritories = (office: string) => {
-    return [office, ...getTerritoriesByOffice(office)].flatMap(findHostileCreeps);
-}
-
-export const findHostileTargetsInOfficeOrTerritories = (office: string) => {
-    return [office, ...getTerritoriesByOffice(office)].flatMap(room => [...findHostileCreeps(room), ...findInvaderStructures(room)]);
 }
 
 export const findHostileCreepsInRange = (pos: RoomPosition, range: number) => {

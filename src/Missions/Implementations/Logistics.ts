@@ -11,10 +11,11 @@ import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
-import { lookNear } from "Selectors/MapCoordinates";
+import { lookNear } from "Selectors/Map/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
+import { renewCost } from "Selectors/renewCost";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { roomEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
@@ -207,7 +208,9 @@ export class Logistics extends MissionImplementation {
         creep.transfer(target, RESOURCE_ENERGY);
         // If target is spawn, is not spawning, and is at capacity, renew this creep
         if (target instanceof StructureSpawn && !target.spawning && target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)) {
-          console.log('renewing', creep.name, target.renewCreep(creep));
+          if (target.renewCreep(creep) === OK) {
+            mission.actual.energy += renewCost(creep);
+          }
         }
         // Back away
         creep.move(target.pos.getDirectionTo(creep.pos.x, creep.pos.y))

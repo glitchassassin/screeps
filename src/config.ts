@@ -87,3 +87,19 @@ export const MINERAL_PRIORITIES: MineralConstant[] = [
     RESOURCE_HYDROGEN,
     RESOURCE_OXYGEN
 ]
+
+export const MISSION_HISTORY_LIMIT = 15000;
+
+export const THREAT_TOLERANCE = {
+    remote: {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 10,
+        4: 20,
+        5: 30,
+        6: 40,
+        7: 80,
+        8: 120
+    } as Record<number, number>
+}

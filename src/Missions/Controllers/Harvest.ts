@@ -1,10 +1,11 @@
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createHarvestMission, HarvestMission } from "Missions/Implementations/Harvest";
+import { createReserveMission } from "Missions/Implementations/Reserve";
 import { MissionStatus, MissionType } from "Missions/Mission";
-import { activeMissions, and, isMission, not, pendingMissions, submitMission } from "Missions/Selectors";
+import { activeMissions, and, isMission, not, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
-import { adjacentWalkablePositions } from "Selectors/MapCoordinates";
+import { adjacentWalkablePositions } from "Selectors/Map/MapCoordinates";
 import { posById } from "Selectors/posById";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
@@ -22,6 +23,8 @@ export default {
     // logCpuStart()
     const franchises = franchisesByOffice(office);
     // logCpu('get franchises')
+
+    const shouldReserve = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable).length > 0
 
     const activeMissionsBySource = activeMissions(office).reduce(
       (missions, mission) => {
@@ -48,16 +51,22 @@ export default {
     const workPartsPerHarvester = MinionBuilders[MinionTypes.SALESMAN](Game.rooms[office].energyCapacityAvailable)
       .filter(p => p === WORK).length;
 
+
     // Create new harvest mission for source, if it doesn't exist
     for (const {source, remote} of franchises) {
       const sourcePos = posById(source);
       if (!sourcePos) continue;
-      const maxMissions = adjacentWalkablePositions(sourcePos, true).length
-      // logCpu('starting franchise review')
+
+      // generate reserver, if needed
+      if (shouldReserve && !pendingAndActiveMissions(office).filter(isMission(MissionType.RESERVE)).some(m => m.data.reserveTarget === sourcePos.roomName)) {
+        submitMission(office, createReserveMission(office, sourcePos.roomName));
+      }
+
       if (Memory.rooms[sourcePos.roomName]?.reserver && Memory.rooms[sourcePos.roomName]?.reserver !== 'LordGreywether') {
         // room is reserved by hostile, ignore
         continue;
       }
+      const maxMissions = adjacentWalkablePositions(sourcePos, true).length
       const ticksToLive = (name: string) => Game.creeps[name]?.ticksToLive ?? 0;
       // sort active missions by ticks to live, so we only schedule spawns for the youngest
       const activeMissions = activeMissionsBySource[source] ?? [];
