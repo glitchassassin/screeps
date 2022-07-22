@@ -1,5 +1,4 @@
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { plannedTerritoryRoads } from "./plannedTerritoryRoads";
 import { roomPlans } from "./roomPlans";
 import { isPlannedStructure } from "./typeguards";
 
@@ -32,7 +31,6 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         plans.franchise2?.extensions ?? [],
         plans.extensions?.extensions ?? []
     );
-    let territoryRoads = plannedTerritoryRoads(officeName);
 
     // Sort already constructed structures to the top
     plannedExtensions = plannedExtensions.filter(e => e.structure)
@@ -117,7 +115,6 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
         plannedStructures = plannedStructures.concat(
             plans.headquarters?.roads ?? [],
             plans.roads?.roads ?? [],
-            territoryRoads,
         )
     }
     // if (rcl >= 4) {

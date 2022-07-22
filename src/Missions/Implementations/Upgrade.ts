@@ -6,6 +6,7 @@ import { UPGRADE_CONTROLLER_COST } from "gameConstants";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
+import { estimateMissionInterval } from "Missions/Selectors";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { rcl } from "Selectors/rcl";
 import { roomPlans } from "Selectors/roomPlans";
@@ -24,7 +25,7 @@ export function createUpgradeMission(office: string, emergency = false): Upgrade
   const body = MinionBuilders[MinionTypes.PARALEGAL](spawnEnergyAvailable(office), maxWork)
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body) + (body.filter(p => p === WORK).length * CREEP_LIFE_TIME * efficiency),
+    energy: minionCost(body) + (body.filter(p => p === WORK).length * estimateMissionInterval(office) * efficiency),
   }
 
   return createMission({
@@ -61,9 +62,10 @@ export class Upgrade extends MissionImplementation {
 
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
     // Adjust estimate if needed
-    if (mission.actual.energy > mission.estimate.energy) {
-      mission.estimate.energy = mission.actual.energy + creep.body.filter(p => p.type === WORK).length * (creep.ticksToLive ?? 0) * 0.5
-    }
+    mission.estimate.energy = mission.actual.energy +
+      creep.body.filter(p => p.type === WORK).length *
+      Math.min(estimateMissionInterval(mission.office), (creep.ticksToLive ?? 0)) *
+      0.5
     // if (
     //   creep.memory.state === States.GET_BOOSTED
     // ) {

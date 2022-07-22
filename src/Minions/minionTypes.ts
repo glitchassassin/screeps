@@ -11,6 +11,7 @@ export enum MinionTypes {
     ACCOUNTANT = 'ACCOUNTANT',
     CLERK = 'CLERK',
     ENGINEER = 'ENGINEER',
+    PAVER = 'PAVER',
     FOREMAN = 'FOREMAN',
     GUARD = 'GUARD',
     AUDITOR = 'AUDITOR',
@@ -81,6 +82,14 @@ export const MinionBuilders = {
         }
         else {
             return buildFromSegment(energy, [WORK, MOVE, CARRY], { maxSegments })
+        }
+    },
+    [MinionTypes.PAVER]: (energy: number, maxSegments = 8) => {
+        if (energy < 200) {
+            return [];
+        }
+        else {
+            return buildFromSegment(energy, [MOVE, CARRY], { maxSegments, suffix: [WORK] })
         }
     },
     [MinionTypes.FOREMAN]: (energy: number) => {

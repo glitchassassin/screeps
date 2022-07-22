@@ -73,7 +73,7 @@ export const facilitiesEfficiency = memoizeByTick(
         const work = facilitiesWorkToDo(office).slice(0, 20);
         const range = facilitiesWorkToDoAverageRange(office)
         const constructionToDo = work.length > 0 ? work.filter(s => !s.structure).length / work.length : 0;
-        if (range === 0) return 1;
+        if (range === 0) return 0.5;
         const energyUsed = constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER
         const workTime = (CARRY_CAPACITY / energyUsed);
         const travelTime = Math.max(0, range - 3) * 2;
@@ -165,7 +165,8 @@ export const facilitiesCostPending = (officeName: string) => {
     return cache[officeName].cost;
 }
 
-export const plannedStructureNeedsWork = (structure: PlannedStructure, threshold = REPAIR_THRESHOLD) => {
+export const plannedStructureNeedsWork = (structure: PlannedStructure, repairing = false) => {
+    structure.survey();
     if (!structure.structure) {
         // Structure needs to be built; check if we can place a construction site
         return !(
@@ -175,7 +176,7 @@ export const plannedStructureNeedsWork = (structure: PlannedStructure, threshold
     } else {
         const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
         const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
-        if (structure.structure.hits < (maxHits * threshold)) {
+        if (structure.structure.hits < (maxHits * (repairing ? 1 : REPAIR_THRESHOLD))) {
             return true;
         }
     }
@@ -227,7 +228,7 @@ export const costForPlannedStructure = (structure: PlannedStructure, office: str
     return cost;
 }
 
-const adjustedEnergyForPlannedStructure = (structure: PlannedStructure, distance: number, threshold = REPAIR_THRESHOLD) => {
+export const adjustedEnergyForPlannedStructure = (structure: PlannedStructure, distance: number, threshold = 1) => {
     // Calculation assumes Engineers have equal WORK and CARRY and can move 1 sq/tick (generally true with roads)
     if (structure.structure) {
         const workTime = (CARRY_CAPACITY / (REPAIR_COST * REPAIR_POWER));

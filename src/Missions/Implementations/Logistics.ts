@@ -7,12 +7,12 @@ import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
 import { activeMissions, isMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
-import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
 import { lookNear } from "Selectors/Map/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
+import { franchisesThatNeedRoadWork } from "Selectors/plannedTerritoryRoads";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
 import { renewCost } from "Selectors/renewCost";
@@ -51,7 +51,7 @@ const assignedLogisticsCapacity = memoizeByTick(
 )
 
 export function createLogisticsMission(office: string, priority = 11): LogisticsMission {
-  const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10;
+  const roads = rcl(office) > 3 && franchisesThatNeedRoadWork(office).length <= 2;
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
   const capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
@@ -75,7 +75,7 @@ export class Logistics extends MissionImplementation {
   static spawn(mission: LogisticsMission) {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
-    const roads = rcl(mission.office) > 3 && roadConstructionToDo(mission.office).length < 10
+    const roads = rcl(mission.office) > 3 && franchisesThatNeedRoadWork(mission.office).length <= 2
 
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, roads);
 

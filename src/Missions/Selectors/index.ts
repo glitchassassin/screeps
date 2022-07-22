@@ -1,5 +1,6 @@
 import { MissionTypes } from "Missions/Implementations";
 import { Mission, MissionStatus, MissionType } from "Missions/Mission";
+import { roomPlans } from "Selectors/roomPlans";
 
 export function activeMissions(office: string) {
   return Memory.offices[office]?.activeMissions ?? [];
@@ -39,4 +40,12 @@ export function isStatus(status: MissionStatus) {
 
 export function assignedCreep(mission: Mission<MissionType>): Creep|undefined {
   return Game.creeps[mission.creepNames[0] ?? ''];
+}
+
+export function estimateMissionInterval(office: string) {
+  if (roomPlans(office)?.headquarters?.storage.structure) {
+    return CREEP_LIFE_TIME;
+  } else {
+    return CREEP_LIFE_TIME / 5;
+  }
 }

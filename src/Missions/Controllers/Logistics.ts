@@ -5,6 +5,7 @@ import { activeMissions, isMission, not, pendingMissions } from "Missions/Select
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
+import { rcl } from "Selectors/rcl";
 import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 
@@ -37,7 +38,7 @@ export default {
       if (isMission(MissionType.HARVEST)(mission)) {
         if (!mission.data.distance || !mission.data.harvestRate) continue;
         const remote = mission.office !== posById(mission.data.source)?.roomName;
-        const harvestRate = (!remote || Game.rooms[posById(mission.data.source)?.roomName ?? '']?.controller?.reservation?.username === 'LordGreywether') ?
+        const harvestRate = (!remote || rcl(mission.office) >= 3) ?
           SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME :
           SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
         const capacity = mission.data.distance * 2 * Math.min(harvestRate, mission.data.harvestRate);
