@@ -47,7 +47,7 @@ export function createEngineerMission(office: string, franchise?: Id<Source>): E
 
   return createMission({
     office,
-    priority: 9,
+    priority: 8,
     type: MissionType.ENGINEER,
     data: {
       workParts,
@@ -137,6 +137,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
     },
     [States.BUILDING]: (mission, creep) => {
       if (!mission.data.facilitiesTarget) return States.FIND_WORK;
+      if (!creep.store.getUsedCapacity(RESOURCE_ENERGY)) return States.GET_ENERGY;
       const plan = PlannedStructure.deserialize(mission.data.facilitiesTarget)
 
       if (!plannedStructureNeedsWork(plan, true)) return States.FIND_WORK;

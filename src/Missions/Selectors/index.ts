@@ -46,6 +46,22 @@ export function estimateMissionInterval(office: string) {
   if (roomPlans(office)?.headquarters?.storage.structure) {
     return CREEP_LIFE_TIME;
   } else {
-    return CREEP_LIFE_TIME / 5;
+    return CREEP_LIFE_TIME / 5; // This worked best in my tests to balance income with expenses
   }
+}
+
+export function deletePendingMission(office: string, mission: Mission<MissionType>) {
+  const index = Memory.offices[office].pendingMissions.indexOf(mission);
+  if (index === -1) return;
+  Memory.offices[office].pendingMissions.splice(index);
+}
+
+/**
+ * Expects a mission with `arrived` data
+ */
+export function missionExpired(mission: Mission<MissionType>) {
+  const ttl = assignedCreep(mission)?.ticksToLive;
+  if (!ttl) return mission.status === MissionStatus.RUNNING // creep should be alive, but isn't
+  if (!mission.data.arrived) return false;
+  return ttl <= mission.data.arrived;
 }

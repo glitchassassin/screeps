@@ -118,6 +118,7 @@ export const refreshFacilitiesWorkCache = (officeName: string) => {
             cost += energyNeeded;
         }
     }
+    work.sort((a, b) => (a.structure ? 1 : 0) - (b.structure ? 1 : 0));
     // console.log(storagePos, ranges, count)
     rangeCache.set(officeName, count ? ranges / count : 0)
     cache[officeName].work = work;
@@ -228,7 +229,7 @@ export const costForPlannedStructure = (structure: PlannedStructure, office: str
     return cost;
 }
 
-export const adjustedEnergyForPlannedStructure = (structure: PlannedStructure, distance: number, threshold = 1) => {
+export const adjustedEnergyForPlannedStructure = (structure: PlannedStructure, distance: number, threshold = REPAIR_THRESHOLD) => {
     // Calculation assumes Engineers have equal WORK and CARRY and can move 1 sq/tick (generally true with roads)
     if (structure.structure) {
         const workTime = (CARRY_CAPACITY / (REPAIR_COST * REPAIR_POWER));

@@ -2,8 +2,9 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { createHarvestMission, HarvestMission } from "Missions/Implementations/Harvest";
 import { createReserveMission } from "Missions/Implementations/Reserve";
 import { MissionStatus, MissionType } from "Missions/Mission";
-import { activeMissions, and, isMission, not, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
+import { activeMissions, and, deletePendingMission, isMission, isStatus, missionExpired, not, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
+import { activeFranchises } from "Selectors/franchiseActive";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { adjacentWalkablePositions } from "Selectors/Map/MapCoordinates";
 import { posById } from "Selectors/posById";
@@ -51,16 +52,27 @@ export default {
     const workPartsPerHarvester = MinionBuilders[MinionTypes.SALESMAN](Game.rooms[office].energyCapacityAvailable)
       .filter(p => p === WORK).length;
 
+    const reserveCount = shouldReserve ? new Set(activeFranchises(office).map(({room}) => room).filter(room => room !== office)).size : 0;
+    const reserveMissions = pendingAndActiveMissions(office).filter(and(
+      isMission(MissionType.RESERVE),
+      not(and(missionExpired, isStatus(MissionStatus.RUNNING)))
+    ));
+    console.log('to reserve', reserveCount, 'reserved', reserveMissions.length);
+    if (reserveCount < reserveMissions.length) {
+      // Too many missions, prune some
+      for (const mission of reserveMissions.slice(0, reserveMissions.length - reserveCount)) {
+        deletePendingMission(office, mission);
+      }
+    } else if (reserveCount > reserveMissions.length) {
+      for (let i = reserveMissions.length; i < reserveCount; i++) {
+        submitMission(office, createReserveMission(office))
+      }
+    }
 
     // Create new harvest mission for source, if it doesn't exist
     for (const {source, remote} of franchises) {
       const sourcePos = posById(source);
       if (!sourcePos) continue;
-
-      // generate reserver, if needed
-      if (shouldReserve && !pendingAndActiveMissions(office).filter(isMission(MissionType.RESERVE)).some(m => m.data.reserveTarget === sourcePos.roomName)) {
-        submitMission(office, createReserveMission(office, sourcePos.roomName));
-      }
 
       if (Memory.rooms[sourcePos.roomName]?.reserver && Memory.rooms[sourcePos.roomName]?.reserver !== 'LordGreywether') {
         // room is reserved by hostile, ignore

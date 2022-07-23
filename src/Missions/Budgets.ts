@@ -16,6 +16,7 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     if (
       mission.type === MissionType.HARVEST ||
       mission.type === MissionType.LOGISTICS ||
+      mission.type === MissionType.RESERVE ||
       mission.type === MissionType.REFILL
     ) {
       return {
@@ -24,7 +25,6 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
       }
     } else if (
       mission.type === MissionType.EXPLORE ||
-      mission.type === MissionType.RESERVE ||
       mission.type === MissionType.DEFEND_REMOTE ||
       mission.type === MissionType.DEFEND_OFFICE
     ) {
@@ -60,17 +60,17 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     ) {
       return {
         cpu: 2000,
-        energy: 1500,
+        energy: Game.rooms[mission.office].energyCapacityAvailable ?? 1500,
       }
     } else if (mission.type === MissionType.UPGRADE && !mission.data.emergency) {
       return {
         cpu: 2000,
-        energy: 55000,
+        energy: 100000,
       }
     } else {
       return {
         cpu: 2000,
-        energy: 40000,
+        energy: 60000,
       }
     }
   }

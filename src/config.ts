@@ -29,14 +29,14 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 1 : 3;
  * Barrier level targets by RCL
  */
 export const BARRIER_LEVEL: Record<number, number> = {
-    1: 3e+3,
-    2: 3e+3,
-    3: 1e+4,
-    4: 5e+4,
-    5: 1e+5,
-    6: 5e+5,
-    7: 1e+6,
-    8: 1e+7,
+    1: 3000,
+    2: 3000,
+    3: 10000,
+    4: 50000,
+    5: 100000,
+    6: 300000,
+    7: 1000000,
+    8: 10000000,
 }
 export const BARRIER_TYPES: StructureConstant[] = [
     STRUCTURE_WALL,

@@ -30,7 +30,7 @@ export function createUpgradeMission(office: string, emergency = false): Upgrade
 
   return createMission({
     office,
-    priority: emergency ? 15 : 8,
+    priority: emergency ? 15 : 7,
     type: MissionType.UPGRADE,
     data: {
       emergency

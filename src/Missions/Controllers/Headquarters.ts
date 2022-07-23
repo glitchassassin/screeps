@@ -21,7 +21,7 @@ export default {
       submitMission(office, createTowerLogisticsMission(office));
     }
 
-    if (!roomPlans(office)?.headquarters?.terminal.structure) return; // not worth it maintaining just for storage + spawn
+    if (!roomPlans(office)?.headquarters?.link.structure) return; // not worth it maintaining just for storage + spawn
     // Maintain one HQ Logistics minion
     const scheduledMissions = pendingAndActiveMissions(office).some(and(
       isMission(MissionType.HQ_LOGISTICS),
