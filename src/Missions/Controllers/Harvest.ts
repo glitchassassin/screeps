@@ -57,7 +57,6 @@ export default {
       isMission(MissionType.RESERVE),
       not(and(missionExpired, isStatus(MissionStatus.RUNNING)))
     ));
-    console.log('to reserve', reserveCount, 'reserved', reserveMissions.length);
     if (reserveCount < reserveMissions.length) {
       // Too many missions, prune some
       for (const mission of reserveMissions.slice(0, reserveMissions.length - reserveCount)) {

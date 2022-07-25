@@ -3,7 +3,7 @@
 export const FEATURES = {
     MINING: true,
     LABS: true,
-    WHITELIST: true,
+    WHITELIST: false,
 }
 
 /**

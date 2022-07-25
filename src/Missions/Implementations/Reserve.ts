@@ -87,7 +87,6 @@ export class Reserve extends MissionImplementation {
       // Set arrived timestamp when in range
       mission.data.arrived ??= CREEP_CLAIM_LIFE_TIME - (creep.ticksToLive ?? CREEP_CLAIM_LIFE_TIME);
     }
-    console.log(mission.data.reserveTarget, mission.data.arrived);
 
     // Move to controller
     if (moveTo(creep, { pos: controllerPos, range: 1 }) === BehaviorResult.SUCCESS) {

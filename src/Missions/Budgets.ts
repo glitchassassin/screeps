@@ -1,4 +1,3 @@
-import { rampartsToRepair } from "Selectors/Combat/defenseRamparts";
 import { roomPlans } from "Selectors/roomPlans";
 import { Mission, MissionType } from "./Mission";
 
@@ -55,8 +54,7 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
         MissionType.DEFEND_REMOTE,
         MissionType.HQ_LOGISTICS,
         MissionType.DEFEND_OFFICE
-      ].includes(mission.type) ||
-      (mission.type === MissionType.ENGINEER && rampartsToRepair(mission.office).length)
+      ].includes(mission.type)
     ) {
       return {
         cpu: 2000,

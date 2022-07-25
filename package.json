@@ -13,13 +13,15 @@
     "push-pserver": "rollup -c --environment DEST:pserver",
     "push-marvin": "rollup -c --environment DEST:marvin",
     "push-sim": "rollup -c --environment DEST:sim",
+    "push-botarena": "rollup -c --environment DEST:botarena",
     "test": "jest",
     "watch-main": "rollup -cw --environment DEST:main",
     "watch-xxworld": "rollup -cw --environment DEST:xxworld",
     "watch-splus": "rollup -cw --environment DEST:splus",
     "watch-pserver": "rollup -cw --environment DEST:pserver",
     "watch-marvin": "rollup -cw --environment DEST:marvin",
-    "watch-sim": "rollup -cw --environment DEST:sim"
+    "watch-sim": "rollup -cw --environment DEST:sim",
+    "watch-botarena": "rollup -cw --environment DEST:botarena"
   },
   "repository": {
     "type": "git",

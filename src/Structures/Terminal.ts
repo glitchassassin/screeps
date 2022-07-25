@@ -1,3 +1,4 @@
+import { allMarketOrders } from "Selectors/marketEnabled";
 import { officeResourceSurplus } from "Selectors/officeResourceSurplus";
 import { roomPlans } from "Selectors/roomPlans";
 import { terminalBalance } from "Selectors/terminalBalance";
@@ -40,7 +41,7 @@ export const runTerminal = () => {
       }
     } else if (resource !== RESOURCE_ENERGY && amount > TERMINAL_SEND_THRESHOLD) {
       // Do not sell surplus energy
-      const order = _.max(Game.market.getAllOrders(o => o.resourceType === resource && o.type === ORDER_BUY && o.amount > 0), o => o.price)
+      const order = _.max(allMarketOrders().filter(o => o.resourceType === resource && o.type === ORDER_BUY && o.amount > 0), o => o.price)
 
       if (order) {
         const cost = order.roomName ? Game.market.calcTransactionCost(Math.min(Math.abs(amount), order.amount), office, order.roomName) : 0
@@ -56,7 +57,7 @@ export const runTerminal = () => {
     const [targetOffice] = maxSurpluses.get(resource) ?? [];
     if (!targetOffice && Math.abs(amount) > TERMINAL_SEND_THRESHOLD) {
       // No surplus of this product available, buy it on the market
-      const order = _.min(Game.market.getAllOrders(o => o.resourceType === resource && o.type === ORDER_SELL && o.amount > 0 && o.price < Game.market.credits), o => o.price)
+      const order = _.min(allMarketOrders().filter(o => o.resourceType === resource && o.type === ORDER_SELL && o.amount > 0 && o.price < Game.market.credits), o => o.price)
       if (order) {
         const cost = order.roomName ? Game.market.calcTransactionCost(Math.min(Math.abs(amount), order.amount), office, order.roomName) : 0
         // Don't execute trades for more than 1/10th of energy in Terminal

@@ -68,7 +68,6 @@ export class DefendOffice extends MissionImplementation {
   static minionRoles: Record<DefendOfficeRoles, (mission: DefendOfficeMission, creep: Creep) => void> = {
     [MinionTypes.GUARD]: (mission: DefendOfficeMission, creep: Creep) => {
       const target = priorityKillTarget(mission.office);
-      console.log(target);
       if (!target) return;
 
       // if ramparts aren't broken, stay inside perimeter
