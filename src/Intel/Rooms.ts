@@ -2,14 +2,15 @@ import { TERRITORY_RADIUS } from "config";
 import { MINERALS } from "gameConstants";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { scanRoomPlanStructures } from "RoomPlanner/scanRoomPlanStructures";
+import { calculateThreatLevel, ThreatLevel } from "Selectors/Combat/threatAnalysis";
 import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
 import { destroyUnplannedStructures } from "Selectors/facilitiesWorkToDo";
-import { findHostileCreeps } from "Selectors/findHostileCreeps";
 import { getOfficeDistanceByRange } from "Selectors/getOfficeDistance";
-import { getRoomPathDistance } from "Selectors/MapCoordinates";
+import { getRoomPathDistance } from "Selectors/Map/Pathing";
 import { ownedMinerals } from "Selectors/ownedMinerals";
 import { serializePlannedStructures } from "Selectors/plannedStructures";
 import { posById } from "Selectors/posById";
+import { rcl } from "Selectors/rcl";
 import { sourceIds } from "Selectors/roomCache";
 import { roomIsEligibleForOffice } from "Selectors/roomIsEligibleForOffice";
 import { roomPlans } from "Selectors/roomPlans";
@@ -42,7 +43,8 @@ declare global {
         franchises: Record<string, Record<Id<Source>, {
             path: string,
             lastHarvested?: number
-        }>>
+        }>>,
+        threatLevel?: [ThreatLevel, number]
     }
     interface Memory {
         positions: Record<string, string>
@@ -57,6 +59,10 @@ export const scanRooms = profiler.registerFN(() => {
 
     // Purge dead offices
     for (let office in Memory.offices) {
+        if (rcl(office) > 1 && !Game.rooms[office]?.find(FIND_MY_SPAWNS).length) {
+            // Office was destroyed
+            Game.rooms[office]?.controller?.unclaim();
+        }
         if (!Game.rooms[office]?.controller?.my) {
             delete Memory.offices[office];
             delete Memory.stats.offices[office];
@@ -87,7 +93,8 @@ export const scanRooms = profiler.registerFN(() => {
                 mineralType,
                 eligibleForOffice,
                 officesInRange: '',
-                franchises: {}
+                franchises: {},
+                threatLevel: calculateThreatLevel(room),
             }
 
             // Calculate nearby offices and assign
@@ -108,14 +115,17 @@ export const scanRooms = profiler.registerFN(() => {
         Memory.rooms[room].reservation = Game.rooms[room].controller?.reservation?.ticksToEnd
         Memory.rooms[room].scanned = Game.time
 
-        if (findHostileCreeps(room).length) Memory.rooms[room].lastHostileSeen = Game.time
+        const threatLevel = calculateThreatLevel(room)
+        Memory.rooms[room].threatLevel = threatLevel;
+
+        if (threatLevel[1]) Memory.rooms[room].lastHostileSeen = Game.time
         if (Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, { filter: s => s.structureType === STRUCTURE_INVADER_CORE }).length > 0) {
             Memory.rooms[room].invaderCore = Game.time
         } else {
             delete Memory.rooms[room].invaderCore
         }
         // If room is unowned and has resources, let's loot it!
-        if (!Game.rooms[room].controller?.owner?.username) {
+        if (![ThreatLevel.OWNED, ThreatLevel.FRIENDLY].includes(threatLevel[0])) {
             const lootStructures = Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, { filter: s => 'store' in s && Object.keys(s.store).length }) as AnyStoreStructure[];
 
             Memory.rooms[room].lootEnergy = 0;

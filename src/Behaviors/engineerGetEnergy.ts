@@ -2,7 +2,7 @@ import { byId } from "Selectors/byId";
 import { franchiseIsFull } from "Selectors/franchiseIsFull";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
-import { getClosestByRange } from "Selectors/MapCoordinates";
+import { getClosestByRange } from "Selectors/Map/MapCoordinates";
 import { posById } from "Selectors/posById";
 import { roomPlans } from "Selectors/roomPlans";
 import { memoizeByTick } from "utils/memoizeFunction";

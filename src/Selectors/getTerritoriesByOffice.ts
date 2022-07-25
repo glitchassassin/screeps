@@ -1,6 +1,7 @@
-import { TERRITORY_RADIUS } from "config";
-import { calculateNearbyRooms, getClosestOfficeFromMemory, isSourceKeeperRoom } from "./MapCoordinates";
-import { getTerritoryIntent, TerritoryIntent } from "./territoryIntent";
+import { TERRITORY_RADIUS, THREAT_TOLERANCE } from "config";
+import { ThreatLevel } from "./Combat/threatAnalysis";
+import { calculateNearbyRooms, getClosestOfficeFromMemory, isSourceKeeperRoom } from "./Map/MapCoordinates";
+import { rcl } from "./rcl";
 
 declare global {
     interface OfficeMemory {
@@ -31,7 +32,9 @@ function recalculateTerritories() {
                 Memory.rooms[t]?.franchises[office] &&
                 !Memory.offices[t] &&
                 getClosestOfficeFromMemory(t) === office &&
-                getTerritoryIntent(t) !== TerritoryIntent.AVOID
+                Memory.rooms[t].threatLevel?.[0] !== ThreatLevel.OWNED &&
+                !Memory.rooms[t].owner &&
+                (Memory.rooms[t].threatLevel?.[1] ?? 0) <= THREAT_TOLERANCE.remote[rcl(office)]
             ));
         Memory.offices[office].territories = [];
         targets.forEach(t => {

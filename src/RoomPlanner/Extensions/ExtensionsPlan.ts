@@ -1,7 +1,8 @@
 import { ExtensionsPlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
-import { calculateAdjacentPositions, getCostMatrix, getRangeTo, isPositionWalkable } from "Selectors/MapCoordinates";
+import { calculateAdjacentPositions, getRangeTo, isPositionWalkable } from "Selectors/Map/MapCoordinates";
+import { getCostMatrix } from "Selectors/Map/Pathing";
 import { roomPlans } from "Selectors/roomPlans";
 import { isRoomPosition } from "Selectors/typeguards";
 import { validateExtensionsPlan } from "./validateExtensionsPlan";

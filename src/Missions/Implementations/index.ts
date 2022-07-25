@@ -2,6 +2,7 @@ import { MissionType } from 'Missions/Mission';
 import { AcquireEngineer, AcquireEngineerMission } from './AcquireEngineer';
 import { AcquireLawyer, AcquireLawyerMission } from './AcquireLawyer';
 import { AcquireLogistics, AcquireLogisticsMission } from './AcquireLogistics';
+import { DefendOffice, DefendOfficeMission } from './DefendOffice';
 import { DefendRemote, DefendRemoteMission } from './DefendRemote';
 import { Engineer, EngineerMission } from './Engineer';
 import { Explore, ExploreMission } from './Explore';
@@ -36,6 +37,7 @@ export type MissionTypes = {
   [MissionType.ACQUIRE_LOGISTICS]: AcquireLogisticsMission,
   [MissionType.ACQUIRE_LAWYER]: AcquireLawyerMission,
   [MissionType.DEFEND_REMOTE]: DefendRemoteMission,
+  [MissionType.DEFEND_OFFICE]: DefendOfficeMission,
 }
 
 export const Missions: Record<MissionType, typeof MissionImplementation> = {
@@ -56,4 +58,5 @@ export const Missions: Record<MissionType, typeof MissionImplementation> = {
   [MissionType.ACQUIRE_LOGISTICS]: AcquireLogistics,
   [MissionType.ACQUIRE_LAWYER]: AcquireLawyer,
   [MissionType.DEFEND_REMOTE]: DefendRemote,
+  [MissionType.DEFEND_OFFICE]: DefendOffice,
 }

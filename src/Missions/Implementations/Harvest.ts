@@ -5,7 +5,7 @@ import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
 import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
 import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
-import { getClosestByRange } from "Selectors/MapCoordinates";
+import { getClosestByRange } from "Selectors/Map/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";

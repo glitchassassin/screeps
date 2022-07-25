@@ -1,6 +1,6 @@
 import { MissionType } from "Missions/Mission";
 import { memoizeByTick } from "utils/memoizeFunction";
-import { adjacentWalkablePositions } from "./MapCoordinates";
+import { adjacentWalkablePositions } from "./Map/MapCoordinates";
 import { posById } from "./posById";
 
 export const franchiseIsFull = memoizeByTick(

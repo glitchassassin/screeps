@@ -4,7 +4,7 @@ import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionStatus, MissionType } from "Missions/Mission";
 import { byId } from "Selectors/byId";
-import { getRangeTo } from "Selectors/MapCoordinates";
+import { getRangeTo } from "Selectors/Map/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
 import { roomPlans } from "Selectors/roomPlans";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";

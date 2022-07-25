@@ -1,5 +1,5 @@
 import { add } from "lodash";
-import { blockSquare, calculateNearbyPositions, getRangeTo, pathsCostMatrix, setMove } from "Selectors/MapCoordinates";
+import { blockSquare, calculateNearbyPositions, getRangeTo, pathsCostMatrix, setMove } from "Selectors/Map/MapCoordinates";
 import { memoizeByTick } from "../memoizeFunction";
 
 const oldMoveTo = Creep.prototype.moveTo;

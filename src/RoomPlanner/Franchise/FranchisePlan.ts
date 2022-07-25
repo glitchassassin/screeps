@@ -1,6 +1,6 @@
 import { FranchisePlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
-import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
+import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/Map/MapCoordinates";
 import { posById } from "Selectors/posById";
 import { validateFranchisePlan } from "./validateFranchisePlan";
 
@@ -25,7 +25,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
     let spawn: StructureSpawn|undefined = undefined;
     try { [spawn] = sourcePos.findInRange(FIND_MY_SPAWNS, 3); } catch {}
 
-    console.log('Found spawn', spawn)
+    // console.log('Found spawn', spawn)
 
     // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
     let route = PathFinder.search(
@@ -44,7 +44,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
         STRUCTURE_CONTAINER
     );
 
-    console.log('container', plan.container.pos)
+    // console.log('container', plan.container.pos)
 
     // 2. The Franchise link and spawn will be adjacent to the container, but not on the path to the Controller,
     // and not too close to an edge (to make room for exit ramparts, if needed)
@@ -61,7 +61,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
         if (!spawnPos) throw new Error('Not enough space to place a Franchise');
         plan.spawn = new PlannedStructure(spawnPos, STRUCTURE_SPAWN);
     }
-    console.log('spawn', plan.spawn.pos)
+    // console.log('spawn', plan.spawn.pos)
     let linkPos = adjacents.shift();
     if (!linkPos) throw new Error('Not enough space to place a Franchise');
     plan.link = new PlannedStructure(linkPos, STRUCTURE_LINK);

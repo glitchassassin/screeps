@@ -1,11 +1,19 @@
 import { BehaviorResult } from "Behaviors/Behavior";
+import { engineerGetEnergy } from "Behaviors/engineerGetEnergy";
 import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
+import { moveTo } from "Behaviors/moveTo";
+import { setState, States } from "Behaviors/states";
+import { UPGRADE_CONTROLLER_COST } from "gameConstants";
 import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
 import { scheduleSpawn } from "Minions/spawnQueues";
+import { getWithdrawLimit } from "Missions/Budgets";
 import { createMission, Mission, MissionType } from "Missions/Mission";
+import { PlannedStructure } from "RoomPlanner/PlannedStructure";
+import { facilitiesWorkToDo, plannedStructureNeedsWork } from "Selectors/facilitiesWorkToDo";
 import { minionCost } from "Selectors/minionCostPerTick";
+import { rcl } from "Selectors/rcl";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { engineerLogic } from "./Engineer";
+import { storageEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { MissionImplementation } from "./MissionImplementation";
 
 export interface AcquireEngineerMission extends Mission<MissionType.ACQUIRE_ENGINEER> {
@@ -76,4 +84,94 @@ export class AcquireEngineer extends MissionImplementation {
       }
     }
   }
+}
+
+const engineerLogic = (creep: Creep, office: string, mission: AcquireEngineerMission) => {
+  let facilitiesTarget;
+  // Check target for completion
+  if (mission.data.facilitiesTarget) {
+    facilitiesTarget = PlannedStructure.deserialize(mission.data.facilitiesTarget)
+    if (!plannedStructureNeedsWork(facilitiesTarget, true)) {
+      mission.data.facilitiesTarget = undefined;
+    }
+  }
+
+  // Select a target
+  if (!mission.data.facilitiesTarget) {
+    facilitiesTarget = facilitiesWorkToDo(office)[0];
+    if (facilitiesTarget) {
+      mission.data.facilitiesTarget = facilitiesTarget.serialize();
+    }
+  }
+
+  // Do work
+  if (!creep.memory.state || creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+    setState(States.GET_ENERGY)(creep);
+  }
+  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    setState(States.WORKING)(creep);
+  }
+  if (creep.memory.state === States.GET_ENERGY) {
+    if (engineerGetEnergy(creep, office, getWithdrawLimit(mission)) === BehaviorResult.SUCCESS) {
+      setState(States.WORKING)(creep);
+    }
+  }
+  if (creep.memory.state === States.WORKING) {
+    if (
+      !mission.data.facilitiesTarget &&
+      (
+        rcl(office) < 4 ||
+        storageEnergyAvailable(office) > getWithdrawLimit(mission)
+      )
+    ) {
+      // No construction - upgrade instead
+      const controller = Game.rooms[office]?.controller
+      if (!controller) return 0;
+      moveTo(creep, { pos: controller.pos, range: 3 });
+      const result = creep.upgradeController(controller);
+      if (result == ERR_NOT_ENOUGH_ENERGY) {
+        setState(States.GET_ENERGY)(creep);
+      } else if (result === OK) {
+        return (UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER) * creep.body.filter(p => p.type === WORK).length
+      }
+    } else if (mission.data.facilitiesTarget) {
+      const plan = PlannedStructure.deserialize(mission.data.facilitiesTarget)
+      // console.log(creep.name, plan.pos, plan.structureType);
+
+      if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
+        const obstacle = plan.pos.lookFor(LOOK_STRUCTURES)
+          .find(s => s.structureType !== STRUCTURE_CONTAINER && s.structureType !== STRUCTURE_ROAD)
+        if (obstacle && moveTo(creep, { pos: plan.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+          creep.dismantle(obstacle);
+        }
+      }
+
+      if (moveTo(creep, { pos: plan.pos, range: 3 }) === BehaviorResult.SUCCESS) {
+        if (plan.structure) {
+          if (creep.repair(plan.structure) === OK) {
+            return (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
+          }
+        } else {
+          // Create construction site if needed
+          const result = plan.pos.createConstructionSite(plan.structureType);
+          if (result === ERR_NOT_OWNER) {
+            // room reserved or claimed by a hostile actor
+            delete mission.data.facilitiesTarget;
+            return 0;
+          }
+          // Shove creeps out of the way if needed
+          if ((OBSTACLE_OBJECT_TYPES as string[]).includes(plan.structureType)) {
+            plan.pos.lookFor(LOOK_CREEPS)[0]?.giveWay();
+          }
+          if (plan.constructionSite) {
+            if (creep.build(plan.constructionSite) === OK) {
+              return BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
+            }
+          }
+        }
+        plan.survey()
+      }
+    }
+  }
+  return 0;
 }

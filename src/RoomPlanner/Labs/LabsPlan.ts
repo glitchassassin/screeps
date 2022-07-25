@@ -1,7 +1,7 @@
 import { LabsPlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
-import { calculateAdjacentPositions } from "Selectors/MapCoordinates";
+import { calculateAdjacentPositions } from "Selectors/Map/MapCoordinates";
 import { roomPlans } from "Selectors/roomPlans";
 import { validatePathsToPointsOfInterest } from "Selectors/validatePathsToPointsOfInterest";
 import { validateLabsPlan } from "./validateLabsPlan";

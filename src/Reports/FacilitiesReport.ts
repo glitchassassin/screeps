@@ -1,7 +1,10 @@
 import { BARRIER_LEVEL, BARRIER_TYPES } from "config";
+import { MissionType } from "Missions/Mission";
+import { activeMissions, isMission } from "Missions/Selectors";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { Dashboard, Rectangle, Table } from "screeps-viz";
 import { facilitiesCostPending, facilitiesWorkToDo } from "Selectors/facilitiesWorkToDo";
+import { franchisesThatNeedRoadWork } from "Selectors/plannedTerritoryRoads";
 
 export default () => {
     for (let room in Memory.offices) {
@@ -28,29 +31,49 @@ export default () => {
                 }
             });
 
-            const data = [
-                ...structureTypes.map(t => ['', '', t]),
-                ['---', '---', '---'],
-                [
-                    workToDo.length,
-                    facilitiesCostPending(room),
-                    ''
-                ]
-            ];
+        const data = [
+            ...structureTypes.map(t => ['', '', t]),
+            ['---', '---', '---'],
+            [
+                workToDo.length,
+                facilitiesCostPending(room),
+                ''
+            ]
+        ];
 
-            Dashboard({
-                widgets: [
-                    {
-                        pos: { x: 1, y: 1 },
-                        width: 40,
-                        height: Math.min(48, 1 + data.length * 1.4),
-                        widget: Rectangle({ data: Table({
-                            config: { headers: ['Count', 'Cost', 'Types'] },
-                            data
-                        }) })
-                    }
-                ],
-                config: { room }
-            })
+        Dashboard({
+            widgets: [
+                {
+                    pos: { x: 1, y: 1 },
+                    width: 40,
+                    height: Math.min(48, 1 + data.length * 1.4),
+                    widget: Rectangle({ data: Table({
+                        config: { headers: ['Count', 'Cost', 'Types'] },
+                        data
+                    }) })
+                }
+            ],
+            config: { room }
+        })
+
+        // Remote roads
+        const remotes = franchisesThatNeedRoadWork(room).map(source => ([
+            source,
+            activeMissions(room).filter(isMission(MissionType.ENGINEER)).filter(m => m.data.franchise === source).length
+        ]))
+        Dashboard({
+            widgets: [
+                {
+                    pos: { x: 1, y: Math.min(48, 1 + data.length * 1.4) + 2 },
+                    width: 40,
+                    height: Math.max(4, Math.min(48, 1 + remotes.length * 1.4)),
+                    widget: Rectangle({ data: Table({
+                        config: { headers: ['Franchise', 'Assigned',] },
+                        data: remotes
+                    }) })
+                }
+            ],
+            config: { room }
+        })
     }
 }

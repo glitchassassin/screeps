@@ -1,7 +1,8 @@
 import { createPlunderMission } from "Missions/Implementations/Plunder";
 import { MissionType } from "Missions/Mission";
 import { isMission, pendingAndActiveMissions } from "Missions/Selectors";
-import { calculateNearbyRooms, getRoomPathDistance } from "Selectors/MapCoordinates";
+import { calculateNearbyRooms } from "Selectors/Map/MapCoordinates";
+import { getRoomPathDistance } from "Selectors/Map/Pathing";
 import { roomPlans } from "Selectors/roomPlans";
 
 const assignedPlunderCapacity = (office: string) => {
@@ -36,7 +37,6 @@ export default {
     const {room, capacity } = calculateNearbyRooms(office, 3, false).map(neededPlunderCapacity(office)).find(({capacity}) => capacity > 0) ?? {}
     if (!room || !capacity) return;
     const assignedCapacity = (plunderCapacity.get(room) ?? 0);
-    console.log('plunder capacity needed for', room, capacity, 'assigned', assignedCapacity);
     if (capacity > assignedCapacity) {
       // New Plunder mission needed
       Memory.offices[office].pendingMissions.push(createPlunderMission(office, room));

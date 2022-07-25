@@ -18,6 +18,9 @@ export enum States {
     RENEW = 'RENEW',
     GET_BOOSTED = 'GET_BOOSTED',
     RECYCLE = 'RECYCLE',
+    FIND_WORK = 'FIND_WORK',
+    BUILDING = 'BUILDING',
+    UPGRADING = 'UPGRADING',
 }
 
 declare global {

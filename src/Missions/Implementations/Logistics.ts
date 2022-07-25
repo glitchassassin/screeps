@@ -7,14 +7,15 @@ import { scheduleSpawn } from "Minions/spawnQueues";
 import { createMission, Mission, MissionType } from "Missions/Mission";
 import { activeMissions, isMission } from "Missions/Selectors";
 import { byId } from "Selectors/byId";
-import { roadConstructionToDo } from "Selectors/facilitiesWorkToDo";
 import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
 import { franchisesByOffice } from "Selectors/franchisesByOffice";
 import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
-import { lookNear } from "Selectors/MapCoordinates";
+import { lookNear } from "Selectors/Map/MapCoordinates";
 import { minionCost } from "Selectors/minionCostPerTick";
+import { franchisesThatNeedRoadWork } from "Selectors/plannedTerritoryRoads";
 import { posById } from "Selectors/posById";
 import { rcl } from "Selectors/rcl";
+import { renewCost } from "Selectors/renewCost";
 import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
 import { roomEnergyAvailable } from "Selectors/storageEnergyAvailable";
 import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
@@ -50,7 +51,7 @@ const assignedLogisticsCapacity = memoizeByTick(
 )
 
 export function createLogisticsMission(office: string, priority = 11): LogisticsMission {
-  const roads = rcl(office) > 3 && roadConstructionToDo(office).length < 10;
+  const roads = rcl(office) > 3 && franchisesThatNeedRoadWork(office).length <= 2;
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, roads);
   const capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
@@ -74,7 +75,7 @@ export class Logistics extends MissionImplementation {
   static spawn(mission: LogisticsMission) {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
-    const roads = rcl(mission.office) > 3 && roadConstructionToDo(mission.office).length < 10
+    const roads = rcl(mission.office) > 3 && franchisesThatNeedRoadWork(mission.office).length <= 2
 
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, roads);
 
@@ -207,7 +208,9 @@ export class Logistics extends MissionImplementation {
         creep.transfer(target, RESOURCE_ENERGY);
         // If target is spawn, is not spawning, and is at capacity, renew this creep
         if (target instanceof StructureSpawn && !target.spawning && target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)) {
-          console.log('renewing', creep.name, target.renewCreep(creep));
+          if (target.renewCreep(creep) === OK) {
+            mission.actual.energy += renewCost(creep);
+          }
         }
         // Back away
         creep.move(target.pos.getDirectionTo(creep.pos.x, creep.pos.y))

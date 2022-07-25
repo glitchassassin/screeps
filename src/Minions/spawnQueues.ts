@@ -1,7 +1,8 @@
 import { moveTo } from "Behaviors/moveTo";
 import { FEATURES } from "config";
 import { byId } from "Selectors/byId";
-import { calculateAdjacentPositions } from "Selectors/MapCoordinates";
+import { calculateAdjacentPositions } from "Selectors/Map/MapCoordinates";
+import { minionCost } from "Selectors/minionCostPerTick";
 import { getSpawns } from "Selectors/roomPlans";
 import { boostsAvailable } from "Selectors/shouldHandleBoosts";
 import { getEnergyStructures } from "Selectors/spawnsAndExtensionsDemand";
@@ -70,7 +71,6 @@ function vacateSpawns(office: string) {
             if (spawningSquares.every(pos => pos.lookFor(LOOK_CREEPS).length)) {
                 for (const pos of spawningSquares) {
                     for (const creep of pos.lookFor(LOOK_CREEPS)) {
-                        console.log('Telling', creep, 'to move');
                         moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
                     }
                 }
@@ -149,7 +149,7 @@ export function spawnFromQueues() {
                     availableSpawns = availableSpawns.filter(s => s !== spawn);
                     orderBoosts(office, order);
                     Memory.offices[office].spawnQueue = Memory.offices[office].spawnQueue.filter(o => o !== order);
-                } else if (result === ERR_BUSY || result === ERR_NOT_ENOUGH_ENERGY) {
+                } else if (result === ERR_BUSY || (result === ERR_NOT_ENOUGH_ENERGY && Game.rooms[office].energyCapacityAvailable >= minionCost(order.data.body))) {
                     // Spawn failed, postpone order
                     order.startTime = undefined;
                     const firstTry = orderAttempted.get(order) ?? Game.time;

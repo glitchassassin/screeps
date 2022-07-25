@@ -44,8 +44,6 @@ export class AcquireLawyer extends MissionImplementation {
     const name = `LAWYER-${mission.office}-${mission.id}`
     const body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(mission.office));
 
-    console.log(name, body);
-
     scheduleSpawn(
       mission.office,
       mission.priority,

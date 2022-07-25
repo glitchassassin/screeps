@@ -1,11 +1,12 @@
 import { Dashboard, Label, Rectangle, Table } from "screeps-viz";
+import { allMarketOrders } from "Selectors/marketEnabled";
 
 interface MarketReportOpts {
-    filter?: OrderFilter | ((o: Order) => boolean)
+    filter?: ((o: Order) => boolean)
 }
 
 export default (opts: MarketReportOpts = {}) => {
-    const orders = Game.market.getAllOrders(opts.filter);
+    const orders = allMarketOrders().filter(o => !opts.filter || opts.filter(o));
     const buyOrders = [];
     const sellOrders = [];
 

@@ -3,7 +3,7 @@
 export const FEATURES = {
     MINING: true,
     LABS: true,
-    WHITELIST: true,
+    WHITELIST: false,
 }
 
 /**
@@ -29,14 +29,14 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 1 : 3;
  * Barrier level targets by RCL
  */
 export const BARRIER_LEVEL: Record<number, number> = {
-    1: 3e+3,
-    2: 3e+3,
-    3: 1e+4,
-    4: 5e+4,
-    5: 1e+5,
-    6: 5e+5,
-    7: 1e+6,
-    8: 1e+7,
+    1: 3000,
+    2: 3000,
+    3: 10000,
+    4: 50000,
+    5: 100000,
+    6: 300000,
+    7: 1000000,
+    8: 10000000,
 }
 export const BARRIER_TYPES: StructureConstant[] = [
     STRUCTURE_WALL,
@@ -87,3 +87,19 @@ export const MINERAL_PRIORITIES: MineralConstant[] = [
     RESOURCE_HYDROGEN,
     RESOURCE_OXYGEN
 ]
+
+export const MISSION_HISTORY_LIMIT = 15000;
+
+export const THREAT_TOLERANCE = {
+    remote: {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 10,
+        4: 20,
+        5: 30,
+        6: 40,
+        7: 80,
+        8: 120
+    } as Record<number, number>
+}

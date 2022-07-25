@@ -1,7 +1,7 @@
 import { HeadquartersPlan } from "RoomPlanner";
 import { PlannedStructure } from "RoomPlanner/PlannedStructure";
 import { costMatrixFromRoomPlan } from "Selectors/costMatrixFromRoomPlan";
-import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/MapCoordinates";
+import { calculateAdjacentPositions, isPositionWalkable } from "Selectors/Map/MapCoordinates";
 import { posById } from "Selectors/posById";
 import { validatePathsToPointsOfInterest } from "Selectors/validatePathsToPointsOfInterest";
 import { validateHeadquartersPlan } from "./validateHeadquartersPlan";

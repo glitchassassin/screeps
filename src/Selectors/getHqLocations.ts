@@ -1,4 +1,4 @@
-import { calculateAdjacentPositions } from "./MapCoordinates";
+import { calculateAdjacentPositions } from "./Map/MapCoordinates";
 import { roomPlans } from "./roomPlans";
 
 const refillerLocationCache = new Map<string, RoomPosition>();
