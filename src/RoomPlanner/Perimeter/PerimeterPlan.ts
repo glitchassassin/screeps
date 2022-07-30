@@ -1,6 +1,6 @@
 import { PerimeterPlan } from 'RoomPlanner';
 import { roomPlans } from 'Selectors/roomPlans';
-import util_mincut, { Rect } from '../../utils/mincut';
+import util_mincut, { Rect } from '../Algorithms/mincut';
 import { PlannedStructure } from '../PlannedStructure';
 import { validatePerimeterPlan } from './validatePerimeterPlan';
 
