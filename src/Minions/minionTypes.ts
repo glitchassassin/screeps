@@ -51,8 +51,8 @@ function buildFromSegment(energy: number, segment: BodyPartConstant[], opts: Par
 }
 
 export const MinionBuilders = {
-    [MinionTypes.CLERK]: (energy: number, maxSegments = 50) => {
-        return buildFromSegment(energy, [CARRY], { maxSegments });
+    [MinionTypes.CLERK]: (energy: number, maxSegments = 50, mobile = false) => {
+        return buildFromSegment(energy, [CARRY], { maxSegments, suffix: [MOVE] });
     },
     [MinionTypes.ACCOUNTANT]: memoize( // Memoizes at 50-energy increments
         (energy: number, maxSegments = 25, roads = false) => `${Math.round(energy * 2 / 100)} ${maxSegments} ${roads}`,
@@ -114,14 +114,14 @@ export const MinionBuilders = {
     [MinionTypes.AUDITOR]: (energy: number) => {
         return [MOVE];
     },
-    [MinionTypes.LAWYER]:  (energy: number) => {
+    [MinionTypes.LAWYER]: (energy: number) => {
         if (energy < 850) {
             return [];
         } else {
             return [CLAIM, MOVE, MOVE, MOVE, MOVE, MOVE]
         }
     },
-    [MinionTypes.MARKETER]:  (energy: number) => {
+    [MinionTypes.MARKETER]: (energy: number) => {
         if (energy < 650) {
             return [];
         }
@@ -135,9 +135,9 @@ export const MinionBuilders = {
         }
         else {
             // Max for an upgrader at RCL8 is 15 energy/tick, so we'll cap these there
-            let workParts = Math.max(1, Math.min(Math.floor(maxWorkParts), Math.floor(((energy) * 10/13) / 100)))
-            let carryParts = Math.max(1, Math.min(3, Math.floor(((energy) * 1/13) / 50)))
-            let moveParts = Math.max(1, Math.min(6, Math.floor(((energy) * 2/13) / 50)))
+            let workParts = Math.max(1, Math.min(Math.floor(maxWorkParts), Math.floor(((energy) * 10 / 13) / 100)))
+            let carryParts = Math.max(1, Math.min(3, Math.floor(((energy) * 1 / 13) / 50)))
+            let moveParts = Math.max(1, Math.min(6, Math.floor(((energy) * 2 / 13) / 50)))
             // console.log(energy, maxWorkParts, workParts)
             return ([] as BodyPartConstant[]).concat(
                 Array(workParts).fill(WORK),

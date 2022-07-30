@@ -4,10 +4,10 @@ import { createAcquireLogisticsMission } from "Missions/Implementations/AcquireL
 import { MissionType } from "Missions/Mission";
 import { isMission, not, or, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
 import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
-import { roomPlans } from "Selectors/roomPlans";
+import { getPrimarySpawn } from "Selectors/getPrimarySpawn";
 
 export default {
-  byTick: () => {},
+  byTick: () => { },
   byOffice: (office: string) => {
     const target = findAcquireTarget();
     if (target && officeShouldClaimAcquireTarget(office)) {
@@ -22,7 +22,7 @@ export default {
         submitMission(office, createAcquireEngineerMission(office, target));
       }
       // Keep Logistics mission pending, if there's a spawn
-      const spawn = roomPlans(target)?.headquarters?.spawn.structure;
+      const spawn = getPrimarySpawn(office);
       if (spawn && !pendingMissions(office).some(isMission(MissionType.ACQUIRE_LOGISTICS))) {
         submitMission(office, createAcquireLogisticsMission(office, target));
       }

@@ -16,29 +16,28 @@ import { Plunder, PlunderMission } from './Plunder';
 import { Refill, RefillMission } from './Refill';
 import { Reserve, ReserveMission } from './Reserve';
 import { Science, ScienceMission } from './Science';
-import { TowerLogistics, TowerLogisticsMission } from './TowerLogistics';
 import { Upgrade, UpgradeMission } from './Upgrade';
 
 export type MissionTypes = {
-  [MissionType.HARVEST]: HarvestMission,
-  [MissionType.LOGISTICS]: LogisticsMission,
-  [MissionType.EXPLORE]: ExploreMission,
-  [MissionType.ENGINEER]: EngineerMission,
-  [MissionType.REFILL]: RefillMission,
-  [MissionType.UPGRADE]: UpgradeMission,
-  [MissionType.RESERVE]: ReserveMission,
-  [MissionType.HQ_LOGISTICS]: HQLogisticsMission,
-  [MissionType.TOWER_LOGISTICS]: TowerLogisticsMission,
-  [MissionType.PLUNDER]: PlunderMission,
-  [MissionType.MINE_FOREMAN]: MineForemanMission,
-  [MissionType.MINE_HAULER]: MineHaulerMission,
-  [MissionType.SCIENCE]: ScienceMission,
-  [MissionType.ACQUIRE_ENGINEER]: AcquireEngineerMission,
-  [MissionType.ACQUIRE_LOGISTICS]: AcquireLogisticsMission,
-  [MissionType.ACQUIRE_LAWYER]: AcquireLawyerMission,
-  [MissionType.DEFEND_REMOTE]: DefendRemoteMission,
-  [MissionType.DEFEND_OFFICE]: DefendOfficeMission,
-}
+  [MissionType.HARVEST]: HarvestMission;
+  [MissionType.LOGISTICS]: LogisticsMission;
+  [MissionType.EXPLORE]: ExploreMission;
+  [MissionType.ENGINEER]: EngineerMission;
+  [MissionType.REFILL]: RefillMission;
+  [MissionType.UPGRADE]: UpgradeMission;
+  [MissionType.RESERVE]: ReserveMission;
+  [MissionType.HQ_LOGISTICS]: HQLogisticsMission;
+  // [MissionType.TOWER_LOGISTICS]: TowerLogisticsMission,
+  [MissionType.PLUNDER]: PlunderMission;
+  [MissionType.MINE_FOREMAN]: MineForemanMission;
+  [MissionType.MINE_HAULER]: MineHaulerMission;
+  [MissionType.SCIENCE]: ScienceMission;
+  [MissionType.ACQUIRE_ENGINEER]: AcquireEngineerMission;
+  [MissionType.ACQUIRE_LOGISTICS]: AcquireLogisticsMission;
+  [MissionType.ACQUIRE_LAWYER]: AcquireLawyerMission;
+  [MissionType.DEFEND_REMOTE]: DefendRemoteMission;
+  [MissionType.DEFEND_OFFICE]: DefendOfficeMission;
+};
 
 export const Missions: Record<MissionType, typeof MissionImplementation> = {
   [MissionType.HARVEST]: Harvest,
@@ -49,7 +48,7 @@ export const Missions: Record<MissionType, typeof MissionImplementation> = {
   [MissionType.UPGRADE]: Upgrade,
   [MissionType.RESERVE]: Reserve,
   [MissionType.HQ_LOGISTICS]: HQLogistics,
-  [MissionType.TOWER_LOGISTICS]: TowerLogistics,
+  // [MissionType.TOWER_LOGISTICS]: TowerLogistics,
   [MissionType.PLUNDER]: Plunder,
   [MissionType.MINE_FOREMAN]: MineForeman,
   [MissionType.MINE_HAULER]: MineHauler,
@@ -58,5 +57,5 @@ export const Missions: Record<MissionType, typeof MissionImplementation> = {
   [MissionType.ACQUIRE_LOGISTICS]: AcquireLogistics,
   [MissionType.ACQUIRE_LAWYER]: AcquireLawyer,
   [MissionType.DEFEND_REMOTE]: DefendRemote,
-  [MissionType.DEFEND_OFFICE]: DefendOffice,
-}
+  [MissionType.DEFEND_OFFICE]: DefendOffice
+};

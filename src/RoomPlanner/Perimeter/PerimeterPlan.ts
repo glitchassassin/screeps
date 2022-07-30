@@ -31,14 +31,15 @@ const padBoundingRect = (rect: Rect, buffer = 2) => {
 
 export const planPerimeter = (room: string) => {
     const roomPlan = roomPlans(room)
-    if (!roomPlan?.headquarters || !roomPlan?.labs || !roomPlan?.extensions || !roomPlan.franchise1 || !roomPlan.franchise2) throw new Error('No Office structures found to plot perimeter');
+    if (!roomPlan?.backfill || !roomPlan?.fastfiller || !roomPlan?.labs || !roomPlan?.extensions || !roomPlan.franchise1 || !roomPlan.franchise2) throw new Error('No Office structures found to plot perimeter');
     const plan: Partial<PerimeterPlan> = {
         ramparts: util_mincut.GetCutTiles(room, [
-            getBoundingRect(...roomPlan.headquarters.towers),
+            getBoundingRect(...roomPlan.backfill.towers),
+            getBoundingRect(...roomPlan.fastfiller.extensions),
             getBoundingRect(...roomPlan.extensions.extensions),
             getBoundingRect(...roomPlan.labs.labs),
-            getBoundingRect(roomPlan.franchise1.spawn, roomPlan.franchise1.container, roomPlan.franchise1.link),
-            getBoundingRect(roomPlan.franchise2.spawn, roomPlan.franchise2.container, roomPlan.franchise2.link),
+            getBoundingRect(roomPlan.franchise1.container, roomPlan.franchise1.link, ...roomPlan.franchise1.extensions),
+            getBoundingRect(roomPlan.franchise2.container, roomPlan.franchise2.link, ...roomPlan.franchise1.extensions),
         ]).map(pos => new PlannedStructure(new RoomPosition(pos.x, pos.y, room), STRUCTURE_RAMPART)),
     }
 

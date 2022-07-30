@@ -27,6 +27,7 @@ declare global {
         roads?: string | null;
         fastfiller?: string | null;
         towers?: string | null;
+        backfill?: string | null;
       };
     };
   }
@@ -39,17 +40,17 @@ const roomSectionPlanner =
     planner: (room: string) => RoomPlan[T],
     serializer: (plan: RoomPlan[T]) => string
   ) =>
-  () => {
-    if (Memory.roomPlans[room][plan] === undefined) {
-      try {
-        const plannedSection = planner(room);
-        Memory.roomPlans[room][plan] = serializer(plannedSection);
-      } catch (e) {
-        console.log(`Error planning ${plan} for ${room}: ${e}`);
-        Memory.roomPlans[room][plan] = null;
+    () => {
+      if (Memory.roomPlans[room][plan] === undefined) {
+        try {
+          const plannedSection = planner(room);
+          Memory.roomPlans[room][plan] = serializer(plannedSection);
+        } catch (e) {
+          console.log(`Error planning ${plan} for ${room}: ${e}`);
+          Memory.roomPlans[room][plan] = null;
+        }
       }
-    }
-  };
+    };
 
 const mainStampsPlanner =
   (
@@ -61,28 +62,28 @@ const mainStampsPlanner =
     },
     serializer: (plan: HeadquartersPlan | LabsPlan | FastfillerPlan) => string
   ) =>
-  () => {
-    if (
-      Memory.roomPlans[room].headquarters === undefined ||
-      Memory.roomPlans[room].labs === undefined ||
-      Memory.roomPlans[room].fastfiller === undefined
-    ) {
-      try {
-        const { hq, labs, fastfiller } = planner(room);
-        if (!hq) throw new Error('No hq plan');
-        if (!labs) throw new Error('No labs plan');
-        if (!fastfiller) throw new Error('No fastfiller plan');
-        Memory.roomPlans[room].headquarters = serializer(hq);
-        Memory.roomPlans[room].labs = serializer(labs);
-        Memory.roomPlans[room].fastfiller = serializer(fastfiller);
-      } catch (e) {
-        console.log(`Error planning stamps for ${room}: ${e}`);
-        Memory.roomPlans[room].headquarters = null;
-        Memory.roomPlans[room].labs = null;
-        Memory.roomPlans[room].fastfiller = null;
+    () => {
+      if (
+        Memory.roomPlans[room].headquarters === undefined ||
+        Memory.roomPlans[room].labs === undefined ||
+        Memory.roomPlans[room].fastfiller === undefined
+      ) {
+        try {
+          const { hq, labs, fastfiller } = planner(room);
+          if (!hq) throw new Error('No hq plan');
+          if (!labs) throw new Error('No labs plan');
+          if (!fastfiller) throw new Error('No fastfiller plan');
+          Memory.roomPlans[room].headquarters = serializer(hq);
+          Memory.roomPlans[room].labs = serializer(labs);
+          Memory.roomPlans[room].fastfiller = serializer(fastfiller);
+        } catch (e) {
+          console.log(`Error planning stamps for ${room}: ${e}`);
+          Memory.roomPlans[room].headquarters = null;
+          Memory.roomPlans[room].labs = null;
+          Memory.roomPlans[room].fastfiller = null;
+        }
       }
-    }
-  };
+    };
 
 const serializePlan = <T extends keyof RoomPlan>(plan: RoomPlan[T]) => {
   if (!plan) throw new Error('Undefined plan, cannot serialize');

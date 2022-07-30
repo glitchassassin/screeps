@@ -1,15 +1,15 @@
-import { moveTo } from "Behaviors/moveTo";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionType } from "Missions/Mission";
-import { getHeadquarterLogisticsLocation } from "Selectors/getHqLocations";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { roomPlans } from "Selectors/roomPlans";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { MissionImplementation } from "./MissionImplementation";
+import { moveTo } from 'Behaviors/moveTo';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { roomPlans } from 'Selectors/roomPlans';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 export interface HQLogisticsMission extends Mission<MissionType.HQ_LOGISTICS> {
-  data: {}
+  data: {};
 }
 
 export function createHQLogisticsMission(office: string, startTime?: number): HQLogisticsMission {
@@ -17,8 +17,8 @@ export function createHQLogisticsMission(office: string, startTime?: number): HQ
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body),
-  }
+    energy: minionCost(body)
+  };
 
   return createMission({
     office,
@@ -27,7 +27,7 @@ export function createHQLogisticsMission(office: string, startTime?: number): HQ
     data: {},
     estimate,
     startTime
-  })
+  });
 }
 
 export class HQLogistics extends MissionImplementation {
@@ -35,28 +35,23 @@ export class HQLogistics extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     const pos = getHeadquarterLogisticsLocation(mission.office);
-    const spawn = roomPlans(mission.office)?.headquarters?.spawn.structure as StructureSpawn;
 
     if (!pos) return;
 
-    const body = MinionBuilders[spawn ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 800 / CARRY_CAPACITY);
+    const body = MinionBuilders[MinionTypes.CLERK](spawnEnergyAvailable(mission.office), 800 / CARRY_CAPACITY, true);
 
     // Set name
-    const name = `CLERK-${mission.office}-${mission.id}`
+    const name = `CLERK-${mission.office}-${mission.id}`;
 
     scheduleSpawn(
       mission.office,
       mission.priority,
       {
         name,
-        body,
+        body
       },
-      spawn && mission.startTime,
-      spawn && mission.startTime ? {
-        spawn: spawn.id,
-        directions: [spawn.pos.getDirectionTo(pos)]
-      } : undefined
-    )
+      mission.startTime
+    );
 
     mission.creepNames.push(name);
   }
@@ -77,11 +72,9 @@ export class HQLogistics extends MissionImplementation {
     let creepEnergy = creep.store.getUsedCapacity(RESOURCE_ENERGY);
     const terminal = hq.terminal.structure as StructureTerminal | undefined;
     const storage = hq.storage.structure as StructureStorage | undefined;
-    const spawn = hq.spawn.structure as StructureSpawn | undefined;
     const link = hq.link.structure as StructureLink | undefined;
 
     const terminalAmountNeeded = terminal ? 30000 - terminal.store.getUsedCapacity(RESOURCE_ENERGY) : 0;
-    const spawnAmountNeeded = spawn?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0;
     const linkAmountAvailable = link?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
 
     // Emergency provision for over-full Storage
@@ -98,17 +91,6 @@ export class HQLogistics extends MissionImplementation {
       creep.withdraw(link, RESOURCE_ENERGY);
       creepEnergy += linkAmountAvailable;
       // console.log(creep.name, 'withdrawing', linkAmountAvailable, 'from link')
-    }
-
-    // Balance energy from Storage to Terminal
-    // If storage pressure is higher AND we have no energy, withdraw from storage just enough to correct the imbalance (if more than threshold)
-    // If terminal pressure is higher AND we have no energy, withdraw from terminal just enough to correct the imbalance
-
-    if (spawn && spawnAmountNeeded > 0) {
-      const amount = Math.min(spawnAmountNeeded, creep.store.getUsedCapacity());
-      creep.transfer(spawn, RESOURCE_ENERGY, amount);
-      creepEnergy -= amount;
-      // console.log(creep.name, 'transferring', amount, 'to spawn')
     }
 
     if (terminal && terminalAmountNeeded && terminalAmountNeeded > 0) {

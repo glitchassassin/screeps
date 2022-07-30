@@ -1,39 +1,40 @@
-import { harvestEnergyFromFranchise } from "Behaviors/harvestEnergyFromFranchise";
-import { moveTo } from "Behaviors/moveTo";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionType } from "Missions/Mission";
-import { getFranchiseDistance } from "Selectors/getFranchiseDistance";
-import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
-import { getClosestByRange } from "Selectors/Map/MapCoordinates";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { posById } from "Selectors/posById";
-import { rcl } from "Selectors/rcl";
-import { getFranchisePlanBySourceId, getSpawns, roomPlans } from "Selectors/roomPlans";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { MissionImplementation } from "./MissionImplementation";
+import { harvestEnergyFromFranchise } from 'Behaviors/harvestEnergyFromFranchise';
+import { moveTo } from 'Behaviors/moveTo';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
+import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
+import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { posById } from 'Selectors/posById';
+import { rcl } from 'Selectors/rcl';
+import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 export interface HarvestMission extends Mission<MissionType.HARVEST> {
   data: {
-    source: Id<Source>,
-    arrived?: number,
-    distance?: number,
-    harvestRate: number
-  }
+    source: Id<Source>;
+    arrived?: number;
+    distance?: number;
+    harvestRate: number;
+  };
 }
 
 export function createHarvestMission(office: string, source: Id<Source>, startTime?: number): HarvestMission {
-  const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office))
+  const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body),
-  }
+    energy: minionCost(body)
+  };
 
   // Make sure that if room plans aren't finished we still prioritize the closest source
-  const franchise1 = roomPlans(office)?.franchise1?.sourceId ?? getSpawns(office)[0]?.pos.findClosestByRange(FIND_SOURCES)?.id;
+  const franchise1 =
+    roomPlans(office)?.franchise1?.sourceId ?? getSpawns(office)[0]?.pos.findClosestByRange(FIND_SOURCES)?.id;
 
   // set priority differently for remote sources
-  const remote = (office !== posById(source)?.roomName);
+  const remote = office !== posById(source)?.roomName;
   const distance = getFranchiseDistance(office, source);
   let priority = 10;
   if (remote) {
@@ -43,10 +44,9 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
       // Round priority to two places
       priority += Math.round(100 * (Math.min(50, distance) / distance)) / 100;
     }
-  }  else {
+  } else {
     if (franchise1 === source) priority += 0.1;
   }
-
 
   return createMission({
     office,
@@ -58,8 +58,8 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
       distance,
       harvestRate: body.filter(t => t === WORK).length * HARVEST_POWER
     },
-    estimate,
-  })
+    estimate
+  });
 }
 
 export class Harvest extends MissionImplementation {
@@ -69,17 +69,23 @@ export class Harvest extends MissionImplementation {
     // Calculate harvester spawn preference
     const franchisePlan = getFranchisePlanBySourceId(mission.data.source);
     const franchiseContainer = franchisePlan?.container.pos;
-    const spawn = franchiseContainer ? getClosestByRange(franchiseContainer, getSpawns(mission.office)) : getSpawns(mission.office)[0];
+    const spawn = franchiseContainer
+      ? getClosestByRange(franchiseContainer, getSpawns(mission.office))
+      : getSpawns(mission.office)[0];
     const link = franchisePlan?.link.structure;
 
-    const spawnPreference = spawn ? {
-      spawn: spawn.id
-    } : undefined;
+    const spawnPreference = spawn
+      ? {
+          spawn: spawn.id
+        }
+      : undefined;
 
-    const energy = hasEnergyIncome(mission.office) ? Game.rooms[mission.office].energyCapacityAvailable : spawnEnergyAvailable(mission.office)
+    const energy = hasEnergyIncome(mission.office)
+      ? Game.rooms[mission.office].energyCapacityAvailable
+      : spawnEnergyAvailable(mission.office);
 
     // Set name
-    const name = `HARVEST-${mission.office}-${mission.id}`
+    const name = `HARVEST-${mission.office}-${mission.id}`;
     const body = MinionBuilders[MinionTypes.SALESMAN](energy, !!link);
 
     scheduleSpawn(
@@ -87,11 +93,11 @@ export class Harvest extends MissionImplementation {
       mission.priority,
       {
         name,
-        body,
+        body
       },
       spawnPreference ? mission.startTime : undefined,
       spawnPreference
-    )
+    );
 
     mission.creepNames.push(name);
   }
@@ -112,28 +118,26 @@ export class Harvest extends MissionImplementation {
     if ((franchisePos?.getRangeTo(creep.pos) ?? Infinity) <= 1) {
       const franchise = Memory.rooms[franchisePos!.roomName]?.franchises[mission.office]?.[mission.data.source];
       if (franchise) franchise.lastHarvested = Game.time;
-      if (
-        !mission.data.arrived &&
-        creep.ticksToLive
-      ) {
+      if (!mission.data.arrived && creep.ticksToLive) {
         mission.data.arrived =
-          (CREEP_LIFE_TIME - creep.ticksToLive) + // creep life time
-          (creep.body.length * CREEP_SPAWN_TIME); // creep spawn time
+          CREEP_LIFE_TIME -
+          creep.ticksToLive + // creep life time
+          creep.body.length * CREEP_SPAWN_TIME; // creep spawn time
       }
     }
 
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.5) {
-
       if (mission.office === franchisePos?.roomName) {
         // Local franchise
-        const plan = getFranchisePlanBySourceId(mission.data.source)
+        const plan = getFranchisePlanBySourceId(mission.data.source);
         if (!plan) return;
 
         // Try to deposit at spawn
-        let result: ScreepsReturnCode = ERR_FULL
-        if (plan.spawn.structure) {
-          result = creep.transfer(plan.spawn.structure, RESOURCE_ENERGY)
-          if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.spawn.pos)
+        let result: ScreepsReturnCode = ERR_FULL;
+        for (const { structure } of plan.extensions) {
+          if (!structure) continue;
+          result = creep.transfer(structure, RESOURCE_ENERGY);
+          if (result === OK) break;
         }
         // Try to build (or repair) container
         // if (result !== OK && !plan.container.structure) {
@@ -148,21 +152,21 @@ export class Harvest extends MissionImplementation {
         // }
         // Try to deposit at link
         if (result === ERR_FULL && plan.link.structure) {
-          result = creep.transfer(plan.link.structure, RESOURCE_ENERGY)
-          if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.spawn.pos)
+          result = creep.transfer(plan.link.structure, RESOURCE_ENERGY);
+          if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.link.pos);
           if (result === OK) {
             // If we've dropped any resources, and there's space in the link, try to pick them up
-            const resource = creep.pos.lookFor(LOOK_RESOURCES).find(r => r.resourceType === RESOURCE_ENERGY)
+            const resource = creep.pos.lookFor(LOOK_RESOURCES).find(r => r.resourceType === RESOURCE_ENERGY);
             if (resource) creep.pickup(resource);
           }
         }
 
         if (result === ERR_FULL) {
-          creep.drop(RESOURCE_ENERGY)
+          creep.drop(RESOURCE_ENERGY);
         }
       } else {
         // Remote franchise
-        const plan = getFranchisePlanBySourceId(mission.data.source)
+        const plan = getFranchisePlanBySourceId(mission.data.source);
         if (!plan || !Game.rooms[plan.container.pos.roomName] || rcl(mission.office) < 3) return;
 
         // Try to build or repair container

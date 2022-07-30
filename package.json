@@ -15,6 +15,7 @@
     "push-sim": "rollup -c --environment DEST:sim",
     "push-botarena": "rollup -c --environment DEST:botarena",
     "test": "jest",
+    "watch": "rollup -cw",
     "watch-main": "rollup -cw --environment DEST:main",
     "watch-xxworld": "rollup -cw --environment DEST:xxworld",
     "watch-splus": "rollup -cw --environment DEST:splus",
