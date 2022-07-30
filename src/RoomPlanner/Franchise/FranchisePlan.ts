@@ -70,7 +70,5 @@ export const planFranchise = (sourceId: Id<Source>) => {
   // plan.ramparts.push(new PlannedStructure(plan.link.pos, STRUCTURE_RAMPART))
   // plan.ramparts.push(new PlannedStructure(plan.container.pos, STRUCTURE_RAMPART))
 
-  plan.extensions = [];
-
   return validateFranchisePlan(plan);
 };

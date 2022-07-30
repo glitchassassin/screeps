@@ -16,7 +16,7 @@ const SOURCE_WEIGHT = 1;
 const LABS_FASTFILLER_WEIGHT = 1;
 const LABS_HQ_WEIGHT = 3;
 const HQ_FASTFILLER_WEIGHT = 2;
-const TOP_N_LAYOUTS = 10;
+const TOP_N_LAYOUTS = 5;
 
 /**
  * Lower score is better
@@ -186,7 +186,7 @@ export function planMainStamps(room: string) {
         row.forEach((cell, x) => {
           let p = new RoomPosition(pos.x + x, pos.y + y, room);
           if (cell === STRUCTURE_ROAD) {
-            hq.roads?.push(new PlannedStructure(p, STRUCTURE_ROAD));
+            labs.roads?.push(new PlannedStructure(p, STRUCTURE_ROAD));
           }
         });
       });

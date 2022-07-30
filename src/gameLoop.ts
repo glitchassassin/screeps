@@ -4,7 +4,6 @@ import { spawnFromQueues } from 'Minions/spawnQueues';
 import { runMissionControl } from 'Missions/Control';
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from 'RoomPlanner/planRooms';
-import { test } from 'RoomPlanner/Stamps/planMainStamps';
 import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl } from 'Selectors/displayBucket';
 import { runStructures } from 'Structures';
@@ -46,6 +45,4 @@ export const gameLoop = () => {
   initializeSpawn();
 
   recordOverhead();
-
-  test('W3N7');
 };

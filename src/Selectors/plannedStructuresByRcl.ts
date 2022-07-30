@@ -21,13 +21,16 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
   if (!rcl || !plans) return [];
 
   let plannedStructures: (PlannedStructure | undefined)[] = [];
-  let plannedExtensions = ([] as PlannedStructure[]).concat(
-    plans.fastfiller?.extensions ?? [],
-    plans.franchise1?.extensions ?? [],
-    plans.franchise2?.extensions ?? [],
-    plans.extensions?.extensions ?? [],
-    plans.backfill?.extensions ?? []
-  );
+  let plannedExtensions = ([] as (PlannedStructure | undefined)[])
+    .concat(
+      plans.fastfiller?.extensions ?? [],
+      plans.headquarters?.extension,
+      plans.franchise1?.extensions ?? [],
+      plans.franchise2?.extensions ?? [],
+      plans.extensions?.extensions ?? [],
+      plans.backfill?.extensions ?? []
+    )
+    .filter(s => !!s) as PlannedStructure[];
 
   // Sort already constructed structures to the top
   plannedExtensions = plannedExtensions.filter(e => e.structure).concat(plannedExtensions.filter(e => !e.structure));
@@ -96,7 +99,8 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
       plans.fastfiller?.spawns[2],
       plannedTowers.slice(3, 6),
       plans.labs?.labs.slice(6, 10) ?? [],
-      [plans.headquarters?.powerSpawn]
+      plans.headquarters?.nuker,
+      plans.headquarters?.powerSpawn
     );
   }
 

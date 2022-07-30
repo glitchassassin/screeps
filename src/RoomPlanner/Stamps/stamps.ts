@@ -51,7 +51,7 @@ export const FASTFILLER_STAMP: Stamp = [
   [undefined,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      undefined],
 ]
 export const FASTFILLER_STAMP_SPAWN_ORDER = [
-  [2, 1],
-  [2, 5],
-  [5, 3]
+  [1, 2],
+  [5, 2],
+  [3, 5]
 ];
