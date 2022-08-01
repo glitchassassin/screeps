@@ -1,12 +1,12 @@
 import { RoadsPlan } from 'RoomPlanner';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
-import { costMatrixFromRoomPlan } from 'Selectors/costMatrixFromRoomPlan';
+import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { roomPlans } from 'Selectors/roomPlans';
 import { validateRoadsPlan } from './validateRoadsPlan';
 
 export const planRoads = (office: string) => {
   const roads = new Set<PlannedStructure<STRUCTURE_ROAD>>();
-  const cm = costMatrixFromRoomPlan(office);
+  const cm = getCostMatrix(office, false, { roomPlan: true });
   const plans = roomPlans(office);
   if (!plans) throw new Error('No office structures to route between');
 

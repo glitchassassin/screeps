@@ -55,6 +55,7 @@ export interface BackfillPlan {
   extensions: PlannedStructure<STRUCTURE_EXTENSION>[];
   towers: PlannedStructure<STRUCTURE_TOWER>[];
   ramparts: PlannedStructure<STRUCTURE_RAMPART>[];
+  observer: PlannedStructure<STRUCTURE_OBSERVER>;
 }
 
 export interface LibraryPlan {

@@ -1,13 +1,17 @@
-import { createAcquireEngineerMission } from "Missions/Implementations/AcquireEngineer";
-import { createAcquireLawyerMission } from "Missions/Implementations/AcquireLawyer";
-import { createAcquireLogisticsMission } from "Missions/Implementations/AcquireLogistics";
-import { MissionType } from "Missions/Mission";
-import { isMission, not, or, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
-import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
-import { getPrimarySpawn } from "Selectors/getPrimarySpawn";
+import { createAcquireEngineerMission } from 'Missions/Implementations/AcquireEngineer';
+import { createAcquireLawyerMission } from 'Missions/Implementations/AcquireLawyer';
+import { createAcquireLogisticsMission } from 'Missions/Implementations/AcquireLogistics';
+import { MissionType } from 'Missions/Mission';
+import { isMission, not, or, pendingAndActiveMissions, pendingMissions, submitMission } from 'Missions/Selectors';
+import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
+import {
+  findAcquireTarget,
+  officeShouldClaimAcquireTarget,
+  officeShouldSupportAcquireTarget
+} from 'Strategy/Acquire/findAcquireTarget';
 
 export default {
-  byTick: () => { },
+  byTick: () => {},
   byOffice: (office: string) => {
     const target = findAcquireTarget();
     if (target && officeShouldClaimAcquireTarget(office)) {
@@ -28,12 +32,15 @@ export default {
       }
     } else {
       // Clear any pending missions
-      Memory.offices[office].pendingMissions = pendingMissions(office)
-        .filter(not(or(
-          isMission(MissionType.ACQUIRE_LAWYER),
-          isMission(MissionType.ACQUIRE_ENGINEER),
-          isMission(MissionType.ACQUIRE_LOGISTICS)
-        )))
+      Memory.offices[office].pendingMissions = pendingMissions(office).filter(
+        not(
+          or(
+            isMission(MissionType.ACQUIRE_LAWYER),
+            isMission(MissionType.ACQUIRE_ENGINEER),
+            isMission(MissionType.ACQUIRE_LOGISTICS)
+          )
+        )
+      );
     }
   }
-}
+};

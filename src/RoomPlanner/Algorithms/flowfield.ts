@@ -2,20 +2,22 @@ import { calculateNearbyPositions, terrainCostAt } from 'Selectors/Map/MapCoordi
 import { memoize } from 'utils/memoizeFunction';
 import { Coord } from 'utils/packrat';
 
-export function flowfields(room: string, pointsOfInterest: Record<string, Coord[]>) {
+export function flowfields(room: string, pointsOfInterest: Record<string, Coord[]>, obstacles?: CostMatrix) {
   const flowfields: Record<string, CostMatrix> = {};
   for (const poi in pointsOfInterest) {
     flowfields[poi] = dijkstraMap(
       room,
-      pointsOfInterest[poi].map(p => new RoomPosition(p.x, p.y, room))
+      pointsOfInterest[poi].map(p => new RoomPosition(p.x, p.y, room)),
+      obstacles
     );
   }
   return flowfields;
 }
 
 export const dijkstraMap = memoize(
-  (room: string, source: RoomPosition[], obstacles?: CostMatrix) => `${room}_${source}`,
-  (room: string, source: RoomPosition[], obstacles = new PathFinder.CostMatrix()) => {
+  (room: string, source: RoomPosition[], obstacles?: CostMatrix, useTerrainCost = true) =>
+    `${room}_${source}_${useTerrainCost}`,
+  (room: string, source: RoomPosition[], obstacles = new PathFinder.CostMatrix(), useTerrainCost = true) => {
     const frontier = source.slice();
     const terrain = Game.map.getRoomTerrain(room);
     const cm = new PathFinder.CostMatrix();
@@ -30,7 +32,7 @@ export const dijkstraMap = memoize(
         )
           continue;
 
-        const nextCost = cm.get(current.x, current.y) + terrainCostAt(next);
+        const nextCost = cm.get(current.x, current.y) + (useTerrainCost ? terrainCostAt(next) : 1);
 
         if (cm.get(next.x, next.y) === 0 || cm.get(next.x, next.y) > nextCost) {
           frontier.push(next);

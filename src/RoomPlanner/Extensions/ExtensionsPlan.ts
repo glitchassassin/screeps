@@ -5,6 +5,7 @@ import { applyStamp, fitStamp } from 'RoomPlanner/Stamps/fitStamp';
 import { EXTENSION_STAMP } from 'RoomPlanner/Stamps/stamps';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { roomPlans } from 'Selectors/roomPlans';
+import { viz } from 'Selectors/viz';
 import { validateExtensionsPlan } from './validateExtensionsPlan';
 
 export const planExtensions = (roomName: string) => {
@@ -28,7 +29,7 @@ export const planExtensions = (roomName: string) => {
 
   if (!anchor) throw new Error('Unable to plan extensions without headquarters as origin');
 
-  const flowfield = dijkstraMap(roomName, [anchor], cm.clone());
+  const flowfield = dijkstraMap(roomName, [anchor], cm.clone(), false);
 
   const stampPositions = [];
   for (let i = 0; i < stampCount; i++) {
@@ -39,7 +40,7 @@ export const planExtensions = (roomName: string) => {
     cm = applyStamp(EXTENSION_STAMP, best, cm);
   }
   stampPositions.forEach(({ x, y }) =>
-    new RoomVisual(roomName).poly(
+    viz(roomName).poly(
       [
         [x - 0.5, y + 2],
         [x + 2, y - 0.5],

@@ -37,14 +37,21 @@ const updateRoomPlan = <T extends keyof RoomPlan>(
 declare global {
   namespace NodeJS {
     interface Global {
-      resetRoomPlan: (room: string) => void;
+      resetRoomPlan: (room?: string) => void;
     }
   }
 }
 
-global.resetRoomPlan = (room: string) => {
-  delete Memory.roomPlans[room];
-  plans.delete(room);
+global.resetRoomPlan = (room?: string) => {
+  if (room) {
+    delete Memory.roomPlans[room];
+    plans.delete(room);
+  } else {
+    Memory.roomPlans = {};
+    for (const [p] of plans) {
+      plans.delete(p);
+    }
+  }
 };
 
 export const roomPlans = profiler.registerFN((roomName: string) => {

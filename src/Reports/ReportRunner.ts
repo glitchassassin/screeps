@@ -60,4 +60,4 @@ register('spawns', SpawnReport);
 register('franchise', FranchiseReport);
 register('estimates', EstimatesReport);
 
-global.d('planning', 'W2N8');
+global.d('planning', 'W2N7');

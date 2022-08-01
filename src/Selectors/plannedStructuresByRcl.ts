@@ -101,7 +101,8 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
       plannedTowers.slice(3, 6),
       plans.labs?.labs.slice(6, 10) ?? [],
       plans.headquarters?.nuker,
-      plans.headquarters?.powerSpawn
+      plans.headquarters?.powerSpawn,
+      plans.backfill?.observer
     );
   }
 

@@ -3,6 +3,7 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { validateHeadquartersPlan } from 'RoomPlanner/Stamps/validateHeadquartersPlan';
 import { validateLabsPlan } from 'RoomPlanner/Stamps/validateLabsPlan';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
+import { viz } from 'Selectors/viz';
 import { memoize } from 'utils/memoizeFunction';
 import { Coord, packCoordList } from 'utils/packrat';
 import { applyStamp, fitStamp } from './fitStamp';
@@ -10,13 +11,14 @@ import { pointsOfInterest } from './pointsOfInterest';
 import { FASTFILLER_STAMP, FASTFILLER_STAMP_SPAWN_ORDER, HQ_STAMP, LABS_STAMP, LABS_STAMP_ORDER } from './stamps';
 import { validateFastfillerPlan } from './validateFastfillerPlan';
 
-const stamps = [FASTFILLER_STAMP, LABS_STAMP, HQ_STAMP];
+const stamps = [FASTFILLER_STAMP, HQ_STAMP, LABS_STAMP];
+const EXIT_WEIGHT = 2;
 const CONTROLLER_WEIGHT = 2;
 const SOURCE_WEIGHT = 1;
 const LABS_FASTFILLER_WEIGHT = 1;
-const LABS_HQ_WEIGHT = 3;
+const LABS_HQ_WEIGHT = 10;
 const HQ_FASTFILLER_WEIGHT = 2;
-const TOP_N_LAYOUTS = 5;
+const TOP_N_LAYOUTS = 7;
 
 /**
  * Lower score is better
@@ -26,7 +28,7 @@ const scoreLayout = memoize(
   (room: string, layout: { x: number; y: number }[]) => {
     const flowfields = pointsOfInterest(room);
     if (layout.length === 0) return Infinity; // no stamps laid out!
-    const [fastFillerPos, labsPos, hqPos] = layout.map((p, i) => {
+    const [fastFillerPos, hqPos, labsPos] = layout.map((p, i) => {
       const offset = 0; // Math.floor(stamps[i].length / 2);
       return { x: p.x - offset, y: p.y - offset };
     });
@@ -36,22 +38,34 @@ const scoreLayout = memoize(
       score += flowfields.controller.get(fastFillerPos.x, fastFillerPos.y) * CONTROLLER_WEIGHT;
       score += flowfields.source1.get(fastFillerPos.x, fastFillerPos.y) * SOURCE_WEIGHT;
       score += flowfields.source1.get(fastFillerPos.x, fastFillerPos.y) * SOURCE_WEIGHT;
-      score += 50 - flowfields.exits.get(fastFillerPos.x, fastFillerPos.y);
-    } else return score;
-    if (labsPos) {
-      score += 50 - flowfields.exits.get(fastFillerPos.x, fastFillerPos.y);
-      score +=
-        Math.max(Math.abs(labsPos.x - fastFillerPos.x), Math.abs(labsPos.y - fastFillerPos.y)) * LABS_FASTFILLER_WEIGHT;
-    } else return score;
+      score += (50 - flowfields.exits.get(fastFillerPos.x, fastFillerPos.y)) * EXIT_WEIGHT;
+      console.log('fastFiller', score);
+    }
     if (hqPos) {
       score += flowfields.controller.get(hqPos.x, hqPos.y) * CONTROLLER_WEIGHT;
       score += flowfields.source1.get(hqPos.x, hqPos.y) * SOURCE_WEIGHT;
       score += flowfields.source1.get(hqPos.x, hqPos.y) * SOURCE_WEIGHT;
-      score += 50 - flowfields.exits.get(fastFillerPos.x, fastFillerPos.y);
+      score += (50 - flowfields.exits.get(hqPos.x, hqPos.y)) * EXIT_WEIGHT;
+      console.log('hq', score);
+    }
+    if (labsPos) {
+      score += (50 - flowfields.exits.get(labsPos.x, labsPos.y)) * EXIT_WEIGHT;
+      console.log('labs', score);
+    }
+    if (hqPos && fastFillerPos) {
       score +=
         Math.max(Math.abs(hqPos.x - fastFillerPos.x), Math.abs(hqPos.y - fastFillerPos.y)) * HQ_FASTFILLER_WEIGHT;
+      console.log('hq_fastfiller', score);
+    }
+    if (labsPos && fastFillerPos) {
+      score +=
+        Math.max(Math.abs(labsPos.x - fastFillerPos.x), Math.abs(labsPos.y - fastFillerPos.y)) * LABS_FASTFILLER_WEIGHT;
+      console.log('labs_fastfiller', score);
+    }
+    if (hqPos && labsPos) {
       score += Math.max(Math.abs(hqPos.x - labsPos.x), Math.abs(hqPos.y - labsPos.y)) * LABS_HQ_WEIGHT;
-    } else return score;
+      console.log('hq_labs', score);
+    }
 
     return score;
   }
@@ -103,8 +117,6 @@ export function planMainStamps(room: string) {
   if (!Memory.rooms[room]) throw new Error('No data cached for planning room');
   let sources = Memory.rooms[room].sourceIds ?? [];
   if (sources.length < 2) throw new Error('Expected two sources for headquarters planning');
-
-  let currentRoomPlan = getCostMatrix(room, false, { roomPlan: true });
 
   const { layout, stamps } = calculateLayout(room);
 
@@ -210,7 +222,7 @@ export function test(room: string) {
     stamps[i].forEach((row, y) => {
       row.forEach((cell, x) => {
         if (cell) {
-          new RoomVisual(room).structure(x + pos.x, y + pos.y, cell);
+          viz(room).structure(x + pos.x, y + pos.y, cell);
         }
       });
     });

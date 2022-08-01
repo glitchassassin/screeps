@@ -2,6 +2,7 @@ import { BehaviorResult } from 'Behaviors/Behavior';
 import { terrainCosts } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
+import { viz } from 'Selectors/viz';
 import { packPos } from 'utils/packrat';
 
 export class Route {
@@ -138,7 +139,7 @@ export class Route {
       // and then back into it. If that happens, we'll just need to parse this
       // into segments a little more intelligently
       if (!this.path) return;
-      new RoomVisual(room).poly(
+      viz(room).poly(
         this.path.filter(pos => pos.roomName === room),
         { lineStyle: 'dotted', stroke: '#fff' }
       );

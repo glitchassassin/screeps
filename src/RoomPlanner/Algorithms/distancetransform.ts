@@ -1,4 +1,5 @@
 import { getCostMatrix } from 'Selectors/Map/Pathing';
+import { viz } from 'Selectors/viz';
 
 /**
  * To fit rectangular stamps
@@ -70,7 +71,7 @@ export function distanceTransform(
 
     for (let x = rect.x1; x <= rect.x2; x += 1) {
       for (let y = rect.y1; y <= rect.y2; y += 1) {
-        new RoomVisual(room).rect(x - 0.5, y - 0.5, 1, 1, {
+        viz(room).rect(x - 0.5, y - 0.5, 1, 1, {
           fill: `hsl(${200}${distanceCM.get(x, y) * 10}, 100%, 60%)`,
           opacity: 0.4
         });
@@ -133,7 +134,7 @@ export function diamondDistanceTransform(
 
     for (let x = rect.x1; x <= rect.x2; x += 1) {
       for (let y = rect.y1; y <= rect.y2; y += 1) {
-        new RoomVisual(room).rect(x - 0.5, y - 0.5, 1, 1, {
+        viz(room).rect(x - 0.5, y - 0.5, 1, 1, {
           fill: `hsl(${200}${distanceCM.get(x, y) * 10}, 100%, 60%)`,
           opacity: 0.4
         });

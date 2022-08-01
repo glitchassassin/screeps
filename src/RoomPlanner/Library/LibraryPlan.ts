@@ -7,6 +7,7 @@ import {
   isPositionWalkable
 } from 'Selectors/Map/MapCoordinates';
 import { controllerPosition } from 'Selectors/roomCache';
+import { viz } from 'Selectors/viz';
 import { validateLibraryPlan } from './validateLibraryPlan';
 
 // high score wins
@@ -33,11 +34,11 @@ export const planLibrary = (roomName: string) => {
 
   if (containerPos) {
     plan.container = new PlannedStructure(containerPos, STRUCTURE_CONTAINER);
-    new RoomVisual(roomName).circle(containerPos, { fill: 'transparent', stroke: 'yellow', radius: 0.5 });
+    viz(roomName).circle(containerPos, { fill: 'transparent', stroke: 'yellow', radius: 0.5 });
   }
   if (linkPos) {
     plan.link = new PlannedStructure(linkPos, STRUCTURE_LINK);
-    new RoomVisual(roomName).circle(linkPos, { fill: 'transparent', stroke: 'green', radius: 0.5 });
+    viz(roomName).circle(linkPos, { fill: 'transparent', stroke: 'green', radius: 0.5 });
   }
 
   return validateLibraryPlan(plan);

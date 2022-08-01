@@ -1,7 +1,6 @@
 import { FastfillerPlan, HeadquartersPlan, LabsPlan, RoomPlan } from 'RoomPlanner';
 import { planExtensions } from 'RoomPlanner/Extensions/ExtensionsPlan';
 import { planFranchise } from 'RoomPlanner/Franchise/FranchisePlan';
-import { planLabs } from 'RoomPlanner/Labs/LabsPlan';
 import { planMine } from 'RoomPlanner/Mine/MinePlan';
 import { planPerimeter } from 'RoomPlanner/Perimeter/PerimeterPlan';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
@@ -51,7 +50,6 @@ const roomSectionPlanner =
       } catch (e) {
         console.log(`Error planning ${plan} for ${room}: ${e}`);
         Memory.roomPlans[room][plan] = null;
-        throw e;
       }
     }
   };
@@ -118,7 +116,6 @@ export const generateRoomPlans = (roomName: string) => {
     roomSectionPlanner(roomName, 'mine', planMine, serializePlan),
     roomSectionPlanner(roomName, 'library', planLibrary, serializePlan),
     mainStampsPlanner(roomName, planMainStamps, serializePlan),
-    roomSectionPlanner(roomName, 'labs', planLabs, serializePlan),
     roomSectionPlanner(roomName, 'extensions', planExtensions, serializePlan),
     roomSectionPlanner(roomName, 'roads', planRoads, serializePlan),
     roomSectionPlanner(roomName, 'backfill', planBackfill, serializePlan),
