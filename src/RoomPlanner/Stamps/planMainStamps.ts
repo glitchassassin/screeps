@@ -122,7 +122,8 @@ export function planMainStamps(room: string) {
     extensions: [],
     spawns: [],
     roads: [],
-    containers: []
+    containers: [],
+    link: undefined
   };
   const labs: Partial<LabsPlan> = {
     labs: [],
@@ -142,6 +143,9 @@ export function planMainStamps(room: string) {
           }
           if (cell === STRUCTURE_CONTAINER) {
             fastfiller.containers?.push(new PlannedStructure(p, STRUCTURE_CONTAINER));
+          }
+          if (cell === STRUCTURE_LINK) {
+            fastfiller.link = new PlannedStructure(p, STRUCTURE_LINK);
           }
           if (cell === STRUCTURE_ROAD) {
             fastfiller.roads?.push(new PlannedStructure(p, STRUCTURE_ROAD));

@@ -1,5 +1,6 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { roomPlans } from './roomPlans';
+import { getExtensions } from './spawnsAndExtensionsDemand';
 import { isPlannedStructure } from './typeguards';
 
 export const plannedStructuresByRcl = (roomName: string, targetRcl?: number) => {
@@ -15,22 +16,17 @@ export const plannedTerritoryStructures = (territoryName: string) => {
   return [plans?.franchise1?.container, plans?.franchise2?.container].filter(s => s) as PlannedStructure[];
 };
 
+// memoize(
+//   (officeName: string, targetRcl?: number) =>
+//     `${officeName}_${targetRcl}_${Object.values(Memory.roomPlans[officeName] ?? {}).filter(v => !!v).length}`,
+
 export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: number) => {
   const plans = roomPlans(officeName);
   const rcl = targetRcl ?? Game.rooms[officeName]?.controller?.level;
   if (!rcl || !plans) return [];
 
   let plannedStructures: (PlannedStructure | undefined)[] = [];
-  let plannedExtensions = ([] as (PlannedStructure | undefined)[])
-    .concat(
-      plans.fastfiller?.extensions ?? [],
-      plans.headquarters?.extension,
-      plans.franchise1?.extensions ?? [],
-      plans.franchise2?.extensions ?? [],
-      plans.extensions?.extensions ?? [],
-      plans.backfill?.extensions ?? []
-    )
-    .filter(s => !!s) as PlannedStructure[];
+  let plannedExtensions = getExtensions(officeName);
 
   // Sort already constructed structures to the top
   plannedExtensions = plannedExtensions.filter(e => e.structure).concat(plannedExtensions.filter(e => !e.structure));
@@ -46,7 +42,11 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     plannedStructures = plannedStructures.concat(plans.fastfiller?.spawns[0]);
   }
   if (rcl >= 2) {
-    plannedStructures = plannedStructures.concat(plannedExtensions.slice(0, 5), plans.fastfiller?.containers ?? []);
+    plannedStructures = plannedStructures.concat(
+      plannedExtensions.slice(0, 5),
+      plans.fastfiller?.containers ?? [],
+      plans.library?.container
+    );
   }
   if (rcl >= 3) {
     plannedStructures = plannedStructures.concat(
@@ -70,26 +70,26 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     plannedStructures = plannedStructures.concat(
       plannedExtensions.slice(20, 30),
       plannedTowers.slice(1, 2),
-      [plans.franchise2?.link],
+      [plans.fastfiller?.link],
       [plans.headquarters?.link]
     );
   }
   if (rcl >= 6) {
     plannedStructures = plannedStructures.concat(
       plannedExtensions.slice(30, 40),
-      [plans.franchise1?.link],
+      [plans.library?.link],
       [plans.headquarters?.terminal],
       [plans.mine?.extractor],
-      [plans.mine?.container],
-      plans.labs?.labs.slice(0, 3) ?? []
+      [plans.mine?.container]
     );
   }
   if (rcl >= 7) {
     plannedStructures = plannedStructures.concat(
       plannedExtensions.slice(40, 50),
       plans.fastfiller?.spawns[1],
+      plans.franchise2?.link,
       plannedTowers.slice(2, 3),
-      plans.labs?.labs.slice(3, 6) ?? [],
+      plans.labs?.labs.slice(0, 6) ?? [],
       plans.headquarters?.factory
     );
   }
@@ -97,6 +97,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     plannedStructures = plannedStructures.concat(
       plannedExtensions.slice(50, 60),
       plans.fastfiller?.spawns[2],
+      plans.franchise1?.link,
       plannedTowers.slice(3, 6),
       plans.labs?.labs.slice(6, 10) ?? [],
       plans.headquarters?.nuker,
@@ -109,8 +110,12 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     plannedStructures = plannedStructures.concat(
       plans.fastfiller?.roads ?? [],
       plans.headquarters?.roads ?? [],
+      plans.extensions?.roads ?? [],
       plans.roads?.roads ?? []
     );
+  }
+  if (rcl >= 7) {
+    plannedStructures = plannedStructures.concat(plans.labs?.roads ?? []);
   }
   // if (rcl >= 4) {
   //     // No ramparts on roads, walls, ramparts, extractors, or extensions

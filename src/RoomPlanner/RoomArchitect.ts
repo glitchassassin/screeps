@@ -7,7 +7,9 @@ import { planPerimeter } from 'RoomPlanner/Perimeter/PerimeterPlan';
 import { serializePlannedStructures } from 'Selectors/plannedStructures';
 import { posById } from 'Selectors/posById';
 import { controllerPosition, sourceIds } from 'Selectors/roomCache';
+import { planBackfill } from './Backfill/BackfillPlan';
 import { serializeFranchisePlan } from './Franchise/serializeFranchisePlan';
+import { planLibrary } from './Library/LibraryPlan';
 import { planRoads } from './Roads/RoadsPlan';
 import { planMainStamps } from './Stamps/planMainStamps';
 
@@ -28,6 +30,7 @@ declare global {
         fastfiller?: string | null;
         towers?: string | null;
         backfill?: string | null;
+        library?: string | null;
       };
     };
   }
@@ -40,17 +43,18 @@ const roomSectionPlanner =
     planner: (room: string) => RoomPlan[T],
     serializer: (plan: RoomPlan[T]) => string
   ) =>
-    () => {
-      if (Memory.roomPlans[room][plan] === undefined) {
-        try {
-          const plannedSection = planner(room);
-          Memory.roomPlans[room][plan] = serializer(plannedSection);
-        } catch (e) {
-          console.log(`Error planning ${plan} for ${room}: ${e}`);
-          Memory.roomPlans[room][plan] = null;
-        }
+  () => {
+    if (Memory.roomPlans[room][plan] === undefined) {
+      try {
+        const plannedSection = planner(room);
+        Memory.roomPlans[room][plan] = serializer(plannedSection);
+      } catch (e) {
+        console.log(`Error planning ${plan} for ${room}: ${e}`);
+        Memory.roomPlans[room][plan] = null;
+        throw e;
       }
-    };
+    }
+  };
 
 const mainStampsPlanner =
   (
@@ -62,28 +66,28 @@ const mainStampsPlanner =
     },
     serializer: (plan: HeadquartersPlan | LabsPlan | FastfillerPlan) => string
   ) =>
-    () => {
-      if (
-        Memory.roomPlans[room].headquarters === undefined ||
-        Memory.roomPlans[room].labs === undefined ||
-        Memory.roomPlans[room].fastfiller === undefined
-      ) {
-        try {
-          const { hq, labs, fastfiller } = planner(room);
-          if (!hq) throw new Error('No hq plan');
-          if (!labs) throw new Error('No labs plan');
-          if (!fastfiller) throw new Error('No fastfiller plan');
-          Memory.roomPlans[room].headquarters = serializer(hq);
-          Memory.roomPlans[room].labs = serializer(labs);
-          Memory.roomPlans[room].fastfiller = serializer(fastfiller);
-        } catch (e) {
-          console.log(`Error planning stamps for ${room}: ${e}`);
-          Memory.roomPlans[room].headquarters = null;
-          Memory.roomPlans[room].labs = null;
-          Memory.roomPlans[room].fastfiller = null;
-        }
+  () => {
+    if (
+      Memory.roomPlans[room].headquarters === undefined ||
+      Memory.roomPlans[room].labs === undefined ||
+      Memory.roomPlans[room].fastfiller === undefined
+    ) {
+      try {
+        const { hq, labs, fastfiller } = planner(room);
+        if (!hq) throw new Error('No hq plan');
+        if (!labs) throw new Error('No labs plan');
+        if (!fastfiller) throw new Error('No fastfiller plan');
+        Memory.roomPlans[room].headquarters = serializer(hq);
+        Memory.roomPlans[room].labs = serializer(labs);
+        Memory.roomPlans[room].fastfiller = serializer(fastfiller);
+      } catch (e) {
+        console.log(`Error planning stamps for ${room}: ${e}`);
+        Memory.roomPlans[room].headquarters = null;
+        Memory.roomPlans[room].labs = null;
+        Memory.roomPlans[room].fastfiller = null;
       }
-    };
+    }
+  };
 
 const serializePlan = <T extends keyof RoomPlan>(plan: RoomPlan[T]) => {
   if (!plan) throw new Error('Undefined plan, cannot serialize');
@@ -112,11 +116,13 @@ export const generateRoomPlans = (roomName: string) => {
     roomSectionPlanner(roomName, 'franchise1', () => planFranchise(franchise1), serializeFranchisePlan),
     roomSectionPlanner(roomName, 'franchise2', () => planFranchise(franchise2), serializeFranchisePlan),
     roomSectionPlanner(roomName, 'mine', planMine, serializePlan),
+    roomSectionPlanner(roomName, 'library', planLibrary, serializePlan),
     mainStampsPlanner(roomName, planMainStamps, serializePlan),
     roomSectionPlanner(roomName, 'labs', planLabs, serializePlan),
     roomSectionPlanner(roomName, 'extensions', planExtensions, serializePlan),
-    roomSectionPlanner(roomName, 'perimeter', planPerimeter, serializePlan),
-    roomSectionPlanner(roomName, 'roads', planRoads, serializePlan)
+    roomSectionPlanner(roomName, 'roads', planRoads, serializePlan),
+    roomSectionPlanner(roomName, 'backfill', planBackfill, serializePlan),
+    roomSectionPlanner(roomName, 'perimeter', planPerimeter, serializePlan)
   ];
 
   const start = Game.cpu.getUsed();
@@ -139,5 +145,7 @@ export const generateRoomPlans = (roomName: string) => {
     Memory.roomPlans[roomName].extensions !== null &&
     Memory.roomPlans[roomName].perimeter !== null &&
     Memory.roomPlans[roomName].fastfiller !== null &&
+    Memory.roomPlans[roomName].backfill !== null &&
+    Memory.roomPlans[roomName].library !== null &&
     Memory.roomPlans[roomName].roads !== null;
 };

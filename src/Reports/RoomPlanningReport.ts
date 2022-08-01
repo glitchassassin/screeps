@@ -2,18 +2,17 @@ import { RoomPlan } from 'RoomPlanner';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { roomPlans } from 'Selectors/roomPlans';
 
-export default () => {
+export default (visualizeRoom?: string) => {
   for (let room in Memory.roomPlans) {
-    plannedOfficeStructuresByRcl(room, 8)
-      .sort(
-        (a, b) => (a.structureType === STRUCTURE_RAMPART ? -1 : 0) - (b.structureType === STRUCTURE_RAMPART ? -1 : 0)
-      )
-      .forEach(s => {
-        s.visualize();
-      });
-
-    const route = roomPlans(room)?.extensions?.extensions.map(e => e.pos) ?? [];
-    new RoomVisual(room).poly(route, { stroke: 'magenta', fill: 'transparent' });
+    if (visualizeRoom === room) {
+      plannedOfficeStructuresByRcl(room, 8)
+        .sort(
+          (a, b) => (a.structureType === STRUCTURE_RAMPART ? -1 : 0) - (b.structureType === STRUCTURE_RAMPART ? -1 : 0)
+        )
+        .forEach(s => {
+          s.visualize();
+        });
+    }
 
     const franchise1pos = roomPlans(room)?.franchise1?.container.pos;
     if (franchise1pos) new RoomVisual(room).text('Franchise1', franchise1pos.x, franchise1pos.y);

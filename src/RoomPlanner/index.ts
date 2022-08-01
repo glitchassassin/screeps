@@ -1,8 +1,9 @@
 import { PlannedStructure } from './PlannedStructure';
 
 export interface ExtensionsPlan {
-  extensions: PlannedStructure[];
-  ramparts: PlannedStructure[];
+  extensions: PlannedStructure<STRUCTURE_EXTENSION>[];
+  roads: PlannedStructure<STRUCTURE_ROAD>[];
+  ramparts: PlannedStructure<STRUCTURE_RAMPART>[];
 }
 
 export interface FranchisePlan {
@@ -33,6 +34,7 @@ export interface FastfillerPlan {
   spawns: PlannedStructure<STRUCTURE_SPAWN>[];
   containers: PlannedStructure<STRUCTURE_CONTAINER>[];
   roads: PlannedStructure<STRUCTURE_ROAD>[];
+  link: PlannedStructure<STRUCTURE_LINK>;
 }
 
 export interface LabsPlan {
@@ -55,6 +57,12 @@ export interface BackfillPlan {
   ramparts: PlannedStructure<STRUCTURE_RAMPART>[];
 }
 
+export interface LibraryPlan {
+  container: PlannedStructure<STRUCTURE_CONTAINER>;
+  link: PlannedStructure<STRUCTURE_LINK>;
+  walls: PlannedStructure<STRUCTURE_WALL>[];
+}
+
 export interface RoomPlan {
   headquarters?: HeadquartersPlan;
   franchise1?: FranchisePlan;
@@ -66,4 +74,5 @@ export interface RoomPlan {
   roads?: RoadsPlan;
   fastfiller?: FastfillerPlan;
   backfill?: BackfillPlan;
+  library?: LibraryPlan;
 }

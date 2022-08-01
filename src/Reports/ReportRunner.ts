@@ -17,7 +17,7 @@ import TerritoriesReport from './TerritoriesReport';
 declare global {
   namespace NodeJS {
     interface Global {
-      d: (key: string) => void;
+      d: (key: string, opts?: any) => void;
     }
   }
 }
@@ -60,4 +60,4 @@ register('spawns', SpawnReport);
 register('franchise', FranchiseReport);
 register('estimates', EstimatesReport);
 
-global.d('planning');
+global.d('planning', 'W2N8');

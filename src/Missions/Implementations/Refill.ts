@@ -77,7 +77,7 @@ export class Refill extends MissionImplementation {
 
   static minionLogic(mission: RefillMission, creep: Creep): void {
     const target = unpackPos(mission.data.refillSquare);
-    moveTo(creep, { pos: target, range: 0 }); // even if already there, this will prevent shoving
+    moveTo(creep, { pos: target, range: 0 }, { ignoreFastfiller: true }); // even if already there, this will prevent shoving
     if (!creep.pos.isEqualTo(target)) {
       return;
     }

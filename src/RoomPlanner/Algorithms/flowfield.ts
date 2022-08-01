@@ -14,16 +14,21 @@ export function flowfields(room: string, pointsOfInterest: Record<string, Coord[
 }
 
 export const dijkstraMap = memoize(
-  (room, source) => `${room}_${source}`,
-  (room: string, source: RoomPosition[]) => {
+  (room: string, source: RoomPosition[], obstacles?: CostMatrix) => `${room}_${source}`,
+  (room: string, source: RoomPosition[], obstacles = new PathFinder.CostMatrix()) => {
     const frontier = source.slice();
-    const cm = new PathFinder.CostMatrix();
     const terrain = Game.map.getRoomTerrain(room);
+    const cm = new PathFinder.CostMatrix();
 
     while (frontier.length) {
       const current = frontier.shift()!;
       for (const next of calculateNearbyPositions(current, 1)) {
-        if (terrain.get(next.x, next.y) === TERRAIN_MASK_WALL || source.some(s => s.isEqualTo(next))) continue;
+        if (
+          terrain.get(next.x, next.y) === TERRAIN_MASK_WALL ||
+          obstacles.get(next.x, next.y) === 255 ||
+          source.some(s => s.isEqualTo(next))
+        )
+          continue;
 
         const nextCost = cm.get(current.x, current.y) + terrainCostAt(next);
 

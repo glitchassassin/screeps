@@ -1,3 +1,5 @@
+import { fastfillerPositions } from 'Reports/fastfillerPositions';
+import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { outsidePerimeter } from 'Selectors/perimeter';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { mineralPosition, sourcePositions } from 'Selectors/roomCache';
@@ -12,6 +14,9 @@ interface getCostMatrixOptions {
   stayInsidePerimeter?: boolean;
   terrain?: boolean;
   roomPlan?: boolean;
+  roomPlanAllStructures?: boolean;
+  ignoreFastfiller?: boolean;
+  ignoreHQLogistics?: boolean;
 }
 export const getCostMatrix = memoizeByTick(
   (roomName: string, avoidCreeps: boolean = false, opts = {}) =>
@@ -34,6 +39,12 @@ export const getCostMatrix = memoizeByTick(
         if ((OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType)) {
           costs.set(s.pos.x, s.pos.y, 255);
         }
+      }
+    }
+
+    if (opts?.roomPlanAllStructures) {
+      for (const s of plannedOfficeStructuresByRcl(roomName, 8)) {
+        costs.set(s.pos.x, s.pos.y, 255);
       }
     }
 
@@ -73,6 +84,17 @@ export const getCostMatrix = memoizeByTick(
           // Can't walk through non-walkable construction sites
           costs.set(struct.pos.x, struct.pos.y, 0xff);
         }
+      }
+
+      // include dedicated filler sites
+      if (!opts?.ignoreFastfiller) {
+        for (const pos of fastfillerPositions(roomName)) {
+          costs.set(pos.x, pos.y, 0xff);
+        }
+      }
+      if (!opts?.ignoreHQLogistics) {
+        const pos = getHeadquarterLogisticsLocation(roomName);
+        if (pos) costs.set(pos.x, pos.y, 0xff);
       }
     }
 

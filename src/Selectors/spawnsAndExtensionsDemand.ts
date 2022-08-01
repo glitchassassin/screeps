@@ -6,11 +6,16 @@ import { roomPlans } from './roomPlans';
 export const getExtensions = (room: string) => {
   const plan = roomPlans(room);
   if (!plan) return [];
-  return ([] as PlannedStructure[]).concat(
-    plan.extensions?.extensions ?? [],
-    plan.franchise1?.extensions ?? [],
-    plan.franchise2?.extensions ?? []
-  );
+  return ([] as (PlannedStructure | undefined)[])
+    .concat(
+      plan.fastfiller?.extensions ?? [],
+      plan.headquarters?.extension,
+      plan.franchise1?.extensions ?? [],
+      plan.franchise2?.extensions ?? [],
+      plan.extensions?.extensions ?? [],
+      plan.backfill?.extensions ?? []
+    )
+    .filter((s): s is PlannedStructure => !!s);
 };
 
 export const getEnergyStructures = memoizeByTick(
@@ -19,13 +24,7 @@ export const getEnergyStructures = memoizeByTick(
     const plan = roomPlans(room);
     if (!plan) return [];
     const structures = ([] as (PlannedStructure | undefined)[])
-      .concat(
-        plan.fastfiller?.spawns ?? [],
-        plan.fastfiller?.extensions ?? [],
-        plan.extensions?.extensions ?? [],
-        plan.franchise1?.extensions ?? [],
-        plan.franchise2?.extensions ?? []
-      )
+      .concat(plan.fastfiller?.spawns ?? [], getExtensions(room))
       .map(s => s?.structure)
       .filter(s => s) as (StructureExtension | StructureSpawn)[];
 

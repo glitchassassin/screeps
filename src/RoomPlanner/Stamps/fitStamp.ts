@@ -1,14 +1,25 @@
-import { distanceTransform } from 'RoomPlanner/Algorithms/distancetransform';
+import { diamondDistanceTransform, distanceTransform } from 'RoomPlanner/Algorithms/distancetransform';
 import { forEverySquareInRoom } from 'Selectors/Map/MapCoordinates';
 import { Coord } from 'utils/packrat';
 import { Stamp } from './stamps';
 
-export function fitStamp(room: string, stamp: Stamp, costMatrix?: CostMatrix) {
-  const dt = distanceTransform(room, false, costMatrix);
+export function fitStamp(room: string, stamp: Stamp, costMatrix?: CostMatrix, diamond = false) {
+  const minMargin = 3; // do not put stamps closer than 3 squares to the edge of the room
+  const dt = (diamond ? diamondDistanceTransform : distanceTransform)(room, false, costMatrix);
   const squares: Coord[] = [];
   const offset = Math.floor(stamp.length / 2);
   forEverySquareInRoom((x, y) => {
-    if (dt.get(x, y) > offset) {
+    const topLeft = { x: x - offset, y: y - offset };
+    const bottomRight = { x: x + offset, y: y + offset };
+    if (
+      topLeft.x <= minMargin ||
+      topLeft.y <= minMargin ||
+      bottomRight.x + minMargin >= 50 ||
+      bottomRight.y + minMargin >= 50
+    )
+      return;
+
+    if (x > offset && y > offset && x + offset < 50 && y + offset < 50 && dt.get(x, y) > offset) {
       squares.push({ x: x - offset, y: y - offset });
     }
   });

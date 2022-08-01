@@ -1,6 +1,8 @@
 import { RoomPlan } from 'RoomPlanner';
+import { deserializeBackfillPlan } from 'RoomPlanner/Backfill/deserializeBackfillPlan';
 import { deserializeExtensionsPlan } from 'RoomPlanner/Extensions/deserializeExtensionsPlan';
 import { deserializeFranchisePlan } from 'RoomPlanner/Franchise/deserializeFranchisePlan';
+import { deserializeLibraryPlan } from 'RoomPlanner/Library/deserializeLibraryPlan';
 import { deserializeMinePlan } from 'RoomPlanner/Mine/deserializeMinePlan';
 import { deserializePerimeterPlan } from 'RoomPlanner/Perimeter/deserializePerimeterPlan';
 import { deserializeRoadsPlan } from 'RoomPlanner/Roads/deserializeRoadsPlan';
@@ -32,6 +34,19 @@ const updateRoomPlan = <T extends keyof RoomPlan>(
   }
 };
 
+declare global {
+  namespace NodeJS {
+    interface Global {
+      resetRoomPlan: (room: string) => void;
+    }
+  }
+}
+
+global.resetRoomPlan = (room: string) => {
+  delete Memory.roomPlans[room];
+  plans.delete(room);
+};
+
 export const roomPlans = profiler.registerFN((roomName: string) => {
   Memory.roomPlans ??= {};
 
@@ -47,10 +62,12 @@ export const roomPlans = profiler.registerFN((roomName: string) => {
   updateRoomPlan(roomName, 'franchise1', deserializeFranchisePlan);
   updateRoomPlan(roomName, 'franchise2', deserializeFranchisePlan);
   updateRoomPlan(roomName, 'mine', deserializeMinePlan);
+  updateRoomPlan(roomName, 'library', deserializeLibraryPlan);
   updateRoomPlan(roomName, 'headquarters', deserializeHeadquartersPlan);
   updateRoomPlan(roomName, 'labs', deserializeLabsPlan);
   updateRoomPlan(roomName, 'fastfiller', deserializeFastfillerPlan);
   updateRoomPlan(roomName, 'extensions', deserializeExtensionsPlan);
+  updateRoomPlan(roomName, 'backfill', deserializeBackfillPlan);
   updateRoomPlan(roomName, 'perimeter', deserializePerimeterPlan);
   updateRoomPlan(roomName, 'roads', deserializeRoadsPlan);
 

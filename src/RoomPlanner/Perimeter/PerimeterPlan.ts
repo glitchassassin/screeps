@@ -5,43 +5,55 @@ import { PlannedStructure } from '../PlannedStructure';
 import { validatePerimeterPlan } from './validatePerimeterPlan';
 
 const getBoundingRect = (...args: PlannedStructure[]) => {
-    const rect = {
-        x1: 50,
-        y1: 50,
-        x2: 0,
-        y2: 0
-    }
-    for (let s of args) {
-        rect.x1 = Math.min(s.pos.x, rect.x1)
-        rect.y1 = Math.min(s.pos.y, rect.y1)
-        rect.x2 = Math.max(s.pos.x, rect.x2)
-        rect.y2 = Math.max(s.pos.y, rect.y2)
-    }
-    return padBoundingRect(rect);
-}
+  const rect = {
+    x1: 50,
+    y1: 50,
+    x2: 0,
+    y2: 0
+  };
+  for (let s of args) {
+    rect.x1 = Math.min(s.pos.x, rect.x1);
+    rect.y1 = Math.min(s.pos.y, rect.y1);
+    rect.x2 = Math.max(s.pos.x, rect.x2);
+    rect.y2 = Math.max(s.pos.y, rect.y2);
+  }
+  return padBoundingRect(rect);
+};
 
 const padBoundingRect = (rect: Rect, buffer = 2) => {
-    return {
-        x1: Math.max(rect.x1 - buffer, 2),
-        y1: Math.max(rect.y1 - buffer, 2),
-        x2: Math.min(rect.x2 + buffer, 47),
-        y2: Math.min(rect.y2 + buffer, 47),
-    }
-}
+  return {
+    x1: Math.max(rect.x1 - buffer, 2),
+    y1: Math.max(rect.y1 - buffer, 2),
+    x2: Math.min(rect.x2 + buffer, 47),
+    y2: Math.min(rect.y2 + buffer, 47)
+  };
+};
 
 export const planPerimeter = (room: string) => {
-    const roomPlan = roomPlans(room)
-    if (!roomPlan?.backfill || !roomPlan?.fastfiller || !roomPlan?.labs || !roomPlan?.extensions || !roomPlan.franchise1 || !roomPlan.franchise2) throw new Error('No Office structures found to plot perimeter');
-    const plan: Partial<PerimeterPlan> = {
-        ramparts: util_mincut.GetCutTiles(room, [
-            getBoundingRect(...roomPlan.backfill.towers),
-            getBoundingRect(...roomPlan.fastfiller.extensions),
-            getBoundingRect(...roomPlan.extensions.extensions),
-            getBoundingRect(...roomPlan.labs.labs),
-            getBoundingRect(roomPlan.franchise1.container, roomPlan.franchise1.link, ...roomPlan.franchise1.extensions),
-            getBoundingRect(roomPlan.franchise2.container, roomPlan.franchise2.link, ...roomPlan.franchise1.extensions),
-        ]).map(pos => new PlannedStructure(new RoomPosition(pos.x, pos.y, room), STRUCTURE_RAMPART)),
-    }
+  const roomPlan = roomPlans(room);
+  if (
+    !roomPlan?.backfill ||
+    !roomPlan?.fastfiller ||
+    !roomPlan.library ||
+    !roomPlan?.labs ||
+    !roomPlan?.extensions ||
+    !roomPlan.franchise1 ||
+    !roomPlan.franchise2
+  )
+    throw new Error('No Office structures found to plot perimeter');
+  const plan: Partial<PerimeterPlan> = {
+    ramparts: util_mincut
+      .GetCutTiles(room, [
+        getBoundingRect(...roomPlan.backfill.towers),
+        getBoundingRect(...roomPlan.fastfiller.extensions),
+        getBoundingRect(...roomPlan.extensions.extensions),
+        getBoundingRect(...roomPlan.labs.labs),
+        getBoundingRect(roomPlan.library.container, roomPlan.library.link),
+        getBoundingRect(roomPlan.franchise1.container, roomPlan.franchise1.link, ...roomPlan.franchise1.extensions),
+        getBoundingRect(roomPlan.franchise2.container, roomPlan.franchise2.link, ...roomPlan.franchise1.extensions)
+      ])
+      .map(pos => new PlannedStructure(new RoomPosition(pos.x, pos.y, room), STRUCTURE_RAMPART))
+  };
 
-    return validatePerimeterPlan(plan);
-}
+  return validatePerimeterPlan(plan);
+};

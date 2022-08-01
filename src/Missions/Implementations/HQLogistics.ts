@@ -64,7 +64,7 @@ export class HQLogistics extends MissionImplementation {
 
     const pos = getHeadquarterLogisticsLocation(mission.office);
     if (!pos) return;
-    moveTo(creep, pos);
+    moveTo(creep, pos, { ignoreHQLogistics: true });
 
     // Check HQ state
     const hq = roomPlans(mission.office)?.headquarters;
