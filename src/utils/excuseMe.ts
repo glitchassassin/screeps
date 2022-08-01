@@ -7,8 +7,9 @@
  * Creep.giveWay({pos: controller.pos, range: 3 }) - moves into random available spot in range of target, if none are avaiable fallbacks to random spot
  */
 
-import profiler from "utils/profiler";
-import { unpackPos } from "./packrat";
+import { viz } from 'Selectors/viz';
+import profiler from 'utils/profiler';
+import { unpackPos } from './packrat';
 
 /*
  * if alwaysNudge false you have to call Creep.move with additional argument -
@@ -24,27 +25,27 @@ const alwaysNudge = true;
  */
 declare global {
   interface Creep {
+    moveTargets?: {
+      pos: string;
+      range: number;
+    }[];
     giveWay(nudgeDirection?: DirectionConstant): void;
     move(direction: DirectionConstant | Creep, excuse?: boolean): CreepMoveReturnCode;
   }
 
   interface PowerCreep {
+    moveTargets?: {
+      pos: string;
+      range: number;
+    }[];
     giveWay(nudgeDirection?: DirectionConstant): void;
     move(direction: DirectionConstant | Creep, excuse?: boolean): CreepMoveReturnCode;
   }
   interface CreepMemory {
     excuseMe?: DirectionConstant;
-    moveTargets?: {
-      pos: string,
-      range: number
-  }[]
   }
   interface PowerCreepMemory {
     excuseMe?: DirectionConstant;
-    moveTargets?: {
-      pos: string,
-      range: number
-  }[]
   }
 }
 
@@ -57,7 +58,7 @@ function getRandomDir() {
   return (Math.floor(Math.random() * 8) + 1) as DirectionConstant;
 }
 function getOppositeDir(dir: DirectionConstant) {
-  return ((dir + 3) % 8 + 1) as DirectionConstant;
+  return (((dir + 3) % 8) + 1) as DirectionConstant;
 }
 
 /*
@@ -73,11 +74,13 @@ function getNudgeDirection_Random(pos: RoomPosition) {
   for (let dir = TOP; dir <= TOP_LEFT; ++dir) {
     let posX = pos.x + offsetX[dir];
     let posY = pos.y + offsetY[dir];
-    if (posX < 1 || posX > 48 || posY < 1 || posY > 48)
-      continue;
-    if ((terrain.get(posX, posY) & TERRAIN_MASK_WALL) > 0)
-      continue;
-    if (room.lookForAt(LOOK_STRUCTURES, posX, posY).find(s => (OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType)))
+    if (posX < 1 || posX > 48 || posY < 1 || posY > 48) continue;
+    if ((terrain.get(posX, posY) & TERRAIN_MASK_WALL) > 0) continue;
+    if (
+      room
+        .lookForAt(LOOK_STRUCTURES, posX, posY)
+        .find(s => (OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType))
+    )
       continue;
 
     const hasCreeps = room.lookForAt(LOOK_CREEPS, posX, posY).length > 0;
@@ -108,8 +111,20 @@ function getNudgeDirection_Random(pos: RoomPosition) {
  * prefers empty tiles over ones with creeps
  * never picks a direction that would result in hitting a wall or an obstacle structure
  */
-function getNudgeDirection_KeepRange(pos: RoomPosition, target: { pos: RoomPosition; range: number; }) {
+function getNudgeDirection_KeepRange(pos: RoomPosition, target: { pos: RoomPosition; range: number }) {
   if (pos.isEqualTo(target.pos) && target.range === 0) return undefined;
+  viz(pos.roomName)
+    .line(pos, target.pos, { color: 'magenta', lineStyle: 'dotted' })
+    .rect(
+      target.pos.x - target.range - 0.5,
+      target.pos.y - target.range - 0.5,
+      target.range * 2 + 1,
+      target.range * 2 + 1,
+      {
+        stroke: 'magenta',
+        fill: 'transparent'
+      }
+    );
   const room = Game.rooms[pos.roomName];
   const terrain = Game.map.getRoomTerrain(pos.roomName);
   let keepRangeTotalWeight = 0;
@@ -119,18 +134,19 @@ function getNudgeDirection_KeepRange(pos: RoomPosition, target: { pos: RoomPosit
   for (let dir = TOP; dir <= TOP_LEFT; ++dir) {
     let posX = pos.x + offsetX[dir];
     let posY = pos.y + offsetY[dir];
-    if (posX < 1 || posX > 48 || posY < 1 || posY > 48)
-      continue;
-    if ((terrain.get(posX, posY) & TERRAIN_MASK_WALL) > 0)
-      continue;
-    if (room.lookForAt(LOOK_STRUCTURES, posX, posY).find(s => (OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType)))
+    if (posX < 1 || posX > 48 || posY < 1 || posY > 48) continue;
+    if ((terrain.get(posX, posY) & TERRAIN_MASK_WALL) > 0) continue;
+    if (
+      room
+        .lookForAt(LOOK_STRUCTURES, posX, posY)
+        .find(s => (OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType))
+    )
       continue;
 
     const hasCreeps = room.lookForAt(LOOK_CREEPS, posX, posY).length > 0;
     const addWeight = hasCreeps ? 1 : 2;
     randomDirCandidates[dir] += addWeight;
-    if (target.pos.inRangeTo(posX, posY, target.range))
-      keepRangeDirCandidates[dir] += addWeight;
+    if (target.pos.inRangeTo(posX, posY, target.range)) keepRangeDirCandidates[dir] += addWeight;
     keepRangeTotalWeight += keepRangeDirCandidates[dir];
     randomTotalWeight += randomDirCandidates[dir];
   }
@@ -161,8 +177,7 @@ function getNudgeDirection_KeepRange(pos: RoomPosition, target: { pos: RoomPosit
 function excuseMe(pos: RoomPosition, direction: DirectionConstant) {
   const nextX = pos.x + offsetX[direction];
   const nextY = pos.y + offsetY[direction];
-  if (nextX > 49 || nextX < 0 || nextY > 49 || nextY < 0)
-    return;
+  if (nextX > 49 || nextX < 0 || nextY > 49 || nextY < 0) return;
 
   const room = Game.rooms[pos.roomName];
   const creeps = room.lookForAt(LOOK_CREEPS, nextX, nextY);
@@ -170,21 +185,19 @@ function excuseMe(pos: RoomPosition, direction: DirectionConstant) {
     creeps[0].giveWay(getOppositeDir(direction));
   }
   const powerCreeps = room.lookForAt(LOOK_POWER_CREEPS, nextX, nextY);
-  if (powerCreeps.length > 0 && powerCreeps[0].my)
-    powerCreeps[0].giveWay(getOppositeDir(direction));
+  if (powerCreeps.length > 0 && powerCreeps[0].my) powerCreeps[0].giveWay(getOppositeDir(direction));
 }
 
 /*
  *
  */
-let movingThisTick = new Set<Id<Creep|PowerCreep>>();
+let movingThisTick = new Set<Id<Creep | PowerCreep>>();
 const move = Creep.prototype.move;
-Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Creep, nudge?: boolean) {
+Creep.prototype.move = function (this: Creep, direction: DirectionConstant | Creep, nudge?: boolean) {
   movingThisTick.add(this.id);
-  if ((alwaysNudge || nudge) && _.isNumber(direction))
-    excuseMe(this.pos, direction);
+  if ((alwaysNudge || nudge) && _.isNumber(direction)) excuseMe(this.pos, direction);
   return move.call(this, direction);
-}) as typeof move;
+} as typeof move;
 
 /*
  * call this on creeps that should react to being nudged
@@ -192,13 +205,15 @@ Creep.prototype.move = (function (this: Creep, direction: DirectionConstant | Cr
  * to be nudged
  */
 function giveWay(creep: AnyCreep, nudgeDirection?: DirectionConstant) {
-  let target = creep.memory.moveTargets?.map(t => ({pos: unpackPos(t.pos), range: t.range})).find(({pos, range}) => pos.inRangeTo(creep, range));
+  let target = creep.moveTargets
+    ?.map(t => ({ pos: unpackPos(t.pos), range: t.range }))
+    .find(({ pos, range }) => pos.inRangeTo(creep, range));
   let { pos, range } = target ?? {};
   if (!movingThisTick.has(creep.id)) {
     if (!pos && nudgeDirection) {
       creep.move(nudgeDirection, true);
     } else if (pos && range) {
-      const dir = getNudgeDirection_KeepRange(creep.pos, { pos, range })
+      const dir = getNudgeDirection_KeepRange(creep.pos, { pos, range });
       if (dir) {
         creep.move(dir, true);
       } else {
@@ -212,9 +227,11 @@ function giveWay(creep: AnyCreep, nudgeDirection?: DirectionConstant) {
   }
   return true;
 }
+Creep.prototype.moveTargets = [];
 Creep.prototype.giveWay = function (nudgeDirection?: DirectionConstant) {
   giveWay(this, nudgeDirection);
 };
+PowerCreep.prototype.moveTargets = [];
 PowerCreep.prototype.giveWay = function (nudgeDirection?: DirectionConstant) {
   giveWay(this, nudgeDirection);
 };
@@ -225,4 +242,4 @@ PowerCreep.prototype.giveWay = function (nudgeDirection?: DirectionConstant) {
  */
 export const clearNudges = profiler.registerFN(() => {
   movingThisTick = new Set();
-}, 'clearNudges')
+}, 'clearNudges');

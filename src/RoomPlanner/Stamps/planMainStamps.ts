@@ -147,8 +147,9 @@ export function planMainStamps(room: string) {
       fastfiller.spawns = FASTFILLER_STAMP_SPAWN_ORDER.map(
         ([x, y]) => new PlannedStructure(new RoomPosition(pos.x + x, pos.y + y, room), STRUCTURE_SPAWN)
       );
-      stamps[i].forEach((row, y) => {
-        row.forEach((cell, x) => {
+      for (let x = 0; x < stamps[i][0].length; x++) {
+        for (let y = 0; y < stamps[i].length; y++) {
+          const cell = stamps[i][y][x];
           const p = new RoomPosition(pos.x + x, pos.y + y, room);
           if (cell === STRUCTURE_EXTENSION) {
             fastfiller.extensions?.push(new PlannedStructure(p, STRUCTURE_EXTENSION));
@@ -162,8 +163,8 @@ export function planMainStamps(room: string) {
           if (cell === STRUCTURE_ROAD) {
             fastfiller.roads?.push(new PlannedStructure(p, STRUCTURE_ROAD));
           }
-        });
-      });
+        }
+      }
     } else if (stamps[i] === HQ_STAMP) {
       stamps[i].forEach((row, y) => {
         row.forEach((cell, x) => {

@@ -225,7 +225,7 @@ export function moveTo(
   }
 
   // Set target position for excuseMe
-  Memory.creeps[creep.name].moveTargets = targets.map(t => ({ pos: packPos(t.pos), range: t.range }));
+  creep.moveTargets = targets.map(t => ({ pos: packPos(t.pos), range: t.range }));
 
   const key = targets.map(t => packPos(t.pos)).join();
 
@@ -242,7 +242,7 @@ export function moveTo(
   try {
     let result = Routes[creep.name].run(creep);
     if (result === ERR_NOT_FOUND) {
-      creep.memory.moveTargets = undefined;
+      creep.moveTargets = [];
       delete Routes[creep.name];
       // console.log('ERR_NOT_FOUND')
       return BehaviorResult.FAILURE;
@@ -254,7 +254,7 @@ export function moveTo(
   } catch (e) {
     // Whether error encountered or execution fell through, the path failed
     // console.log(e);
-    creep.memory.moveTargets = undefined;
+    creep.moveTargets = [];
     delete Routes[creep.name];
     return BehaviorResult.FAILURE;
   }
