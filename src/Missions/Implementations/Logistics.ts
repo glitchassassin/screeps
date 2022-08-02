@@ -18,7 +18,7 @@ import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { renewCost } from 'Selectors/renewCost';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
-import { roomEnergyAvailable } from 'Selectors/storageEnergyAvailable';
+import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { MissionImplementation } from './MissionImplementation';
@@ -99,7 +99,7 @@ export class Logistics extends MissionImplementation {
     runStates(
       {
         [States.DEPOSIT]: (mission, creep) => {
-          if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.WITHDRAW;
+          if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.FIND_WORK;
           mission.efficiency.working += 1;
 
           const target = storageStructureThatNeedsEnergy(mission.office);
@@ -111,8 +111,8 @@ export class Logistics extends MissionImplementation {
               if (opp.creep?.my) {
                 if (
                   opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-                  (((opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('PARALEGAL')) &&
-                    roomEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable) ||
+                  (((opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('RESEARCH')) &&
+                    storageEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable) ||
                     opp.creep.name.startsWith('REFILL'))
                 ) {
                   creep.transfer(opp.creep, RESOURCE_ENERGY);
@@ -126,23 +126,21 @@ export class Logistics extends MissionImplementation {
                 ) {
                   creep.transfer(opp.creep, RESOURCE_ENERGY);
                   energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
-                  if (opp.creep.memory.state === States.WITHDRAW) {
-                    setState(States.DEPOSIT)(opp.creep);
-                  }
-                  break;
-                } else if (
-                  (opp.structure?.structureType === STRUCTURE_EXTENSION ||
-                    opp.structure?.structureType === STRUCTURE_SPAWN) &&
-                  (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY] <
-                    (opp.structure as AnyStoreStructure).store.getCapacity(RESOURCE_ENERGY)
-                ) {
-                  creep.transfer(opp.structure, RESOURCE_ENERGY);
-                  energyRemaining -= Math.min(
-                    (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY],
-                    energyRemaining
-                  );
+                  setState(States.DEPOSIT)(opp.creep);
                   break;
                 }
+              } else if (
+                (opp.structure?.structureType === STRUCTURE_EXTENSION ||
+                  opp.structure?.structureType === STRUCTURE_SPAWN) &&
+                (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY] <
+                  (opp.structure as AnyStoreStructure).store.getCapacity(RESOURCE_ENERGY)
+              ) {
+                creep.transfer(opp.structure, RESOURCE_ENERGY);
+                energyRemaining -= Math.min(
+                  (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY],
+                  energyRemaining
+                );
+                break;
               }
             }
             if (energyRemaining === 0) {
@@ -162,8 +160,6 @@ export class Logistics extends MissionImplementation {
                 mission.actual.energy += renewCost(creep);
               }
             }
-            // Back away
-            creep.move(target.pos.getDirectionTo(creep.pos.x, creep.pos.y));
           }
 
           return States.DEPOSIT;
@@ -196,7 +192,6 @@ export class Logistics extends MissionImplementation {
           return States.FIND_WORK;
         },
         [States.WITHDRAW]: (mission, creep) => {
-          creep.say('-');
           let energyCapacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
 
           // Look for opportunity targets

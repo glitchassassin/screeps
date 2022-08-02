@@ -7,9 +7,7 @@
  * Creep.giveWay({pos: controller.pos, range: 3 }) - moves into random available spot in range of target, if none are avaiable fallbacks to random spot
  */
 
-import { viz } from 'Selectors/viz';
 import profiler from 'utils/profiler';
-import { unpackPos } from './packrat';
 
 /*
  * if alwaysNudge false you have to call Creep.move with additional argument -
@@ -26,7 +24,7 @@ const alwaysNudge = true;
 declare global {
   interface Creep {
     moveTargets?: {
-      pos: string;
+      pos: RoomPosition;
       range: number;
     }[];
     giveWay(nudgeDirection?: DirectionConstant): void;
@@ -35,7 +33,7 @@ declare global {
 
   interface PowerCreep {
     moveTargets?: {
-      pos: string;
+      pos: RoomPosition;
       range: number;
     }[];
     giveWay(nudgeDirection?: DirectionConstant): void;
@@ -113,18 +111,6 @@ function getNudgeDirection_Random(pos: RoomPosition) {
  */
 function getNudgeDirection_KeepRange(pos: RoomPosition, target: { pos: RoomPosition; range: number }) {
   if (pos.isEqualTo(target.pos) && target.range === 0) return undefined;
-  viz(pos.roomName)
-    .line(pos, target.pos, { color: 'magenta', lineStyle: 'dotted' })
-    .rect(
-      target.pos.x - target.range - 0.5,
-      target.pos.y - target.range - 0.5,
-      target.range * 2 + 1,
-      target.range * 2 + 1,
-      {
-        stroke: 'magenta',
-        fill: 'transparent'
-      }
-    );
   const room = Game.rooms[pos.roomName];
   const terrain = Game.map.getRoomTerrain(pos.roomName);
   let keepRangeTotalWeight = 0;
@@ -182,10 +168,10 @@ function excuseMe(pos: RoomPosition, direction: DirectionConstant) {
   const room = Game.rooms[pos.roomName];
   const creeps = room.lookForAt(LOOK_CREEPS, nextX, nextY);
   if (creeps.length > 0 && creeps[0].my) {
-    creeps[0].giveWay(getOppositeDir(direction));
+    creeps[0].giveWay();
   }
   const powerCreeps = room.lookForAt(LOOK_POWER_CREEPS, nextX, nextY);
-  if (powerCreeps.length > 0 && powerCreeps[0].my) powerCreeps[0].giveWay(getOppositeDir(direction));
+  if (powerCreeps.length > 0 && powerCreeps[0].my) powerCreeps[0].giveWay();
 }
 
 /*
@@ -195,7 +181,7 @@ let movingThisTick = new Set<Id<Creep | PowerCreep>>();
 const move = Creep.prototype.move;
 Creep.prototype.move = function (this: Creep, direction: DirectionConstant | Creep, nudge?: boolean) {
   movingThisTick.add(this.id);
-  if ((alwaysNudge || nudge) && _.isNumber(direction)) excuseMe(this.pos, direction);
+  if ((alwaysNudge || nudge) && _.isNumber(direction) && !this.fatigue) excuseMe(this.pos, direction);
   return move.call(this, direction);
 } as typeof move;
 
@@ -205,9 +191,21 @@ Creep.prototype.move = function (this: Creep, direction: DirectionConstant | Cre
  * to be nudged
  */
 function giveWay(creep: AnyCreep, nudgeDirection?: DirectionConstant) {
-  let target = creep.moveTargets
-    ?.map(t => ({ pos: unpackPos(t.pos), range: t.range }))
-    .find(({ pos, range }) => pos.inRangeTo(creep, range));
+  let target = creep.moveTargets?.find(({ pos, range }) => pos.inRangeTo(creep, range));
+  // if (target) {
+  //   viz(creep.pos.roomName)
+  //     .line(creep.pos, target.pos, { color: 'magenta', lineStyle: 'dotted' })
+  //     .rect(
+  //       target.pos.x - target.range - 0.5,
+  //       target.pos.y - target.range - 0.5,
+  //       target.range * 2 + 1,
+  //       target.range * 2 + 1,
+  //       {
+  //         stroke: 'magenta',
+  //         fill: 'transparent'
+  //       }
+  //     );
+  // }
   let { pos, range } = target ?? {};
   if (!movingThisTick.has(creep.id)) {
     if (!pos && nudgeDirection) {

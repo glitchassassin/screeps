@@ -10,9 +10,10 @@ export const getEnergyFromStorage = profiler.registerFN(
 
     const hq = roomPlans(office)?.headquarters;
     const storage = hq?.storage.structure as StructureStorage | undefined;
-    const container = roomPlans(office)
-      ?.fastfiller?.containers.map(c => c.structure as StructureContainer | undefined)
-      .find(c => c?.store[RESOURCE_ENERGY]) as StructureContainer | undefined;
+    const containers =
+      roomPlans(office)?.fastfiller?.containers.map(c => c.structure as StructureContainer | undefined) ?? [];
+    const container =
+      containers.find(c => c?.store[RESOURCE_ENERGY]) ?? (containers[0] as StructureContainer | undefined);
     const spawn = getPrimarySpawn(office) as StructureSpawn | undefined;
 
     const withdrawLimit = limit ?? Game.rooms[office]?.energyCapacityAvailable;

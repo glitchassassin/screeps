@@ -82,7 +82,8 @@ export class Route {
         return getCostMatrix(room, avoidCreeps, {
           stayInsidePerimeter: this.opts?.stayInsidePerimeter,
           ignoreFastfiller: this.opts?.ignoreFastfiller,
-          ignoreHQLogistics: this.opts?.ignoreHQLogistics
+          ignoreHQLogistics: this.opts?.ignoreHQLogistics,
+          ignoreFranchises: this.opts?.ignoreFranchises
         });
       },
       ...terrainCosts(creep),
@@ -169,6 +170,7 @@ interface MoveToOpts extends globalThis.MoveToOpts {
   stayInsidePerimeter?: boolean;
   ignoreFastfiller?: boolean;
   ignoreHQLogistics?: boolean;
+  ignoreFranchises?: boolean;
 }
 
 export function moveTo(
@@ -225,7 +227,7 @@ export function moveTo(
   }
 
   // Set target position for excuseMe
-  creep.moveTargets = targets.map(t => ({ pos: packPos(t.pos), range: t.range }));
+  creep.moveTargets = targets;
 
   const key = targets.map(t => packPos(t.pos)).join();
 

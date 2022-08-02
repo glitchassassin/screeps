@@ -5,7 +5,13 @@ import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { mineralPosition, sourcePositions } from 'Selectors/roomCache';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
 import { memoize, memoizeByTick } from 'utils/memoizeFunction';
-import { calculateNearbyPositions, isPositionWalkable, isSourceKeeperRoom, terrainCostAt } from './MapCoordinates';
+import {
+  adjacentWalkablePositions,
+  calculateNearbyPositions,
+  isPositionWalkable,
+  isSourceKeeperRoom,
+  terrainCostAt
+} from './MapCoordinates';
 
 interface getCostMatrixOptions {
   ignoreSourceKeepers?: boolean;
@@ -17,6 +23,7 @@ interface getCostMatrixOptions {
   roomPlanAllStructures?: boolean;
   ignoreFastfiller?: boolean;
   ignoreHQLogistics?: boolean;
+  ignoreFranchises?: boolean;
 }
 export const getCostMatrix = memoizeByTick(
   (roomName: string, avoidCreeps: boolean = false, opts = {}) =>
@@ -95,6 +102,11 @@ export const getCostMatrix = memoizeByTick(
       if (!opts?.ignoreHQLogistics) {
         const pos = getHeadquarterLogisticsLocation(roomName);
         if (pos) costs.set(pos.x, pos.y, 0xff);
+      }
+      if (!opts?.ignoreFranchises) {
+        sourcePositions(roomName).forEach(pos =>
+          adjacentWalkablePositions(pos, true).forEach(p => costs.set(p.x, p.y, 0xff))
+        );
       }
     }
 

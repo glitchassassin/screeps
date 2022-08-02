@@ -84,7 +84,7 @@ const orderAttempted = new WeakMap<SpawnOrder, number>();
 export function spawnFromQueues() {
   for (const office in Memory.offices) {
     vacateSpawns(office);
-    let availableSpawns = getSpawns(office).filter(s => !s.spawning);
+    let availableSpawns = getSpawns(office).filter(s => !s.spawning || s.spawning.remainingTime === 1);
 
     // loop through priorities, highest to lowest
     for (const order of Memory.offices[office].spawnQueue) {

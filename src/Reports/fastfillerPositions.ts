@@ -1,3 +1,4 @@
+import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export function fastfillerPositions(room: string) {
@@ -9,5 +10,5 @@ export function fastfillerPositions(room: string) {
     new RoomPosition(spawn3.x - 1, spawn3.y - 1, spawn3.roomName),
     new RoomPosition(spawn2.x - 1, spawn2.y, spawn2.roomName),
     new RoomPosition(spawn3.x + 1, spawn3.y - 1, spawn3.roomName)
-  ];
+  ].slice(0, rcl(room) < 3 ? 2 : undefined); // only fill the first two fastiller positions until RCL3
 }
