@@ -69,7 +69,7 @@ export default {
             )
         ).size
       : 0;
-    console.log('reserveCount', reserveCount);
+
     const reserveMissions = pendingAndActiveMissions(office).filter(
       and(isMission(MissionType.RESERVE), not(and(missionExpired, isStatus(MissionStatus.RUNNING))))
     );
