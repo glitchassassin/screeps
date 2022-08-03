@@ -295,3 +295,17 @@ export function forEverySquareInRoom(callback: (x: number, y: number) => void) {
     }
   }
 }
+
+export function posAtDirection(origin: RoomPosition, direction: DirectionConstant) {
+  const offset = [
+    { x: 0, y: -1 },
+    { x: 1, y: -1 },
+    { x: 1, y: 0 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 1 },
+    { x: -1, y: 0 },
+    { x: -1, y: -1 }
+  ][direction - 1];
+  return new RoomPosition(origin.x + offset.x, origin.y + offset.y, origin.roomName);
+}

@@ -56,8 +56,10 @@ export const MinionBuilders = {
   },
   [MinionTypes.ACCOUNTANT]: memoize(
     // Memoizes at 50-energy increments
-    (energy: number, maxSegments = 25, roads = false) => `${Math.round((energy * 2) / 100)} ${maxSegments} ${roads}`,
-    (energy: number, maxSegments = 25, roads = false) => {
+    (energy: number, maxSegments = 25, roads = false, repair = false) =>
+      `${Math.round((energy * 2) / 100)} ${maxSegments} ${roads}`,
+    (energy: number, maxSegments = 25, roads = false, repair = false) => {
+      const suffix = repair ? [WORK] : [];
       if (energy < 200 || maxSegments === 0) {
         return [];
       } else if (energy <= 300) {
@@ -65,15 +67,15 @@ export const MinionBuilders = {
       } else if (energy < 5600) {
         // Before we have two spawns, create smaller haulers
         if (!roads) {
-          return buildFromSegment(energy, [CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13) });
+          return buildFromSegment(energy, [CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13), suffix });
         } else {
-          return buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13) });
+          return buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13), suffix });
         }
       } else {
         if (!roads) {
-          return buildFromSegment(energy, [CARRY, MOVE], { maxSegments });
+          return buildFromSegment(energy, [CARRY, MOVE], { maxSegments, suffix });
         } else {
-          return buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments });
+          return buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments, suffix });
         }
       }
     }

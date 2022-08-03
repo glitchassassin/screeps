@@ -84,6 +84,11 @@ export default {
       }
     }
 
+    const maxWorkParts = Math.min(
+      5,
+      Math.floor((Game.rooms[office].energyCapacityAvailable - BODYPART_COST[MOVE]) / BODYPART_COST[WORK])
+    );
+
     // Create new harvest mission for source, if it doesn't exist
     for (const { source, remote } of franchises) {
       const sourcePos = posById(source);
@@ -103,10 +108,18 @@ export default {
       const pendingMissions = pendingMissionsBySource[source] ?? [];
 
       // recalculate pending missions estimate, if needed
+      let saturation = 10;
       pendingMissions.forEach(m => {
-        if (m.estimate.energy > spawnEnergyAvailable(m.office)) {
-          console.log('re-estimating harvest mission', m.office);
-          m.estimate = createHarvestMission(m.office, m.data.source, m.startTime).estimate;
+        if (saturation <= 0) deletePendingMission(office, m);
+        else if (
+          m.estimate.energy > Math.max(300, spawnEnergyAvailable(m.office)) ||
+          m.data.harvestRate < maxWorkParts
+        ) {
+          // console.log('re-estimating harvest mission', m.office);
+          const mission = createHarvestMission(m.office, m.data.source, m.startTime);
+          m.estimate = mission.estimate;
+          m.data.harvestRate = mission.data.harvestRate;
+          saturation -= m.data.harvestRate;
         }
       });
 

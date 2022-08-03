@@ -4,6 +4,7 @@ import { activeMissions, isMission, pendingMissions, submitMission } from 'Missi
 import { fastfillerPositions } from 'Reports/fastfillerPositions';
 import { roomHasExtensions } from 'Selectors/getExtensionsCapacity';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
+import { roomPlans } from 'Selectors/roomPlans';
 import { unpackPos } from 'utils/packrat';
 
 /**
@@ -24,7 +25,11 @@ export default {
         m => (m.estimate.energy = createRefillMission(office, unpackPos(m.data.refillSquare)).estimate.energy)
       );
     }
-    if (!roomHasExtensions(office) || !hasEnergyIncome(office)) return; // Only one pending mission needed at a time; skip if we have no extensions or very low energy
+    if (
+      (!roomHasExtensions(office) && !roomPlans(office)?.fastfiller?.containers.some(s => s.structure)) ||
+      !hasEnergyIncome(office)
+    )
+      return; // Only one pending mission needed at a time; skip if we have no extensions or very low energy
 
     // Maintain four fastfillers
     for (const pos of positionsNeeded) {

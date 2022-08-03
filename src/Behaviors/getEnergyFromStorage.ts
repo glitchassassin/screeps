@@ -21,7 +21,9 @@ export const getEnergyFromStorage = profiler.registerFN(
     let target = undefined;
     if ((storage?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) > withdrawLimit) {
       target = storage;
-    } else if ((container?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) > withdrawLimit) {
+    } else if (
+      containers.reduce((sum, c) => sum + (c?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0), 0) > withdrawLimit
+    ) {
       target = container;
     } else if (!storage && !container && !ignoreSpawn && (spawn?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) >= 300) {
       target = spawn;

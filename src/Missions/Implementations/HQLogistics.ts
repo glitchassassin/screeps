@@ -76,36 +76,51 @@ export class HQLogistics extends MissionImplementation {
 
     const terminalAmountNeeded = terminal ? 30000 - terminal.store.getUsedCapacity(RESOURCE_ENERGY) : 0;
     const linkAmountAvailable = link?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
+    const linkAmountToTransfer = LINK_CAPACITY / 2 - linkAmountAvailable;
+
+    let withdraw = false;
+    let transfer = false;
 
     // Emergency provision for over-full Storage
     if (storage && storage.store.getFreeCapacity() < 5000) {
-      creep.withdraw(storage, RESOURCE_ENERGY);
+      !withdraw && creep.withdraw(storage, RESOURCE_ENERGY);
+      withdraw = true;
       if (creep.drop(RESOURCE_ENERGY) === OK) {
         mission.actual.energy += creep.store.getUsedCapacity(RESOURCE_ENERGY);
       }
       return;
     }
 
-    // First, try to get energy from link
-    if (link && linkAmountAvailable > 0) {
-      creep.withdraw(link, RESOURCE_ENERGY);
-      creepEnergy += linkAmountAvailable;
+    // First, try to balance link
+    if (link && linkAmountToTransfer < 0) {
+      !withdraw &&
+        creep.withdraw(link, RESOURCE_ENERGY, Math.min(creep.store.getFreeCapacity(), Math.abs(linkAmountToTransfer)));
+      withdraw = true;
+      creepEnergy += Math.abs(linkAmountToTransfer);
       // console.log(creep.name, 'withdrawing', linkAmountAvailable, 'from link')
+    } else if (link && linkAmountToTransfer > 0) {
+      !transfer &&
+        creep.transfer(link, RESOURCE_ENERGY, Math.min(creep.store.getUsedCapacity(), Math.abs(linkAmountToTransfer)));
+      transfer = true;
+      creepEnergy -= Math.abs(linkAmountToTransfer);
     }
 
     if (terminal && terminalAmountNeeded && terminalAmountNeeded > 0) {
       const amount = Math.min(terminalAmountNeeded, creep.store.getUsedCapacity());
-      creep.transfer(terminal, RESOURCE_ENERGY, amount);
+      !transfer && creep.transfer(terminal, RESOURCE_ENERGY, amount);
+      transfer = true;
       creepEnergy -= amount;
       // console.log(creep.name, 'transferring', amount, 'to terminal')
     }
 
     if (storage && creepEnergy < creep.store.getCapacity()) {
-      creep.withdraw(storage, RESOURCE_ENERGY);
+      !withdraw && creep.withdraw(storage, RESOURCE_ENERGY);
+      withdraw = true;
       // console.log(creep.name, 'withdrawing extra from storage')
     } else if (storage && creepEnergy > creep.store.getCapacity()) {
       const amount = creepEnergy - creep.store.getCapacity();
-      creep.transfer(storage, RESOURCE_ENERGY, amount);
+      !transfer && creep.transfer(storage, RESOURCE_ENERGY, amount);
+      transfer = true;
       // console.log(creep.name, 'transferring', amount, 'to storage')
     }
   }

@@ -43,8 +43,8 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
   }
   if (rcl >= 2) {
     plannedStructures = plannedStructures.concat(
-      plannedExtensions.slice(0, 5),
       plans.fastfiller?.containers ?? [],
+      plannedExtensions.slice(0, 5),
       plans.library?.container
     );
   }

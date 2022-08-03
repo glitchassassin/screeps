@@ -28,8 +28,8 @@ declare global {
 // Storage (go based on storage pos, then collect by hierarchy)
 
 const energySourcesByOffice = memoizeByTick(
-  (office, withdrawLimit) => office + withdrawLimit,
-  (office: string, withdrawLimit: number) => {
+  (office, withdrawLimit, remote) => office + withdrawLimit + remote,
+  (office: string, withdrawLimit: number, remote = false) => {
     const sources: (Ruin | { id: Id<Source>; pos: RoomPosition; energy: number } | AnyStoreStructure)[] = [];
     // ruins
     Game.rooms[office]
@@ -46,21 +46,30 @@ const energySourcesByOffice = memoizeByTick(
       .filter(source => shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0)
       .forEach(source => sources.push(source));
     // storage
-    const storage = (roomPlans(office)?.headquarters?.storage.structure ??
-      roomPlans(office)?.fastfiller?.containers.find(c => c.structure)?.structure ??
-      roomPlans(office)?.fastfiller?.spawns.find(c => c.structure)?.structure) as AnyStoreStructure | undefined;
-    if (storage) {
-      sources.push(storage);
+    const storage = [] as AnyStoreStructure[];
+    if (roomPlans(office)?.headquarters?.storage.structure)
+      storage.push(roomPlans(office)!.headquarters!.storage.structure as AnyStoreStructure);
+    if (!storage.length)
+      roomPlans(office)
+        ?.fastfiller?.containers.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
+        .forEach(c => storage.push(c.structure as AnyStoreStructure));
+    if (!storage.length)
+      roomPlans(office)
+        ?.fastfiller?.spawns.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
+        .forEach(c => storage.push(c.structure as AnyStoreStructure));
+    if (storage.length) {
+      // && !remote
+      sources.push(...storage);
     }
     return sources;
   }
 );
 
 export const engineerGetEnergy = profiler.registerFN(
-  (creep: Creep, office: string, withdrawLimit = Game.rooms[office].energyCapacityAvailable) => {
+  (creep: Creep, office: string, withdrawLimit = Game.rooms[office].energyCapacityAvailable, remote = false) => {
     if (!creep.memory.getEnergyState) {
       // Find nearest target
-      const source = getClosestByRange(creep.pos, energySourcesByOffice(office, withdrawLimit));
+      const source = getClosestByRange(creep.pos, energySourcesByOffice(office, withdrawLimit, remote));
       if (!source) {
         return;
       } else if (source instanceof Ruin) {

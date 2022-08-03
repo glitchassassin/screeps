@@ -10,6 +10,7 @@ import {
   calculateNearbyPositions,
   isPositionWalkable,
   isSourceKeeperRoom,
+  posAtDirection,
   terrainCostAt
 } from './MapCoordinates';
 
@@ -76,6 +77,13 @@ export const getCostMatrix = memoizeByTick(
         if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
           // Can't walk through non-walkable buildings
           costs.set(struct.pos.x, struct.pos.y, 0xff);
+          if (struct.structureType === STRUCTURE_SPAWN && struct.spawning && struct.spawning.remainingTime < 3) {
+            // also block spawning squares
+            (
+              struct.spawning?.directions?.map(d => posAtDirection(struct.pos, d)) ??
+              adjacentWalkablePositions(struct.pos)
+            ).forEach(p => costs.set(p.x, p.y, 0xff));
+          }
         } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
           // Favor roads over plain tiles
           costs.set(struct.pos.x, struct.pos.y, 1);

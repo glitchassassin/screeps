@@ -1,7 +1,7 @@
 import { moveTo } from 'Behaviors/moveTo';
 import { FEATURES } from 'config';
 import { byId } from 'Selectors/byId';
-import { calculateAdjacentPositions } from 'Selectors/Map/MapCoordinates';
+import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { getSpawns } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
@@ -66,14 +66,12 @@ export function scheduleSpawn(
 function vacateSpawns(office: string) {
   for (const spawn of getSpawns(office)) {
     if (spawn.spawning && spawn.spawning.remainingTime < 2) {
-      const spawningSquares = calculateAdjacentPositions(spawn.pos).filter(
-        pos => !spawn.spawning?.directions || spawn.spawning.directions.includes(spawn.pos.getDirectionTo(pos))
-      );
-      if (spawningSquares.every(pos => pos.lookFor(LOOK_CREEPS).length)) {
-        for (const pos of spawningSquares) {
-          for (const creep of pos.lookFor(LOOK_CREEPS)) {
-            moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
-          }
+      const spawningSquares =
+        spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ?? adjacentWalkablePositions(spawn.pos, true);
+      for (const pos of spawningSquares) {
+        for (const creep of pos.lookFor(LOOK_CREEPS)) {
+          if (creep.name.startsWith('REFILL')) continue; // don't shove refillers
+          moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
         }
       }
     }

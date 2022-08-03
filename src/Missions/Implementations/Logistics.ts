@@ -1,55 +1,34 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { getEnergyFromFranchise } from 'Behaviors/getEnergyFromFranchise';
+import { assignedLogisticsCapacity, findBestDepositTarget, findBestWithdrawTarget } from 'Behaviors/logistics';
 import { moveTo } from 'Behaviors/moveTo';
 import { runStates } from 'Behaviors/stateMachine';
-import { setState, States } from 'Behaviors/states';
+import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { activeMissions, isMission } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
+import { plannedStructureNeedsWork } from 'Selectors/facilitiesWorkToDo';
 import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
-import { franchisesByOffice } from 'Selectors/franchisesByOffice';
-import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';
-import { franchisesThatNeedRoadWork } from 'Selectors/plannedTerritoryRoads';
+import { franchisesThatNeedRoadWork, plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { renewCost } from 'Selectors/renewCost';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
-import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { memoizeByTick } from 'utils/memoizeFunction';
+import { viz } from 'Selectors/viz';
 import { MissionImplementation } from './MissionImplementation';
 
 export interface LogisticsMission extends Mission<MissionType.LOGISTICS> {
   data: {
     capacity: number;
-    logisticsTarget?: Id<Tombstone | Source>;
+    withdrawTarget?: Id<Tombstone | Source>;
+    depositTarget?: Id<AnyStoreStructure | Creep>;
+    repair?: boolean;
   };
 }
-
-const assignedLogisticsCapacity = memoizeByTick(
-  office => office,
-  (office: string) => {
-    const assignments = new Map<Id<Source>, number>();
-
-    for (let { source } of franchisesByOffice(office)) {
-      assignments.set(source, 0);
-    }
-
-    for (const mission of activeMissions(office).filter(isMission(MissionType.LOGISTICS))) {
-      if (!mission.data.logisticsTarget || !assignments.has(mission.data.logisticsTarget as Id<Source>)) continue;
-      assignments.set(
-        mission.data.logisticsTarget as Id<Source>,
-        (assignments.get(mission.data.logisticsTarget as Id<Source>) ?? 0) + mission.data.capacity
-      );
-    }
-
-    return assignments;
-  }
-);
 
 export function createLogisticsMission(office: string, priority = 11): LogisticsMission {
   const roads = rcl(office) > 3 && franchisesThatNeedRoadWork(office).length <= 2;
@@ -78,12 +57,17 @@ export class Logistics extends MissionImplementation {
 
     const roads = rcl(mission.office) > 3 && franchisesThatNeedRoadWork(mission.office).length <= 2;
 
-    const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, roads);
+    const repair =
+      rcl(mission.office) > 3 &&
+      plannedTerritoryRoads(mission.office).some(r => r.structure && plannedStructureNeedsWork(r));
+
+    const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, roads, repair);
 
     // Set name
     const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
 
     mission.data.capacity ??= body.filter(p => p === CARRY).length * CARRY_CAPACITY;
+    mission.data.repair = repair;
 
     scheduleSpawn(mission.office, mission.priority, {
       name,
@@ -99,10 +83,21 @@ export class Logistics extends MissionImplementation {
     runStates(
       {
         [States.DEPOSIT]: (mission, creep) => {
-          if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.FIND_WORK;
+          if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.FIND_WITHDRAW;
           mission.efficiency.working += 1;
 
-          const target = storageStructureThatNeedsEnergy(mission.office);
+          let target = byId(mission.data.depositTarget);
+
+          if (!target || target.store[RESOURCE_ENERGY] >= target.store.getCapacity(RESOURCE_ENERGY)) {
+            return States.FIND_DEPOSIT;
+          }
+
+          if (mission.data.repair) {
+            const road = creep.pos
+              .findInRange(FIND_STRUCTURES, 3)
+              .find(s => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax);
+            if (road) creep.repair(road);
+          }
 
           if (!target || creep.pos.getRangeTo(target) > 1) {
             // Check for nearby targets of opportunity
@@ -118,17 +113,20 @@ export class Logistics extends MissionImplementation {
                   creep.transfer(opp.creep, RESOURCE_ENERGY);
                   energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
                   break;
-                } else if (
-                  opp.creep.name.startsWith('ACCOUNTANT') &&
-                  opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) >= energyRemaining &&
-                  target &&
-                  opp.creep.pos.getRangeTo(target) < creep.pos.getRangeTo(target)
-                ) {
-                  creep.transfer(opp.creep, RESOURCE_ENERGY);
-                  energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
-                  setState(States.DEPOSIT)(opp.creep);
-                  break;
                 }
+                // else if (
+                //   opp.creep.name.startsWith('ACCOUNTANT') &&
+                //   opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) >= energyRemaining &&
+                //   target &&
+                //   opp.creep.pos.getRangeTo(target) < creep.pos.getRangeTo(target)
+                // ) {
+                //   if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
+                //     energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
+                //     opp.creep.memory.runState = States.DEPOSIT;
+                //     return States.WITHDRAW;
+                //   }
+                //   break;
+                // }
               } else if (
                 (opp.structure?.structureType === STRUCTURE_EXTENSION ||
                   opp.structure?.structureType === STRUCTURE_SPAWN) &&
@@ -144,12 +142,15 @@ export class Logistics extends MissionImplementation {
               }
             }
             if (energyRemaining === 0) {
-              return States.WITHDRAW;
+              return States.FIND_WITHDRAW;
             }
           }
           if (!target) return States.DEPOSIT;
+          viz(creep.pos.roomName).line(creep.pos, target.pos);
           if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-            creep.transfer(target, RESOURCE_ENERGY);
+            if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
+              delete mission.data.depositTarget;
+            }
             // If target is spawn, is not spawning, and is at capacity, renew this creep
             if (
               target instanceof StructureSpawn &&
@@ -164,32 +165,37 @@ export class Logistics extends MissionImplementation {
 
           return States.DEPOSIT;
         },
-        [States.FIND_WORK]: (mission, creep) => {
+        [States.FIND_DEPOSIT]: (mission, creep) => {
+          delete mission.data.depositTarget;
           // Get energy from a franchise
-          const franchiseCapacity = assignedLogisticsCapacity(mission.office);
-          let bestTarget = undefined;
-          let bestAmount = 0;
-          let bestDistance = Infinity;
-          for (const [source, capacity] of franchiseCapacity) {
-            const amount = franchiseEnergyAvailable(source) - capacity;
-            const distance = getFranchiseDistance(mission.office, source) ?? Infinity;
-            if (
-              (distance < bestDistance &&
-                amount >= Math.min(bestAmount, creep.store.getFreeCapacity(RESOURCE_ENERGY))) ||
-              (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))
-            ) {
-              bestTarget = source;
-              bestAmount = amount;
-              bestDistance = distance;
-            }
-          }
+          const { depositAssignments } = assignedLogisticsCapacity(mission.office);
+          const bestTarget = findBestDepositTarget(mission.office, creep);
           if (bestTarget) {
-            franchiseCapacity.set(bestTarget, (franchiseCapacity.get(bestTarget) ?? 0) + mission.data.capacity);
-            mission.data.logisticsTarget = bestTarget;
+            depositAssignments.set(
+              bestTarget,
+              (depositAssignments.get(bestTarget) ?? 0) + creep.store[RESOURCE_ENERGY]
+            );
+            mission.data.depositTarget = bestTarget[1].id;
           }
-          if (mission.data.logisticsTarget) return States.WITHDRAW;
+          if (mission.data.depositTarget) return States.DEPOSIT;
+          if (!creep.store[RESOURCE_ENERGY]) return States.FIND_WITHDRAW;
           creep.say('Idle');
-          return States.FIND_WORK;
+          return States.FIND_DEPOSIT;
+        },
+        [States.FIND_WITHDRAW]: (mission, creep) => {
+          delete mission.data.withdrawTarget;
+          // Get energy from a franchise
+          const { withdrawAssignments } = assignedLogisticsCapacity(mission.office);
+          const bestTarget = findBestWithdrawTarget(mission.office, creep);
+
+          if (bestTarget) {
+            withdrawAssignments.set(bestTarget, (withdrawAssignments.get(bestTarget) ?? 0) + mission.data.capacity);
+            mission.data.withdrawTarget = bestTarget;
+          }
+          if (mission.data.withdrawTarget) return States.WITHDRAW;
+          if (creep.store.getUsedCapacity(RESOURCE_ENERGY)) return States.FIND_DEPOSIT;
+          creep.say('Idle');
+          return States.FIND_WITHDRAW;
         },
         [States.WITHDRAW]: (mission, creep) => {
           let energyCapacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
@@ -215,20 +221,20 @@ export class Logistics extends MissionImplementation {
             }
           }
 
-          if (energyCapacity === 0) return States.DEPOSIT;
+          if (energyCapacity === 0) return States.FIND_DEPOSIT;
 
           // Otherwise, continue to main withdraw target
-          const pos = posById(mission.data.logisticsTarget) ?? byId(mission.data.logisticsTarget)?.pos;
-          if (!mission.data.logisticsTarget || !pos) {
-            return States.FIND_WORK;
+          const pos = posById(mission.data.withdrawTarget) ?? byId(mission.data.withdrawTarget)?.pos;
+          if (!mission.data.withdrawTarget || !pos) {
+            return States.FIND_WITHDRAW;
           }
 
           // Target identified
-          const result = getEnergyFromFranchise(creep, mission.data.logisticsTarget as Id<Source>);
+          const result = getEnergyFromFranchise(creep, mission.data.withdrawTarget as Id<Source>);
           if (result === BehaviorResult.SUCCESS) {
-            return States.DEPOSIT;
-          } else if (franchiseEnergyAvailable(mission.data.logisticsTarget as Id<Source>) <= 50) {
-            return States.FIND_WORK;
+            return States.FIND_DEPOSIT;
+          } else if (franchiseEnergyAvailable(mission.data.withdrawTarget as Id<Source>) <= 50) {
+            return States.FIND_WITHDRAW;
           }
 
           return States.WITHDRAW;

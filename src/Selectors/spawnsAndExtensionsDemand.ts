@@ -3,12 +3,12 @@ import { memoizeByTick } from 'utils/memoizeFunction';
 import { rcl } from './rcl';
 import { roomPlans } from './roomPlans';
 
-export const getExtensions = (room: string) => {
+export const getExtensions = (room: string, includeFastfiller = true) => {
   const plan = roomPlans(room);
   if (!plan) return [];
   return ([] as (PlannedStructure | undefined)[])
     .concat(
-      plan.fastfiller?.extensions ?? [],
+      includeFastfiller ? plan.fastfiller?.extensions ?? [] : [],
       plan.headquarters?.extension,
       plan.franchise1?.extensions ?? [],
       plan.franchise2?.extensions ?? [],

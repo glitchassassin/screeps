@@ -51,6 +51,6 @@ export const energyInTransit = memoizeByTick(
       (sum, { source }) => sum + franchiseEnergyAvailable(source),
       0
     );
-    return fleetEnergy + Math.min(fleetCapacity, franchiseEnergy);
+    return fleetEnergy; // + Math.min(fleetCapacity, franchiseEnergy);
   }
 );

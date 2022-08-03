@@ -1,7 +1,9 @@
 import { MissionStatus, MissionType } from 'Missions/Mission';
-import { activeMissions, isStatus } from 'Missions/Selectors';
+import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
 import { Metrics } from 'screeps-viz';
+import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
 import { franchiseIncome } from 'Selectors/franchiseIncome';
+import { franchisesByOffice } from 'Selectors/franchisesByOffice';
 import { getActualEnergyAvailable } from 'Selectors/getActualEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -42,7 +44,9 @@ declare global {
           energyAvailable: number;
           energyCapacityAvailable: number;
           spawnUptime: number;
+          logisticsCapacity: number;
           franchiseIncome: number;
+          franchiseEnergy: number;
           storageLevel: number;
           terminalLevel: number;
           missions: MissionStats;
@@ -148,6 +152,13 @@ export const recordMetrics = profiler.registerFN(() => {
       spawnUptime: getSpawns(office).filter(s => s.spawning).length,
       storageLevel: storageEnergyAvailable(office),
       franchiseIncome: franchiseIncome(office),
+      logisticsCapacity: activeMissions(office)
+        .filter(isMission(MissionType.LOGISTICS))
+        .map(m => m.data.capacity)
+        .reduce((a, b) => a + b, 0),
+      franchiseEnergy: franchisesByOffice(office)
+        .map(({ source }) => franchiseEnergyAvailable(source))
+        .reduce((a, b) => a + b, 0),
       terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
       missions
     };

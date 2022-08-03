@@ -1,9 +1,7 @@
 import { createAcquireEngineerMission } from 'Missions/Implementations/AcquireEngineer';
 import { createAcquireLawyerMission } from 'Missions/Implementations/AcquireLawyer';
-import { createAcquireLogisticsMission } from 'Missions/Implementations/AcquireLogistics';
 import { MissionType } from 'Missions/Mission';
 import { isMission, not, or, pendingAndActiveMissions, pendingMissions, submitMission } from 'Missions/Selectors';
-import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
 import {
   findAcquireTarget,
   officeShouldClaimAcquireTarget,
@@ -26,18 +24,18 @@ export default {
         submitMission(office, createAcquireEngineerMission(office, target));
       }
       // Keep Logistics mission pending, if there's a spawn
-      const spawn = getPrimarySpawn(office);
-      if (spawn && !pendingMissions(office).some(isMission(MissionType.ACQUIRE_LOGISTICS))) {
-        submitMission(office, createAcquireLogisticsMission(office, target));
-      }
+      // const spawn = getPrimarySpawn(office);
+      // if (spawn && !pendingMissions(office).some(isMission(MissionType.ACQUIRE_LOGISTICS))) {
+      //   submitMission(office, createAcquireLogisticsMission(office, target));
+      // }
     } else {
       // Clear any pending missions
       Memory.offices[office].pendingMissions = pendingMissions(office).filter(
         not(
           or(
             isMission(MissionType.ACQUIRE_LAWYER),
-            isMission(MissionType.ACQUIRE_ENGINEER),
-            isMission(MissionType.ACQUIRE_LOGISTICS)
+            isMission(MissionType.ACQUIRE_ENGINEER)
+            // isMission(MissionType.ACQUIRE_LOGISTICS)
           )
         )
       );

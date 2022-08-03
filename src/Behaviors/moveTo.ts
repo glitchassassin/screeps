@@ -236,6 +236,7 @@ export function moveTo(
     try {
       Routes[creep.name] = new Route(creep, key, targets, opts);
     } catch (e) {
+      // throw e;
       return BehaviorResult.FAILURE;
     }
   }

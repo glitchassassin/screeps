@@ -1,22 +1,22 @@
-import { moveTo } from "Behaviors/moveTo";
-import { States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionStatus, MissionType } from "Missions/Mission";
-import { byId } from "Selectors/byId";
-import { getRangeTo } from "Selectors/Map/MapCoordinates";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { roomPlans } from "Selectors/roomPlans";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { storageStructureThatNeedsEnergy } from "Selectors/storageStructureThatNeedsEnergy";
-import { MissionImplementation } from "./MissionImplementation";
+import { findBestDepositTarget } from 'Behaviors/logistics';
+import { moveTo } from 'Behaviors/moveTo';
+import { States } from 'Behaviors/states';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionStatus, MissionType } from 'Missions/Mission';
+import { byId } from 'Selectors/byId';
+import { getRangeTo } from 'Selectors/Map/MapCoordinates';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { roomPlans } from 'Selectors/roomPlans';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 export interface PlunderMission extends Mission<MissionType.PLUNDER> {
   data: {
-    capacity: number,
-    targetRoom: string,
-    plunderTarget?: Id<AnyStoreStructure>
-  }
+    capacity: number;
+    targetRoom: string;
+    plunderTarget?: Id<AnyStoreStructure>;
+  };
 }
 
 export function createPlunderMission(office: string, targetRoom: string): PlunderMission {
@@ -33,8 +33,8 @@ export function createPlunderMission(office: string, targetRoom: string): Plunde
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body),
-  }
+    energy: minionCost(body)
+  };
 
   return createMission({
     office,
@@ -44,8 +44,8 @@ export function createPlunderMission(office: string, targetRoom: string): Plunde
       capacity,
       targetRoom
     },
-    estimate,
-  })
+    estimate
+  });
 }
 
 export class Plunder extends MissionImplementation {
@@ -55,18 +55,14 @@ export class Plunder extends MissionImplementation {
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, false);
 
     // Set name
-    const name = `ACCOUNTANT-${mission.office}-${mission.id}`
+    const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
 
     mission.data.capacity ??= body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body,
-      }
-    )
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }
@@ -81,11 +77,9 @@ export class Plunder extends MissionImplementation {
         return;
       }
 
-      mission.data.plunderTarget ??= Game.rooms[mission.data.targetRoom]
-        .find(
-          FIND_HOSTILE_STRUCTURES,
-          { filter: s => 'store' in s && Object.keys(s.store).length }
-        )[0]?.id as Id<AnyStoreStructure>
+      mission.data.plunderTarget ??= Game.rooms[mission.data.targetRoom].find(FIND_HOSTILE_STRUCTURES, {
+        filter: s => 'store' in s && Object.keys(s.store).length
+      })[0]?.id as Id<AnyStoreStructure>;
 
       if (!mission.data.plunderTarget) {
         mission.status = MissionStatus.DONE;
@@ -93,7 +87,7 @@ export class Plunder extends MissionImplementation {
       }
 
       const target = byId(mission.data.plunderTarget);
-      const targetResource = target && Object.keys(target.store)[0] as ResourceConstant | undefined;
+      const targetResource = target && (Object.keys(target.store)[0] as ResourceConstant | undefined);
       if (!targetResource) {
         delete mission.data.plunderTarget;
       }
@@ -105,11 +99,15 @@ export class Plunder extends MissionImplementation {
     if (creep.memory.state === States.DEPOSIT) {
       mission.efficiency.working += 1;
       if (creep.store.getUsedCapacity() === 0) creep.memory.state = States.WITHDRAW;
-      const storage = storageStructureThatNeedsEnergy(mission.office);
+      const storage = findBestDepositTarget(mission.office, creep);
       const terminal = roomPlans(mission.office)?.headquarters?.terminal.structure;
       const nonEnergyResource = Object.keys(creep.store).find(c => c !== RESOURCE_ENERGY) as ResourceConstant;
-      if (creep.store.getUsedCapacity(RESOURCE_ENERGY) && storage && creep.transfer(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-        moveTo(creep, storage.pos);
+      if (
+        creep.store.getUsedCapacity(RESOURCE_ENERGY) &&
+        storage &&
+        creep.transfer(storage[1], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE
+      ) {
+        moveTo(creep, storage[1].pos);
         return;
       } else if (nonEnergyResource && terminal && creep.transfer(terminal, nonEnergyResource) === ERR_NOT_IN_RANGE) {
         moveTo(creep, terminal.pos);

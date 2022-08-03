@@ -126,9 +126,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         if (!mission.data.franchise) return States.GET_ENERGY; // go upgrade instead
 
         // Pick the next section of road to complete
-        const road = plannedFranchiseRoads(mission.office, mission.data.franchise).find(s =>
-          plannedStructureNeedsWork(s)
-        );
+        const road = plannedFranchiseRoads(mission.office, mission.data.franchise).find(s => !s.structure);
         if (road) {
           mission.data.facilitiesTarget = road.serialize();
           return States.GET_ENERGY;
@@ -141,7 +139,12 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
       [States.GET_ENERGY]: (mission, creep) => {
         if (
           creep.store.getUsedCapacity(RESOURCE_ENERGY) ||
-          engineerGetEnergy(creep, mission.office, getWithdrawLimit(mission)) === BehaviorResult.SUCCESS
+          engineerGetEnergy(
+            creep,
+            mission.office,
+            getWithdrawLimit(mission),
+            !!mission.data.franchise && !!mission.data.facilitiesTarget // currently building for a franchise
+          ) === BehaviorResult.SUCCESS
         ) {
           return mission.data.facilitiesTarget ? States.BUILDING : States.UPGRADING;
         }
