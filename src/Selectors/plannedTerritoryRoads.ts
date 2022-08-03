@@ -4,9 +4,16 @@ import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './fa
 import { franchisesByOffice } from './franchisesByOffice';
 import { deserializePlannedStructures } from './plannedStructures';
 import { posById } from './posById';
+import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
 
 const cachedPlans = new Map<string, PlannedStructure[]>();
 const MAX_TERRITORY_ROADS = 6;
+
+export function nextFranchiseRoadToBuild(office: string, source: Id<Source>) {
+  return plannedFranchiseRoads(office, source).find(
+    r => !r.structure && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
+  );
+}
 
 export function plannedFranchiseRoads(office: string, source: Id<Source>) {
   const pos = posById(source);
@@ -44,7 +51,9 @@ export function franchisesThatNeedRoadWork(office: string) {
       return (
         remote &&
         (Memory.rooms[room]?.franchises?.[office]?.[source]?.lastHarvested ?? 0) + 1500 > Game.time &&
-        plannedFranchiseRoads(office, source).some(s => !s.structure)
+        plannedFranchiseRoads(office, source).some(
+          r => !r.structure && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
+        )
       );
     })
     .map(({ source }) => source);

@@ -13,7 +13,7 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { facilitiesEfficiency, facilitiesWorkToDo, plannedStructureNeedsWork } from 'Selectors/facilitiesWorkToDo';
 import { franchiseThatNeedsEngineers } from 'Selectors/franchiseThatNeedsEngineers';
 import { minionCost } from 'Selectors/minionCostPerTick';
-import { franchisesThatNeedRoadWork, plannedFranchiseRoads } from 'Selectors/plannedTerritoryRoads';
+import { franchisesThatNeedRoadWork, nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -126,7 +126,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         if (!mission.data.franchise) return States.GET_ENERGY; // go upgrade instead
 
         // Pick the next section of road to complete
-        const road = plannedFranchiseRoads(mission.office, mission.data.franchise).find(s => !s.structure);
+        const road = nextFranchiseRoadToBuild(mission.office, mission.data.franchise);
         if (road) {
           mission.data.facilitiesTarget = road.serialize();
           return States.GET_ENERGY;

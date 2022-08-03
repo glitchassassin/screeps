@@ -1538,7 +1538,7 @@
           "hide": false,
           "refCount": 0,
           "refId": "C",
-          "target": "alias(movingAverage(stats.gauges.$world.offices.$office.logisticsCapacity, '10min'), 'Logistics Capacity')"
+          "target": "alias(stats.gauges.$world.offices.$office.logisticsCapacity, 'Logistics Capacity')"
         }
       ],
       "thresholds": [],
@@ -2300,5 +2300,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "a-YBxxz4z",
-  "version": 2
+  "version": 3
 }

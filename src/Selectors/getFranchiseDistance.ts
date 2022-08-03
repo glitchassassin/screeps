@@ -1,12 +1,19 @@
-import { memoize } from "utils/memoizeFunction";
-import { posById } from "./posById";
-import { roomPlans } from "./roomPlans";
+import { memoizeByTick } from 'utils/memoizeFunction';
+import { terrainCostAt } from './Map/MapCoordinates';
+import { plannedFranchiseRoads } from './plannedTerritoryRoads';
+import { posById } from './posById';
 
-export const getFranchiseDistance = memoize(
-  (office: string, sourceId: Id<Source>) => office + posById(sourceId) + roomPlans(office)?.headquarters?.storage.pos,
+export const getFranchiseDistance = memoizeByTick(
+  (office: string, sourceId: Id<Source>) => office + posById(sourceId) + plannedFranchiseRoads(office, sourceId).length,
   (office: string, sourceId: Id<Source>) => {
-    const sourcePos = posById(sourceId);
-    const franchise = Memory.rooms[sourcePos?.roomName ?? '']?.franchises[office]?.[sourceId];
-    return franchise ? (franchise.path.length / 3) : undefined;
+    const roads = plannedFranchiseRoads(office, sourceId);
+    if (!roads.length) return undefined;
+
+    let cost = 0;
+    for (const road of roads) {
+      cost += road.structure ? 1 : terrainCostAt(road.pos);
+    }
+
+    return cost;
   }
-)
+);
