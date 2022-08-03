@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1657844482856,
+  "iteration": 1659482558804,
   "links": [],
   "panels": [
     {
@@ -206,9 +206,7 @@
       "options": {
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -452,9 +450,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -504,9 +500,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -589,9 +583,7 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -659,9 +651,7 @@
       "options": {
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -736,9 +726,7 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -1064,9 +1052,7 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -1135,9 +1121,7 @@
       "options": {
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -1213,9 +1197,7 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -1524,6 +1506,16 @@
           "alias": "1hr Moving Average",
           "fill": 0,
           "steppedLine": false
+        },
+        {
+          "$$hashKey": "object:555",
+          "alias": "Franchise Energy",
+          "yaxis": 2
+        },
+        {
+          "$$hashKey": "object:724",
+          "alias": "Logistics Capacity",
+          "yaxis": 2
         }
       ],
       "spaceLength": 10,
@@ -1540,13 +1532,13 @@
           "hide": false,
           "refCount": 0,
           "refId": "B",
-          "target": "alias(stats.gauges.$world.offices.$office.logisticsThroughput, 'Logistics Throughput')"
+          "target": "alias(stats.gauges.$world.offices.$office.franchiseEnergy, 'Franchise Energy')"
         },
         {
           "hide": false,
           "refCount": 0,
           "refId": "C",
-          "target": "alias(movingAverage(stats.gauges.$world.offices.$office.logisticsOutput, '10min'), 'Logistics Output')"
+          "target": "alias(movingAverage(stats.gauges.$world.offices.$office.logisticsCapacity, '10min'), 'Logistics Capacity')"
         }
       ],
       "thresholds": [],
@@ -2244,9 +2236,7 @@
   "refresh": "30s",
   "schemaVersion": 30,
   "style": "dark",
-  "tags": [
-    "screeps"
-  ],
+  "tags": ["screeps"],
   "templating": {
     "list": [
       {
@@ -2276,7 +2266,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pserver",
           "value": "pserver"
         },
@@ -2304,32 +2294,11 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "browser",
   "title": "Overview",
-  "uid": "pCNBEqe7z",
-  "version": 7
+  "uid": "a-YBxxz4z",
+  "version": 2
 }
