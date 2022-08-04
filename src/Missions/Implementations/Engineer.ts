@@ -32,13 +32,9 @@ export interface EngineerMission extends Mission<MissionType.ENGINEER> {
 
 export function createEngineerMission(office: string, franchise?: Id<Source>): EngineerMission {
   // Scale engineer by available room energy
-  const efficiencyAdjustment = facilitiesEfficiency(office);
-  const maxWork = Math.max(
-    1,
-    Math.floor((Game.rooms[office].energyCapacityAvailable * 5) / (CREEP_LIFE_TIME * efficiencyAdjustment))
-  );
 
-  const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office), maxWork);
+  const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office), rcl(office) >= 3, !franchise);
+  const efficiencyAdjustment = facilitiesEfficiency(office, body);
 
   const workEfficiency = body.filter(p => p === WORK).length * efficiencyAdjustment;
 
@@ -67,13 +63,12 @@ export class Engineer extends MissionImplementation {
 
     // Set name
     const name = `ENGINEER-${mission.office}-${mission.id}`;
-    const efficiencyAdjustment = facilitiesEfficiency(mission.office);
-    const maxWork = Math.max(
-      1,
-      Math.floor((Game.rooms[mission.office].energyCapacityAvailable * 5) / (CREEP_LIFE_TIME * efficiencyAdjustment))
-    );
 
-    const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(mission.office), maxWork);
+    const body = MinionBuilders[MinionTypes.ENGINEER](
+      spawnEnergyAvailable(mission.office),
+      rcl(mission.office) >= 3,
+      !mission.data.franchise
+    );
 
     mission.data.workParts = body.filter(p => p === WORK).length;
 
@@ -89,7 +84,14 @@ export class Engineer extends MissionImplementation {
     // Adjust estimate, if needed
     const lifetime = Math.min(estimateMissionInterval(mission.office), creep.ticksToLive ?? 0);
     const workParts = creep.body.filter(p => p.type === WORK).length;
-    mission.estimate.energy = mission.actual.energy + lifetime * workParts * facilitiesEfficiency(mission.office);
+    mission.estimate.energy =
+      mission.actual.energy +
+      lifetime *
+        workParts *
+        facilitiesEfficiency(
+          mission.office,
+          creep.body.map(p => p.type)
+        );
 
     // Run logic
     engineerLogic(mission, creep);

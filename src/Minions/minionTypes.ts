@@ -1,5 +1,6 @@
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { memoize } from 'utils/memoizeFunction';
+import { builder } from './builder';
 
 export interface Minion {
   body: BodyPartConstant[];
@@ -80,19 +81,8 @@ export const MinionBuilders = {
       }
     }
   ),
-  [MinionTypes.ENGINEER]: (energy: number, maxSegments = 16) => {
-    if (energy < 200) {
-      return [];
-    } else {
-      return buildFromSegment(energy, [WORK, MOVE, CARRY], { maxSegments });
-    }
-  },
-  [MinionTypes.PAVER]: (energy: number, maxSegments = 8) => {
-    if (energy < 200) {
-      return [];
-    } else {
-      return buildFromSegment(energy, [MOVE, CARRY], { maxSegments, suffix: [WORK] });
-    }
+  [MinionTypes.ENGINEER]: (energy: number, roads = false, near = false) => {
+    return builder[roads ? 'roads' : 'none'][near ? 'near' : 'far'].find(b => minionCost(b) < energy) ?? [];
   },
   [MinionTypes.FOREMAN]: (energy: number) => {
     if (energy < 550) {
