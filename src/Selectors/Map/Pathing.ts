@@ -28,7 +28,9 @@ interface getCostMatrixOptions {
 }
 export const getCostMatrix = memoizeByTick(
   (roomName: string, avoidCreeps: boolean = false, opts = {}) =>
-    `${roomName} ${avoidCreeps ? 'Y' : 'N'} ${JSON.stringify(opts)}`,
+    `${roomName} ${avoidCreeps ? 'Y' : 'N'} ${JSON.stringify(opts)} ${
+      opts.roomPlan ? Object.keys(Memory.roomPlans[roomName]).length : ''
+    }`,
   (roomName: string, avoidCreeps: boolean = false, opts?: getCostMatrixOptions) => {
     let room = Game.rooms[roomName];
     let costs = new PathFinder.CostMatrix();

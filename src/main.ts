@@ -6,7 +6,6 @@ import profiler from 'utils/profiler';
 import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import './utils/RoomVisual';
 
-
 try {
   if (Date.now() - JSON.parse('__buildDate__') < 15000) {
     // Built less than 15 seconds ago - fresh code push
@@ -30,19 +29,19 @@ global.purge = () => {
     gcl: {
       progress: Game.gcl.progress,
       progressTotal: Game.gcl.progressTotal,
-      level: Game.gcl.level,
+      level: Game.gcl.level
     },
     cpu: {
       bucket: Game.cpu.bucket,
       limit: Game.cpu.limit,
-      used: Game.cpu.getUsed(),
+      used: Game.cpu.getUsed()
     },
     creepCount: Object.keys(Game.creeps).length,
     officeCount: Object.keys(Memory.offices).length,
     profiling: {},
     offices: {}
-  }
-}
+  };
+};
 
 // If respawning, wipe memory clean
 onRespawn(global.purge);
@@ -57,4 +56,4 @@ export const loop = () => {
   MemHack.pretick();
   // ErrorMapper.wrapLoop(mainLoop)();
   profiler.wrap(gameLoop);
-}
+};

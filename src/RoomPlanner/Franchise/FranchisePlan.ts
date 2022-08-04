@@ -1,6 +1,6 @@
 import { FranchisePlan } from 'RoomPlanner';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
-import { calculateAdjacentPositions, isPositionWalkable } from 'Selectors/Map/MapCoordinates';
+import { calculateAdjacentPositions } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { posById } from 'Selectors/posById';
 import { validateFranchisePlan } from './validateFranchisePlan';
@@ -21,13 +21,15 @@ export const planFranchise = (sourceId: Id<Source>) => {
   let controllerPos = posById(Memory.rooms[sourcePos.roomName].controllerId);
   if (!controllerPos) throw new Error('No known controller in room, unable to compute plan');
 
+  const cm = getCostMatrix(sourcePos.roomName, false, { roomPlan: true, terrain: true, ignoreFranchises: true });
+
   // console.log('Found spawn', spawn)
 
   // 1. The Franchise containers will be at the first position of the path between the Source and the Controller.
   let route = PathFinder.search(
     sourcePos,
     { pos: controllerPos, range: 1 },
-    { roomCallback: room => getCostMatrix(room, false, { ignoreFranchises: true }) }
+    { roomCallback: room => getCostMatrix(room, false, { roomPlan: true, ignoreFranchises: true }) }
   );
   if (route.incomplete) {
     console.log(JSON.stringify(route));
@@ -36,7 +38,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
   const containerPos = route.path.length
     ? route.path[0]
     : calculateAdjacentPositions(sourcePos).find(
-        pos => isPositionWalkable(pos, true, true) && pos.x > 1 && pos.x < 48 && pos.y > 1 && pos.y < 48
+        pos => cm.get(pos.x, pos.y) !== 255 && pos.x > 1 && pos.x < 48 && pos.y > 1 && pos.y < 48
       );
   if (!containerPos) throw new Error('Unable to place container');
   plan.container = new PlannedStructure(containerPos, STRUCTURE_CONTAINER);
@@ -47,7 +49,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
   // and not too close to an edge (to make room for exit ramparts, if needed)
   let adjacents = calculateAdjacentPositions(plan.container.pos).filter(
     pos =>
-      isPositionWalkable(pos, true, true) &&
+      cm.get(pos.x, pos.y) !== 255 &&
       (route.path[1] ? !pos.isEqualTo(route.path[1]) : pos.getRangeTo(controllerPos!) > 1) &&
       pos.x > 1 &&
       pos.x < 48 &&
