@@ -1,30 +1,27 @@
 {
-    "[javascript]": {
-        "editor.formatOnSave": false
-    },
-    "[json]": {
-        "editor.formatOnSave": true
-    },
-    "[typescript]": {
-        "editor.formatOnSave": false
-    },
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true,
-        "source.organizeImports": true
-    },
-    "editor.formatOnSave": true,
-    "editor.renderWhitespace": "boundary",
-    "files.encoding": "utf8",
-    "files.insertFinalNewline": true,
-    "files.trimTrailingWhitespace": true,
-    "search.exclude": {
-        "_book/**": true,
-        ".rpt2_cache/**": true,
-        "dist/**": true,
-        "node_modules/**": true,
-        "typings/**": true
-    },
-    "typescript.tsdk": "./node_modules/typescript/lib",
-    "eslint.enable": true,
-    "editor.tabSize": 2,
+  "[javascript]": {},
+  "[json]": {},
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.organizeImports": true
+  },
+  "editor.formatOnSave": true,
+  "editor.renderWhitespace": "boundary",
+  "files.encoding": "utf8",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "search.exclude": {
+    "_book/**": true,
+    ".rpt2_cache/**": true,
+    "dist/**": true,
+    "node_modules/**": true,
+    "typings/**": true
+  },
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "eslint.enable": true,
+  "editor.tabSize": 2,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

@@ -1,18 +1,18 @@
-import { BehaviorResult } from "Behaviors/Behavior";
-import { getEnergyFromStorage } from "Behaviors/getEnergyFromStorage";
-import { moveTo } from "Behaviors/moveTo";
-import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionType } from "Missions/Mission";
-import { getTowerRefillerLocation } from "Selectors/getHqLocations";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { roomPlans } from "Selectors/roomPlans";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { MissionImplementation } from "./MissionImplementation";
+import { BehaviorResult } from 'Behaviors/Behavior';
+import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
+import { moveTo } from 'Behaviors/moveTo';
+import { setState, States } from 'Behaviors/states';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { getTowerRefillerLocation } from 'Selectors/getHqLocations';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { roomPlans } from 'Selectors/roomPlans';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 export interface TowerLogisticsMission extends Mission<MissionType.TOWER_LOGISTICS> {
-  data: {}
+  data: {};
 }
 
 // TODO - Make the filling more CPU-efficient. Refill once every 100 ticks or so. Track the last
@@ -23,16 +23,16 @@ export function createTowerLogisticsMission(office: string): TowerLogisticsMissi
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body),
-  }
+    energy: minionCost(body)
+  };
 
   return createMission({
     office,
     priority: 15,
     type: MissionType.TOWER_LOGISTICS,
     data: {},
-    estimate,
-  })
+    estimate
+  });
 }
 
 export class TowerLogistics extends MissionImplementation {
@@ -40,28 +40,33 @@ export class TowerLogistics extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     const pos = getTowerRefillerLocation(mission.office);
-    const spawn = roomPlans(mission.office)?.headquarters?.spawn.structure as StructureSpawn;
+    const containers =
+      roomPlans(mission.office)
+        ?.fastfiller?.containers.map(c => c.structure)
+        .filter((c): c is StructureContainer => !!c) ?? ([] as StructureContainer[]);
     if (!pos) return;
     const storage = roomPlans(mission.office)?.headquarters?.storage.structure;
 
-    const body = MinionBuilders[storage && spawn ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
+    const body = MinionBuilders[storage && containers ? MinionTypes.CLERK : MinionTypes.ACCOUNTANT](
+      spawnEnergyAvailable(mission.office)
+    );
 
     // Set name
-    const name = `CLERK-${mission.office}-${mission.id}`
+    const name = `CLERK-${mission.office}-${mission.id}`;
 
     scheduleSpawn(
       mission.office,
       mission.priority,
       {
         name,
-        body,
+        body
       },
-      spawn && mission.startTime,
-      spawn && {
-        spawn: spawn.id,
-        directions: [spawn.pos.getDirectionTo(pos)]
+      containers && mission.startTime,
+      containers && {
+        spawn: containers.id,
+        directions: [containers.pos.getDirectionTo(pos)]
       }
-    )
+    );
 
     mission.creepNames.push(name);
   }
@@ -89,7 +94,7 @@ export class TowerLogistics extends MissionImplementation {
       }
     }
     if (creep.memory.state === States.GET_ENERGY_STORAGE) {
-      const result = getEnergyFromStorage(creep, mission.office)
+      const result = getEnergyFromStorage(creep, mission.office);
       if (result === BehaviorResult.SUCCESS) {
         setState(States.FILL_TOWERS)(creep);
       }
@@ -99,8 +104,10 @@ export class TowerLogistics extends MissionImplementation {
         setState(States.GET_ENERGY_STORAGE)(creep);
         return;
       }
-      const towers = hq.towers.filter(t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0);
-      for (const {structure} of towers) {
+      const towers = hq.towers.filter(
+        t => ((t.structure as StructureTower)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > 0
+      );
+      for (const { structure } of towers) {
         if (structure) {
           if (creep.transfer(structure, RESOURCE_ENERGY) === OK) {
             mission.efficiency.working += 1;

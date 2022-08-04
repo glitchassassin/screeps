@@ -1,0 +1,57 @@
+export type Stamp = (BuildableStructureConstant | undefined)[][];
+
+// prettier-ignore
+export const EXTENSION_STAMP: Stamp = [
+  [undefined,      undefined,           STRUCTURE_ROAD,      undefined,           undefined],
+  [undefined,      STRUCTURE_ROAD,      STRUCTURE_EXTENSION, STRUCTURE_ROAD,      undefined],
+  [STRUCTURE_ROAD, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_ROAD],
+  [undefined,      STRUCTURE_ROAD,      STRUCTURE_EXTENSION, STRUCTURE_ROAD,      undefined],
+  [undefined,      undefined,           STRUCTURE_ROAD,      undefined,           undefined],
+]
+
+// prettier-ignore
+export const HQ_STAMP: Stamp = [
+  [undefined,      STRUCTURE_ROAD,     STRUCTURE_ROAD,    STRUCTURE_ROAD,        undefined],
+  [STRUCTURE_ROAD, STRUCTURE_STORAGE,  STRUCTURE_NUKER,   STRUCTURE_EXTENSION,   STRUCTURE_ROAD],
+  [undefined,      STRUCTURE_ROAD,     STRUCTURE_ROAD,    STRUCTURE_LINK,        STRUCTURE_ROAD],
+  [STRUCTURE_ROAD, STRUCTURE_TERMINAL, STRUCTURE_FACTORY, STRUCTURE_POWER_SPAWN, STRUCTURE_ROAD],
+  [undefined,      STRUCTURE_ROAD,     STRUCTURE_ROAD,    STRUCTURE_ROAD,        undefined],
+]
+
+// prettier-ignore
+export const LABS_STAMP: Stamp = [
+  [undefined,      undefined,      STRUCTURE_ROAD, STRUCTURE_ROAD, undefined,      undefined],
+  [undefined,      STRUCTURE_ROAD, STRUCTURE_LAB,  STRUCTURE_LAB,  STRUCTURE_ROAD, undefined],
+  [STRUCTURE_ROAD, STRUCTURE_LAB,  STRUCTURE_ROAD, STRUCTURE_LAB,  STRUCTURE_LAB,  STRUCTURE_ROAD ],
+  [STRUCTURE_ROAD, STRUCTURE_LAB,  STRUCTURE_LAB,  STRUCTURE_ROAD, STRUCTURE_LAB,  STRUCTURE_ROAD ],
+  [undefined,      STRUCTURE_ROAD, STRUCTURE_LAB,  STRUCTURE_LAB,  STRUCTURE_ROAD, undefined],
+  [undefined,      undefined,      STRUCTURE_ROAD, STRUCTURE_ROAD, undefined,      undefined],
+]
+export const LABS_STAMP_ORDER = [
+  [2, 3],
+  [3, 2],
+  [3, 4],
+  [2, 4],
+  [4, 3],
+  [4, 2],
+  [1, 2],
+  [1, 3],
+  [2, 1],
+  [3, 1]
+];
+
+// prettier-ignore
+export const FASTFILLER_STAMP: Stamp = [
+  [undefined,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      undefined],
+  [STRUCTURE_ROAD, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_ROAD],
+  [STRUCTURE_ROAD, STRUCTURE_SPAWN,     undefined,           STRUCTURE_EXTENSION, undefined,           STRUCTURE_SPAWN,     STRUCTURE_ROAD],
+  [STRUCTURE_ROAD, STRUCTURE_CONTAINER, STRUCTURE_EXTENSION, STRUCTURE_LINK,      STRUCTURE_EXTENSION, STRUCTURE_CONTAINER, STRUCTURE_ROAD],
+  [STRUCTURE_ROAD, STRUCTURE_EXTENSION, undefined,           STRUCTURE_EXTENSION, undefined,           STRUCTURE_EXTENSION, STRUCTURE_ROAD],
+  [STRUCTURE_ROAD, STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_SPAWN,     STRUCTURE_EXTENSION, STRUCTURE_EXTENSION, STRUCTURE_ROAD],
+  [undefined,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      STRUCTURE_ROAD,      undefined],
+]
+export const FASTFILLER_STAMP_SPAWN_ORDER = [
+  [1, 2],
+  [5, 2],
+  [3, 5]
+];

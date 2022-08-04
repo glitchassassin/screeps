@@ -1,46 +1,39 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { createRefillMission } from "Missions/Implementations/Refill";
-import { MissionType } from "Missions/Mission";
-import { activeMissions, isMission, pendingMissions, submitMission } from "Missions/Selectors";
-import { approximateExtensionsCapacity, roomHasExtensions } from "Selectors/getExtensionsCapacity";
-import { hasEnergyIncome } from "Selectors/hasEnergyIncome";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { createRefillMission } from 'Missions/Implementations/Refill';
+import { MissionType } from 'Missions/Mission';
+import { activeMissions, isMission, pendingMissions, submitMission } from 'Missions/Selectors';
+import { fastfillerPositions } from 'Reports/fastfillerPositions';
+import { roomHasExtensions } from 'Selectors/getExtensionsCapacity';
+import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
+import { roomPlans } from 'Selectors/roomPlans';
+import { unpackPos } from 'utils/packrat';
 
 /**
- * Maintain a quota of refillers, with pre-spawning
+ * Maintain four refillers in fastfiller
  */
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
     // Scale refill down if needed to fit energy
     const active = activeMissions(office).filter(isMission(MissionType.REFILL));
+    const pending = pendingMissions(office).filter(isMission(MissionType.REFILL));
+    const positionsNeeded = fastfillerPositions(office).filter(
+      p => ![...active, ...pending].some(m => unpackPos(m.data.refillSquare).isEqualTo(p))
+    );
 
-    if (active.length) {
-      pendingMissions(office)
-        .filter(isMission(MissionType.REFILL))
-        .forEach(m => m.estimate.energy = minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))));
+    if (!active.length) {
+      pending.forEach(
+        m => (m.estimate.energy = createRefillMission(office, unpackPos(m.data.refillSquare)).estimate.energy)
+      );
     }
     if (
-      pendingMissions(office).some(isMission(MissionType.REFILL)) ||
-      !roomHasExtensions(office) ||
+      (!roomHasExtensions(office) && !roomPlans(office)?.fastfiller?.containers.some(s => s.structure)) ||
       !hasEnergyIncome(office)
-    ) return; // Only one pending mission needed at a time; skip if we have no extensions or very low energy
+    )
+      return; // Only one pending mission needed at a time; skip if we have no extensions or very low energy
 
-    // Maintain up to three Accountants (at max level) to refill extensions
-    const SCALING_FACTOR = 0.5;
-    const capacity = Math.min(32 * 3 * CARRY_CAPACITY, approximateExtensionsCapacity(office) * SCALING_FACTOR);
-
-    const spawnTime = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office)).length * CREEP_SPAWN_TIME;
-
-    const actualCapacity = active.reduce((sum, m) => (
-      (Game.creeps[m.creepNames[0]]?.ticksToLive ?? CREEP_LIFE_TIME) > spawnTime ? sum + m.data.carryCapacity : sum
-    ), 0);
-
-    // console.log('Controllers/Refill.ts', harvestMissionExists, logisticsMissionExists, capacity, actualCapacity, spawnTime);
-
-    if (actualCapacity < capacity) {
-      submitMission(office, createRefillMission(office));
+    // Maintain four fastfillers
+    for (const pos of positionsNeeded) {
+      submitMission(office, createRefillMission(office, pos));
     }
   }
-}
+};

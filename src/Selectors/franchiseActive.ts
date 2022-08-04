@@ -1,14 +1,15 @@
-import { memoizeByTick } from "utils/memoizeFunction";
-import { franchisesByOffice } from "./franchisesByOffice";
-import { posById } from "./posById";
+import { memoizeByTick } from 'utils/memoizeFunction';
+import { franchisesByOffice } from './franchisesByOffice';
+import { posById } from './posById';
 
 export const franchiseActive = (office: string, source: Id<Source>) => {
   const room = posById(source)?.roomName ?? '';
   const lastHarvested = Memory.rooms[room]?.franchises[office]?.[source]?.lastHarvested;
-  return (lastHarvested && lastHarvested + 3000 > Game.time)
-}
+  return lastHarvested && lastHarvested + 500 > Game.time;
+};
 
-export const activeFranchises = (office: string) => franchisesByOffice(office).filter(source => franchiseActive(office, source.source));
+export const activeFranchises = (office: string) =>
+  franchisesByOffice(office).filter(source => franchiseActive(office, source.source));
 
 export const furthestActiveFranchiseRoundTripDistance = memoizeByTick(
   office => office,
@@ -20,4 +21,4 @@ export const furthestActiveFranchiseRoundTripDistance = memoizeByTick(
     }
     return distance * 2;
   }
-)
+);

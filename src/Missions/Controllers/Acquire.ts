@@ -1,10 +1,12 @@
-import { createAcquireEngineerMission } from "Missions/Implementations/AcquireEngineer";
-import { createAcquireLawyerMission } from "Missions/Implementations/AcquireLawyer";
-import { createAcquireLogisticsMission } from "Missions/Implementations/AcquireLogistics";
-import { MissionType } from "Missions/Mission";
-import { isMission, not, or, pendingAndActiveMissions, pendingMissions, submitMission } from "Missions/Selectors";
-import { findAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from "Selectors/findAcquireTarget";
-import { roomPlans } from "Selectors/roomPlans";
+import { createAcquireEngineerMission } from 'Missions/Implementations/AcquireEngineer';
+import { createAcquireLawyerMission } from 'Missions/Implementations/AcquireLawyer';
+import { MissionType } from 'Missions/Mission';
+import { isMission, not, or, pendingAndActiveMissions, pendingMissions, submitMission } from 'Missions/Selectors';
+import {
+  findAcquireTarget,
+  officeShouldClaimAcquireTarget,
+  officeShouldSupportAcquireTarget
+} from 'Strategy/Acquire/findAcquireTarget';
 
 export default {
   byTick: () => {},
@@ -22,18 +24,21 @@ export default {
         submitMission(office, createAcquireEngineerMission(office, target));
       }
       // Keep Logistics mission pending, if there's a spawn
-      const spawn = roomPlans(target)?.headquarters?.spawn.structure;
-      if (spawn && !pendingMissions(office).some(isMission(MissionType.ACQUIRE_LOGISTICS))) {
-        submitMission(office, createAcquireLogisticsMission(office, target));
-      }
+      // const spawn = getPrimarySpawn(office);
+      // if (spawn && !pendingMissions(office).some(isMission(MissionType.ACQUIRE_LOGISTICS))) {
+      //   submitMission(office, createAcquireLogisticsMission(office, target));
+      // }
     } else {
       // Clear any pending missions
-      Memory.offices[office].pendingMissions = pendingMissions(office)
-        .filter(not(or(
-          isMission(MissionType.ACQUIRE_LAWYER),
-          isMission(MissionType.ACQUIRE_ENGINEER),
-          isMission(MissionType.ACQUIRE_LOGISTICS)
-        )))
+      Memory.offices[office].pendingMissions = pendingMissions(office).filter(
+        not(
+          or(
+            isMission(MissionType.ACQUIRE_LAWYER),
+            isMission(MissionType.ACQUIRE_ENGINEER)
+            // isMission(MissionType.ACQUIRE_LOGISTICS)
+          )
+        )
+      );
     }
   }
-}
+};

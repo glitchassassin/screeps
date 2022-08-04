@@ -1,0 +1,24 @@
+import { States } from 'Behaviors/states';
+import { Mission, MissionType } from 'Missions/Mission';
+import { roomPlans } from 'Selectors/roomPlans';
+
+export const withdrawFromStorage = (
+  mission: Mission<MissionType.LOGISTICS | MissionType.MOBILE_REFILL>,
+  creep: Creep
+) => {
+  delete mission.data.withdrawTarget;
+  // Get energy from a franchise
+  const storage = roomPlans(mission.office)?.headquarters?.storage.structure;
+
+  if (!storage || (creep.ticksToLive && creep.ticksToLive < 50)) {
+    // no work within range and creep is dying
+    console.log('Sending', creep.name, 'to recycle instead of withdraw', creep.pos, creep.ticksToLive);
+    return States.RECYCLE;
+  }
+
+  mission.data.withdrawTarget = storage.id;
+
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY)) return States.FIND_DEPOSIT;
+
+  return States.WITHDRAW;
+};

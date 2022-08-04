@@ -1,13 +1,20 @@
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { createLogisticsMission } from "Missions/Implementations/Logistics";
-import { MissionType } from "Missions/Mission";
-import { activeMissions, isMission, not, pendingMissions } from "Missions/Selectors";
-import { franchiseEnergyAvailable } from "Selectors/franchiseEnergyAvailable";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { posById } from "Selectors/posById";
-import { rcl } from "Selectors/rcl";
-import { getFranchisePlanBySourceId } from "Selectors/roomPlans";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { createLogisticsMission } from 'Missions/Implementations/Logistics';
+import { createMobileRefillMission } from 'Missions/Implementations/MobileRefill';
+import { MissionType } from 'Missions/Mission';
+import {
+  activeMissions,
+  isMission,
+  not,
+  pendingAndActiveMissions,
+  pendingMissions,
+  submitMission
+} from 'Missions/Selectors';
+import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { posById } from 'Selectors/posById';
+import { getFranchisePlanBySourceId, roomPlans } from 'Selectors/roomPlans';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 
 const REMOTE_LOGISTICS_PRIORITY = 11;
 const INROOM_LOGISTICS_PRIORITY = 11.1;
@@ -15,11 +22,21 @@ const INROOM_LOGISTICS_PRIORITY = 11.1;
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    // Maintain one mobile refill mission
+    if (
+      roomPlans(office)?.headquarters?.storage.structure &&
+      !pendingAndActiveMissions(office).some(isMission(MissionType.MOBILE_REFILL))
+    ) {
+      submitMission(office, createMobileRefillMission(office, INROOM_LOGISTICS_PRIORITY));
+    }
+
     // Scale down if needed to fit energy
     if (!activeMissions(office).some(isMission(MissionType.LOGISTICS))) {
       Memory.offices[office].pendingMissions
         .filter(isMission(MissionType.LOGISTICS))
-        .forEach(m => m.estimate.energy = minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))));
+        .forEach(
+          m => (m.estimate.energy = minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))))
+        );
     }
     const inRoomLogisticsMissions = [];
     const remoteLogisticsMissions = [];
@@ -37,14 +54,22 @@ export default {
       }
       if (isMission(MissionType.HARVEST)(mission)) {
         if (!mission.data.distance || !mission.data.harvestRate) continue;
-        const remote = mission.office !== posById(mission.data.source)?.roomName;
-        const harvestRate = (!remote || rcl(mission.office) >= 3) ?
-          SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME :
-          SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
+        const room = posById(mission.data.source)?.roomName;
+        const remote = mission.office !== room;
+        const reserved = Game.rooms[room ?? '']?.controller?.reservation?.username === 'LordGreywether';
+        const canReserve = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable).length > 0;
+        const harvestRate =
+          !remote || canReserve
+            ? SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME
+            : SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
         const capacity = mission.data.distance * 2 * Math.min(harvestRate, mission.data.harvestRate);
+        // console.log(room, remote, canReserve, reserved, harvestRate, mission.data.harvestRate);
         if (remote) {
           remoteCapacity += capacity;
-        } else if (!getFranchisePlanBySourceId(mission.data.source)?.link.structure || franchiseEnergyAvailable(mission.data.source) > CONTAINER_CAPACITY) {
+        } else if (
+          !getFranchisePlanBySourceId(mission.data.source)?.link.structure ||
+          franchiseEnergyAvailable(mission.data.source) > CONTAINER_CAPACITY
+        ) {
           // If we don't have a link, or if energy is piling up behind the link for some
           // reason, dispatch logistics
           inRoomCapacity += capacity;
@@ -54,7 +79,7 @@ export default {
 
     // If we have some logistics minions, wait to spawn another
     // until demand is at least half the capacity of a hauler
-    const carrierCapacity = ((spawnEnergyAvailable(office) / 2) / BODYPART_COST[CARRY]) * CARRY_CAPACITY;
+    const carrierCapacity = (spawnEnergyAvailable(office) / 2 / BODYPART_COST[CARRY]) * CARRY_CAPACITY;
     if (actualCapacity) actualCapacity += carrierCapacity / 2;
 
     const inRoomPendingMissions = [];
@@ -77,6 +102,6 @@ export default {
       ...pendingMissions(office).filter(not(isMission(MissionType.LOGISTICS))),
       ...inRoomPendingMissions,
       ...remotePendingMissions
-    ]
+    ];
   }
-}
+};

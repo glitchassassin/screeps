@@ -1,48 +1,51 @@
-import { scanRooms } from "Intel/Rooms";
-import { recordMetrics } from "Metrics/recordMetrics";
-import { spawnFromQueues } from "Minions/spawnQueues";
-import { runMissionControl } from "Missions/Control";
+import { scanRooms } from 'Intel/Rooms';
+import { recordMetrics } from 'Metrics/recordMetrics';
+import { spawnFromQueues } from 'Minions/spawnQueues';
+import { runMissionControl } from 'Missions/Control';
 import { run as runReports } from 'Reports/ReportRunner';
-import { planRooms } from "RoomPlanner/planRooms";
-import { recordOverhead } from "Selectors/cpuOverhead";
-import { displayBucket, displayGcl } from "Selectors/displayBucket";
-import { runStructures } from "Structures";
-import { debugCPU, resetDebugCPU } from "utils/debugCPU";
+import { planRooms } from 'RoomPlanner/planRooms';
+import { recordOverhead } from 'Selectors/cpuOverhead';
+import { displayBucket, displayGcl, displaySpawn } from 'Selectors/displayBucket';
+import { runStructures } from 'Structures';
+import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
 import { clearNudges } from 'utils/excuseMe';
-import { initializeSpawn } from "utils/initializeSpawns";
-import { purgeDeadCreeps } from "utils/purgeDeadCreeps";
+import { initializeSpawn } from 'utils/initializeSpawns';
+import { purgeDeadCreeps } from 'utils/purgeDeadCreeps';
 
 export const gameLoop = () => {
-    displayBucket();
-    displayGcl();
-    resetDebugCPU(true);
-    purgeDeadCreeps();
-    clearNudges();
-    debugCPU('gameLoop setup', true);
-    // Cache data where needed
-    scanRooms();
-    debugCPU('scanRooms', true);
+  displayBucket();
+  displayGcl();
+  displaySpawn();
+  resetDebugCPU(true);
+  purgeDeadCreeps();
+  clearNudges();
+  debugCPU('gameLoop setup', true);
+  // Cache data where needed
+  scanRooms();
+  debugCPU('scanRooms', true);
 
-    // Office loop
-    // logCpuStart()
-    runMissionControl();
-    debugCPU('Missions', true);
+  // Office loop
+  // logCpuStart()
+  runMissionControl();
+  debugCPU('Missions', true);
 
-    spawnFromQueues();
-    debugCPU('Spawns', true);
+  spawnFromQueues();
+  debugCPU('Spawns', true);
 
-    runStructures();
-    debugCPU('Structures', true);
+  runStructures();
+  debugCPU('Structures', true);
 
-    planRooms();
-    debugCPU('planRooms', true);
+  planRooms();
+  debugCPU('planRooms', true);
 
-    recordMetrics();
+  recordMetrics();
 
-    runReports();
+  runReports();
 
-    // Setup first spawn if needed
-    initializeSpawn();
+  // Setup first spawn if needed
+  initializeSpawn();
 
-    recordOverhead();
-}
+  recordOverhead();
+
+  // planLibrary('W2N8');
+};
