@@ -1,4 +1,4 @@
-import { findBestDepositTarget } from 'Behaviors/logistics';
+import { findBestDepositTarget } from 'Behaviors/Logistics';
 import { moveTo } from 'Behaviors/moveTo';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';

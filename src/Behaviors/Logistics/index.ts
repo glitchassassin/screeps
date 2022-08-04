@@ -46,16 +46,19 @@ export const assignedLogisticsCapacity = memoizeByTick(
   }
 );
 
-export function findBestDepositTarget(office: string, creep: Creep) {
+export function findBestDepositTarget(office: string, creep: Creep, ignoreStorage = false) {
   const { depositAssignments } = assignedLogisticsCapacity(office);
+  const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.5;
   let bestTarget = undefined;
-  let bestAmount = 0;
+  let bestAmount = -Infinity;
   let bestPriority = 0;
   let bestDistance = Infinity;
   for (const [prioritizedStructure, capacity] of depositAssignments) {
     const [priority, target] = prioritizedStructure;
+    if (target instanceof StructureStorage && ignoreStorage) continue;
     const amount = (target.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) - capacity;
     const distance = getRangeTo(creep.pos, target.pos);
+    if (distance > maxDistance) continue; // too far for this creep to survive
     if (
       priority > bestPriority ||
       (priority === bestPriority &&
@@ -74,12 +77,14 @@ export function findBestDepositTarget(office: string, creep: Creep) {
 
 export function findBestWithdrawTarget(office: string, creep: Creep) {
   const { withdrawAssignments } = assignedLogisticsCapacity(office);
+  const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.5;
   let bestTarget = undefined;
   let bestAmount = 0;
   let bestDistance = Infinity;
   for (const [source, capacity] of withdrawAssignments) {
     const amount = franchiseEnergyAvailable(source) - capacity;
     const distance = getFranchiseDistance(office, source) ?? Infinity;
+    if (distance * 2 > maxDistance) continue; // too far for this creep to survive
     if (
       (distance < bestDistance && amount >= Math.min(bestAmount, creep.store.getFreeCapacity(RESOURCE_ENERGY))) ||
       (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))

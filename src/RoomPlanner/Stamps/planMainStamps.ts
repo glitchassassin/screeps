@@ -39,32 +39,26 @@ const scoreLayout = memoize(
       score += flowfields.source1.get(fastFillerPos.x, fastFillerPos.y) * SOURCE_WEIGHT;
       score += flowfields.source1.get(fastFillerPos.x, fastFillerPos.y) * SOURCE_WEIGHT;
       score += (50 - flowfields.exits.get(fastFillerPos.x, fastFillerPos.y)) * EXIT_WEIGHT;
-      console.log('fastFiller', score);
     }
     if (hqPos) {
       score += flowfields.controller.get(hqPos.x, hqPos.y) * CONTROLLER_WEIGHT;
       score += flowfields.source1.get(hqPos.x, hqPos.y) * SOURCE_WEIGHT;
       score += flowfields.source1.get(hqPos.x, hqPos.y) * SOURCE_WEIGHT;
       score += (50 - flowfields.exits.get(hqPos.x, hqPos.y)) * EXIT_WEIGHT;
-      console.log('hq', score);
     }
     if (labsPos) {
       score += (50 - flowfields.exits.get(labsPos.x, labsPos.y)) * EXIT_WEIGHT;
-      console.log('labs', score);
     }
     if (hqPos && fastFillerPos) {
       score +=
         Math.max(Math.abs(hqPos.x - fastFillerPos.x), Math.abs(hqPos.y - fastFillerPos.y)) * HQ_FASTFILLER_WEIGHT;
-      console.log('hq_fastfiller', score);
     }
     if (labsPos && fastFillerPos) {
       score +=
         Math.max(Math.abs(labsPos.x - fastFillerPos.x), Math.abs(labsPos.y - fastFillerPos.y)) * LABS_FASTFILLER_WEIGHT;
-      console.log('labs_fastfiller', score);
     }
     if (hqPos && labsPos) {
       score += Math.max(Math.abs(hqPos.x - labsPos.x), Math.abs(hqPos.y - labsPos.y)) * LABS_HQ_WEIGHT;
-      console.log('hq_labs', score);
     }
 
     return score;

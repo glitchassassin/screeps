@@ -5,7 +5,7 @@ import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
 import { franchiseIncome } from 'Selectors/franchiseIncome';
 import { franchisesByOffice } from 'Selectors/franchisesByOffice';
 import { getActualEnergyAvailable } from 'Selectors/getActualEnergyAvailable';
-import { getSpawns } from 'Selectors/roomPlans';
+import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import profiler from 'utils/profiler';
 import { heapMetrics } from './heapMetrics';
@@ -41,6 +41,7 @@ declare global {
           controllerProgress: number;
           controllerProgressTotal: number;
           controllerLevel: number;
+          libraryEnergyAvailable: number;
           energyAvailable: number;
           energyCapacityAvailable: number;
           spawnUptime: number;
@@ -147,6 +148,12 @@ export const recordMetrics = profiler.registerFN(() => {
       controllerProgress: Game.rooms[office].controller?.progress ?? 0,
       controllerProgressTotal: Game.rooms[office].controller?.progressTotal ?? 0,
       controllerLevel: Game.rooms[office].controller?.level ?? 0,
+      libraryEnergyAvailable:
+        (
+          (roomPlans(office)?.library?.link.structure ?? roomPlans(office)?.library?.container.structure) as
+            | StructureContainer
+            | StructureLink
+        )?.store[RESOURCE_ENERGY] ?? 0,
       energyAvailable: Game.rooms[office].energyAvailable,
       energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
       spawnUptime: getSpawns(office).filter(s => s.spawning).length,

@@ -27,9 +27,12 @@ export const planFranchise = (sourceId: Id<Source>) => {
   let route = PathFinder.search(
     sourcePos,
     { pos: controllerPos, range: 1 },
-    { roomCallback: room => getCostMatrix(room, false) }
+    { roomCallback: room => getCostMatrix(room, false, { ignoreFranchises: true }) }
   );
-  if (route.incomplete) throw new Error('Unable to calculate path between source and controller');
+  if (route.incomplete) {
+    console.log(JSON.stringify(route));
+    throw new Error('Unable to calculate path between source and controller');
+  }
   const containerPos = route.path.length
     ? route.path[0]
     : calculateAdjacentPositions(sourcePos).find(

@@ -11,6 +11,7 @@ import { Logistics, LogisticsMission } from './Logistics';
 import { MineForeman, MineForemanMission } from './MineForeman';
 import { MineHauler, MineHaulerMission } from './MineHauler';
 import { MissionImplementation } from './MissionImplementation';
+import { MobileRefill, MobileRefillMission } from './MobileRefill';
 import { Plunder, PlunderMission } from './Plunder';
 import { Refill, RefillMission } from './Refill';
 import { Reserve, ReserveMission } from './Reserve';
@@ -23,6 +24,7 @@ export type MissionTypes = {
   [MissionType.EXPLORE]: ExploreMission;
   [MissionType.ENGINEER]: EngineerMission;
   [MissionType.REFILL]: RefillMission;
+  [MissionType.MOBILE_REFILL]: MobileRefillMission;
   [MissionType.UPGRADE]: UpgradeMission;
   [MissionType.RESERVE]: ReserveMission;
   [MissionType.HQ_LOGISTICS]: HQLogisticsMission;
@@ -44,6 +46,7 @@ export const Missions: Record<MissionType, typeof MissionImplementation> = {
   [MissionType.EXPLORE]: Explore,
   [MissionType.ENGINEER]: Engineer,
   [MissionType.REFILL]: Refill,
+  [MissionType.MOBILE_REFILL]: MobileRefill,
   [MissionType.UPGRADE]: Upgrade,
   [MissionType.RESERVE]: Reserve,
   [MissionType.HQ_LOGISTICS]: HQLogistics,

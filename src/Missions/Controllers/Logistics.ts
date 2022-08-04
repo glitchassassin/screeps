@@ -1,11 +1,19 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { createLogisticsMission } from 'Missions/Implementations/Logistics';
+import { createMobileRefillMission } from 'Missions/Implementations/MobileRefill';
 import { MissionType } from 'Missions/Mission';
-import { activeMissions, isMission, not, pendingMissions } from 'Missions/Selectors';
+import {
+  activeMissions,
+  isMission,
+  not,
+  pendingAndActiveMissions,
+  pendingMissions,
+  submitMission
+} from 'Missions/Selectors';
 import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
-import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
+import { getFranchisePlanBySourceId, roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 
 const REMOTE_LOGISTICS_PRIORITY = 11;
@@ -14,6 +22,14 @@ const INROOM_LOGISTICS_PRIORITY = 11.1;
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
+    // Maintain one mobile refill mission
+    if (
+      roomPlans(office)?.headquarters?.storage.structure &&
+      !pendingAndActiveMissions(office).some(isMission(MissionType.MOBILE_REFILL))
+    ) {
+      submitMission(office, createMobileRefillMission(office, INROOM_LOGISTICS_PRIORITY));
+    }
+
     // Scale down if needed to fit energy
     if (!activeMissions(office).some(isMission(MissionType.LOGISTICS))) {
       Memory.offices[office].pendingMissions
