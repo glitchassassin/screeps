@@ -11,10 +11,11 @@ function test(workParts = 1, moveParts = 1, carryParts = 1, distance = 55, energ
   // work parts generate 2 fatigue off roads, 1 fatigue on roads
   // full carry parts (1/2 time) generate 2 fatigue off roads, 1 fatigue on roads
   const speed = Math.min(1, (moveParts * 2) / ((roads ? 1 : 2) * (workParts + carryParts / 2)));
-  const travelTime = ((distance * 2) / speed) * trips;
+  const travelTime = distance / speed;
+  const waitTime = distance * 2 * trips;
   const workTime = (carryCapacity / buildPower) * trips;
 
-  const time = travelTime + workTime;
+  const time = travelTime + waitTime + workTime;
   const cost = workParts * 100 + moveParts * 50 + carryParts * 50;
   const costPerTick = cost / 1500;
 
@@ -24,7 +25,7 @@ function test(workParts = 1, moveParts = 1, carryParts = 1, distance = 55, energ
 
   const metricVsCost = `${costPerTick * time}\t${cost}`;
 
-  return [costPerTick * time, [workParts, moveParts, carryParts]];
+  return [costPerTick * time, description];
 }
 
 function permutations(i, distance, energyLimit, roads) {
@@ -39,25 +40,35 @@ function permutations(i, distance, energyLimit, roads) {
   }
   return results.sort((a, b) => a[0] - b[0]);
 }
-console.log('export const builder = {');
-for (const roads of [true, false]) {
-  console.log(roads ? '  roads: {' : '  none: {');
-  for (let distance = 10; distance <= 100; distance += 90) {
-    console.log(distance === 10 ? '    near: [' : '    far: [');
-    for (const energyLimit of [12900, 5600, 1800, 1300, 800, 550, 300]) {
-      const results = permutations(50, distance, energyLimit, roads)[0][1];
-      console.log(
-        '      [',
-        [
-          ...new Array(results[0]).fill('WORK'),
-          ...new Array(results[1]).fill('MOVE'),
-          ...new Array(results[2]).fill('CARRY')
-        ].join(', '),
-        '],'
-      );
+
+function exportBuilder() {
+  console.log('export const builder = {');
+  for (const roads of [true, false]) {
+    console.log(roads ? '  roads: {' : '  none: {');
+    for (let distance = 10; distance <= 100; distance += 90) {
+      console.log(distance === 10 ? '    near: [' : '    far: [');
+      for (const energyLimit of [12900, 5600, 1800, 1300, 800, 550, 300]) {
+        const results = permutations(50, distance, energyLimit, roads)[0][1];
+        console.log(JSON.stringify(results) + ',');
+      }
+      console.log('    ],');
     }
-    console.log('    ],');
+    console.log('  },');
   }
-  console.log('  },');
+  console.log('}');
 }
-console.log('}');
+
+function computeScores() {
+  for (const energyLimit of [12900, 5600, 1800, 1300, 800, 550, 300]) {
+    console.log('\nEnergy limit:', energyLimit);
+    for (const roads of [true, false]) {
+      console.log('roads:', roads);
+      for (let distance = 10; distance <= 100; distance += 90) {
+        const results = permutations(50, distance, energyLimit, roads)[0][1];
+        console.log('distance:', distance, results);
+      }
+    }
+  }
+}
+
+computeScores();

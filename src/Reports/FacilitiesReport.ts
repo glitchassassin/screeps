@@ -3,8 +3,8 @@ import { MissionType } from 'Missions/Mission';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { facilitiesCostPending, facilitiesWorkToDo } from 'Selectors/facilitiesWorkToDo';
 import { franchisesThatNeedRoadWork } from 'Selectors/plannedTerritoryRoads';
+import { facilitiesCostPending, facilitiesWorkToDo } from 'Selectors/Structures/facilitiesWorkToDo';
 import { viz } from 'Selectors/viz';
 
 export default () => {

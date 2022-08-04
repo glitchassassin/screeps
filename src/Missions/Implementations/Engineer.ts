@@ -10,13 +10,14 @@ import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, estimateMissionInterval, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
-import { facilitiesEfficiency, facilitiesWorkToDo, plannedStructureNeedsWork } from 'Selectors/facilitiesWorkToDo';
 import { franchiseThatNeedsEngineers } from 'Selectors/franchiseThatNeedsEngineers';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { franchisesThatNeedRoadWork, nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
+import { facilitiesEfficiency } from 'Selectors/Structures/facilitiesEfficiency';
+import { facilitiesWorkToDo, plannedStructureNeedsWork } from 'Selectors/Structures/facilitiesWorkToDo';
 import { viz } from 'Selectors/viz';
 import { MissionImplementation } from './MissionImplementation';
 

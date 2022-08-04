@@ -1,10 +1,10 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './facilitiesWorkToDo';
 import { franchisesByOffice } from './franchisesByOffice';
 import { deserializePlannedStructures } from './plannedStructures';
 import { posById } from './posById';
 import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
+import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './Structures/facilitiesWorkToDo';
 
 const cachedPlans = new Map<string, PlannedStructure[]>();
 const MAX_TERRITORY_ROADS = 6;

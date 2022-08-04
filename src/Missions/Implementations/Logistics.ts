@@ -8,7 +8,6 @@ import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { byId } from 'Selectors/byId';
-import { plannedStructureNeedsWork } from 'Selectors/facilitiesWorkToDo';
 import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';
@@ -18,6 +17,7 @@ import { rcl } from 'Selectors/rcl';
 import { renewCost } from 'Selectors/renewCost';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
+import { plannedStructureNeedsWork } from 'Selectors/Structures/facilitiesWorkToDo';
 import { viz } from 'Selectors/viz';
 import { MissionImplementation } from './MissionImplementation';
 

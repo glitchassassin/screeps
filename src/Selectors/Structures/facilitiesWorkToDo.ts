@@ -1,12 +1,9 @@
 import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from 'config';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { getFranchiseDistance } from './getFranchiseDistance';
-import { calculateAdjacentPositions, getRangeTo } from './Map/MapCoordinates';
-import { plannedStructuresByRcl } from './plannedStructuresByRcl';
-import { franchisesThatNeedRoadWork } from './plannedTerritoryRoads';
-import { rcl } from './rcl';
-import { roomPlans } from './roomPlans';
+import { calculateAdjacentPositions, getRangeTo } from '../Map/MapCoordinates';
+import { plannedStructuresByRcl } from '../plannedStructuresByRcl';
+import { roomPlans } from '../roomPlans';
 
 export const destroyUnplannedStructures = (room: string) => {
   if (!Game.rooms[room]?.controller?.my || !Memory.roomPlans?.[room]?.office) return;
@@ -75,46 +72,6 @@ export function facilitiesWorkToDoAverageRange(office: string) {
   }
   return rangeCache.get(office) ?? 0;
 }
-
-export const facilitiesEfficiency = memoizeByTick(
-  (office, creep) => office + creep.join(''),
-  (office: string, creep: BodyPartConstant[]) => {
-    let work = facilitiesWorkToDo(office).slice(0, 20);
-    let range = facilitiesWorkToDoAverageRange(office);
-    let constructionToDo = work.filter(s => !s.structure).length > 0;
-    if (!work.length) {
-      const franchises = franchisesThatNeedRoadWork(office);
-      if (!franchises.length) return 0.5;
-      range = franchises.reduce((sum, f) => sum + (getFranchiseDistance(office, f) ?? 0), 0) / franchises.length;
-      constructionToDo = true;
-    }
-    let carryParts = 0;
-    let moveParts = 0;
-    let workParts = 0;
-    creep.forEach(p => {
-      if (p === CARRY) carryParts += 1;
-      if (p === MOVE) moveParts += 1;
-      if (p === WORK) workParts += 1;
-    });
-    const energyUsed = (constructionToDo ? BUILD_POWER : REPAIR_COST * REPAIR_POWER) * workParts;
-    const workTime = (CARRY_CAPACITY * carryParts) / energyUsed;
-    const speed = Math.min(1, (moveParts * 2) / ((rcl(office) >= 3 ? 1 : 2) * (workParts + carryParts / 2)));
-    const travelTime = (Math.max(0, range - 3) * 2) / speed;
-    const efficiency = workTime / (workTime + travelTime);
-    // console.log('range', range, 'energyUsed', energyUsed, 'workTime', workTime, 'travelTime', travelTime, 'efficiency', efficiency);
-    return efficiency;
-  }
-);
-
-export const facilitiesEfficiencyByStructure = (office: string, structure: PlannedStructure) => {
-  const storage = roomPlans(office)?.headquarters?.storage.pos;
-  const range = storage ? getRangeTo(storage, structure.pos) : 25;
-  const energyUsed = structure.structure ? REPAIR_COST * REPAIR_POWER : BUILD_POWER;
-  const workTime = CARRY_CAPACITY / energyUsed;
-  const travelTime = Math.max(0, range - 3) * 2;
-  const efficiency = workTime / (workTime + travelTime);
-  return efficiency;
-};
 
 let cacheReviewed = new Map<string, number>();
 
