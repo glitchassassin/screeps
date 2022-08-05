@@ -1,9 +1,11 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { moveTo } from 'Behaviors/moveTo';
 import { States } from 'Behaviors/states';
+import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { Mission, MissionType } from 'Missions/Mission';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
+import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { renewCost } from 'Selectors/renewCost';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { viz } from 'Selectors/viz';
@@ -11,6 +13,11 @@ import { viz } from 'Selectors/viz';
 export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOBILE_REFILL>, creep: Creep) => {
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.FIND_WITHDRAW;
   mission.efficiency.working += 1;
+
+  if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+    // Record deposit cost
+    HarvestLedger.record(mission.office, mission.data.withdrawTarget, -creepCostPerTick(creep));
+  }
 
   let target = byId(mission.data.depositTarget as Id<AnyStoreStructure | Creep>);
 
@@ -38,9 +45,15 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
             storageEnergyAvailable(mission.office) >= Game.rooms[mission.office].energyCapacityAvailable) ||
             opp.creep.name.startsWith('REFILL'))
         ) {
-          creep.transfer(opp.creep, RESOURCE_ENERGY);
-          energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
-          break;
+          if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
+            const amount = Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
+            energyRemaining -= amount;
+            if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+              // Record deposit amount
+              HarvestLedger.record(mission.office, mission.data.withdrawTarget, amount);
+            }
+            break;
+          }
         }
         // else if (
         //   opp.creep.name.startsWith('ACCOUNTANT') &&
@@ -60,9 +73,15 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
         (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY] <
           (opp.structure as AnyStoreStructure).store.getCapacity(RESOURCE_ENERGY)
       ) {
-        creep.transfer(opp.structure, RESOURCE_ENERGY);
-        energyRemaining -= Math.min((opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY], energyRemaining);
-        break;
+        if (creep.transfer(opp.structure, RESOURCE_ENERGY) === OK) {
+          const amount = Math.min((opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY], energyRemaining);
+          energyRemaining -= amount;
+          if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+            // Record deposit amount
+            HarvestLedger.record(mission.office, mission.data.withdrawTarget, amount);
+          }
+          break;
+        }
       }
     }
     if (energyRemaining === 0) {
@@ -73,6 +92,11 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
   if (mission.type === MissionType.MOBILE_REFILL) viz(creep.pos.roomName).line(creep.pos, target.pos);
   if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
     if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
+      const amount = Math.min(target.store[RESOURCE_ENERGY], creep.store.getUsedCapacity(RESOURCE_ENERGY));
+      if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+        // Record deposit amount
+        HarvestLedger.record(mission.office, mission.data.withdrawTarget, amount);
+      }
       delete mission.data.depositTarget;
     }
     // If target is spawn, is not spawning, and is at capacity, renew this creep

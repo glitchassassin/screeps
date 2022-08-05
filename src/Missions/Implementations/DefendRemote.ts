@@ -1,21 +1,23 @@
-import { blinkyKill } from "Behaviors/blinkyKill";
-import { guardKill } from "Behaviors/guardKill";
-import { moveTo } from "Behaviors/moveTo";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionType } from "Missions/Mission";
-import { findClosestHostileCreepByRange, findInvaderStructures } from "Selectors/findHostileCreeps";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { MissionImplementation } from "./MissionImplementation";
+import { blinkyKill } from 'Behaviors/blinkyKill';
+import { guardKill } from 'Behaviors/guardKill';
+import { moveTo } from 'Behaviors/moveTo';
+import { HarvestLedger } from 'Ledger/HarvestLedger';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { findClosestHostileCreepByRange, findInvaderStructures } from 'Selectors/findHostileCreeps';
+import { creepCostPerTick, minionCost } from 'Selectors/minionCostPerTick';
+import { sourceIds } from 'Selectors/roomCache';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 interface DefendRemoteMissionData {
-  roomTarget?: string,
-  coreKiller: boolean
+  roomTarget?: string;
+  coreKiller: boolean;
 }
 
 export interface DefendRemoteMission extends Mission<MissionType.DEFEND_REMOTE> {
-  data: DefendRemoteMissionData
+  data: DefendRemoteMissionData;
 }
 
 export function createDefendRemoteMission(office: string, coreKiller = false): DefendRemoteMission {
@@ -23,16 +25,16 @@ export function createDefendRemoteMission(office: string, coreKiller = false): D
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body),
-  }
+    energy: minionCost(body)
+  };
 
   return createMission({
     office,
     priority: 9.9,
     type: MissionType.DEFEND_REMOTE,
     data: { coreKiller },
-    estimate,
-  })
+    estimate
+  });
 }
 
 export class DefendRemote extends MissionImplementation {
@@ -40,27 +42,28 @@ export class DefendRemote extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `JANITOR-${mission.office}-${mission.id}`
-    const body = MinionBuilders[mission.data.coreKiller ? MinionTypes.GUARD : MinionTypes.BLINKY](spawnEnergyAvailable(mission.office));
+    const name = `JANITOR-${mission.office}-${mission.id}`;
+    const body = MinionBuilders[mission.data.coreKiller ? MinionTypes.GUARD : MinionTypes.BLINKY](
+      spawnEnergyAvailable(mission.office)
+    );
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body,
-      }
-    )
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }
 
   static minionLogic(mission: DefendRemoteMission, creep: Creep) {
     // If work is done, clear target
-    if (mission.data.roomTarget && !(
-      Memory.rooms[mission.data.roomTarget].invaderCore ||
-      Memory.rooms[mission.data.roomTarget].lastHostileSeen === Memory.rooms[mission.data.roomTarget].scanned
-    )) {
+    if (
+      mission.data.roomTarget &&
+      !(
+        Memory.rooms[mission.data.roomTarget].invaderCore ||
+        Memory.rooms[mission.data.roomTarget].lastHostileSeen === Memory.rooms[mission.data.roomTarget].scanned
+      )
+    ) {
       delete mission.data.roomTarget;
     }
 
@@ -80,6 +83,13 @@ export class DefendRemote extends MissionImplementation {
     }
 
     if (!mission.data.roomTarget) return; // nothing to do
+
+    // Record cost
+    const sources = sourceIds(mission.data.roomTarget);
+    if (sources.length) {
+      const cost = creepCostPerTick(creep) / sources.length;
+      sources.forEach(s => HarvestLedger.record(mission.office, s, -cost));
+    }
 
     // Go to room
     if (creep.pos.roomName !== mission.data.roomTarget) {

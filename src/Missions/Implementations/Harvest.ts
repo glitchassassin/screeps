@@ -1,12 +1,13 @@
 import { harvestEnergyFromFranchise } from 'Behaviors/harvestEnergyFromFranchise';
 import { moveTo } from 'Behaviors/moveTo';
+import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
-import { minionCost } from 'Selectors/minionCostPerTick';
+import { creepCost, minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
@@ -102,7 +103,11 @@ export class Harvest extends MissionImplementation {
     mission.creepNames.push(name);
   }
 
-  static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
+  static onStart(mission: HarvestMission, creep: Creep) {
+    HarvestLedger.record(mission.office, mission.data.source, -creepCost(creep));
+  }
+
+  static minionLogic(mission: HarvestMission, creep: Creep): void {
     // Set some additional data on the mission
     mission.data.harvestRate ??= creep.body.filter(p => p.type === WORK).length * HARVEST_POWER;
     mission.data.distance ??= getFranchiseDistance(mission.office, mission.data.source);

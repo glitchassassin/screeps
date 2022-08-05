@@ -24,13 +24,23 @@ export abstract class MissionImplementation {
       mission.actual.energy += minionCost(creep.body.map(p => p.type));
       // Adjust estimate with actual spawning cost, if needed
       mission.estimate.energy += Math.max(0, mission.actual.energy - mission.estimate.energy);
+      this.onStart(mission, creep);
     }
 
     mission.efficiency ??= { running: 0, working: 0 };
     mission.efficiency.running += 1;
     this.minionLogic(mission, creep);
   }
+  /**
+   * Runs each tick, once per assigned minion
+   */
   static minionLogic(mission: Mission<MissionType>, creep: Creep) {
     // Default implementation does nothing
+  }
+  /**
+   * Runs once when the mission starts
+   */
+  static onStart(mission: Mission<MissionType>, creep: Creep) {
+    // default implementation does nothing
   }
 }

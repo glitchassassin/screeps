@@ -4,6 +4,7 @@ import { moveTo } from 'Behaviors/moveTo';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
+import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { getWithdrawLimit } from 'Missions/Budgets';
@@ -11,7 +12,7 @@ import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, estimateMissionInterval, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { franchiseThatNeedsEngineers } from 'Selectors/franchiseThatNeedsEngineers';
-import { minionCost } from 'Selectors/minionCostPerTick';
+import { creepCostPerTick, minionCost } from 'Selectors/minionCostPerTick';
 import { franchisesThatNeedRoadWork, nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -162,6 +163,10 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
 
         viz(plan.pos.roomName).line(creep.pos, plan.pos, { color: 'cyan' });
 
+        if (mission.data.franchise) {
+          HarvestLedger.record(mission.office, mission.data.franchise, -creepCostPerTick(creep));
+        }
+
         if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
           const obstacle = plan.pos
             .lookFor(LOOK_STRUCTURES)
@@ -177,8 +182,12 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         if (moveTo(creep, { pos: plan.pos, range: 3 }) === BehaviorResult.SUCCESS) {
           if (plan.structure) {
             if (creep.repair(plan.structure) === OK) {
+              const cost = REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
               mission.actual.energy += REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
               mission.efficiency.working += 1;
+              if (mission.data.franchise) {
+                HarvestLedger.record(mission.office, mission.data.franchise, -cost);
+              }
             }
           } else {
             // Create construction site if needed
@@ -197,8 +206,12 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
             if (plan.constructionSite) {
               const result = creep.build(plan.constructionSite);
               if (result === OK) {
-                mission.actual.energy += BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
+                const cost = BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
+                mission.actual.energy += cost;
                 mission.efficiency.working += 1;
+                if (mission.data.franchise) {
+                  HarvestLedger.record(mission.office, mission.data.franchise, -cost);
+                }
               } else if (result === ERR_NOT_ENOUGH_ENERGY) {
                 return States.GET_ENERGY;
               }

@@ -2,10 +2,12 @@ import { BehaviorResult } from 'Behaviors/Behavior';
 import { getEnergyFromFranchise } from 'Behaviors/getEnergyFromFranchise';
 import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
 import { States } from 'Behaviors/states';
+import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { Mission, MissionType } from 'Missions/Mission';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
+import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 
@@ -37,7 +39,7 @@ export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MO
   if (energyCapacity === 0) return States.FIND_DEPOSIT;
 
   // Otherwise, continue to main withdraw target
-  const target = byId(mission.data.withdrawTarget as Id<Tombstone | Source | StructureStorage>);
+  const target = byId(mission.data.withdrawTarget as Id<Source | StructureStorage>);
   const pos = posById(mission.data.withdrawTarget) ?? target?.pos;
   if (!mission.data.withdrawTarget || !pos) {
     return States.FIND_WITHDRAW;
@@ -52,6 +54,9 @@ export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MO
       return States.FIND_WITHDRAW;
     }
   } else {
+    // Record cost
+    HarvestLedger.record(mission.office, mission.data.withdrawTarget, -creepCostPerTick(creep));
+
     const result = getEnergyFromFranchise(creep, mission.data.withdrawTarget as Id<Source>);
     if (result === BehaviorResult.SUCCESS) {
       return States.FIND_DEPOSIT;

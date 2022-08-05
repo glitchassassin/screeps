@@ -18,7 +18,7 @@ import { MissionImplementation } from './MissionImplementation';
 export interface LogisticsMission extends Mission<MissionType.LOGISTICS> {
   data: {
     capacity: number;
-    withdrawTarget?: Id<Tombstone | Source>;
+    withdrawTarget?: Id<Source>;
     depositTarget?: Id<AnyStoreStructure | Creep>;
     repair?: boolean;
   };
