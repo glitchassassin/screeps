@@ -25,7 +25,7 @@ export class Ledger {
     return Game.time - Memory.ledger[id].created > this.baseline;
   }
   isExpired(id: string): boolean {
-    return Game.time - Memory.ledger[id].created > this.baseline;
+    return Game.time - Memory.ledger[id].created > this.interval;
   }
   get(id: string): LedgerItem {
     if (!Memory.ledger[id] || this.isExpired(id)) {

@@ -13,7 +13,6 @@ export const recycle = (mission: Mission<MissionType>, creep: Creep) => {
     return States.RECYCLE;
   }
   if (moveTo(creep, { pos: recycleTarget, range: 0 }) === BehaviorResult.SUCCESS) {
-    console.log(creep.name, 'recycled');
     recycleSpawn.recycleCreep(creep);
   }
   return States.RECYCLE;

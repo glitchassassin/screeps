@@ -4,6 +4,7 @@ import { createMobileRefillMission } from 'Missions/Implementations/MobileRefill
 import { MissionType } from 'Missions/Mission';
 import {
   activeMissions,
+  assignedCreep,
   isMission,
   not,
   pendingAndActiveMissions,
@@ -50,6 +51,8 @@ export default {
     let actualCapacity = 0;
     for (const mission of activeMissions(office)) {
       if (isMission(MissionType.LOGISTICS)(mission)) {
+        const ttl = assignedCreep(mission)?.ticksToLive;
+        if (ttl && ttl < 200) continue; // creep is close to dying, don't count its capacity towards total
         actualCapacity += mission.data.capacity ?? 0;
       }
       if (isMission(MissionType.HARVEST)(mission)) {

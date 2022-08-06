@@ -11,7 +11,6 @@ export abstract class MissionImplementation {
     const spawnOrder = Memory.offices[mission.office].spawnQueue.find(o => o.data.name === mission.creepNames[0]);
     if (!spawnOrder && !creep) {
       // creep is dead
-      if (mission.creepNames[0].startsWith('ACCOUNTANT')) console.log(Game.time, mission.creepNames[0], 'died');
       mission.status = MissionStatus.DONE;
       return;
     }

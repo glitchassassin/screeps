@@ -11,9 +11,10 @@ import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, estimateMissionInterval, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
+import { franchisesThatNeedRoadWork } from 'Selectors/franchisesThatNeedRoadWork';
 import { franchiseThatNeedsEngineers } from 'Selectors/franchiseThatNeedsEngineers';
 import { creepCostPerTick, minionCost } from 'Selectors/minionCostPerTick';
-import { franchisesThatNeedRoadWork, nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
+import { nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -164,7 +165,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         viz(plan.pos.roomName).line(creep.pos, plan.pos, { color: 'cyan' });
 
         if (mission.data.franchise) {
-          HarvestLedger.record(mission.office, mission.data.franchise, -creepCostPerTick(creep));
+          HarvestLedger.record(mission.office, mission.data.franchise, creep.name + ' spawn', -creepCostPerTick(creep));
         }
 
         if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
@@ -186,7 +187,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
               mission.actual.energy += REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
               mission.efficiency.working += 1;
               if (mission.data.franchise) {
-                HarvestLedger.record(mission.office, mission.data.franchise, -cost);
+                HarvestLedger.record(mission.office, mission.data.franchise, creep.name + ' repair', -cost);
               }
             }
           } else {
@@ -210,7 +211,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
                 mission.actual.energy += cost;
                 mission.efficiency.working += 1;
                 if (mission.data.franchise) {
-                  HarvestLedger.record(mission.office, mission.data.franchise, -cost);
+                  HarvestLedger.record(mission.office, mission.data.franchise, creep.name + ' build', -cost);
                 }
               } else if (result === ERR_NOT_ENOUGH_ENERGY) {
                 return States.GET_ENERGY;

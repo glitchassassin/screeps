@@ -1,3 +1,4 @@
+import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { HarvestMission } from 'Missions/Implementations/Harvest';
 import { MissionType } from 'Missions/Mission';
@@ -8,6 +9,7 @@ import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/franchisesByOffice';
 import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
 import { posById } from 'Selectors/posById';
+import { sourceIds } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export default () => {
@@ -32,29 +34,32 @@ export default () => {
           lineStyle: disabled ? 'dashed' : 'solid'
         });
 
+        const order = sourceIds(franchise.room).indexOf(franchise.source);
+
+        const startY = Math.min(39 - 10 * order, sourcePos.y);
+
         Game.map.visual.text(
           (getFranchiseDistance(office, franchise.source)?.toFixed(0) ?? '--') + '🦶',
-          new RoomPosition(Math.max(0, sourcePos.x), Math.min(49, sourcePos.y + 4), sourcePos.roomName),
-          { fontSize: 5 }
+          new RoomPosition(Math.max(0, sourcePos.x), startY + 4, sourcePos.roomName),
+          { fontSize: 4 }
         );
         if (!disabled) {
+          // `${assigned}⛏ ${byId(franchise.source)?.energy.toFixed(0) ?? '--'}⚡ ${franchiseEnergyAvailable(
+          //   franchise.source
+          // ).toFixed(0)}📦 ${perTick.toFixed(2)}${isValid ? '' : '?'}`;
           Game.map.visual.text(
-            `${assigned}⛏`,
-            new RoomPosition(sourcePos.x, Math.max(0, sourcePos.y - 5), sourcePos.roomName),
-            { fontSize: 5 }
-          );
-          Game.map.visual.text(
-            `${byId(franchise.source)?.energy.toFixed(0) ?? '--'}⚡ ${franchiseEnergyAvailable(
-              franchise.source
-            ).toFixed(0)}📦`,
-            new RoomPosition(Math.max(0, sourcePos.x), Math.min(49, sourcePos.y + 10), sourcePos.roomName),
-            { fontSize: 5 }
+            `${franchiseEnergyAvailable(franchise.source).toFixed(0)}📦 ${perTick.toFixed(2)}${isValid ? '' : '?'}⚡`,
+            new RoomPosition(Math.max(0, sourcePos.x), startY + 10, sourcePos.roomName),
+            { fontSize: 4 }
           );
         }
       }
 
       let source = byId(franchise.source);
       if (!source) continue;
+
+      const assignedLogistics = assignedLogisticsCapacity(office).withdrawAssignments.get(source.id);
+      // console.log(source.pos, assignedLogistics);
 
       Dashboard({
         widgets: [
@@ -114,6 +119,26 @@ export default () => {
                 style: {
                   stroke: 'yellow',
                   fill: 'yellow'
+                }
+              }
+            })
+          },
+          {
+            pos: {
+              x: source.pos.x + 3,
+              y: source.pos.y - 2.5
+            },
+            width: 2,
+            height: 5,
+            widget: Bar({
+              data: {
+                value: assignedLogistics ?? 0,
+                maxValue: CONTAINER_CAPACITY
+              },
+              config: {
+                style: {
+                  stroke: 'blue',
+                  fill: 'blue'
                 }
               }
             })

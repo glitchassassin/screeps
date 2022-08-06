@@ -12,7 +12,6 @@ export const findDeposit = (mission: Mission<MissionType.LOGISTICS | MissionType
     mission.data.depositTarget = bestTarget[1].id;
   } else if (creep.ticksToLive && creep.ticksToLive < 100) {
     // no work within range and creep is dying
-    console.log('Sending', creep.name, 'to recycle instead of deposit', creep.pos, creep.ticksToLive);
     return States.RECYCLE;
   }
   if (mission.data.depositTarget) return States.DEPOSIT;

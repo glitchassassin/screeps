@@ -1,4 +1,5 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
+import { followPathHomeFromSource } from 'Behaviors/followPathHomeFromSource';
 import { moveTo } from 'Behaviors/moveTo';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
@@ -16,7 +17,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
 
   if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
     // Record deposit cost
-    HarvestLedger.record(mission.office, mission.data.withdrawTarget, -creepCostPerTick(creep));
+    HarvestLedger.record(mission.office, mission.data.withdrawTarget, creep.name + ' spawn', -creepCostPerTick(creep));
   }
 
   let target = byId(mission.data.depositTarget as Id<AnyStoreStructure | Creep>);
@@ -29,7 +30,15 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
     const road = creep.pos
       .findInRange(FIND_STRUCTURES, 3)
       .find(s => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax);
-    if (road) creep.repair(road);
+    if (road) {
+      if (creep.repair(road) === OK) {
+        const cost = REPAIR_COST * REPAIR_POWER * 1; // Haulers will only ever have one work part // creep.body.filter(p => p.type === WORK).length;
+        if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+          // Record deposit cost
+          HarvestLedger.record(mission.office, mission.data.withdrawTarget, creep.name + ' repair', -cost);
+        }
+      }
+    }
   }
 
   const nearby = lookNear(creep.pos);
@@ -50,7 +59,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
             energyRemaining -= amount;
             if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
               // Record deposit amount
-              HarvestLedger.record(mission.office, mission.data.withdrawTarget, amount);
+              HarvestLedger.record(mission.office, mission.data.withdrawTarget, creep.name + ' deposit', amount);
             }
             break;
           }
@@ -78,7 +87,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
           energyRemaining -= amount;
           if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
             // Record deposit amount
-            HarvestLedger.record(mission.office, mission.data.withdrawTarget, amount);
+            HarvestLedger.record(mission.office, mission.data.withdrawTarget, creep.name + ' deposit', amount);
           }
           break;
         }
@@ -90,12 +99,19 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
   }
   if (!target) return States.DEPOSIT;
   if (mission.type === MissionType.MOBILE_REFILL) viz(creep.pos.roomName).line(creep.pos, target.pos);
-  if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+  // travel home from a source
+  if (
+    mission.data.withdrawTarget &&
+    !(byId(mission.data.withdrawTarget) instanceof StructureStorage) &&
+    creep.pos.roomName !== mission.office
+  ) {
+    followPathHomeFromSource(creep, mission.office, mission.data.withdrawTarget);
+  } else if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
     if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
       const amount = Math.min(target.store[RESOURCE_ENERGY], creep.store.getUsedCapacity(RESOURCE_ENERGY));
       if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
         // Record deposit amount
-        HarvestLedger.record(mission.office, mission.data.withdrawTarget, amount);
+        HarvestLedger.record(mission.office, mission.data.withdrawTarget, creep.name + ' deposit', amount);
       }
       delete mission.data.depositTarget;
     }

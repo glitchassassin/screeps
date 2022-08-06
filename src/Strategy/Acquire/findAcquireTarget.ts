@@ -1,4 +1,5 @@
 import { OFFICE_LIMIT } from 'config';
+import { roomPlans } from 'Selectors/roomPlans';
 import { getOfficeDistanceByRoomPath } from '../../Selectors/getOfficeDistance';
 import { rcl } from '../../Selectors/rcl';
 import { scoreAcquireTarget } from './scoreAcquireTarget';
@@ -137,6 +138,7 @@ export const officeShouldSupportAcquireTarget = (officeName: string) => {
 
   // Evaluate further if claiming or support are necessary
   if (!cachedAcquireTarget) return false;
+  if (roomPlans(cachedAcquireTarget)?.fastfiller?.spawns[0].structure) return false; // don't bother supporting once we have a spawn
   const controller = Game.rooms[cachedAcquireTarget]?.controller;
   if (!controller) return false;
   return controller.my && controller.level < 4;

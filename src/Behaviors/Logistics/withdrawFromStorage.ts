@@ -12,7 +12,6 @@ export const withdrawFromStorage = (
 
   if (!storage || (creep.ticksToLive && creep.ticksToLive < 50)) {
     // no work within range and creep is dying
-    console.log('Sending', creep.name, 'to recycle instead of withdraw', creep.pos, creep.ticksToLive);
     return States.RECYCLE;
   }
 

@@ -55,7 +55,7 @@ export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MO
     }
   } else {
     // Record cost
-    HarvestLedger.record(mission.office, mission.data.withdrawTarget, -creepCostPerTick(creep));
+    HarvestLedger.record(mission.office, mission.data.withdrawTarget, creep.name + ' spawn', -creepCostPerTick(creep));
 
     const result = getEnergyFromFranchise(creep, mission.data.withdrawTarget as Id<Source>);
     if (result === BehaviorResult.SUCCESS) {

@@ -104,7 +104,7 @@ export class Harvest extends MissionImplementation {
   }
 
   static onStart(mission: HarvestMission, creep: Creep) {
-    HarvestLedger.record(mission.office, mission.data.source, -creepCost(creep));
+    HarvestLedger.record(mission.office, mission.data.source, creep.name + ' spawn', -creepCost(creep));
   }
 
   static minionLogic(mission: HarvestMission, creep: Creep): void {
@@ -142,7 +142,18 @@ export class Harvest extends MissionImplementation {
         for (const { structure } of plan.extensions) {
           if (!structure) continue;
           result = creep.transfer(structure, RESOURCE_ENERGY);
-          if (result === OK) break;
+          if (result === OK) {
+            HarvestLedger.record(
+              mission.office,
+              mission.data.source,
+              creep.name + ' deposit',
+              Math.min(
+                creep.store[RESOURCE_ENERGY],
+                (structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY)
+              )
+            );
+            break;
+          }
         }
         // Try to build (or repair) container
         // if (result !== OK && !plan.container.structure) {
@@ -160,6 +171,15 @@ export class Harvest extends MissionImplementation {
           result = creep.transfer(plan.link.structure, RESOURCE_ENERGY);
           if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.link.pos);
           if (result === OK) {
+            HarvestLedger.record(
+              mission.office,
+              mission.data.source,
+              creep.name + ' deposit',
+              Math.min(
+                creep.store[RESOURCE_ENERGY],
+                (plan.link.structure as StructureLink).store.getFreeCapacity(RESOURCE_ENERGY)
+              )
+            );
             // If we've dropped any resources, and there's space in the link, try to pick them up
             const resource = creep.pos.lookFor(LOOK_RESOURCES).find(r => r.resourceType === RESOURCE_ENERGY);
             if (resource) creep.pickup(resource);
@@ -180,12 +200,22 @@ export class Harvest extends MissionImplementation {
             plan.container.pos.createConstructionSite(plan.container.structureType);
           } else {
             if (creep.build(plan.container.constructionSite) === OK) {
-              // mission.actual.energy += BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
+              HarvestLedger.record(
+                mission.office,
+                mission.data.source,
+                creep.name + ' build',
+                -BUILD_POWER * creep.body.filter(p => p.type === WORK).length
+              );
             }
           }
         } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
           if (creep.repair(plan.container.structure) === OK) {
-            // mission.actual.energy += (REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
+            HarvestLedger.record(
+              mission.office,
+              mission.data.source,
+              creep.name + ' repair',
+              -(REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length
+            );
           }
         }
       }

@@ -42,11 +42,10 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     plannedStructures = plannedStructures.concat(plans.fastfiller?.spawns[0]);
   }
   if (rcl >= 2) {
-    plannedStructures = plannedStructures.concat(
-      plans.fastfiller?.containers ?? [],
-      plannedExtensions.slice(0, 5),
-      plans.library?.container
-    );
+    plannedStructures = plannedStructures.concat(plans.fastfiller?.containers ?? [], plannedExtensions.slice(0, 5));
+  }
+  if (rcl >= 2 && rcl < 6) {
+    plannedStructures = plannedStructures.concat(plans.library?.container);
   }
   if (rcl >= 3) {
     plannedStructures = plannedStructures.concat(
@@ -70,14 +69,14 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     plannedStructures = plannedStructures.concat(
       plannedExtensions.slice(20, 30),
       plannedTowers.slice(1, 2),
-      [plans.fastfiller?.link],
+      [plans.library?.link],
       [plans.headquarters?.link]
     );
   }
   if (rcl >= 6) {
     plannedStructures = plannedStructures.concat(
       plannedExtensions.slice(30, 40),
-      [plans.library?.link],
+      [plans.fastfiller?.link],
       [plans.headquarters?.terminal],
       [plans.mine?.extractor],
       [plans.mine?.container]

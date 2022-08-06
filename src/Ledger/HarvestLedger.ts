@@ -8,7 +8,8 @@ export class HarvestLedger {
   static get(office: string, sourceId: Id<Source>) {
     return this.Ledger.get(this.id(office, sourceId));
   }
-  static record(office: string, sourceId: Id<Source>, value: number) {
+  static record(office: string, sourceId: Id<Source>, label: string, value: number) {
+    // if (!label.includes('spawn')) console.log(Game.time, 'HarvestLedger', office, label, value);
     return this.Ledger.record(this.id(office, sourceId), value);
   }
 }

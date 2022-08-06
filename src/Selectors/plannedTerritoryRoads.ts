@@ -1,6 +1,5 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { franchisesByOffice } from './franchisesByOffice';
 import { deserializePlannedStructures } from './plannedStructures';
 import { posById } from './posById';
 import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
@@ -27,6 +26,10 @@ export function plannedFranchiseRoads(office: string, source: Id<Source>) {
   return structures;
 }
 
+export function franchisePath(office: string, source: Id<Source>) {
+  return plannedFranchiseRoads(office, source).map(s => s.pos);
+}
+
 export const plannedFranchiseRoadsCost = memoizeByTick(
   (office, source) => office + source,
   (office: string, source: Id<Source>) => {
@@ -44,20 +47,6 @@ export const adjustedPlannedFranchiseRoadsCost = memoizeByTick(
       .reduce((sum, a) => sum + a, 0);
   }
 );
-
-export function franchisesThatNeedRoadWork(office: string) {
-  return franchisesByOffice(office)
-    .filter(({ remote, source, room }) => {
-      return (
-        remote &&
-        (Memory.rooms[room]?.franchises?.[office]?.[source]?.lastHarvested ?? 0) + 1500 > Game.time &&
-        plannedFranchiseRoads(office, source).some(
-          r => !r.structure && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
-        )
-      );
-    })
-    .map(({ source }) => source);
-}
 
 export function plannedTerritoryRoads(office: string) {
   return [

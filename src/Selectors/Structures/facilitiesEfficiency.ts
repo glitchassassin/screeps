@@ -1,7 +1,7 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
+import { franchisesThatNeedRoadWork } from 'Selectors/franchisesThatNeedRoadWork';
 import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
-import { franchisesThatNeedRoadWork } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
 import { memoizeByTick } from 'utils/memoizeFunction';

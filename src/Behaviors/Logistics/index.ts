@@ -1,3 +1,4 @@
+import { States } from 'Behaviors/states';
 import { MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
@@ -23,13 +24,23 @@ export const assignedLogisticsCapacity = memoizeByTick(
     }
 
     for (const mission of activeMissions(office).filter(isMission(MissionType.LOGISTICS))) {
-      if (mission.data.withdrawTarget && withdrawAssignments.has(mission.data.withdrawTarget as Id<Source>)) {
+      if (
+        assignedCreep(mission)?.memory.runState === States.WITHDRAW &&
+        mission.data.withdrawTarget &&
+        withdrawAssignments.has(mission.data.withdrawTarget as Id<Source>)
+      ) {
         withdrawAssignments.set(
           mission.data.withdrawTarget as Id<Source>,
           (withdrawAssignments.get(mission.data.withdrawTarget as Id<Source>) ?? 0) + mission.data.capacity
         );
+      } else if (mission.data.withdrawTarget === '1e1b077481ac2b2') {
+        console.log(assignedCreep(mission)?.memory.runState);
       }
-      if (mission.data.depositTarget && depositAssignmentIds.has(mission.data.depositTarget)) {
+      if (
+        assignedCreep(mission)?.memory.runState === States.DEPOSIT &&
+        mission.data.depositTarget &&
+        depositAssignmentIds.has(mission.data.depositTarget)
+      ) {
         const target = depositAssignmentIds.get(mission.data.depositTarget);
         if (!target) continue;
         depositAssignments.set(
@@ -75,23 +86,27 @@ export function findBestDepositTarget(office: string, creep: Creep, ignoreStorag
   return bestTarget;
 }
 
+/**
+ * Best withdraw target is the one this creep can get the most from, or (in case of a tie)
+ * the one with the largest stockpile
+ */
 export function findBestWithdrawTarget(office: string, creep: Creep) {
   const { withdrawAssignments } = assignedLogisticsCapacity(office);
-  const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.5;
+  const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.8;
   let bestTarget = undefined;
-  let bestAmount = 0;
-  let bestDistance = Infinity;
+  let bestCreepAmount = 0;
+  let bestTotalAmount = 0;
   for (const [source, capacity] of withdrawAssignments) {
-    const amount = franchiseEnergyAvailable(source) - capacity;
+    // total stockpile at the source
+    const totalAmount = franchiseEnergyAvailable(source);
+    // total this creep can get (after reservations)
+    const creepAmount = Math.min(totalAmount - capacity, creep.store.getFreeCapacity(RESOURCE_ENERGY));
     const distance = getFranchiseDistance(office, source) ?? Infinity;
     if (distance * 2 > maxDistance) continue; // too far for this creep to survive
-    if (
-      (distance < bestDistance && amount >= Math.min(bestAmount, creep.store.getFreeCapacity(RESOURCE_ENERGY))) ||
-      (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))
-    ) {
+    if (creepAmount > bestCreepAmount || (creepAmount === bestCreepAmount && totalAmount > bestTotalAmount)) {
       bestTarget = source;
-      bestAmount = amount;
-      bestDistance = distance;
+      bestCreepAmount = creepAmount;
+      bestTotalAmount = totalAmount;
     }
   }
   return bestTarget;

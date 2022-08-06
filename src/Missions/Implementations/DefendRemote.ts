@@ -88,7 +88,7 @@ export class DefendRemote extends MissionImplementation {
     const sources = sourceIds(mission.data.roomTarget);
     if (sources.length) {
       const cost = creepCostPerTick(creep) / sources.length;
-      sources.forEach(s => HarvestLedger.record(mission.office, s, -cost));
+      sources.forEach(s => HarvestLedger.record(mission.office, s, creep.name + ' spawn', -cost));
     }
 
     // Go to room
