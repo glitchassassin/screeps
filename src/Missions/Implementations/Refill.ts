@@ -84,12 +84,9 @@ export class Refill extends MissionImplementation {
 
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY)) {
       // Look for source
-      const source = creep.pos
-        .findInRange(FIND_STRUCTURES, 1)
-        .find(
-          s =>
-            (s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_LINK) && s.store[RESOURCE_ENERGY]
-        ) as StructureContainer | undefined;
+      const sources = creep.pos.findInRange(FIND_STRUCTURES, 1).filter(s => 'store' in s && s.store[RESOURCE_ENERGY]);
+      const source = (sources.find(s => s.structureType === STRUCTURE_LINK) ??
+        sources.find(s => s.structureType === STRUCTURE_CONTAINER)) as StructureContainer | StructureLink | undefined;
       if (source) {
         creep.withdraw(source, RESOURCE_ENERGY);
         source.store[RESOURCE_ENERGY] = Math.max(

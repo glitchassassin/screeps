@@ -1,33 +1,42 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { deserializePlannedStructures } from './plannedStructures';
+import { unpackPosList } from 'utils/packrat';
 import { posById } from './posById';
 import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
 import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './Structures/facilitiesWorkToDo';
 
+const cachedPaths = new Map<string, RoomPosition[]>();
 const cachedPlans = new Map<string, PlannedStructure[]>();
+let surveyed = 0;
 const MAX_TERRITORY_ROADS = 6;
 
 export function nextFranchiseRoadToBuild(office: string, source: Id<Source>) {
   return plannedFranchiseRoads(office, source).find(
-    r => !r.structure && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
+    r => !r.survey() && r.lastSurveyed && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
   );
 }
 
 export function plannedFranchiseRoads(office: string, source: Id<Source>) {
+  const key = office + source;
+  const structures =
+    cachedPlans.get(key) ??
+    franchisePath(office, source)
+      .filter(p => p.x !== 0 && p.x !== 49 && p.y !== 0 && p.y !== 49)
+      .map(p => new PlannedStructure(p, STRUCTURE_ROAD));
+  if (structures.length) cachedPlans.set(key, structures);
+  return structures;
+}
+
+export function franchisePath(office: string, source: Id<Source>) {
   const pos = posById(source);
   if (!pos) return [];
 
   const { path } = Memory.rooms[pos.roomName]?.franchises[office]?.[source] ?? {};
   if (!path) return [];
 
-  const structures = cachedPlans.get(path) ?? deserializePlannedStructures(path);
-  cachedPlans.set(path, structures);
-  return structures;
-}
-
-export function franchisePath(office: string, source: Id<Source>) {
-  return plannedFranchiseRoads(office, source).map(s => s.pos);
+  const unpackedPath = cachedPaths.get(path) ?? unpackPosList(path);
+  cachedPaths.set(path, unpackedPath);
+  return unpackedPath;
 }
 
 export const plannedFranchiseRoadsCost = memoizeByTick(

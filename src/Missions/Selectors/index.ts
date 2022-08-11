@@ -1,6 +1,7 @@
-import { MissionTypes } from "Missions/Implementations";
-import { Mission, MissionStatus, MissionType } from "Missions/Mission";
-import { roomPlans } from "Selectors/roomPlans";
+import { MissionTypes } from 'Missions/Implementations';
+import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
+import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';
+import { roomPlans } from 'Selectors/roomPlans';
 
 export function activeMissions(office: string) {
   return Memory.offices[office]?.activeMissions ?? [];
@@ -15,11 +16,11 @@ export function submitMission(office: string, mission: Mission<MissionType>) {
 }
 
 export function pendingAndActiveMissions(office: string) {
-  return [...activeMissions(office), ...pendingMissions(office)]
+  return [...activeMissions(office), ...pendingMissions(office)];
 }
 
 export function isMission<T extends MissionType>(missionType: T) {
-  return (mission: Mission<any>): mission is MissionTypes[T] => mission.type === missionType
+  return (mission: Mission<any>): mission is MissionTypes[T] => mission.type === missionType;
 }
 
 export function and<T>(...conditions: ((t: T) => boolean)[]) {
@@ -31,14 +32,14 @@ export function or<T>(...conditions: ((t: T) => boolean)[]) {
 }
 
 export function not<T>(condition: (t: T) => boolean) {
-  return (t: T) => !condition(t)
+  return (t: T) => !condition(t);
 }
 
 export function isStatus(status: MissionStatus) {
   return (mission: Mission<MissionType>) => mission.status === status;
 }
 
-export function assignedCreep(mission: Mission<MissionType>): Creep|undefined {
+export function assignedCreep(mission: Mission<MissionType>): Creep | undefined {
   return Game.creeps[mission.creepNames[0] ?? ''];
 }
 
@@ -46,7 +47,7 @@ export function estimateMissionInterval(office: string) {
   if (roomPlans(office)?.headquarters?.storage.structure) {
     return CREEP_LIFE_TIME;
   } else {
-    return CREEP_LIFE_TIME / 5; // This worked best in my tests to balance income with expenses
+    return furthestActiveFranchiseRoundTripDistance(office) * 1.2; // This worked best in my tests to balance income with expenses
   }
 }
 
@@ -61,7 +62,7 @@ export function deletePendingMission(office: string, mission: Mission<MissionTyp
  */
 export function missionExpired(mission: Mission<MissionType>) {
   const ttl = assignedCreep(mission)?.ticksToLive;
-  if (!ttl) return mission.status === MissionStatus.RUNNING // creep should be alive, but isn't
+  if (!ttl) return mission.status === MissionStatus.RUNNING; // creep should be alive, but isn't
   if (!mission.data.arrived) return false;
   return ttl <= mission.data.arrived;
 }

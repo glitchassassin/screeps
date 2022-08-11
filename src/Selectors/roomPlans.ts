@@ -95,6 +95,8 @@ export const getFranchisePlanBySourceId = memoizeByTick(
     const pos = posById(id);
     if (!pos) return;
     const plan = roomPlans(pos.roomName);
+    plan?.franchise1?.container.survey();
+    plan?.franchise2?.container.survey();
     if (plan?.franchise1?.sourceId === id) return plan.franchise1;
     if (plan?.franchise2?.sourceId === id) return plan.franchise2;
     return;

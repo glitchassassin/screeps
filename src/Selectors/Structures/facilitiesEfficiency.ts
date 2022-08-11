@@ -1,6 +1,6 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
-import { franchisesThatNeedRoadWork } from 'Selectors/franchisesThatNeedRoadWork';
-import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
+import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
+import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';

@@ -1,6 +1,5 @@
+import { nextFranchiseRoadToBuild } from '../plannedTerritoryRoads';
 import { franchisesByOffice } from './franchisesByOffice';
-import { plannedFranchiseRoads } from './plannedTerritoryRoads';
-import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
 
 export function franchisesThatNeedRoadWork(office: string) {
   return franchisesByOffice(office)
@@ -8,9 +7,7 @@ export function franchisesThatNeedRoadWork(office: string) {
       return (
         remote &&
         (Memory.rooms[room]?.franchises?.[office]?.[source]?.lastHarvested ?? 0) + 1500 > Game.time &&
-        plannedFranchiseRoads(office, source).some(
-          r => !r.structure && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
-        )
+        nextFranchiseRoadToBuild(office, source)
       );
     })
     .map(({ source }) => source);

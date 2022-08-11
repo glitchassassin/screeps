@@ -59,7 +59,7 @@ export const MinionBuilders = {
     (energy: number, maxSegments = 25, roads = false, repair = false) =>
       `${Math.round((energy * 2) / 100)} ${maxSegments} ${roads}`,
     (energy: number, maxSegments = 25, roads = false, repair = false) => {
-      const suffix = repair ? [WORK] : [];
+      const suffix = repair ? (roads ? [WORK, CARRY, MOVE] : [WORK, MOVE]) : [];
       if (energy < 200 || maxSegments === 0) {
         return [];
       } else if (energy <= 300) {
@@ -134,20 +134,22 @@ export const MinionBuilders = {
       );
     }
   },
-  [MinionTypes.SALESMAN]: (energy: number, carry = false) => {
+  [MinionTypes.SALESMAN]: (energy: number, link = false, remote = false) => {
     if (energy < 200) {
       return [];
     } else if (energy < 550) {
-      return carry ? [WORK, WORK, CARRY, MOVE] : [WORK, WORK, MOVE];
-    } else if (energy < 600 && carry) {
-      return [WORK, WORK, WORK, CARRY, MOVE];
-    } else if (energy < 650) {
-      return carry ? [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE] : [WORK, WORK, WORK, WORK, WORK, MOVE];
-    } else if (energy < 5300) {
-      return [WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
+      return [WORK, WORK, MOVE];
+    } else if (energy === 550) {
+      return link ? [WORK, WORK, WORK, CARRY, MOVE] : [WORK, WORK, WORK, WORK, WORK, MOVE];
+    }
+
+    if (remote) {
+      return buildFromSegment(energy, [WORK, WORK, WORK, MOVE], { maxSegments: 2, suffix: [CARRY] });
     } else {
-      // At higher RCL, use bigger harvesters to reduce CPU
-      return [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE];
+      return buildFromSegment(energy, [WORK, WORK, WORK, WORK, WORK, MOVE], {
+        maxSegments: 1,
+        suffix: link ? [CARRY] : []
+      });
     }
   },
   [MinionTypes.BLINKY]: (energy: number) => {

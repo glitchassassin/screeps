@@ -68,6 +68,10 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
  */
 export const REPAIR_THRESHOLD = 0.5;
 
+export const FRANCHISE_RETRY_INTERVAL = 100000;
+
+export const FRANCHISE_EVALUATE_PERIOD = 10;
+
 export const WHITELIST = FEATURES.WHITELIST ? ['CrAzYDubC', 'thmsn', 'Joboe'] : [];
 
 export const CACHED_STRUCTURES: StructureConstant[] = [STRUCTURE_CONTAINER];

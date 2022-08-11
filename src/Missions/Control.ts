@@ -134,7 +134,6 @@ function allocateMissions() {
         missionEnergyAvailable(office)
       )
     );
-    if (office === 'W8N3') console.log(office, 'cpu', remainingCpu, 'energy', remainingEnergy);
     const priorities = [...new Set(Memory.offices[office].pendingMissions.map(o => o.priority))].sort((a, b) => b - a);
 
     // loop through priorities, highest to lowest

@@ -1,8 +1,8 @@
 import { EngineerMission } from 'Missions/Implementations/Engineer';
 import { assignedCreep } from 'Missions/Selectors';
+import { adjustedPlannedFranchiseRoadsCost } from '../plannedTerritoryRoads';
+import { rcl } from '../rcl';
 import { franchisesThatNeedRoadWork } from './franchisesThatNeedRoadWork';
-import { adjustedPlannedFranchiseRoadsCost } from './plannedTerritoryRoads';
-import { rcl } from './rcl';
 
 export const franchiseThatNeedsEngineers = (office: string, missions: EngineerMission[], includeFull = false) => {
   if (rcl(office) < 3) return undefined;
@@ -11,7 +11,8 @@ export const franchiseThatNeedsEngineers = (office: string, missions: EngineerMi
 
   const assignedCapacity = missions.reduce((sum, m) => {
     if (m.data.franchise)
-      sum[m.data.franchise] = (sum[m.data.franchise] ?? 0) + m.data.workParts * (assignedCreep(m)?.ticksToLive ?? 0);
+      sum[m.data.franchise] =
+        (sum[m.data.franchise] ?? 0) + m.data.workParts * (assignedCreep(m)?.ticksToLive ?? CREEP_LIFE_TIME);
     return sum;
   }, <Record<Id<Source>, number>>{});
 

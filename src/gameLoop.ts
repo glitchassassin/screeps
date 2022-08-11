@@ -1,4 +1,5 @@
 import { scanRooms } from 'Intel/Rooms';
+import { reportLogisticsLedger } from 'Ledger/LogisticsLedger';
 import { recordMetrics } from 'Metrics/recordMetrics';
 import { spawnFromQueues } from 'Minions/spawnQueues';
 import { runMissionControl } from 'Missions/Control';
@@ -47,5 +48,6 @@ export const gameLoop = () => {
 
   recordOverhead();
 
-  // planLibrary('W2N8');
+  // if (Game.time % 100 === 0) reportAccuracyLedger();
+  if (Game.time % 100 === 0) reportLogisticsLedger();
 };

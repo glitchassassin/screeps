@@ -1,9 +1,9 @@
 import { MissionStatus, MissionType } from 'Missions/Mission';
 import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
 import { Metrics } from 'screeps-viz';
-import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
-import { franchiseIncome } from 'Selectors/franchiseIncome';
-import { franchisesByOffice } from 'Selectors/franchisesByOffice';
+import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
+import { franchiseIncome } from 'Selectors/Franchises/franchiseIncome';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getActualEnergyAvailable } from 'Selectors/getActualEnergyAvailable';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';

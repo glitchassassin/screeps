@@ -1,15 +1,18 @@
-import { plannedStructuresByRcl } from "Selectors/plannedStructuresByRcl";
+import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
+import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 
 let scanned: Record<string, number> = {};
 
-export const scanRoomPlanStructures = (room: string) => {
-    const structures = Game.rooms[room]?.find(FIND_STRUCTURES).length;
-    const rcl = Game.rooms[room]?.controller?.level ?? 0;
-    if (Game.rooms[room] && (scanned[room] !== structures || Game.time % 50 === 0)) {
-        scanned[room] = structures;
-        for (let s of plannedStructuresByRcl(room, 8)) {
-            s.survey();
-        }
+export const scanRoomPlanStructures = (office: string) => {
+  const structures = Game.rooms[office]?.find(FIND_STRUCTURES).length;
+  const rcl = Game.rooms[office]?.controller?.level ?? 0;
+  if (Game.rooms[office] && (scanned[office] !== structures || Game.time % 50 === 0)) {
+    scanned[office] = structures;
+    for (let s of plannedStructuresByRcl(office, 8)) {
+      s.survey();
     }
-
-}
+    for (let s of plannedTerritoryRoads(office)) {
+      s.survey();
+    }
+  }
+};

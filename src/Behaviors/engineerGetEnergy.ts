@@ -1,6 +1,6 @@
 import { byId } from 'Selectors/byId';
-import { franchiseIsFull } from 'Selectors/franchiseIsFull';
-import { franchisesByOffice } from 'Selectors/franchisesByOffice';
+import { franchiseIsFull } from 'Selectors/Franchises/franchiseIsFull';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { posById } from 'Selectors/posById';
@@ -8,7 +8,6 @@ import { roomPlans } from 'Selectors/roomPlans';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
-import { getEnergyFromFranchise } from './getEnergyFromFranchise';
 import { getEnergyFromRuin } from './getEnergyFromRuin';
 import { getEnergyFromSource } from './getEnergyFromSource';
 import { getEnergyFromStorage } from './getEnergyFromStorage';
@@ -49,6 +48,8 @@ const energySourcesByOffice = memoizeByTick(
     const storage = [] as AnyStoreStructure[];
     if (roomPlans(office)?.headquarters?.storage.structure)
       storage.push(roomPlans(office)!.headquarters!.storage.structure as AnyStoreStructure);
+    if (roomPlans(office)?.library?.container.structure)
+      storage.push(roomPlans(office)!.library!.container.structure as AnyStoreStructure);
     if (!storage.length)
       roomPlans(office)
         ?.fastfiller?.containers.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
@@ -96,12 +97,6 @@ export const engineerGetEnergy = profiler.registerFN(
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_STORAGE) {
       let result = getEnergyFromStorage(creep, office, withdrawLimit);
-      if (result !== BehaviorResult.INPROGRESS) {
-        delete creep.memory.getEnergyState;
-      }
-    }
-    if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {
-      let result = getEnergyFromFranchise(creep);
       if (result !== BehaviorResult.INPROGRESS) {
         delete creep.memory.getEnergyState;
       }

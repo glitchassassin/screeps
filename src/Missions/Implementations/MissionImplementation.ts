@@ -12,6 +12,7 @@ export abstract class MissionImplementation {
     if (!spawnOrder && !creep) {
       // creep is dead
       mission.status = MissionStatus.DONE;
+      this.onEnd(mission);
       return;
     }
     if (!creep || creep.spawning) return; // wait for creep
@@ -40,6 +41,12 @@ export abstract class MissionImplementation {
    * Runs once when the mission starts
    */
   static onStart(mission: Mission<MissionType>, creep: Creep) {
+    // default implementation does nothing
+  }
+  /**
+   * Runs once when the creep dies
+   */
+  static onEnd(mission: Mission<MissionType>) {
     // default implementation does nothing
   }
 }

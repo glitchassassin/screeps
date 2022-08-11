@@ -1,18 +1,22 @@
 import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { HarvestMission } from 'Missions/Implementations/Harvest';
-import { MissionType } from 'Missions/Mission';
+import { MissionStatus, MissionType } from 'Missions/Mission';
+import { isMission, isStatus } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { byId } from 'Selectors/byId';
-import { franchiseActive } from 'Selectors/franchiseActive';
-import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
-import { franchisesByOffice } from 'Selectors/franchisesByOffice';
+import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
+import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { posById } from 'Selectors/posById';
 
 export default () => {
   for (const office in Memory.offices) {
+    let actualLogisticsCapacity = 0;
     const activeMissionsBySource = Memory.offices[office]?.activeMissions.reduce((obj, mission) => {
-      if (mission.type !== MissionType.HARVEST) return obj;
+      if (isMission(MissionType.LOGISTICS)(mission) && isStatus(MissionStatus.RUNNING))
+        actualLogisticsCapacity += mission.data.capacity;
+      if (mission.type !== MissionType.HARVEST || !isStatus(MissionStatus.RUNNING)(mission)) return obj;
       obj[mission.data.source] ??= [];
       obj[mission.data.source].push(mission as HarvestMission);
       return obj;
@@ -21,11 +25,13 @@ export default () => {
     const totals = {
       harvested: 0,
       hauling: 0,
-      value: 0
+      value: 0,
+      capacity: 0
     };
 
     const data = franchisesByOffice(office).map(franchise => {
       let sourcePos = posById(franchise.source);
+      Game.map.visual.text(franchiseEnergyAvailable(franchise.source).toFixed(0), sourcePos!, { fontSize: 5 });
       let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
       let estimatedCapacity =
         activeMissionsBySource[franchise.source]
@@ -35,6 +41,9 @@ export default () => {
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 
+      const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source];
+      const perTickAverage = scores.reduce((a, b) => a + b, 0) / scores.length;
+
       const assignedLogistics = assignedLogisticsCapacity(office).withdrawAssignments.get(franchise.source) ?? 0;
 
       const harvested = franchiseEnergyAvailable(franchise.source);
@@ -42,6 +51,7 @@ export default () => {
       totals.harvested += harvested;
       totals.hauling += hauling;
       totals.value += perTick;
+      totals.capacity += estimatedCapacity;
 
       return [
         `${office}:${sourcePos}${disabled ? '' : ' ✓'}`,
@@ -50,11 +60,19 @@ export default () => {
         byId(franchise.source)?.energy.toFixed(0) ?? '--',
         harvested.toFixed(0),
         hauling.toFixed(0),
-        `${perTick.toFixed(2)}${isValid ? '' : '?'}`
+        `${perTick.toFixed(2)}${isValid ? '' : '?'} (${perTickAverage.toFixed(2)})`
       ];
     });
     data.push(['--', '--', '--', '--', '--', '--', '--']);
-    data.push(['', '', '', '', totals.harvested.toFixed(0), totals.hauling.toFixed(0), totals.value.toFixed(0)]);
+    data.push([
+      '',
+      '',
+      `${totals.capacity.toFixed(0)}/${actualLogisticsCapacity.toFixed(0)}`,
+      '',
+      totals.harvested.toFixed(0),
+      totals.hauling.toFixed(0),
+      totals.value.toFixed(0)
+    ]);
 
     Dashboard({
       widgets: [

@@ -4,23 +4,21 @@ import { moveTo } from 'Behaviors/moveTo';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
-import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, estimateMissionInterval, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
-import { franchisesThatNeedRoadWork } from 'Selectors/franchisesThatNeedRoadWork';
-import { franchiseThatNeedsEngineers } from 'Selectors/franchiseThatNeedsEngineers';
-import { creepCostPerTick, minionCost } from 'Selectors/minionCostPerTick';
+import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
+import { franchiseThatNeedsEngineers } from 'Selectors/Franchises/franchiseThatNeedsEngineers';
+import { minionCost } from 'Selectors/minionCostPerTick';
 import { nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { facilitiesEfficiency } from 'Selectors/Structures/facilitiesEfficiency';
 import { facilitiesWorkToDo, plannedStructureNeedsWork } from 'Selectors/Structures/facilitiesWorkToDo';
-import { viz } from 'Selectors/viz';
 import { MissionImplementation } from './MissionImplementation';
 
 interface EngineerMissionData {
@@ -162,12 +160,6 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
 
         if (!plannedStructureNeedsWork(plan, true)) return States.FIND_WORK;
 
-        viz(plan.pos.roomName).line(creep.pos, plan.pos, { color: 'cyan' });
-
-        if (mission.data.franchise) {
-          HarvestLedger.record(mission.office, mission.data.franchise, creep.name + ' spawn', -creepCostPerTick(creep));
-        }
-
         if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
           const obstacle = plan.pos
             .lookFor(LOOK_STRUCTURES)
@@ -181,14 +173,15 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         }
 
         if (moveTo(creep, { pos: plan.pos, range: 3 }) === BehaviorResult.SUCCESS) {
-          if (plan.structure) {
+          if (plan.structure && plan.structure.hits < plan.structure.hitsMax) {
+            if (mission.data.franchise) {
+              // engineers should not be repairing
+              return States.FIND_WORK;
+            }
             if (creep.repair(plan.structure) === OK) {
               const cost = REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
-              mission.actual.energy += REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
+              mission.actual.energy += cost;
               mission.efficiency.working += 1;
-              if (mission.data.franchise) {
-                HarvestLedger.record(mission.office, mission.data.franchise, creep.name + ' repair', -cost);
-              }
             }
           } else {
             // Create construction site if needed
@@ -210,9 +203,6 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
                 const cost = BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
                 mission.actual.energy += cost;
                 mission.efficiency.working += 1;
-                if (mission.data.franchise) {
-                  HarvestLedger.record(mission.office, mission.data.franchise, creep.name + ' build', -cost);
-                }
               } else if (result === ERR_NOT_ENOUGH_ENERGY) {
                 return States.GET_ENERGY;
               }
@@ -239,6 +229,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
             UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER * creep.body.filter(p => p.type === WORK).length;
           mission.efficiency.working += 1;
         }
+        if (Game.time % 10 === 0) return States.FIND_WORK;
         return States.UPGRADING;
       }
     },

@@ -1,5 +1,6 @@
+import { States } from 'Behaviors/states';
 import { MissionType } from 'Missions/Mission';
-import { activeMissions, and, assignedCreep, isMission } from 'Missions/Selectors';
+import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { roomPlans } from './roomPlans';
 import { getExtensions } from './spawnsAndExtensionsDemand';
 
@@ -23,8 +24,9 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
   const library = roomPlans(office)?.library;
   const labs = roomPlans(office)?.labs;
   const engineers = activeMissions(office)
-    .filter(and(isMission(MissionType.ENGINEER), m => !!m.data.franchise))
-    .map(m => assignedCreep(m));
+    .filter(isMission(MissionType.ENGINEER))
+    .map(m => assignedCreep(m))
+    .filter(c => c && !c.spawning && c.memory.runState !== States.UPGRADING) as Creep[];
   const structures = ([] as [number, AnyStoreStructure | Creep][])
     .concat(
       fastfiller?.containers.map(s => [10, s.structure as AnyStoreStructure]) ?? [],
@@ -32,7 +34,7 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
       getExtensions(office, false).map(s => [8, s.structure as AnyStoreStructure]),
       backfill?.towers.map(s => [7, s.structure as AnyStoreStructure]) ?? [],
       labs?.labs.map(s => [6, s.structure as AnyStoreStructure]) ?? [],
-      // engineers.filter((e): e is Creep => !!e).map(e => [5, e]),
+      engineers.map(e => [5, e]),
       [[4, library?.container.structure as AnyStoreStructure]],
       [[1, hq?.storage.structure as AnyStoreStructure]]
     )

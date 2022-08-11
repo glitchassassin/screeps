@@ -1,5 +1,5 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
-import { terrainCosts } from 'Selectors/Map/MapCoordinates';
+import { getRangeTo, terrainCosts } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
 import { viz } from 'Selectors/viz';
@@ -76,6 +76,12 @@ export class Route {
   }
 
   calculatePath(creep: Creep, positionsInRange: MoveTarget[], avoidCreeps = false) {
+    if (this.opts?.followPath && positionsInRange.some(({ pos }) => creep.pos.isEqualTo(pos))) {
+      // we are on the path, now follow it
+      this.path = positionsInRange.map(({ pos }) => pos);
+      this.lastPos = creep.pos;
+      return;
+    }
     let route = PathFinder.search(creep.pos, positionsInRange, {
       roomCallback: room => {
         if (!this.rooms?.includes(room)) return false;
@@ -99,11 +105,17 @@ export class Route {
   pathComplete(creep: Creep) {
     if (this.opts?.flee) {
       return !this.targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range);
+    } else if (this.opts?.followPath) {
+      return this.targets[this.targets.length - 1].pos.inRangeTo(
+        creep.pos,
+        this.targets[this.targets.length - 1].range
+      );
     }
     return this.targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range);
   }
 
   run(creep: Creep) {
+    if (this.opts?.followPath) this.visualize();
     if (this.pathComplete(creep)) return OK;
 
     if (creep.pos.roomName === this.pathRoom) {
@@ -171,6 +183,7 @@ interface MoveToOpts extends globalThis.MoveToOpts {
   ignoreFastfiller?: boolean;
   ignoreHQLogistics?: boolean;
   ignoreFranchises?: boolean;
+  followPath?: boolean;
 }
 
 export function moveTo(
@@ -201,9 +214,19 @@ export function moveTo(
 
   // If the creep is in range of a move target, it does not need to move
   // If target has exactly one target, it is there, and it has range 0, then it does "need to move" to avoid being shoved
+  // if following path, and creep is not at the end, creep needs to move
+
   const needsToMove = opts?.flee
-    ? targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range)
-    : !targets.some(target => creep.pos.getRangeTo(target.pos) <= target.range);
+    ? targets.some(
+        target => creep.pos.roomName === target.pos.roomName && getRangeTo(creep.pos, target.pos) <= target.range
+      )
+    : opts?.followPath
+    ? creep.pos.roomName !== targets[targets.length - 1].pos.roomName ||
+      getRangeTo(creep.pos, targets[targets.length - 1].pos) > targets[targets.length - 1].range
+    : !targets.some(
+        target => creep.pos.roomName === target.pos.roomName && getRangeTo(creep.pos, target.pos) <= target.range
+      );
+
   if (!targets) return BehaviorResult.FAILURE;
 
   if (creep.pos.x === 0) {

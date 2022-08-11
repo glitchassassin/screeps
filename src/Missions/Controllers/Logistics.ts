@@ -11,7 +11,7 @@ import {
   pendingMissions,
   submitMission
 } from 'Missions/Selectors';
-import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
+import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { getFranchisePlanBySourceId, roomPlans } from 'Selectors/roomPlans';
@@ -62,7 +62,7 @@ export default {
         const reserved = Game.rooms[room ?? '']?.controller?.reservation?.username === 'LordGreywether';
         const canReserve = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable).length > 0;
         const harvestRate =
-          !remote || canReserve
+          !remote || reserved
             ? SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME
             : SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
         const capacity = mission.data.distance * 2 * Math.min(harvestRate, mission.data.harvestRate);
@@ -82,8 +82,10 @@ export default {
 
     // If we have some logistics minions, wait to spawn another
     // until demand is at least half the capacity of a hauler
-    const carrierCapacity = (spawnEnergyAvailable(office) / 2 / BODYPART_COST[CARRY]) * CARRY_CAPACITY;
-    if (actualCapacity) actualCapacity += carrierCapacity / 2;
+    // const carrierCapacity = (spawnEnergyAvailable(office) / 2 / BODYPART_COST[CARRY]) * CARRY_CAPACITY;
+    // if (actualCapacity) actualCapacity += carrierCapacity / 2;
+
+    // actualCapacity *= 0.5; // allow for inefficiencies
 
     const inRoomPendingMissions = [];
     const remotePendingMissions = [];

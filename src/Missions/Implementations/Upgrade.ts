@@ -76,6 +76,7 @@ export class Upgrade extends MissionImplementation {
             moveTo(creep, { pos: link.pos, range: 1 });
             if (creep.withdraw(link, RESOURCE_ENERGY) === OK) {
               link.store[RESOURCE_ENERGY] = Math.max(0, link.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity());
+              return States.WORKING;
             }
           } else if (container) {
             moveTo(creep, { pos: container.pos, range: 1 });
@@ -84,6 +85,7 @@ export class Upgrade extends MissionImplementation {
                 0,
                 container.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity()
               );
+              return States.WORKING;
             }
           } else {
             if (getEnergyFromStorage(creep, mission.office) === BehaviorResult.SUCCESS) {
@@ -93,7 +95,6 @@ export class Upgrade extends MissionImplementation {
           return States.GET_ENERGY;
         },
         [States.WORKING]: (mission, creep) => {
-          if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.GET_ENERGY;
           const controller = Game.rooms[mission.office]?.controller;
           if (!controller) throw new Error(`No controller for upgrader ${creep.name} (${creep.pos})`);
           // Move out of the way of other upgraders if needed
@@ -108,6 +109,8 @@ export class Upgrade extends MissionImplementation {
             mission.actual.energy += energyUsed;
             mission.efficiency.working += 1;
             if (creep.store[RESOURCE_ENERGY] <= energyUsed) return States.GET_ENERGY;
+          } else if (result === ERR_NOT_ENOUGH_ENERGY) {
+            return States.GET_ENERGY;
           }
 
           return States.WORKING;

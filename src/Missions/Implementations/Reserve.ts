@@ -88,7 +88,7 @@ export class Reserve extends MissionImplementation {
       // Record cost
       const sources = sourceIds(room);
       sources.forEach(s =>
-        HarvestLedger.record(mission.office, s, creep.name + ' spawn', -creepCost(creep) / sources.length)
+        HarvestLedger.record(mission.office, s, 'spawn_reserve', -creepCost(creep) / sources.length)
       );
       mission.data.reserveTarget = room;
     }

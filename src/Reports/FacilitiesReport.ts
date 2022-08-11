@@ -3,7 +3,7 @@ import { MissionType } from 'Missions/Mission';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { franchisesThatNeedRoadWork } from 'Selectors/franchisesThatNeedRoadWork';
+import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { facilitiesCostPending, facilitiesWorkToDo } from 'Selectors/Structures/facilitiesWorkToDo';
 import { viz } from 'Selectors/viz';
 

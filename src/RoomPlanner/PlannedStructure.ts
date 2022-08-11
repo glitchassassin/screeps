@@ -33,11 +33,11 @@ let plannedStructures: Record<string, PlannedStructure> = {};
 let deserializedPlannedStructures = new Map<string, PlannedStructure>();
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
-  private lastSurveyed = 0;
+  public lastSurveyed = 0;
   private lastGet = 0;
   private _structure: Structure<T> | undefined = undefined;
   constructor(public pos: RoomPosition, public structureType: T, public structureId?: Id<Structure<T>>) {
-    const key = packPos(pos) + structureType;
+    const key = PackedStructureTypes[structureType] + packPos(pos);
     if (plannedStructures[key]) {
       return plannedStructures[key] as PlannedStructure<T>;
     } else {
@@ -47,6 +47,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
 
   get structure() {
     if (Game.time !== this.lastGet) {
+      this.survey();
       this._structure = byId(this.structureId);
       this.lastGet = Game.time;
     }
@@ -64,14 +65,14 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
   }
   static deserialize(serialized: string) {
     try {
-      const existing = deserializedPlannedStructures.get(serialized.slice(0, 3));
+      const existing = plannedStructures[serialized.slice(0, 3)];
       if (existing) return existing;
 
       let structureType = PackedStructureTypesLookup[serialized.slice(0, 1)];
       let pos = unpackPos(serialized.slice(1, 3));
 
       const result = new PlannedStructure(pos, structureType);
-      deserializedPlannedStructures.set(serialized.slice(0, 3), result);
+      plannedStructures[serialized.slice(0, 3)] = result;
       return result;
     } catch (e) {
       console.log('Deserializing error', serialized);
@@ -80,6 +81,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
   }
   survey() {
     if (Game.time === this.lastSurveyed) return !!byId(this.structureId); // Only survey once per tick
+    this.lastSurveyed = Game.time;
     if (Game.rooms[this.pos.roomName]) {
       if (byId(this.structureId)) {
         return true; // Actual structure is visible

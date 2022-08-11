@@ -1,8 +1,8 @@
 import { MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
+import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { franchiseEnergyAvailable } from './franchiseEnergyAvailable';
-import { franchisesByOffice } from './franchisesByOffice';
 import { getPrimarySpawn } from './getPrimarySpawn';
 import { roomPlans } from './roomPlans';
 
@@ -16,6 +16,20 @@ export const storageEnergyAvailable = (roomName: string) => {
       0
     ) ?? 0) +
     (getPrimarySpawn(roomName)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0)
+  );
+};
+
+export const fastfillerIsFull = (roomName: string) => {
+  const plan = roomPlans(roomName)?.fastfiller;
+  if (!plan) return true;
+  return (
+    plan.containers.every(
+      c => !c.structure || (c.structure as StructureContainer).store.getFreeCapacity(RESOURCE_ENERGY) === 0
+    ) &&
+    plan.extensions.every(
+      c => !c.structure || (c.structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY) === 0
+    ) &&
+    plan.spawns.every(c => !c.structure || (c.structure as StructureSpawn).store.getFreeCapacity(RESOURCE_ENERGY) === 0)
   );
 };
 

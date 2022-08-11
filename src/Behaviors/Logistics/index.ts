@@ -1,9 +1,9 @@
 import { States } from 'Behaviors/states';
 import { MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
-import { franchiseEnergyAvailable } from 'Selectors/franchiseEnergyAvailable';
-import { franchisesByOffice } from 'Selectors/franchisesByOffice';
-import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
+import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
+import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { memoizeByTick } from 'utils/memoizeFunction';
@@ -33,8 +33,6 @@ export const assignedLogisticsCapacity = memoizeByTick(
           mission.data.withdrawTarget as Id<Source>,
           (withdrawAssignments.get(mission.data.withdrawTarget as Id<Source>) ?? 0) + mission.data.capacity
         );
-      } else if (mission.data.withdrawTarget === '1e1b077481ac2b2') {
-        console.log(assignedCreep(mission)?.memory.runState);
       }
       if (
         assignedCreep(mission)?.memory.runState === States.DEPOSIT &&
@@ -59,7 +57,6 @@ export const assignedLogisticsCapacity = memoizeByTick(
 
 export function findBestDepositTarget(office: string, creep: Creep, ignoreStorage = false) {
   const { depositAssignments } = assignedLogisticsCapacity(office);
-  const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.5;
   let bestTarget = undefined;
   let bestAmount = -Infinity;
   let bestPriority = 0;
@@ -69,7 +66,6 @@ export function findBestDepositTarget(office: string, creep: Creep, ignoreStorag
     if (target instanceof StructureStorage && ignoreStorage) continue;
     const amount = (target.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) - capacity;
     const distance = getRangeTo(creep.pos, target.pos);
-    if (distance > maxDistance) continue; // too far for this creep to survive
     if (
       priority > bestPriority ||
       (priority === bestPriority &&
@@ -96,17 +92,21 @@ export function findBestWithdrawTarget(office: string, creep: Creep) {
   let bestTarget = undefined;
   let bestCreepAmount = 0;
   let bestTotalAmount = 0;
+  let bestDistance = Infinity;
   for (const [source, capacity] of withdrawAssignments) {
     // total stockpile at the source
     const totalAmount = franchiseEnergyAvailable(source);
     // total this creep can get (after reservations)
     const creepAmount = Math.min(totalAmount - capacity, creep.store.getFreeCapacity(RESOURCE_ENERGY));
+    if (creepAmount === 0) continue;
+
     const distance = getFranchiseDistance(office, source) ?? Infinity;
     if (distance * 2 > maxDistance) continue; // too far for this creep to survive
-    if (creepAmount > bestCreepAmount || (creepAmount === bestCreepAmount && totalAmount > bestTotalAmount)) {
+    if (creepAmount > bestCreepAmount || (creepAmount === bestCreepAmount && distance < bestDistance)) {
       bestTarget = source;
       bestCreepAmount = creepAmount;
       bestTotalAmount = totalAmount;
+      bestDistance = distance;
     }
   }
   return bestTarget;

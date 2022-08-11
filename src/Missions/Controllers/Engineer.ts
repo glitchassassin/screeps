@@ -1,8 +1,16 @@
 import { createEngineerMission } from 'Missions/Implementations/Engineer';
 import { MissionType } from 'Missions/Mission';
-import { and, isMission, not, pendingAndActiveMissions, pendingMissions, submitMission } from 'Missions/Selectors';
-import { franchisesThatNeedRoadWork } from 'Selectors/franchisesThatNeedRoadWork';
-import { franchiseThatNeedsEngineers } from 'Selectors/franchiseThatNeedsEngineers';
+import {
+  activeMissions,
+  and,
+  isMission,
+  not,
+  pendingAndActiveMissions,
+  pendingMissions,
+  submitMission
+} from 'Missions/Selectors';
+import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
+import { franchiseThatNeedsEngineers } from 'Selectors/Franchises/franchiseThatNeedsEngineers';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { rcl } from 'Selectors/rcl';
 import { facilitiesCostPending } from 'Selectors/Structures/facilitiesWorkToDo';
@@ -10,12 +18,14 @@ import { facilitiesCostPending } from 'Selectors/Structures/facilitiesWorkToDo';
 export default {
   byTick: () => {},
   byOffice: (office: string) => {
-    const queuedMissions = pendingAndActiveMissions(office).filter(isMission(MissionType.ENGINEER));
+    const pending = pendingMissions(office).filter(isMission(MissionType.ENGINEER));
+    const active = activeMissions(office).filter(isMission(MissionType.ENGINEER));
+    const queuedRegularMissions = [...pending, ...active].filter(m => !m.data.franchise);
 
     // if (queuedMissions.some(isStatus(MissionStatus.PENDING))) return; // Only one pending Engineer mission at a time
 
     // Calculate effective work for active missions
-    const workPending = queuedMissions
+    const workPending = queuedRegularMissions
       .filter(m => !m.data.franchise)
       .reduce((sum, m) => sum + m.data.workParts * CREEP_LIFE_TIME, 0);
     let pendingCost = facilitiesCostPending(office);
@@ -39,6 +49,7 @@ export default {
 
     if (hasEnergyIncome(office) && pendingCost > workPending) {
       submitMission(office, createEngineerMission(office));
+      return;
     }
 
     if (franchises.length === 0) {
@@ -46,14 +57,15 @@ export default {
       Memory.offices[office].pendingMissions = pendingMissions(office).filter(
         not(and(isMission(MissionType.ENGINEER), mission => !!mission.data.franchise))
       );
+      return;
     }
 
-    if (hasEnergyIncome(office) && pendingCost === 0 && queuedMissions.length < franchises.length) {
+    if (rcl(office) >= 3 && hasEnergyIncome(office) && pending.filter(m => m.data.franchise).length < 2) {
       const nextFranchise = franchiseThatNeedsEngineers(
         office,
         pendingAndActiveMissions(office).filter(isMission(MissionType.ENGINEER))
       );
-      submitMission(office, createEngineerMission(office, nextFranchise));
+      if (nextFranchise) submitMission(office, createEngineerMission(office, nextFranchise));
     }
   }
 };

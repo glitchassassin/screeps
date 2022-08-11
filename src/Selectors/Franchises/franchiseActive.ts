@@ -1,6 +1,7 @@
 import { memoizeByTick } from 'utils/memoizeFunction';
+import { posById } from '../posById';
 import { franchisesByOffice } from './franchisesByOffice';
-import { posById } from './posById';
+import { getFranchiseDistance } from './getFranchiseDistance';
 
 export const franchiseActive = (office: string, source: Id<Source>) => {
   const room = posById(source)?.roomName ?? '';
@@ -14,11 +15,9 @@ export const activeFranchises = (office: string) =>
 export const furthestActiveFranchiseRoundTripDistance = memoizeByTick(
   office => office,
   (office: string) => {
-    let distance = 10; // default estimate
-    for (const franchise of activeFranchises(office)) {
-      const newDistance = Memory.rooms[franchise.room].franchises[office][franchise.source].path.length / 27;
-      if (newDistance > distance) distance = newDistance;
-    }
-    return distance * 2;
+    return (
+      Math.max(10, ...activeFranchises(office).map(franchise => getFranchiseDistance(office, franchise.source) ?? 0)) *
+      2
+    );
   }
 );

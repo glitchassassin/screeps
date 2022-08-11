@@ -8,10 +8,11 @@ export const getEnergyFromStorage = profiler.registerFN(
   (creep: Creep, office: string, limit?: number, ignoreSpawn = false): BehaviorResult => {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) return BehaviorResult.SUCCESS;
 
-    const hq = roomPlans(office)?.headquarters;
-    const storage = hq?.storage.structure as StructureStorage | undefined;
+    const { headquarters, library } = roomPlans(office) ?? {};
+    const storage = headquarters?.storage.structure as StructureStorage | undefined;
     const containers =
       roomPlans(office)?.fastfiller?.containers.map(c => c.structure as StructureContainer | undefined) ?? [];
+    if (library?.container.structure) containers.unshift(library.container.structure as StructureContainer);
     const container =
       containers.find(c => c?.store[RESOURCE_ENERGY]) ?? (containers[0] as StructureContainer | undefined);
     const spawn = getPrimarySpawn(office) as StructureSpawn | undefined;

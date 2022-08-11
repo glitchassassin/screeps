@@ -1,7 +1,7 @@
+import { terrainCostAt } from 'Selectors/Map/MapCoordinates';
+import { plannedFranchiseRoads } from 'Selectors/plannedTerritoryRoads';
+import { posById } from 'Selectors/posById';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { terrainCostAt } from './Map/MapCoordinates';
-import { plannedFranchiseRoads } from './plannedTerritoryRoads';
-import { posById } from './posById';
 
 export const getFranchiseDistance = memoizeByTick(
   (office: string, sourceId: Id<Source>) => office + posById(sourceId) + plannedFranchiseRoads(office, sourceId).length,

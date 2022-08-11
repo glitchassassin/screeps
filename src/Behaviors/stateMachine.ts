@@ -1,8 +1,8 @@
-import { Mission, MissionType } from "Missions/Mission";
+import { Mission, MissionType } from 'Missions/Mission';
 
 declare global {
   interface CreepMemory {
-      runState?: string
+    runState?: string;
   }
 }
 
@@ -22,5 +22,5 @@ export function runStates<M extends Mission<MissionType>>(
     }
     creep.memory.runState = states[creep.memory.runState](mission, creep);
   }
-  // console.log(creep.name, mission.type, JSON.stringify(statesRun));
+  // if (statesRun.includes(States.FIND_WITHDRAW)) console.log(creep.name, mission.type, JSON.stringify(statesRun));
 }

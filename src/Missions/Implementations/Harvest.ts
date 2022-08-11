@@ -1,12 +1,14 @@
 import { harvestEnergyFromFranchise } from 'Behaviors/harvestEnergyFromFranchise';
 import { moveTo } from 'Behaviors/moveTo';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
+import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { getFranchiseDistance } from 'Selectors/getFranchiseDistance';
+import { byId } from 'Selectors/byId';
+import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
+import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
-import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { creepCost, minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
@@ -69,17 +71,8 @@ export class Harvest extends MissionImplementation {
 
     // Calculate harvester spawn preference
     const franchisePlan = getFranchisePlanBySourceId(mission.data.source);
-    const franchiseContainer = franchisePlan?.container.pos;
-    const spawn = franchiseContainer
-      ? getClosestByRange(franchiseContainer, getSpawns(mission.office))
-      : getSpawns(mission.office)[0];
-    const link = franchisePlan?.link.structure;
-
-    const spawnPreference = spawn
-      ? {
-          spawn: spawn.id
-        }
-      : undefined;
+    const link = !!franchisePlan?.link.structure || franchisePlan?.extensions.some(e => e.structure);
+    const remote = posById(mission.data.source)?.roomName !== mission.office;
 
     const energy = hasEnergyIncome(mission.office)
       ? Game.rooms[mission.office].energyCapacityAvailable
@@ -87,7 +80,7 @@ export class Harvest extends MissionImplementation {
 
     // Set name
     const name = `HARVEST-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.SALESMAN](energy, !!link);
+    const body = MinionBuilders[MinionTypes.SALESMAN](energy, link, remote);
 
     scheduleSpawn(
       mission.office,
@@ -96,15 +89,28 @@ export class Harvest extends MissionImplementation {
         name,
         body
       },
-      spawnPreference ? mission.startTime : undefined,
-      spawnPreference
+      mission.startTime
     );
 
     mission.creepNames.push(name);
   }
 
   static onStart(mission: HarvestMission, creep: Creep) {
-    HarvestLedger.record(mission.office, mission.data.source, creep.name + ' spawn', -creepCost(creep));
+    // HarvestLedger.reset(mission.office, mission.data.source);
+    HarvestLedger.record(mission.office, mission.data.source, 'spawn_harvest', -creepCost(creep));
+  }
+
+  static onEnd(mission: HarvestMission) {
+    // console.log(
+    //   mission.office,
+    //   posById(mission.data.source),
+    //   mission.creepNames[0],
+    //   getFranchiseDistance(mission.office, mission.data.source),
+    //   JSON.stringify(HarvestLedger.get(mission.office, mission.data.source).value),
+    //   HarvestLedger.get(mission.office, mission.data.source).perTick,
+    //   HarvestLedger.get(mission.office, mission.data.source).age
+    // );
+    // HarvestLedger.reset(mission.office, mission.data.source);
   }
 
   static minionLogic(mission: HarvestMission, creep: Creep): void {
@@ -113,10 +119,13 @@ export class Harvest extends MissionImplementation {
     mission.data.distance ??= getFranchiseDistance(mission.office, mission.data.source);
 
     // Mission behavior
-    const harvested = harvestEnergyFromFranchise(creep, mission.data.source);
-    if (harvested || !mission.data.arrived) {
-      mission.efficiency.working += 1;
-    }
+    // measure energy lost to decay
+    const container = getFranchisePlanBySourceId(mission.data.source)?.container.structureId;
+    LogisticsLedger.record(
+      mission.office,
+      'decay',
+      -Math.ceil(Math.max(0, franchiseEnergyAvailable(mission.data.source) - (container ? 2000 : 0)) / 1000)
+    );
 
     const franchisePos = posById(mission.data.source);
 
@@ -143,15 +152,12 @@ export class Harvest extends MissionImplementation {
           if (!structure) continue;
           result = creep.transfer(structure, RESOURCE_ENERGY);
           if (result === OK) {
-            HarvestLedger.record(
-              mission.office,
-              mission.data.source,
-              creep.name + ' deposit',
-              Math.min(
-                creep.store[RESOURCE_ENERGY],
-                (structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY)
-              )
+            const amount = Math.min(
+              creep.store[RESOURCE_ENERGY],
+              (structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY)
             );
+            HarvestLedger.record(mission.office, mission.data.source, 'deposit', amount);
+            LogisticsLedger.record(mission.office, 'deposit', -amount);
             break;
           }
         }
@@ -171,54 +177,67 @@ export class Harvest extends MissionImplementation {
           result = creep.transfer(plan.link.structure, RESOURCE_ENERGY);
           if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.link.pos);
           if (result === OK) {
-            HarvestLedger.record(
-              mission.office,
-              mission.data.source,
-              creep.name + ' deposit',
-              Math.min(
-                creep.store[RESOURCE_ENERGY],
-                (plan.link.structure as StructureLink).store.getFreeCapacity(RESOURCE_ENERGY)
-              )
+            const amount = Math.min(
+              creep.store[RESOURCE_ENERGY],
+              (plan.link.structure as StructureLink).store.getFreeCapacity(RESOURCE_ENERGY)
             );
+            HarvestLedger.record(mission.office, mission.data.source, 'deposit', amount);
+            LogisticsLedger.record(mission.office, 'deposit', -amount);
             // If we've dropped any resources, and there's space in the link, try to pick them up
             const resource = creep.pos.lookFor(LOOK_RESOURCES).find(r => r.resourceType === RESOURCE_ENERGY);
             if (resource) creep.pickup(resource);
           }
         }
 
-        if (result === ERR_FULL) {
-          creep.drop(RESOURCE_ENERGY);
+        if (result === ERR_FULL && plan.container.structure) {
+          result = creep.transfer(plan.container.structure, RESOURCE_ENERGY);
         }
       } else {
         // Remote franchise
         const plan = getFranchisePlanBySourceId(mission.data.source);
-        if (!plan || !Game.rooms[plan.container.pos.roomName] || rcl(mission.office) < 3) return;
-
-        // Try to build or repair container
-        if (!plan.container.structure) {
-          if (!plan.container.constructionSite) {
-            plan.container.pos.createConstructionSite(plan.container.structureType);
-          } else {
-            if (creep.build(plan.container.constructionSite) === OK) {
-              HarvestLedger.record(
-                mission.office,
-                mission.data.source,
-                creep.name + ' build',
-                -BUILD_POWER * creep.body.filter(p => p.type === WORK).length
-              );
+        if (plan && Game.rooms[plan.container.pos.roomName] && rcl(mission.office) >= 3) {
+          // Try to build or repair container
+          if (!plan.container.structure) {
+            if (!plan.container.constructionSite) {
+              const result = plan.container.pos.createConstructionSite(plan.container.structureType);
+              console.log('creating construction site', plan.container.pos, result);
+            } else {
+              if (creep.build(plan.container.constructionSite) === OK) {
+                const amount = -BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
+                HarvestLedger.record(mission.office, mission.data.source, 'build', amount);
+                LogisticsLedger.record(mission.office, 'deposit', amount);
+                return;
+              }
+            }
+          } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
+            if (creep.repair(plan.container.structure) === OK) {
+              const amount = -(REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
+              HarvestLedger.record(mission.office, mission.data.source, 'repair', amount);
+              LogisticsLedger.record(mission.office, 'deposit', amount);
+              return;
             }
           }
-        } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
-          if (creep.repair(plan.container.structure) === OK) {
-            HarvestLedger.record(
-              mission.office,
-              mission.data.source,
-              creep.name + ' repair',
-              -(REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length
-            );
-          }
+        }
+        if (
+          plan?.container.structure &&
+          creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.75
+        ) {
+          creep.transfer(plan.container.structure, RESOURCE_ENERGY);
         }
       }
+    }
+
+    const harvested = harvestEnergyFromFranchise(creep, mission.data.source);
+    if (harvested || !mission.data.arrived) {
+      mission.efficiency.working += 1;
+    }
+    if (harvested) {
+      const amount = Math.min(
+        byId(mission.data.source)?.energy ?? 0,
+        creep.body.filter(p => p.type === WORK).length * HARVEST_POWER,
+        10
+      );
+      LogisticsLedger.record(mission.office, 'harvest', amount);
     }
   }
 }

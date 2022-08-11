@@ -1,13 +1,11 @@
 import { blinkyKill } from 'Behaviors/blinkyKill';
 import { guardKill } from 'Behaviors/guardKill';
 import { moveTo } from 'Behaviors/moveTo';
-import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { findClosestHostileCreepByRange, findInvaderStructures } from 'Selectors/findHostileCreeps';
-import { creepCostPerTick, minionCost } from 'Selectors/minionCostPerTick';
-import { sourceIds } from 'Selectors/roomCache';
+import { minionCost } from 'Selectors/minionCostPerTick';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
 
@@ -85,11 +83,11 @@ export class DefendRemote extends MissionImplementation {
     if (!mission.data.roomTarget) return; // nothing to do
 
     // Record cost
-    const sources = sourceIds(mission.data.roomTarget);
-    if (sources.length) {
-      const cost = creepCostPerTick(creep) / sources.length;
-      sources.forEach(s => HarvestLedger.record(mission.office, s, creep.name + ' spawn', -cost));
-    }
+    // const sources = sourceIds(mission.data.roomTarget);
+    // if (sources.length) {
+    //   const cost = creepCostPerTick(creep) / sources.length;
+    //   sources.forEach(s => HarvestLedger.record(mission.office, s, 'spawn_defense', -cost));
+    // }
 
     // Go to room
     if (creep.pos.roomName !== mission.data.roomTarget) {

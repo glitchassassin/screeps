@@ -73,8 +73,10 @@ export class HQLogistics extends MissionImplementation {
     const terminal = hq.terminal.structure as StructureTerminal | undefined;
     const storage = hq.storage.structure as StructureStorage | undefined;
     const link = hq.link.structure as StructureLink | undefined;
+    const extension = hq.extension.structure as StructureExtension | undefined;
 
     const terminalAmountNeeded = terminal ? 30000 - terminal.store.getUsedCapacity(RESOURCE_ENERGY) : 0;
+    const extensionAmountNeeded = extension ? extension.store.getFreeCapacity(RESOURCE_ENERGY) : 0;
     const linkAmountAvailable = link?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
     const linkAmountToTransfer = LINK_CAPACITY / 2 - linkAmountAvailable;
 
@@ -111,6 +113,14 @@ export class HQLogistics extends MissionImplementation {
       transfer = true;
       creepEnergy -= amount;
       // console.log(creep.name, 'transferring', amount, 'to terminal')
+    }
+
+    if (extension && extensionAmountNeeded && extensionAmountNeeded > 0) {
+      const amount = Math.min(extensionAmountNeeded, creep.store.getUsedCapacity());
+      !transfer && creep.transfer(extension, RESOURCE_ENERGY, amount);
+      transfer = true;
+      creepEnergy -= amount;
+      // console.log(creep.name, 'transferring', amount, 'to extension')
     }
 
     if (storage && creepEnergy < creep.store.getCapacity()) {

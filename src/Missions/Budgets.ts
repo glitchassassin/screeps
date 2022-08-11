@@ -1,5 +1,5 @@
-import { roomPlans } from "Selectors/roomPlans";
-import { Mission, MissionType } from "./Mission";
+import { roomPlans } from 'Selectors/roomPlans';
+import { Mission, MissionType } from './Mission';
 
 export function getWithdrawLimit(mission: Mission<MissionType>) {
   return getBudgetAdjustment(mission).energy;
@@ -20,8 +20,8 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     ) {
       return {
         cpu: 2000,
-        energy: -mission.estimate.energy,
-      }
+        energy: -mission.estimate.energy
+      };
     } else if (
       mission.type === MissionType.EXPLORE ||
       mission.type === MissionType.DEFEND_REMOTE ||
@@ -29,13 +29,18 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     ) {
       return {
         cpu: 2000,
-        energy: 0,
-      }
+        energy: 0
+      };
+    } else if (mission.type !== MissionType.UPGRADE) {
+      return {
+        cpu: 2000,
+        energy: 500
+      };
     } else {
       return {
         cpu: 2000,
-        energy: 500,
-      }
+        energy: 1000
+      };
     }
   } else {
     // Storage allows more fine-grained capacity management
@@ -46,30 +51,27 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     ) {
       return {
         cpu: 2000,
-        energy: 0,
-      }
+        energy: 0
+      };
     } else if (
-      [
-        MissionType.RESERVE,
-        MissionType.DEFEND_REMOTE,
-        MissionType.HQ_LOGISTICS,
-        MissionType.DEFEND_OFFICE
-      ].includes(mission.type)
+      [MissionType.RESERVE, MissionType.DEFEND_REMOTE, MissionType.HQ_LOGISTICS, MissionType.DEFEND_OFFICE].includes(
+        mission.type
+      )
     ) {
       return {
         cpu: 2000,
-        energy: Game.rooms[mission.office].energyCapacityAvailable ?? 1500,
-      }
+        energy: Game.rooms[mission.office].energyCapacityAvailable ?? 1500
+      };
     } else if (mission.type === MissionType.UPGRADE && !mission.data.emergency) {
       return {
         cpu: 2000,
-        energy: 100000,
-      }
+        energy: 100000
+      };
     } else {
       return {
         cpu: 2000,
-        energy: 60000,
-      }
+        energy: 60000
+      };
     }
   }
 }

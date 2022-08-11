@@ -15,8 +15,8 @@ import {
   submitMission
 } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
-import { activeFranchises } from 'Selectors/franchiseActive';
-import { franchisesByOffice } from 'Selectors/franchisesByOffice';
+import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { adjacentWalkablePositions } from 'Selectors/Map/MapCoordinates';
 import { posById } from 'Selectors/posById';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -39,7 +39,7 @@ export default {
     const shouldReserve = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable).length > 0;
 
     const activeMissionsBySource = activeMissions(office).reduce((missions, mission) => {
-      if (isMission(MissionType.HARVEST)(mission)) {
+      if (isMission(MissionType.HARVEST)(mission) && !missionExpired(mission)) {
         missions[mission.data.source] ??= [];
         missions[mission.data.source].push(mission);
       }
