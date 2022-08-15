@@ -80,7 +80,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     }
   }
   survey() {
-    if (Game.time === this.lastSurveyed) return !!byId(this.structureId); // Only survey once per tick
+    if (Game.time === this.lastSurveyed) return !!this.structureId; // Only survey once per tick
     this.lastSurveyed = Game.time;
     if (Game.rooms[this.pos.roomName]) {
       if (byId(this.structureId)) {

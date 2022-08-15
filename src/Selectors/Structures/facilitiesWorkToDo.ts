@@ -90,7 +90,7 @@ export const refreshFacilitiesWorkCache = (officeName: string) => {
   for (let structure of cache[officeName].work) {
     // Also populate range cache
     const range = getRangeTo(structure.pos, storagePos);
-    const energyNeeded = adjustedEnergyForPlannedStructure(structure, range);
+    const energyNeeded = adjustedEnergyForPlannedStructure(structure, range, 1);
     if (!structure.structure || energyNeeded > CARRY_CAPACITY) {
       work.push(structure);
       ranges += range;
@@ -107,7 +107,6 @@ export const refreshFacilitiesWorkCache = (officeName: string) => {
 
   // Only re-scan work to do every 500 ticks unless structure count changes
   if (!Game.rooms[officeName]) return;
-
   const foundStructures = Game.rooms[officeName].find(FIND_STRUCTURES).length;
   const foundRcl = Game.rooms[officeName].controller?.level;
   if (

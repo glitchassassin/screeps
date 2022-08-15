@@ -1,8 +1,11 @@
-import { energyInTransit, roomEnergyAvailable } from "./storageEnergyAvailable";
+import { estimateMissionInterval } from 'Missions/Selectors';
+import { roomPlans } from './roomPlans';
+import { energyInProduction, roomEnergyAvailable } from './storageEnergyAvailable';
 
 export const missionEnergyAvailable = (office: string) => {
-  return (
-    roomEnergyAvailable(office) +
-    energyInTransit(office)
-  );
-}
+  let energy = roomEnergyAvailable(office);
+  if (!roomPlans(office)?.headquarters?.storage.structure) {
+    energy += energyInProduction(office, estimateMissionInterval(office));
+  }
+  return energy;
+};

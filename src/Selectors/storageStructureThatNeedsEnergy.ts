@@ -34,7 +34,7 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
       getExtensions(office, false).map(s => [8, s.structure as AnyStoreStructure]),
       backfill?.towers.map(s => [7, s.structure as AnyStoreStructure]) ?? [],
       labs?.labs.map(s => [6, s.structure as AnyStoreStructure]) ?? [],
-      engineers.map(e => [5, e]),
+      // engineers.map(e => [5, e]),
       [[4, library?.container.structure as AnyStoreStructure]],
       [[1, hq?.storage.structure as AnyStoreStructure]]
     )

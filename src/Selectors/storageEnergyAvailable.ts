@@ -4,6 +4,7 @@ import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAv
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { getPrimarySpawn } from './getPrimarySpawn';
+import { posById } from './posById';
 import { roomPlans } from './roomPlans';
 
 export const storageEnergyAvailable = (roomName: string) => {
@@ -66,5 +67,33 @@ export const energyInTransit = memoizeByTick(
       0
     );
     return fleetEnergy + Math.min(fleetCapacity, franchiseEnergy);
+  }
+);
+
+export const energyInProduction = memoizeByTick(
+  office => office,
+  (office: string, timeframe: number) => {
+    let harvestCapacity = 0;
+    let haulCapacity = 0;
+    for (const mission of activeMissions(office)) {
+      if (
+        isMission(MissionType.LOGISTICS)(mission) &&
+        (assignedCreep(mission)?.ticksToLive ?? CREEP_LIFE_TIME) > timeframe
+      ) {
+        haulCapacity += mission.data.capacity ?? 0;
+      }
+      if (isMission(MissionType.HARVEST)(mission) && mission.data.distance && mission.data.harvestRate) {
+        const room = posById(mission.data.source)?.roomName;
+        const remote = mission.office !== room;
+        const reserved = Game.rooms[room ?? '']?.controller?.reservation?.username === 'LordGreywether';
+        const time = Math.min(timeframe, assignedCreep(mission)?.ticksToLive ?? CREEP_LIFE_TIME);
+        const harvestRate =
+          !remote || reserved
+            ? SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME
+            : SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
+        harvestCapacity += time * Math.min(harvestRate, mission.data.harvestRate);
+      }
+    }
+    return Math.min(harvestCapacity, haulCapacity);
   }
 );

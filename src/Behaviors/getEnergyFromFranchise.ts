@@ -10,6 +10,10 @@ export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, office:
   const pos = posById(franchise);
   if (!pos) return BehaviorResult.FAILURE;
 
+  if (pos.roomName !== creep.pos.roomName) {
+    return moveTo(creep, { pos, range: 2 });
+  }
+
   if (franchiseEnergyAvailable(franchise) <= 50 || creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     return BehaviorResult.SUCCESS;
   } else {
