@@ -11,12 +11,9 @@ let surveyed = 0;
 const MAX_TERRITORY_ROADS = 6;
 
 export function nextFranchiseRoadToBuild(office: string, source: Id<Source>) {
-  return plannedFranchiseRoads(office, source).find(r => {
-    if (!r.survey()) {
-      console.log('Missing planned road', r.structureId, r.pos);
-    }
-    return !r.survey() && r.lastSurveyed && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName);
-  });
+  return plannedFranchiseRoads(office, source).find(
+    r => !r.survey() && r.lastSurveyed && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
+  );
 }
 
 export function plannedFranchiseRoads(office: string, source: Id<Source>) {

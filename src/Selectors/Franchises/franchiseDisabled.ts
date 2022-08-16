@@ -8,7 +8,7 @@ export const franchiseDisabled = memoizeByTick(
     const pos = posById(source);
     if (!pos) return true;
     const { scores } = Memory.rooms[pos.roomName].franchises[office][source];
-    if (scores.length === FRANCHISE_EVALUATE_PERIOD && scores.reduce((a, b) => a + b, 0) / scores.length < 0.5) {
+    if (scores.length === FRANCHISE_EVALUATE_PERIOD && scores.reduce((a, b) => a + b, 0) / scores.length < 0) {
       // franchise is too expensive
       return true;
     }

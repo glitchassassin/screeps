@@ -3,6 +3,7 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { costMatrixFromRoomPlan } from 'Selectors/costMatrixFromRoomPlan';
 import { getOfficeDistanceByRange } from 'Selectors/getOfficeDistance';
 import { getRoomPathDistance } from 'Selectors/Map/Pathing';
+import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { posById } from 'Selectors/posById';
 import { sourceIds } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -43,6 +44,10 @@ function calculateTerritoryData(
   if (sources.length === 0) return undefined;
   const sourcePaths: PathFinderPath[] = [];
   const roads = new Set<PlannedStructure>();
+
+  // Add known roads
+  plannedTerritoryRoads(office).forEach(road => roads.add(road));
+
   for (const sourceId of sources) {
     const pos = posById(sourceId);
     if (!pos) continue;

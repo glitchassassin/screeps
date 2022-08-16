@@ -1,7 +1,7 @@
 export const FEATURES = {
   MINING: true,
   LABS: true,
-  WHITELIST: false
+  WHITELIST: true
 };
 
 /**
@@ -10,7 +10,7 @@ export const FEATURES = {
 export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 1 : 3;
 
 /**
- * Rooms around an Office to control as remote territories
+ * Number of offices to control
  */
 export const OFFICE_LIMIT = Game.shard.name === 'shard3' ? 1 : Infinity;
 

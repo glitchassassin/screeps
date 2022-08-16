@@ -25,6 +25,7 @@ export default () => {
       let storagePos = roomPlans(office)?.headquarters?.storage.pos;
       let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
       let disabled = !franchiseActive(office, franchise.source);
+      const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source];
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 
@@ -39,7 +40,10 @@ export default () => {
         const startY = Math.min(39 - 10 * order, sourcePos.y);
 
         Game.map.visual.text(
-          (getFranchiseDistance(office, franchise.source)?.toFixed(0) ?? '--') + '🦶',
+          (getFranchiseDistance(office, franchise.source)?.toFixed(0) ?? '--') +
+            '🦶 ' +
+            (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2) +
+            '⚡',
           new RoomPosition(Math.max(0, sourcePos.x), startY + 4, sourcePos.roomName),
           { fontSize: 4 }
         );
