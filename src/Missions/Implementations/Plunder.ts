@@ -1,9 +1,10 @@
 import { findBestDepositTarget } from 'Behaviors/Logistics';
 import { moveTo } from 'Behaviors/moveTo';
+import { recycle } from 'Behaviors/recycle';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
-import { createMission, Mission, MissionStatus, MissionType } from 'Missions/Mission';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';
@@ -14,6 +15,7 @@ import { MissionImplementation } from './MissionImplementation';
 export interface PlunderMission extends Mission<MissionType.PLUNDER> {
   data: {
     capacity: number;
+    arrived?: number;
     targetRoom: string;
     plunderTarget?: Id<AnyStoreStructure>;
   };
@@ -78,40 +80,65 @@ export class Plunder extends MissionImplementation {
       }
 
       mission.data.plunderTarget ??= Game.rooms[mission.data.targetRoom].find(FIND_HOSTILE_STRUCTURES, {
-        filter: s => 'store' in s && Object.keys(s.store).length
+        filter: s => 'store' in s && s.structureType !== STRUCTURE_NUKER && Object.keys(s.store).length
       })[0]?.id as Id<AnyStoreStructure>;
 
       if (!mission.data.plunderTarget) {
-        mission.status = MissionStatus.DONE;
-        return;
+        creep.memory.state = States.DEPOSIT;
       }
 
       const target = byId(mission.data.plunderTarget);
       const targetResource = target && (Object.keys(target.store)[0] as ResourceConstant | undefined);
+
       if (!targetResource) {
         delete mission.data.plunderTarget;
-      }
-      if (targetResource && creep.withdraw(target, targetResource) === ERR_NOT_IN_RANGE) {
-        moveTo(creep, target.pos);
-        return;
+      } else {
+        if (creep.withdraw(target, targetResource) === ERR_NOT_IN_RANGE) {
+          moveTo(creep, { pos: target.pos, range: 1 });
+          const opportunityTarget = creep.pos
+            .findInRange(FIND_HOSTILE_STRUCTURES, 1)
+            .find(s => 'store' in s && Object.keys(s.store).length) as AnyStoreStructure | undefined;
+          if (opportunityTarget) {
+            const opportunityResource = Object.keys(opportunityTarget.store)[0] as ResourceConstant | undefined;
+            if (opportunityResource) creep.withdraw(opportunityTarget, opportunityResource);
+          }
+          return;
+        } else {
+          // withdrew successfully, or another error
+          mission.data.arrived ??= CREEP_LIFE_TIME - (creep.ticksToLive ?? CREEP_LIFE_TIME);
+        }
       }
     }
     if (creep.memory.state === States.DEPOSIT) {
       mission.efficiency.working += 1;
-      if (creep.store.getUsedCapacity() === 0) creep.memory.state = States.WITHDRAW;
-      const storage = findBestDepositTarget(mission.office, creep);
+      if (creep.store.getUsedCapacity() === 0) {
+        if (!mission.data.arrived || (creep.ticksToLive ?? CREEP_LIFE_TIME) > mission.data.arrived) {
+          creep.memory.state = States.WITHDRAW;
+        } else {
+          recycle(mission, creep);
+        }
+      }
+      const depositTarget = findBestDepositTarget(mission.office, creep);
       const terminal = roomPlans(mission.office)?.headquarters?.terminal.structure;
+      const storage = roomPlans(mission.office)?.headquarters?.storage.structure;
       const nonEnergyResource = Object.keys(creep.store).find(c => c !== RESOURCE_ENERGY) as ResourceConstant;
       if (
         creep.store.getUsedCapacity(RESOURCE_ENERGY) &&
-        storage &&
-        creep.transfer(storage[1], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE
+        depositTarget &&
+        creep.transfer(depositTarget[1], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE
       ) {
-        moveTo(creep, storage[1].pos);
+        moveTo(creep, depositTarget[1].pos);
         return;
-      } else if (nonEnergyResource && terminal && creep.transfer(terminal, nonEnergyResource) === ERR_NOT_IN_RANGE) {
-        moveTo(creep, terminal.pos);
-        return;
+      } else if (nonEnergyResource) {
+        if (terminal && creep.transfer(terminal, nonEnergyResource) === ERR_NOT_IN_RANGE) {
+          moveTo(creep, { pos: terminal.pos, range: 1 });
+          return;
+        } else if (storage && creep.transfer(storage, nonEnergyResource) === ERR_NOT_IN_RANGE) {
+          moveTo(creep, { pos: storage.pos, range: 1 });
+          return;
+        } else if (!terminal && !storage) {
+          creep.drop(nonEnergyResource);
+        }
       }
     }
   }

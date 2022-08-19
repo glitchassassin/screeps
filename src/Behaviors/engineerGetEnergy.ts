@@ -5,7 +5,8 @@ import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { posById } from 'Selectors/posById';
-import { roomPlans } from 'Selectors/roomPlans';
+import { getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
@@ -38,6 +39,7 @@ const energySourcesByOffice = memoizeByTick(
       .forEach(ruin => sources.push(ruin));
     // sources
     const shouldHarvest = !hasEnergyIncome(office);
+    const shouldGetFromFranchise = storageEnergyAvailable(office) > Game.rooms[office].energyCapacityAvailable;
     franchisesByOffice(office)
       .map(({ source }) => ({
         id: source,
@@ -46,8 +48,9 @@ const energySourcesByOffice = memoizeByTick(
       }))
       .filter(
         source =>
-          franchiseEnergyAvailable(source.id) >= 50 ||
-          (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0)
+          source.pos.roomName !== office &&
+          ((shouldGetFromFranchise && franchiseEnergyAvailable(source.id) >= 50) ||
+            (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0))
       )
       .forEach(source => sources.push(source));
     // storage
@@ -61,9 +64,9 @@ const energySourcesByOffice = memoizeByTick(
         ?.fastfiller?.containers.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
         .forEach(c => storage.push(c.structure as AnyStoreStructure));
     if (!storage.length)
-      roomPlans(office)
-        ?.fastfiller?.spawns.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
-        .forEach(c => storage.push(c.structure as AnyStoreStructure));
+      getSpawns(office)
+        .filter(c => c.store[RESOURCE_ENERGY])
+        .forEach(c => storage.push(c as AnyStoreStructure));
     if (storage.length) {
       // && !remote
       sources.push(...storage);

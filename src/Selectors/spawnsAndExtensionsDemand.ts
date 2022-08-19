@@ -1,7 +1,7 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { rcl } from './rcl';
-import { roomPlans } from './roomPlans';
+import { getSpawns, roomPlans } from './roomPlans';
 
 export const getExtensions = (room: string, includeFastfiller = true) => {
   const plan = roomPlans(room);
@@ -23,9 +23,9 @@ export const getEnergyStructures = memoizeByTick(
   (room: string) => {
     const plan = roomPlans(room);
     if (!plan) return [];
-    const structures = ([] as (PlannedStructure | undefined)[])
-      .concat(plan.fastfiller?.spawns ?? [], getExtensions(room))
+    const structures = getExtensions(room)
       .map(s => s?.structure)
+      .concat(getSpawns(room))
       .filter(s => s) as (StructureExtension | StructureSpawn)[];
 
     if (Memory.rooms[room].rclMilestones?.[rcl(room) + 1]) {

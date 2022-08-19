@@ -100,14 +100,10 @@ export const generateRoomPlans = (roomName: string) => {
   if (Memory.roomPlans[roomName].complete) return;
 
   const controllerPos = controllerPosition(roomName)!;
-  // Make sure that if exactly one Franchise already has a spawn, it becomes franchise1;
-  // otherwise, they are sorted in order of distance to controller
-  const populatedSources = sourceIds(roomName)
-    .filter(s => Game.rooms[roomName] && posById(s)!.findInRange(FIND_MY_SPAWNS, 3).length)
-    .sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
-  const franchiseSources = populatedSources.length
-    ? populatedSources.concat(sourceIds(roomName).filter(id => !populatedSources.includes(id)))
-    : sourceIds(roomName).sort((a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos));
+  // Franchises are sorted in order of distance to controller
+  const franchiseSources = sourceIds(roomName).sort(
+    (a, b) => posById(a)!.getRangeTo(controllerPos) - posById(b)!.getRangeTo(controllerPos)
+  );
   const [franchise1, franchise2] = franchiseSources;
 
   const steps = [

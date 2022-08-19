@@ -85,7 +85,9 @@ export const getSpawns = memoizeByTick(
   roomName => roomName,
   (roomName: string) => {
     const plan = roomPlans(roomName);
-    return (plan?.fastfiller?.spawns.map(s => s.structure).filter(s => s && s.isActive()) ?? []) as StructureSpawn[];
+    const fastfillers = plan?.fastfiller?.spawns.map(s => s.structure).filter(s => s && s.isActive());
+    if (fastfillers?.length) return fastfillers as StructureSpawn[];
+    return (Game.rooms[roomName]?.find(FIND_MY_SPAWNS) ?? []) as StructureSpawn[];
   }
 );
 

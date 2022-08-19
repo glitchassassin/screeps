@@ -86,6 +86,7 @@ export function spawnFromQueues() {
 
     // loop through priorities, highest to lowest
     for (const order of Memory.offices[office].spawnQueue) {
+      // console.log('availableSpawns', availableSpawns, JSON.stringify(order));
       if (availableSpawns.length === 0) break; // No more available spawns
       // Get next scheduled order per spawn
       if (order.startTime && order.startTime > Game.time) {
@@ -114,7 +115,7 @@ export function spawnFromQueues() {
         },
         energyStructures: getEnergyStructures(office)
       });
-      // console.log('spawn result', result)
+      // console.log('spawn result', result);
       if (result === OK) {
         availableSpawns = availableSpawns.filter(s => s !== spawn);
         orderBoosts(office, order);

@@ -1,7 +1,7 @@
 import { States } from 'Behaviors/states';
 import { MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
-import { roomPlans } from './roomPlans';
+import { getSpawns, roomPlans } from './roomPlans';
 import { getExtensions } from './spawnsAndExtensionsDemand';
 
 function toMostEmpty(a?: AnyStoreStructure, b?: AnyStoreStructure) {
@@ -30,7 +30,7 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
   const structures = ([] as [number, AnyStoreStructure | Creep][])
     .concat(
       fastfiller?.containers.map(s => [10, s.structure as AnyStoreStructure]) ?? [],
-      fastfiller?.spawns.map(s => [9, s.structure as AnyStoreStructure]) ?? [],
+      getSpawns(office).map(s => [9, s as AnyStoreStructure]) ?? [],
       getExtensions(office, false).map(s => [8, s.structure as AnyStoreStructure]),
       backfill?.towers.map(s => [7, s.structure as AnyStoreStructure]) ?? [],
       labs?.labs.map(s => [6, s.structure as AnyStoreStructure]) ?? [],
