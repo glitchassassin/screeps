@@ -59,6 +59,8 @@ const energySourcesByOffice = memoizeByTick(
       storage.push(roomPlans(office)!.headquarters!.storage.structure as AnyStoreStructure);
     if (roomPlans(office)?.library?.container.structure)
       storage.push(roomPlans(office)!.library!.container.structure as AnyStoreStructure);
+    if (roomPlans(office)?.library?.link.structure)
+      storage.push(roomPlans(office)!.library!.link.structure as AnyStoreStructure);
     if (!storage.length)
       roomPlans(office)
         ?.fastfiller?.containers.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
