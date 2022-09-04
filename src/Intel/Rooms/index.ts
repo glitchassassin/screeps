@@ -37,7 +37,6 @@ declare global {
       Record<
         Id<Source>,
         {
-          path: string;
           lastHarvested?: number;
           scores: number[];
         }

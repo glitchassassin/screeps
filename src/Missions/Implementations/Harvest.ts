@@ -1,10 +1,10 @@
 import { harvestEnergyFromFranchise } from 'Behaviors/harvestEnergyFromFranchise';
-import { moveTo } from 'Behaviors/moveTo';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
@@ -174,8 +174,8 @@ export class Harvest extends MissionImplementation {
         // }
         // Try to deposit at link
         if (result === ERR_FULL && plan.link.structure) {
+          moveTo(creep, plan.link.pos);
           result = creep.transfer(plan.link.structure, RESOURCE_ENERGY);
-          if (result === ERR_NOT_IN_RANGE) moveTo(creep, plan.link.pos);
           if (result === OK) {
             const amount = Math.min(
               creep.store[RESOURCE_ENERGY],

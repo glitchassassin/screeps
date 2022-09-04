@@ -1,8 +1,8 @@
+import { moveTo } from 'screeps-cartographer';
 import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
 import { roomPlans } from 'Selectors/roomPlans';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
-import { moveTo } from './moveTo';
 
 export const getEnergyFromStorage = profiler.registerFN(
   (creep: Creep, office: string, limit?: number, ignoreSpawn = false): BehaviorResult => {

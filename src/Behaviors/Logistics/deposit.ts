@@ -1,10 +1,9 @@
-import { BehaviorResult } from 'Behaviors/Behavior';
 import { followPathHomeFromSource } from 'Behaviors/followPathHomeFromSource';
-import { moveTo } from 'Behaviors/moveTo';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
@@ -115,7 +114,8 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
     creep.pos.roomName !== mission.office
   ) {
     followPathHomeFromSource(creep, mission.office, mission.data.withdrawTarget);
-  } else if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+  } else {
+    moveTo(creep, { pos: target.pos, range: 1 });
     if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
       const amount = Math.min(
         target.store.getFreeCapacity(RESOURCE_ENERGY),

@@ -1,6 +1,5 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { engineerGetEnergy } from 'Behaviors/engineerGetEnergy';
-import { moveTo } from 'Behaviors/moveTo';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
@@ -10,6 +9,7 @@ import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, estimateMissionInterval, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
+import { moveTo } from 'screeps-cartographer';
 import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { franchiseThatNeedsEngineers } from 'Selectors/Franchises/franchiseThatNeedsEngineers';
 import { minionCost } from 'Selectors/minionCostPerTick';
@@ -165,14 +165,17 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
             .lookFor(LOOK_STRUCTURES)
             .find(s => s.structureType !== STRUCTURE_CONTAINER && s.structureType !== STRUCTURE_ROAD);
           if (obstacle) {
-            if (moveTo(creep, { pos: plan.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+            moveTo(creep, { pos: plan.pos, range: 1 });
+            if (creep.pos.inRangeTo(plan.pos, 1)) {
               if (creep.dismantle(obstacle) === OK) mission.efficiency.working += 1;
             }
             return States.BUILDING;
           }
         }
 
-        if (moveTo(creep, { pos: plan.pos, range: 3 }) === BehaviorResult.SUCCESS) {
+        moveTo(creep, { pos: plan.pos, range: 3 });
+
+        if (creep.pos.inRangeTo(plan.pos, 3)) {
           if (plan.structure && plan.structure.hits < plan.structure.hitsMax) {
             if (mission.data.franchise) {
               // engineers should not be repairing

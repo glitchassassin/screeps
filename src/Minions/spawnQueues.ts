@@ -1,5 +1,5 @@
-import { moveTo } from 'Behaviors/moveTo';
 import { FEATURES } from 'config';
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';

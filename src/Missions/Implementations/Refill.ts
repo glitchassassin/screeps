@@ -1,8 +1,9 @@
-import { moveTo } from 'Behaviors/moveTo';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
+import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { rcl } from 'Selectors/rcl';
 import { getSpawns } from 'Selectors/roomPlans';
@@ -77,7 +78,7 @@ export class Refill extends MissionImplementation {
 
   static minionLogic(mission: RefillMission, creep: Creep): void {
     const target = unpackPos(mission.data.refillSquare);
-    moveTo(creep, { pos: target, range: 0 }, { ignoreFastfiller: true }); // even if already there, this will prevent shoving
+    moveTo(creep, { pos: target, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) }); // even if already there, this will prevent shoving
     if (!creep.pos.isEqualTo(target)) {
       return;
     }

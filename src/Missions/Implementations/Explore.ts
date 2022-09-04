@@ -1,33 +1,33 @@
-import { BehaviorResult } from "Behaviors/Behavior";
-import { moveTo } from "Behaviors/moveTo";
-import { signRoom } from "Behaviors/signRoom";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionType } from "Missions/Mission";
-import { getPatrolRoute } from "Selectors/getPatrolRoute";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { MissionImplementation } from "./MissionImplementation";
+import { BehaviorResult } from 'Behaviors/Behavior';
+import { signRoom } from 'Behaviors/signRoom';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
+import { getPatrolRoute } from 'Selectors/getPatrolRoute';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 export interface ExploreMission extends Mission<MissionType.EXPLORE> {
   data: {
-    exploreTarget?: string|undefined
-  }
+    exploreTarget?: string | undefined;
+  };
 }
 
 export function createExploreMission(office: string): ExploreMission {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.3,
-    energy: minionCost(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office))),
-  }
+    energy: minionCost(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office)))
+  };
 
   return createMission({
     office,
     priority: 15,
     type: MissionType.EXPLORE,
     data: {},
-    estimate,
-  })
+    estimate
+  });
 }
 
 export class Explore extends MissionImplementation {
@@ -35,17 +35,13 @@ export class Explore extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `AUDITOR-${mission.office}-${mission.id}`
+    const name = `AUDITOR-${mission.office}-${mission.id}`;
     const body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(mission.office));
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body,
-      }
-    )
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }
@@ -63,15 +59,14 @@ export class Explore extends MissionImplementation {
 
       if (!rooms.length) return;
 
-      const bestMatch = rooms
-        .reduce((last, match) => {
-          // Ignore rooms we've already scanned for now
-          if (last === undefined) return match;
-          if ((match.scanned ?? 0) >= (last.scanned ?? 0)) {
-            return last;
-          }
-          return match;
-        })
+      const bestMatch = rooms.reduce((last, match) => {
+        // Ignore rooms we've already scanned for now
+        if (last === undefined) return match;
+        if ((match.scanned ?? 0) >= (last.scanned ?? 0)) {
+          return last;
+        }
+        return match;
+      });
       mission.data.exploreTarget = bestMatch?.name;
     }
 
@@ -79,7 +74,7 @@ export class Explore extends MissionImplementation {
     if (mission.data.exploreTarget) {
       mission.efficiency.working += 1;
       if (!Game.rooms[mission.data.exploreTarget]) {
-        if (moveTo(creep, {pos: new RoomPosition(25, 25, mission.data.exploreTarget), range: 20}) === BehaviorResult.FAILURE) {
+        if (moveTo(creep, { pos: new RoomPosition(25, 25, mission.data.exploreTarget), range: 20 }) !== OK) {
           // console.log('Failed to path', creep.pos, mission.data.exploreTarget);
           Memory.rooms[mission.data.exploreTarget] ??= { officesInRange: '', franchises: {} }; // Unable to path
           Memory.rooms[mission.data.exploreTarget].scanned = Game.time;
@@ -88,7 +83,11 @@ export class Explore extends MissionImplementation {
         }
       } else {
         const controller = Game.rooms[mission.data.exploreTarget].controller;
-        if (creep.pos.roomName === mission.data.exploreTarget && controller && controller.sign?.username !== 'LordGreywether') {
+        if (
+          creep.pos.roomName === mission.data.exploreTarget &&
+          controller &&
+          controller.sign?.username !== 'LordGreywether'
+        ) {
           // Room is visible, creep is in room
           // In room, sign controller
           if (signRoom(creep, mission.data.exploreTarget) === BehaviorResult.INPROGRESS) return;

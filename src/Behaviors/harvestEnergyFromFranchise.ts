@@ -1,9 +1,10 @@
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
+import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { posById } from 'Selectors/posById';
 import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
-import { moveTo } from './moveTo';
 
 export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, franchiseTarget: Id<Source>) => {
   const source = byId(franchiseTarget);
@@ -21,9 +22,13 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
       plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0) &&
     !plan.link.structure
   ) {
-    moveTo(creep, [{ pos: plan.container.pos, range: 0 }], { ignoreFranchises: true });
+    moveTo(
+      creep,
+      { pos: plan.container.pos, range: 0 },
+      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) }
+    );
   } else {
-    moveTo(creep, [{ pos: sourcePos, range: 1 }], { ignoreFranchises: true });
+    moveTo(creep, sourcePos, { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) });
   }
 
   return creep.harvest(source!) === OK;

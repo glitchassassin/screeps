@@ -1,15 +1,8 @@
-import { franchisePath } from 'Selectors/plannedTerritoryRoads';
+import { moveByPath } from 'screeps-cartographer';
 import { BehaviorResult } from './Behavior';
-import { moveTo } from './moveTo';
 
 export const followPathHomeFromSource = (creep: Creep, office: string, sourceId: Id<Source>) => {
-  const sourcePath = franchisePath(office, sourceId).slice().reverse();
-
   if (creep.pos.roomName === office) return BehaviorResult.SUCCESS;
-
-  return moveTo(
-    creep,
-    sourcePath.map(pos => ({ pos, range: 0 })),
-    { followPath: true }
-  );
+  moveByPath(creep, office + sourceId, { reverse: true });
+  return BehaviorResult.INPROGRESS;
 };

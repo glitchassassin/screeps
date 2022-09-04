@@ -1,6 +1,5 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
-import { moveTo } from 'Behaviors/moveTo';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
@@ -8,6 +7,7 @@ import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { estimateMissionInterval } from 'Missions/Selectors';
+import { moveTo } from 'screeps-cartographer';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';

@@ -1,11 +1,10 @@
-import { BehaviorResult } from 'Behaviors/Behavior';
-import { moveTo } from 'Behaviors/moveTo';
 import { signRoom } from 'Behaviors/signRoom';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission, missionExpired } from 'Missions/Selectors';
+import { moveTo } from 'screeps-cartographer';
 import { creepCost, minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { controllerPosition, sourceIds } from 'Selectors/roomCache';
@@ -103,7 +102,8 @@ export class Reserve extends MissionImplementation {
     }
 
     // Move to controller
-    if (moveTo(creep, { pos: controllerPos, range: 1 }) === BehaviorResult.SUCCESS) {
+    moveTo(creep, { pos: controllerPos, range: 1 });
+    if (creep.pos.inRangeTo(controllerPos, 1)) {
       // Reserve controller
       const controller = Game.rooms[mission.data.reserveTarget].controller;
       if (controller) {

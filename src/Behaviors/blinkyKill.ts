@@ -1,8 +1,8 @@
-import { getRangeTo } from "Selectors/Map/MapCoordinates";
-import { moveTo } from "./moveTo";
+import { moveTo } from 'screeps-cartographer';
+import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 
-export const blinkyKill = (creep: Creep, target?: Creep|Structure) => {
-  const kite = (target instanceof Creep && target.body.some(p => p.type === ATTACK));
+export const blinkyKill = (creep: Creep, target?: Creep | Structure) => {
+  const kite = target instanceof Creep && target.body.some(p => p.type === ATTACK);
   if (target) {
     if (kite && getRangeTo(creep.pos, target.pos) < 3) {
       moveTo(creep, { pos: target.pos, range: 3 }, { flee: true });
@@ -16,4 +16,4 @@ export const blinkyKill = (creep: Creep, target?: Creep|Structure) => {
     }
   }
   return false;
-}
+};

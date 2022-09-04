@@ -1,4 +1,6 @@
 import { fastfillerPositions } from 'Reports/fastfillerPositions';
+import { config } from 'screeps-cartographer';
+import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { outsidePerimeter } from 'Selectors/perimeter';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
@@ -13,6 +15,18 @@ import {
   posAtDirection,
   terrainCostAt
 } from './MapCoordinates';
+
+export const defaultRouteCallback = () => (room: string) => {
+  if (Memory.rooms[room]?.threatLevel?.[0] === ThreatLevel.OWNED) return Infinity; // avoid owned rooms
+  return;
+};
+
+export const defaultRoomCallback = (opts?: getCostMatrixOptions) => (room: string) => {
+  return getCostMatrix(room, false, opts);
+};
+
+config.DEFAULT_MOVE_OPTS.routeCallback = defaultRouteCallback();
+config.DEFAULT_MOVE_OPTS.roomCallback = defaultRoomCallback();
 
 interface getCostMatrixOptions {
   ignoreSourceKeepers?: boolean;

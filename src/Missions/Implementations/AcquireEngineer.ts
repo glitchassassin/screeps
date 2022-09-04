@@ -1,7 +1,6 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { engineerGetEnergy } from 'Behaviors/engineerGetEnergy';
 import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
-import { moveTo } from 'Behaviors/moveTo';
 import { setState, States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
@@ -9,6 +8,7 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
+import { moveTo } from 'screeps-cartographer';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -135,12 +135,15 @@ const engineerLogic = (creep: Creep, office: string, mission: AcquireEngineerMis
         const obstacle = plan.pos
           .lookFor(LOOK_STRUCTURES)
           .find(s => s.structureType !== STRUCTURE_CONTAINER && s.structureType !== STRUCTURE_ROAD);
-        if (obstacle && moveTo(creep, { pos: plan.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+        if (obstacle) {
+          moveTo(creep, { pos: plan.pos, range: 1 });
           creep.dismantle(obstacle);
         }
       }
 
-      if (moveTo(creep, { pos: plan.pos, range: 3 }) === BehaviorResult.SUCCESS) {
+      moveTo(creep, { pos: plan.pos, range: 3 });
+
+      if (creep.pos.inRangeTo(plan.pos, 3)) {
         if (plan.structure) {
           if (creep.repair(plan.structure) === OK) {
             return REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;

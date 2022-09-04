@@ -1,9 +1,8 @@
-import { BehaviorResult } from 'Behaviors/Behavior';
-import { moveTo } from 'Behaviors/moveTo';
 import { setState, States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { getLabs } from 'Selectors/getLabs';
 import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
 import { ingredientsNeededForLabOrder } from 'Selectors/ingredientsNeededForLabOrder';
@@ -99,10 +98,12 @@ export class Science extends MissionImplementation {
       if (creep.store.getUsedCapacity() === 0) {
         // Go to spawn and recycle
         const spawn = getPrimarySpawn(mission.office);
-        if (spawn && moveTo(creep, { pos: spawn.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+        if (spawn) {
+          moveTo(creep, { pos: spawn.pos, range: 1 });
           spawn.recycleCreep(creep);
         }
-      } else if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+      } else {
+        moveTo(creep, { pos: terminal.pos, range: 1 });
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           return; // Other resources deposited
@@ -114,18 +115,18 @@ export class Science extends MissionImplementation {
       if (creep.store.getUsedCapacity() === 0) {
         setState(States.WITHDRAW)(creep);
       }
-      if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-        const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
-        if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
-          return; // Other resources deposited
-        } else {
-          // Nothing further to deposit
-          setState(States.WITHDRAW)(creep);
-        }
+      moveTo(creep, { pos: terminal.pos, range: 1 });
+      const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
+      if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
+        return; // Other resources deposited
+      } else {
+        // Nothing further to deposit
+        setState(States.WITHDRAW)(creep);
       }
     }
     if (creep.memory.state === States.WITHDRAW) {
-      if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+      moveTo(creep, { pos: terminal.pos, range: 1 });
+      if (creep.pos.inRangeTo(terminal, 1)) {
         if (creep.store.getFreeCapacity() > 0) {
           for (const lab of boostLabsToFill(mission.office)) {
             let [resource, needed] = boostsNeededForLab(
@@ -155,9 +156,8 @@ export class Science extends MissionImplementation {
         setState(States.DEPOSIT)(creep);
         return;
       }
-      if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-        creep.withdraw(target.structure, resource);
-      }
+      moveTo(creep, { pos: target.pos, range: 1 });
+      creep.withdraw(target.structure, resource);
     }
     if (creep.memory.state === States.FILL_LABS) {
       const target = boostLabsToFill(mission.office).find(lab => {
@@ -174,9 +174,8 @@ export class Science extends MissionImplementation {
         setState(States.DEPOSIT)(creep);
         return;
       }
-      if (moveTo(creep, { pos: target.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-        creep.transfer(target.structure, resource, Math.min(amount, creep.store.getUsedCapacity(resource)));
-      }
+      moveTo(creep, { pos: target.pos, range: 1 });
+      creep.transfer(target.structure, resource, Math.min(amount, creep.store.getUsedCapacity(resource)));
     }
   }
 
@@ -197,10 +196,12 @@ export class Science extends MissionImplementation {
       if (creep.store.getUsedCapacity() === 0) {
         // Go to spawn and recycle
         const spawn = getPrimarySpawn(mission.office);
-        if (spawn && moveTo(creep, { pos: spawn.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+        if (spawn) {
+          moveTo(creep, { pos: spawn.pos, range: 1 });
           spawn.recycleCreep(creep);
         }
-      } else if (terminal && moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
+      } else if (terminal) {
+        moveTo(creep, { pos: terminal.pos, range: 1 });
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           return; // Other resources deposited
@@ -209,9 +210,9 @@ export class Science extends MissionImplementation {
     }
     if (creep.memory.state === States.DEPOSIT) {
       if (!terminal) return;
-      const result = moveTo(creep, { pos: terminal.pos, range: 1 });
+      moveTo(creep, { pos: terminal.pos, range: 1 });
       // console.log(creep.name, 'depositing', creep.pos, terminal.pos, result);
-      if (result === BehaviorResult.SUCCESS) {
+      if (creep.pos.inRangeTo(terminal, 1)) {
         const toDeposit = Object.keys(creep.store)[0] as ResourceConstant | undefined;
         if (toDeposit && creep.transfer(terminal, toDeposit) === OK) {
           if (order && toDeposit === order.output) {
@@ -259,29 +260,32 @@ export class Science extends MissionImplementation {
       ) {
         // Creep is already full of ingredients
         setState(States.FILL_LABS)(creep);
-      } else if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-        if (target1 > 0 && creep.withdraw(terminal, order.ingredient1, target1) === OK) {
-          return; // Ingredients withdrawn
-        } else if (target2 > 0 && creep.withdraw(terminal, order.ingredient2, target2) === OK) {
-          return; // Ingredients withdrawn
-        } else if (target1 > 0 || target2 > 0) {
-          // No ingredients available, recalculate lab orders
-          const orders = Memory.offices[mission.office].lab.orders;
-          const targetOrder = orders[orders.length - 1];
-          try {
-            Memory.offices[mission.office].lab.orders = getLabOrderDependencies(
-              targetOrder,
-              getAvailableResourcesFromTerminal(terminal)
-            ).concat(targetOrder);
-          } catch {
-            // No resources for this job
-            Memory.offices[mission.office].lab.orders = [];
+      } else {
+        moveTo(creep, { pos: terminal.pos, range: 1 });
+        if (creep.pos.inRangeTo(terminal, 1)) {
+          if (target1 > 0 && creep.withdraw(terminal, order.ingredient1, target1) === OK) {
+            return; // Ingredients withdrawn
+          } else if (target2 > 0 && creep.withdraw(terminal, order.ingredient2, target2) === OK) {
+            return; // Ingredients withdrawn
+          } else if (target1 > 0 || target2 > 0) {
+            // No ingredients available, recalculate lab orders
+            const orders = Memory.offices[mission.office].lab.orders;
+            const targetOrder = orders[orders.length - 1];
+            try {
+              Memory.offices[mission.office].lab.orders = getLabOrderDependencies(
+                targetOrder,
+                getAvailableResourcesFromTerminal(terminal)
+              ).concat(targetOrder);
+            } catch {
+              // No resources for this job
+              Memory.offices[mission.office].lab.orders = [];
+            }
+            // if (mission.office === 'W7S7') console.log('Recalculating order', JSON.stringify(Memory.offices[mission.office].lab.orders))
+            return;
+          } else {
+            // No ingredients needed, or no more available
+            setState(States.FILL_LABS)(creep);
           }
-          // if (mission.office === 'W7S7') console.log('Recalculating order', JSON.stringify(Memory.offices[mission.office].lab.orders))
-          return;
-        } else {
-          // No ingredients needed, or no more available
-          setState(States.FILL_LABS)(creep);
         }
       }
     }
@@ -301,23 +305,20 @@ export class Science extends MissionImplementation {
         (lab1?.store.getFreeCapacity(order.ingredient1) ?? 0) > 0 &&
         creep.store.getUsedCapacity(order.ingredient1) > 0
       ) {
-        if (moveTo(creep, { pos: lab1.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.transfer(lab1, order.ingredient1);
-        }
+        moveTo(creep, { pos: lab1.pos, range: 1 });
+        creep.transfer(lab1, order.ingredient1);
         return; // Ingredients deposited
       } else if (
         lab2 &&
         (lab2?.store.getFreeCapacity(order.ingredient2) ?? 0) > 0 &&
         creep.store.getUsedCapacity(order.ingredient2) > 0
       ) {
-        if (moveTo(creep, { pos: lab2.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.transfer(lab2, order.ingredient2);
-        }
+        moveTo(creep, { pos: lab2.pos, range: 1 });
+        creep.transfer(lab2, order.ingredient2);
         return; // Ingredients deposited
       } else if (nextOutputLab && creep.store.getFreeCapacity() > 0) {
-        if (moveTo(creep, { pos: nextOutputLab.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.withdraw(nextOutputLab, order.output);
-        }
+        moveTo(creep, { pos: nextOutputLab.pos, range: 1 });
+        creep.withdraw(nextOutputLab, order.output);
         return; // Getting available product
       } else {
         // No further ingredients or product to transfer, return to Storage
@@ -338,19 +339,16 @@ export class Science extends MissionImplementation {
       // if (mission.office === 'W6N8') console.log(mission.office, 'EMPTY_LABS', outputLabIngredient, lab1Ingredient, lab2Ingredient)
 
       if (nextOutputLab && outputLabIngredient && creep.store.getFreeCapacity() > 0) {
-        if (moveTo(creep, { pos: nextOutputLab.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.withdraw(nextOutputLab, outputLabIngredient);
-        }
+        moveTo(creep, { pos: nextOutputLab.pos, range: 1 });
+        creep.withdraw(nextOutputLab, outputLabIngredient);
         return; // Getting available product
       } else if (lab1 && lab1Ingredient && lab1Ingredient !== order?.ingredient1 && creep.store.getFreeCapacity() > 0) {
-        if (moveTo(creep, { pos: lab1.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.withdraw(lab1, lab1Ingredient);
-        }
+        moveTo(creep, { pos: lab1.pos, range: 1 });
+        creep.withdraw(lab1, lab1Ingredient);
         return; // Getting available product
       } else if (lab2 && lab2Ingredient && lab2Ingredient !== order?.ingredient2 && creep.store.getFreeCapacity() > 0) {
-        if (moveTo(creep, { pos: lab2.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.withdraw(lab2, lab2Ingredient);
-        }
+        moveTo(creep, { pos: lab2.pos, range: 1 });
+        creep.withdraw(lab2, lab2Ingredient);
         return; // Getting available product
       } else {
         // No further ingredients or product to transfer, return to Storage

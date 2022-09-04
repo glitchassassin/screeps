@@ -1,9 +1,9 @@
 import { blinkyKill } from 'Behaviors/blinkyKill';
 import { guardKill } from 'Behaviors/guardKill';
-import { moveTo } from 'Behaviors/moveTo';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { findClosestHostileCreepByRange, findInvaderStructures } from 'Selectors/findHostileCreeps';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';

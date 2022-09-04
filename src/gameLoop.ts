@@ -5,6 +5,7 @@ import { spawnFromQueues } from 'Minions/spawnQueues';
 import { runMissionControl } from 'Missions/Control';
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from 'RoomPlanner/planRooms';
+import { preTick, reconcileTraffic } from 'screeps-cartographer';
 import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl, displaySpawn } from 'Selectors/displayBucket';
 import { runStructures } from 'Structures';
@@ -14,6 +15,7 @@ import { initializeSpawn } from 'utils/initializeSpawns';
 import { purgeDeadCreeps } from 'utils/purgeDeadCreeps';
 
 export const gameLoop = () => {
+  preTick();
   displayBucket();
   displayGcl();
   displaySpawn();
@@ -29,6 +31,9 @@ export const gameLoop = () => {
   // logCpuStart()
   runMissionControl();
   debugCPU('Missions', true);
+
+  reconcileTraffic();
+  debugCPU('Traffic Management', true);
 
   spawnFromQueues();
   debugCPU('Spawns', true);

@@ -1,10 +1,10 @@
 import { findBestDepositTarget } from 'Behaviors/Logistics';
-import { moveTo } from 'Behaviors/moveTo';
 import { recycle } from 'Behaviors/recycle';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';

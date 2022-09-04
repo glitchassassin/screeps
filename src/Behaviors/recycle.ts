@@ -1,7 +1,6 @@
 import { Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { roomPlans } from 'Selectors/roomPlans';
-import { BehaviorResult } from './Behavior';
-import { moveTo } from './moveTo';
 import { States } from './states';
 
 export const recycle = (mission: Mission<MissionType>, creep: Creep) => {
@@ -12,8 +11,7 @@ export const recycle = (mission: Mission<MissionType>, creep: Creep) => {
     creep.suicide();
     return States.RECYCLE;
   }
-  if (moveTo(creep, { pos: recycleTarget, range: 0 }) === BehaviorResult.SUCCESS) {
-    recycleSpawn.recycleCreep(creep);
-  }
+  moveTo(creep, { pos: recycleTarget, range: 0 });
+  recycleSpawn.recycleCreep(creep);
   return States.RECYCLE;
 };

@@ -1,8 +1,9 @@
-import { moveTo } from 'Behaviors/moveTo';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
+import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -64,7 +65,7 @@ export class HQLogistics extends MissionImplementation {
 
     const pos = getHeadquarterLogisticsLocation(mission.office);
     if (!pos) return;
-    moveTo(creep, pos, { ignoreHQLogistics: true });
+    moveTo(creep, pos, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
 
     // Check HQ state
     const hq = roomPlans(mission.office)?.headquarters;

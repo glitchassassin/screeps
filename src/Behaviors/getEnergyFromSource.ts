@@ -1,10 +1,10 @@
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { franchiseIsFull } from 'Selectors/Franchises/franchiseIsFull';
 import { posById } from 'Selectors/posById';
 import { sourceIds } from 'Selectors/roomCache';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
-import { moveTo } from './moveTo';
 
 declare global {
   interface CreepMemory {
@@ -48,14 +48,17 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, office: st
   const source = byId(creep.memory.franchiseTarget);
   const sourcePos = source?.pos ?? posById(creep.memory.franchiseTarget);
 
-  if (sourcePos && creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, sourcePos, { color: '#ff00ff' });
+  if (sourcePos) {
+    if (creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, sourcePos, { color: '#ff00ff' });
 
-  if (sourcePos && moveTo(creep, { pos: sourcePos, range: 1 }) === BehaviorResult.SUCCESS) {
-    if (creep.harvest(source!) === OK) {
-      return BehaviorResult.INPROGRESS;
-    } else {
-      delete creep.memory.franchiseTarget;
-      return BehaviorResult.FAILURE;
+    moveTo(creep, { pos: sourcePos, range: 1 });
+    if (creep.pos.inRangeTo(sourcePos, 1)) {
+      if (creep.harvest(source!) === OK) {
+        return BehaviorResult.INPROGRESS;
+      } else {
+        delete creep.memory.franchiseTarget;
+        return BehaviorResult.FAILURE;
+      }
     }
   }
 

@@ -1,27 +1,27 @@
-import { BehaviorResult } from "Behaviors/Behavior";
-import { getResourcesFromMineContainer } from "Behaviors/getResourcesFromMineContainer";
-import { moveTo } from "Behaviors/moveTo";
-import { setState, States } from "Behaviors/states";
-import { MinionBuilders, MinionTypes } from "Minions/minionTypes";
-import { scheduleSpawn } from "Minions/spawnQueues";
-import { createMission, Mission, MissionType } from "Missions/Mission";
-import { minionCost } from "Selectors/minionCostPerTick";
-import { roomPlans } from "Selectors/roomPlans";
-import { spawnEnergyAvailable } from "Selectors/spawnEnergyAvailable";
-import { MissionImplementation } from "./MissionImplementation";
+import { BehaviorResult } from 'Behaviors/Behavior';
+import { getResourcesFromMineContainer } from 'Behaviors/getResourcesFromMineContainer';
+import { setState, States } from 'Behaviors/states';
+import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { moveTo } from 'screeps-cartographer';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { roomPlans } from 'Selectors/roomPlans';
+import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { MissionImplementation } from './MissionImplementation';
 
 export interface MineHaulerMission extends Mission<MissionType.MINE_HAULER> {
   data: {
-    mineral: Id<Mineral>
-  }
+    mineral: Id<Mineral>;
+  };
 }
 
 export function createMineHaulerMission(office: string, mineral: Id<Mineral>): MineHaulerMission {
-  const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office))
+  const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body),
-  }
+    energy: minionCost(body)
+  };
 
   return createMission({
     office,
@@ -30,8 +30,8 @@ export function createMineHaulerMission(office: string, mineral: Id<Mineral>): M
     data: {
       mineral
     },
-    estimate,
-  })
+    estimate
+  });
 }
 
 export class MineHauler extends MissionImplementation {
@@ -39,17 +39,13 @@ export class MineHauler extends MissionImplementation {
     if (mission.creepNames.length) return; // only need to spawn one minion
 
     // Set name
-    const name = `ACCOUNTANT-${mission.office}-${mission.id}`
+    const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body,
-      }
-    )
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }
@@ -84,11 +80,10 @@ export class MineHauler extends MissionImplementation {
       if (!terminal) return;
 
       if (terminal.structure && (terminal.structure as StructureTerminal).store.getFreeCapacity() > 100000) {
-        if (moveTo(creep, { pos: terminal.pos, range: 1 }) === BehaviorResult.SUCCESS) {
-          creep.transfer(terminal.structure, res);
-        }
+        moveTo(creep, { pos: terminal.pos, range: 1 });
+        creep.transfer(terminal.structure, res);
       } else {
-        creep.drop(res)
+        creep.drop(res);
       } //else if (storage.structure) {
       //     if (moveTo(storage.pos, 1)(creep) === BehaviorResult.SUCCESS) {
       //         creep.transfer(storage.structure, res);
