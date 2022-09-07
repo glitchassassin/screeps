@@ -17,6 +17,7 @@ export const facilitiesEfficiency = memoizeByTick(
       const franchises = franchisesThatNeedRoadWork(office);
       if (!franchises.length) return 0.5;
       range = franchises.reduce((sum, f) => sum + (getFranchiseDistance(office, f) ?? 0), 0) / franchises.length;
+      range /= 2;
       constructionToDo = true;
     }
     let carryParts = 0;

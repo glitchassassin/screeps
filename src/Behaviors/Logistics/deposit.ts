@@ -115,7 +115,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
   ) {
     followPathHomeFromSource(creep, mission.office, mission.data.withdrawTarget);
   } else {
-    moveTo(creep, { pos: target.pos, range: 1 });
+    moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
     if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
       const amount = Math.min(
         target.store.getFreeCapacity(RESOURCE_ENERGY),

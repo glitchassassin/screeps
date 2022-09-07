@@ -11,6 +11,7 @@ import {
   pendingMissions,
   submitMission
 } from 'Missions/Selectors';
+import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
@@ -63,9 +64,7 @@ export default {
         const canReserve = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable).length > 0;
         const time = Math.min(mission.data.distance * 2, assignedCreep(mission)?.ticksToLive ?? CREEP_LIFE_TIME);
         const harvestRate =
-          !remote || reserved
-            ? SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME
-            : SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
+          (byId(mission.data.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
         const capacity = time * Math.min(harvestRate, mission.data.harvestRate);
         // console.log(room, remote, canReserve, reserved, harvestRate, mission.data.harvestRate);
         if (remote) {

@@ -3,8 +3,8 @@ import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { memoizeByTick } from 'utils/memoizeFunction';
+import { byId } from './byId';
 import { getPrimarySpawn } from './getPrimarySpawn';
-import { posById } from './posById';
 import { roomPlans } from './roomPlans';
 
 export const storageEnergyAvailable = (roomName: string) => {
@@ -73,27 +73,28 @@ export const energyInTransit = memoizeByTick(
 export const energyInProduction = memoizeByTick(
   office => office,
   (office: string, timeframe: number) => {
-    let harvestCapacity = 0;
+    let harvestCapacities: Record<Id<Source>, number> = {};
     let haulCapacity = 0;
     for (const mission of activeMissions(office)) {
-      if (
-        isMission(MissionType.LOGISTICS)(mission) &&
-        (assignedCreep(mission)?.ticksToLive ?? CREEP_LIFE_TIME) > timeframe
-      ) {
+      if (isMission(MissionType.LOGISTICS)(mission) && (assignedCreep(mission)?.ticksToLive ?? 0) > timeframe) {
         haulCapacity += mission.data.capacity ?? 0;
       }
-      if (isMission(MissionType.HARVEST)(mission) && mission.data.distance && mission.data.harvestRate) {
-        const room = posById(mission.data.source)?.roomName;
-        const remote = mission.office !== room;
-        const reserved = Game.rooms[room ?? '']?.controller?.reservation?.username === 'LordGreywether';
+      if (
+        isMission(MissionType.HARVEST)(mission) &&
+        mission.data.arrived &&
+        mission.data.distance &&
+        mission.data.harvestRate
+      ) {
         const time = Math.min(timeframe, assignedCreep(mission)?.ticksToLive ?? CREEP_LIFE_TIME);
         const harvestRate =
-          !remote || reserved
-            ? SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME
-            : SOURCE_ENERGY_NEUTRAL_CAPACITY / ENERGY_REGEN_TIME;
-        harvestCapacity += time * Math.min(harvestRate, mission.data.harvestRate);
+          (byId(mission.data.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
+        harvestCapacities[mission.data.source] = Math.min(
+          harvestRate * time,
+          (harvestCapacities[mission.data.source] ?? 0) + mission.data.harvestRate * time
+        );
       }
     }
+    const harvestCapacity = Object.values(harvestCapacities).reduce((a, b) => a + b, 0);
     return Math.min(harvestCapacity, haulCapacity);
   }
 );

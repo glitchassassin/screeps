@@ -22,13 +22,17 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
       plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0) &&
     !plan.link.structure
   ) {
+    creep.room.visual.line(creep.pos, plan.container.pos, { color: 'cyan' });
     moveTo(
       creep,
       { pos: plan.container.pos, range: 0 },
-      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) }
+      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }), visualizePathStyle: { stroke: 'cyan' } }
     );
   } else {
-    moveTo(creep, sourcePos, { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) });
+    moveTo(creep, sourcePos, {
+      roomCallback: defaultRoomCallback({ ignoreFranchises: true }),
+      visualizePathStyle: { stroke: 'magenta' }
+    });
   }
 
   return creep.harvest(source!) === OK;

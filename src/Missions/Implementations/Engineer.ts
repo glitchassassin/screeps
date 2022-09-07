@@ -12,8 +12,9 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { franchiseThatNeedsEngineers } from 'Selectors/Franchises/franchiseThatNeedsEngineers';
+import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';
-import { nextFranchiseRoadToBuild } from 'Selectors/plannedTerritoryRoads';
+import { franchiseRoadsToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -85,6 +86,13 @@ export class Engineer extends MissionImplementation {
     // Adjust estimate, if needed
     const lifetime = Math.min(estimateMissionInterval(mission.office), creep.ticksToLive ?? 0);
     const workParts = creep.body.filter(p => p.type === WORK).length;
+    console.log(
+      creep.name,
+      facilitiesEfficiency(
+        mission.office,
+        creep.body.map(p => p.type)
+      )
+    );
     mission.estimate.energy =
       mission.actual.energy +
       lifetime *
@@ -104,7 +112,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
     {
       [States.FIND_WORK]: (mission, creep) => {
         delete mission.data.facilitiesTarget;
-        const nextStructure = facilitiesWorkToDo(mission.office)[0];
+        const nextStructure = getClosestByRange(creep.pos, facilitiesWorkToDo(mission.office));
         if (nextStructure) {
           mission.data.facilitiesTarget = nextStructure.serialize();
           delete mission.data.franchise;
@@ -129,7 +137,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         if (!mission.data.franchise) return States.GET_ENERGY; // go upgrade instead
 
         // Pick the next section of road to complete
-        const road = nextFranchiseRoadToBuild(mission.office, mission.data.franchise);
+        const road = getClosestByRange(creep.pos, franchiseRoadsToBuild(mission.office, mission.data.franchise));
         if (road) {
           mission.data.facilitiesTarget = road.serialize();
           return States.GET_ENERGY;
@@ -198,7 +206,8 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
             }
             // Shove creeps out of the way if needed
             if ((OBSTACLE_OBJECT_TYPES as string[]).includes(plan.structureType)) {
-              plan.pos.lookFor(LOOK_CREEPS)[0]?.giveWay();
+              const fleeCreep = plan.pos.lookFor(LOOK_CREEPS)[0];
+              if (fleeCreep) moveTo(fleeCreep, { pos: plan.pos, range: 2 }, { flee: true });
             }
             if (plan.constructionSite) {
               const result = creep.build(plan.constructionSite);

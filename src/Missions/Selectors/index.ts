@@ -47,7 +47,7 @@ export function estimateMissionInterval(office: string) {
   if (roomPlans(office)?.headquarters?.storage.structure) {
     return CREEP_LIFE_TIME;
   } else {
-    return furthestActiveFranchiseRoundTripDistance(office) * 1.2; // This worked best in my tests to balance income with expenses
+    return Math.max(100, furthestActiveFranchiseRoundTripDistance(office) * 1.2); // This worked best in my tests to balance income with expenses
   }
 }
 

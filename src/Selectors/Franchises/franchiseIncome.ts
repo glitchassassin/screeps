@@ -1,15 +1,11 @@
 import { MissionType } from 'Missions/Mission';
 import { activeMissions, isMission } from 'Missions/Selectors';
-import { posById } from '../posById';
+import { byId } from 'Selectors/byId';
 
 export const franchiseIncome = (office: string) => {
   let income = new Map<Id<Source>, number>();
   for (const mission of activeMissions(office).filter(isMission(MissionType.HARVEST))) {
-    const sourcePos = posById(mission.data.source);
-    const ownedOrReserved =
-      Memory.rooms[sourcePos?.roomName ?? '']?.reserver === 'LordGreywether' ||
-      Memory.rooms[sourcePos?.roomName ?? '']?.owner === 'LordGreywether';
-    const maxIncome = (ownedOrReserved ? SOURCE_ENERGY_CAPACITY : SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
+    const maxIncome = (byId(mission.data.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
     income.set(
       mission.data.source,
       Math.min(maxIncome, (income.get(mission.data.source) ?? 0) + mission.data.harvestRate)

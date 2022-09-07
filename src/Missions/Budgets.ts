@@ -34,7 +34,7 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     } else if (mission.type !== MissionType.UPGRADE) {
       return {
         cpu: 2000,
-        energy: 500
+        energy: 300
       };
     } else {
       return {

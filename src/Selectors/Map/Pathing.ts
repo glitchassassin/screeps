@@ -4,6 +4,7 @@ import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { outsidePerimeter } from 'Selectors/perimeter';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
+import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { mineralPosition, sourcePositions } from 'Selectors/roomCache';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
 import { memoize, memoizeByTick } from 'utils/memoizeFunction';
@@ -34,6 +35,7 @@ interface getCostMatrixOptions {
   ignoreStructures?: boolean;
   stayInsidePerimeter?: boolean;
   terrain?: boolean;
+  territoryPlannedRoadsCost?: number;
   roomPlan?: boolean;
   roomPlanAllStructures?: boolean;
   ignoreFastfiller?: boolean;
@@ -62,6 +64,16 @@ export const getCostMatrix = memoizeByTick(
       for (const s of plannedOfficeStructuresByRcl(roomName, 8)) {
         if ((OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType)) {
           costs.set(s.pos.x, s.pos.y, 255);
+        }
+      }
+    }
+
+    if (opts?.territoryPlannedRoadsCost) {
+      for (const office in Memory.rooms[roomName]?.franchises ?? {}) {
+        for (const s of plannedTerritoryRoads(office)) {
+          if (s.pos.roomName === roomName) {
+            costs.set(s.pos.x, s.pos.y, opts.territoryPlannedRoadsCost);
+          }
         }
       }
     }

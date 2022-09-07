@@ -79,13 +79,15 @@ export class Upgrade extends MissionImplementation {
               return States.WORKING;
             }
           } else if (container) {
-            moveTo(creep, { pos: container.pos, range: 1 });
-            if (creep.withdraw(container, RESOURCE_ENERGY) === OK) {
-              container.store[RESOURCE_ENERGY] = Math.max(
-                0,
-                container.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity()
-              );
-              return States.WORKING;
+            if (container.store[RESOURCE_ENERGY]) {
+              moveTo(creep, { pos: container.pos, range: 1 });
+              if (creep.withdraw(container, RESOURCE_ENERGY) === OK) {
+                container.store[RESOURCE_ENERGY] = Math.max(
+                  0,
+                  container.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity()
+                );
+                return States.WORKING;
+              }
             }
           } else {
             if (getEnergyFromStorage(creep, mission.office) === BehaviorResult.SUCCESS) {

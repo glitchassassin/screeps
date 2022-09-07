@@ -140,7 +140,10 @@ export class Harvest extends MissionImplementation {
       }
     }
 
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.5) {
+    if (
+      creep.store.getCapacity(RESOURCE_ENERGY) &&
+      creep.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) * 0.5
+    ) {
       if (mission.office === franchisePos?.roomName) {
         // Local franchise
         const plan = getFranchisePlanBySourceId(mission.data.source);

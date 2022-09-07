@@ -10,7 +10,6 @@ import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl, displaySpawn } from 'Selectors/displayBucket';
 import { runStructures } from 'Structures';
 import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
-import { clearNudges } from 'utils/excuseMe';
 import { initializeSpawn } from 'utils/initializeSpawns';
 import { purgeDeadCreeps } from 'utils/purgeDeadCreeps';
 
@@ -21,7 +20,6 @@ export const gameLoop = () => {
   displaySpawn();
   resetDebugCPU(true);
   purgeDeadCreeps();
-  clearNudges();
   debugCPU('gameLoop setup', true);
   // Cache data where needed
   scanRooms();
@@ -32,11 +30,11 @@ export const gameLoop = () => {
   runMissionControl();
   debugCPU('Missions', true);
 
-  reconcileTraffic();
-  debugCPU('Traffic Management', true);
-
   spawnFromQueues();
   debugCPU('Spawns', true);
+
+  reconcileTraffic({ visualize: false });
+  debugCPU('Traffic Management', true);
 
   runStructures();
   debugCPU('Structures', true);

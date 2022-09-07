@@ -158,7 +158,8 @@ const engineerLogic = (creep: Creep, office: string, mission: AcquireEngineerMis
           }
           // Shove creeps out of the way if needed
           if ((OBSTACLE_OBJECT_TYPES as string[]).includes(plan.structureType)) {
-            plan.pos.lookFor(LOOK_CREEPS)[0]?.giveWay();
+            const fleeCreep = plan.pos.lookFor(LOOK_CREEPS)[0];
+            if (fleeCreep) moveTo(fleeCreep, { pos: plan.pos, range: 2 }, { flee: true });
           }
           if (plan.constructionSite) {
             if (creep.build(plan.constructionSite) === OK) {

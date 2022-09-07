@@ -81,7 +81,30 @@ export const MinionBuilders = {
     }
   ),
   [MinionTypes.ENGINEER]: (energy: number, roads = false, near = false) => {
-    return engineerBuilder(roads, near).find(b => minionCost(b) <= energy) ?? [];
+    if (near) {
+      if (roads) {
+        return buildFromSegment(energy, [WORK, MOVE, CARRY, CARRY]);
+      } else {
+        return buildFromSegment(energy, [WORK, MOVE, MOVE, CARRY, CARRY]);
+      }
+    } else {
+      if (roads) {
+        if (energy <= 300) return buildFromSegment(energy, [WORK, MOVE, CARRY, CARRY]);
+        return buildFromSegment(energy, [WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]);
+      } else {
+        if (energy <= 300) return buildFromSegment(energy, [WORK, MOVE, MOVE, CARRY, CARRY]);
+        if (energy <= 550) return buildFromSegment(energy, [WORK, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY]);
+        if (energy <= 1800)
+          return buildFromSegment(energy, [WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]);
+        // prettier-ignore
+        return [
+          WORK, WORK, WORK,
+          MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+          CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+          CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY
+        ]
+      }
+    }
   },
   [MinionTypes.FOREMAN]: (energy: number) => {
     if (energy < 550) {

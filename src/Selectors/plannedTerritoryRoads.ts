@@ -15,6 +15,12 @@ export function nextFranchiseRoadToBuild(office: string, source: Id<Source>) {
   );
 }
 
+export function franchiseRoadsToBuild(office: string, source: Id<Source>) {
+  return plannedFranchiseRoads(office, source).filter(
+    r => !r.survey() && r.lastSurveyed && !isReservedByEnemy(r.pos.roomName) && !isOwnedByEnemy(r.pos.roomName)
+  );
+}
+
 export function plannedFranchiseRoads(office: string, source: Id<Source>) {
   const key = office + source;
   const structures =

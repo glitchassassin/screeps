@@ -35,15 +35,17 @@ export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MO
       return States.FIND_WITHDRAW;
     }
   } else {
-    const result = getEnergyFromFranchise(creep, mission.office, mission.data.withdrawTarget as Id<Source>);
-    if (result === BehaviorResult.SUCCESS) {
-      return States.WITHDRAW;
-    } else if (franchiseEnergyAvailable(mission.data.withdrawTarget as Id<Source>) <= 50) {
+    if (franchiseEnergyAvailable(mission.data.withdrawTarget as Id<Source>) <= 50) {
       console.log(creep.name, 'reassigned withdraw target', creep.pos.roomName, mission.office);
       return States.FIND_WITHDRAW;
+    } else {
+      const result = getEnergyFromFranchise(creep, mission.office, mission.data.withdrawTarget as Id<Source>);
+      if (result === BehaviorResult.SUCCESS) {
+        return States.WITHDRAW;
+      }
+      // Record cost
+      HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
     }
-    // Record cost
-    HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
   }
 
   const nearby = lookNear(creep.pos);
