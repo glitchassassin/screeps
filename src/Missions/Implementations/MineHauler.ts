@@ -5,7 +5,6 @@ import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -20,7 +19,7 @@ export function createMineHaulerMission(office: string, mineral: Id<Mineral>): M
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

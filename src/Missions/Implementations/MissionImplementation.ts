@@ -1,5 +1,4 @@
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
-import { minionCost } from 'Selectors/minionCostPerTick';
 
 export abstract class MissionImplementation {
   static spawn(mission: Mission<MissionType>) {
@@ -19,11 +18,6 @@ export abstract class MissionImplementation {
 
     if (mission.status === MissionStatus.SCHEDULED || mission.status === MissionStatus.STARTING) {
       mission.status = MissionStatus.RUNNING;
-      // Record spawning expenses
-      mission.actual.cpu += 0.2; // Spawning intent
-      mission.actual.energy += minionCost(creep.body.map(p => p.type));
-      // Adjust estimate with actual spawning cost, if needed
-      mission.estimate.energy += Math.max(0, mission.actual.energy - mission.estimate.energy);
       this.onStart(mission, creep);
     }
 

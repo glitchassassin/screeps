@@ -4,7 +4,6 @@ import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { rcl } from 'Selectors/rcl';
 import { getSpawns } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -26,7 +25,7 @@ export function createRefillMission(office: string, position: RoomPosition): Ref
   );
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({
@@ -66,7 +65,6 @@ export class Refill extends MissionImplementation {
         name,
         body
       },
-      undefined,
       {
         spawn: preferredSpawn?.id,
         directions: preferredDirections

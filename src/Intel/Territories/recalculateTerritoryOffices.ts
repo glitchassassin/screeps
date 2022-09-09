@@ -17,7 +17,7 @@ export function recalculateTerritoryOffices(room: string) {
     })
     .sort();
   const key = officesInRange.join('_');
-  if (Memory.rooms[room].officesInRange !== key) {
+  if (roomPlans(room) && Memory.rooms[room].officesInRange !== key) {
     console.log('Offices in range of', room, 'have changed, recalculating paths');
     Memory.rooms[room].officesInRange = key;
     // Offices in range of this room have changed; recalculate paths, if needed

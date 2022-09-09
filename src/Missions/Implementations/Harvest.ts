@@ -9,7 +9,7 @@ import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
-import { creepCost, minionCost } from 'Selectors/minionCostPerTick';
+import { creepCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
@@ -29,7 +29,7 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
   const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   // Make sure that if room plans aren't finished we still prioritize the closest source
@@ -82,15 +82,10 @@ export class Harvest extends MissionImplementation {
     const name = `HARVEST-${mission.office}-${mission.id}`;
     const body = MinionBuilders[MinionTypes.SALESMAN](energy, link, remote);
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body
-      },
-      mission.startTime
-    );
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }
@@ -201,6 +196,7 @@ export class Harvest extends MissionImplementation {
         if (plan && Game.rooms[plan.container.pos.roomName] && rcl(mission.office) >= 3) {
           // Try to build or repair container
           if (!plan.container.structure) {
+            mission.data.harvestRate = 0;
             if (!plan.container.constructionSite) {
               const result = plan.container.pos.createConstructionSite(plan.container.structureType);
               console.log('creating construction site', plan.container.pos, result);
@@ -219,6 +215,8 @@ export class Harvest extends MissionImplementation {
               LogisticsLedger.record(mission.office, 'deposit', amount);
               return;
             }
+          } else {
+            mission.data.harvestRate = creep.body.filter(p => p.type === WORK).length * HARVEST_POWER;
           }
         }
         if (

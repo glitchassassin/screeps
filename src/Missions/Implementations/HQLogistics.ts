@@ -4,7 +4,6 @@ import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -18,7 +17,7 @@ export function createHQLogisticsMission(office: string, startTime?: number): HQ
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({
@@ -44,15 +43,10 @@ export class HQLogistics extends MissionImplementation {
     // Set name
     const name = `CLERK-${mission.office}-${mission.id}`;
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body
-      },
-      mission.startTime
-    );
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }

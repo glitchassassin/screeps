@@ -33,10 +33,15 @@ export default () => {
       let sourcePos = posById(franchise.source);
       Game.map.visual.text(franchiseEnergyAvailable(franchise.source).toFixed(0), sourcePos!, { fontSize: 5 });
       let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
-      let estimatedCapacity =
+      let harvestRate = Math.min(
+        (byId(franchise.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME,
         activeMissionsBySource[franchise.source]
-          ?.map(mission => (mission.data.distance ?? 50) * 2 * Math.min(10, mission.data.harvestRate))
-          .reduce((a, b) => a + b) ?? 0;
+          ?.filter(mission => mission.data.arrived)
+          .map(mission => mission.data.harvestRate)
+          .reduce((a, b) => a + b, 0) ?? 0
+      );
+      let estimatedCapacity = harvestRate * franchise.distance * 2;
+
       let disabled = !franchiseActive(office, franchise.source);
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
@@ -54,7 +59,8 @@ export default () => {
       totals.capacity += estimatedCapacity;
 
       return [
-        `${office}:${sourcePos}${disabled ? '' : ' ✓'}`,
+        `${sourcePos}${disabled ? '' : ' ✓'}`,
+        franchise.distance,
         assigned.toFixed(0),
         estimatedCapacity.toFixed(0),
         byId(franchise.source)?.energy.toFixed(0) ?? '--',
@@ -63,8 +69,9 @@ export default () => {
         `${perTick.toFixed(2)}${isValid ? '' : '?'} (${perTickAverage.toFixed(2)})`
       ];
     });
-    data.push(['--', '--', '--', '--', '--', '--', '--']);
+    data.push(['--', '--', '--', '--', '--', '--', '--', '--']);
     data.push([
+      '',
       '',
       '',
       `${totals.capacity.toFixed(0)}/${actualLogisticsCapacity.toFixed(0)}`,
@@ -83,7 +90,16 @@ export default () => {
           widget: Rectangle({
             data: Table({
               config: {
-                headers: ['Franchise', 'Assigned', 'Estimated Capacity', 'Energy', 'Harvested', 'Hauling', 'Value']
+                headers: [
+                  'Franchise',
+                  'Distance',
+                  'Assigned',
+                  'Estimated Capacity',
+                  'Energy',
+                  'Harvested',
+                  'Hauling',
+                  'Value'
+                ]
               },
               data
             })

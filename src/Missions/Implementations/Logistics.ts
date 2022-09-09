@@ -11,7 +11,6 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { byId } from 'Selectors/byId';
 import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
@@ -36,7 +35,7 @@ export function createLogisticsMission(office: string, priority = 11): Logistics
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.8,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({
@@ -72,7 +71,6 @@ export class Logistics extends MissionImplementation {
 
     mission.data.capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
     mission.data.repair = repair;
-    mission.estimate.energy = minionCost(body);
 
     scheduleSpawn(mission.office, mission.priority, {
       name,

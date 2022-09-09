@@ -57,7 +57,7 @@ export default {
         actualCapacity += mission.data.capacity ?? 0;
       }
       if (isMission(MissionType.HARVEST)(mission)) {
-        if (!mission.data.distance || !mission.data.harvestRate) continue;
+        if (!mission.data.distance || !mission.data.harvestRate || !mission.data.arrived) continue;
         const room = posById(mission.data.source)?.roomName;
         const remote = mission.office !== room;
         const reserved = Game.rooms[room ?? '']?.controller?.reservation?.username === 'LordGreywether';

@@ -116,8 +116,9 @@ function allocateMissions() {
   // Calculate already-allocated resources
   for (const office in Memory.offices) {
     // Should have no more STARTING missions than active spawns
+    const availableSpawns = getSpawns(office).filter(s => !s.spawning).length;
     let startingMissions = activeMissions(office).filter(isStatus(MissionStatus.STARTING)).length;
-    if (startingMissions >= getSpawns(office).length) continue;
+    if (startingMissions >= availableSpawns) continue;
 
     const hasStorage = Boolean(roomPlans(office)?.headquarters?.storage.structure);
     let remainingCpu = Math.max(
@@ -127,31 +128,27 @@ function allocateMissions() {
         missionCpuAvailable(office)
       )
     );
-    let remainingEnergy = Math.max(
-      0,
-      activeMissions(office).reduce(
-        (remaining, mission) => (remaining -= Math.max(0, mission.estimate.energy - mission.actual.energy)),
-        missionEnergyAvailable(office)
-      )
+    let remainingEnergy = activeMissions(office).reduce(
+      (remaining, mission) => (remaining -= Math.max(0, mission.estimate.energy - mission.actual.energy)),
+      missionEnergyAvailable(office)
     );
     const priorities = [...new Set(Memory.offices[office].pendingMissions.map(o => o.priority))].sort((a, b) => b - a);
 
     // loop through priorities, highest to lowest
     for (const priority of priorities) {
-      if (startingMissions > getSpawns(office).length) break;
+      if (startingMissions > availableSpawns) break;
 
       const missions = Memory.offices[office].pendingMissions.filter(o => o.priority === priority);
-      const scheduledStartWindow = hasStorage ? Game.time + CREEP_SPAWN_TIME * 100 : Game.time;
       const sortedMissions = [
-        ...missions.filter(o => o.startTime && o.startTime <= scheduledStartWindow),
+        ...missions.filter(o => o.startTime && o.startTime <= Game.time),
         ...missions.filter(o => o.startTime === undefined)
       ];
 
       let startFailures = '';
       // Handles scheduled missions first
       while (sortedMissions.length) {
-        if (startingMissions > getSpawns(office).length) break;
-        if (remainingCpu < 0 || remainingEnergy < 0) break;
+        if (startingMissions > availableSpawns) break;
+        if (remainingCpu < 0) break;
         const mission = sortedMissions.shift();
         if (!mission) break;
         const adjustedBudget = getBudgetAdjustment(mission);
@@ -175,6 +172,7 @@ function allocateMissions() {
         // Mission can start
         Memory.offices[office].pendingMissions = Memory.offices[office].pendingMissions.filter(m => m !== mission);
         Memory.offices[office].activeMissions.push(mission);
+
         startingMissions += 1;
         // Update mission status and remaining budgets
         mission.status =

@@ -6,7 +6,6 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -23,7 +22,7 @@ export function createMineForemanMission(office: string, mineral: Id<Mineral>): 
   const body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

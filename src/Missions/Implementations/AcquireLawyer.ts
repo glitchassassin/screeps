@@ -4,7 +4,6 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionStatus, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -21,7 +20,7 @@ export function createAcquireLawyerMission(office: string, targetOffice: string)
 
   const estimate = {
     cpu: CREEP_CLAIM_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

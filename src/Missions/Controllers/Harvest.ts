@@ -15,7 +15,6 @@ import {
   submitMission
 } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
-import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { adjacentWalkablePositions } from 'Selectors/Map/MapCoordinates';
 import { posById } from 'Selectors/posById';
@@ -38,8 +37,10 @@ export default {
 
     const shouldReserve = MinionBuilders[MinionTypes.MARKETER](Game.rooms[office].energyCapacityAvailable).length > 0;
 
+    const roomsToReserve = new Set<string>();
     const activeMissionsBySource = activeMissions(office).reduce((missions, mission) => {
       if (isMission(MissionType.HARVEST)(mission) && !missionExpired(mission)) {
+        roomsToReserve.add(posById(mission.data.source)?.roomName ?? '');
         missions[mission.data.source] ??= [];
         missions[mission.data.source].push(mission);
       }
@@ -59,15 +60,11 @@ export default {
     ).filter(p => p === WORK).length;
 
     const reserveCount = shouldReserve
-      ? new Set(
-          activeFranchises(office)
-            .map(({ room }) => room)
-            .filter(
-              room =>
-                room !== office &&
-                !(Memory.rooms[room].reserver === 'LordGreywether' && (Memory.rooms[room].reservation ?? 0) >= 3000)
-            )
-        ).size
+      ? [...roomsToReserve].filter(
+          room =>
+            room !== office &&
+            !(Memory.rooms[room].reserver === 'LordGreywether' && (Memory.rooms[room].reservation ?? 0) >= 3000)
+        ).length
       : 0;
 
     const reserveMissions = pendingAndActiveMissions(office).filter(

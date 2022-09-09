@@ -20,26 +20,12 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     ) {
       return {
         cpu: 2000,
-        energy: -mission.estimate.energy
-      };
-    } else if (
-      mission.type === MissionType.EXPLORE ||
-      mission.type === MissionType.DEFEND_REMOTE ||
-      mission.type === MissionType.DEFEND_OFFICE
-    ) {
-      return {
-        cpu: 2000,
-        energy: 0
-      };
-    } else if (mission.type !== MissionType.UPGRADE) {
-      return {
-        cpu: 2000,
-        energy: 300
+        energy: -Infinity
       };
     } else {
       return {
         cpu: 2000,
-        energy: 1000
+        energy: 0
       };
     }
   } else {
@@ -51,7 +37,7 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
     ) {
       return {
         cpu: 2000,
-        energy: 0
+        energy: -Infinity
       };
     } else if (
       [MissionType.RESERVE, MissionType.DEFEND_REMOTE, MissionType.HQ_LOGISTICS, MissionType.DEFEND_OFFICE].includes(

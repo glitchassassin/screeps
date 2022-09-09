@@ -8,7 +8,6 @@ import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
 
@@ -26,7 +25,7 @@ export function createMobileRefillMission(office: string, priority = 11): Mobile
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.8,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

@@ -9,7 +9,6 @@ import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -31,7 +30,7 @@ export function createAcquireEngineerMission(office: string, targetOffice: strin
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.6,
-    energy: minionCost(body) + capacity
+    energy: capacity
   };
 
   const workParts = body.filter(p => p === WORK).length;

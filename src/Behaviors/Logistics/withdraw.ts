@@ -36,7 +36,7 @@ export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MO
     }
   } else {
     if (franchiseEnergyAvailable(mission.data.withdrawTarget as Id<Source>) <= 50) {
-      console.log(creep.name, 'reassigned withdraw target', creep.pos.roomName, mission.office);
+      // console.log(creep.name, 'reassigned withdraw target', creep.pos.roomName, mission.office);
       return States.FIND_WITHDRAW;
     } else {
       const result = getEnergyFromFranchise(creep, mission.office, mission.data.withdrawTarget as Id<Source>);

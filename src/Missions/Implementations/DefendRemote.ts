@@ -5,7 +5,6 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { findClosestHostileCreepByRange, findInvaderStructures } from 'Selectors/findHostileCreeps';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
 
@@ -23,7 +22,7 @@ export function createDefendRemoteMission(office: string, coreKiller = false): D
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

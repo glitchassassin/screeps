@@ -7,7 +7,6 @@ import { getLabs } from 'Selectors/getLabs';
 import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
 import { ingredientsNeededForLabOrder } from 'Selectors/ingredientsNeededForLabOrder';
 import { labsShouldBeEmptied } from 'Selectors/labsShouldBeEmptied';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import {
   boostLabsToEmpty,
@@ -39,7 +38,7 @@ export function createScienceMission(office: string, startTime?: number): Scienc
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({
@@ -60,15 +59,10 @@ export class Science extends MissionImplementation {
     const name = `SCIENTIST-${mission.office}-${mission.id}`;
     const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
 
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body
-      },
-      mission.startTime
-    );
+    scheduleSpawn(mission.office, mission.priority, {
+      name,
+      body
+    });
 
     mission.creepNames.push(name);
   }

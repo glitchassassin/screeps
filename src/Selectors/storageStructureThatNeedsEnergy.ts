@@ -1,4 +1,3 @@
-import { States } from 'Behaviors/states';
 import { MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { rcl } from './rcl';
@@ -29,7 +28,7 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
       ? (activeMissions(office)
           .filter(isMission(MissionType.ENGINEER))
           .map(m => assignedCreep(m))
-          .filter(c => c && !c.spawning && c.memory.runState !== States.UPGRADING) as Creep[])
+          .filter(c => c && !c.spawning) as Creep[])
       : [];
   const structures = ([] as [number, AnyStoreStructure | Creep][])
     .concat(

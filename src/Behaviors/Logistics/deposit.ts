@@ -7,7 +7,6 @@ import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
-import { renewCost } from 'Selectors/renewCost';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
 import { viz } from 'Selectors/viz';
 
@@ -134,9 +133,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
       !target.spawning &&
       target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)
     ) {
-      if (target.renewCreep(creep) === OK) {
-        mission.actual.energy += renewCost(creep);
-      }
+      target.renewCreep(creep);
     }
   }
 

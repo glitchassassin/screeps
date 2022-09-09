@@ -10,13 +10,14 @@ import { roomPlans } from './roomPlans';
 export const storageEnergyAvailable = (roomName: string) => {
   const plan = roomPlans(roomName);
   if (!plan?.headquarters && !plan?.fastfiller) return 0;
+  if (!plan.fastfiller?.containers.some(c => c.structure))
+    return getPrimarySpawn(roomName)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
   return (
     ((plan.headquarters?.storage.structure as StructureStorage)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) +
     (plan.fastfiller?.containers.reduce(
       (sum, c) => sum + ((c.structure as StructureContainer)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0),
       0
-    ) ?? 0) +
-    (getPrimarySpawn(roomName)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0)
+    ) ?? 0)
   );
 };
 
@@ -40,11 +41,11 @@ export const roomEnergyAvailable = memoizeByTick(
     const plan = roomPlans(office);
     return (
       ((plan?.headquarters?.storage.structure as StructureStorage)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) +
+      ((plan?.library?.container.structure as StructureContainer)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0) +
       (plan?.fastfiller?.containers.reduce(
         (sum, c) => sum + ((c.structure as StructureContainer)?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0),
         0
-      ) ?? 0) +
-      Game.rooms[office].energyAvailable
+      ) ?? 0)
     );
   }
 );

@@ -7,7 +7,6 @@ import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -35,7 +34,7 @@ export function createPlunderMission(office: string, targetRoom: string): Plunde
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

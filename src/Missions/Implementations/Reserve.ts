@@ -5,7 +5,7 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission, missionExpired } from 'Missions/Selectors';
 import { moveTo } from 'screeps-cartographer';
-import { creepCost, minionCost } from 'Selectors/minionCostPerTick';
+import { creepCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { controllerPosition, sourceIds } from 'Selectors/roomCache';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -21,7 +21,7 @@ export interface ReserveMission extends Mission<MissionType.RESERVE> {
 export function createReserveMission(office: string): ReserveMission {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(office)))
+    energy: 0
   };
 
   return createMission({

@@ -13,7 +13,6 @@ import { moveTo } from 'screeps-cartographer';
 import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { franchiseThatNeedsEngineers } from 'Selectors/Franchises/franchiseThatNeedsEngineers';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { franchiseRoadsToBuild } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -42,7 +41,7 @@ export function createEngineerMission(office: string, franchise?: Id<Source>): E
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body) + workEfficiency * estimateMissionInterval(office)
+    energy: workEfficiency * estimateMissionInterval(office)
   };
 
   const workParts = body.filter(p => p === WORK).length;
@@ -86,13 +85,6 @@ export class Engineer extends MissionImplementation {
     // Adjust estimate, if needed
     const lifetime = Math.min(estimateMissionInterval(mission.office), creep.ticksToLive ?? 0);
     const workParts = creep.body.filter(p => p.type === WORK).length;
-    console.log(
-      creep.name,
-      facilitiesEfficiency(
-        mission.office,
-        creep.body.map(p => p.type)
-      )
-    );
     mission.estimate.energy =
       mission.actual.energy +
       lifetime *
@@ -116,12 +108,12 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
         if (nextStructure) {
           mission.data.facilitiesTarget = nextStructure.serialize();
           delete mission.data.franchise;
-          return States.GET_ENERGY;
+          return States.BUILDING;
         }
         if (rcl(mission.office) < 3) {
           // Skip building roads until RCL3
           delete mission.data.facilitiesTarget;
-          return States.GET_ENERGY;
+          return States.UPGRADING;
         }
 
         // Pick a road to work on
@@ -134,18 +126,18 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
           );
         }
 
-        if (!mission.data.franchise) return States.GET_ENERGY; // go upgrade instead
+        if (!mission.data.franchise) return States.UPGRADING; // go upgrade instead
 
         // Pick the next section of road to complete
         const road = getClosestByRange(creep.pos, franchiseRoadsToBuild(mission.office, mission.data.franchise));
         if (road) {
           mission.data.facilitiesTarget = road.serialize();
-          return States.GET_ENERGY;
+          return States.BUILDING;
         }
 
         // No work found for this franchise
         delete mission.data.franchise;
-        return States.FIND_WORK;
+        return States.UPGRADING;
       },
       [States.GET_ENERGY]: (mission, creep) => {
         if (
@@ -157,13 +149,13 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
             !!mission.data.franchise && !!mission.data.facilitiesTarget // currently building for a franchise
           ) === BehaviorResult.SUCCESS
         ) {
-          return mission.data.facilitiesTarget ? States.BUILDING : States.UPGRADING;
+          return States.FIND_WORK;
         }
         return States.GET_ENERGY;
       },
       [States.BUILDING]: (mission, creep) => {
-        if (!mission.data.facilitiesTarget) return States.FIND_WORK;
         if (!creep.store.getUsedCapacity(RESOURCE_ENERGY)) return States.GET_ENERGY;
+        if (!mission.data.facilitiesTarget) return States.FIND_WORK;
         const plan = PlannedStructure.deserialize(mission.data.facilitiesTarget);
 
         if (!plannedStructureNeedsWork(plan, true)) return States.FIND_WORK;

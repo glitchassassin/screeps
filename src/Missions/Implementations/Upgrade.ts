@@ -8,7 +8,6 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { estimateMissionInterval } from 'Missions/Selectors';
 import { moveTo } from 'screeps-cartographer';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -28,7 +27,7 @@ export function createUpgradeMission(office: string, emergency = false): Upgrade
   const body = MinionBuilders[MinionTypes.RESEARCH](spawnEnergyAvailable(office), maxWork);
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body) + body.filter(p => p === WORK).length * estimateMissionInterval(office)
+    energy: body.filter(p => p === WORK).length * estimateMissionInterval(office)
   };
 
   return createMission({

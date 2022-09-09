@@ -13,7 +13,7 @@ import { BehaviorResult } from './Behavior';
 import { getEnergyFromFranchise } from './getEnergyFromFranchise';
 import { getEnergyFromRuin } from './getEnergyFromRuin';
 import { getEnergyFromSource } from './getEnergyFromSource';
-import { getEnergyFromStorage } from './getEnergyFromStorage';
+import { getEnergyFromStorageStructure } from './getEnergyFromStorageStructure';
 import { States } from './states';
 
 declare global {
@@ -61,7 +61,7 @@ const energySourcesByOffice = memoizeByTick(
       storage.push(roomPlans(office)!.library!.container.structure as AnyStoreStructure);
     if (roomPlans(office)?.library?.link.structure)
       storage.push(roomPlans(office)!.library!.link.structure as AnyStoreStructure);
-    if (!storage.length)
+    if (!roomPlans(office)?.headquarters?.storage.structure)
       roomPlans(office)
         ?.fastfiller?.containers.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
         .forEach(c => storage.push(c.structure as AnyStoreStructure));
@@ -89,6 +89,7 @@ export const engineerGetEnergy = profiler.registerFN(
         creep.memory.targetRuin = source.id;
       } else if ('structureType' in source) {
         creep.memory.getEnergyState = States.GET_ENERGY_STORAGE;
+        creep.memory.targetStructure = source.id;
       } else {
         if (hasEnergyIncome(office) && franchiseEnergyAvailable(source.id) >= 50) {
           creep.memory.getEnergyState = States.GET_ENERGY_FRANCHISE;
@@ -111,9 +112,10 @@ export const engineerGetEnergy = profiler.registerFN(
       }
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_STORAGE) {
-      let result = getEnergyFromStorage(creep, office, withdrawLimit);
+      let result = getEnergyFromStorageStructure(creep, office, withdrawLimit);
       if (result !== BehaviorResult.INPROGRESS) {
         delete creep.memory.getEnergyState;
+        delete creep.memory.targetStructure;
       }
     }
     if (creep.memory.getEnergyState === States.GET_ENERGY_FRANCHISE) {

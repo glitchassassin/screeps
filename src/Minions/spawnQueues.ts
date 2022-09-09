@@ -18,7 +18,6 @@ interface PreferredSpawnData {
   directions?: DirectionConstant[];
 }
 interface SpawnOrder {
-  startTime?: number;
   duration: number;
   priority: number;
   spawn?: PreferredSpawnData;
@@ -30,37 +29,24 @@ declare global {
   }
 }
 
-function byPriorityThenSpawnTime(a: SpawnOrder, b: SpawnOrder) {
-  if (a.priority !== b.priority) {
-    return b.priority - a.priority;
-  } else {
-    return (a.startTime ?? Game.time) - (b.startTime ?? Game.time);
-  }
+function byPriority(a: SpawnOrder, b: SpawnOrder) {
+  return b.priority - a.priority;
 }
 
-export function scheduleSpawn(
-  office: string,
-  priority: number,
-  data: SpawnOrderData,
-  startTime?: number,
-  spawn?: PreferredSpawnData
-) {
+export function scheduleSpawn(office: string, priority: number, data: SpawnOrderData, spawn?: PreferredSpawnData) {
   Memory.offices[office].spawnQueue ??= [];
 
   const duration = data.body.length * CREEP_SPAWN_TIME;
 
   const order: SpawnOrder = {
-    startTime,
     duration,
     priority,
     data,
     spawn
   };
 
-  // console.log('Spawn scheduled', order.data.name, order.priority, order.startTime);
-
   Memory.offices[office].spawnQueue.push(order);
-  Memory.offices[office].spawnQueue.sort(byPriorityThenSpawnTime);
+  Memory.offices[office].spawnQueue.sort(byPriority);
 }
 
 function vacateSpawns(office: string) {
@@ -89,9 +75,6 @@ export function spawnFromQueues() {
       // console.log('availableSpawns', availableSpawns, JSON.stringify(order));
       if (availableSpawns.length === 0) break; // No more available spawns
       // Get next scheduled order per spawn
-      if (order.startTime && order.startTime > Game.time) {
-        continue; // Not ready to spawn yet
-      }
       if (order.spawn?.spawn && byId(order.spawn.spawn)?.spawning) {
         continue; // Specific spawn requested; wait until it's free
       }
@@ -125,7 +108,6 @@ export function spawnFromQueues() {
         (result === ERR_NOT_ENOUGH_ENERGY && Game.rooms[office].energyCapacityAvailable >= minionCost(order.data.body))
       ) {
         // Spawn failed, postpone order
-        order.startTime = undefined;
         const firstTry = orderAttempted.get(order) ?? Game.time;
         if (firstTry < Game.time - 151) {
           // Give up after 151 ticks

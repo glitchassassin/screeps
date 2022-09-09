@@ -4,14 +4,10 @@ import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { recalculateTerritoryOffices } from './recalculateTerritoryOffices';
 
-let offices: string;
 export const scanTerritories = () => {
   // Recalculate territory assignments, if needed
-  const currentOffices = Object.keys(Memory.offices).sort().join('_');
-  if (offices !== currentOffices) {
+  if (Game.time % 50 === 0) {
     // Offices have changed
-    console.log('Offices have changed, recalculating territories');
-    offices = currentOffices;
     const startingCpu = Game.cpu.getUsed();
     for (const room in Memory.rooms) {
       Memory.rooms[room].officesInRange ??= '';
@@ -21,8 +17,7 @@ export const scanTerritories = () => {
       // console.log(room, '->', Memory.rooms[room].office);
 
       if (Game.cpu.getUsed() - startingCpu > 200) {
-        // continue next tick if we take more than 200 CPU
-        offices = '';
+        // continue next time if we take more than 200 CPU
         break;
       }
     }

@@ -7,7 +7,6 @@ import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
 import { priorityKillTarget } from 'Selectors/Combat/priorityTarget';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { closestRampartSection } from 'Selectors/perimeter';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { isCreep } from 'Selectors/typeguards';
@@ -28,7 +27,7 @@ export function createDefendOfficeMission(office: string, role: DefendOfficeRole
 
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
-    energy: minionCost(body)
+    energy: 0
   };
 
   return createMission({

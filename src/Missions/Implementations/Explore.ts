@@ -5,7 +5,6 @@ import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getPatrolRoute } from 'Selectors/getPatrolRoute';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
 
@@ -18,7 +17,7 @@ export interface ExploreMission extends Mission<MissionType.EXPLORE> {
 export function createExploreMission(office: string): ExploreMission {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.3,
-    energy: minionCost(MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(office)))
+    energy: 0
   };
 
   return createMission({
