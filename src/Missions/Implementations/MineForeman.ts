@@ -48,6 +48,7 @@ export class MineForeman extends MissionImplementation {
     scheduleSpawn(mission.office, mission.priority, {
       name,
       body,
+      missionId: mission.id,
       memory: { state: States.GET_BOOSTED },
       boosts: [RESOURCE_UTRIUM_ALKALIDE]
     });

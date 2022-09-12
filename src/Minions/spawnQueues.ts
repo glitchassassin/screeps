@@ -10,8 +10,9 @@ import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
 interface SpawnOrderData {
   name: string;
   body: BodyPartConstant[];
+  missionId: string;
   boosts?: MineralBoostConstant[];
-  memory?: CreepMemory;
+  memory?: Partial<CreepMemory>;
 }
 interface PreferredSpawnData {
   spawn?: Id<StructureSpawn>;
@@ -26,6 +27,9 @@ interface SpawnOrder {
 declare global {
   interface OfficeMemory {
     spawnQueue: SpawnOrder[];
+  }
+  interface CreepMemory {
+    mission: string;
   }
 }
 
@@ -94,6 +98,7 @@ export function spawnFromQueues() {
       const result = spawn.spawnCreep(order.data.body, order.data.name, {
         directions: order.spawn?.directions,
         memory: {
+          mission: order.data.missionId,
           ...order.data.memory
         },
         energyStructures: getEnergyStructures(office)

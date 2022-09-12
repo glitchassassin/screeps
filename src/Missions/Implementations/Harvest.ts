@@ -84,7 +84,8 @@ export class Harvest extends MissionImplementation {
 
     scheduleSpawn(mission.office, mission.priority, {
       name,
-      body
+      body,
+      missionId: mission.id
     });
 
     mission.creepNames.push(name);
@@ -195,20 +196,7 @@ export class Harvest extends MissionImplementation {
         const plan = getFranchisePlanBySourceId(mission.data.source);
         if (plan && Game.rooms[plan.container.pos.roomName] && rcl(mission.office) >= 3) {
           // Try to build or repair container
-          if (!plan.container.structure) {
-            mission.data.harvestRate = 0;
-            if (!plan.container.constructionSite) {
-              const result = plan.container.pos.createConstructionSite(plan.container.structureType);
-              console.log('creating construction site', plan.container.pos, result);
-            } else {
-              if (creep.build(plan.container.constructionSite) === OK) {
-                const amount = -BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
-                HarvestLedger.record(mission.office, mission.data.source, 'build', amount);
-                LogisticsLedger.record(mission.office, 'deposit', amount);
-                return;
-              }
-            }
-          } else if (plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
+          if (plan.container.structure && plan.container.structure.hits < plan.container.structure.hitsMax - 500) {
             if (creep.repair(plan.container.structure) === OK) {
               const amount = -(REPAIR_COST * REPAIR_POWER) * creep.body.filter(p => p.type === WORK).length;
               HarvestLedger.record(mission.office, mission.data.source, 'repair', amount);

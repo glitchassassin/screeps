@@ -18,7 +18,12 @@ export const getEnergyFromStorageStructure = (creep: Creep, office: string, limi
       ? SPAWN_ENERGY_CAPACITY
       : limit ?? Game.rooms[office]?.energyCapacityAvailable ?? 0;
 
-  if (!structure || structure.store.getUsedCapacity(RESOURCE_ENERGY) < withdrawLimit) return BehaviorResult.FAILURE;
+  if (
+    !structure ||
+    !structure.store.getUsedCapacity(RESOURCE_ENERGY) ||
+    structure.store.getUsedCapacity(RESOURCE_ENERGY) < withdrawLimit
+  )
+    return BehaviorResult.FAILURE;
 
   moveTo(creep, structure);
   if (creep.withdraw(structure, RESOURCE_ENERGY) === OK) {

@@ -1,4 +1,3 @@
-import { BehaviorResult } from 'Behaviors/Behavior';
 import { getEnergyFromFranchise } from 'Behaviors/getEnergyFromFranchise';
 import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
 import { States } from 'Behaviors/states';
@@ -6,46 +5,40 @@ import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { Mission, MissionType } from 'Missions/Mission';
 import { byId } from 'Selectors/byId';
-import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
-import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
+import { bucketBrigadeWithdraw } from './bucketBrigade';
 
 export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MOBILE_REFILL>, creep: Creep) => {
-  let energyCapacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+  if (bucketBrigadeWithdraw(creep, mission)) {
+    return States.DEPOSIT;
+  }
+  if (creep.ticksToLive && creep.ticksToLive < 100) {
+    // no work within range and creep is dying
+    return States.RECYCLE;
+  }
 
-  if (energyCapacity === 0) return States.FIND_DEPOSIT;
+  let energyCapacity = creep.store.getCapacity(RESOURCE_ENERGY) - creep.store[RESOURCE_ENERGY];
+
+  if (energyCapacity === 0) return States.DEPOSIT;
 
   // Otherwise, continue to main withdraw target
   const target = byId(mission.data.withdrawTarget as Id<Source | StructureStorage>);
   const pos = posById(mission.data.withdrawTarget) ?? target?.pos;
   if (!mission.data.withdrawTarget || !pos) {
-    return States.FIND_WITHDRAW;
+    return States.WITHDRAW;
   }
 
   mission.efficiency.working += 1;
 
   // Target identified
-  if (target instanceof StructureStorage) {
-    const result = getEnergyFromStorage(creep, mission.office, undefined, true);
-    if (result === BehaviorResult.SUCCESS) {
-      return States.WITHDRAW;
-    } else if (storageEnergyAvailable(mission.office) <= 50) {
-      return States.FIND_WITHDRAW;
-    }
+  if (mission.type === MissionType.MOBILE_REFILL) {
+    getEnergyFromStorage(creep, mission.office, undefined, true);
   } else {
-    if (franchiseEnergyAvailable(mission.data.withdrawTarget as Id<Source>) <= 50) {
-      // console.log(creep.name, 'reassigned withdraw target', creep.pos.roomName, mission.office);
-      return States.FIND_WITHDRAW;
-    } else {
-      const result = getEnergyFromFranchise(creep, mission.office, mission.data.withdrawTarget as Id<Source>);
-      if (result === BehaviorResult.SUCCESS) {
-        return States.WITHDRAW;
-      }
-      // Record cost
-      HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
-    }
+    getEnergyFromFranchise(creep, mission.office, mission.data.withdrawTarget as Id<Source>);
+    // Record cost
+    HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
   }
 
   const nearby = lookNear(creep.pos);

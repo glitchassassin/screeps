@@ -8,14 +8,17 @@ import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
-import { viz } from 'Selectors/viz';
+import { bucketBrigadeDeposit } from './bucketBrigade';
 
 export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOBILE_REFILL>, creep: Creep) => {
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.FIND_WITHDRAW;
+  if (creep.store[RESOURCE_ENERGY] <= 0) {
+    delete mission.data.withdrawTarget;
+    return States.WITHDRAW;
+  }
   let target = byId(mission.data.depositTarget as Id<AnyStoreStructure | Creep>);
 
   if (!target || target.store[RESOURCE_ENERGY] >= target.store.getCapacity(RESOURCE_ENERGY)) {
-    return States.FIND_DEPOSIT;
+    return States.DEPOSIT;
   }
 
   mission.efficiency.working += 1;
@@ -27,7 +30,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
     if (road) {
       if (creep.repair(road) === OK) {
         const cost = REPAIR_COST * REPAIR_POWER * 1; // Haulers will only ever have one work part // creep.body.filter(p => p.type === WORK).length;
-        if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+        if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof Structure)) {
           // Record deposit cost
           HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'repair', -cost);
           LogisticsLedger.record(mission.office, 'deposit', -cost);
@@ -39,8 +42,13 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
   const nearby = lookNear(creep.pos);
 
   if (!target || creep.pos.getRangeTo(target) > 1) {
+    if (bucketBrigadeDeposit(creep, mission)) {
+      delete mission.data.withdrawTarget;
+      return States.WITHDRAW;
+    }
+
     // Check for nearby targets of opportunity
-    let energyRemaining = creep.store.getUsedCapacity(RESOURCE_ENERGY);
+    let energyRemaining = creep.store[RESOURCE_ENERGY];
 
     for (const opp of nearby) {
       if (opp.creep?.my) {
@@ -53,7 +61,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
           if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
             const amount = Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
             energyRemaining -= amount;
-            if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+            if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof Structure)) {
               // Record deposit amount
               HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'deposit', amount);
               LogisticsLedger.record(mission.office, 'deposit', -amount);
@@ -61,19 +69,6 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
             break;
           }
         }
-        // else if (
-        //   opp.creep.name.startsWith('ACCOUNTANT') &&
-        //   opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) >= energyRemaining &&
-        //   target &&
-        //   opp.creep.pos.getRangeTo(target) < creep.pos.getRangeTo(target)
-        // ) {
-        //   if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
-        //     energyRemaining -= Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
-        //     opp.creep.memory.runState = States.DEPOSIT;
-        //     return States.WITHDRAW;
-        //   }
-        //   break;
-        // }
       } else if (
         (opp.structure?.structureType === STRUCTURE_EXTENSION || opp.structure?.structureType === STRUCTURE_SPAWN) &&
         (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY] <
@@ -95,21 +90,21 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
       }
     }
     if (energyRemaining === 0) {
-      return States.FIND_WITHDRAW;
+      delete mission.data.withdrawTarget;
+      return States.WITHDRAW;
     }
   }
   if (!target) return States.DEPOSIT;
 
-  if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+  if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof Structure)) {
     // Record deposit cost
     HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
   }
 
-  if (mission.type === MissionType.MOBILE_REFILL) viz(creep.pos.roomName).line(creep.pos, target.pos);
   // travel home from a source
   if (
     mission.data.withdrawTarget &&
-    !(byId(mission.data.withdrawTarget) instanceof StructureStorage) &&
+    !(byId(mission.data.withdrawTarget) instanceof Structure) &&
     creep.pos.roomName !== mission.office
   ) {
     followPathHomeFromSource(creep, mission.office, mission.data.withdrawTarget);
@@ -120,7 +115,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
         target.store.getFreeCapacity(RESOURCE_ENERGY),
         creep.store.getUsedCapacity(RESOURCE_ENERGY)
       );
-      if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof StructureStorage)) {
+      if (mission.data.withdrawTarget && !(byId(mission.data.withdrawTarget) instanceof Structure)) {
         // Record deposit amount
         HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'deposit', amount);
         LogisticsLedger.record(mission.office, 'deposit', -amount);

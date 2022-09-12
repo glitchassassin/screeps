@@ -2,6 +2,7 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { getCachedPath } from 'screeps-cartographer';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
+import { getFranchisePlanBySourceId } from './roomPlans';
 import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './Structures/facilitiesWorkToDo';
 
 const cachedPaths = new Map<string, RoomPosition[]>();
@@ -23,12 +24,15 @@ export function franchiseRoadsToBuild(office: string, source: Id<Source>) {
 
 export function plannedFranchiseRoads(office: string, source: Id<Source>) {
   const key = office + source;
+  const path = franchisePath(office, source);
+  const containerPos = getFranchisePlanBySourceId(source)?.container.pos;
   const structures =
     cachedPlans.get(key) ??
-    franchisePath(office, source)
+    path
       .filter(p => p.x !== 0 && p.x !== 49 && p.y !== 0 && p.y !== 49)
       .map(p => new PlannedStructure(p, STRUCTURE_ROAD));
   if (structures.length) cachedPlans.set(key, structures);
+  if (containerPos) return [...structures, new PlannedStructure(containerPos, STRUCTURE_CONTAINER)];
   return structures;
 }
 

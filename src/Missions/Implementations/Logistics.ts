@@ -1,6 +1,4 @@
 import { deposit } from 'Behaviors/Logistics/deposit';
-import { findDeposit } from 'Behaviors/Logistics/findDeposit';
-import { findWithdraw } from 'Behaviors/Logistics/findWithdraw';
 import { withdraw } from 'Behaviors/Logistics/withdraw';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
@@ -9,10 +7,8 @@ import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { byId } from 'Selectors/byId';
 import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
-import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { plannedStructureNeedsWork } from 'Selectors/Structures/facilitiesWorkToDo';
@@ -22,6 +18,7 @@ export interface LogisticsMission extends Mission<MissionType.LOGISTICS> {
   data: {
     capacity: number;
     lastCapacity?: number;
+    lastRan?: number;
     withdrawTarget?: Id<Source>;
     depositTarget?: Id<AnyStoreStructure | Creep>;
     repair?: boolean;
@@ -74,7 +71,8 @@ export class Logistics extends MissionImplementation {
 
     scheduleSpawn(mission.office, mission.priority, {
       name,
-      body
+      body,
+      missionId: mission.id
     });
 
     mission.creepNames.push(name);
@@ -85,19 +83,13 @@ export class Logistics extends MissionImplementation {
   }
 
   static minionLogic(mission: LogisticsMission, creep: Creep): void {
-    const pos = posById(mission.data.withdrawTarget);
-    const pos2 = byId(mission.data.depositTarget)?.pos;
-    if (pos) Game.map.visual.line(creep.pos, pos, { color: '#ff00ff' });
-    if (pos2) Game.map.visual.line(creep.pos, pos2, { color: '#00ffff' });
-
     mission.data.capacity = creep.body.filter(p => p.type === CARRY).length * CARRY_CAPACITY;
     mission.data.lastCapacity = creep.store.getUsedCapacity(RESOURCE_ENERGY);
+    mission.data.lastRan = Game.time;
 
     runStates(
       {
         [States.DEPOSIT]: deposit,
-        [States.FIND_DEPOSIT]: findDeposit,
-        [States.FIND_WITHDRAW]: findWithdraw,
         [States.WITHDRAW]: withdraw,
         [States.RECYCLE]: recycle
       },

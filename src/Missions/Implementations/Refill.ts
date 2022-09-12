@@ -63,7 +63,8 @@ export class Refill extends MissionImplementation {
       mission.priority,
       {
         name,
-        body
+        body,
+        missionId: mission.id
       },
       {
         spawn: preferredSpawn?.id,

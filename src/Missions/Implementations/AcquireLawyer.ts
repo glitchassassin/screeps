@@ -44,7 +44,8 @@ export class AcquireLawyer extends MissionImplementation {
 
     scheduleSpawn(mission.office, mission.priority, {
       name,
-      body
+      body,
+      missionId: mission.id
     });
 
     mission.creepNames.push(name);

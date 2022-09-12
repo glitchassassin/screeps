@@ -3,6 +3,13 @@ import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
 import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';
 import { roomPlans } from 'Selectors/roomPlans';
 
+const missionIndex = new Map<string, Mission<MissionType>>();
+for (const office in Memory.offices) {
+  for (const mission of pendingAndActiveMissions(office)) {
+    missionIndex.set(mission.id, mission);
+  }
+}
+
 export function activeMissions(office: string) {
   return Memory.offices[office]?.activeMissions ?? [];
 }
@@ -12,6 +19,7 @@ export function pendingMissions(office: string) {
 }
 
 export function submitMission(office: string, mission: Mission<MissionType>) {
+  missionIndex.set(mission.id, mission);
   Memory.offices[office]?.pendingMissions.push(mission);
 }
 
@@ -41,6 +49,11 @@ export function isStatus(status: MissionStatus) {
 
 export function assignedCreep(mission: Mission<MissionType>): Creep | undefined {
   return Game.creeps[mission.creepNames[0] ?? ''];
+}
+
+export function assignedMission(creep: Creep): Mission<MissionType> | undefined {
+  if (creep.spawning) return undefined;
+  return missionIndex.get(creep.memory.mission);
 }
 
 export function estimateMissionInterval(office: string) {

@@ -55,7 +55,7 @@ export const assignedLogisticsCapacity = memoizeByTick(
   }
 );
 
-export function findBestDepositTarget(office: string, creep: Creep, ignoreStorage = false) {
+export function findBestDepositTarget(office: string, creep: Creep, ignoreStorage = false, assign = true) {
   const { depositAssignments } = assignedLogisticsCapacity(office);
   let bestTarget = undefined;
   let bestAmount = -Infinity;
@@ -79,6 +79,10 @@ export function findBestDepositTarget(office: string, creep: Creep, ignoreStorag
       bestPriority = priority;
     }
   }
+
+  if (assign && bestTarget) {
+    depositAssignments.set(bestTarget, (depositAssignments.get(bestTarget) ?? 0) + creep.store[RESOURCE_ENERGY]);
+  }
   return bestTarget;
 }
 
@@ -86,7 +90,7 @@ export function findBestDepositTarget(office: string, creep: Creep, ignoreStorag
  * Best withdraw target is the one this creep can get the most from, or (in case of a tie)
  * the one with the largest stockpile
  */
-export function findBestWithdrawTarget(office: string, creep: Creep) {
+export function findBestWithdrawTarget(office: string, creep: Creep, assign = true) {
   const { withdrawAssignments } = assignedLogisticsCapacity(office);
   const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.8;
   let bestTarget = undefined;
@@ -108,6 +112,12 @@ export function findBestWithdrawTarget(office: string, creep: Creep) {
       bestTotalAmount = totalAmount;
       bestDistance = distance;
     }
+  }
+  if (assign && bestTarget) {
+    withdrawAssignments.set(
+      bestTarget,
+      (withdrawAssignments.get(bestTarget) ?? 0) + creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY
+    );
   }
   return bestTarget;
 }

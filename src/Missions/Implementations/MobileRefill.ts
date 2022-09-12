@@ -1,7 +1,5 @@
 import { deposit } from 'Behaviors/Logistics/deposit';
-import { findDeposit } from 'Behaviors/Logistics/findDeposit';
 import { withdraw } from 'Behaviors/Logistics/withdraw';
-import { withdrawFromStorage } from 'Behaviors/Logistics/withdrawFromStorage';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
@@ -58,7 +56,8 @@ export class MobileRefill extends MissionImplementation {
 
     scheduleSpawn(mission.office, mission.priority, {
       name,
-      body
+      body,
+      missionId: mission.id
     });
 
     mission.creepNames.push(name);
@@ -68,8 +67,6 @@ export class MobileRefill extends MissionImplementation {
     runStates(
       {
         [States.DEPOSIT]: deposit,
-        [States.FIND_DEPOSIT]: findDeposit,
-        [States.FIND_WITHDRAW]: withdrawFromStorage,
         [States.WITHDRAW]: withdraw,
         [States.RECYCLE]: recycle
       },

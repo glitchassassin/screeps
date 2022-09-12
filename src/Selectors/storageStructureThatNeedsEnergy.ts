@@ -1,5 +1,5 @@
 import { MissionType } from 'Missions/Mission';
-import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
+import { activeMissions, assignedCreep, isMission, or } from 'Missions/Selectors';
 import { rcl } from './rcl';
 import { getSpawns, roomPlans } from './roomPlans';
 import { getExtensions } from './spawnsAndExtensionsDemand';
@@ -26,7 +26,7 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
   const engineers =
     rcl(office) < 3
       ? (activeMissions(office)
-          .filter(isMission(MissionType.ENGINEER))
+          .filter(or(isMission(MissionType.ENGINEER), isMission(MissionType.UPGRADE)))
           .map(m => assignedCreep(m))
           .filter(c => c && !c.spawning) as Creep[])
       : [];
@@ -38,8 +38,8 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
       backfill?.towers.map(s => [7, s.structure as AnyStoreStructure]) ?? [],
       labs?.labs.map(s => [6, s.structure as AnyStoreStructure]) ?? [],
       [[4, library?.container.structure as AnyStoreStructure]],
-      engineers.map(e => [3, e]),
-      [[1, hq?.storage.structure as AnyStoreStructure]]
+      [[3, hq?.storage.structure as AnyStoreStructure]],
+      engineers.map(e => [1, e])
     )
     .filter(
       ([_, structure]) => structure && structure.store[RESOURCE_ENERGY] < structure.store.getCapacity(RESOURCE_ENERGY)

@@ -52,6 +52,7 @@ export class Upgrade extends MissionImplementation {
     scheduleSpawn(mission.office, mission.priority, {
       name,
       body,
+      missionId: mission.id,
       boosts: [RESOURCE_GHODIUM_ACID]
     });
 
