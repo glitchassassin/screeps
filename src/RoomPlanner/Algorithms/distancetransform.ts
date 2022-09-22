@@ -7,7 +7,7 @@ import { viz } from 'Selectors/viz';
 export function distanceTransform(
   room: string,
   visualize = false,
-  initialCM = getCostMatrix(room, false, { ignoreStructures: true, terrain: true }),
+  initialCM = getCostMatrix(room, false, { roomPlan: true, ignoreStructures: true, terrain: true }),
   rect = {
     x1: 0,
     y1: 0,
@@ -88,7 +88,7 @@ export function distanceTransform(
 export function diamondDistanceTransform(
   room: string,
   visualize = false,
-  initialCM = getCostMatrix(room, false, { ignoreStructures: true, terrain: true }),
+  initialCM = getCostMatrix(room, false, { roomPlan: true, ignoreStructures: true, terrain: true }),
   rect = {
     x1: 0,
     y1: 0,

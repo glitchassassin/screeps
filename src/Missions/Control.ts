@@ -75,10 +75,11 @@ function executeMissions() {
         throw e;
       }
       mission.actual.cpu += Math.max(0, Game.cpu.getUsed() - startTime);
+      debugCPU(mission.type, true);
     }
     // Clean up completed missions
     activeMissions(office)
-      .filter(m => isStatus(MissionStatus.DONE)(m) && m.actual.energy)
+      .filter(m => isStatus(MissionStatus.DONE)(m) && m.efficiency?.running)
       .forEach(mission => {
         Memory.offices[office].missionResults ??= {};
         Memory.offices[office].missionResults[mission.type] ??= [];

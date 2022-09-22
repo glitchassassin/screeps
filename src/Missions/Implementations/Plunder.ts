@@ -24,7 +24,7 @@ export function createPlunderMission(office: string, targetRoom: string): Plunde
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, false);
   const capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
-  let priority = 7;
+  let priority = 5;
   let distance = getRangeTo(new RoomPosition(25, 25, office), new RoomPosition(25, 25, targetRoom));
   if (distance) {
     // Increase priority for closer targets, up to 1 point for closer than 50 squares

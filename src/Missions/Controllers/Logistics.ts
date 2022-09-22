@@ -17,6 +17,7 @@ import { minionCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { getFranchisePlanBySourceId, roomPlans } from 'Selectors/roomPlans';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { upgradersNeedSupplementalEnergy } from 'Selectors/upgradersNeedSupplementalEnergy';
 
 const REMOTE_LOGISTICS_PRIORITY = 11;
 const INROOM_LOGISTICS_PRIORITY = 11.1;
@@ -25,9 +26,10 @@ export default {
   byTick: () => {},
   byOffice: (office: string) => {
     // Maintain one mobile refill mission
+    const mobileRefillMissions = upgradersNeedSupplementalEnergy(office) ? 2 : 1;
     if (
       roomPlans(office)?.headquarters?.storage.structure &&
-      !pendingAndActiveMissions(office).some(isMission(MissionType.MOBILE_REFILL))
+      pendingAndActiveMissions(office).filter(isMission(MissionType.MOBILE_REFILL)).length < mobileRefillMissions
     ) {
       submitMission(office, createMobileRefillMission(office, INROOM_LOGISTICS_PRIORITY));
     }

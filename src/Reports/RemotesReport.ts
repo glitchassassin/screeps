@@ -46,8 +46,8 @@ export default () => {
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 
-      const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source];
-      const perTickAverage = scores.reduce((a, b) => a + b, 0) / scores.length;
+      const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source] ?? {};
+      const perTickAverage = scores ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
       const assignedLogistics = assignedLogisticsCapacity(office).withdrawAssignments.get(franchise.source) ?? 0;
 

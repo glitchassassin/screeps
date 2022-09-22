@@ -64,6 +64,8 @@ export class HQLogistics extends MissionImplementation {
 
     // Check HQ state
     const hq = roomPlans(mission.office)?.headquarters;
+    const fastfiller = roomPlans(mission.office)?.fastfiller;
+    const library = roomPlans(mission.office)?.library;
     if (!hq) return;
     let creepEnergy = creep.store.getUsedCapacity(RESOURCE_ENERGY);
     const terminal = hq.terminal.structure as StructureTerminal | undefined;
@@ -74,7 +76,10 @@ export class HQLogistics extends MissionImplementation {
     const terminalAmountNeeded = terminal ? 30000 - terminal.store.getUsedCapacity(RESOURCE_ENERGY) : 0;
     const extensionAmountNeeded = extension ? extension.store.getFreeCapacity(RESOURCE_ENERGY) : 0;
     const linkAmountAvailable = link?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
-    const linkAmountToTransfer = LINK_CAPACITY / 2 - linkAmountAvailable;
+    const destinationLinkFreeSpace =
+      ((fastfiller?.link.structure as StructureLink)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) +
+      ((library?.link.structure as StructureLink)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0);
+    const linkAmountToTransfer = destinationLinkFreeSpace ? LINK_CAPACITY - linkAmountAvailable : 0;
 
     let withdraw = false;
     let transfer = false;

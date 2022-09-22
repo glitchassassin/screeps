@@ -3,7 +3,7 @@ import { signRoom } from 'Behaviors/signRoom';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { moveTo } from 'screeps-cartographer';
+import { cachePath, getCachedPath, moveByPath } from 'screeps-cartographer';
 import { getPatrolRoute } from 'Selectors/getPatrolRoute';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -74,7 +74,18 @@ export class Explore extends MissionImplementation {
     if (mission.data.exploreTarget) {
       mission.efficiency.working += 1;
       if (!Game.rooms[mission.data.exploreTarget]) {
-        if (moveTo(creep, { pos: new RoomPosition(25, 25, mission.data.exploreTarget), range: 20 }) !== OK) {
+        let path = getCachedPath(creep.name);
+        if (!path) {
+          path = cachePath(creep.name, creep.pos, {
+            pos: new RoomPosition(25, 25, mission.data.exploreTarget),
+            range: 20
+          });
+        }
+        if (
+          !path?.length ||
+          path[path.length - 1].roomName !== mission.data.exploreTarget ||
+          moveByPath(creep, creep.name) !== OK
+        ) {
           // console.log('Failed to path', creep.pos, mission.data.exploreTarget);
           Memory.rooms[mission.data.exploreTarget] ??= { officesInRange: '', franchises: {} }; // Unable to path
           Memory.rooms[mission.data.exploreTarget].scanned = Game.time;

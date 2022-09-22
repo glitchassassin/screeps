@@ -23,23 +23,22 @@ export const withdraw = (mission: Mission<MissionType.LOGISTICS | MissionType.MO
 
   if (energyCapacity === 0) return States.DEPOSIT;
 
-  // Otherwise, continue to main withdraw target
-  const target = byId(mission.data.withdrawTarget as Id<Source | StructureStorage>);
-  const pos = posById(mission.data.withdrawTarget) ?? target?.pos;
-  if (!mission.data.withdrawTarget || !pos) {
-    return States.WITHDRAW;
-  }
-
-  mission.efficiency.working += 1;
-
-  // Target identified
   if (mission.type === MissionType.MOBILE_REFILL) {
     getEnergyFromStorage(creep, mission.office, undefined, true);
   } else {
+    // Otherwise, continue to main withdraw target (set by src\Strategy\Logistics\LogisticsTargets.ts)
+    const target = byId(mission.data.withdrawTarget as Id<Source | StructureStorage>);
+    const pos = posById(mission.data.withdrawTarget) ?? target?.pos;
+    if (!mission.data.withdrawTarget || !pos) {
+      return States.WITHDRAW;
+    }
+
+    // Target identified
     getEnergyFromFranchise(creep, mission.office, mission.data.withdrawTarget as Id<Source>);
     // Record cost
     HarvestLedger.record(mission.office, mission.data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
   }
+  mission.efficiency.working += 1;
 
   const nearby = lookNear(creep.pos);
 

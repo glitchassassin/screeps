@@ -52,7 +52,7 @@ export function assignedCreep(mission: Mission<MissionType>): Creep | undefined 
 }
 
 export function assignedMission(creep: Creep): Mission<MissionType> | undefined {
-  if (creep.spawning) return undefined;
+  if (creep.spawning || !creep.memory?.mission) return undefined;
   return missionIndex.get(creep.memory.mission);
 }
 

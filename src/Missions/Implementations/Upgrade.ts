@@ -72,11 +72,13 @@ export class Upgrade extends MissionImplementation {
           if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) return States.WORKING;
           const container = roomPlans(mission.office)?.library?.container.structure as StructureContainer;
           const link = roomPlans(mission.office)?.library?.link.structure as StructureLink;
-          if (link && link.store[RESOURCE_ENERGY]) {
-            moveTo(creep, { pos: link.pos, range: 1 });
-            if (creep.withdraw(link, RESOURCE_ENERGY) === OK) {
-              link.store[RESOURCE_ENERGY] = Math.max(0, link.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity());
-              return States.WORKING;
+          if (link) {
+            if (link.store[RESOURCE_ENERGY]) {
+              moveTo(creep, { pos: link.pos, range: 1 });
+              if (creep.withdraw(link, RESOURCE_ENERGY) === OK) {
+                link.store[RESOURCE_ENERGY] = Math.max(0, link.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity());
+                return States.WORKING;
+              }
             }
           } else if (container) {
             if (container.store[RESOURCE_ENERGY]) {

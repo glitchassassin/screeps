@@ -3,6 +3,7 @@ import { activeMissions, assignedCreep, isMission, or } from 'Missions/Selectors
 import { rcl } from './rcl';
 import { getSpawns, roomPlans } from './roomPlans';
 import { getExtensions } from './spawnsAndExtensionsDemand';
+import { upgradersNeedSupplementalEnergy } from './upgradersNeedSupplementalEnergy';
 
 function toMostEmpty(a?: AnyStoreStructure, b?: AnyStoreStructure) {
   if (!a) return b;
@@ -30,6 +31,12 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
           .map(m => assignedCreep(m))
           .filter(c => c && !c.spawning) as Creep[])
       : [];
+  let upgraders = upgradersNeedSupplementalEnergy(office)
+    ? (activeMissions(office)
+        .filter(isMission(MissionType.UPGRADE))
+        .map(m => assignedCreep(m))
+        .filter(c => c && !c.spawning) as Creep[])
+    : [];
   const structures = ([] as [number, AnyStoreStructure | Creep][])
     .concat(
       fastfiller?.containers.map(s => [10, s.structure as AnyStoreStructure]) ?? [],
@@ -38,6 +45,7 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
       backfill?.towers.map(s => [7, s.structure as AnyStoreStructure]) ?? [],
       labs?.labs.map(s => [6, s.structure as AnyStoreStructure]) ?? [],
       [[4, library?.container.structure as AnyStoreStructure]],
+      upgraders.map(e => [4, e]),
       [[3, hq?.storage.structure as AnyStoreStructure]],
       engineers.map(e => [1, e])
     )

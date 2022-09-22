@@ -1,11 +1,14 @@
 import { fastfillerPositions } from 'Reports/fastfillerPositions';
 import { config } from 'screeps-cartographer';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
+import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { outsidePerimeter } from 'Selectors/perimeter';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
-import { mineralPosition, sourcePositions } from 'Selectors/roomCache';
+import { posById } from 'Selectors/posById';
+import { rcl } from 'Selectors/rcl';
+import { mineralPosition, sourceIds, sourcePositions } from 'Selectors/roomCache';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
 import { memoize, memoizeByTick } from 'utils/memoizeFunction';
 import {
@@ -101,49 +104,39 @@ export const getCostMatrix = memoizeByTick(
 
     if (!room) return costs;
     if (!opts?.ignoreStructures) {
-      for (let struct of room.find(FIND_STRUCTURES)) {
-        if ((OBSTACLE_OBJECT_TYPES as string[]).includes(struct.structureType)) {
-          // Can't walk through non-walkable buildings
-          costs.set(struct.pos.x, struct.pos.y, 0xff);
-          if (struct.structureType === STRUCTURE_SPAWN && struct.spawning && struct.spawning.remainingTime < 3) {
+      for (const s of plannedOfficeStructuresByRcl(roomName, rcl(roomName))) {
+        if ((OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType)) {
+          costs.set(s.pos.x, s.pos.y, 255);
+          if (s.structure instanceof StructureSpawn && s.structure.spawning && s.structure.spawning.remainingTime < 3) {
             // also block spawning squares
             (
-              struct.spawning?.directions?.map(d => posAtDirection(struct.pos, d)) ??
-              adjacentWalkablePositions(struct.pos)
+              s.structure.spawning?.directions?.map(d => posAtDirection(s.pos, d)) ?? adjacentWalkablePositions(s.pos)
             ).forEach(p => costs.set(p.x, p.y, 0xff));
           }
-        } else if (struct.structureType === STRUCTURE_ROAD && !(costs.get(struct.pos.x, struct.pos.y) === 0xff)) {
+        } else if (s.structureType === STRUCTURE_ROAD && s.structure && !(costs.get(s.pos.x, s.pos.y) === 0xff)) {
           // Favor roads over plain tiles
-          costs.set(struct.pos.x, struct.pos.y, 1);
+          costs.set(s.pos.x, s.pos.y, 1);
         }
       }
+    }
 
-      for (let struct of room.find(FIND_MY_CONSTRUCTION_SITES)) {
-        if (
-          struct.structureType !== STRUCTURE_ROAD &&
-          struct.structureType !== STRUCTURE_CONTAINER &&
-          struct.structureType !== STRUCTURE_RAMPART
-        ) {
-          // Can't walk through non-walkable construction sites
-          costs.set(struct.pos.x, struct.pos.y, 0xff);
-        }
+    // include dedicated filler sites
+    if (!opts?.ignoreFastfiller && Memory.offices[roomName]) {
+      for (const pos of fastfillerPositions(roomName)) {
+        costs.set(pos.x, pos.y, 0xff);
       }
-
-      // include dedicated filler sites
-      if (!opts?.ignoreFastfiller) {
-        for (const pos of fastfillerPositions(roomName)) {
-          costs.set(pos.x, pos.y, 0xff);
-        }
-      }
-      if (!opts?.ignoreHQLogistics) {
-        const pos = getHeadquarterLogisticsLocation(roomName);
-        if (pos) costs.set(pos.x, pos.y, 0xff);
-      }
-      if (!opts?.ignoreFranchises) {
-        sourcePositions(roomName).forEach(pos =>
-          adjacentWalkablePositions(pos, true).forEach(p => costs.set(p.x, p.y, 0xff))
-        );
-      }
+    }
+    if (!opts?.ignoreHQLogistics && Memory.offices[roomName]) {
+      const pos = getHeadquarterLogisticsLocation(roomName);
+      if (pos) costs.set(pos.x, pos.y, 0xff);
+    }
+    if (!opts?.ignoreFranchises) {
+      sourceIds(roomName)
+        .filter(id => Object.keys(Memory.offices).some(o => franchiseActive(o, id)))
+        .map(id => posById(id))
+        .forEach(pos => {
+          if (pos) adjacentWalkablePositions(pos, true).forEach(p => costs.set(p.x, p.y, 0xfe));
+        });
     }
 
     // Avoid creeps in the room
