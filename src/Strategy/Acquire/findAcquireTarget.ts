@@ -52,7 +52,7 @@ export const findAcquireTarget = () => {
         .map(r => getOfficeDistanceByRoomPath(r, room) ?? Infinity),
       Infinity
     );
-    if (distance * 30 > CREEP_CLAIM_LIFE_TIME) {
+    if (distance * 50 > CREEP_CLAIM_LIFE_TIME) {
       delete Memory.rooms[room].acquire;
       continue;
     }

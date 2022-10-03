@@ -20,8 +20,13 @@ import {
   terrainCostAt
 } from './MapCoordinates';
 
-export const defaultRouteCallback = () => (room: string) => {
+interface RouteCallbackOpts {
+  ignoreSourceKeeperRooms: boolean;
+}
+
+export const defaultRouteCallback = (opts?: RouteCallbackOpts) => (room: string) => {
   if (Memory.rooms[room]?.threatLevel?.[0] === ThreatLevel.OWNED) return Infinity; // avoid owned rooms
+  if (!opts?.ignoreSourceKeeperRooms && isSourceKeeperRoom(room)) return Infinity; // avoid source keeper rooms
   return;
 };
 
@@ -91,13 +96,13 @@ export const getCostMatrix = memoizeByTick(
       // Block out radius of 5 around protected sources
       for (let source of sourcePositions(roomName)) {
         for (let pos of calculateNearbyPositions(source, 5, true)) {
-          costs.set(pos.x, pos.y, 254);
+          costs.set(pos.x, pos.y, 255);
         }
       }
       const mineral = mineralPosition(roomName);
       if (mineral) {
         for (let pos of calculateNearbyPositions(mineral, 5, true)) {
-          costs.set(pos.x, pos.y, 254);
+          costs.set(pos.x, pos.y, 255);
         }
       }
     }

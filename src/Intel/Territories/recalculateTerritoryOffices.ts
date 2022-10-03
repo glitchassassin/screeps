@@ -1,10 +1,30 @@
 import { TERRITORY_RADIUS } from 'config';
-import { cachePath } from 'screeps-cartographer';
+import { cachePath, resetCachedPath } from 'screeps-cartographer';
 import { getOfficeDistanceByRange } from 'Selectors/getOfficeDistance';
 import { getCostMatrix, getRoomPathDistance } from 'Selectors/Map/Pathing';
 import { sourceIds } from 'Selectors/roomCache';
 import { getFranchisePlanBySourceId, roomPlans } from 'Selectors/roomPlans';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
+
+declare global {
+  namespace NodeJS {
+    interface Global {
+      resetTerritories(): void;
+    }
+  }
+}
+
+global.resetTerritories = () => {
+  for (const room in Memory.rooms) {
+    Memory.rooms[room].officesInRange = '';
+    Memory.rooms[room].franchises = {};
+    for (const source of sourceIds(room)) {
+      for (const office in Memory.offices) {
+        resetCachedPath(office + source);
+      }
+    }
+  }
+};
 
 export function recalculateTerritoryOffices(room: string) {
   const officesInRange = Object.keys(Memory.offices)

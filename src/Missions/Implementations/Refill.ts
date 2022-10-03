@@ -75,10 +75,26 @@ export class Refill extends MissionImplementation {
     mission.creepNames.push(name);
   }
 
+  static run(mission: RefillMission) {
+    // clear the space if needed
+    const creep = Game.creeps[mission.creepNames[0]];
+    const target = unpackPos(mission.data.refillSquare);
+    const existing = target.lookFor(LOOK_CREEPS)[0];
+    if (creep?.spawning && existing?.name.startsWith('REFILL')) {
+      existing.suicide();
+    }
+    super.run(mission);
+  }
+
   static minionLogic(mission: RefillMission, creep: Creep): void {
     const target = unpackPos(mission.data.refillSquare);
     moveTo(creep, { pos: target, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) }); // even if already there, this will prevent shoving
     if (!creep.pos.isEqualTo(target)) {
+      if (creep.pos.isNearTo(target)) {
+        const existing = target.lookFor(LOOK_CREEPS)[0];
+        // old creep still surviving - clear it out to make space for this one
+        if (existing?.name.startsWith('REFILL')) existing.suicide();
+      }
       return;
     }
 

@@ -11,7 +11,7 @@ export const getFranchiseDistance = memoizeByTick(
 
     let cost = 0;
     for (const road of roads) {
-      cost += road.structure ? 1 : terrainCostAt(road.pos);
+      cost += road.structureId ? 1 : terrainCostAt(road.pos);
     }
 
     return cost;

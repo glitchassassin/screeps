@@ -3,10 +3,13 @@ import { signRoom } from 'Behaviors/signRoom';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { scheduleSpawn } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { cachePath, getCachedPath, moveByPath } from 'screeps-cartographer';
+import { cachePath, getCachedPath, moveByPath, resetCachedPath } from 'screeps-cartographer';
 import { getPatrolRoute } from 'Selectors/getPatrolRoute';
+import { defaultRouteCallback } from 'Selectors/Map/Pathing';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
+
+const DEBUG = false;
 
 export interface ExploreMission extends Mission<MissionType.EXPLORE> {
   data: {
@@ -51,6 +54,7 @@ export class Explore extends MissionImplementation {
     if (!mission.data.exploreTarget) {
       // Ignore aggression on scouts
       creep.notifyWhenAttacked(false);
+      resetCachedPath(creep.name);
 
       let rooms = getPatrolRoute(mission.office).map(room => ({
         name: room,
@@ -72,19 +76,28 @@ export class Explore extends MissionImplementation {
 
     // Do work
     if (mission.data.exploreTarget) {
+      if (DEBUG) Game.map.visual.line(creep.pos, new RoomPosition(25, 25, mission.data.exploreTarget));
       mission.efficiency.working += 1;
       if (!Game.rooms[mission.data.exploreTarget]) {
         let path = getCachedPath(creep.name);
         if (!path) {
-          path = cachePath(creep.name, creep.pos, {
-            pos: new RoomPosition(25, 25, mission.data.exploreTarget),
-            range: 20
-          });
+          path = cachePath(
+            creep.name,
+            creep.pos,
+            {
+              pos: new RoomPosition(25, 25, mission.data.exploreTarget),
+              range: 20
+            },
+            {
+              routeCallback: defaultRouteCallback({ ignoreSourceKeeperRooms: true })
+            }
+          );
         }
+        if (DEBUG && path) Game.map.visual.poly(path, { fill: 'transparent' });
         if (
           !path?.length ||
           path[path.length - 1].roomName !== mission.data.exploreTarget ||
-          moveByPath(creep, creep.name) !== OK
+          moveByPath(creep, creep.name, { visualizePathStyle: { stroke: 'green' } }) !== OK
         ) {
           // console.log('Failed to path', creep.pos, mission.data.exploreTarget);
           Memory.rooms[mission.data.exploreTarget] ??= { officesInRange: '', franchises: {} }; // Unable to path

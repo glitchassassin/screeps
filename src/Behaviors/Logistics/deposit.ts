@@ -56,7 +56,7 @@ export const deposit = (mission: Mission<MissionType.LOGISTICS | MissionType.MOB
           opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
           (((opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('RESEARCH')) &&
             fastfillerIsFull(mission.office)) ||
-            opp.creep.name.startsWith('REFILL'))
+            opp.creep.name.startsWith('MOBILE_REFILL'))
         ) {
           if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
             const amount = Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);

@@ -41,7 +41,7 @@ function buildFromSegment(energy: number, segment: BodyPartConstant[], opts: Par
   const segmentCost = minionCost(segment);
   const segmentCount = Math.min(
     Math.floor(energy / segmentCost),
-    Math.floor(50 / segment.length),
+    Math.floor((50 - actualOpts.suffix.length) / segment.length),
     actualOpts.maxSegments
   );
   const body = new Array(segmentCount).fill(segment).flat();

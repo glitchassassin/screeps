@@ -75,7 +75,6 @@ function executeMissions() {
         throw e;
       }
       mission.actual.cpu += Math.max(0, Game.cpu.getUsed() - startTime);
-      debugCPU(mission.type, true);
     }
     // Clean up completed missions
     activeMissions(office)
@@ -108,7 +107,7 @@ function generateMissions() {
   for (const office in Memory.offices) {
     for (const dispatcher of Dispatchers) {
       dispatcher.byOffice(office);
-      // debugCPU('dispatcher' + Dispatchers.indexOf(dispatcher), true);
+      debugCPU('dispatcher' + Dispatchers.indexOf(dispatcher), true);
     }
   }
 }

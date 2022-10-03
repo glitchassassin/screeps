@@ -1,4 +1,4 @@
-import { moveTo } from 'screeps-cartographer';
+import { adjacentWalkablePositions, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { posById } from 'Selectors/posById';
@@ -16,6 +16,7 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
   }
 
   // Prefer to work from container position, fall back to adjacent position
+  const start = Game.cpu.getUsed();
   if (
     plan &&
     (!Game.rooms[plan.container.pos.roomName] ||
@@ -26,13 +27,16 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
     moveTo(
       creep,
       { pos: plan.container.pos, range: 0 },
-      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }), visualizePathStyle: { stroke: 'cyan' } }
+      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) }
     );
-  } else {
+  } else if (adjacentWalkablePositions(sourcePos, false).length) {
+    // available squares to target
     moveTo(creep, sourcePos, {
-      roomCallback: defaultRoomCallback({ ignoreFranchises: true }),
-      visualizePathStyle: { stroke: 'magenta' }
+      roomCallback: defaultRoomCallback({ ignoreFranchises: true })
     });
+  } else {
+    // stand by in area
+    moveTo(creep, { pos: sourcePos, range: 2 });
   }
 
   return creep.harvest(source!) === OK;

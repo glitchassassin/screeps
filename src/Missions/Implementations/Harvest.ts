@@ -28,7 +28,7 @@ export interface HarvestMission extends Mission<MissionType.HARVEST> {
 export function createHarvestMission(office: string, source: Id<Source>, startTime?: number): HarvestMission {
   const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office));
   const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.4,
+    cpu: CREEP_LIFE_TIME * 0.5,
     energy: 0
   };
 
