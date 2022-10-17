@@ -4,7 +4,7 @@ import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, estimateMissionInterval, isMission } from 'Missions/Selectors';
@@ -31,7 +31,7 @@ export interface EngineerMission extends Mission<MissionType.ENGINEER> {
   data: EngineerMissionData;
 }
 
-export function createEngineerMission(office: string, franchise?: Id<Source>): EngineerMission {
+export function createEngineerOrder(office: string, franchise?: Id<Source>): SpawnOrder {
   // Scale engineer by available room energy
 
   const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office), rcl(office) >= 3, !franchise);
@@ -46,7 +46,7 @@ export function createEngineerMission(office: string, franchise?: Id<Source>): E
 
   const workParts = body.filter(p => p === WORK).length;
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 8,
     type: MissionType.ENGINEER,
@@ -56,32 +56,16 @@ export function createEngineerMission(office: string, franchise?: Id<Source>): E
     },
     estimate
   });
+
+  const name = `ENGINEER-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class Engineer extends MissionImplementation {
-  static spawn(mission: EngineerMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `ENGINEER-${mission.office}-${mission.id}`;
-
-    const body = MinionBuilders[MinionTypes.ENGINEER](
-      spawnEnergyAvailable(mission.office),
-      rcl(mission.office) >= 3,
-      !mission.data.franchise
-    );
-
-    mission.data.workParts = body.filter(p => p === WORK).length;
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: EngineerMission, creep: Creep) {
     // Adjust estimate, if needed
     const lifetime = Math.min(estimateMissionInterval(mission.office), creep.ticksToLive ?? 0);
@@ -142,7 +126,7 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
       },
       [States.GET_ENERGY]: (mission, creep) => {
         if (
-          creep.store.getUsedCapacity(RESOURCE_ENERGY) ||
+          creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 ||
           engineerGetEnergy(
             creep,
             mission.office,

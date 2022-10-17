@@ -48,7 +48,7 @@ const energySourcesByOffice = memoizeByTick(
       }))
       .filter(
         source =>
-          source.pos.roomName !== office &&
+          (shouldHarvest || source.pos.roomName !== office) &&
           ((shouldGetFromFranchise && franchiseEnergyAvailable(source.id) >= 50) ||
             (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0))
       )
@@ -57,9 +57,9 @@ const energySourcesByOffice = memoizeByTick(
     const storage = [] as AnyStoreStructure[];
     if (roomPlans(office)?.headquarters?.storage.structure)
       storage.push(roomPlans(office)!.headquarters!.storage.structure as AnyStoreStructure);
-    if (roomPlans(office)?.library?.container.structure)
+    if ((roomPlans(office)?.library?.container.structure as AnyStoreStructure)?.store[RESOURCE_ENERGY])
       storage.push(roomPlans(office)!.library!.container.structure as AnyStoreStructure);
-    if (roomPlans(office)?.library?.link.structure)
+    if ((roomPlans(office)?.library?.link.structure as AnyStoreStructure)?.store[RESOURCE_ENERGY])
       storage.push(roomPlans(office)!.library!.link.structure as AnyStoreStructure);
     if (!roomPlans(office)?.headquarters?.storage.structure)
       roomPlans(office)

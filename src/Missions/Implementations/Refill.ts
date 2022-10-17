@@ -1,5 +1,5 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
@@ -16,7 +16,7 @@ export interface RefillMission extends Mission<MissionType.REFILL> {
   };
 }
 
-export function createRefillMission(office: string, position: RoomPosition): RefillMission {
+export function createRefillOrder(office: string, position: RoomPosition): SpawnOrder {
   const mobile = getSpawns(office).length !== 3;
   const body = MinionBuilders[MinionTypes.CLERK](
     spawnEnergyAvailable(office),
@@ -28,7 +28,7 @@ export function createRefillMission(office: string, position: RoomPosition): Ref
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 16,
     type: MissionType.REFILL,
@@ -38,52 +38,35 @@ export function createRefillMission(office: string, position: RoomPosition): Ref
     },
     estimate
   });
+
+  // Set name
+  const name = `REFILL-${mission.office}-${mission.id}`;
+  const preferredSpawn = getClosestByRange(position, getSpawns(mission.office));
+  const preferredDirections =
+    preferredSpawn?.pos.getRangeTo(position) === 1 ? [preferredSpawn.pos.getDirectionTo(position)] : undefined;
+
+  return createSpawnOrder(
+    mission,
+    {
+      name,
+      body
+    },
+    {
+      spawn: preferredSpawn?.id,
+      directions: preferredDirections
+    }
+  );
 }
 
 export class Refill extends MissionImplementation {
-  static spawn(mission: RefillMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `REFILL-${mission.office}-${mission.id}`;
-    const mobile = getSpawns(mission.office).length !== 3;
-    const body = MinionBuilders[MinionTypes.CLERK](
-      spawnEnergyAvailable(mission.office),
-      (SPAWN_ENERGY_CAPACITY + EXTENSION_ENERGY_CAPACITY[rcl(mission.office)]) / CARRY_CAPACITY,
-      mobile
-    );
-
-    const position = unpackPos(mission.data.refillSquare);
-    const preferredSpawn = getClosestByRange(position, getSpawns(mission.office));
-    const preferredDirections =
-      preferredSpawn?.pos.getRangeTo(position) === 1 ? [preferredSpawn.pos.getDirectionTo(position)] : undefined;
-
-    scheduleSpawn(
-      mission.office,
-      mission.priority,
-      {
-        name,
-        body,
-        missionId: mission.id
-      },
-      {
-        spawn: preferredSpawn?.id,
-        directions: preferredDirections
-      }
-    );
-
-    mission.creepNames.push(name);
-  }
-
-  static run(mission: RefillMission) {
+  static run(mission: RefillMission, creep?: Creep) {
     // clear the space if needed
-    const creep = Game.creeps[mission.creepNames[0]];
     const target = unpackPos(mission.data.refillSquare);
     const existing = target.lookFor(LOOK_CREEPS)[0];
     if (creep?.spawning && existing?.name.startsWith('REFILL')) {
       existing.suicide();
     }
-    super.run(mission);
+    super.run(mission, creep);
   }
 
   static minionLogic(mission: RefillMission, creep: Creep): void {

@@ -43,7 +43,7 @@ export const bucketBrigadeWithdraw = (
   brigadeLog().set(creep, log);
   // Bucket brigade
   const opp = lookNear(creep.pos).find(r => {
-    if (r.creep) {
+    if (r.creep?.my) {
       const m = assignedMission(r.creep) as LogisticsMission | MobileRefillMission;
       const target = byId(m?.data.depositTarget as Id<AnyStoreStructure | Creep>);
       log.set(
@@ -68,9 +68,10 @@ export const bucketBrigadeWithdraw = (
     if (oppMission) {
       // console.log('reassigning', creep.name, 'to', oppMission.data.depositTarget);
       mission.data.depositTarget = oppMission.data.depositTarget;
+      mission.data.withdrawTarget = oppMission.data.withdrawTarget;
       delete oppMission.data.depositTarget;
+      delete oppMission.data.withdrawTarget;
     }
-    delete mission.data.withdrawTarget;
     hasBrigaded().add(creep);
     hasBrigaded().add(opp.creep);
     return true;
@@ -86,7 +87,7 @@ export const bucketBrigadeDeposit = (
   const target = byId(mission.data.depositTarget as Id<AnyStoreStructure | Creep>);
   if (!target) return false;
   const opp = lookNear(creep.pos).find(r => shouldBucketBrigadeWithdraw(creep, r.creep));
-  if (opp?.creep) {
+  if (opp?.creep?.my) {
     if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
       opp.creep.store[RESOURCE_ENERGY] += creep.store[RESOURCE_ENERGY];
       opp.creep.memory.runState = States.DEPOSIT;
@@ -114,9 +115,10 @@ export const bucketBrigadeDeposit = (
       if (oppMission) {
         // console.log('reassigning', opp.creep.name, 'to', mission.data.depositTarget);
         oppMission.data.depositTarget = mission.data.depositTarget;
-        delete oppMission.data.withdrawTarget;
+        oppMission.data.withdrawTarget = mission.data.withdrawTarget;
       }
       delete mission.data.depositTarget;
+      delete mission.data.withdrawTarget;
       hasBrigaded().add(creep);
       hasBrigaded().add(opp.creep);
       return true;

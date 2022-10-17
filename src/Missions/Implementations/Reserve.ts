@@ -1,7 +1,7 @@
 import { signRoom } from 'Behaviors/signRoom';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission, missionExpired } from 'Missions/Selectors';
 import { moveTo } from 'screeps-cartographer';
@@ -18,40 +18,31 @@ export interface ReserveMission extends Mission<MissionType.RESERVE> {
   };
 }
 
-export function createReserveMission(office: string): ReserveMission {
+export function createReserveOrder(office: string): SpawnOrder {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 9,
     type: MissionType.RESERVE,
     data: {},
     estimate
   });
+
+  // Set name
+  const name = `MARKETER-${mission.office}-${mission.id}`;
+  const body = MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(mission.office));
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class Reserve extends MissionImplementation {
-  static spawn(mission: ReserveMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `MARKETER-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.MARKETER](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
-  static onStart(mission: ReserveMission, creep: Creep) {}
-
   static minionLogic(mission: ReserveMission, creep: Creep): void {
     if (!mission.data.reserveTarget) {
       // Select reserve target

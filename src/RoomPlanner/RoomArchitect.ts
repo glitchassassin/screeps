@@ -48,7 +48,7 @@ const roomSectionPlanner =
         const plannedSection = planner(room);
         Memory.roomPlans[room][plan] = serializer(plannedSection);
       } catch (e) {
-        console.log(`Error planning ${plan} for ${room}: ${e}`);
+        // console.log(`Error planning ${plan} for ${room}: ${e}`);
         Memory.roomPlans[room][plan] = null;
       }
     }
@@ -79,7 +79,7 @@ const mainStampsPlanner =
         Memory.roomPlans[room].labs = serializer(labs);
         Memory.roomPlans[room].fastfiller = serializer(fastfiller);
       } catch (e) {
-        console.log(`Error planning stamps for ${room}: ${e}`);
+        // console.log(`Error planning stamps for ${room}: ${e}`);
         Memory.roomPlans[room].headquarters = null;
         Memory.roomPlans[room].labs = null;
         Memory.roomPlans[room].fastfiller = null;

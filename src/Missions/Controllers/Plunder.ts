@@ -1,6 +1,7 @@
-import { createPlunderMission } from 'Missions/Implementations/Plunder';
+import { SpawnOrder } from 'Minions/spawnQueues';
+import { createPlunderOrder } from 'Missions/Implementations/Plunder';
 import { MissionType } from 'Missions/Mission';
-import { isMission, pendingAndActiveMissions } from 'Missions/Selectors';
+import { activeMissions, isMission } from 'Missions/Selectors';
 import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
 import { getRoomPathDistance } from 'Selectors/Map/Pathing';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -8,7 +9,7 @@ import { roomPlans } from 'Selectors/roomPlans';
 const assignedPlunderCapacity = (office: string) => {
   const assignments = new Map<string, number>();
 
-  for (const mission of pendingAndActiveMissions(office).filter(isMission(MissionType.PLUNDER))) {
+  for (const mission of activeMissions(office).filter(isMission(MissionType.PLUNDER))) {
     if (!mission.data.targetRoom) continue;
     assignments.set(mission.data.targetRoom, (assignments.get(mission.data.targetRoom) ?? 0) + mission.data.capacity);
   }
@@ -28,18 +29,20 @@ const neededPlunderCapacity = (office: string) => (room: string) => {
 
 export default {
   byTick: () => {},
-  byOffice: (office: string) => {
-    if (Game.cpu.bucket < 500 || !roomPlans(office)?.headquarters?.storage.structure) return; // don't run when we have low bucket
+  byOffice: (office: string): SpawnOrder[] => {
+    if (Game.cpu.bucket < 500 || !roomPlans(office)?.headquarters?.storage.structure) return []; // don't run when we have low bucket
     const plunderCapacity = assignedPlunderCapacity(office);
     const { room, capacity } =
       calculateNearbyRooms(office, 3, false)
         .map(neededPlunderCapacity(office))
         .find(({ capacity }) => capacity > 0) ?? {};
-    if (!room || !capacity) return;
+    if (!room || !capacity) return [];
     const assignedCapacity = plunderCapacity.get(room) ?? 0;
     if (capacity > assignedCapacity) {
       // New Plunder mission needed
-      Memory.offices[office].pendingMissions.push(createPlunderMission(office, room));
+      return [createPlunderOrder(office, room)];
     }
+
+    return [];
   }
 };

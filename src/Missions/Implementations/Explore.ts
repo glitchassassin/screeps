@@ -1,15 +1,14 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { signRoom } from 'Behaviors/signRoom';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
-import { cachePath, getCachedPath, moveByPath, resetCachedPath } from 'screeps-cartographer';
+import { moveTo } from 'screeps-cartographer';
 import { getPatrolRoute } from 'Selectors/getPatrolRoute';
-import { defaultRouteCallback } from 'Selectors/Map/Pathing';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
 
-const DEBUG = false;
+const DEBUG = true;
 
 export interface ExploreMission extends Mission<MissionType.EXPLORE> {
   data: {
@@ -17,44 +16,35 @@ export interface ExploreMission extends Mission<MissionType.EXPLORE> {
   };
 }
 
-export function createExploreMission(office: string): ExploreMission {
+export function createExploreOrder(office: string): SpawnOrder {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.3,
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 15,
     type: MissionType.EXPLORE,
     data: {},
     estimate
   });
+
+  const name = `AUDITOR-${mission.office}-${mission.id}`;
+  const body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(mission.office));
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class Explore extends MissionImplementation {
-  static spawn(mission: ExploreMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `AUDITOR-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.AUDITOR](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
     // Select a target
     if (!mission.data.exploreTarget) {
       // Ignore aggression on scouts
       creep.notifyWhenAttacked(false);
-      resetCachedPath(creep.name);
 
       let rooms = getPatrolRoute(mission.office).map(room => ({
         name: room,
@@ -79,25 +69,17 @@ export class Explore extends MissionImplementation {
       if (DEBUG) Game.map.visual.line(creep.pos, new RoomPosition(25, 25, mission.data.exploreTarget));
       mission.efficiency.working += 1;
       if (!Game.rooms[mission.data.exploreTarget]) {
-        let path = getCachedPath(creep.name);
-        if (!path) {
-          path = cachePath(
-            creep.name,
-            creep.pos,
+        if (
+          moveTo(
+            creep,
             {
               pos: new RoomPosition(25, 25, mission.data.exploreTarget),
               range: 20
             },
             {
-              routeCallback: defaultRouteCallback({ ignoreSourceKeeperRooms: true })
+              sourceKeeperRoomCost: 2
             }
-          );
-        }
-        if (DEBUG && path) Game.map.visual.poly(path, { fill: 'transparent' });
-        if (
-          !path?.length ||
-          path[path.length - 1].roomName !== mission.data.exploreTarget ||
-          moveByPath(creep, creep.name, { visualizePathStyle: { stroke: 'green' } }) !== OK
+          ) !== OK
         ) {
           // console.log('Failed to path', creep.pos, mission.data.exploreTarget);
           Memory.rooms[mission.data.exploreTarget] ??= { officesInRange: '', franchises: {} }; // Unable to path

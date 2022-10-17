@@ -26,7 +26,6 @@ interface RouteCallbackOpts {
 
 export const defaultRouteCallback = (opts?: RouteCallbackOpts) => (room: string) => {
   if (Memory.rooms[room]?.threatLevel?.[0] === ThreatLevel.OWNED) return Infinity; // avoid owned rooms
-  if (!opts?.ignoreSourceKeeperRooms && isSourceKeeperRoom(room)) return Infinity; // avoid source keeper rooms
   return;
 };
 
@@ -35,6 +34,7 @@ export const defaultRoomCallback = (opts?: getCostMatrixOptions) => (room: strin
 };
 
 config.DEFAULT_MOVE_OPTS.routeCallback = defaultRouteCallback();
+config.DEFAULT_MOVE_OPTS.sourceKeeperRoomCost = Infinity;
 config.DEFAULT_MOVE_OPTS.roomCallback = defaultRoomCallback();
 
 interface getCostMatrixOptions {

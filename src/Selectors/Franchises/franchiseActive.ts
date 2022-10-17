@@ -6,7 +6,7 @@ import { getFranchiseDistance } from './getFranchiseDistance';
 export const franchiseActive = (office: string, source: Id<Source>) => {
   const room = posById(source)?.roomName ?? '';
   const lastHarvested = Memory.rooms[room]?.franchises[office]?.[source]?.lastHarvested;
-  return lastHarvested && lastHarvested + 500 > Game.time;
+  return lastHarvested && lastHarvested + 1500 > Game.time;
 };
 
 export const activeFranchises = (office: string) =>

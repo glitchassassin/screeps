@@ -1,7 +1,7 @@
 import { blinkyKill } from 'Behaviors/blinkyKill';
 import { guardKill } from 'Behaviors/guardKill';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { findClosestHostileCreepByRange, findInvaderStructures } from 'Selectors/findHostileCreeps';
@@ -17,7 +17,7 @@ export interface DefendRemoteMission extends Mission<MissionType.DEFEND_REMOTE> 
   data: DefendRemoteMissionData;
 }
 
-export function createDefendRemoteMission(office: string, coreKiller = false): DefendRemoteMission {
+export function createDefendRemoteOrder(office: string, coreKiller = false): SpawnOrder {
   const body = MinionBuilders[coreKiller ? MinionTypes.GUARD : MinionTypes.BLINKY](spawnEnergyAvailable(office));
 
   const estimate = {
@@ -25,34 +25,23 @@ export function createDefendRemoteMission(office: string, coreKiller = false): D
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 9.9,
     type: MissionType.DEFEND_REMOTE,
     data: { coreKiller },
     estimate
   });
+
+  const name = `JANITOR-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class DefendRemote extends MissionImplementation {
-  static spawn(mission: DefendRemoteMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `JANITOR-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[mission.data.coreKiller ? MinionTypes.GUARD : MinionTypes.BLINKY](
-      spawnEnergyAvailable(mission.office)
-    );
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: DefendRemoteMission, creep: Creep) {
     // If work is done, clear target
     if (

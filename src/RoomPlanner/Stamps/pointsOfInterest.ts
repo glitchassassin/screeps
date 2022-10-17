@@ -26,18 +26,18 @@ export const pointsOfInterest = memoize(
     const mineral = mineralPosition(room);
     const exits = roomExits(room);
     if (!controller || !source1 || !source2 || !mineral || !exits) {
-      console.log(
-        'controller',
-        !controller,
-        'source1',
-        !source1,
-        'source2',
-        !source2,
-        'mineral',
-        !mineral,
-        'exits',
-        !exits
-      );
+      // console.log(
+      //   'controller',
+      //   !controller,
+      //   'source1',
+      //   !source1,
+      //   'source2',
+      //   !source2,
+      //   'mineral',
+      //   !mineral,
+      //   'exits',
+      //   !exits
+      // );
       throw new Error('Unable to generate flowfields for room');
     }
 

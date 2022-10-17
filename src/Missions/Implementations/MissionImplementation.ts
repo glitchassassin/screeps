@@ -1,22 +1,17 @@
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
 
 export abstract class MissionImplementation {
-  static spawn(mission: Mission<MissionType>) {
+  static run(mission: Mission<MissionType>, creep?: Creep) {
     // Default implementation does nothing
-  }
-  static run(mission: Mission<MissionType>) {
-    // Default implementation does nothing
-    const creep = Game.creeps[mission.creepNames[0]];
-    const spawnOrder = Memory.offices[mission.office].spawnQueue.find(o => o.data.name === mission.creepNames[0]);
-    if (!spawnOrder && !creep) {
+    if (mission.status === MissionStatus.RUNNING && !creep) {
       // creep is dead
       mission.status = MissionStatus.DONE;
       this.onEnd(mission);
       return;
     }
-    if (!creep || creep.spawning) return; // wait for creep
+    if (!creep || creep?.spawning) return; // wait for creep
 
-    if (mission.status === MissionStatus.SCHEDULED || mission.status === MissionStatus.STARTING) {
+    if (mission.status === MissionStatus.PENDING) {
       mission.status = MissionStatus.RUNNING;
       this.onStart(mission, creep);
     }

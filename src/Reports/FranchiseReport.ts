@@ -2,6 +2,7 @@ import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { HarvestMission } from 'Missions/Implementations/Harvest';
 import { MissionType } from 'Missions/Mission';
+import { activeMissions } from 'Missions/Selectors';
 import { Bar, Dashboard, Label } from 'screeps-viz';
 import { byId } from 'Selectors/byId';
 import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
@@ -14,7 +15,7 @@ import { roomPlans } from 'Selectors/roomPlans';
 
 export default () => {
   for (const office in Memory.offices) {
-    const activeMissionsBySource = Memory.offices[office]?.activeMissions.reduce((obj, mission) => {
+    const activeMissionsBySource = activeMissions(office).reduce((obj, mission) => {
       if (mission.type !== MissionType.HARVEST) return obj;
       obj[mission.data.source] ??= [];
       obj[mission.data.source].push(mission as HarvestMission);

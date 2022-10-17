@@ -2,7 +2,7 @@ import { findBestDepositTarget } from 'Behaviors/Logistics';
 import { recycle } from 'Behaviors/recycle';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
@@ -20,7 +20,7 @@ export interface PlunderMission extends Mission<MissionType.PLUNDER> {
   };
 }
 
-export function createPlunderMission(office: string, targetRoom: string): PlunderMission {
+export function createPlunderOrder(office: string, targetRoom: string): SpawnOrder {
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, false);
   const capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
@@ -37,7 +37,7 @@ export function createPlunderMission(office: string, targetRoom: string): Plunde
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority,
     type: MissionType.PLUNDER,
@@ -47,28 +47,17 @@ export function createPlunderMission(office: string, targetRoom: string): Plunde
     },
     estimate
   });
+
+  // Set name
+  const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class Plunder extends MissionImplementation {
-  static spawn(mission: PlunderMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office), 50, false);
-
-    // Set name
-    const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
-
-    mission.data.capacity ??= body.filter(p => p === CARRY).length * CARRY_CAPACITY;
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: PlunderMission, creep: Creep): void {
     creep.memory.state ??= States.WITHDRAW;
 

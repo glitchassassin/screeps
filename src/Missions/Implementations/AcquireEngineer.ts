@@ -4,15 +4,17 @@ import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
 import { setState, States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { getWithdrawLimit } from 'Missions/Budgets';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { assignCreepToOffice } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { rcl } from 'Selectors/rcl';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { facilitiesWorkToDo, plannedStructureNeedsWork } from 'Selectors/Structures/facilitiesWorkToDo';
+import { createEngineerOrder } from './Engineer';
 import { MissionImplementation } from './MissionImplementation';
 
 export interface AcquireEngineerMission extends Mission<MissionType.ACQUIRE_ENGINEER> {
@@ -24,7 +26,7 @@ export interface AcquireEngineerMission extends Mission<MissionType.ACQUIRE_ENGI
   };
 }
 
-export function createAcquireEngineerMission(office: string, targetOffice: string): AcquireEngineerMission {
+export function createAcquireEngineerOrder(office: string, targetOffice: string): SpawnOrder {
   const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(office));
   const capacity = body.filter(b => b === CARRY).length * CARRY_CAPACITY;
 
@@ -35,9 +37,9 @@ export function createAcquireEngineerMission(office: string, targetOffice: strin
 
   const workParts = body.filter(p => p === WORK).length;
 
-  return createMission({
+  const mission = createMission({
     office,
-    priority: 5,
+    priority: 8.1,
     type: MissionType.ACQUIRE_ENGINEER,
     data: {
       workParts,
@@ -46,27 +48,19 @@ export function createAcquireEngineerMission(office: string, targetOffice: strin
     },
     estimate
   });
+
+  // Set name
+  const name = `ENGINEER-${mission.office}-${mission.id}`;
+
+  mission.data.workParts = body.filter(p => p === WORK).length;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class AcquireEngineer extends MissionImplementation {
-  static spawn(mission: AcquireEngineerMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `ENGINEER-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.ENGINEER](spawnEnergyAvailable(mission.office));
-
-    mission.data.workParts = body.filter(p => p === WORK).length;
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: AcquireEngineerMission, creep: Creep) {
     if (!mission.data.initialized) {
       // Load up with energy from sponsor office
@@ -75,9 +69,8 @@ export class AcquireEngineer extends MissionImplementation {
         mission.data.initialized = true;
       }
     } else {
-      if (engineerLogic(creep, mission.data.targetOffice, mission)) {
-        mission.efficiency.working += 1;
-      }
+      assignCreepToOffice(creep, mission.data.targetOffice);
+      creep.memory.mission = createEngineerOrder(mission.data.targetOffice).mission;
     }
   }
 }

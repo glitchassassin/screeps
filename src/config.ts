@@ -86,7 +86,7 @@ export const MINERAL_PRIORITIES: MineralConstant[] = [
   RESOURCE_OXYGEN
 ];
 
-export const MISSION_HISTORY_LIMIT = 15000;
+export const MISSION_HISTORY_LIMIT = 1500;
 
 export const THREAT_TOLERANCE = {
   remote: {

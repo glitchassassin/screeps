@@ -32,7 +32,7 @@ export const planFranchise = (sourceId: Id<Source>) => {
     { roomCallback: room => getCostMatrix(room, false, { roomPlan: true, ignoreFranchises: true }) }
   );
   if (route.incomplete) {
-    console.log(JSON.stringify(route));
+    // console.log(JSON.stringify(route));
     throw new Error('Unable to calculate path between source and controller');
   }
   const containerPos = route.path.length

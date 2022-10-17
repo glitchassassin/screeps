@@ -62,4 +62,4 @@ register('franchise', FranchiseReport);
 register('estimates', EstimatesReport);
 register('remotes', RemotesReport);
 
-global.d('estimates');
+global.d('remotes');

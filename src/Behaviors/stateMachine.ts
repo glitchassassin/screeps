@@ -22,5 +22,4 @@ export function runStates<M extends Mission<MissionType>>(
     }
     creep.memory.runState = states[creep.memory.runState](mission, creep);
   }
-  // if (statesRun.includes(States.FIND_WITHDRAW)) console.log(creep.name, mission.type, JSON.stringify(statesRun));
 }

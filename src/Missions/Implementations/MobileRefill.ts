@@ -4,7 +4,7 @@ import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { MissionImplementation } from './MissionImplementation';
@@ -17,7 +17,7 @@ export interface MobileRefillMission extends Mission<MissionType.MOBILE_REFILL> 
   };
 }
 
-export function createMobileRefillMission(office: string, priority = 11): MobileRefillMission {
+export function createMobileRefillOrder(office: string, priority = 11): SpawnOrder {
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office), 50, true);
   const capacity = body.filter(p => p === CARRY).length * CARRY_CAPACITY;
 
@@ -26,7 +26,7 @@ export function createMobileRefillMission(office: string, priority = 11): Mobile
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority,
     type: MissionType.MOBILE_REFILL,
@@ -35,34 +35,20 @@ export function createMobileRefillMission(office: string, priority = 11): Mobile
     },
     estimate
   });
+
+  // Set name
+  const name = `MOBILE_REFILL-${mission.office}-${mission.id}`;
+
+  mission.data.capacity ??= body.filter(p => p === CARRY).length * CARRY_CAPACITY;
+  mission.data.repair = false;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class MobileRefill extends MissionImplementation {
-  static spawn(mission: MobileRefillMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion;
-
-    const body = MinionBuilders[MinionTypes.ACCOUNTANT](
-      Math.min(1050, spawnEnergyAvailable(mission.office)),
-      50,
-      true,
-      false
-    );
-
-    // Set name
-    const name = `MOBILE_REFILL-${mission.office}-${mission.id}`;
-
-    mission.data.capacity ??= body.filter(p => p === CARRY).length * CARRY_CAPACITY;
-    mission.data.repair = false;
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: MobileRefillMission, creep: Creep): void {
     runStates(
       {

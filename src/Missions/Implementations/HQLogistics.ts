@@ -1,5 +1,5 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
@@ -12,7 +12,7 @@ export interface HQLogisticsMission extends Mission<MissionType.HQ_LOGISTICS> {
   data: {};
 }
 
-export function createHQLogisticsMission(office: string, startTime?: number): HQLogisticsMission {
+export function createHQLogisticsOrder(office: string, startTime?: number): SpawnOrder {
   const body = MinionBuilders[MinionTypes.CLERK](spawnEnergyAvailable(office));
 
   const estimate = {
@@ -20,7 +20,7 @@ export function createHQLogisticsMission(office: string, startTime?: number): HQ
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 15,
     type: MissionType.HQ_LOGISTICS,
@@ -28,30 +28,17 @@ export function createHQLogisticsMission(office: string, startTime?: number): HQ
     estimate,
     startTime
   });
+
+  // Set name
+  const name = `CLERK-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class HQLogistics extends MissionImplementation {
-  static spawn(mission: HQLogisticsMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    const pos = getHeadquarterLogisticsLocation(mission.office);
-
-    if (!pos) return;
-
-    const body = MinionBuilders[MinionTypes.CLERK](spawnEnergyAvailable(mission.office), 800 / CARRY_CAPACITY, true);
-
-    // Set name
-    const name = `CLERK-${mission.office}-${mission.id}`;
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: HQLogisticsMission, creep: Creep): void {
     // Priorities:
     // Link -> Storage
@@ -60,7 +47,7 @@ export class HQLogistics extends MissionImplementation {
 
     const pos = getHeadquarterLogisticsLocation(mission.office);
     if (!pos) return;
-    moveTo(creep, pos, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
+    moveTo(creep, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
 
     // Check HQ state
     const hq = roomPlans(mission.office)?.headquarters;

@@ -2,13 +2,12 @@ import { harvestEnergyFromFranchise } from 'Behaviors/harvestEnergyFromFranchise
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
-import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { creepCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
@@ -25,8 +24,7 @@ export interface HarvestMission extends Mission<MissionType.HARVEST> {
   };
 }
 
-export function createHarvestMission(office: string, source: Id<Source>, startTime?: number): HarvestMission {
-  const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office));
+export function createHarvestOrder(office: string, source: Id<Source>, startTime?: number): SpawnOrder {
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.5,
     energy: 0
@@ -38,6 +36,8 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
 
   // set priority differently for remote sources
   const remote = office !== posById(source)?.roomName;
+  const plan = getFranchisePlanBySourceId(source);
+  const link = !!(plan?.link.structureId || plan?.extensions.some(e => e.structureId));
   const distance = getFranchiseDistance(office, source);
   let priority = 10;
   if (remote) {
@@ -51,7 +51,9 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
     if (franchise1 === source) priority += 0.1;
   }
 
-  return createMission({
+  const body = MinionBuilders[MinionTypes.SALESMAN](spawnEnergyAvailable(office), link, remote);
+
+  const mission = createMission({
     office,
     priority,
     type: MissionType.HARVEST,
@@ -63,50 +65,20 @@ export function createHarvestMission(office: string, source: Id<Source>, startTi
     },
     estimate
   });
+
+  // Set name
+  const name = `HARVEST-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class Harvest extends MissionImplementation {
-  static spawn(mission: HarvestMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Calculate harvester spawn preference
-    const franchisePlan = getFranchisePlanBySourceId(mission.data.source);
-    const link = !!franchisePlan?.link.structure || franchisePlan?.extensions.some(e => e.structure);
-    const remote = posById(mission.data.source)?.roomName !== mission.office;
-
-    const energy = hasEnergyIncome(mission.office)
-      ? Game.rooms[mission.office].energyCapacityAvailable
-      : spawnEnergyAvailable(mission.office);
-
-    // Set name
-    const name = `HARVEST-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.SALESMAN](energy, link, remote);
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static onStart(mission: HarvestMission, creep: Creep) {
     // HarvestLedger.reset(mission.office, mission.data.source);
     HarvestLedger.record(mission.office, mission.data.source, 'spawn_harvest', -creepCost(creep));
-  }
-
-  static onEnd(mission: HarvestMission) {
-    // console.log(
-    //   mission.office,
-    //   posById(mission.data.source),
-    //   mission.creepNames[0],
-    //   getFranchiseDistance(mission.office, mission.data.source),
-    //   JSON.stringify(HarvestLedger.get(mission.office, mission.data.source).value),
-    //   HarvestLedger.get(mission.office, mission.data.source).perTick,
-    //   HarvestLedger.get(mission.office, mission.data.source).age
-    // );
-    // HarvestLedger.reset(mission.office, mission.data.source);
   }
 
   static minionLogic(mission: HarvestMission, creep: Creep): void {

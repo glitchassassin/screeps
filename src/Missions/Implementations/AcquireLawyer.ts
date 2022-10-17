@@ -1,6 +1,6 @@
 import { signRoom } from 'Behaviors/signRoom';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionStatus, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
@@ -15,7 +15,7 @@ export interface AcquireLawyerMission extends Mission<MissionType.ACQUIRE_LAWYER
   };
 }
 
-export function createAcquireLawyerMission(office: string, targetOffice: string): AcquireLawyerMission {
+export function createAcquireLawyerOrder(office: string, targetOffice: string): SpawnOrder {
   const body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(office));
 
   const estimate = {
@@ -23,34 +23,26 @@ export function createAcquireLawyerMission(office: string, targetOffice: string)
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
-    priority: 5.2,
+    priority: 8.2,
     type: MissionType.ACQUIRE_LAWYER,
     data: {
       targetOffice
     },
     estimate
   });
+
+  // Set name
+  const name = `LAWYER-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class AcquireLawyer extends MissionImplementation {
-  static spawn(mission: AcquireLawyerMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `LAWYER-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.LAWYER](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: AcquireLawyerMission, creep: Creep) {
     if (mission.data.targetOffice && Memory.rooms[mission.data.targetOffice]) {
       Memory.rooms[mission.data.targetOffice].lastAcquireAttempt = Game.time;

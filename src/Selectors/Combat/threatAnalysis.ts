@@ -1,7 +1,9 @@
-import { FEATURES, WHITELIST } from "config";
-import { findHostileCreeps } from "Selectors/findHostileCreeps";
-import { isSourceKeeperRoom } from "Selectors/Map/MapCoordinates";
-import { totalCreepStats } from "./combatStats";
+import { FEATURES, WHITELIST } from 'config';
+import { creepStats } from 'Selectors/creepStats';
+import { findHostileCreeps } from 'Selectors/findHostileCreeps';
+import { isSourceKeeperRoom } from 'Selectors/Map/MapCoordinates';
+import { memoizeByTick } from 'utils/memoizeFunction';
+import { totalCreepStats } from './combatStats';
 
 export enum ThreatLevel {
   NONE = 'NONE', // No hostile minions or structures
@@ -35,7 +37,10 @@ export const calculateThreatLevel = (room: string): [ThreatLevel, number] => {
 
   // Unowned room - actively harvested or not?
   if (!controller.owner) {
-    if (controller.reservation && (WHITELIST.includes(controller.reservation.username) || controller.reservation.username === 'LordGreywether')) {
+    if (
+      controller.reservation &&
+      (WHITELIST.includes(controller.reservation.username) || controller.reservation.username === 'LordGreywether')
+    ) {
       return [ThreatLevel.FRIENDLY, hostiles.score]; // Friendly remote
     } else if (hostiles.harvest || controller.reservation) {
       return [ThreatLevel.REMOTE, hostiles.score];
@@ -45,10 +50,17 @@ export const calculateThreatLevel = (room: string): [ThreatLevel, number] => {
   }
 
   // Owned room - friendly?
-  if (controller.my || FEATURES.WHITELIST && WHITELIST.includes(controller.owner.username)) {
-    return [ThreatLevel.FRIENDLY, hostiles.score]
+  if (controller.my || (FEATURES.WHITELIST && WHITELIST.includes(controller.owner.username))) {
+    return [ThreatLevel.FRIENDLY, hostiles.score];
   }
 
   // Then it's hostile
-  return [ThreatLevel.OWNED, hostiles.score]
-}
+  return [ThreatLevel.OWNED, hostiles.score];
+};
+
+export const calculateDefensiveThreatLevel = memoizeByTick(
+  office => office,
+  (office: string): number => {
+    return creepStats(findHostileCreeps(office)).attack;
+  }
+);

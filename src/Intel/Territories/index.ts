@@ -37,7 +37,7 @@ export const scanTerritories = () => {
         scores.push(ledger.perTick);
         if (scores.length > FRANCHISE_EVALUATE_PERIOD) scores.shift();
 
-        console.log(office, room, source, scores); //JSON.stringify(ledger.value));
+        console.log(office, room, source, JSON.stringify(ledger.value), scores);
       } else {
         // unprofitable franchise was abandoned - evaluate if scores should be reset
         if (

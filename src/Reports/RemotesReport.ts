@@ -2,7 +2,7 @@ import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { HarvestMission } from 'Missions/Implementations/Harvest';
 import { MissionStatus, MissionType } from 'Missions/Mission';
-import { isMission, isStatus } from 'Missions/Selectors';
+import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { byId } from 'Selectors/byId';
 import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
@@ -13,7 +13,7 @@ import { posById } from 'Selectors/posById';
 export default () => {
   for (const office in Memory.offices) {
     let actualLogisticsCapacity = 0;
-    const activeMissionsBySource = Memory.offices[office]?.activeMissions.reduce((obj, mission) => {
+    const activeMissionsBySource = activeMissions(office).reduce((obj, mission) => {
       if (isMission(MissionType.LOGISTICS)(mission) && isStatus(MissionStatus.RUNNING))
         actualLogisticsCapacity += mission.data.capacity;
       if (mission.type !== MissionType.HARVEST || !isStatus(MissionStatus.RUNNING)(mission)) return obj;
@@ -29,7 +29,7 @@ export default () => {
       capacity: 0
     };
 
-    const data = franchisesByOffice(office).map(franchise => {
+    const data = franchisesByOffice(office, true).map(franchise => {
       let sourcePos = posById(franchise.source);
       Game.map.visual.text(franchiseEnergyAvailable(franchise.source).toFixed(0), sourcePos!, { fontSize: 5 });
       let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
@@ -66,7 +66,7 @@ export default () => {
         byId(franchise.source)?.energy.toFixed(0) ?? '--',
         harvested.toFixed(0),
         hauling.toFixed(0),
-        `${perTick.toFixed(2)}${isValid ? '' : '?'} (${perTickAverage.toFixed(2)})`
+        `${perTick.toFixed(2)}${isValid ? '' : '?'} (${perTickAverage.toFixed(2)}/${scores?.length ?? '?'})`
       ];
     });
     data.push(['--', '--', '--', '--', '--', '--', '--', '--']);

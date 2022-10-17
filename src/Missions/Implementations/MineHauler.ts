@@ -2,7 +2,7 @@ import { BehaviorResult } from 'Behaviors/Behavior';
 import { getResourcesFromMineContainer } from 'Behaviors/getResourcesFromMineContainer';
 import { setState, States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -15,14 +15,14 @@ export interface MineHaulerMission extends Mission<MissionType.MINE_HAULER> {
   };
 }
 
-export function createMineHaulerMission(office: string, mineral: Id<Mineral>): MineHaulerMission {
+export function createMineHaulerOrder(office: string, mineral: Id<Mineral>): SpawnOrder {
   const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 7,
     type: MissionType.MINE_HAULER,
@@ -31,25 +31,17 @@ export function createMineHaulerMission(office: string, mineral: Id<Mineral>): M
     },
     estimate
   });
+
+  // Set name
+  const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class MineHauler extends MissionImplementation {
-  static spawn(mission: MineHaulerMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `ACCOUNTANT-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.ACCOUNTANT](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
     // Set some additional data on the mission
     mission.data.harvestRate ??= creep.body.filter(p => p.type === WORK).length * HARVEST_MINERAL_POWER;

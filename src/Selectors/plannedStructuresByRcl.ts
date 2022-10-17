@@ -1,4 +1,6 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
+import { calculateDefensiveThreatLevel } from './Combat/threatAnalysis';
+import { plannedTerritoryRoads } from './plannedTerritoryRoads';
 import { roomPlans } from './roomPlans';
 import { getExtensions } from './spawnsAndExtensionsDemand';
 import { isPlannedStructure } from './typeguards';
@@ -25,6 +27,8 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
   const rcl = targetRcl ?? Game.rooms[officeName]?.controller?.level;
   if (!rcl || !plans) return [];
 
+  let energyStructures: (PlannedStructure | undefined)[] = [];
+  let defensiveStructures: (PlannedStructure | undefined)[] = [];
   let plannedStructures: (PlannedStructure | undefined)[] = [];
   let plannedExtensions = getExtensions(officeName);
 
@@ -37,28 +41,29 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
 
   if (rcl >= 0) {
     plannedStructures = [];
+    energyStructures = [];
+    defensiveStructures = [];
   }
   if (rcl >= 1) {
-    plannedStructures = plannedStructures.concat(plans.fastfiller?.spawns[0]);
+    energyStructures = energyStructures.concat(plans.fastfiller?.spawns[0]);
   }
   if (rcl >= 2) {
-    plannedStructures = plannedStructures.concat(plans.fastfiller?.containers ?? [], plannedExtensions.slice(0, 5));
+    energyStructures = energyStructures.concat(plans.fastfiller?.containers ?? [], plannedExtensions.slice(0, 5));
   }
   if (rcl >= 2 && rcl < 6) {
     plannedStructures = plannedStructures.concat(plans.library?.container);
   }
   if (rcl >= 3) {
-    plannedStructures = plannedStructures.concat(
+    energyStructures = energyStructures.concat(
       plannedExtensions.slice(5, 10),
-      plannedTowers.slice(0, 1),
       plans.franchise1?.container,
       plans.franchise2?.container
     );
+    defensiveStructures = defensiveStructures.concat(plannedTowers.slice(0, 1));
   }
   if (rcl >= 4) {
-    plannedStructures = plannedStructures.concat(
-      plannedExtensions.slice(10, 20),
-      plans.headquarters?.storage,
+    energyStructures = energyStructures.concat(plannedExtensions.slice(10, 20), plans.headquarters?.storage);
+    defensiveStructures = defensiveStructures.concat(
       plans.franchise1?.ramparts ?? [],
       plans.perimeter?.ramparts ?? [],
       plans.extensions?.ramparts ?? [],
@@ -66,38 +71,35 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     );
   }
   if (rcl >= 5) {
-    plannedStructures = plannedStructures.concat(
-      plannedExtensions.slice(20, 30),
-      plannedTowers.slice(1, 2),
-      [plans.library?.link],
-      [plans.headquarters?.link]
-    );
+    energyStructures = energyStructures.concat(plannedExtensions.slice(20, 30));
+    defensiveStructures = defensiveStructures.concat(plannedTowers.slice(1, 2));
+    plannedStructures = plannedStructures.concat([plans.library?.link], [plans.headquarters?.link]);
   }
   if (rcl >= 6) {
+    energyStructures = energyStructures.concat(plannedExtensions.slice(30, 40), [plans.fastfiller?.link]);
     plannedStructures = plannedStructures.concat(
-      plannedExtensions.slice(30, 40),
-      [plans.fastfiller?.link],
       [plans.headquarters?.terminal],
       [plans.mine?.extractor],
       [plans.mine?.container]
     );
   }
   if (rcl >= 7) {
-    plannedStructures = plannedStructures.concat(
+    energyStructures = energyStructures.concat(
       plannedExtensions.slice(40, 50),
       plans.fastfiller?.spawns[1],
-      plans.franchise2?.link,
-      plannedTowers.slice(2, 3),
-      plans.labs?.labs.slice(0, 6) ?? [],
-      plans.headquarters?.factory
+      plans.franchise2?.link
     );
+    defensiveStructures = defensiveStructures.concat(plannedTowers.slice(2, 3));
+    plannedStructures = plannedStructures.concat(plans.labs?.labs.slice(0, 6) ?? [], plans.headquarters?.factory);
   }
   if (rcl === 8) {
-    plannedStructures = plannedStructures.concat(
+    energyStructures = energyStructures.concat(
       plannedExtensions.slice(50, 60),
       plans.fastfiller?.spawns[2],
-      plans.franchise1?.link,
-      plannedTowers.slice(3, 6),
+      plans.franchise1?.link
+    );
+    defensiveStructures = plannedStructures.concat(plannedTowers.slice(3, 6));
+    plannedStructures = plannedStructures.concat(
       plans.labs?.labs.slice(6, 10) ?? [],
       plans.headquarters?.nuker,
       plans.headquarters?.powerSpawn,
@@ -105,17 +107,26 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
     );
   }
 
-  // Roads are always at the end of the priority queue
+  // Roads are at the end of the energy structures priority queue
   if (rcl >= 3) {
-    plannedStructures = plannedStructures.concat(
+    energyStructures = energyStructures.concat(
       plans.fastfiller?.roads ?? [],
       plans.headquarters?.roads ?? [],
       plans.extensions?.roads ?? [],
-      plans.roads?.roads ?? []
+      plans.roads?.roads ?? [],
+      plannedTerritoryRoads(officeName)
     );
   }
   if (rcl >= 7) {
     plannedStructures = plannedStructures.concat(plans.labs?.roads ?? []);
+  }
+
+  if (calculateDefensiveThreatLevel(officeName) > 0) {
+    // defensive structures have priority
+    plannedStructures = [...defensiveStructures, ...energyStructures, ...plannedStructures];
+  } else {
+    // energy structures have priority
+    plannedStructures = [...energyStructures, ...defensiveStructures, ...plannedStructures];
   }
   // if (rcl >= 4) {
   //     // No ramparts on roads, walls, ramparts, extractors, or extensions

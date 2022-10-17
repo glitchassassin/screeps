@@ -4,7 +4,7 @@ import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { estimateMissionInterval } from 'Missions/Selectors';
 import { moveTo } from 'screeps-cartographer';
@@ -19,7 +19,7 @@ export interface UpgradeMission extends Mission<MissionType.UPGRADE> {
   };
 }
 
-export function createUpgradeMission(office: string, emergency = false): UpgradeMission {
+export function createUpgradeOrder(office: string, emergency = false): SpawnOrder {
   const maxWork =
     rcl(office) === 8
       ? 15
@@ -30,7 +30,7 @@ export function createUpgradeMission(office: string, emergency = false): Upgrade
     energy: body.filter(p => p === WORK).length * estimateMissionInterval(office)
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: emergency ? 15 : 7,
     type: MissionType.UPGRADE,
@@ -39,26 +39,18 @@ export function createUpgradeMission(office: string, emergency = false): Upgrade
     },
     estimate
   });
+
+  // Set name
+  const name = `RESEARCH-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body,
+    boosts: [RESOURCE_GHODIUM_ACID]
+  });
 }
 
 export class Upgrade extends MissionImplementation {
-  static spawn(mission: UpgradeMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `RESEARCH-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.RESEARCH](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id,
-      boosts: [RESOURCE_GHODIUM_ACID]
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
     // Adjust estimate if needed
     mission.estimate.energy =

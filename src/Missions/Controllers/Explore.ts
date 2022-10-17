@@ -1,15 +1,17 @@
-import { createExploreMission } from 'Missions/Implementations/Explore';
+import { SpawnOrder } from 'Minions/spawnQueues';
+import { createExploreOrder } from 'Missions/Implementations/Explore';
 import { MissionType } from 'Missions/Mission';
-import { isMission, pendingAndActiveMissions, submitMission } from 'Missions/Selectors';
+import { activeMissions, isMission } from 'Missions/Selectors';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 
 export default {
   byTick: () => {},
-  byOffice: (office: string) => {
-    if (pendingAndActiveMissions(office).some(isMission(MissionType.EXPLORE))) return; // Only one pending logistics mission at a time
+  byOffice: (office: string): SpawnOrder[] => {
+    if (activeMissions(office).some(isMission(MissionType.EXPLORE))) return []; // Only one pending logistics mission at a time
 
     if (hasEnergyIncome(office) || Memory.roomPlans[office]?.office === false) {
-      submitMission(office, createExploreMission(office));
+      return [createExploreOrder(office)];
     }
+    return [];
   }
 };

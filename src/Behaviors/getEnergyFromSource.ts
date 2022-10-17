@@ -53,7 +53,8 @@ export const getEnergyFromSource = profiler.registerFN((creep: Creep, office: st
 
     moveTo(creep, { pos: sourcePos, range: 1 });
     if (creep.pos.inRangeTo(sourcePos, 1)) {
-      if (creep.harvest(source!) === OK) {
+      const result = creep.harvest(source!);
+      if (result === OK) {
         return BehaviorResult.INPROGRESS;
       } else {
         delete creep.memory.franchiseTarget;

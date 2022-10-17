@@ -1,5 +1,6 @@
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
+import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { BehaviorResult } from './Behavior';
 
 declare global {
@@ -18,11 +19,7 @@ export const getEnergyFromStorageStructure = (creep: Creep, office: string, limi
       ? SPAWN_ENERGY_CAPACITY
       : limit ?? Game.rooms[office]?.energyCapacityAvailable ?? 0;
 
-  if (
-    !structure ||
-    !structure.store.getUsedCapacity(RESOURCE_ENERGY) ||
-    structure.store.getUsedCapacity(RESOURCE_ENERGY) < withdrawLimit
-  )
+  if (!structure || !structure.store.getUsedCapacity(RESOURCE_ENERGY) || storageEnergyAvailable(office) < withdrawLimit)
     return BehaviorResult.FAILURE;
 
   moveTo(creep, structure);

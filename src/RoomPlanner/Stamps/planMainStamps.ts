@@ -82,8 +82,8 @@ export function calculateLayout(room: string) {
   let possibilities: Coord[][] = [];
 
   for (const stamp of stamps) {
-    console.log('possibilities.length', possibilities.length);
-    console.log('stamp', stamp.length);
+    // console.log('possibilities.length', possibilities.length);
+    // console.log('stamp', stamp.length);
     const newPossibilities: Coord[][] = [];
     if (possibilities.length === 0) {
       newPossibilities.push(...fitStamp(room, stamp, cm).map(pos => [pos]));
@@ -103,7 +103,7 @@ export function calculateLayout(room: string) {
 
   layoutsCache.set(room, possibilities[0]);
 
-  console.log('Layout planned in', Game.cpu.getUsed() - start, 'ms');
+  // console.log('Layout planned in', Game.cpu.getUsed() - start, 'ms');
   return { layout: possibilities[0], stamps };
 }
 

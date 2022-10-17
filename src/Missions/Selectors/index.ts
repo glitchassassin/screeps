@@ -1,34 +1,57 @@
 import { MissionTypes } from 'Missions/Implementations';
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
 import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';
-import { roomPlans } from 'Selectors/roomPlans';
+import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 
-const missionIndex = new Map<string, Mission<MissionType>>();
-for (const office in Memory.offices) {
-  for (const mission of pendingAndActiveMissions(office)) {
-    missionIndex.set(mission.id, mission);
+const creepsByOffice = new Map<string, Set<string>>();
+let initialized = false;
+export function initializeCreepIndex() {
+  if (initialized) return;
+  initialized = true;
+  for (const creep in Game.creeps) {
+    if (!Memory.creeps[creep]?.mission?.office) {
+      console.log(creep, 'with no mission', JSON.stringify(Game.creeps[creep]));
+      continue;
+    }
+    const creeps = creepsByOffice.get(Memory.creeps[creep].mission.office) ?? new Set();
+    creeps.add(creep);
+    creepsByOffice.set(Memory.creeps[creep].mission.office, creeps);
   }
 }
 
+export function assignCreepToOffice(creep: Creep, office: string) {
+  creepsByOffice.get(creep.memory.mission.office)?.delete(creep.name);
+  const creeps = creepsByOffice.get(office) ?? new Set();
+  creeps.add(creep.name);
+  creepsByOffice.set(office, creeps);
+}
+
+export function activeCreeps(office: string) {
+  const creeps = [...(creepsByOffice.get(office) ?? [])].filter(c => Memory.creeps[c]?.mission);
+  creepsByOffice.set(office, new Set(creeps));
+  return creeps;
+}
+
 export function activeMissions(office: string) {
-  return Memory.offices[office]?.activeMissions ?? [];
+  return activeCreeps(office)
+    .map(c => Memory.creeps[c].mission)
+    .filter(m => m);
 }
 
-export function pendingMissions(office: string) {
-  return Memory.offices[office]?.pendingMissions ?? [];
-}
-
-export function submitMission(office: string, mission: Mission<MissionType>) {
-  missionIndex.set(mission.id, mission);
-  Memory.offices[office]?.pendingMissions.push(mission);
-}
-
-export function pendingAndActiveMissions(office: string) {
-  return [...activeMissions(office), ...pendingMissions(office)];
+export function registerSpawningCreeps() {
+  for (const office in Memory.offices) {
+    const creeps = creepsByOffice.get(office) ?? new Set();
+    for (const spawn of getSpawns(office)) {
+      if (spawn.spawning?.name) {
+        creeps.add(spawn.spawning?.name);
+      }
+    }
+    creepsByOffice.set(office, creeps);
+  }
 }
 
 export function isMission<T extends MissionType>(missionType: T) {
-  return (mission: Mission<any>): mission is MissionTypes[T] => mission.type === missionType;
+  return (mission: Mission<any>): mission is MissionTypes[T] => mission?.type === missionType;
 }
 
 export function and<T>(...conditions: ((t: T) => boolean)[]) {
@@ -48,12 +71,11 @@ export function isStatus(status: MissionStatus) {
 }
 
 export function assignedCreep(mission: Mission<MissionType>): Creep | undefined {
-  return Game.creeps[mission.creepNames[0] ?? ''];
+  return Game.creeps[mission.creep ?? ''];
 }
 
 export function assignedMission(creep: Creep): Mission<MissionType> | undefined {
-  if (creep.spawning || !creep.memory?.mission) return undefined;
-  return missionIndex.get(creep.memory.mission);
+  return creep.memory?.mission;
 }
 
 export function estimateMissionInterval(office: string) {
@@ -62,12 +84,6 @@ export function estimateMissionInterval(office: string) {
   } else {
     return Math.max(100, furthestActiveFranchiseRoundTripDistance(office) * 1.2); // This worked best in my tests to balance income with expenses
   }
-}
-
-export function deletePendingMission(office: string, mission: Mission<MissionType>) {
-  const index = Memory.offices[office].pendingMissions.indexOf(mission);
-  if (index === -1) return;
-  Memory.offices[office].pendingMissions.splice(index);
 }
 
 /**

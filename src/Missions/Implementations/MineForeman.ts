@@ -2,7 +2,7 @@ import { BehaviorResult } from 'Behaviors/Behavior';
 import { getBoosted } from 'Behaviors/getBoosted';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
@@ -18,14 +18,14 @@ export interface MineForemanMission extends Mission<MissionType.MINE_FOREMAN> {
   };
 }
 
-export function createMineForemanMission(office: string, mineral: Id<Mineral>): MineForemanMission {
+export function createMineForemanOrder(office: string, mineral: Id<Mineral>): SpawnOrder {
   const body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(office));
   const estimate = {
     cpu: CREEP_LIFE_TIME * 0.4,
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 7,
     type: MissionType.MINE_FOREMAN,
@@ -35,27 +35,19 @@ export function createMineForemanMission(office: string, mineral: Id<Mineral>): 
     },
     estimate
   });
+
+  // Set name
+  const name = `FOREMAN-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body,
+    memory: { state: States.GET_BOOSTED },
+    boosts: [RESOURCE_UTRIUM_ALKALIDE]
+  });
 }
 
 export class MineForeman extends MissionImplementation {
-  static spawn(mission: MineForemanMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `FOREMAN-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[MinionTypes.FOREMAN](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id,
-      memory: { state: States.GET_BOOSTED },
-      boosts: [RESOURCE_UTRIUM_ALKALIDE]
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
     // Set some additional data on the mission
     mission.data.harvestRate ??= creep.body.filter(p => p.type === WORK).length * HARVEST_MINERAL_POWER;

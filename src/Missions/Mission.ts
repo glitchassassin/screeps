@@ -22,21 +22,18 @@ export enum MissionType {
 
 export enum MissionStatus {
   PENDING = 'PENDING',
-  SCHEDULED = 'SCHEDULED',
-  STARTING = 'STARTING',
   RUNNING = 'RUNNING',
-  CANCELED = 'CANCELED',
   DONE = 'DONE'
 }
 
 export interface Mission<T extends MissionType> {
   id: string;
+  creep?: string;
   replacement?: string;
   office: string;
   priority: number;
   type: T;
   status: MissionStatus;
-  creepNames: string[];
   startTime?: number;
   data: any;
   // Budgeting
@@ -52,6 +49,12 @@ export interface Mission<T extends MissionType> {
     running: number;
     working: number;
   };
+}
+
+declare global {
+  interface CreepMemory {
+    mission: Mission<MissionType>;
+  }
 }
 
 export interface MissionWithoutDefaults<T extends MissionType> {
@@ -77,7 +80,6 @@ export function createMission<T extends MissionType>(mission: MissionWithoutDefa
   return {
     id: generateMissionId(),
     status: MissionStatus.PENDING,
-    creepNames: [],
     actual: {
       cpu: 0,
       energy: 0

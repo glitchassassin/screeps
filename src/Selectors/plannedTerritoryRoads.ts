@@ -3,7 +3,7 @@ import { getCachedPath } from 'screeps-cartographer';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { isOwnedByEnemy, isReservedByEnemy } from './reservations';
 import { getFranchisePlanBySourceId } from './roomPlans';
-import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './Structures/facilitiesWorkToDo';
+import { adjustedEnergyForPlannedStructure, costForPlannedStructure } from './Structures/costForStructure';
 
 const cachedPaths = new Map<string, RoomPosition[]>();
 const cachedPlans = new Map<string, PlannedStructure[]>();

@@ -1,5 +1,5 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { scheduleSpawn } from 'Minions/spawnQueues';
+import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
 import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { moveTo } from 'screeps-cartographer';
@@ -22,7 +22,7 @@ export interface DefendOfficeMission extends Mission<MissionType.DEFEND_OFFICE> 
   data: DefendOfficeMissionData;
 }
 
-export function createDefendOfficeMission(office: string, role: DefendOfficeRoles): DefendOfficeMission {
+export function createDefendOfficeOrder(office: string, role: DefendOfficeRoles): SpawnOrder {
   const body = MinionBuilders[role](spawnEnergyAvailable(office));
 
   const estimate = {
@@ -30,32 +30,23 @@ export function createDefendOfficeMission(office: string, role: DefendOfficeRole
     energy: 0
   };
 
-  return createMission({
+  const mission = createMission({
     office,
     priority: 15,
     type: MissionType.DEFEND_OFFICE,
     data: { role },
     estimate
   });
+
+  const name = `JANITOR-${mission.office}-${mission.id}`;
+
+  return createSpawnOrder(mission, {
+    name,
+    body
+  });
 }
 
 export class DefendOffice extends MissionImplementation {
-  static spawn(mission: DefendOfficeMission) {
-    if (mission.creepNames.length) return; // only need to spawn one minion
-
-    // Set name
-    const name = `JANITOR-${mission.office}-${mission.id}`;
-    const body = MinionBuilders[mission.data.role](spawnEnergyAvailable(mission.office));
-
-    scheduleSpawn(mission.office, mission.priority, {
-      name,
-      body,
-      missionId: mission.id
-    });
-
-    mission.creepNames.push(name);
-  }
-
   static minionLogic(mission: DefendOfficeMission, creep: Creep) {
     if (mission.data.role in this.minionRoles) {
       this.minionRoles[mission.data.role](mission, creep);
