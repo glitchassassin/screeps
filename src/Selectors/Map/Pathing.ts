@@ -109,7 +109,7 @@ export const getCostMatrix = memoizeByTick(
 
     if (!room) return costs;
     if (!opts?.ignoreStructures) {
-      for (const s of plannedOfficeStructuresByRcl(roomName, rcl(roomName))) {
+      for (const s of plannedOfficeStructuresByRcl(roomName, rcl(roomName)).filter(s => s.pos.roomName === roomName)) {
         if ((OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType)) {
           costs.set(s.pos.x, s.pos.y, 255);
           if (s.structure instanceof StructureSpawn && s.structure.spawning && s.structure.spawning.remainingTime < 3) {
@@ -118,7 +118,7 @@ export const getCostMatrix = memoizeByTick(
               s.structure.spawning?.directions?.map(d => posAtDirection(s.pos, d)) ?? adjacentWalkablePositions(s.pos)
             ).forEach(p => costs.set(p.x, p.y, 0xff));
           }
-        } else if (s.structureType === STRUCTURE_ROAD && s.structure && !(costs.get(s.pos.x, s.pos.y) === 0xff)) {
+        } else if (s.structureType === STRUCTURE_ROAD && s.structureId && !(costs.get(s.pos.x, s.pos.y) === 0xff)) {
           // Favor roads over plain tiles
           costs.set(s.pos.x, s.pos.y, 1);
         }

@@ -20,8 +20,7 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
   if (
     plan &&
     (!Game.rooms[plan.container.pos.roomName] ||
-      plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0) &&
-    !plan.link.structure
+      plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0)
   ) {
     creep.room.visual.line(creep.pos, plan.container.pos, { color: 'cyan' });
     moveTo(
