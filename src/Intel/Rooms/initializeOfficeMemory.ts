@@ -13,6 +13,7 @@ export function initializeOfficeMemory(room: string) {
       boosts: [],
       boostingLabs: []
     },
+    squadMissions: [],
     missionResults: {}
   };
   destroyUnplannedStructures(room);

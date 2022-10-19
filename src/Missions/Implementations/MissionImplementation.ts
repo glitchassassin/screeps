@@ -1,4 +1,6 @@
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
+import { squadMissionById } from 'Missions/Selectors';
+import { getSquadMission } from 'Missions/Squads/getSquadMission';
 
 export abstract class MissionImplementation {
   static run(mission: Mission<MissionType>, creep?: Creep) {
@@ -8,6 +10,10 @@ export abstract class MissionImplementation {
       mission.status = MissionStatus.DONE;
       this.onEnd(mission);
       return;
+    }
+    if (creep?.memory.squad) {
+      const squadMission = squadMissionById(mission.office, creep.memory.squad);
+      if (squadMission) getSquadMission(squadMission).register(creep);
     }
     if (!creep || creep?.spawning) return; // wait for creep
 

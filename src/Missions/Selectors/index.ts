@@ -1,5 +1,7 @@
 import { MissionTypes } from 'Missions/Implementations';
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
+import { SquadMission, SquadMissionType } from 'Missions/Squads';
+import { SquadMissionTypes } from 'Missions/Squads/Missions';
 import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 
@@ -38,6 +40,14 @@ export function activeMissions(office: string) {
     .filter(m => m);
 }
 
+export function activeSquadMissions(office: string) {
+  return Memory.offices[office].squadMissions;
+}
+
+export function squadMissionById(office: string, id: string) {
+  return activeSquadMissions(office).find(m => m.id === id);
+}
+
 export function registerSpawningCreeps() {
   for (const office in Memory.offices) {
     const creeps = creepsByOffice.get(office) ?? new Set();
@@ -53,6 +63,9 @@ export function registerSpawningCreeps() {
 export function isMission<T extends MissionType>(missionType: T) {
   return (mission: Mission<any>): mission is MissionTypes[T] => mission?.type === missionType;
 }
+export function isSquadMission<T extends SquadMissionType>(missionType: T) {
+  return (mission: SquadMission<SquadMissionType>): mission is SquadMissionTypes[T] => mission?.type === missionType;
+}
 
 export function and<T>(...conditions: ((t: T) => boolean)[]) {
   return (t: T) => conditions.every(c => c(t));
@@ -67,7 +80,7 @@ export function not<T>(condition: (t: T) => boolean) {
 }
 
 export function isStatus(status: MissionStatus) {
-  return (mission: Mission<MissionType>) => mission.status === status;
+  return (mission: { status: MissionStatus }) => mission.status === status;
 }
 
 export function assignedCreep(mission: Mission<MissionType>): Creep | undefined {

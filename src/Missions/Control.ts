@@ -8,8 +8,11 @@ import { debugCPU } from 'utils/debugCPU';
 import { getBudgetAdjustment } from './Budgets';
 import { Dispatchers } from './Controllers';
 import { Missions } from './Implementations';
-import { MissionType } from './Mission';
-import { activeCreeps, activeMissions, initializeCreepIndex, registerSpawningCreeps } from './Selectors';
+import { MissionStatus, MissionType } from './Mission';
+import { activeCreeps, activeMissions, initializeCreepIndex, isStatus, not, registerSpawningCreeps } from './Selectors';
+import { getSquadMission } from './Squads/getSquadMission';
+
+const DEBUG_CPU = false;
 
 declare global {
   interface OfficeMemory {
@@ -41,6 +44,8 @@ export function runMissionControl() {
 
 function executeMissions() {
   for (const office in Memory.offices) {
+    if (DEBUG_CPU) console.log('-=<', office, 'missions >=-');
+    Memory.offices[office].squadMissions ??= [];
     // console.log('pending', office, Memory.offices[office].pendingMissions.map(m => m.type));
     // console.log('active', office, Memory.offices[office].activeMissions.map(m => m.type));
     for (const creep of activeCreeps(office)) {
@@ -59,9 +64,19 @@ function executeMissions() {
         console.log(e);
         throw e;
       }
-      mission.actual.cpu += Math.max(0, Game.cpu.getUsed() - startTime);
+      const cpuUsed = Math.max(0, Game.cpu.getUsed() - startTime);
+      mission.actual.cpu += cpuUsed;
+      if (DEBUG_CPU) console.log(mission.type, cpuUsed.toFixed(2), Game.creeps[creep]?.pos);
+    }
+    // Run squad missions
+    for (const mission of Memory.offices[office].squadMissions) {
+      getSquadMission(mission).run();
+      console.log(getSquadMission(mission).status());
     }
     // Clean up completed missions/creep memory
+    Memory.offices[office].squadMissions = Memory.offices[office].squadMissions.filter(
+      not(isStatus(MissionStatus.DONE))
+    );
     for (const creepName in Memory.creeps) {
       if (creepName in Game.creeps) continue;
       const mission = Memory.creeps[creepName].mission;

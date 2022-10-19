@@ -70,7 +70,7 @@ export interface MissionWithoutDefaults<T extends MissionType> {
   };
 }
 
-function generateMissionId() {
+export function generateMissionId() {
   return Number(Math.floor(Math.random() * 0xffffffff))
     .toString(16)
     .padStart(8, '0');
