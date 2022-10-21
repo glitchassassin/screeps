@@ -1,9 +1,9 @@
-import { MinionTypes } from 'Minions/minionTypes';
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createDefendOfficeOrder } from 'Missions/Implementations/DefendOffice';
 import { createDefendRemoteOrder } from 'Missions/Implementations/DefendRemote';
 import { MissionType } from 'Missions/Mission';
-import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
+import { activeMissions, activeSquadMissions, assignedCreep, isMission, isSquadMission } from 'Missions/Selectors';
+import { SquadMissionType } from 'Missions/Squads';
+import { createAttackerHealerDuoMission } from 'Missions/Squads/Implementations/AttackerHealerDuo';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { creepStats } from 'Selectors/creepStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
@@ -11,6 +11,7 @@ import { getTerritoriesByOffice } from 'Selectors/getTerritoriesByOffice';
 import { isCreep } from 'Selectors/typeguards';
 
 export default {
+  name: 'Defense',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const orders = [];
@@ -34,11 +35,10 @@ export default {
     );
     if (hostiles.count) {
       // Hostiles in room; calculate defenders needed
-      if (allies.attack > allies.heal) {
-        orders.push(createDefendOfficeOrder(office, MinionTypes.MEDIC));
-      }
       if (Math.max(hostiles.attack, hostiles.rangedAttack) > allies.attack) {
-        orders.push(createDefendOfficeOrder(office, MinionTypes.GUARD));
+        if (!activeSquadMissions(office).some(isSquadMission(SquadMissionType.ATTACKER_HEALER_DUO))) {
+          createAttackerHealerDuoMission(office);
+        }
       }
     }
 

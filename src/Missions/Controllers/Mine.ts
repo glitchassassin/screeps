@@ -14,6 +14,7 @@ import { roomPlans } from 'Selectors/roomPlans';
 // Then we can track the replacement as part of the mission data so it doesn't get replaced twice.
 
 export default {
+  name: 'Mine',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const orders: SpawnOrder[] = [];

@@ -1,7 +1,7 @@
 import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from 'config';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import { calculateAdjacentPositions, getRangeTo } from '../Map/MapCoordinates';
+import { getRangeTo } from '../Map/MapCoordinates';
 import { plannedStructuresByRcl } from '../plannedStructuresByRcl';
 import { roomPlans } from '../roomPlans';
 import { adjustedEnergyForPlannedStructure } from './costForStructure';
@@ -11,36 +11,11 @@ export const destroyUnplannedStructures = (room: string) => {
   const allPlannedStructures = plannedStructuresByRcl(room, 8);
   // Destroy all controller-limited structures
   Game.rooms[room].find(FIND_STRUCTURES).forEach(s => {
-    if (
-      s.structureType !== STRUCTURE_WALL &&
-      s.structureType !== STRUCTURE_ROAD &&
-      s.structureType !== STRUCTURE_CONTROLLER
-    ) {
+    if (s.structureType !== STRUCTURE_ROAD && s.structureType !== STRUCTURE_CONTROLLER) {
       s.destroy();
     }
   });
   Game.rooms[room].find(FIND_CONSTRUCTION_SITES).forEach(s => s.remove());
-  allPlannedStructures.forEach(structure => {
-    calculateAdjacentPositions(structure.pos).forEach(pos => {
-      let structures = pos.lookFor(LOOK_STRUCTURES);
-      for (let s of structures) {
-        if (
-          !allPlannedStructures.some(
-            planned => planned.pos.isEqualTo(s.pos) && planned.structureType === s.structureType
-          )
-        ) {
-          // Destroy unplanned adjacent structures
-          if (s.structureType === STRUCTURE_WALL) {
-            s.destroy();
-          }
-        }
-      }
-    });
-    const existingSite = structure.pos.lookFor(LOOK_CONSTRUCTION_SITES).shift();
-    if (existingSite && existingSite.structureType !== structure.structureType) {
-      existingSite.remove();
-    }
-  });
 };
 
 interface FacilitiesCache {
@@ -48,6 +23,7 @@ interface FacilitiesCache {
   structureCount?: number;
   rcl?: number;
   cost: number;
+  updated: number;
 }
 
 let cache: Record<string, FacilitiesCache> = {};
@@ -78,7 +54,7 @@ let cacheReviewed = new Map<string, number>();
 
 export const refreshFacilitiesWorkCache = (officeName: string) => {
   // Initialize cache
-  cache[officeName] ??= { work: [], cost: 0 };
+  cache[officeName] ??= { work: [], cost: 0, updated: Game.time };
 
   if (cacheReviewed.get(officeName) === Game.time) return;
 
@@ -106,14 +82,14 @@ export const refreshFacilitiesWorkCache = (officeName: string) => {
   cache[officeName].cost = cost;
   cacheReviewed.set(officeName, Game.time);
 
-  // Only re-scan work to do every 500 ticks unless structure count changes
   if (!Game.rooms[officeName]) return;
   const foundStructures = Game.rooms[officeName].find(FIND_STRUCTURES).length;
   const foundRcl = Game.rooms[officeName].controller?.level;
+  // Only re-scan work to do every 500 ticks unless structure count or RCL changes
   if (
     foundStructures !== cache[officeName].structureCount ||
     (foundRcl !== undefined && foundRcl !== cache[officeName].rcl) ||
-    Game.time % 500 === 0
+    Game.time - cache[officeName].updated > 500
   ) {
     // console.log('Recalculating facilities cache')
     cache[officeName] = {
@@ -121,7 +97,8 @@ export const refreshFacilitiesWorkCache = (officeName: string) => {
       // .sort((a, b) => BUILD_PRIORITIES[b.structureType] - BUILD_PRIORITIES[a.structureType]),
       structureCount: foundStructures,
       rcl: foundRcl,
-      cost: 0
+      cost: 0,
+      updated: Game.time
     };
     plannedStructuresByRcl(officeName).forEach(structure => {
       const range = getRangeTo(structure.pos, storagePos);
@@ -147,15 +124,14 @@ export const facilitiesCostPending = (officeName: string) => {
 };
 
 export const plannedStructureNeedsWork = (structure: PlannedStructure, repairing = false) => {
-  structure.survey();
-  if (!structure.structure) {
+  if (!structure.survey()) {
     // Structure needs to be built; check if we can place a construction site
     return !(
       (Memory.rooms[structure.pos.roomName].owner && Memory.rooms[structure.pos.roomName].owner !== 'LordGreywether') ||
       (Memory.rooms[structure.pos.roomName].reserver &&
         Memory.rooms[structure.pos.roomName].reserver !== 'LordGreywether')
     );
-  } else {
+  } else if (structure.structure) {
     const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
     const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
     if (structure.structure.hits < maxHits * (repairing ? 1 : REPAIR_THRESHOLD)) {

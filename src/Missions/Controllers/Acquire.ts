@@ -10,6 +10,7 @@ import {
 } from 'Strategy/Acquire/findAcquireTarget';
 
 export default {
+  name: 'Acquire',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const target = findAcquireTarget();

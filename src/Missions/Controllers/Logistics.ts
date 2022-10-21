@@ -14,6 +14,7 @@ const REMOTE_LOGISTICS_PRIORITY = 11;
 const INROOM_LOGISTICS_PRIORITY = 11.1;
 
 export default {
+  name: 'Logistics',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const orders: SpawnOrder[] = [];

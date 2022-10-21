@@ -20,7 +20,9 @@ export enum MinionTypes {
   SALESMAN = 'SALESMAN',
   MARKETER = 'MARKETER',
   BLINKY = 'BLINKY',
-  MEDIC = 'MEDIC'
+  MEDIC = 'MEDIC',
+  POWER_BANK_ATTACKER = 'PBA',
+  POWER_BANK_HEALER = 'PBH'
 }
 
 interface buildFromSegmentOpts {
@@ -114,14 +116,14 @@ export const MinionBuilders = {
       return buildFromSegment(energy, [WORK, WORK, WORK, WORK, MOVE]);
     }
   },
-  [MinionTypes.GUARD]: (energy: number) => {
+  [MinionTypes.GUARD]: (energy: number, heal = false) => {
     if (energy < 200) {
       return [];
-    } else if (energy <= 550) {
-      return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true });
-    } else {
+    } else if (heal) {
       // Add a heal part
-      return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true, suffix: [HEAL] });
+      return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true, suffix: [HEAL, MOVE] });
+    } else {
+      return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true });
     }
   },
   [MinionTypes.AUDITOR]: (energy: number) => {
@@ -170,7 +172,7 @@ export const MinionBuilders = {
       return buildFromSegment(energy, [WORK, WORK, WORK, MOVE], { maxSegments: 2, suffix: [CARRY] });
     } else {
       return buildFromSegment(energy, [WORK, WORK, WORK, WORK, WORK, MOVE], {
-        maxSegments: 1,
+        maxSegments: 2,
         suffix: link ? [CARRY] : []
       });
     }
@@ -189,6 +191,26 @@ export const MinionBuilders = {
       return [];
     } else {
       return buildFromSegment(energy, [HEAL, MOVE], { sorted: true });
+    }
+  },
+  [MinionTypes.POWER_BANK_ATTACKER]: (energy: number, speed: number) => {
+    const attackParts = speed === 1 ? 22 : 29;
+    const moveParts = speed === 1 ? 28 : 21;
+    const body = ([] as BodyPartConstant[]).concat(Array(moveParts).fill(MOVE), Array(attackParts).fill(ATTACK));
+    if (energy < minionCost(body)) {
+      return [];
+    } else {
+      return body;
+    }
+  },
+  [MinionTypes.POWER_BANK_HEALER]: (energy: number, speed: number) => {
+    const healParts = speed === 1 ? 28 : 37;
+    const moveParts = speed === 1 ? 22 : 13;
+    const body = ([] as BodyPartConstant[]).concat(Array(moveParts).fill(MOVE), Array(healParts).fill(HEAL));
+    if (energy < minionCost(body)) {
+      return [];
+    } else {
+      return body;
     }
   }
 };

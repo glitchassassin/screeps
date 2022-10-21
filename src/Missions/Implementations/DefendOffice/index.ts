@@ -1,6 +1,5 @@
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
-import { createSpawnOrder, SpawnOrder } from 'Minions/spawnQueues';
-import { createMission, Mission, MissionType } from 'Missions/Mission';
+import { MinionTypes } from 'Minions/minionTypes';
+import { Mission, MissionType } from 'Missions/Mission';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { moveTo } from 'screeps-cartographer';
 import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
@@ -8,11 +7,10 @@ import { priorityKillTarget } from 'Selectors/Combat/priorityTarget';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { closestRampartSection } from 'Selectors/perimeter';
-import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 import { isCreep } from 'Selectors/typeguards';
-import { MissionImplementation } from './MissionImplementation';
+import { MissionImplementation } from '../MissionImplementation';
 
-type DefendOfficeRoles = MinionTypes.GUARD | MinionTypes.MEDIC;
+export type DefendOfficeRoles = MinionTypes.GUARD | MinionTypes.MEDIC;
 
 interface DefendOfficeMissionData {
   role: DefendOfficeRoles;
@@ -22,38 +20,17 @@ export interface DefendOfficeMission extends Mission<MissionType.DEFEND_OFFICE> 
   data: DefendOfficeMissionData;
 }
 
-export function createDefendOfficeOrder(office: string, role: DefendOfficeRoles): SpawnOrder {
-  const body = MinionBuilders[role](spawnEnergyAvailable(office));
-
-  const estimate = {
-    cpu: CREEP_LIFE_TIME * 0.4,
-    energy: 0
-  };
-
-  const mission = createMission({
-    office,
-    priority: 15,
-    type: MissionType.DEFEND_OFFICE,
-    data: { role },
-    estimate
-  });
-
-  const name = `JANITOR-${mission.office}-${mission.id}`;
-
-  return createSpawnOrder(mission, {
-    name,
-    body
-  });
-}
-
 export class DefendOffice extends MissionImplementation {
   static minionLogic(mission: DefendOfficeMission, creep: Creep) {
-    if (mission.data.role in this.minionRoles) {
-      this.minionRoles[mission.data.role](mission, creep);
+    if (!creep.memory.squad && mission.data.role in this.soloRoles) {
+      this.soloRoles[mission.data.role](mission, creep);
     }
   }
 
-  static minionRoles: Record<DefendOfficeRoles, (mission: DefendOfficeMission, creep: Creep) => void> = {
+  /**
+   * Solo roles - if the duo squad gets broken, fall back to these behaviors
+   */
+  static soloRoles: Record<DefendOfficeRoles, (mission: DefendOfficeMission, creep: Creep) => void> = {
     [MinionTypes.GUARD]: (mission: DefendOfficeMission, creep: Creep) => {
       const target = priorityKillTarget(mission.office);
       if (!target) return;

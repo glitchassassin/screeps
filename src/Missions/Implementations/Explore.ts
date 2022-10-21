@@ -6,6 +6,7 @@ import { createMission, Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getPatrolRoute } from 'Selectors/getPatrolRoute';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+// import { logCpu, logCpuStart } from 'utils/logCPU';
 import { MissionImplementation } from './MissionImplementation';
 
 const DEBUG = true;
@@ -41,6 +42,7 @@ export function createExploreOrder(office: string): SpawnOrder {
 
 export class Explore extends MissionImplementation {
   static minionLogic(mission: Mission<MissionType>, creep: Creep): void {
+    // logCpuStart();
     // Select a target
     if (!mission.data.exploreTarget) {
       // Ignore aggression on scouts
@@ -62,6 +64,7 @@ export class Explore extends MissionImplementation {
         return match;
       });
       mission.data.exploreTarget = bestMatch?.name;
+      // logCpu('select a target');
     }
 
     // Do work
@@ -85,8 +88,10 @@ export class Explore extends MissionImplementation {
           Memory.rooms[mission.data.exploreTarget] ??= { officesInRange: '', franchises: {} }; // Unable to path
           Memory.rooms[mission.data.exploreTarget].scanned = Game.time;
           delete mission.data.exploreTarget;
+          // logCpu('failed move to target room');
           return;
         }
+        // logCpu('move to target room');
       } else {
         const controller = Game.rooms[mission.data.exploreTarget].controller;
         if (
@@ -96,7 +101,9 @@ export class Explore extends MissionImplementation {
         ) {
           // Room is visible, creep is in room
           // In room, sign controller
-          if (signRoom(creep, mission.data.exploreTarget) === BehaviorResult.INPROGRESS) return;
+          const result = signRoom(creep, mission.data.exploreTarget);
+          // logCpu('signing room');
+          if (result === BehaviorResult.INPROGRESS) return;
           // otherwise, successful or no path found
         }
         delete mission.data.exploreTarget;

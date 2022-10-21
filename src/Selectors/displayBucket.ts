@@ -71,3 +71,25 @@ export const displayGcl = () => {
     ]
   });
 };
+
+export const displayGpl = () => {
+  Dashboard({
+    widgets: [
+      {
+        pos: { x: 24, y: 46 },
+        width: 6,
+        height: 4,
+        widget: Dial({
+          data: {
+            value: Game.gpl.progress / Game.gpl.progressTotal
+          },
+          config: {
+            label: Game.gpl.level.toFixed(),
+            textStyle: { font: '1' },
+            foregroundStyle: { stroke: '#ff0000' }
+          }
+        })
+      }
+    ]
+  });
+};

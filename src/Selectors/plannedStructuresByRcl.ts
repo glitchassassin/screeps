@@ -63,12 +63,15 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
   }
   if (rcl >= 4) {
     energyStructures = energyStructures.concat(plannedExtensions.slice(10, 20), plans.headquarters?.storage);
-    defensiveStructures = defensiveStructures.concat(
+    const ramparts = [
       plans.franchise1?.ramparts ?? [],
       plans.perimeter?.ramparts ?? [],
       plans.extensions?.ramparts ?? [],
       plans.franchise2?.ramparts ?? []
-    );
+    ]
+      .flat()
+      .sort((a, b) => (!a.structure?.hits ? -1 : !b.structure?.hits ? 1 : a.structure.hits - b.structure.hits));
+    defensiveStructures = defensiveStructures.concat(ramparts);
   }
   if (rcl >= 5) {
     energyStructures = energyStructures.concat(plannedExtensions.slice(20, 30));
@@ -98,7 +101,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
       plans.fastfiller?.spawns[2],
       plans.franchise1?.link
     );
-    defensiveStructures = plannedStructures.concat(plannedTowers.slice(3, 6));
+    defensiveStructures = defensiveStructures.concat(plannedTowers.slice(3, 6));
     plannedStructures = plannedStructures.concat(
       plans.labs?.labs.slice(6, 10) ?? [],
       plans.headquarters?.nuker,

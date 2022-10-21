@@ -73,7 +73,7 @@ export const adjustedEnergyForPlannedStructure = (
     const workTime = CARRY_CAPACITY / BUILD_POWER;
     const efficiency = workTime / (workTime + distance * 2);
     return (structure.constructionSite.progressTotal - structure.constructionSite.progress) / efficiency;
-  } else {
+  } else if (!structure.survey()) {
     if (
       !(
         (Memory.rooms[structure.pos.roomName].owner &&
@@ -86,9 +86,8 @@ export const adjustedEnergyForPlannedStructure = (
       const workTime = CARRY_CAPACITY / BUILD_POWER;
       const efficiency = workTime / (workTime + distance * 2);
       return CONSTRUCTION_COST[structure.structureType] / efficiency;
-    } else {
-      // Hostile territory, cannot build
-      return 0;
     }
   }
+  // cannot confirm any work to be done
+  return 0;
 };

@@ -16,6 +16,7 @@ import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 // Then we can track the replacement as part of the mission data so it doesn't get replaced twice.
 
 export default {
+  name: 'Harvest',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const orders: SpawnOrder[] = [];

@@ -27,10 +27,15 @@ const neededPlunderCapacity = (office: string) => (room: string) => {
   return { room, capacity };
 };
 
+let lastRun = Game.time;
+
 export default {
+  name: 'Plunder',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
-    if (Game.cpu.bucket < 500 || !roomPlans(office)?.headquarters?.storage.structure) return []; // don't run when we have low bucket
+    if (Game.cpu.bucket < 5000 || !roomPlans(office)?.headquarters?.storage.structure || Game.time - lastRun < 500)
+      return []; // don't run when we have low bucket
+    lastRun = Game.time;
     const plunderCapacity = assignedPlunderCapacity(office);
     const { room, capacity } =
       calculateNearbyRooms(office, 3, false)
