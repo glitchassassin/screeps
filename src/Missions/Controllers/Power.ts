@@ -5,6 +5,7 @@ import { SquadMissionType } from 'Missions/Squads';
 import { createPowerBankMission } from 'Missions/Squads/Implementations/PowerBank';
 
 export default {
+  name: 'Power',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     if (!FEATURES.POWER) return [];
@@ -19,6 +20,7 @@ export default {
       createPowerBankMission(office, report);
       break;
     }
+
     return [];
   }
 };

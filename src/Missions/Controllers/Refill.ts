@@ -12,6 +12,7 @@ import { unpackPos } from 'utils/packrat';
  * Maintain four refillers in fastfiller
  */
 export default {
+  name: 'Refill',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const orders: SpawnOrder[] = [];

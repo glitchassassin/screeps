@@ -1,3 +1,4 @@
+import { SpawnOrder } from 'Minions/spawnQueues';
 import { createPowerbankHaulerOrder } from 'Missions/Implementations/PowerBank/createPowerbankHaulerOrder';
 import { MissionStatus } from 'Missions/Mission';
 import { squadMissionById } from 'Missions/Selectors';
@@ -54,7 +55,8 @@ export class PowerBank implements SquadMissionImplementation {
   }
 
   spawn() {
-    if (!this.report?.distance) return [];
+    const orders: SpawnOrder[] = [];
+    if (!this.report?.distance) return orders;
     const totalDamage = this.duos.reduce((sum, d) => sum + (d?.damageRemaining() ?? 0), 0);
     const perTickDamage = this.duos.reduce((sum, d) => sum + (d?.damagePerTick() ?? 0), 0);
     if (
@@ -75,20 +77,22 @@ export class PowerBank implements SquadMissionImplementation {
       const targetHaulers = Math.ceil(this.report.amount / (CARRY_CAPACITY * 25));
       const actualHaulers = this.haulers.length;
       if (targetHaulers - actualHaulers > 0) {
-        return new Array(targetHaulers - actualHaulers)
-          .fill(0)
-          .map(() =>
-            createPowerbankHaulerOrder(
-              this.mission.office,
-              this.mission.id,
-              this.mission.data.powerbank,
-              this.mission.data.powerBankPos,
-              this.mission.priority
+        orders.push(
+          ...new Array(targetHaulers - actualHaulers)
+            .fill(0)
+            .map(() =>
+              createPowerbankHaulerOrder(
+                this.mission.office,
+                this.mission.id,
+                this.mission.data.powerbank,
+                this.mission.data.powerBankPos,
+                this.mission.priority
+              )
             )
-          );
+        );
       }
     }
-    return [];
+    return orders;
   }
 
   run() {

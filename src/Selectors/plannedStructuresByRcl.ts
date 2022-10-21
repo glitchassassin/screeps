@@ -63,12 +63,15 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
   }
   if (rcl >= 4) {
     energyStructures = energyStructures.concat(plannedExtensions.slice(10, 20), plans.headquarters?.storage);
-    defensiveStructures = defensiveStructures.concat(
+    const ramparts = [
       plans.franchise1?.ramparts ?? [],
       plans.perimeter?.ramparts ?? [],
       plans.extensions?.ramparts ?? [],
       plans.franchise2?.ramparts ?? []
-    );
+    ]
+      .flat()
+      .sort((a, b) => (!a.structure?.hits ? -1 : !b.structure?.hits ? 1 : a.structure.hits - b.structure.hits));
+    defensiveStructures = defensiveStructures.concat(ramparts);
   }
   if (rcl >= 5) {
     energyStructures = energyStructures.concat(plannedExtensions.slice(20, 30));

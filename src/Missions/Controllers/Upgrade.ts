@@ -9,6 +9,7 @@ import { controllerPosition } from 'Selectors/roomCache';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 
 export default {
+  name: 'Upgrade',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     if (rcl(office) < 2) return [];

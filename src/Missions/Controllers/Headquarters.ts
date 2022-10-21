@@ -6,6 +6,7 @@ import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export default {
+  name: 'Headquarters',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     if (rcl(office) < 3) return [];

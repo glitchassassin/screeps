@@ -11,6 +11,7 @@ import { getTerritoriesByOffice } from 'Selectors/getTerritoriesByOffice';
 import { isCreep } from 'Selectors/typeguards';
 
 export default {
+  name: 'Defense',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const orders = [];

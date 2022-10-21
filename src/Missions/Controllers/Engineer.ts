@@ -7,6 +7,7 @@ import { rcl } from 'Selectors/rcl';
 import { facilitiesCostPending } from 'Selectors/Structures/facilitiesWorkToDo';
 
 export default {
+  name: 'Engineer',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     const active = activeMissions(office).filter(isMission(MissionType.ENGINEER));

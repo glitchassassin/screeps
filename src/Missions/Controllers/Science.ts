@@ -5,6 +5,7 @@ import { activeMissions, isMission } from 'Missions/Selectors';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export default {
+  name: 'Science',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     if (!roomPlans(office)?.labs?.labs[0].structure) return [];

@@ -28,6 +28,7 @@ const neededPlunderCapacity = (office: string) => (room: string) => {
 };
 
 export default {
+  name: 'Plunder',
   byTick: () => {},
   byOffice: (office: string): SpawnOrder[] => {
     if (Game.cpu.bucket < 500 || !roomPlans(office)?.headquarters?.storage.structure) return []; // don't run when we have low bucket
