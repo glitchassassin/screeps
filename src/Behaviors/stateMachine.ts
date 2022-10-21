@@ -1,5 +1,5 @@
 import { Mission, MissionType } from 'Missions/Mission';
-import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
+import { logCpu, logCpuStart } from 'utils/logCPU';
 
 declare global {
   interface CreepMemory {
@@ -15,7 +15,7 @@ export function runStates<M extends Mission<MissionType>>(
 ) {
   const statesRun: string[] = [];
   creep.memory.runState = creep.memory.runState ?? Object.keys(states)[0]; // First state is default
-  if (profile) resetDebugCPU();
+  if (profile) logCpuStart();
   while (!statesRun.includes(creep.memory.runState)) {
     statesRun.push(creep.memory.runState);
     if (!(creep.memory.runState in states)) {
@@ -25,6 +25,6 @@ export function runStates<M extends Mission<MissionType>>(
     }
     const key = `${mission.type}_${creep.memory.runState}`;
     creep.memory.runState = states[creep.memory.runState](mission, creep);
-    if (profile) debugCPU(key);
+    if (profile) logCpu(key);
   }
 }
