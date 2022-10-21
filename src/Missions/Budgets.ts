@@ -48,7 +48,10 @@ export function getBudgetAdjustment(mission: Mission<MissionType>) {
         cpu: 2000,
         energy: Game.rooms[mission.office].energyCapacityAvailable ?? 1500
       };
-    } else if (mission.type === MissionType.UPGRADE && !mission.data.emergency) {
+    } else if (
+      [MissionType.POWER_BANK].includes(mission.type) ||
+      (mission.type === MissionType.UPGRADE && !mission.data.emergency)
+    ) {
       return {
         cpu: 2000,
         energy: 100000

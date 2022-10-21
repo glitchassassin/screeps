@@ -172,7 +172,7 @@ export const MinionBuilders = {
       return buildFromSegment(energy, [WORK, WORK, WORK, MOVE], { maxSegments: 2, suffix: [CARRY] });
     } else {
       return buildFromSegment(energy, [WORK, WORK, WORK, WORK, WORK, MOVE], {
-        maxSegments: 1,
+        maxSegments: 2,
         suffix: link ? [CARRY] : []
       });
     }

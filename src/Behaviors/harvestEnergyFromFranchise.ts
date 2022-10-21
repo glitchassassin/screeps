@@ -17,7 +17,14 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
 
   // Prefer to work from container position, fall back to adjacent position
   const start = Game.cpu.getUsed();
-  if (
+  if (plan && creep.pos.isEqualTo(plan?.container.pos)) {
+    // stay here
+    moveTo(
+      creep,
+      { pos: plan.container.pos, range: 0 },
+      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) }
+    );
+  } else if (
     plan &&
     (!Game.rooms[plan.container.pos.roomName] ||
       plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0)
@@ -38,5 +45,8 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
     moveTo(creep, { pos: sourcePos, range: 2 });
   }
 
+  if (creep.getActiveBodyparts(WORK) >= 10 && Game.time % 2 === 0) {
+    return true; // harvest every other tick
+  }
   return creep.harvest(source!) === OK;
 }, 'harvestEnergyFromFranchise');
