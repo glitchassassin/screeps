@@ -64,7 +64,8 @@ export function isMission<T extends MissionType>(missionType: T) {
   return (mission: Mission<any>): mission is MissionTypes[T] => mission?.type === missionType;
 }
 export function isSquadMission<T extends SquadMissionType>(missionType: T) {
-  return (mission: SquadMission<SquadMissionType>): mission is SquadMissionTypes[T] => mission?.type === missionType;
+  return (mission: SquadMission<SquadMissionType, any>): mission is SquadMissionTypes[T] =>
+    mission?.type === missionType;
 }
 
 export function and<T>(...conditions: ((t: T) => boolean)[]) {

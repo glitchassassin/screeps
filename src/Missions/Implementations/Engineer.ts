@@ -122,7 +122,8 @@ const engineerLogic = (mission: EngineerMission, creep: Creep) => {
 
         // No work found for this franchise
         delete mission.data.franchise;
-        return States.UPGRADING;
+        if (rcl(mission.office) < 8) return States.UPGRADING;
+        return States.FIND_WORK;
       },
       [States.GET_ENERGY]: (mission, creep) => {
         if (

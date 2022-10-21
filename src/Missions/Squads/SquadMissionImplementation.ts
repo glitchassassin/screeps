@@ -2,7 +2,7 @@ import { SpawnOrder } from 'Minions/spawnQueues';
 import { SquadMission, SquadMissionType } from '.';
 
 export class SquadMissionImplementation {
-  constructor(public mission: SquadMission<SquadMissionType>) {}
+  constructor(public mission: SquadMission<SquadMissionType, any>) {}
 
   register(creep: Creep) {
     throw new Error('Not implemented yet');

@@ -7,6 +7,7 @@ import HeadquartersDispatcher from './Headquarters';
 import LogisticsDispatcher from './Logistics';
 import MineDispatcher from './Mine';
 import PlunderDispatcher from './Plunder';
+import PowerDispatcher from './Power';
 import RefillDispatcher from './Refill';
 import ScienceDispatcher from './Science';
 import SquadMissionsDispatcher from './SquadMissions';
@@ -25,5 +26,6 @@ export const Dispatchers = [
   AcquireDispatcher,
   DefenseDispatcher,
   PlunderDispatcher,
+  PowerDispatcher,
   SquadMissionsDispatcher // should always be last
 ];

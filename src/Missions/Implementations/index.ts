@@ -13,6 +13,7 @@ import { MineHauler, MineHaulerMission } from './MineHauler';
 import { MissionImplementation } from './MissionImplementation';
 import { MobileRefill, MobileRefillMission } from './MobileRefill';
 import { Plunder, PlunderMission } from './Plunder';
+import { PowerBank, PowerBankMission } from './PowerBank';
 import { Refill, RefillMission } from './Refill';
 import { Reserve, ReserveMission } from './Reserve';
 import { Science, ScienceMission } from './Science';
@@ -38,6 +39,7 @@ export type MissionTypes = {
   [MissionType.ACQUIRE_LAWYER]: AcquireLawyerMission;
   [MissionType.DEFEND_REMOTE]: DefendRemoteMission;
   [MissionType.DEFEND_OFFICE]: DefendOfficeMission;
+  [MissionType.POWER_BANK]: PowerBankMission;
 };
 
 export const Missions: Record<MissionType, typeof MissionImplementation> = {
@@ -59,5 +61,6 @@ export const Missions: Record<MissionType, typeof MissionImplementation> = {
   // [MissionType.ACQUIRE_LOGISTICS]: AcquireLogistics,
   [MissionType.ACQUIRE_LAWYER]: AcquireLawyer,
   [MissionType.DEFEND_REMOTE]: DefendRemote,
-  [MissionType.DEFEND_OFFICE]: DefendOffice
+  [MissionType.DEFEND_OFFICE]: DefendOffice,
+  [MissionType.POWER_BANK]: PowerBank
 };

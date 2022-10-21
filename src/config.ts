@@ -1,7 +1,8 @@
 export const FEATURES = {
   MINING: true,
   LABS: true,
-  WHITELIST: true
+  WHITELIST: true,
+  POWER: true
 };
 
 /**
@@ -87,6 +88,8 @@ export const MINERAL_PRIORITIES: MineralConstant[] = [
 ];
 
 export const MISSION_HISTORY_LIMIT = 1500;
+
+export const MAX_POWER_BANK_DISTANCE = 500;
 
 export const THREAT_TOLERANCE = {
   remote: {

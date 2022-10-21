@@ -9,6 +9,7 @@ import { scanRoomPlanStructures } from 'RoomPlanner/scanRoomPlanStructures';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { ownedMinerals } from 'Selectors/ownedMinerals';
 import { roomPlans } from 'Selectors/roomPlans';
+import { evaluatePowerBanks } from 'Strategy/ResourceAnalysis/PowerBank';
 import profiler from 'utils/profiler';
 
 declare global {
@@ -101,6 +102,9 @@ export const scanRooms = profiler.registerFN(() => {
       }
       scanRoomPlanStructures(room);
     }
+
+    // collect intel
+    evaluatePowerBanks(room);
   }
 
   scanTerritories();

@@ -1,4 +1,5 @@
 import { getCachedPath } from 'screeps-cartographer';
+import { rcl } from 'Selectors/rcl';
 import { memoize, memoizeByTick } from 'utils/memoizeFunction';
 
 export const calculateAdjacencyMatrix = memoize(
@@ -227,11 +228,12 @@ export function lookNear(pos: RoomPosition, range = 1) {
   );
 }
 export const getClosestOffice = memoize(
-  (roomName: string) => roomName + Object.keys(Memory.offices).join(''),
-  (roomName: string) => {
+  (roomName: string, minRcl = 1) => roomName + minRcl + Object.keys(Memory.offices).join(''),
+  (roomName: string, minRcl = 1) => {
     let closest: string | undefined = undefined;
     let route: { exit: ExitConstant; room: string }[] | undefined = undefined;
     for (let office of Object.keys(Memory.offices)) {
+      if (rcl(office) < minRcl) continue;
       const newRoute = Game.map.findRoute(office, roomName);
       if (newRoute === -2) continue;
       if (!closest || newRoute.length < (route?.length ?? Infinity)) {

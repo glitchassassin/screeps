@@ -34,12 +34,12 @@ export function runMissionControl() {
   initializeCreepIndex();
   registerSpawningCreeps();
   vacateSpawns();
-  allocateMissions();
-  debugCPU('allocateMissions', true);
   const before = Game.cpu.getUsed();
   executeMissions();
   recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
   debugCPU('executeMissions', true);
+  allocateMissions();
+  debugCPU('allocateMissions', true);
 }
 
 function executeMissions() {
@@ -71,7 +71,6 @@ function executeMissions() {
     // Run squad missions
     for (const mission of Memory.offices[office].squadMissions) {
       getSquadMission(mission).run();
-      console.log(getSquadMission(mission).status());
     }
     // Clean up completed missions/creep memory
     Memory.offices[office].squadMissions = Memory.offices[office].squadMissions.filter(

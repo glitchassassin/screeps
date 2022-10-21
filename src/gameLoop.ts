@@ -5,7 +5,7 @@ import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from 'RoomPlanner/planRooms';
 import { preTick, reconcileTraffic } from 'screeps-cartographer';
 import { recordOverhead } from 'Selectors/cpuOverhead';
-import { displayBucket, displayGcl, displaySpawn } from 'Selectors/displayBucket';
+import { displayBucket, displayGcl, displayGpl, displaySpawn } from 'Selectors/displayBucket';
 import { updateLogisticsTargets } from 'Strategy/Logistics/LogisticsTargets';
 import { runStructures } from 'Structures';
 import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
@@ -15,6 +15,7 @@ export const gameLoop = () => {
   preTick();
   displayBucket();
   displayGcl();
+  displayGpl();
   displaySpawn();
   resetDebugCPU(true);
   debugCPU('gameLoop setup', true);
@@ -47,6 +48,10 @@ export const gameLoop = () => {
   initializeSpawn();
 
   recordOverhead();
+
+  // roomPlans('W12S3')?.perimeter?.ramparts.forEach(r =>
+  //   viz(r.pos.roomName).circle(r.pos.x, r.pos.y, { radius: 0.5, fill: r.structure ? 'green' : 'red' })
+  // );
 
   // if (Game.time % 100 === 0) reportAccuracyLedger();
   // if (Game.time % 100 === 0) reportLogisticsLedger();

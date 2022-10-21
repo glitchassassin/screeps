@@ -98,7 +98,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
       plans.fastfiller?.spawns[2],
       plans.franchise1?.link
     );
-    defensiveStructures = plannedStructures.concat(plannedTowers.slice(3, 6));
+    defensiveStructures = defensiveStructures.concat(plannedTowers.slice(3, 6));
     plannedStructures = plannedStructures.concat(
       plans.labs?.labs.slice(6, 10) ?? [],
       plans.headquarters?.nuker,
