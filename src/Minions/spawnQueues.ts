@@ -7,13 +7,13 @@ import { getSpawns } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
 
-interface SpawnOrderData {
+export interface SpawnOrderData {
   name: string;
   body: BodyPartConstant[];
   boosts?: MineralBoostConstant[];
   memory?: Partial<CreepMemory>;
 }
-interface PreferredSpawnData {
+export interface PreferredSpawnData {
   spawn?: Id<StructureSpawn>;
   directions?: DirectionConstant[];
 }
