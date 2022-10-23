@@ -1,3 +1,4 @@
+import { missionById, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
 import { MissionTypes } from 'Missions/OldImplementations';
 import { SquadMission, SquadMissionType } from 'Missions/Squads';
@@ -88,8 +89,8 @@ export function assignedCreep(mission: Mission<MissionType>): Creep | undefined 
   return Game.creeps[mission.creep ?? ''];
 }
 
-export function assignedMission(creep: Creep): Mission<MissionType> | undefined {
-  return creep.memory?.mission;
+export function assignedMission(creep: Creep): MissionImplementation | undefined {
+  return creep.memory.missionId ? missionById(creep.memory.missionId) : undefined;
 }
 
 export function estimateMissionInterval(office: string) {

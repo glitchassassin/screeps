@@ -13,6 +13,7 @@ declare global {
         data: any;
         started: number;
         cpuUsed: number;
+        energyUsed: number;
         missions: Record<string, string[]>;
         creeps: Record<string, any>;
       }
@@ -21,6 +22,7 @@ declare global {
       type: string;
       duration: number;
       cpuUsed: number;
+      energyUsed: number;
       finished: number;
     }[];
   }
@@ -34,6 +36,10 @@ const singletons = new Map<MissionImplementation['id'], MissionImplementation>()
 
 export function allMissions() {
   return singletons.values();
+}
+
+export function missionById(id: MissionImplementation['id']) {
+  return singletons.get(id);
 }
 
 export class MissionImplementation {
@@ -58,6 +64,7 @@ export class MissionImplementation {
       data: missionData,
       started: Game.time,
       cpuUsed: 0,
+      energyUsed: 0,
       missions: {},
       creeps: {}
     };
@@ -163,6 +170,7 @@ export class MissionImplementation {
       type: this.constructor.name,
       duration: Game.time - Memory.missions[this.id].started,
       cpuUsed: Memory.missions[this.id].cpuUsed,
+      energyUsed: Memory.missions[this.id].energyUsed,
       finished: Game.time
     });
     // Clean up the mission
@@ -174,6 +182,9 @@ export class MissionImplementation {
   }
   energyRemaining() {
     return this.estimatedEnergyRemaining;
+  }
+  recordEnergy(energy: number) {
+    Memory.missions[this.id].energyUsed += energy;
   }
 }
 
