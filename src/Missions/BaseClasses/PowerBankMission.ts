@@ -1,4 +1,5 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { Budget } from 'Missions/Budgets';
 import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
 import { BaseMissionData, MissionImplementation, ResolvedCreeps, ResolvedMissions } from './MissionImplementation';
 import { MultiMissionSpawner } from './MissionSpawner/MultiMissionSpawner';
@@ -13,6 +14,7 @@ export class PowerBankMission extends MissionImplementation {
   public creeps = {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
+      budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
       count: () => Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY))
     })

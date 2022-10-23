@@ -1,66 +1,39 @@
 import { roomPlans } from 'Selectors/roomPlans';
-import { Mission, MissionType } from './Mission';
 
-export function getWithdrawLimit(mission: Mission<MissionType>) {
-  return getBudgetAdjustment(mission).energy;
+export function getWithdrawLimit(office: string, budget: Budget) {
+  return getBudgetAdjustment(office, budget);
+}
+
+export enum Budget {
+  ESSENTIAL = 'ESSENTIAL',
+  ECONOMY = 'ECONOMY',
+  EFFICIENCY = 'EFFICIENCY',
+  SURPLUS = 'SURPLUS'
 }
 
 /**
  * Sets capacity threshold for different mission types, to make sure certain
- * missions can spawn only when storage levels are high enough
+ * missions can spawn only when storage levels are high enough - storage must
+ * have `capacity` + `missionCost` to spawn mission
  */
-export function getBudgetAdjustment(mission: Mission<MissionType>) {
-  if (!roomPlans(mission.office)?.headquarters?.storage.structure) {
+export function getBudgetAdjustment(office: string, budget: Budget) {
+  if (!roomPlans(office)?.headquarters?.storage.structure) {
     // No storage yet - minimal capacities enforced, except for income missions
-    if (
-      mission.type === MissionType.HARVEST ||
-      mission.type === MissionType.LOGISTICS ||
-      mission.type === MissionType.RESERVE ||
-      mission.type === MissionType.REFILL
-    ) {
-      return {
-        cpu: 2000,
-        energy: -Infinity
-      };
+    if ([Budget.ESSENTIAL, Budget.ECONOMY].includes(budget)) {
+      return -Infinity;
     } else {
-      return {
-        cpu: 2000,
-        energy: 0
-      };
+      return 0;
     }
   } else {
     // Storage allows more fine-grained capacity management
-    if (
-      mission.type === MissionType.HARVEST ||
-      mission.type === MissionType.LOGISTICS ||
-      mission.type === MissionType.REFILL
-    ) {
-      return {
-        cpu: 2000,
-        energy: -Infinity
-      };
-    } else if (
-      [MissionType.RESERVE, MissionType.DEFEND_REMOTE, MissionType.HQ_LOGISTICS, MissionType.DEFEND_OFFICE].includes(
-        mission.type
-      )
-    ) {
-      return {
-        cpu: 2000,
-        energy: Game.rooms[mission.office].energyCapacityAvailable ?? 1500
-      };
-    } else if (
-      [MissionType.POWER_BANK].includes(mission.type) ||
-      (mission.type === MissionType.UPGRADE && !mission.data.emergency)
-    ) {
-      return {
-        cpu: 2000,
-        energy: 100000
-      };
+    if ([Budget.ESSENTIAL, Budget.ECONOMY].includes(budget)) {
+      return -Infinity;
+    } else if ([Budget.EFFICIENCY].includes(budget)) {
+      return Game.rooms[office].energyCapacityAvailable ?? 1500;
+    } else if ([Budget.SURPLUS].includes(budget)) {
+      return 100000;
     } else {
-      return {
-        cpu: 2000,
-        energy: 60000
-      };
+      return 60000;
     }
   }
 }

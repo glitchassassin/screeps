@@ -1,6 +1,6 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { Budget } from 'Missions/Budgets';
 import { CreepSpawner } from './CreepSpawner/CreepSpawner';
-import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
 import { BaseMissionData, MissionImplementation, ResolvedCreeps, ResolvedMissions } from './MissionImplementation';
 
 export interface PowerBankDuoMissionData extends BaseMissionData {
@@ -12,16 +12,13 @@ export class PowerBankDuoMission extends MissionImplementation {
   public creeps = {
     attacker: new CreepSpawner('a', this.missionData.office, {
       role: MinionTypes.GUARD,
+      budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.GUARD](energy, false)
     }),
     healer: new CreepSpawner('b', this.missionData.office, {
       role: MinionTypes.MEDIC,
+      budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.MEDIC](energy)
-    }),
-    haulers: new MultiCreepSpawner('h', this.missionData.office, {
-      role: MinionTypes.ACCOUNTANT,
-      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
-      count: () => Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY))
     })
   };
 
@@ -43,7 +40,7 @@ export class PowerBankDuoMission extends MissionImplementation {
     missions: ResolvedMissions<PowerBankDuoMission>,
     data: PowerBankDuoMissionData
   ) {
-    const { attacker, healer, haulers } = creeps;
+    const { attacker, healer } = creeps;
     const { powerBank } = data;
   }
 }

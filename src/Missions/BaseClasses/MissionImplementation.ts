@@ -42,6 +42,7 @@ export class MissionImplementation {
   public status = MissionStatus.PENDING;
   public id: string;
   public priority = 5;
+  public estimatedEnergyRemaining = 0;
   constructor(public missionData: { office: string }, id?: string) {
     this.id =
       id ??
@@ -166,6 +167,13 @@ export class MissionImplementation {
     });
     // Clean up the mission
     delete Memory.missions[this.id];
+  }
+
+  cpuRemaining() {
+    return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0);
+  }
+  energyRemaining() {
+    return this.estimatedEnergyRemaining;
   }
 }
 

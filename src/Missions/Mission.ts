@@ -52,12 +52,6 @@ export interface Mission<T extends MissionType> {
   };
 }
 
-declare global {
-  interface CreepMemory {
-    mission: Mission<MissionType>;
-  }
-}
-
 export interface MissionWithoutDefaults<T extends MissionType> {
   office: string;
   priority: number;

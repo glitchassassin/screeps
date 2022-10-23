@@ -1,7 +1,11 @@
 import { MinionTypes } from 'Minions/minionTypes';
+import { SpawnOrder } from 'Minions/spawnQueues';
+import { Budget } from 'Missions/Budgets';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 
 export abstract class BaseCreepSpawner {
+  defaultCpuPerTick = 0.4;
+
   constructor(
     public id: string,
     public office: string,
@@ -14,11 +18,13 @@ export abstract class BaseCreepSpawner {
         directions?: DirectionConstant[];
       };
       body: (energy: number) => BodyPartConstant[];
+      budget: Budget;
       estimatedCpuPerTick?: number;
       estimatedEnergy?: (body: BodyPartConstant[]) => number;
     }
   ) {}
-  spawn(missionId: CreepMemory['missionId'], priority: number) {
+
+  spawn(missionId: CreepMemory['missionId'], priority: number): SpawnOrder[] {
     const body = this.props.body(spawnEnergyAvailable(this.office));
     const lifetime = body.includes(CLAIM) ? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
 
@@ -30,10 +36,12 @@ export abstract class BaseCreepSpawner {
       {
         ...this.props.spawnData,
         priority,
+        office: this.office,
+        budget: this.props.budget,
         name: `${missionId}|${padding}`,
         body,
         estimate: {
-          cpu: (this.props.estimatedCpuPerTick ?? 0.4) * lifetime,
+          cpu: (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick) * lifetime,
           energy: this.props.estimatedEnergy?.(body) ?? 0
         },
         memory: {
@@ -51,4 +59,6 @@ export abstract class BaseCreepSpawner {
   setMemory(memory: this['memory']) {
     this.memory = memory;
   }
+
+  abstract cpuRemaining(): number;
 }

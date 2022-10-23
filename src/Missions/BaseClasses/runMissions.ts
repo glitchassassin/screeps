@@ -1,15 +1,32 @@
-import { allMissions } from './MissionImplementation';
+import { MISSION_HISTORY_LIMIT } from 'config';
+import { allMissions, MissionImplementation } from './MissionImplementation';
 
 export function runMissions() {
   for (const mission of allMissions()) {
     mission.execute();
   }
+  Memory.missionReports = Memory.missionReports.filter(r => r.finished > Game.time - MISSION_HISTORY_LIMIT);
 }
 
 export function spawnMissions() {
-  const orders = [];
+  const orders: Record<
+    string,
+    {
+      orders: ReturnType<MissionImplementation['spawn']>;
+      energyRemaining: number;
+    }
+  > = {};
+  let cpuRemaining = 0;
   for (const mission of allMissions()) {
-    orders.push(...mission.spawn());
+    orders[mission.missionData.office] ??= {
+      orders: [],
+      energyRemaining: 0
+    };
+    for (const order of mission.spawn()) {
+      orders[order.office].orders.push(order);
+    }
+    cpuRemaining += mission.cpuRemaining();
+    orders[mission.missionData.office].energyRemaining += mission.energyRemaining();
   }
-  return orders;
+  return { orders, cpuRemaining };
 }

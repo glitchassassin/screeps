@@ -24,4 +24,8 @@ export class CreepSpawner extends BaseCreepSpawner {
   get died() {
     return this._creep && !Game.creeps[this._creep];
   }
+
+  cpuRemaining(): number {
+    return (this.resolved?.ticksToLive ?? 0) * (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick);
+  }
 }
