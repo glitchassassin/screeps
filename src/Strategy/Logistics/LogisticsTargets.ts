@@ -5,9 +5,9 @@
 
 import { findBestDepositTarget, findBestWithdrawTarget } from 'Behaviors/Logistics';
 import { States } from 'Behaviors/states';
-import { LogisticsMission } from 'Missions/Implementations/Logistics';
-import { MobileRefillMission } from 'Missions/Implementations/MobileRefill';
 import { MissionType } from 'Missions/Mission';
+import { LogisticsMission } from 'Missions/OldImplementations/Logistics';
+import { MobileRefillMission } from 'Missions/OldImplementations/MobileRefill';
 import { activeMissions, assignedCreep, isMission, or } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';

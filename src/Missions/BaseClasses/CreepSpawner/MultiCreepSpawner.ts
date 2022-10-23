@@ -1,13 +1,18 @@
 import { BaseCreepSpawner } from './BaseCreepSpawner';
 
 export class MultiCreepSpawner extends BaseCreepSpawner {
-  constructor(id: string, office: string, public props: BaseCreepSpawner['props'] & { count: () => number }) {
-    super(id, office, props);
+  constructor(
+    id: string,
+    office: string,
+    public props: BaseCreepSpawner['props'] & { count: (current: Creep[]) => number },
+    public onSpawn?: BaseCreepSpawner['onSpawn']
+  ) {
+    super(id, office, props, onSpawn);
   }
 
   spawn(missionId: CreepMemory['missionId'], priority: number) {
     const spawnOrders = [];
-    for (let i = 0; i < this.props.count() - this.resolved.length; i += 1) {
+    for (let i = 0; i < this.props.count(this.resolved); i += 1) {
       spawnOrders.push(...super.spawn(missionId, priority));
     }
     return spawnOrders;
@@ -20,7 +25,10 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
   }
 
   register(creep: Creep) {
-    if (!this._creeps.includes(creep.name)) this._creeps.push(creep.name);
+    if (!this._creeps.includes(creep.name)) {
+      this.onSpawn?.(creep);
+      this._creeps.push(creep.name);
+    }
   }
 
   cpuRemaining(): number {

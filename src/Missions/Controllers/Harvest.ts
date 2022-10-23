@@ -1,8 +1,8 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createHarvestOrder, HarvestMission } from 'Missions/Implementations/Harvest';
-import { createReserveOrder } from 'Missions/Implementations/Reserve';
 import { MissionStatus, MissionType } from 'Missions/Mission';
+import { createHarvestOrder, HarvestMission } from 'Missions/OldImplementations/Harvest';
+import { createReserveOrder } from 'Missions/OldImplementations/Reserve';
 import { activeMissions, and, isMission, isStatus, missionExpired, not } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';

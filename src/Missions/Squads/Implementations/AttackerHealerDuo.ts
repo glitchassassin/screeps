@@ -1,6 +1,6 @@
 import { MinionTypes } from 'Minions/minionTypes';
-import { createDefendOfficeOrder } from 'Missions/Implementations/DefendOffice/createDefendOfficeOrder';
 import { MissionStatus, MissionType } from 'Missions/Mission';
+import { createDefendOfficeOrder } from 'Missions/OldImplementations/DefendOffice/createDefendOfficeOrder';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { follow, moveTo } from 'screeps-cartographer';
 import { isAttacker, isHealer } from 'Selectors/Combat/combatStats';

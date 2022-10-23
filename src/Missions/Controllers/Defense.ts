@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createDefendRemoteOrder } from 'Missions/Implementations/DefendRemote';
 import { MissionType } from 'Missions/Mission';
+import { createDefendRemoteOrder } from 'Missions/OldImplementations/DefendRemote';
 import { activeMissions, activeSquadMissions, assignedCreep, isMission, isSquadMission } from 'Missions/Selectors';
 import { SquadMissionType } from 'Missions/Squads';
 import { createAttackerHealerDuoMission } from 'Missions/Squads/Implementations/AttackerHealerDuo';

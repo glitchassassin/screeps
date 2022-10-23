@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createPowerbankHaulerOrder } from 'Missions/Implementations/PowerBank/createPowerbankHaulerOrder';
 import { MissionStatus } from 'Missions/Mission';
+import { createPowerbankHaulerOrder } from 'Missions/OldImplementations/PowerBank/createPowerbankHaulerOrder';
 import { squadMissionById } from 'Missions/Selectors';
 import { isCreep } from 'Selectors/typeguards';
 import { unpackPos } from 'utils/packrat';

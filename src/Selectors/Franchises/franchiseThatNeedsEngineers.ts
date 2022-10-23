@@ -1,4 +1,4 @@
-import { EngineerMission } from 'Missions/Implementations/Engineer';
+import { EngineerMission } from 'Missions/OldImplementations/Engineer';
 import { assignedCreep } from 'Missions/Selectors';
 import { adjustedPlannedFranchiseRoadsCost } from '../plannedTerritoryRoads';
 import { rcl } from '../rcl';

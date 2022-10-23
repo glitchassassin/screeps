@@ -1,7 +1,12 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
-import { CreepSpawner } from './CreepSpawner/CreepSpawner';
-import { BaseMissionData, MissionImplementation, ResolvedCreeps, ResolvedMissions } from './MissionImplementation';
+import {
+  BaseMissionData,
+  MissionImplementation,
+  ResolvedCreeps,
+  ResolvedMissions
+} from '../BaseClasses/MissionImplementation';
 
 export interface PowerBankDuoMissionData extends BaseMissionData {
   powerBank: Id<StructurePowerBank>;

@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createPlunderOrder } from 'Missions/Implementations/Plunder';
 import { MissionType } from 'Missions/Mission';
+import { createPlunderOrder } from 'Missions/OldImplementations/Plunder';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
 import { getRoomPathDistance } from 'Selectors/Map/Pathing';

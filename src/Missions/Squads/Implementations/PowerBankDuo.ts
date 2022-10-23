@@ -1,6 +1,6 @@
 import { MinionTypes } from 'Minions/minionTypes';
-import { createPowerBankDuoOrder } from 'Missions/Implementations/PowerBank/createPowerbankDuoOrder';
 import { MissionStatus } from 'Missions/Mission';
+import { createPowerBankDuoOrder } from 'Missions/OldImplementations/PowerBank/createPowerbankDuoOrder';
 import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { isAttacker, isHealer } from 'Selectors/Combat/combatStats';

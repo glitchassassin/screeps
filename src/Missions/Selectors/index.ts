@@ -1,5 +1,5 @@
-import { MissionTypes } from 'Missions/Implementations';
 import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
+import { MissionTypes } from 'Missions/OldImplementations';
 import { SquadMission, SquadMissionType } from 'Missions/Squads';
 import { SquadMissionTypes } from 'Missions/Squads/Missions';
 import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';

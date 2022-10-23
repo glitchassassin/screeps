@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createRefillOrder } from 'Missions/Implementations/Refill';
 import { MissionType } from 'Missions/Mission';
+import { createRefillOrder } from 'Missions/OldImplementations/Refill';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { fastfillerPositions } from 'Reports/fastfillerPositions';
 import { roomHasExtensions } from 'Selectors/getExtensionsCapacity';

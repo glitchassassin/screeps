@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createExploreOrder } from 'Missions/Implementations/Explore';
 import { MissionType } from 'Missions/Mission';
+import { createExploreOrder } from 'Missions/OldImplementations/Explore';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 

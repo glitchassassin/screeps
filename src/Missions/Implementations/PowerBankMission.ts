@@ -1,8 +1,14 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { fixedCount } from 'Missions/BaseClasses';
+import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
+import {
+  BaseMissionData,
+  MissionImplementation,
+  ResolvedCreeps,
+  ResolvedMissions
+} from 'Missions/BaseClasses/MissionImplementation';
+import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
-import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
-import { BaseMissionData, MissionImplementation, ResolvedCreeps, ResolvedMissions } from './MissionImplementation';
-import { MultiMissionSpawner } from './MissionSpawner/MultiMissionSpawner';
 import { PowerBankDuoMission } from './PowerBankDuoMission';
 
 export interface PowerBankMissionData extends BaseMissionData {
@@ -16,7 +22,7 @@ export class PowerBankMission extends MissionImplementation {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
-      count: () => Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY))
+      count: fixedCount(() => Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY)))
     })
   };
 

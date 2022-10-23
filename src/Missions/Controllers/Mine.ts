@@ -1,7 +1,7 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createMineForemanOrder, MineForemanMission } from 'Missions/Implementations/MineForeman';
-import { createMineHaulerOrder, MineHaulerMission } from 'Missions/Implementations/MineHauler';
 import { MissionType } from 'Missions/Mission';
+import { createMineForemanOrder, MineForemanMission } from 'Missions/OldImplementations/MineForeman';
+import { createMineHaulerOrder, MineHaulerMission } from 'Missions/OldImplementations/MineHauler';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { marketEnabled } from 'Selectors/marketEnabled';

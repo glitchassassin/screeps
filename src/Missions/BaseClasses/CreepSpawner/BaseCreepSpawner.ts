@@ -21,7 +21,8 @@ export abstract class BaseCreepSpawner {
       budget: Budget;
       estimatedCpuPerTick?: number;
       estimatedEnergy?: (body: BodyPartConstant[]) => number;
-    }
+    },
+    public onSpawn?: (creep: Creep) => void
   ) {}
 
   spawn(missionId: CreepMemory['missionId'], priority: number): SpawnOrder[] {

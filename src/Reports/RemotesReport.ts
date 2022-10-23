@@ -1,7 +1,7 @@
 import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
-import { HarvestMission } from 'Missions/Implementations/Harvest';
 import { MissionStatus, MissionType } from 'Missions/Mission';
+import { HarvestMission } from 'Missions/OldImplementations/Harvest';
 import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { byId } from 'Selectors/byId';

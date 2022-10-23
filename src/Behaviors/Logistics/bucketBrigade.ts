@@ -1,7 +1,7 @@
 import { States } from 'Behaviors/states';
-import { LogisticsMission } from 'Missions/Implementations/Logistics';
-import { MobileRefillMission } from 'Missions/Implementations/MobileRefill';
 import { Mission, MissionType } from 'Missions/Mission';
+import { LogisticsMission } from 'Missions/OldImplementations/Logistics';
+import { MobileRefillMission } from 'Missions/OldImplementations/MobileRefill';
 import { assignedMission } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';

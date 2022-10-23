@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createHQLogisticsOrder } from 'Missions/Implementations/HQLogistics';
 import { MissionType } from 'Missions/Mission';
+import { createHQLogisticsOrder } from 'Missions/OldImplementations/HQLogistics';
 import { activeMissions, and, isMission, missionExpired, not } from 'Missions/Selectors';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';

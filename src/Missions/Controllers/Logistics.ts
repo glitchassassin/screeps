@@ -1,8 +1,8 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createLogisticsOrder } from 'Missions/Implementations/Logistics';
-import { createMobileRefillOrder } from 'Missions/Implementations/MobileRefill';
 import { MissionType } from 'Missions/Mission';
+import { createLogisticsOrder } from 'Missions/OldImplementations/Logistics';
+import { createMobileRefillOrder } from 'Missions/OldImplementations/MobileRefill';
 import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
