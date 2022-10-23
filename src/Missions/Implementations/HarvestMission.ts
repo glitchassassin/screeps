@@ -95,10 +95,6 @@ export class HarvestMission extends MissionImplementation {
     }
   );
 
-  onStart(): void {
-    super.onStart();
-  }
-
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;
     const { source, office } = this.missionData;

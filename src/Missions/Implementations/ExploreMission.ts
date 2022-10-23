@@ -19,7 +19,7 @@ export interface ExploreMissionData extends BaseMissionData {
 export class ExploreMission extends MissionImplementation {
   public creeps = {
     explorer: new CreepSpawner('x', this.missionData.office, {
-      role: MinionTypes.SALESMAN,
+      role: MinionTypes.AUDITOR,
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.AUDITOR](energy),
       respawn: () => true
@@ -33,10 +33,6 @@ export class ExploreMission extends MissionImplementation {
   }
   static fromId(id: ExploreMission['id']) {
     return new this(Memory.missions[id].data, id);
-  }
-
-  onStart(): void {
-    super.onStart();
   }
 
   run(creeps: ResolvedCreeps<ExploreMission>, missions: ResolvedMissions<ExploreMission>, data: ExploreMissionData) {

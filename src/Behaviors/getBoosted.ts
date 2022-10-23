@@ -1,30 +1,27 @@
 import { FEATURES } from 'config';
-import { Mission, MissionType } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getScientists } from 'Selectors/getScientists';
 import { BehaviorResult } from './Behavior';
 
-export function getBoosted(creep: Creep, mission: Mission<MissionType>) {
+export function getBoosted(creep: Creep, office: string) {
   // If no Scientists are on duty, skip
-  if (!FEATURES.LABS || !getScientists(mission.office).length) return BehaviorResult.FAILURE;
+  if (!FEATURES.LABS || !getScientists(office).length) return BehaviorResult.FAILURE;
 
   // Check if boosts are completed
   const boosts = creep.body.reduce((map, part) => {
     if (part.boost)
-      map.set(part.boost as MineralBoostConstant, (map.get(part.boost as MineralBoostConstant) ?? 0) + 30);
+      map.set(part.boost as MineralCompoundConstant, (map.get(part.boost as MineralCompoundConstant) ?? 0) + 30);
     return map;
-  }, new Map<MineralBoostConstant, number>());
+  }, new Map<MineralCompoundConstant, number>());
   const outstanding =
-    Memory.offices[mission.office].lab.boosts
+    Memory.offices[office].lab.boosts
       .find(o => o.name === creep.name)
       ?.boosts.filter(b => (boosts.get(b.type) ?? 0) < b.count) ?? [];
   // We don't need to check count, only completeness
   if (outstanding.length === 0) {
     // All boosts accounted for, we're done
-    Memory.offices[mission.office].lab.boosts = Memory.offices[mission.office].lab.boosts.filter(
-      o => o.name !== creep.name
-    );
+    Memory.offices[office].lab.boosts = Memory.offices[office].lab.boosts.filter(o => o.name !== creep.name);
     // console.log(office, 'Boosted creep', JSON.stringify(creep.body));
     return BehaviorResult.SUCCESS;
   }
@@ -32,9 +29,7 @@ export function getBoosted(creep: Creep, mission: Mission<MissionType>) {
   // console.log(office, creep.name, JSON.stringify([...boosts.values()]))
 
   // We still have some boosts outstanding
-  const targetLab = Memory.offices[mission.office].lab.boostingLabs.find(l =>
-    outstanding.some(o => o.type === l.resource)
-  );
+  const targetLab = Memory.offices[office].lab.boostingLabs.find(l => outstanding.some(o => o.type === l.resource));
   const lab = byId(targetLab?.id);
   const targetBoostCount = outstanding.find(b => b.type === targetLab?.resource)?.count ?? 0;
   if (lab) {
@@ -47,7 +42,6 @@ export function getBoosted(creep: Creep, mission: Mission<MissionType>) {
       const result = lab.boostCreep(creep);
       if (result === OK) {
         const boostCost = Math.round((targetBoostCount * 2) / 3);
-        mission.actual.energy += boostCost;
       }
     }
   }
