@@ -14,7 +14,8 @@ export abstract class BaseCreepSpawner {
         directions?: DirectionConstant[];
       };
       body: (energy: number) => BodyPartConstant[];
-      estimate?: (body: BodyPartConstant[]) => { cpu: number; energy: number };
+      estimatedCpuPerTick?: number;
+      estimatedEnergy?: (body: BodyPartConstant[]) => number;
     }
   ) {}
   spawn(missionId: CreepMemory['missionId'], priority: number) {
@@ -31,7 +32,10 @@ export abstract class BaseCreepSpawner {
         priority,
         name: `${missionId}|${padding}`,
         body,
-        estimate: this.props.estimate?.(body) ?? { cpu: 0.4 * lifetime, energy: 0 },
+        estimate: {
+          cpu: (this.props.estimatedCpuPerTick ?? 0.4) * lifetime,
+          energy: this.props.estimatedEnergy?.(body) ?? 0
+        },
         memory: {
           ...this.props.spawnData?.memory,
           role: this.props.role,

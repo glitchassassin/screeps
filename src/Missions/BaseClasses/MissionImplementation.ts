@@ -1,3 +1,4 @@
+import { MissionStatus } from 'Missions/Mission';
 import { BaseCreepSpawner } from './CreepSpawner/BaseCreepSpawner';
 import { BaseMissionSpawner } from './MissionSpawner/BaseMissionSpawner';
 
@@ -10,10 +11,18 @@ declare global {
       MissionImplementation['id'],
       {
         data: any;
+        started: number;
+        cpuUsed: number;
         missions: Record<string, string[]>;
         creeps: Record<string, any>;
       }
     >;
+    missionReports: {
+      type: string;
+      duration: number;
+      cpuUsed: number;
+      finished: number;
+    }[];
   }
 }
 
@@ -30,6 +39,7 @@ export function allMissions() {
 export class MissionImplementation {
   public creeps: Record<string, BaseCreepSpawner> = {};
   public missions: Record<string, BaseMissionSpawner<typeof MissionImplementation>> = {};
+  public status = MissionStatus.PENDING;
   public id: string;
   public priority = 5;
   constructor(public missionData: { office: string }, id?: string) {
@@ -45,6 +55,8 @@ export class MissionImplementation {
     }
     Memory.missions[this.id] ??= {
       data: missionData,
+      started: Game.time,
+      cpuUsed: 0,
       missions: {},
       creeps: {}
     };
@@ -66,6 +78,17 @@ export class MissionImplementation {
   }
 
   execute() {
+    const start = Game.cpu.getUsed();
+
+    // clean up mission
+    if (this.status === MissionStatus.PENDING) {
+      this.onStart();
+    }
+    if (this.status === MissionStatus.DONE) {
+      this.onEnd();
+      return;
+    }
+
     // register ids
     for (const mission in this.missions) {
       this.missions[mission].register(Memory.missions[this.id].missions[mission] ?? []);
@@ -106,6 +129,9 @@ export class MissionImplementation {
 
     // run logic
     this.run(resolvedCreeps, resolvedMissions, this.missionData);
+
+    // log CPU usage
+    Memory.missions[this.id].cpuUsed += Math.max(0, Game.cpu.getUsed() - start);
   }
 
   register(creep: Creep) {
@@ -123,6 +149,23 @@ export class MissionImplementation {
     data: MissionImplementation['missionData']
   ) {
     throw new Error('Not implemented yet');
+  }
+
+  onStart() {
+    // Set status to RUNNING
+    this.status = MissionStatus.RUNNING;
+  }
+
+  onEnd() {
+    // file mission report
+    Memory.missionReports.push({
+      type: this.constructor.name,
+      duration: Game.time - Memory.missions[this.id].started,
+      cpuUsed: Memory.missions[this.id].cpuUsed,
+      finished: Game.time
+    });
+    // Clean up the mission
+    delete Memory.missions[this.id];
   }
 }
 
