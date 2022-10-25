@@ -30,7 +30,7 @@ export class HQLogisticsMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: HQLogisticsMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as HQLogisticsMission;
   }
 
   onStart(): void {

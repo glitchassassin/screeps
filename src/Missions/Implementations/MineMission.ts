@@ -41,7 +41,7 @@ export class MineMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: MineMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as MineMission;
   }
 
   run(creeps: ResolvedCreeps<MineMission>, missions: ResolvedMissions<MineMission>, data: MineMissionData) {

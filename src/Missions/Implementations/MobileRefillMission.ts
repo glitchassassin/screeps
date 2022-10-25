@@ -13,7 +13,7 @@ export class MobileRefillMission extends LogisticsMission {
     super(missionData, id);
   }
   static fromId(id: MobileRefillMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as MobileRefillMission;
   }
 
   fromStorage = true;

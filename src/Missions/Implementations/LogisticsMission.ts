@@ -60,9 +60,10 @@ export class LogisticsMission extends MissionImplementation {
 
   constructor(public missionData: LogisticsMissionData, id?: string) {
     super(missionData, id);
+    console.log('New LogisticsMission', this.id);
   }
   static fromId(id: LogisticsMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as LogisticsMission;
   }
 
   capacity = memoizeByTick(
@@ -217,6 +218,10 @@ export class LogisticsMission extends MissionImplementation {
     for (const assigned in this.missionData.assignments) {
       const assignment = this.missionData.assignments[assigned];
       const creep = Game.creeps[assigned];
+      if (!creep) {
+        delete this.missionData.assignments[assigned];
+        continue;
+      }
       if (creep?.memory.runState === States.DEPOSIT && assignment.depositTarget) {
         const target = byId(assignment.depositTarget as Id<AnyStoreStructure | Creep>);
 

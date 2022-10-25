@@ -65,7 +65,7 @@ export class EngineerMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: EngineerMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as EngineerMission;
   }
 
   calculated = memoizeByTick(

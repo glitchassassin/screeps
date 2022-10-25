@@ -39,7 +39,7 @@ export class ReserveMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: ReserveMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as ReserveMission;
   }
 
   run(creeps: ResolvedCreeps<ReserveMission>, missions: ResolvedMissions<ReserveMission>, data: ReserveMissionData) {

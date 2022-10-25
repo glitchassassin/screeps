@@ -32,7 +32,7 @@ export class ExploreMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: ExploreMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as ExploreMission;
   }
 
   run(creeps: ResolvedCreeps<ExploreMission>, missions: ResolvedMissions<ExploreMission>, data: ExploreMissionData) {

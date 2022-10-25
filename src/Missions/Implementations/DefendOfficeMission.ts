@@ -43,7 +43,7 @@ export class DefendOfficeMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: DefendOfficeMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as DefendOfficeMission;
   }
 
   report() {

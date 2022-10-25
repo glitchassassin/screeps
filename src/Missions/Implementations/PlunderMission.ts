@@ -57,7 +57,7 @@ export class PlunderMission extends MissionImplementation {
     }
   }
   static fromId(id: PlunderMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as PlunderMission;
   }
 
   run(creeps: ResolvedCreeps<PlunderMission>, missions: ResolvedMissions<PlunderMission>, data: PlunderMissionData) {

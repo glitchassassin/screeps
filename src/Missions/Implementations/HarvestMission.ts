@@ -81,7 +81,7 @@ export class HarvestMission extends MissionImplementation {
     }
   }
   static fromId(id: HarvestMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as HarvestMission;
   }
 
   calculated = memoizeByTick(

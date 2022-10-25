@@ -33,21 +33,17 @@ export class PowerBankMission extends MissionImplementation {
   };
 
   public missions = {
-    duos: new MultiMissionSpawner(
-      PowerBankDuoMission,
-      () => this.missionData,
-      current => {
-        const totalDamage = current.reduce((sum, d) => sum + (d?.damageRemaining() ?? 0), 0);
-        if (
-          current.length < (this.report()?.adjacentSquares ?? 0) &&
-          current.every(d => d.assembled()) &&
-          totalDamage < (this.report()?.hits ?? 0)
-        ) {
-          return 1;
-        }
-        return 0;
+    duos: new MultiMissionSpawner(PowerBankDuoMission, current => {
+      const totalDamage = current.reduce((sum, d) => sum + (d?.damageRemaining() ?? 0), 0);
+      if (
+        current.length < (this.report()?.adjacentSquares ?? 0) &&
+        current.every(d => d.assembled()) &&
+        totalDamage < (this.report()?.hits ?? 0)
+      ) {
+        return [this.missionData];
       }
-    )
+      return [];
+    })
   };
 
   priority = 8;
@@ -56,7 +52,7 @@ export class PowerBankMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: PowerBankMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as PowerBankMission;
   }
 
   report() {

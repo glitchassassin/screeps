@@ -49,7 +49,7 @@ export class FastfillerMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: FastfillerMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as FastfillerMission;
   }
 
   run(

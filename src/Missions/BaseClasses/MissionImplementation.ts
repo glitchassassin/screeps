@@ -84,7 +84,7 @@ export class MissionImplementation {
   }
 
   static fromId(id: MissionImplementation['id']) {
-    return new this(Memory.missions[id].data, id);
+    return singletons.get(id) ?? new this(Memory.missions[id].data, id);
   }
 
   spawn() {

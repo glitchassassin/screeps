@@ -30,7 +30,7 @@ export class KillCoreMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: KillCoreMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as KillCoreMission;
   }
 
   run(creeps: ResolvedCreeps<KillCoreMission>, missions: ResolvedMissions<KillCoreMission>, data: KillCoreMissionData) {

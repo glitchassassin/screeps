@@ -1,4 +1,4 @@
-import { allMissions, missionById } from './BaseClasses/MissionImplementation';
+import { missionById } from './BaseClasses/MissionImplementation';
 import { MainOfficeMission } from './Implementations/MainOfficeMission';
 
 declare global {
@@ -20,14 +20,9 @@ export function initializeOfficeMissions() {
   }
   if (!initializedCreeps) {
     initializedCreeps = true;
-    console.log('Initializing...');
-    for (const mission of allMissions()) {
-      console.log(mission);
-    }
     // register creeps
     for (let creep in Game.creeps) {
       const mission = missionById(Game.creeps[creep].memory.missionId.split('|')[0]);
-      console.log(creep, mission);
       mission?.register(Game.creeps[creep]);
     }
   }

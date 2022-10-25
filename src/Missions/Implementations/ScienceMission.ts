@@ -45,7 +45,7 @@ export class ScienceMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: ScienceMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as ScienceMission;
   }
 
   run(creeps: ResolvedCreeps<ScienceMission>, missions: ResolvedMissions<ScienceMission>, data: ScienceMissionData) {

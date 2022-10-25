@@ -39,7 +39,7 @@ export class PowerBankDuoMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: PowerBankDuoMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as PowerBankDuoMission;
   }
 
   report() {

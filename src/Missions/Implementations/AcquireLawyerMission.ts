@@ -34,7 +34,7 @@ export class AcquireLawyerMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: AcquireLawyerMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as AcquireLawyerMission;
   }
 
   run(

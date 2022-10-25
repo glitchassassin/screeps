@@ -30,7 +30,7 @@ export class MainOfficeMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: MainOfficeMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as MainOfficeMission;
   }
   run(
     creeps: ResolvedCreeps<MainOfficeMission>,

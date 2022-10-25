@@ -28,8 +28,9 @@ export class AcquireEngineerMission extends EngineerMission {
   constructor(public missionData: AcquireEngineerMissionData, id?: string) {
     super(missionData, id);
   }
+
   static fromId(id: AcquireEngineerMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as AcquireEngineerMission;
   }
 
   calculated = memoizeByTick(

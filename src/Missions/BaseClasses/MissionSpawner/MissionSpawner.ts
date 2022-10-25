@@ -14,6 +14,12 @@ export class MissionSpawner<T extends typeof MissionImplementation> extends Base
   }
 
   get resolved() {
-    return new this.missionClass(this.missionData(), this.ids[0]) as InstanceType<T>;
+    let mission = this.missionClass.fromId(this.ids[0]) as InstanceType<T>;
+    if (!mission) {
+      this.ids.shift();
+      mission = new this.missionClass(this.missionData()) as InstanceType<T>;
+      this.ids.push(mission.id);
+    }
+    return mission;
   }
 }

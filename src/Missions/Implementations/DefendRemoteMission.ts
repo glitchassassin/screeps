@@ -40,7 +40,7 @@ export class DefendRemoteMission extends MissionImplementation {
     super(missionData, id);
   }
   static fromId(id: DefendRemoteMission['id']) {
-    return new this(Memory.missions[id].data, id);
+    return super.fromId(id) as DefendRemoteMission;
   }
 
   run(
