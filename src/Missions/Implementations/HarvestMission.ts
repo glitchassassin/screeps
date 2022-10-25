@@ -10,6 +10,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { adjacentWalkablePositions, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
@@ -68,6 +69,7 @@ export class HarvestMission extends MissionImplementation {
     // set priority differently for remote sources
     const remote = this.missionData.office !== posById(this.missionData.source)?.roomName;
     const distance = getFranchiseDistance(this.missionData.office, this.missionData.source);
+    this.missionData.distance = distance;
     if (remote) {
       this.priority = 1;
       if (distance) {
@@ -95,9 +97,29 @@ export class HarvestMission extends MissionImplementation {
     }
   );
 
+  haulingCapacityNeeded() {
+    const time = (this.missionData.distance ?? 50) * 2;
+    return time * this.harvestRate();
+  }
+
+  harvestRate() {
+    const creepHarvestRate = this.creeps.harvesters.resolved
+      .map(c => c.getActiveBodyparts(WORK) * HARVEST_POWER)
+      .reduce(sum, 0);
+    const maxHarvestRate =
+      (byId(this.missionData.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
+    return Math.min(creepHarvestRate, maxHarvestRate);
+  }
+
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;
     const { source, office } = this.missionData;
+
+    if (harvesters.length) {
+      this.status === MissionStatus.RUNNING;
+    } else {
+      this.status === MissionStatus.PENDING;
+    }
 
     const container = getFranchisePlanBySourceId(source)?.container.structureId;
     LogisticsLedger.record(

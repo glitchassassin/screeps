@@ -1,10 +1,6 @@
 import { BARRIER_LEVEL, BARRIER_TYPES } from 'config';
-import { MissionType } from 'Missions/Mission';
-import { activeMissions, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
-import { posById } from 'Selectors/posById';
 import { facilitiesCostPending, facilitiesWorkToDo } from 'Selectors/Structures/facilitiesWorkToDo';
 import { viz } from 'Selectors/viz';
 
@@ -49,30 +45,6 @@ export default () => {
             data: Table({
               config: { headers: ['Count', 'Cost', 'Types'] },
               data
-            })
-          })
-        }
-      ],
-      config: { room }
-    });
-
-    // Remote roads
-    const remotes = franchisesThatNeedRoadWork(room).map(source => [
-      posById(source)?.toString(),
-      activeMissions(room)
-        .filter(isMission(MissionType.ENGINEER))
-        .filter(m => m.data.franchise === source).length
-    ]);
-    Dashboard({
-      widgets: [
-        {
-          pos: { x: 1, y: Math.min(48, 1 + data.length * 1.4) + 2 },
-          width: 40,
-          height: Math.max(4, Math.min(48, 1 + remotes.length * 1.4)),
-          widget: Rectangle({
-            data: Table({
-              config: { headers: ['Franchise', 'Assigned'] },
-              data: remotes
             })
           })
         }

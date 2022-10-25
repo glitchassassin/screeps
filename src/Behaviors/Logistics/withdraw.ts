@@ -7,7 +7,6 @@ import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
-import { bucketBrigadeWithdraw } from './bucketBrigade';
 
 export const withdraw =
   (fromStorage?: boolean) =>
@@ -20,9 +19,6 @@ export const withdraw =
     },
     creep: Creep
   ) => {
-    if (bucketBrigadeWithdraw(creep, data)) {
-      return States.DEPOSIT;
-    }
     if (creep.ticksToLive && creep.ticksToLive < 100) {
       // no work within range and creep is dying
       return States.RECYCLE;

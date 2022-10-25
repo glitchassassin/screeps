@@ -1,3 +1,6 @@
+import { recycle } from 'Behaviors/recycle';
+import { runStates } from 'Behaviors/stateMachine';
+import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { fixedCount } from 'Missions/BaseClasses';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
@@ -9,6 +12,9 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
+import { moveTo } from 'screeps-cartographer';
+import { roomPlans } from 'Selectors/roomPlans';
+import { unpackPos } from 'utils/packrat';
 import { PowerBankDuoMission } from './PowerBankDuoMission';
 
 export interface PowerBankMissionData extends BaseMissionData {
@@ -30,7 +36,17 @@ export class PowerBankMission extends MissionImplementation {
     duos: new MultiMissionSpawner(
       PowerBankDuoMission,
       () => this.missionData,
-      () => 1
+      current => {
+        const totalDamage = current.reduce((sum, d) => sum + (d?.damageRemaining() ?? 0), 0);
+        if (
+          current.length < (this.report()?.adjacentSquares ?? 0) &&
+          current.every(d => d.assembled()) &&
+          totalDamage < (this.report()?.hits ?? 0)
+        ) {
+          return 1;
+        }
+        return 0;
+      }
     )
   };
 
@@ -53,7 +69,38 @@ export class PowerBankMission extends MissionImplementation {
     data: PowerBankMissionData
   ) {
     const { haulers } = creeps;
-    const { powerBank } = data;
-    const { duos } = missions;
+
+    const powerBankPos = unpackPos(data.powerBankPos);
+    const powerBankRuin = powerBankPos
+      .lookFor(LOOK_RUINS)
+      .find(s => s.structure.structureType === STRUCTURE_POWER_BANK);
+    const terminal = roomPlans(data.office)?.headquarters?.terminal.structure;
+
+    for (const hauler of haulers) {
+      runStates(
+        {
+          [States.WITHDRAW]: (mission, creep) => {
+            if (creep.store.getUsedCapacity(RESOURCE_POWER)) return States.DEPOSIT;
+            if (powerBankRuin) {
+              moveTo(creep, powerBankRuin);
+              creep.withdraw(powerBankRuin, RESOURCE_POWER);
+            } else {
+              moveTo(creep, { pos: powerBankPos, range: 3 });
+            }
+            Game.map.visual.line(creep.pos, powerBankPos);
+            return States.WITHDRAW;
+          },
+          [States.DEPOSIT]: (mission, creep) => {
+            if (!creep.store.getUsedCapacity(RESOURCE_POWER) || !terminal) return States.RECYCLE;
+            moveTo(creep, terminal);
+            creep.transfer(terminal, RESOURCE_POWER);
+            return States.DEPOSIT;
+          },
+          [States.RECYCLE]: recycle
+        },
+        this.missionData,
+        hauler
+      );
+    }
   }
 }

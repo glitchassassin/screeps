@@ -6,7 +6,6 @@ import { planRooms } from 'RoomPlanner/planRooms';
 import { preTick, reconcileTraffic } from 'screeps-cartographer';
 import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl, displayGpl, displaySpawn } from 'Selectors/displayBucket';
-import { updateLogisticsTargets } from 'Strategy/Logistics/LogisticsTargets';
 import { runStructures } from 'Structures';
 import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
 import { initializeSpawn } from 'utils/initializeSpawns';
@@ -22,9 +21,6 @@ export const gameLoop = () => {
   // Cache data where needed
   scanRooms();
   debugCPU('scanRooms', true);
-
-  updateLogisticsTargets();
-  debugCPU('Logistics targets', true);
 
   // Office loop
   // logCpuStart()

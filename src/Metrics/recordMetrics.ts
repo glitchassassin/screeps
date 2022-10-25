@@ -1,5 +1,5 @@
-import { MissionStatus, MissionType } from 'Missions/Mission';
-import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
+import { LogisticsMission } from 'Missions/Implementations/LogisticsMission';
+import { isMission, missionsByOffice } from 'Missions/Selectors';
 import { Metrics } from 'screeps-viz';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchiseIncome } from 'Selectors/Franchises/franchiseIncome';
@@ -9,18 +9,6 @@ import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import profiler from 'utils/profiler';
 import { heapMetrics } from './heapMetrics';
-
-type MissionStats = Partial<
-  Record<
-    MissionType,
-    {
-      count: number;
-      // cpuAccuracy: number,
-      // energyAccuracy: number,
-      efficiency: number;
-    }
-  >
->;
 
 declare global {
   interface Memory {
@@ -50,7 +38,6 @@ declare global {
           franchiseEnergy: number;
           storageLevel: number;
           terminalLevel: number;
-          missions: MissionStats;
         };
       };
       profiling: Record<string, number>;
@@ -105,44 +92,6 @@ export const recordMetrics = profiler.registerFN(() => {
     const spawnEfficiency = spawns.length ? spawns.filter(s => s.spawning).length / spawns.length : 0;
     Metrics.update(heapMetrics[office].spawnEfficiency, spawnEfficiency, 100);
 
-    // Compute mission data
-    const missions: MissionStats = {};
-    for (const mission of activeMissions(office).filter(isStatus(MissionStatus.RUNNING))) {
-      missions[mission.type] ??= {
-        count: 0,
-        // cpuAccuracy: 0,
-        // energyAccuracy: 0,
-        efficiency: 0
-      };
-      missions[mission.type]!.count += 1;
-      missions[mission.type]!.efficiency += mission.efficiency.running
-        ? (mission.efficiency.working / mission.efficiency.running) * 100
-        : 0;
-    }
-    for (const type in missions) {
-      missions[type as MissionType]!.efficiency /= missions[type as MissionType]!.count;
-    }
-    // for (const type in Memory.offices[office].missionResults) {
-    //     missions[type as MissionType] ??= {
-    //         count: 0,
-    //         // cpuAccuracy: 0,
-    //         // energyAccuracy: 0,
-    //         efficiency: 0
-    //     }
-    //     const mission = missions[type as MissionType]!;
-    //     let cpu = 0;
-    //     let energy = 0;
-    //     let efficiency = 0;
-    //     for (const result of Memory.offices[office].missionResults[type as MissionType]!) {
-    //         cpu += ((result.estimate.cpu - result.actual.cpu) / result.estimate.cpu) * 100;
-    //         energy += ((result.estimate.energy - result.actual.energy) / result.estimate.energy) * 100;
-    //         efficiency += result.efficiency * 100;
-    //     }
-    //     // mission.cpuAccuracy = cpu / Memory.offices[office].missionResults[type as MissionType]!.length;
-    //     // mission.energyAccuracy = energy / Memory.offices[office].missionResults[type as MissionType]!.length;
-    //     mission.efficiency = efficiency / Memory.offices[office].missionResults[type as MissionType]!.length;
-    // }
-
     Memory.stats.offices[office] = {
       ...Memory.stats.offices[office],
       controllerProgress: Game.rooms[office].controller?.progress ?? 0,
@@ -159,15 +108,14 @@ export const recordMetrics = profiler.registerFN(() => {
       spawnUptime: getSpawns(office).filter(s => s.spawning).length,
       storageLevel: storageEnergyAvailable(office),
       franchiseIncome: franchiseIncome(office),
-      logisticsCapacity: activeMissions(office)
-        .filter(isMission(MissionType.LOGISTICS))
-        .map(m => m.data.capacity)
+      logisticsCapacity: missionsByOffice()
+        [office].filter(isMission(LogisticsMission))
+        .map(m => m.capacity())
         .reduce((a, b) => a + b, 0),
       franchiseEnergy: franchisesByOffice(office)
         .map(({ source }) => franchiseEnergyAvailable(source))
         .reduce((a, b) => a + b, 0),
-      terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
-      missions
+      terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0
     };
   }
 }, 'recordMetrics');

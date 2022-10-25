@@ -1,7 +1,7 @@
-import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
-import { MissionStatus, MissionType } from 'Missions/Mission';
-import { HarvestMission } from 'Missions/OldImplementations/Harvest';
+import { HarvestMission } from 'Missions/Implementations/HarvestMission';
+import { LogisticsMission } from 'Missions/Implementations/LogisticsMission';
+import { MissionStatus } from 'Missions/Mission';
 import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { byId } from 'Selectors/byId';
@@ -9,18 +9,18 @@ import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { posById } from 'Selectors/posById';
+import { sum } from 'Selectors/reducers';
 
 export default () => {
   for (const office in Memory.offices) {
     let actualLogisticsCapacity = 0;
     const activeMissionsBySource = activeMissions(office).reduce((obj, mission) => {
-      if (isMission(MissionType.LOGISTICS)(mission) && isStatus(MissionStatus.RUNNING))
-        actualLogisticsCapacity += mission.data.capacity;
-      if (mission.type !== MissionType.HARVEST || !isStatus(MissionStatus.RUNNING)(mission)) return obj;
-      obj[mission.data.source] ??= [];
-      obj[mission.data.source].push(mission as HarvestMission);
+      if (isMission(LogisticsMission)(mission) && isStatus(MissionStatus.RUNNING)(mission))
+        actualLogisticsCapacity += mission.capacity();
+      if (!(mission instanceof HarvestMission)) return obj;
+      obj[mission.missionData.source] = mission;
       return obj;
-    }, {} as Record<string, HarvestMission[]>);
+    }, {} as Record<string, HarvestMission>);
 
     const totals = {
       harvested: 0,
@@ -32,14 +32,8 @@ export default () => {
     const data = franchisesByOffice(office, true).map(franchise => {
       let sourcePos = posById(franchise.source);
       Game.map.visual.text(franchiseEnergyAvailable(franchise.source).toFixed(0), sourcePos!, { fontSize: 5 });
-      let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
-      let harvestRate = Math.min(
-        (byId(franchise.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME,
-        activeMissionsBySource[franchise.source]
-          ?.filter(mission => mission.data.arrived)
-          .map(mission => mission.data.harvestRate)
-          .reduce((a, b) => a + b, 0) ?? 0
-      );
+      let assigned = activeMissionsBySource[franchise.source]?.creeps.harvesters.resolved.length ?? 0;
+      let harvestRate = activeMissionsBySource[franchise.source]?.harvestRate() ?? 0;
       let estimatedCapacity = harvestRate * franchise.distance * 2;
 
       let disabled = !franchiseActive(office, franchise.source);
@@ -49,7 +43,10 @@ export default () => {
       const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source] ?? {};
       const perTickAverage = scores ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
-      const assignedLogistics = assignedLogisticsCapacity(office).withdrawAssignments.get(franchise.source) ?? 0;
+      const assignedLogistics = activeMissions(office)
+        .filter(isMission(LogisticsMission))
+        .map(m => m.assignedLogisticsCapacity().withdrawAssignments.get(franchise.source) ?? 0)
+        .reduce(sum, 0);
 
       const harvested = franchiseEnergyAvailable(franchise.source);
       const hauling = assignedLogistics;

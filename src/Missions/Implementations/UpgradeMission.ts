@@ -17,6 +17,8 @@ import { moveTo } from 'screeps-cartographer';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
+import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
+import { upgradersNeedSupplementalEnergy } from 'Selectors/upgradersNeedSupplementalEnergy';
 import { memoizeByTick } from 'utils/memoizeFunction';
 
 export interface UpgradeMissionData extends BaseMissionData {}
@@ -60,6 +62,10 @@ export class UpgradeMission extends MissionImplementation {
     }
   );
 
+  capacity() {
+    return this.creeps.upgraders.resolved.map(c => c.store.getCapacity()).reduce(sum, 0);
+  }
+
   run(creeps: ResolvedCreeps<UpgradeMission>, missions: ResolvedMissions<UpgradeMission>, data: UpgradeMissionData) {
     const { upgraders } = creeps;
 
@@ -67,11 +73,17 @@ export class UpgradeMission extends MissionImplementation {
       .map(
         creep =>
           creep.body.filter(p => p.type === WORK).length *
-          Math.min(estimateMissionInterval(this.missionData.office), creep.ticksToLive ?? 0)
+          Math.min(estimateMissionInterval(data.office), creep.ticksToLive ?? 0)
       )
       .reduce(sum, 0);
 
+    const needEnergy = upgradersNeedSupplementalEnergy(data.office);
     for (const creep of upgraders) {
+      if (needEnergy) {
+        CreepsThatNeedEnergy.add(creep.name);
+      } else {
+        CreepsThatNeedEnergy.delete(creep.name);
+      }
       runStates(
         {
           [States.GET_ENERGY]: (mission, creep) => {

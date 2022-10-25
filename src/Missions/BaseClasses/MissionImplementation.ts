@@ -24,6 +24,7 @@ declare global {
       cpuUsed: number;
       energyUsed: number;
       finished: number;
+      office: string;
     }[];
   }
 }
@@ -171,7 +172,8 @@ export class MissionImplementation {
       duration: Game.time - Memory.missions[this.id].started,
       cpuUsed: Memory.missions[this.id].cpuUsed,
       energyUsed: Memory.missions[this.id].energyUsed,
-      finished: Game.time
+      finished: Game.time,
+      office: this.missionData.office
     });
     // Clean up the mission
     delete Memory.missions[this.id];
@@ -180,8 +182,14 @@ export class MissionImplementation {
   cpuRemaining() {
     return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0);
   }
+  cpuUsed() {
+    return Memory.missions[this.id].cpuUsed;
+  }
   energyRemaining() {
     return this.estimatedEnergyRemaining;
+  }
+  energyUsed() {
+    return Memory.missions[this.id].energyUsed;
   }
   recordEnergy(energy: number) {
     Memory.missions[this.id].energyUsed += energy;

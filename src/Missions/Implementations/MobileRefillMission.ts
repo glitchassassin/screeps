@@ -1,9 +1,3 @@
-import { deposit } from 'Behaviors/Logistics/deposit';
-import { withdraw } from 'Behaviors/Logistics/withdraw';
-import { recycle } from 'Behaviors/recycle';
-import { runStates } from 'Behaviors/stateMachine';
-import { States } from 'Behaviors/states';
-import { ResolvedCreeps, ResolvedMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { LogisticsMission, LogisticsMissionData } from './LogisticsMission';
 
 export interface MobileRefillMissionData extends LogisticsMissionData {
@@ -22,23 +16,5 @@ export class MobileRefillMission extends LogisticsMission {
     return new this(Memory.missions[id].data, id);
   }
 
-  run(
-    creeps: ResolvedCreeps<MobileRefillMission>,
-    missions: ResolvedMissions<MobileRefillMission>,
-    data: MobileRefillMissionData
-  ) {
-    const { hauler } = creeps;
-
-    if (!hauler) return;
-
-    runStates(
-      {
-        [States.DEPOSIT]: deposit,
-        [States.WITHDRAW]: withdraw(true),
-        [States.RECYCLE]: recycle
-      },
-      data,
-      hauler
-    );
-  }
+  fromStorage = true;
 }

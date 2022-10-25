@@ -5,7 +5,7 @@ export class MultiMissionSpawner<T extends typeof MissionImplementation> extends
   constructor(
     public missionClass: T,
     public missionData: () => InstanceType<T>['missionData'],
-    public count: () => number
+    public count: (current: InstanceType<T>[]) => number
   ) {
     super();
   }
@@ -17,10 +17,16 @@ export class MultiMissionSpawner<T extends typeof MissionImplementation> extends
   }
 
   get resolved() {
-    const actualIds: (InstanceType<T>['id'] | undefined)[] = this.ids.slice();
-    while (actualIds.length < this.count()) {
-      actualIds.push(undefined);
+    // remove cleaned up missions
+    this.ids = this.ids.filter(i => !!Memory.missions[i]);
+    // generate new missions
+    const current = this.ids.map(id => new this.missionClass(this.missionData(), id) as InstanceType<T>);
+    const count = this.count(current);
+    while (current.length < count) {
+      const mission = new this.missionClass(this.missionData()) as InstanceType<T>;
+      current.push(mission);
+      this.ids.push(mission.id);
     }
-    return actualIds.map(id => new this.missionClass(this.missionData(), id) as InstanceType<T>);
+    return current;
   }
 }

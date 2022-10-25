@@ -1,8 +1,6 @@
-import { assignedLogisticsCapacity } from 'Behaviors/Logistics';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
-import { MissionType } from 'Missions/Mission';
-import { HarvestMission } from 'Missions/OldImplementations/Harvest';
-import { activeMissions } from 'Missions/Selectors';
+import { LogisticsMission } from 'Missions/Implementations/LogisticsMission';
+import { activeMissions, isMission } from 'Missions/Selectors';
 import { Bar, Dashboard, Label } from 'screeps-viz';
 import { byId } from 'Selectors/byId';
 import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
@@ -10,21 +8,15 @@ import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAv
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { posById } from 'Selectors/posById';
+import { sum } from 'Selectors/reducers';
 import { sourceIds } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export default () => {
   for (const office in Memory.offices) {
-    const activeMissionsBySource = activeMissions(office).reduce((obj, mission) => {
-      if (mission.type !== MissionType.HARVEST) return obj;
-      obj[mission.data.source] ??= [];
-      obj[mission.data.source].push(mission as HarvestMission);
-      return obj;
-    }, {} as Record<string, HarvestMission[]>);
     for (const franchise of franchisesByOffice(office)) {
       let sourcePos = posById(franchise.source);
       let storagePos = roomPlans(office)?.headquarters?.storage.pos;
-      let assigned = activeMissionsBySource[franchise.source]?.length ?? 0;
       let disabled = !franchiseActive(office, franchise.source);
       const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source];
 
@@ -63,7 +55,10 @@ export default () => {
       let source = byId(franchise.source);
       if (!source) continue;
 
-      const assignedLogistics = assignedLogisticsCapacity(office).withdrawAssignments.get(source.id);
+      const assignedLogistics = activeMissions(office)
+        .filter(isMission(LogisticsMission))
+        .map(m => m.assignedLogisticsCapacity().withdrawAssignments.get(source!.id) ?? 0)
+        .reduce(sum, 0);
       // console.log(source.pos, assignedLogistics);
 
       Dashboard({

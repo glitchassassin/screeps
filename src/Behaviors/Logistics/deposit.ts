@@ -7,7 +7,6 @@ import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
-import { bucketBrigadeDeposit } from './bucketBrigade';
 
 export const deposit = (
   data: {
@@ -47,11 +46,6 @@ export const deposit = (
   const nearby = lookNear(creep.pos);
 
   if (!target || creep.pos.getRangeTo(target) > 1) {
-    if (bucketBrigadeDeposit(creep, data)) {
-      delete data.withdrawTarget;
-      return States.WITHDRAW;
-    }
-
     // Check for nearby targets of opportunity
     let energyRemaining = creep.store[RESOURCE_ENERGY];
 

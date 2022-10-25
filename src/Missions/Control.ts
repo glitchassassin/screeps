@@ -4,11 +4,8 @@ import { getSpawns } from 'Selectors/roomPlans';
 import { debugCPU } from 'utils/debugCPU';
 import { runMissions, spawnMissions } from './BaseClasses/runMissions';
 import { getBudgetAdjustment } from './Budgets';
-import { initializeCreepIndex, registerSpawningCreeps } from './Selectors';
 
 export function runMissionControl() {
-  initializeCreepIndex();
-  registerSpawningCreeps();
   vacateSpawns();
   const before = Game.cpu.getUsed();
   executeMissions();
