@@ -45,30 +45,28 @@ export class ReserveMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<ReserveMission>, missions: ResolvedMissions<ReserveMission>, data: ReserveMissionData) {
     const { marketers } = creeps;
 
-    this.missionData.reserveTargets = [
-      ...new Set(activeFranchises(this.missionData.office, 0).map(({ room }) => room))
-    ];
-    this.missionData.assignments ??= {};
+    data.reserveTargets = [...new Set(activeFranchises(data.office, 0).map(({ room }) => room))];
+    data.assignments ??= {};
     // remove no longer valid assignments
     const assigned: string[] = [];
     const unassignedCreeps = new Set(marketers.map(c => c.name));
-    for (const assignment in this.missionData.assignments) {
-      if (!this.missionData.reserveTargets.includes(this.missionData.assignments[assignment])) {
-        delete this.missionData.assignments[assignment];
-      } else if (!assigned.includes(this.missionData.assignments[assignment])) {
+    for (const assignment in data.assignments) {
+      if (!Game.creeps[assignment] || !data.reserveTargets.includes(data.assignments[assignment])) {
+        delete data.assignments[assignment];
+      } else if (!assigned.includes(data.assignments[assignment])) {
         unassignedCreeps.delete(assignment);
-        assigned.push(this.missionData.assignments[assignment]);
+        assigned.push(data.assignments[assignment]);
       }
     }
     // create new assignments
-    for (const target of this.missionData.reserveTargets) {
+    for (const target of data.reserveTargets) {
       if (assigned.includes(target)) continue;
       for (const name of unassignedCreeps) {
         const creep = Game.creeps[name];
         if (!creep.ticksToLive || creep.ticksToLive <= getRangeTo(creep.pos, new RoomPosition(25, 25, target)))
           continue;
         // assign creep
-        this.missionData.assignments[name] = target;
+        data.assignments[name] = target;
         unassignedCreeps.delete(name);
         assigned.push(target);
         break;
@@ -76,11 +74,11 @@ export class ReserveMission extends MissionImplementation {
     }
 
     for (const creep of marketers) {
-      const target = this.missionData.assignments[creep.name];
+      const target = data.assignments[creep.name];
       if (!target) continue;
       // Reserve target
       const controllerPos = controllerPosition(target);
-      if (!controllerPos) return;
+      if (!controllerPos) continue;
 
       if (creep.pos.getRangeTo(controllerPos) <= 2) {
         // Set arrived timestamp when in range

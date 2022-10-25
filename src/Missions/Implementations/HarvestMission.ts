@@ -27,8 +27,6 @@ export interface HarvestMissionData extends BaseMissionData {
   source: Id<Source>;
   arrived?: number;
   distance?: number;
-  link?: boolean;
-  remote?: boolean;
 }
 
 export class HarvestMission extends MissionImplementation {
@@ -39,7 +37,7 @@ export class HarvestMission extends MissionImplementation {
       {
         role: MinionTypes.SALESMAN,
         budget: Budget.ESSENTIAL,
-        body: energy => MinionBuilders[MinionTypes.SALESMAN](energy, this.missionData.link, this.missionData.remote),
+        body: energy => MinionBuilders[MinionTypes.SALESMAN](energy, this.calculated().link, this.calculated().remote),
         count: current => {
           const harvestRate = current
             .filter(prespawnByArrived)
@@ -88,7 +86,9 @@ export class HarvestMission extends MissionImplementation {
     () => '',
     () => {
       return {
-        link: !!getFranchisePlanBySourceId(this.missionData.source)?.link.structure,
+        link:
+          !!getFranchisePlanBySourceId(this.missionData.source)?.link.structure ||
+          getFranchisePlanBySourceId(this.missionData.source)?.extensions.some(s => s.structure),
         remote: posById(this.missionData.source)?.roomName !== this.missionData.office,
         maxHarvesters: adjacentWalkablePositions(posById(this.missionData.source)!, true).length,
         source: byId(this.missionData.source)
