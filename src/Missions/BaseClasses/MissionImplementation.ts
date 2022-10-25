@@ -56,11 +56,11 @@ export class MissionImplementation {
       Number(Math.floor(Math.random() * 0xffffffff))
         .toString(16)
         .padStart(8, '0');
-    if (id) {
-      const cached = singletons.get(id);
-      if (cached) return cached;
-      singletons.set(this.id, this);
-    }
+
+    const cached = singletons.get(this.id);
+    if (cached && Memory.missions[this.id]) return cached;
+    singletons.set(this.id, this);
+
     Memory.missions[this.id] ??= {
       data: missionData,
       started: Game.time,
@@ -71,22 +71,33 @@ export class MissionImplementation {
     };
   }
 
+  initialized = false;
+  init() {
+    if (this.initialized) return;
+    // Initialize missions with memory space
+    for (const mission in this.missions) {
+      const spawner = this.missions[mission];
+      Memory.missions[this.id].missions[mission] ??= [];
+      spawner.register(Memory.missions[this.id].missions[mission]);
+    }
+    this.initialized = true;
+  }
+
   static fromId(id: MissionImplementation['id']) {
     return new this(Memory.missions[id].data, id);
   }
 
   spawn() {
     const orders = [];
-    for (let key in this) {
-      const prop = this[key];
-      if (prop instanceof BaseCreepSpawner) {
-        orders.push(...prop.spawn(`${this.id}|${prop.id}`, this.priority));
-      }
+    for (let key in this.creeps) {
+      const prop = this.creeps[key];
+      orders.push(...prop.spawn(`${this.id}|${prop.id}`, this.priority));
     }
     return orders;
   }
 
   execute() {
+    this.init();
     const start = Game.cpu.getUsed();
 
     // clean up mission
@@ -144,10 +155,10 @@ export class MissionImplementation {
   }
 
   register(creep: Creep) {
-    for (let key in this) {
-      const prop = this[key];
-      if (prop instanceof BaseCreepSpawner && creep.memory.missionId === `${this.id}|${prop.id}`) {
-        prop.register(creep);
+    for (let key in this.creeps) {
+      const spawner = this.creeps[key];
+      if (creep.memory.missionId === `${this.id}|${spawner.id}`) {
+        spawner.register(creep);
       }
     }
   }
@@ -193,6 +204,10 @@ export class MissionImplementation {
   }
   recordEnergy(energy: number) {
     Memory.missions[this.id].energyUsed += energy;
+  }
+
+  toString() {
+    return `[${this.constructor.name}:${this.id}]`;
   }
 }
 

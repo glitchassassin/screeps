@@ -1,4 +1,5 @@
 import { FEATURES } from 'config';
+import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
@@ -30,14 +31,21 @@ export interface SpawnOrder {
 export function vacateSpawns() {
   for (const office in Memory.offices) {
     for (const spawn of getSpawns(office)) {
-      if (spawn.spawning && spawn.spawning.remainingTime < 2) {
-        const spawningSquares =
-          spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??
-          adjacentWalkablePositions(spawn.pos, true);
-        for (const pos of spawningSquares) {
-          for (const creep of pos.lookFor(LOOK_CREEPS)) {
-            if (creep.name.startsWith('REFILL')) continue; // don't shove refillers
-            moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
+      if (spawn.spawning) {
+        // register spawning creeps
+        const creep = spawn.spawning.name;
+        const mission = missionById(Memory.creeps[creep].missionId.split('|')[0]);
+        mission?.register(Game.creeps[creep]);
+
+        if (spawn.spawning.remainingTime < 2) {
+          const spawningSquares =
+            spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??
+            adjacentWalkablePositions(spawn.pos, true);
+          for (const pos of spawningSquares) {
+            for (const creep of pos.lookFor(LOOK_CREEPS)) {
+              if (creep.name.startsWith('REFILL')) continue; // don't shove refillers
+              moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
+            }
           }
         }
       }

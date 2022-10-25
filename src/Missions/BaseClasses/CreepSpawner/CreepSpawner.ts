@@ -19,7 +19,8 @@ export class CreepSpawner extends BaseCreepSpawner {
 
   spawn(missionId: CreepMemory['missionId'], priority: number) {
     const prespawn = this.props.prespawn && this.resolved && prespawnByArrived(this.resolved);
-    if (!prespawn || this.resolved || (this.memory?.spawned && !this.props.respawn?.())) return [];
+    if (this.memory?.spawned && !this.props.respawn?.()) return [];
+    if (this.resolved && !prespawn) return [];
     return super.spawn(missionId, priority);
   }
 

@@ -1,3 +1,4 @@
+import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { spawnRequests } from 'Missions/Control';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 
@@ -6,7 +7,8 @@ export default () => {
     let table = [];
     const data = (spawnRequests.get(room) ?? []).sort((a, b) => b.priority - a.priority);
     for (let s of data) {
-      table.push([s.name, s.priority, s.memory.missionId, s.spawn ?? '---']);
+      const mission = missionById(s.memory.missionId.split('|')[0])?.constructor.name;
+      table.push([mission, s.name, s.memory.role, s.priority]);
     }
     Dashboard({
       widgets: [
@@ -16,7 +18,7 @@ export default () => {
           height: 2 + Math.min(48, table.length * 1.5),
           widget: Rectangle({
             data: Table({
-              config: { headers: ['Minion', 'Priority', 'Mission', 'Preferred Spawn'] },
+              config: { headers: ['Mission', 'Minion', 'Role', 'Priority'] },
               data: table
             })
           })

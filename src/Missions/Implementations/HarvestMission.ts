@@ -27,7 +27,6 @@ export interface HarvestMissionData extends BaseMissionData {
   source: Id<Source>;
   arrived?: number;
   distance?: number;
-  harvestRate: number;
   link?: boolean;
   remote?: boolean;
 }

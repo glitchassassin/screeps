@@ -12,7 +12,6 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
-import { MissionStatus } from 'Missions/Mission';
 import { isMission, missionsByOffice } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
@@ -29,7 +28,7 @@ import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
 export interface LogisticsMissionData extends BaseMissionData {
-  assignments: Record<
+  assignments?: Record<
     string,
     {
       withdrawTarget?: Id<Source>;
@@ -212,12 +211,7 @@ export class LogisticsMission extends MissionImplementation {
     data: LogisticsMissionData
   ) {
     const { haulers } = creeps;
-
-    if (haulers.length) {
-      this.status === MissionStatus.RUNNING;
-    } else {
-      this.status === MissionStatus.PENDING;
-    }
+    data.assignments ??= {};
 
     // clean up invalid assignments
     for (const assigned in this.missionData.assignments) {
@@ -245,8 +239,8 @@ export class LogisticsMission extends MissionImplementation {
     // add targets, if needed
 
     for (const creep of haulers) {
-      this.missionData.assignments[creep.name] ??= {};
-      const assignment = this.missionData.assignments[creep.name];
+      data.assignments[creep.name] ??= {};
+      const assignment = data.assignments[creep.name];
       if (creep?.memory.runState === States.DEPOSIT && !assignment.depositTarget) {
         assignment.depositTarget = this.findBestDepositTarget(creep, this.fromStorage, true)?.[1].id;
       } else if (creep?.memory.runState === States.WITHDRAW && !assignment.withdrawTarget && !this.fromStorage) {
@@ -275,8 +269,8 @@ export class LogisticsMission extends MissionImplementation {
 
         if (withdraw.store.getFreeCapacity() < deposit.store[RESOURCE_ENERGY]) continue;
 
-        const withdrawAssignment = this.missionData.assignments[withdraw.name];
-        const depositAssignment = this.missionData.assignments[deposit.name];
+        const withdrawAssignment = data.assignments[withdraw.name];
+        const depositAssignment = data.assignments[deposit.name];
 
         const target = byId(depositAssignment.depositTarget)?.pos;
         if (!target) continue;
@@ -287,8 +281,8 @@ export class LogisticsMission extends MissionImplementation {
         if (deposit.transfer(withdraw, RESOURCE_ENERGY) === OK) {
           withdraw.memory.state = States.DEPOSIT;
           deposit.memory.state = States.WITHDRAW;
-          this.missionData.assignments[withdraw.name] = depositAssignment;
-          this.missionData.assignments[deposit.name] = withdrawAssignment;
+          data.assignments[withdraw.name] = depositAssignment;
+          data.assignments[deposit.name] = withdrawAssignment;
           hasBrigaded.add(withdraw);
           hasBrigaded.add(deposit);
         }

@@ -56,6 +56,11 @@ export const gameLoop = () => {
     const memorySize = JSON.stringify(Memory).length;
     if (memorySize > 1000000) {
       console.log('Memory approaching dangerous levels:', memorySize);
+      console.log(
+        Object.keys(Memory)
+          .map(k => `Memory.${k}: ${JSON.stringify(Memory[k as keyof Memory]).length}`)
+          .join('\n')
+      );
     }
   }
 };

@@ -1,4 +1,5 @@
 // initialize
+import 'Missions/MemoryFixes';
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
 import MemHack from 'utils/memhack';

@@ -1,5 +1,7 @@
 import { spawnOrder, SpawnOrder, vacateSpawns } from 'Minions/spawnQueues';
 import { recordMissionCpu } from 'Selectors/cpuOverhead';
+import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
+import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
 import { debugCPU } from 'utils/debugCPU';
 import { runMissions, spawnMissions } from './BaseClasses/runMissions';
@@ -22,7 +24,8 @@ function executeMissions() {
 export const spawnRequests = new Map<string, SpawnOrder[]>();
 
 function allocateMissions() {
-  let { orders, cpuRemaining } = spawnMissions();
+  const orders = spawnMissions();
+
   // Calculate already-allocated resources
   for (const office in Memory.offices) {
     // Should have no more STARTING missions than active spawns
@@ -30,7 +33,9 @@ function allocateMissions() {
     if (!availableSpawns) continue;
 
     const requests = orders[office]?.orders ?? [];
-    let energyRemaining = orders[office]?.energyRemaining;
+    let cpuRemaining = missionCpuAvailable(office) - (orders[office]?.cpuAllocated ?? 0);
+    let energyRemaining = missionEnergyAvailable(office) - (orders[office]?.energyAllocated ?? 0);
+
     spawnRequests.set(office, requests);
     const priorities = [...new Set(requests.map(o => o.priority))].sort((a, b) => b - a);
 

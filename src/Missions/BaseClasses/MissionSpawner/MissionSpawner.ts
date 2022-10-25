@@ -6,13 +6,14 @@ export class MissionSpawner<T extends typeof MissionImplementation> extends Base
     super();
   }
 
-  public id?: InstanceType<T>['id'];
+  public ids: InstanceType<T>['id'][] = [];
 
   register(ids: InstanceType<T>['id'][]) {
-    this.id = ids[0];
+    this.ids = ids;
+    this.resolved.init();
   }
 
   get resolved() {
-    return new this.missionClass(this.missionData(), this.id) as InstanceType<T>;
+    return new this.missionClass(this.missionData(), this.ids[0]) as InstanceType<T>;
   }
 }

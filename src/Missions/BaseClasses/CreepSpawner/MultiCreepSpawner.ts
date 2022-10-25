@@ -1,3 +1,4 @@
+import { isCreep } from 'Selectors/typeguards';
 import { BaseCreepSpawner } from './BaseCreepSpawner';
 
 export class MultiCreepSpawner extends BaseCreepSpawner {
@@ -21,12 +22,13 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
   public _creeps: string[] = [];
 
   get resolved(): Creep[] {
-    return [Game.creeps['creep']];
+    const creeps = this._creeps.map(n => Game.creeps[n]).filter(isCreep);
+    this._creeps = creeps.map(c => c.name);
+    return creeps;
   }
 
   register(creep: Creep) {
     if (!this._creeps.includes(creep.name)) {
-      this.onSpawn?.(creep);
       this._creeps.push(creep.name);
     }
   }
