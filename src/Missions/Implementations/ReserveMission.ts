@@ -23,7 +23,7 @@ export class ReserveMission extends MissionImplementation {
   public creeps = {
     marketers: new MultiCreepSpawner('m', this.missionData.office, {
       role: MinionTypes.MARKETER,
-      budget: Budget.SURPLUS,
+      budget: Budget.ECONOMY,
       body: energy => MinionBuilders[MinionTypes.MARKETER](energy),
       count: current => {
         const targets = this.missionData.reserveTargets?.length ?? 0;

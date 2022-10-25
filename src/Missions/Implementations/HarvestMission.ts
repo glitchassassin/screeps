@@ -38,7 +38,7 @@ export class HarvestMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.SALESMAN,
-        budget: Budget.SURPLUS,
+        budget: Budget.ESSENTIAL,
         body: energy => MinionBuilders[MinionTypes.SALESMAN](energy, this.missionData.link, this.missionData.remote),
         count: current => {
           const harvestRate = current

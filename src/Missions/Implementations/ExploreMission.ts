@@ -20,7 +20,7 @@ export class ExploreMission extends MissionImplementation {
   public creeps = {
     explorer: new CreepSpawner('x', this.missionData.office, {
       role: MinionTypes.AUDITOR,
-      budget: Budget.SURPLUS,
+      budget: Budget.ESSENTIAL,
       body: energy => MinionBuilders[MinionTypes.AUDITOR](energy),
       respawn: () => true
     })

@@ -27,7 +27,7 @@ import {
 import { memoizeByTick } from 'utils/memoizeFunction';
 
 export interface EngineerMissionData extends BaseMissionData {
-  assignments: Record<
+  assignments?: Record<
     string,
     {
       facilitiesTarget?: string;
@@ -37,7 +37,7 @@ export interface EngineerMissionData extends BaseMissionData {
 }
 
 export class EngineerMission extends MissionImplementation {
-  budget = Budget.ECONOMY;
+  budget = Budget.EFFICIENCY;
   public creeps = {
     engineers: new MultiCreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
@@ -79,14 +79,12 @@ export class EngineerMission extends MissionImplementation {
 
   run(creeps: ResolvedCreeps<EngineerMission>, missions: ResolvedMissions<EngineerMission>, data: EngineerMissionData) {
     const { engineers } = creeps;
+    this.missionData.assignments ??= {};
 
     for (const creep of engineers) {
       this.missionData.assignments[creep.name] ??= {};
-      const assignment = {
-        ...this.missionData.assignments[creep.name],
-        office: this.missionData.office
-      };
-      if (rcl(this.missionData.office) > 3) {
+      const assignment = this.missionData.assignments[creep.name];
+      if (rcl(this.missionData.office) < 3) {
         CreepsThatNeedEnergy.add(creep.name);
       } else {
         CreepsThatNeedEnergy.delete(creep.name);
@@ -95,18 +93,18 @@ export class EngineerMission extends MissionImplementation {
         {
           [States.FIND_WORK]: (mission, creep) => {
             delete mission.facilitiesTarget;
-            const nextStructure = getClosestByRange(creep.pos, facilitiesWorkToDo(mission.office));
+            const nextStructure = getClosestByRange(creep.pos, facilitiesWorkToDo(data.office));
             if (nextStructure) {
               mission.facilitiesTarget = nextStructure.serialize();
               delete mission.franchise;
               return States.BUILDING;
             }
-            if (rcl(mission.office) < 3) {
+            if (rcl(data.office) < 3) {
               // Skip building roads until RCL3
               delete mission.facilitiesTarget;
               return States.UPGRADING;
             }
-            if (rcl(mission.office) < 8) return States.UPGRADING;
+            if (rcl(data.office) < 8) return States.UPGRADING;
             return States.FIND_WORK;
           },
           [States.GET_ENERGY]: (mission, creep) => {
@@ -114,8 +112,8 @@ export class EngineerMission extends MissionImplementation {
               creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 ||
               engineerGetEnergy(
                 creep,
-                mission.office,
-                getWithdrawLimit(mission.office, this.budget),
+                data.office,
+                getWithdrawLimit(data.office, this.budget),
                 !!mission.franchise && !!mission.facilitiesTarget // currently building for a franchise
               ) === BehaviorResult.SUCCESS
             ) {
@@ -187,13 +185,13 @@ export class EngineerMission extends MissionImplementation {
           },
           [States.UPGRADING]: (mission, creep) => {
             if (
-              rcl(mission.office) >= 4 &&
-              storageEnergyAvailable(mission.office) <= getWithdrawLimit(mission.office, this.budget)
+              rcl(data.office) >= 4 &&
+              storageEnergyAvailable(data.office) <= getWithdrawLimit(data.office, this.budget)
             )
               return States.FIND_WORK;
 
             // No construction - upgrade instead
-            const controller = Game.rooms[mission.office]?.controller;
+            const controller = Game.rooms[data.office]?.controller;
             if (!controller) return States.FIND_WORK;
             moveTo(creep, { pos: controller.pos, range: 3 });
             const result = creep.upgradeController(controller);

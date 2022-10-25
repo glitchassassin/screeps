@@ -1,8 +1,6 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
-import { MissionType } from 'Missions/Mission';
-import { activeMissions, assignedCreep, isMission } from 'Missions/Selectors';
 import { follow, moveTo } from 'screeps-cartographer';
 import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
 import { priorityKillTarget } from 'Selectors/Combat/priorityTarget';
@@ -10,7 +8,6 @@ import { findHostileCreepsInRange } from 'Selectors/findHostileCreeps';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { closestRampartSection } from 'Selectors/perimeter';
-import { isCreep } from 'Selectors/typeguards';
 import {
   BaseMissionData,
   MissionImplementation,
@@ -60,15 +57,7 @@ export class DefendOfficeMission extends MissionImplementation {
 
     const rampartsIntact = !rampartsAreBroken(data.office);
     const killTarget = priorityKillTarget(data.office);
-    const healTargets = [
-      attacker,
-      healer,
-      ...activeMissions(data.office)
-        .filter(isMission(MissionType.DEFEND_OFFICE))
-        .map(assignedCreep)
-        .filter(isCreep)
-        .sort((a, b) => b.hitsMax - b.hits - (a.hitsMax - a.hits))
-    ];
+    const healTargets = [attacker, healer];
     const healTarget = healTargets.find(c => c && c.hits < c.hitsMax && healer?.pos.inRangeTo(c, 3));
 
     // movement

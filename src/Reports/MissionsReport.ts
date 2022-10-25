@@ -43,7 +43,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         energy: 0
       }
     };
-    entry.count += 1;
+    entry.count += mission.creepCount();
     entry.actual.cpu += mission.cpuUsed();
     entry.actual.energy += mission.energyUsed();
     entry.estimate.cpu += mission.energyRemaining();

@@ -1,12 +1,13 @@
 import { getEnergyFromFranchise } from 'Behaviors/getEnergyFromFranchise';
-import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
+import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
+import { roomPlans } from 'Selectors/roomPlans';
 
 export const withdraw =
   (fromStorage?: boolean) =>
@@ -28,8 +29,10 @@ export const withdraw =
 
     if (energyCapacity === 0) return States.DEPOSIT;
 
-    if (fromStorage) {
-      getEnergyFromStorage(creep, data.office, undefined, true);
+    const storage = roomPlans(data.office)?.headquarters?.storage.structure as StructureStorage | undefined;
+    if (fromStorage && storage?.store.getUsedCapacity(RESOURCE_ENERGY)) {
+      moveTo(creep, { pos: storage.pos, range: 1 });
+      creep.withdraw(storage, RESOURCE_ENERGY);
     } else {
       // Otherwise, continue to main withdraw target (set by src\Strategy\Logistics\LogisticsTargets.ts)
       const target = byId(data.withdrawTarget as Id<Source | StructureStorage>);

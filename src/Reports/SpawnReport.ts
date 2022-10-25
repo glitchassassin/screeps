@@ -8,7 +8,7 @@ export default () => {
     const data = (spawnRequests.get(room) ?? []).sort((a, b) => b.priority - a.priority);
     for (let s of data) {
       const mission = missionById(s.memory.missionId.split('|')[0])?.constructor.name;
-      table.push([mission, s.name, s.memory.role, s.priority]);
+      table.push([mission, s.name, s.memory.role, s.priority, s.budget]);
     }
     Dashboard({
       widgets: [
@@ -18,7 +18,7 @@ export default () => {
           height: 2 + Math.min(48, table.length * 1.5),
           widget: Rectangle({
             data: Table({
-              config: { headers: ['Mission', 'Minion', 'Role', 'Priority'] },
+              config: { headers: ['Mission', 'Minion', 'Role', 'Priority', 'Budget'] },
               data: table
             })
           })

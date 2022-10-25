@@ -22,10 +22,10 @@ export interface FastfillerMissionData extends BaseMissionData {
   };
 }
 
-const fastfillerSpawner = (office: string) =>
-  new CreepSpawner('x', office, {
+const fastfillerSpawner = (office: string, id: string) =>
+  new CreepSpawner(id, office, {
     role: MinionTypes.CLERK,
-    budget: Budget.SURPLUS,
+    budget: Budget.ESSENTIAL,
     body: energy =>
       MinionBuilders[MinionTypes.CLERK](
         energy,
@@ -37,10 +37,10 @@ const fastfillerSpawner = (office: string) =>
 
 export class FastfillerMission extends MissionImplementation {
   public creeps = {
-    topLeft: fastfillerSpawner(this.missionData.office),
-    topRight: fastfillerSpawner(this.missionData.office),
-    bottomLeft: fastfillerSpawner(this.missionData.office),
-    bottomRight: fastfillerSpawner(this.missionData.office)
+    topLeft: fastfillerSpawner(this.missionData.office, 'a'),
+    topRight: fastfillerSpawner(this.missionData.office, 'b'),
+    bottomLeft: fastfillerSpawner(this.missionData.office, 'c'),
+    bottomRight: fastfillerSpawner(this.missionData.office, 'd')
   };
 
   priority = 15;

@@ -1,5 +1,7 @@
 import { MissionStatus } from 'Missions/Mission';
+import { sum } from 'Selectors/reducers';
 import { BaseCreepSpawner } from './CreepSpawner/BaseCreepSpawner';
+import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
 import { BaseMissionSpawner } from './MissionSpawner/BaseMissionSpawner';
 
 declare global {
@@ -84,7 +86,9 @@ export class MissionImplementation {
   }
 
   static fromId(id: MissionImplementation['id']) {
-    return singletons.get(id) ?? new this(Memory.missions[id].data, id);
+    if (singletons.has(id)) return singletons.get(id);
+    if (Memory.missions[id]) return new this(Memory.missions[id].data, id);
+    return undefined;
   }
 
   spawn() {
@@ -204,6 +208,15 @@ export class MissionImplementation {
   }
   recordEnergy(energy: number) {
     Memory.missions[this.id].energyUsed += energy;
+  }
+
+  creepCount() {
+    return Object.keys(this.creeps)
+      .map(k => {
+        const spawner = this.creeps[k];
+        return spawner instanceof MultiCreepSpawner ? spawner.resolved.length : spawner.resolved ? 1 : 0;
+      })
+      .reduce(sum, 0);
   }
 
   toString() {

@@ -60,7 +60,6 @@ export class LogisticsMission extends MissionImplementation {
 
   constructor(public missionData: LogisticsMissionData, id?: string) {
     super(missionData, id);
-    console.log('New LogisticsMission', this.id);
   }
   static fromId(id: LogisticsMission['id']) {
     return super.fromId(id) as LogisticsMission;
@@ -284,8 +283,8 @@ export class LogisticsMission extends MissionImplementation {
 
         // clear to swap
         if (deposit.transfer(withdraw, RESOURCE_ENERGY) === OK) {
-          withdraw.memory.state = States.DEPOSIT;
-          deposit.memory.state = States.WITHDRAW;
+          withdraw.memory.runState = States.DEPOSIT;
+          deposit.memory.runState = States.WITHDRAW;
           data.assignments[withdraw.name] = depositAssignment;
           data.assignments[deposit.name] = withdrawAssignment;
           hasBrigaded.add(withdraw);

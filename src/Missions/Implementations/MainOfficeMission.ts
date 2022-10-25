@@ -6,9 +6,17 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
+import { refillSquares } from 'Reports/fastfillerPositions';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
+import { EngineerMission } from './EngineerMission';
+import { ExploreMission } from './ExploreMission';
+import { FastfillerMission } from './FastfillerMission';
 import { HarvestMission } from './HarvestMission';
+import { HQLogisticsMission } from './HQLogisticsMission';
 import { LogisticsMission } from './LogisticsMission';
+import { MobileRefillMission } from './MobileRefillMission';
+import { ReserveMission } from './ReserveMission';
+import { UpgradeMission } from './UpgradeMission';
 
 export interface MainOfficeMissionData extends BaseMissionData {}
 
@@ -21,7 +29,17 @@ export class MainOfficeMission extends MissionImplementation {
       }
       return [...franchises].map(source => ({ source, ...this.missionData }));
     }),
-    logistics: new MissionSpawner(LogisticsMission, () => ({ ...this.missionData }))
+    logistics: new MissionSpawner(LogisticsMission, () => ({ ...this.missionData })),
+    explore: new MissionSpawner(ExploreMission, () => ({ ...this.missionData })),
+    fastfiller: new MissionSpawner(FastfillerMission, () => ({
+      ...this.missionData,
+      refillSquares: refillSquares(this.missionData.office)
+    })),
+    mobileRefill: new MissionSpawner(MobileRefillMission, () => ({ ...this.missionData })),
+    engineer: new MissionSpawner(EngineerMission, () => ({ ...this.missionData })),
+    reserve: new MissionSpawner(ReserveMission, () => ({ ...this.missionData })),
+    hqLogistics: new MissionSpawner(HQLogisticsMission, () => ({ ...this.missionData })),
+    upgrade: new MissionSpawner(UpgradeMission, () => ({ ...this.missionData }))
   };
 
   priority = 20;

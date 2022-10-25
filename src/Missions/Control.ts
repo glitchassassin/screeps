@@ -50,6 +50,7 @@ function allocateMissions() {
         if (cpuRemaining < 0) break;
         const order = missions.shift();
         if (!order) break;
+        if (!order.body.length) continue;
         const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
         const canStart = order.estimate.energy <= energyRemaining - adjustedBudget;
         // Mission can start

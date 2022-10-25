@@ -18,7 +18,6 @@ import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { upgradersNeedSupplementalEnergy } from 'Selectors/upgradersNeedSupplementalEnergy';
 import { memoizeByTick } from 'utils/memoizeFunction';
 
 export interface UpgradeMissionData extends BaseMissionData {}
@@ -38,7 +37,7 @@ export class UpgradeMission extends MissionImplementation {
     })
   };
 
-  priority = 10;
+  priority = 7;
 
   constructor(public missionData: UpgradeMissionData, id?: string) {
     super(missionData, id);
@@ -65,9 +64,18 @@ export class UpgradeMission extends MissionImplementation {
   capacity() {
     return this.creeps.upgraders.resolved.map(c => c.store.getCapacity()).reduce(sum, 0);
   }
+  needsSupplementalEnergy() {
+    return this.capacity() > LINK_CAPACITY / 2;
+  }
 
   run(creeps: ResolvedCreeps<UpgradeMission>, missions: ResolvedMissions<UpgradeMission>, data: UpgradeMissionData) {
     const { upgraders } = creeps;
+
+    if (Game.rooms[data.office].controller!.ticksToDowngrade < 10000) {
+      this.priority = 15;
+    } else {
+      this.priority = 7;
+    }
 
     this.estimatedEnergyRemaining = upgraders
       .map(
@@ -77,9 +85,8 @@ export class UpgradeMission extends MissionImplementation {
       )
       .reduce(sum, 0);
 
-    const needEnergy = upgradersNeedSupplementalEnergy(data.office);
     for (const creep of upgraders) {
-      if (needEnergy) {
+      if (this.needsSupplementalEnergy()) {
         CreepsThatNeedEnergy.add(creep.name);
       } else {
         CreepsThatNeedEnergy.delete(creep.name);
