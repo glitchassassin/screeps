@@ -34,7 +34,7 @@ export class DefendRemoteMission extends MissionImplementation {
     })
   };
 
-  priority = 10;
+  priority = 10.5;
 
   constructor(public missionData: DefendRemoteMissionData, id?: string) {
     super(missionData, id);

@@ -2,12 +2,14 @@ import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
 import { follow, moveTo } from 'screeps-cartographer';
+import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
 import { priorityKillTarget } from 'Selectors/Combat/priorityTarget';
 import { findHostileCreepsInRange } from 'Selectors/findHostileCreeps';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
 import { closestRampartSection } from 'Selectors/perimeter';
+import { isCreep } from 'Selectors/typeguards';
 import {
   BaseMissionData,
   MissionImplementation,
@@ -15,10 +17,7 @@ import {
   ResolvedMissions
 } from '../BaseClasses/MissionImplementation';
 
-export interface DefendOfficeMissionData extends BaseMissionData {
-  powerBank: Id<StructurePowerBank>;
-  powerBankPos: string;
-}
+export interface DefendOfficeMissionData extends BaseMissionData {}
 
 export class DefendOfficeMission extends MissionImplementation {
   public creeps = {
@@ -43,8 +42,8 @@ export class DefendOfficeMission extends MissionImplementation {
     return super.fromId(id) as DefendOfficeMission;
   }
 
-  report() {
-    return Memory.offices[this.missionData.office].powerbanks.find(p => p.id === this.missionData.powerBank);
+  score() {
+    return totalCreepStats([this.creeps.attacker.resolved, this.creeps.healer.resolved].filter(isCreep)).score;
   }
 
   run(

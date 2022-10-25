@@ -8,6 +8,7 @@ import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawn
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { refillSquares } from 'Reports/fastfillerPositions';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
+import { DefenseCoordinationMission } from './DefenseCoordinationMission';
 import { EngineerMission } from './EngineerMission';
 import { ExploreMission } from './ExploreMission';
 import { FastfillerMission } from './FastfillerMission';
@@ -39,7 +40,8 @@ export class MainOfficeMission extends MissionImplementation {
     engineer: new MissionSpawner(EngineerMission, () => ({ ...this.missionData })),
     reserve: new MissionSpawner(ReserveMission, () => ({ ...this.missionData })),
     hqLogistics: new MissionSpawner(HQLogisticsMission, () => ({ ...this.missionData })),
-    upgrade: new MissionSpawner(UpgradeMission, () => ({ ...this.missionData }))
+    upgrade: new MissionSpawner(UpgradeMission, () => ({ ...this.missionData })),
+    defense: new MissionSpawner(DefenseCoordinationMission, () => ({ ...this.missionData }))
   };
 
   priority = 20;
