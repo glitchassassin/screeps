@@ -5,6 +5,7 @@ import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAv
 import { franchiseIncome } from 'Selectors/Franchises/franchiseIncome';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getActualEnergyAvailable } from 'Selectors/getActualEnergyAvailable';
+import { sum } from 'Selectors/reducers';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import profiler from 'utils/profiler';
@@ -111,10 +112,10 @@ export const recordMetrics = profiler.registerFN(() => {
       logisticsCapacity: missionsByOffice()
         [office].filter(isMission(LogisticsMission))
         .map(m => m.capacity())
-        .reduce((a, b) => a + b, 0),
+        .reduce(sum, 0),
       franchiseEnergy: franchisesByOffice(office)
         .map(({ source }) => franchiseEnergyAvailable(source))
-        .reduce((a, b) => a + b, 0),
+        .reduce(sum, 0),
       terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0
     };
   }

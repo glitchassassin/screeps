@@ -73,9 +73,10 @@ export class HQLogisticsMission extends MissionImplementation {
     const powerSpawnAmountNeeded = powerSpawn ? powerSpawn.store.getFreeCapacity(RESOURCE_ENERGY) : 0;
     const linkAmountAvailable = link?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
     const destinationLinkFreeSpace =
-      ((fastfiller?.link.structure as StructureLink)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) +
-      ((library?.link.structure as StructureLink)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0);
-    const linkAmountToTransfer = destinationLinkFreeSpace ? LINK_CAPACITY - linkAmountAvailable : 0;
+      ((fastfiller?.link.structure as StructureLink)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) >
+        LINK_CAPACITY / 2 ||
+      ((library?.link.structure as StructureLink)?.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) > LINK_CAPACITY / 2;
+    const linkAmountToTransfer = destinationLinkFreeSpace ? LINK_CAPACITY - linkAmountAvailable : -linkAmountAvailable;
 
     let withdraw = false;
     let transfer = false;

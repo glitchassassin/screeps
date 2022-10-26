@@ -45,7 +45,13 @@ export class ReserveMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<ReserveMission>, missions: ResolvedMissions<ReserveMission>, data: ReserveMissionData) {
     const { marketers } = creeps;
 
-    data.reserveTargets = [...new Set(activeFranchises(data.office, 0).map(({ room }) => room))];
+    data.reserveTargets = [
+      ...new Set(
+        activeFranchises(data.office, 0)
+          .map(({ room }) => room)
+          .filter(room => room !== data.office)
+      )
+    ];
     data.assignments ??= {};
     // remove no longer valid assignments
     const assigned: string[] = [];

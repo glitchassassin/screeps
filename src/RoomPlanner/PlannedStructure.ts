@@ -88,7 +88,9 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
       } else {
         this.structureId = Game.rooms[this.pos.roomName]
           .lookForAt(LOOK_STRUCTURES, this.pos)
-          .find(s => s.structureType === this.structureType)?.id as Id<Structure<T>>;
+          .find(s => s.structureType === this.structureType && (!('my' in s) || (s as OwnedStructure).my))?.id as Id<
+          Structure<T>
+        >;
         if (byId(this.structureId)) return true; // Found structure at expected position
       }
     } else if (this.structureId) {

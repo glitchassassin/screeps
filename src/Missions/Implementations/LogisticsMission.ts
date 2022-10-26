@@ -50,7 +50,8 @@ export class LogisticsMission extends MissionImplementation {
           [this.missionData.office].filter(isMission(HarvestMission))
           .map(m => m.haulingCapacityNeeded())
           .reduce(sum, 0);
-        if (current.map(c => c.store.getCapacity()).reduce(sum, 0) < neededCapacity) return 1;
+        const currentCapacity = current.map(c => c.store.getCapacity()).reduce(sum, 0);
+        if (currentCapacity < neededCapacity) return 1;
         return 0;
       }
     })

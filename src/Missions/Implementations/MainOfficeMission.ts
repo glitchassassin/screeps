@@ -78,7 +78,7 @@ export class MainOfficeMission extends MissionImplementation {
     plunder: new MultiMissionSpawner(PlunderMission, current => {
       if (current.length || !roomPlans(this.missionData.office)?.headquarters?.terminal.structure) return []; // only one plunder mission per office
       const targetRoom = calculateNearbyRooms(this.missionData.office, 3, false).find(
-        r => Memory.rooms[r].plunder?.resources.length
+        r => Memory.rooms[r]?.plunder?.resources.length
       );
       if (!targetRoom) return [];
       return [{ ...this.missionData, targetRoom }];

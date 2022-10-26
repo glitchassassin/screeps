@@ -160,13 +160,13 @@ export const roomNameToCoords = (roomName: string) => {
   if (!match) throw new Error('Invalid room name');
   let [, h, wx, v, wy] = match;
   return {
-    wx: h == 'W' ? Number(wx) : ~Number(wx),
-    wy: v == 'S' ? Number(wy) : ~Number(wy)
+    wx: h == 'W' ? ~Number(wx) : Number(wx),
+    wy: v == 'S' ? ~Number(wy) : Number(wy)
   };
 };
 export const roomNameFromCoords = (x: number, y: number) => {
-  let h = x < 0 ? 'E' : 'W';
-  let v = y < 0 ? 'N' : 'S';
+  let h = x < 0 ? 'W' : 'E';
+  let v = y < 0 ? 'S' : 'N';
   x = x < 0 ? ~x : x;
   y = y < 0 ? ~y : y;
   return `${h}${x}${v}${y}`;
