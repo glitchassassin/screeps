@@ -1,5 +1,6 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { engineerGetEnergy } from 'Behaviors/engineerGetEnergy';
+import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
@@ -105,7 +106,7 @@ export class EngineerMission extends MissionImplementation {
               return States.UPGRADING;
             }
             if (rcl(data.office) < 8) return States.UPGRADING;
-            return States.FIND_WORK;
+            return States.RECYCLE;
           },
           [States.GET_ENERGY]: (mission, creep) => {
             if (
@@ -204,7 +205,8 @@ export class EngineerMission extends MissionImplementation {
             }
             if (Game.time % 10 === 0) return States.FIND_WORK;
             return States.UPGRADING;
-          }
+          },
+          [States.RECYCLE]: (mission, creep) => recycle(this.missionData, creep)
         },
         assignment,
         creep

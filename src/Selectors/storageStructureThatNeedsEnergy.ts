@@ -23,7 +23,10 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
   const backfill = roomPlans(office)?.backfill;
   const library = roomPlans(office)?.library;
   const labs = roomPlans(office)?.labs;
-  const creeps = [...CreepsThatNeedEnergy].map(c => Game.creeps[c]).filter(isCreep);
+  const creeps = [...CreepsThatNeedEnergy]
+    .map(c => Game.creeps[c])
+    .filter(isCreep)
+    .filter(c => c.store.getFreeCapacity(RESOURCE_ENERGY) > 10);
   const structures = ([] as [number, AnyStoreStructure | Creep][])
     .concat(
       fastfiller?.containers.map(s => [10, s.structure as AnyStoreStructure]) ?? [],
