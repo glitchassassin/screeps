@@ -10,12 +10,7 @@ import './utils/RoomVisual';
 import { gameLoop } from 'gameLoop';
 
 try {
-  if (Date.now() - JSON.parse('__buildDate__') < 60000) {
-    // Built less than 60 seconds ago - fresh code push
-    console.log('New code successfully deployed, build time', new Date(JSON.parse('__buildDate__')));
-  } else {
-    console.log('Global reset detected');
-  }
+  console.log('Global reset detected. Build time', new Date(JSON.parse('__buildDate__')));
 } catch {
   // Ignore
 }
