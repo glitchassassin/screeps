@@ -31,6 +31,11 @@ declare global {
     invaderCore?: number;
     lootEnergy?: number;
     lootResources?: number;
+    plunder?: {
+      office: string;
+      resources: ResourceConstant[];
+      scanned: number;
+    };
     office?: string;
     officesInRange: string;
     franchises: Record<

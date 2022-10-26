@@ -10,6 +10,7 @@ import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMi
 import { refillSquares } from 'Reports/fastfillerPositions';
 import { byId } from 'Selectors/byId';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
+import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
 import { rcl } from 'Selectors/rcl';
 import { min } from 'Selectors/reducers';
@@ -24,6 +25,7 @@ import { HQLogisticsMission } from './HQLogisticsMission';
 import { LogisticsMission } from './LogisticsMission';
 import { MineMission } from './MineMission';
 import { MobileRefillMission } from './MobileRefillMission';
+import { PlunderMission } from './PlunderMission';
 import { PowerBankMission } from './PowerBankMission';
 import { ReserveMission } from './ReserveMission';
 import { ScienceMission } from './ScienceMission';
@@ -72,6 +74,14 @@ export class MainOfficeMission extends MissionImplementation {
         );
       if (!powerbank) return [];
       return [{ ...this.missionData, powerBank: powerbank.id, powerBankPos: powerbank.pos }];
+    }),
+    plunder: new MultiMissionSpawner(PlunderMission, current => {
+      if (current.length || !roomPlans(this.missionData.office)?.headquarters?.terminal.structure) return []; // only one plunder mission per office
+      const targetRoom = calculateNearbyRooms(this.missionData.office, 3, false).find(
+        r => Memory.rooms[r].plunder?.resources.length
+      );
+      if (!targetRoom) return [];
+      return [{ ...this.missionData, targetRoom }];
     })
   };
 

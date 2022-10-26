@@ -1,4 +1,3 @@
-import { findBestDepositTarget } from 'Behaviors/Logistics';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
@@ -112,16 +111,15 @@ export class PlunderMission extends MissionImplementation {
                 recycle(data, creep);
               }
             }
-            const depositTarget = findBestDepositTarget(data.office, creep);
             const terminal = roomPlans(data.office)?.headquarters?.terminal.structure;
             const storage = roomPlans(data.office)?.headquarters?.storage.structure;
             const nonEnergyResource = Object.keys(creep.store).find(c => c !== RESOURCE_ENERGY) as ResourceConstant;
             if (
               creep.store.getUsedCapacity(RESOURCE_ENERGY) &&
-              depositTarget &&
-              creep.transfer(depositTarget[1], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE
+              storage &&
+              creep.transfer(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE
             ) {
-              moveTo(creep, depositTarget[1].pos);
+              moveTo(creep, storage.pos);
               return States.DEPOSIT;
             } else if (nonEnergyResource) {
               if (terminal && creep.transfer(terminal, nonEnergyResource) === ERR_NOT_IN_RANGE) {
