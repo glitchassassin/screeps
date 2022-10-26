@@ -1,6 +1,7 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { getBoosted } from 'Behaviors/getBoosted';
 import { getResourcesFromMineContainer } from 'Behaviors/getResourcesFromMineContainer';
+import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
@@ -12,6 +13,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -35,7 +37,7 @@ export class MineMission extends MissionImplementation {
     })
   };
 
-  priority = 15;
+  priority = 7;
 
   constructor(public missionData: MineMissionData, id?: string) {
     super(missionData, id);
@@ -44,10 +46,18 @@ export class MineMission extends MissionImplementation {
     return super.fromId(id) as MineMission;
   }
 
+  spawn() {
+    const orders = super.spawn();
+    return orders;
+  }
+
   run(creeps: ResolvedCreeps<MineMission>, missions: ResolvedMissions<MineMission>, data: MineMissionData) {
     const { miner, hauler } = creeps;
+    if (this.creeps.miner.died && this.creeps.hauler.died) {
+      this.status = MissionStatus.DONE;
+    }
     const plan = roomPlans(data.office)?.mine;
-    const mine = byId(Memory.rooms[data.office].mineralId);
+    const mine = byId(data.mineral);
     if (!plan || !mine) return;
 
     if (miner) {
@@ -82,6 +92,10 @@ export class MineMission extends MissionImplementation {
         {
           [States.WITHDRAW]: (data, hauler) => {
             if (getResourcesFromMineContainer(hauler, data.office) === BehaviorResult.SUCCESS) {
+              if (!miner && hauler.store.getUsedCapacity() === 0) {
+                // all done
+                return States.RECYCLE;
+              }
               return States.DEPOSIT;
             }
             return States.WITHDRAW;
@@ -104,7 +118,8 @@ export class MineMission extends MissionImplementation {
               hauler.drop(res);
             }
             return States.DEPOSIT;
-          }
+          },
+          [States.RECYCLE]: recycle
         },
         this.missionData,
         hauler

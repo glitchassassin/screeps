@@ -19,15 +19,17 @@ export interface DefenseCoordinationMissionData extends BaseMissionData {}
 export class DefenseCoordinationMission extends MissionImplementation {
   public missions = {
     defendOffice: new MultiMissionSpawner(DefendOfficeMission, current => {
-      if (
-        totalCreepStats(findHostileCreeps(this.missionData.office)).score > current.map(m => m.score()).reduce(sum, 0)
-      ) {
+      if (current.some(m => !m.assembled())) return []; // re-evaluate after finishing this duo
+      const hostileScore = totalCreepStats(findHostileCreeps(this.missionData.office)).score;
+      const allyScore = current.map(m => m.score()).reduce(sum, 0);
+      if (hostileScore > allyScore) {
         return [this.missionData];
       }
       return [];
     }),
     defendRemotes: new MissionSpawner(DefendRemoteMission, () => this.missionData),
     coreKiller: new MultiMissionSpawner(KillCoreMission, current => {
+      if (current.some(m => !m.assembled())) return []; // re-evaluate after finishing current missions
       const cores = franchisesByOffice(this.missionData.office)
         .map(({ room }) => room)
         .filter(room => Memory.rooms[room].invaderCore);

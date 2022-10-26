@@ -9,6 +9,7 @@ import {
 import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
+import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { roomPlans } from 'Selectors/roomPlans';
 
@@ -20,7 +21,7 @@ export class HQLogisticsMission extends MissionImplementation {
       role: MinionTypes.CLERK,
       budget: Budget.ESSENTIAL,
       body: energy => MinionBuilders[MinionTypes.CLERK](energy),
-      respawn: () => true
+      respawn: () => hasEnergyIncome(this.missionData.office)
     })
   };
 

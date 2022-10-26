@@ -181,17 +181,20 @@ export class MissionImplementation {
   }
 
   onEnd() {
-    // file mission report
-    Memory.missionReports.push({
-      type: this.constructor.name,
-      duration: Game.time - Memory.missions[this.id].started,
-      cpuUsed: Memory.missions[this.id].cpuUsed,
-      energyUsed: Memory.missions[this.id].energyUsed,
-      finished: Game.time,
-      office: this.missionData.office
-    });
-    // Clean up the mission
-    delete Memory.missions[this.id];
+    if (Memory.missions[this.id]) {
+      // file mission report
+      Memory.missionReports.push({
+        type: this.constructor.name,
+        duration: Game.time - Memory.missions[this.id].started,
+        cpuUsed: Memory.missions[this.id].cpuUsed,
+        energyUsed: Memory.missions[this.id].energyUsed,
+        finished: Game.time,
+        office: this.missionData.office
+      });
+      // Clean up the mission
+      delete Memory.missions[this.id];
+    }
+    singletons.delete(this.id);
   }
 
   cpuRemaining() {

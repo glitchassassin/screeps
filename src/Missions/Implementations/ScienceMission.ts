@@ -35,7 +35,11 @@ export class ScienceMission extends MissionImplementation {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy),
-      respawn: () => true
+      respawn: () =>
+        Boolean(
+          Memory.offices[this.missionData.office].lab.orders.length !== 0 &&
+            Memory.offices[this.missionData.office].lab.boosts.length !== 0
+        )
     })
   };
 

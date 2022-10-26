@@ -8,6 +8,7 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
+import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { rcl } from 'Selectors/rcl';
 import { getSpawns } from 'Selectors/roomPlans';
@@ -32,7 +33,7 @@ const fastfillerSpawner = (office: string, id: string) =>
         (SPAWN_ENERGY_CAPACITY + EXTENSION_ENERGY_CAPACITY[rcl(office)]) / CARRY_CAPACITY,
         getSpawns(office).length !== 3
       ),
-    respawn: () => true
+    respawn: () => hasEnergyIncome(office)
   });
 
 export class FastfillerMission extends MissionImplementation {

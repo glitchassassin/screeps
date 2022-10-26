@@ -1,6 +1,7 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { follow, moveTo } from 'screeps-cartographer';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
@@ -46,12 +47,20 @@ export class DefendOfficeMission extends MissionImplementation {
     return totalCreepStats([this.creeps.attacker.resolved, this.creeps.healer.resolved].filter(isCreep)).score;
   }
 
+  assembled() {
+    return this.creeps.attacker.spawned && this.creeps.healer.spawned;
+  }
+
   run(
     creeps: ResolvedCreeps<DefendOfficeMission>,
     missions: ResolvedMissions<DefendOfficeMission>,
     data: DefendOfficeMissionData
   ) {
     const { attacker, healer } = creeps;
+    if (!attacker && !healer && this.assembled()) {
+      this.status = MissionStatus.DONE;
+      return;
+    }
     if (!attacker || !healer) return; // wait for both creeps
 
     const rampartsIntact = !rampartsAreBroken(data.office);

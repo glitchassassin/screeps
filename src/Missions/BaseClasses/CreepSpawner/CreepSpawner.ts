@@ -30,6 +30,10 @@ export class CreepSpawner extends BaseCreepSpawner {
     return this._creep ? Game.creeps[this._creep] : undefined;
   }
 
+  get spawned() {
+    return Boolean(this.memory?.spawned);
+  }
+
   register(creep: Creep) {
     if (this.memory) {
       this.memory.spawned = true;
@@ -39,7 +43,7 @@ export class CreepSpawner extends BaseCreepSpawner {
   }
 
   get died() {
-    return this._creep && !Game.creeps[this._creep];
+    return this.memory?.spawned && (!this._creep || !Game.creeps[this._creep]);
   }
 
   cpuRemaining(): number {

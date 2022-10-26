@@ -8,6 +8,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { findInvaderStructures } from 'Selectors/findHostileCreeps';
 
@@ -24,7 +25,7 @@ export class KillCoreMission extends MissionImplementation {
     })
   };
 
-  priority = 10;
+  priority = 9.5;
 
   constructor(public missionData: KillCoreMissionData, id?: string) {
     super(missionData, id);
@@ -33,8 +34,16 @@ export class KillCoreMission extends MissionImplementation {
     return super.fromId(id) as KillCoreMission;
   }
 
+  assembled() {
+    return this.creeps.guard.spawned;
+  }
+
   run(creeps: ResolvedCreeps<KillCoreMission>, missions: ResolvedMissions<KillCoreMission>, data: KillCoreMissionData) {
     const { guard } = creeps;
+    if (!guard && this.assembled()) {
+      this.status = MissionStatus.DONE;
+      return;
+    }
     if (!guard) return;
 
     // If work is done, clear target

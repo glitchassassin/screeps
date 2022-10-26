@@ -1,3 +1,4 @@
+import { MissionStatus } from 'Missions/Mission';
 import { MissionImplementation } from '../MissionImplementation';
 import { BaseMissionSpawner } from './BaseMissionSpawner';
 
@@ -22,7 +23,9 @@ export class MultiMissionSpawner<T extends typeof MissionImplementation> extends
       if (!Memory.missions[id]) this.ids.splice(this.ids.indexOf(id));
     });
     // generate new missions
-    const current = this.ids.map(id => this.missionClass.fromId(id) as InstanceType<T>).filter(mission => !!mission);
+    const current = this.ids
+      .map(id => this.missionClass.fromId(id) as InstanceType<T>)
+      .filter(mission => mission?.status !== MissionStatus.DONE);
     for (const data of this.generate(current)) {
       const mission = new this.missionClass(data) as InstanceType<T>;
       current.push(mission);
