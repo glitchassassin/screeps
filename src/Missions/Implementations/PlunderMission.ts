@@ -61,6 +61,16 @@ export class PlunderMission extends MissionImplementation {
     return super.fromId(id) as PlunderMission;
   }
 
+  onStart() {
+    super.onStart();
+    console.log('[PowerBankMission] started targeting', this.missionData.targetRoom);
+  }
+
+  onEnd() {
+    super.onEnd();
+    console.log('[PlunderMission] finished for', this.missionData.targetRoom);
+  }
+
   run(creeps: ResolvedCreeps<PlunderMission>, missions: ResolvedMissions<PlunderMission>, data: PlunderMissionData) {
     const { haulers } = creeps;
     data.assignments ??= {};

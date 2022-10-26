@@ -14,6 +14,7 @@ declare global {
       {
         data: any;
         started: number;
+        status: MissionStatus;
         cpuUsed: number;
         energyUsed: number;
         missions: Record<string, string[]>;
@@ -48,7 +49,6 @@ export function missionById(id: MissionImplementation['id']) {
 export class MissionImplementation {
   public creeps: Record<string, BaseCreepSpawner> = {};
   public missions: Record<string, BaseMissionSpawner<typeof MissionImplementation>> = {};
-  public status = MissionStatus.PENDING;
   public id: string;
   public priority = 5;
   public estimatedEnergyRemaining = 0;
@@ -66,11 +66,19 @@ export class MissionImplementation {
     Memory.missions[this.id] ??= {
       data: missionData,
       started: Game.time,
+      status: MissionStatus.PENDING,
       cpuUsed: 0,
       energyUsed: 0,
       missions: {},
       creeps: {}
     };
+  }
+
+  get status() {
+    return Memory.missions[this.id].status;
+  }
+  set status(value: MissionStatus) {
+    Memory.missions[this.id].status = value;
   }
 
   initialized = false;

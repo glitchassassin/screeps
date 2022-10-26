@@ -68,7 +68,13 @@ export class FastfillerMission extends MissionImplementation {
 
     for (const { creep, pos } of positions) {
       if (!creep) continue;
-      if (creep) moveTo(creep, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) }); // even if already there, this will prevent shoving
+      if (creep)
+        moveTo(
+          creep,
+          { pos, range: 0 },
+          { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }), visualizePathStyle: {} }
+        ); // even if already there, this will prevent shoving
+      if (!creep.pos.isEqualTo(pos)) continue; // wait to get to position
       if (creep.store.getFreeCapacity(RESOURCE_ENERGY)) {
         // Look for source
         const sources = creep.pos.findInRange(FIND_STRUCTURES, 1).filter(s => 'store' in s && s.store[RESOURCE_ENERGY]);

@@ -28,7 +28,15 @@ export class PowerBankMission extends MissionImplementation {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
-      count: fixedCount(() => Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY)))
+      count: fixedCount(() => {
+        // wait to spawn until duos are about to crack the bank
+        const totalDamage = this.missions.duos.resolved.reduce((sum, d) => sum + (d?.damagePerTick() ?? 0), 0) * 750; // damage over next 750 ticks
+        if (totalDamage < (this.report()?.hits ?? Infinity)) {
+          return 0;
+        }
+        // spawn enough to haul all the power in one trip
+        return Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY));
+      })
     })
   };
 
@@ -55,6 +63,16 @@ export class PowerBankMission extends MissionImplementation {
     return super.fromId(id) as PowerBankMission;
   }
 
+  onStart() {
+    super.onStart();
+    console.log('[PowerBankMission] started targeting', unpackPos(this.missionData.powerBankPos));
+  }
+
+  onEnd() {
+    super.onEnd();
+    console.log('[PowerBankMission] finished in', unpackPos(this.missionData.powerBankPos));
+  }
+
   report() {
     return Memory.offices[this.missionData.office].powerbanks.find(p => p.id === this.missionData.powerBank);
   }
@@ -67,9 +85,9 @@ export class PowerBankMission extends MissionImplementation {
     const { haulers } = creeps;
 
     const powerBankPos = unpackPos(data.powerBankPos);
-    const powerBankRuin = powerBankPos
-      .lookFor(LOOK_RUINS)
-      .find(s => s.structure.structureType === STRUCTURE_POWER_BANK);
+    const powerBankRuin = Game.rooms[powerBankPos.roomName]
+      ? powerBankPos.lookFor(LOOK_RUINS).find(s => s.structure.structureType === STRUCTURE_POWER_BANK)
+      : undefined;
     const terminal = roomPlans(data.office)?.headquarters?.terminal.structure;
 
     for (const hauler of haulers) {
