@@ -53,11 +53,14 @@ export class MissionImplementation {
   public priority = 5;
   public estimatedEnergyRemaining = 0;
   constructor(public missionData: { office: string }, id?: string) {
-    this.id =
-      id ??
-      Number(Math.floor(Math.random() * 0xffffffff))
-        .toString(16)
-        .padStart(8, '0');
+    const prefix = this.constructor.name
+      .split('')
+      .filter(c => c === c.toUpperCase())
+      .join(''); // Takes uppercase letters as prefix
+    const randomString = Number(Math.floor(Math.random() * 0xffff))
+      .toString(16)
+      .padStart(4, '0');
+    this.id = id ?? `${prefix}_${randomString}`;
 
     const cached = singletons.get(this.id);
     if (cached && Memory.missions[this.id]) return cached;

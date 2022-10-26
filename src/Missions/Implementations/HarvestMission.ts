@@ -10,7 +10,6 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
-import { MissionStatus } from 'Missions/Mission';
 import { adjacentWalkablePositions, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
@@ -113,12 +112,6 @@ export class HarvestMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;
     const { source, office } = this.missionData;
-
-    if (harvesters.length) {
-      this.status === MissionStatus.RUNNING;
-    } else {
-      this.status === MissionStatus.PENDING;
-    }
 
     const container = getFranchisePlanBySourceId(source)?.container.structureId;
     LogisticsLedger.record(
