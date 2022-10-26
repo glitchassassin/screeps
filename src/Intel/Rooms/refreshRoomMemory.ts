@@ -1,6 +1,7 @@
 import { resourcesToPlunder } from 'Selectors/Combat/shouldPlunder';
 import { calculateThreatLevel, ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { getClosestOffice } from 'Selectors/Map/MapCoordinates';
+import { getRoomPathDistance } from 'Selectors/Map/Pathing';
 
 export function refreshRoomMemory(room: string) {
   Memory.rooms[room].rcl = Game.rooms[room].controller?.level;
@@ -27,7 +28,8 @@ export function refreshRoomMemory(room: string) {
     if (![ThreatLevel.OWNED, ThreatLevel.FRIENDLY].includes(threatLevel[0])) {
       // select plundering office
       const office = getClosestOffice(room, 6);
-      if (office) {
+      const pathDistance = office ? getRoomPathDistance(office, room) : undefined;
+      if (office && pathDistance) {
         // check loot structures for resources
         const lootStructures = Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, {
           filter: s => 'store' in s && Object.keys(s.store).length
@@ -41,15 +43,23 @@ export function refreshRoomMemory(room: string) {
         });
 
         // ignore small amounts of any resources
+        let capacity = 0;
         for (const [resource, amount] of resources) {
-          if (amount < CARRY_CAPACITY) resources.delete(resource);
+          if (amount < CARRY_CAPACITY) {
+            resources.delete(resource);
+          } else {
+            capacity += amount;
+          }
         }
 
+        const distance = pathDistance * 50;
+
         // cache results
-        Memory.rooms[room].lootEnergy = resources.get(RESOURCE_ENERGY) ?? 0;
         Memory.rooms[room].plunder = {
           office,
-          resources: resourcesToPlunder(office, room, [...resources.keys()]),
+          distance,
+          capacity,
+          resources: resourcesToPlunder(distance, [...resources.keys()]),
           scanned: Game.time
         };
       }

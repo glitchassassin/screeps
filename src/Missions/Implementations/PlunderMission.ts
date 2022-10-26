@@ -13,14 +13,18 @@ import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
-import { getRoomPathDistance } from 'Selectors/Map/Pathing';
 import { setArrived } from 'Selectors/prespawn';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export interface PlunderMissionData extends BaseMissionData {
   targetRoom: string;
-  plunderTarget?: Id<AnyStoreStructure>;
+  assignments?: Record<
+    string,
+    {
+      plunderTarget?: Id<AnyStoreStructure>;
+    }
+  >;
 }
 
 export class PlunderMission extends MissionImplementation {
@@ -30,10 +34,8 @@ export class PlunderMission extends MissionImplementation {
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy),
       count: current => {
-        if (
-          neededPlunderCapacity(this.missionData.office, this.missionData.targetRoom) >
-          current.map(c => c.store.getCapacity()).reduce(sum, 0)
-        ) {
+        const capacity = Memory.rooms[this.missionData.targetRoom].plunder?.capacity ?? 0;
+        if (capacity > current.map(c => c.store.getCapacity()).reduce(sum, 0)) {
           return 1; // more haulers needed
         }
         return 0; // we are at capacity
@@ -61,30 +63,45 @@ export class PlunderMission extends MissionImplementation {
 
   run(creeps: ResolvedCreeps<PlunderMission>, missions: ResolvedMissions<PlunderMission>, data: PlunderMissionData) {
     const { haulers } = creeps;
+    data.assignments ??= {};
+    const plunder = Memory.rooms[data.targetRoom]?.plunder;
+    const { resources } = plunder ?? {};
 
     for (const creep of haulers) {
+      data.assignments[creep.name] ??= {};
       runStates(
         {
-          [States.WITHDRAW]: (data, creep) => {
-            if (creep.store.getFreeCapacity() === 0) creep.memory.state = States.DEPOSIT;
+          [States.WITHDRAW]: (assignment, creep) => {
+            if (creep.store.getFreeCapacity() === 0) {
+              if (plunder) plunder.capacity -= creep.store.getUsedCapacity();
+              return States.DEPOSIT;
+            }
             if (creep.pos.roomName !== data.targetRoom) {
               moveTo(creep, { pos: new RoomPosition(25, 25, data.targetRoom), range: 20 });
               return States.WITHDRAW;
             }
 
-            data.plunderTarget ??= Game.rooms[data.targetRoom].find(FIND_HOSTILE_STRUCTURES, {
-              filter: s => 'store' in s && s.structureType !== STRUCTURE_NUKER && Object.keys(s.store).length
+            assignment.plunderTarget ??= Game.rooms[data.targetRoom].find(FIND_HOSTILE_STRUCTURES, {
+              filter: s =>
+                'store' in s &&
+                s.structureType !== STRUCTURE_NUKER &&
+                Object.keys(s.store).some(k => resources?.includes(k as ResourceConstant))
             })[0]?.id as Id<AnyStoreStructure>;
 
-            if (!data.plunderTarget) {
+            if (!assignment.plunderTarget) {
+              if (plunder) plunder.capacity -= creep.store.getUsedCapacity();
               return States.DEPOSIT;
             }
 
-            const target = byId(data.plunderTarget);
-            const targetResource = target && (Object.keys(target.store)[0] as ResourceConstant | undefined);
+            const target = byId(assignment.plunderTarget);
+            const targetResource =
+              target &&
+              (Object.keys(target.store).find(k => resources?.includes(k as ResourceConstant)) as
+                | ResourceConstant
+                | undefined);
 
             if (!targetResource) {
-              delete data.plunderTarget;
+              delete assignment.plunderTarget;
             } else {
               if (creep.withdraw(target, targetResource) === ERR_NOT_IN_RANGE) {
                 moveTo(creep, { pos: target.pos, range: 1 });
@@ -92,8 +109,14 @@ export class PlunderMission extends MissionImplementation {
                   .findInRange(FIND_HOSTILE_STRUCTURES, 1)
                   .find(s => 'store' in s && Object.keys(s.store).length) as AnyStoreStructure | undefined;
                 if (opportunityTarget) {
-                  const opportunityResource = Object.keys(opportunityTarget.store)[0] as ResourceConstant | undefined;
-                  if (opportunityResource) creep.withdraw(opportunityTarget, opportunityResource);
+                  const opportunityResource = Object.keys(opportunityTarget.store).find(k =>
+                    resources?.includes(k as ResourceConstant)
+                  ) as ResourceConstant | undefined;
+                  if (opportunityResource) {
+                    creep.withdraw(opportunityTarget, opportunityResource);
+                  } else {
+                    delete assignment.plunderTarget;
+                  }
                 }
                 return States.WITHDRAW;
               } else {
@@ -103,7 +126,7 @@ export class PlunderMission extends MissionImplementation {
             }
             return States.WITHDRAW;
           },
-          [States.DEPOSIT]: (data, creep) => {
+          [States.DEPOSIT]: (assignment, creep) => {
             if (creep.store.getUsedCapacity() === 0) {
               if (!creep.memory.arrived || (creep.ticksToLive ?? CREEP_LIFE_TIME) > creep.memory.arrived) {
                 return States.WITHDRAW;
@@ -135,20 +158,9 @@ export class PlunderMission extends MissionImplementation {
             return States.DEPOSIT;
           }
         },
-        this.missionData,
+        data.assignments[creep.name],
         creep
       );
     }
   }
 }
-
-const neededPlunderCapacity = (office: string, room: string) => {
-  let distance = (getRoomPathDistance(office, room) ?? 2) * 50;
-  let trips = CREEP_LIFE_TIME / distance;
-  let capacity = Memory.rooms[room]?.lootEnergy ?? 0;
-  if (roomPlans(office)?.headquarters?.terminal) {
-    capacity += Memory.rooms[room]?.lootResources ?? 0;
-  }
-  capacity /= trips;
-  return capacity;
-};
