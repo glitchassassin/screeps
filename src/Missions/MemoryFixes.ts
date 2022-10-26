@@ -1,0 +1,2 @@
+Memory.missions ??= {};
+Memory.missionReports ??= [];

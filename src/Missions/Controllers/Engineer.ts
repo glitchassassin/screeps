@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createEngineerOrder } from 'Missions/Implementations/Engineer';
 import { MissionType } from 'Missions/Mission';
+import { createEngineerOrder } from 'Missions/OldImplementations/Engineer';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { rcl } from 'Selectors/rcl';

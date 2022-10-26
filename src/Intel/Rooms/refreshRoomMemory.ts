@@ -1,4 +1,7 @@
+import { resourcesToPlunder } from 'Selectors/Combat/shouldPlunder';
 import { calculateThreatLevel, ThreatLevel } from 'Selectors/Combat/threatAnalysis';
+import { getClosestOffice } from 'Selectors/Map/MapCoordinates';
+import { getRoomPathDistance } from 'Selectors/Map/Pathing';
 
 export function refreshRoomMemory(room: string) {
   Memory.rooms[room].rcl = Game.rooms[room].controller?.level;
@@ -19,19 +22,47 @@ export function refreshRoomMemory(room: string) {
   } else {
     delete Memory.rooms[room].invaderCore;
   }
-  // If room is unowned and has resources, let's loot it!
-  if (![ThreatLevel.OWNED, ThreatLevel.FRIENDLY].includes(threatLevel[0])) {
-    const lootStructures = Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, {
-      filter: s => 'store' in s && Object.keys(s.store).length
-    }) as AnyStoreStructure[];
 
-    Memory.rooms[room].lootEnergy = 0;
-    Memory.rooms[room].lootResources = 0;
+  if ((Memory.rooms[room].plunder?.scanned ?? 0) + 500 < Game.time) {
+    // If room is unowned and has resources, let's loot it!
+    if (![ThreatLevel.OWNED, ThreatLevel.FRIENDLY].includes(threatLevel[0])) {
+      // select plundering office
+      const office = getClosestOffice(room, 6);
+      const pathDistance = office ? getRoomPathDistance(office, room) : undefined;
+      if (office && pathDistance) {
+        // check loot structures for resources
+        const lootStructures = Game.rooms[room].find(FIND_HOSTILE_STRUCTURES, {
+          filter: s => 'store' in s && Object.keys(s.store).length
+        }) as AnyStoreStructure[];
+        const resources = new Map<ResourceConstant, number>();
+        lootStructures.forEach(s => {
+          for (const resource in s.store) {
+            const amount = s.store.getUsedCapacity(resource as ResourceConstant) ?? 0;
+            resources.set(resource as ResourceConstant, (resources.get(resource as ResourceConstant) ?? 0) + amount);
+          }
+        });
 
-    lootStructures.forEach(s => {
-      Memory.rooms[room].lootEnergy! += s.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0;
-      Memory.rooms[room].lootResources! +=
-        (s.store.getUsedCapacity() ?? 0) - (s.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0);
-    });
+        // ignore small amounts of any resources
+        let capacity = 0;
+        for (const [resource, amount] of resources) {
+          if (amount < CARRY_CAPACITY) {
+            resources.delete(resource);
+          } else {
+            capacity += amount;
+          }
+        }
+
+        const distance = pathDistance * 50;
+
+        // cache results
+        Memory.rooms[room].plunder = {
+          office,
+          distance,
+          capacity,
+          resources: resourcesToPlunder(distance, [...resources.keys()]),
+          scanned: Game.time
+        };
+      }
+    }
   }
 }

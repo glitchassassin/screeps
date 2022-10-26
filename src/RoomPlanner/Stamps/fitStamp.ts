@@ -4,6 +4,20 @@ import { Coord } from 'utils/packrat';
 import { Stamp } from './stamps';
 
 export function fitStamp(room: string, stamp: Stamp, costMatrix?: CostMatrix, diamond = false) {
+  // pin stamp if initial spawn
+  if (stamp.some(s => s.includes(STRUCTURE_SPAWN))) {
+    const initialSpawn = Game.rooms[room]?.find(FIND_MY_SPAWNS)[0];
+    if (initialSpawn) {
+      for (let y = 0; y < stamp.length; y++) {
+        for (let x = 0; x < stamp[y].length; x++) {
+          if (stamp[y][x] === STRUCTURE_SPAWN) {
+            return [{ x: initialSpawn.pos.x - x, y: initialSpawn.pos.y - y }];
+          }
+        }
+      }
+    }
+  }
+
   const minMargin = 3; // do not put stamps closer than 3 squares to the edge of the room
   const dt = (diamond ? diamondDistanceTransform : distanceTransform)(room, false, costMatrix);
   const squares: Coord[] = [];

@@ -13,7 +13,6 @@ import OfficeReport from './OfficeReport';
 import PowerReport from './PowerReport';
 import RemotesReport from './RemotesReport';
 import SpawnReport from './SpawnReport';
-import SquadMissionsReport from './SquadMissionsReport';
 import TerminalsReport from './TerminalsReport';
 import TerritoriesReport from './TerritoriesReport';
 
@@ -64,6 +63,5 @@ register('franchise', FranchiseReport);
 register('estimates', EstimatesReport);
 register('remotes', RemotesReport);
 register('power', PowerReport);
-register('squad', SquadMissionsReport);
 
-global.d('facilities');
+global.d('missions');

@@ -1,17 +1,12 @@
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { creepStats } from 'Selectors/creepStats';
+import { buyMarketPrice } from 'Selectors/Market/marketPrice';
 import { viz } from 'Selectors/viz';
 import { unpackPos } from 'utils/packrat';
 
 export default () => {
-  const minPowerPrice = Math.min(
-    ...Game.market.getAllOrders({ type: ORDER_SELL, resourceType: RESOURCE_POWER }).map(o => o.price),
-    Infinity
-  );
-  const minEnergyPrice = Math.min(
-    ...Game.market.getAllOrders({ type: ORDER_SELL, resourceType: RESOURCE_ENERGY }).map(o => o.price),
-    Infinity
-  );
+  const minPowerPrice = buyMarketPrice(RESOURCE_POWER);
+  const minEnergyPrice = buyMarketPrice(RESOURCE_ENERGY);
   const powerEnergyPrice = minPowerPrice / minEnergyPrice;
   for (const office in Memory.offices) {
     const data = Memory.offices[office].powerbanks

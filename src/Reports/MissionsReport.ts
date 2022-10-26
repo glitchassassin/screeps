@@ -1,10 +1,11 @@
-import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
-import { activeMissions } from 'Missions/Selectors';
+import { MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
+import { MissionStatus } from 'Missions/Mission';
+import { missionsByOffice } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
 
-const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
+const buildMissionsTable = (room: string, missions: MissionImplementation[]) => {
   let estimatedCPU = 0;
   let estimatedEnergy = 0;
   let actualCPU = 0;
@@ -14,7 +15,7 @@ const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
     {
       count: number;
       priority: number;
-      type: MissionType;
+      type: string;
       status: MissionStatus;
       actual: {
         cpu: number;
@@ -27,12 +28,12 @@ const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
     }
   >();
   for (let mission of missions) {
-    const key = `${mission.priority}_${mission.type}_${mission.status}`;
+    const key = `${mission.priority}_${mission.constructor.name}_${mission.status}`;
     const entry = missionsList.get(key) ?? {
       count: 0,
       priority: mission.priority,
       status: mission.status,
-      type: mission.type,
+      type: mission.constructor.name,
       actual: {
         cpu: 0,
         energy: 0
@@ -42,11 +43,11 @@ const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
         energy: 0
       }
     };
-    entry.count += 1;
-    entry.actual.cpu += mission.actual.cpu;
-    entry.actual.energy += mission.actual.energy;
-    entry.estimate.cpu += mission.estimate.cpu;
-    entry.estimate.energy += mission.estimate.energy;
+    entry.count += mission.creepCount();
+    entry.actual.cpu += mission.cpuUsed();
+    entry.actual.energy += mission.energyUsed();
+    entry.estimate.cpu += mission.energyRemaining();
+    entry.estimate.energy += mission.energyRemaining();
     missionsList.set(key, entry);
   }
   let table = [];
@@ -72,8 +73,9 @@ const buildMissionsTable = (room: string, missions: Mission<MissionType>[]) => {
 };
 
 export default () => {
+  const missions = missionsByOffice();
   for (const room in Memory.offices ?? []) {
-    const active = buildMissionsTable(room, activeMissions(room));
+    const active = buildMissionsTable(room, missions[room]);
     Dashboard({
       widgets: [
         {

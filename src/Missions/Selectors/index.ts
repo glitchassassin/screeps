@@ -1,71 +1,11 @@
-import { MissionTypes } from 'Missions/Implementations';
-import { Mission, MissionStatus, MissionType } from 'Missions/Mission';
-import { SquadMission, SquadMissionType } from 'Missions/Squads';
-import { SquadMissionTypes } from 'Missions/Squads/Missions';
+import { allMissions, missionById, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
+import { MissionStatus } from 'Missions/Mission';
 import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';
-import { getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { roomPlans } from 'Selectors/roomPlans';
+import { memoizeByTick } from 'utils/memoizeFunction';
 
-const creepsByOffice = new Map<string, Set<string>>();
-let initialized = false;
-export function initializeCreepIndex() {
-  if (initialized) return;
-  initialized = true;
-  for (const creep in Game.creeps) {
-    if (!Memory.creeps[creep]?.mission?.office) {
-      console.log(creep, 'with no mission', JSON.stringify(Game.creeps[creep]));
-      continue;
-    }
-    const creeps = creepsByOffice.get(Memory.creeps[creep].mission.office) ?? new Set();
-    creeps.add(creep);
-    creepsByOffice.set(Memory.creeps[creep].mission.office, creeps);
-  }
-}
-
-export function assignCreepToOffice(creep: Creep, office: string) {
-  creepsByOffice.get(creep.memory.mission.office)?.delete(creep.name);
-  const creeps = creepsByOffice.get(office) ?? new Set();
-  creeps.add(creep.name);
-  creepsByOffice.set(office, creeps);
-}
-
-export function activeCreeps(office: string) {
-  const creeps = [...(creepsByOffice.get(office) ?? [])].filter(c => Memory.creeps[c]?.mission);
-  creepsByOffice.set(office, new Set(creeps));
-  return creeps;
-}
-
-export function activeMissions(office: string) {
-  return activeCreeps(office)
-    .map(c => Memory.creeps[c].mission)
-    .filter(m => m);
-}
-
-export function activeSquadMissions(office: string) {
-  return Memory.offices[office].squadMissions;
-}
-
-export function squadMissionById(office: string, id: string) {
-  return activeSquadMissions(office).find(m => m.id === id);
-}
-
-export function registerSpawningCreeps() {
-  for (const office in Memory.offices) {
-    const creeps = creepsByOffice.get(office) ?? new Set();
-    for (const spawn of getSpawns(office)) {
-      if (spawn.spawning?.name) {
-        creeps.add(spawn.spawning?.name);
-      }
-    }
-    creepsByOffice.set(office, creeps);
-  }
-}
-
-export function isMission<T extends MissionType>(missionType: T) {
-  return (mission: Mission<any>): mission is MissionTypes[T] => mission?.type === missionType;
-}
-export function isSquadMission<T extends SquadMissionType>(missionType: T) {
-  return (mission: SquadMission<SquadMissionType, any>): mission is SquadMissionTypes[T] =>
-    mission?.type === missionType;
+export function isMission<T extends typeof MissionImplementation>(missionType: T) {
+  return (mission: MissionImplementation): mission is InstanceType<T> => mission instanceof missionType;
 }
 
 export function and<T>(...conditions: ((t: T) => boolean)[]) {
@@ -84,12 +24,8 @@ export function isStatus(status: MissionStatus) {
   return (mission: { status: MissionStatus }) => mission.status === status;
 }
 
-export function assignedCreep(mission: Mission<MissionType>): Creep | undefined {
-  return Game.creeps[mission.creep ?? ''];
-}
-
-export function assignedMission(creep: Creep): Mission<MissionType> | undefined {
-  return creep.memory?.mission;
+export function assignedMission(creep: Creep): MissionImplementation | undefined {
+  return creep.memory.missionId ? missionById(creep.memory.missionId) : undefined;
 }
 
 export function estimateMissionInterval(office: string) {
@@ -100,12 +36,16 @@ export function estimateMissionInterval(office: string) {
   }
 }
 
-/**
- * Expects a mission with `arrived` data
- */
-export function missionExpired(mission: Mission<MissionType>) {
-  const ttl = assignedCreep(mission)?.ticksToLive;
-  if (!ttl) return mission.status === MissionStatus.RUNNING; // creep should be alive, but isn't
-  if (!mission.data.arrived) return false;
-  return ttl <= mission.data.arrived;
-}
+export const missionsByOffice = memoizeByTick(
+  () => '',
+  () => {
+    const missions: Record<string, MissionImplementation[]> = {};
+    for (const mission of allMissions()) {
+      missions[mission.missionData.office] ??= [];
+      missions[mission.missionData.office].push(mission);
+    }
+    return missions;
+  }
+);
+
+export const activeMissions = (office: string) => missionsByOffice()[office];

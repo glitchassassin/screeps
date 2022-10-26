@@ -1,5 +1,4 @@
-import { Mission, MissionType } from 'Missions/Mission';
-import { logCpu, logCpuStart } from 'utils/logCPU';
+import { logCpuStart } from 'utils/logCPU';
 
 declare global {
   interface CreepMemory {
@@ -7,9 +6,9 @@ declare global {
   }
 }
 
-export function runStates<M extends Mission<MissionType>>(
-  states: Record<string, (mission: M, creep: Creep) => string>,
-  mission: M,
+export function runStates<M extends {}>(
+  states: Record<string, (data: M, creep: Creep) => string>,
+  data: M,
   creep: Creep,
   profile = false
 ) {
@@ -19,12 +18,10 @@ export function runStates<M extends Mission<MissionType>>(
   while (!statesRun.includes(creep.memory.runState)) {
     statesRun.push(creep.memory.runState);
     if (!(creep.memory.runState in states)) {
-      console.log('Error: mission', mission.type, 'has no state', creep.memory.runState);
+      const state = creep.memory.runState;
       delete creep.memory.runState;
-      return;
+      throw new Error(`Mission has no state: ${state}`);
     }
-    const key = `${mission.type}_${creep.memory.runState}`;
-    creep.memory.runState = states[creep.memory.runState](mission, creep);
-    if (profile) logCpu(key);
+    creep.memory.runState = states[creep.memory.runState](data, creep);
   }
 }

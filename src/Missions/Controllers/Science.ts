@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createScienceOrder } from 'Missions/Implementations/Science';
 import { MissionType } from 'Missions/Mission';
+import { createScienceOrder } from 'Missions/OldImplementations/Science';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { roomPlans } from 'Selectors/roomPlans';
 

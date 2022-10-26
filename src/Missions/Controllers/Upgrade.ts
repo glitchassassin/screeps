@@ -1,6 +1,6 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createUpgradeOrder } from 'Missions/Implementations/Upgrade';
 import { MissionType } from 'Missions/Mission';
+import { createUpgradeOrder } from 'Missions/OldImplementations/Upgrade';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { calculateNearbyPositions, isPositionWalkable } from 'Selectors/Map/MapCoordinates';

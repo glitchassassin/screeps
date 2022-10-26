@@ -3,14 +3,14 @@ import { posById } from '../posById';
 import { franchisesByOffice } from './franchisesByOffice';
 import { getFranchiseDistance } from './getFranchiseDistance';
 
-export const franchiseActive = (office: string, source: Id<Source>) => {
+export const franchiseActive = (office: string, source: Id<Source>, sinceTicks = 1500) => {
   const room = posById(source)?.roomName ?? '';
   const lastHarvested = Memory.rooms[room]?.franchises[office]?.[source]?.lastHarvested;
-  return lastHarvested && lastHarvested + 1500 > Game.time;
+  return lastHarvested && lastHarvested + sinceTicks >= Game.time;
 };
 
-export const activeFranchises = (office: string) =>
-  franchisesByOffice(office).filter(source => franchiseActive(office, source.source));
+export const activeFranchises = (office: string, sinceTicks = 1500) =>
+  franchisesByOffice(office).filter(source => franchiseActive(office, source.source, sinceTicks));
 
 export const furthestActiveFranchiseRoundTripDistance = memoizeByTick(
   office => office,

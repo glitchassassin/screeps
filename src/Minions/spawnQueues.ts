@@ -1,55 +1,51 @@
 import { FEATURES } from 'config';
-import { Mission, MissionType } from 'Missions/Mission';
+import { missionById } from 'Missions/BaseClasses/MissionImplementation';
+import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
 import { getSpawns } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
+import { MinionTypes } from './minionTypes';
 
-interface SpawnOrderData {
+export interface SpawnOrder {
+  priority: number;
+  office: string;
+  budget: Budget;
   name: string;
   body: BodyPartConstant[];
+  estimate: {
+    cpu: number;
+    energy: number;
+  };
+  memory: {
+    role: MinionTypes;
+    missionId: string;
+  } & Partial<CreepMemory>;
   boosts?: MineralBoostConstant[];
-  memory?: Partial<CreepMemory>;
-}
-interface PreferredSpawnData {
   spawn?: Id<StructureSpawn>;
   directions?: DirectionConstant[];
-}
-export interface SpawnOrder {
-  mission: Mission<MissionType>;
-  duration: number;
-  spawn?: PreferredSpawnData;
-  data: SpawnOrderData;
-}
-
-export function createSpawnOrder(
-  mission: Mission<MissionType>,
-  data: SpawnOrderData,
-  spawn?: PreferredSpawnData
-): SpawnOrder {
-  const duration = data.body.length * CREEP_SPAWN_TIME;
-
-  return {
-    duration,
-    mission,
-    data,
-    spawn
-  };
 }
 
 export function vacateSpawns() {
   for (const office in Memory.offices) {
     for (const spawn of getSpawns(office)) {
-      if (spawn.spawning && spawn.spawning.remainingTime < 2) {
-        const spawningSquares =
-          spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??
-          adjacentWalkablePositions(spawn.pos, true);
-        for (const pos of spawningSquares) {
-          for (const creep of pos.lookFor(LOOK_CREEPS)) {
-            if (creep.name.startsWith('REFILL')) continue; // don't shove refillers
-            moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
+      if (spawn.spawning) {
+        // register spawning creeps
+        const creep = spawn.spawning.name;
+        const mission = missionById(Memory.creeps[creep].missionId.split('|')[0]);
+        mission?.register(Game.creeps[creep]);
+
+        if (spawn.spawning.remainingTime < 2) {
+          const spawningSquares =
+            spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??
+            adjacentWalkablePositions(spawn.pos, true);
+          for (const pos of spawningSquares) {
+            for (const creep of pos.lookFor(LOOK_CREEPS)) {
+              if (creep.name.startsWith('REFILL')) continue; // don't shove refillers
+              moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
+            }
           }
         }
       }
@@ -64,9 +60,9 @@ export function spawnOrder(office: string, order: SpawnOrder) {
   if (availableSpawns.length === 0) return false; // No more available spawns
   // Get next scheduled order per spawn
   const spawn = availableSpawns.find(s => {
-    if (byId(order.spawn?.spawn)) {
+    if (byId(order.spawn)) {
       // Spawn-specific order
-      return s.id === order.spawn!.spawn;
+      return s.id === order.spawn;
     }
     return true;
   });
@@ -76,15 +72,9 @@ export function spawnOrder(office: string, order: SpawnOrder) {
   }
   // Spawn is available
   // console.log(order.data.body, order.data.name);
-  const result = spawn.spawnCreep(order.data.body, order.data.name, {
-    directions: order.spawn?.directions,
-    memory: {
-      ...order.data.memory,
-      mission: {
-        ...order.mission,
-        creep: order.data.name
-      }
-    },
+  const result = spawn.spawnCreep(order.body, order.name, {
+    directions: order.directions,
+    memory: order.memory,
     energyStructures: getEnergyStructures(office)
   });
   // console.log('spawn result', result);
@@ -97,17 +87,17 @@ export function spawnOrder(office: string, order: SpawnOrder) {
   } else {
     // Spawn failed un-recoverably, abandon order
     console.log('Unrecoverable spawn error', result);
-    console.log(order.data.name, order.data.body.length);
+    console.log(order.name, order.body.length);
   }
   return false;
 }
 
 const orderBoosts = (office: string, order: SpawnOrder) => {
-  for (const resource of order.data.boosts ?? []) {
+  for (const resource of order.boosts ?? []) {
     const part = Object.entries(BOOSTS).find(([k, v]) => resource in v)?.[0] as BodyPartConstant | undefined;
     if (!part) continue;
     let available = FEATURES.LABS && boostsAvailable(office, resource, false);
-    const workParts = order.data.body.filter(p => p === part).length;
+    const workParts = order.body.filter(p => p === part).length;
     const target = workParts * LAB_BOOST_MINERAL;
     if (available && available >= target) {
       // We have enough minerals, enter a boost order
@@ -118,7 +108,7 @@ const orderBoosts = (office: string, order: SpawnOrder) => {
             count: target
           }
         ],
-        name: order.data.name
+        name: order.name
       });
     }
   }

@@ -1,7 +1,7 @@
 import { SpawnOrder } from 'Minions/spawnQueues';
-import { createAcquireEngineerOrder } from 'Missions/Implementations/AcquireEngineer';
-import { createAcquireLawyerOrder } from 'Missions/Implementations/AcquireLawyer';
 import { MissionType } from 'Missions/Mission';
+import { createAcquireEngineerOrder } from 'Missions/OldImplementations/AcquireEngineer';
+import { createAcquireLawyerOrder } from 'Missions/OldImplementations/AcquireLawyer';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import {
   findAcquireTarget,
