@@ -11,7 +11,8 @@ import { moveTo } from 'screeps-cartographer';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { rcl } from 'Selectors/rcl';
-import { getSpawns } from 'Selectors/roomPlans';
+import { getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { viz } from 'Selectors/viz';
 import { unpackPos } from 'utils/packrat';
 
 export interface FastfillerMissionData extends BaseMissionData {
@@ -59,14 +60,51 @@ export class FastfillerMission extends MissionImplementation {
     data: FastfillerMissionData
   ) {
     const { topLeft, topRight, bottomLeft, bottomRight } = creeps;
+
+    const plan = roomPlans(data.office)?.fastfiller;
+    const structures = {
+      topLeft: {
+        spawn: plan?.spawns[0].structure,
+        container: plan?.containers[0].structure,
+        oppositeContainer: plan?.containers[1].structure,
+        extensions: [0, 3, 4, 6].map(i => plan?.extensions[i].structure),
+        centerExtension: plan?.extensions[7].structure
+      },
+      bottomLeft: {
+        spawn: plan?.spawns[2].structure,
+        container: plan?.containers[0].structure,
+        oppositeContainer: plan?.containers[1].structure,
+        extensions: [1, 2, 4, 5].map(i => plan?.extensions[i].structure),
+        centerExtension: plan?.extensions[8].structure
+      },
+      topRight: {
+        spawn: plan?.spawns[1].structure,
+        container: plan?.containers[1].structure,
+        oppositeContainer: plan?.containers[0].structure,
+        extensions: [9, 12, 6, 10].map(i => plan?.extensions[i].structure),
+        centerExtension: plan?.extensions[7].structure
+      },
+      bottomRight: {
+        spawn: plan?.spawns[2].structure,
+        container: plan?.containers[1].structure,
+        oppositeContainer: plan?.containers[0].structure,
+        extensions: [11, 13, 14, 10].map(i => plan?.extensions[i].structure),
+        centerExtension: plan?.extensions[8].structure
+      }
+    };
+    const link = plan?.link.structure;
+
     const positions = [
-      { creep: topLeft, pos: unpackPos(data.refillSquares.topLeft) },
-      { creep: topRight, pos: unpackPos(data.refillSquares.topRight) },
-      { creep: bottomLeft, pos: unpackPos(data.refillSquares.bottomLeft) },
-      { creep: bottomRight, pos: unpackPos(data.refillSquares.bottomRight) }
+      { creep: topLeft, pos: unpackPos(data.refillSquares.topLeft), structures: structures.topLeft },
+      { creep: topRight, pos: unpackPos(data.refillSquares.topRight), structures: structures.topRight },
+      { creep: bottomLeft, pos: unpackPos(data.refillSquares.bottomLeft), structures: structures.bottomLeft },
+      { creep: bottomRight, pos: unpackPos(data.refillSquares.bottomRight), structures: structures.bottomRight }
     ];
 
-    for (const { creep, pos } of positions) {
+    const shouldTransfer = (s: AnyStoreStructure | undefined) =>
+      s && s.store[RESOURCE_ENERGY] < s.store.getCapacity(RESOURCE_ENERGY);
+
+    for (const { creep, pos, structures } of positions) {
       if (!creep) continue;
       if (creep)
         moveTo(
@@ -75,13 +113,33 @@ export class FastfillerMission extends MissionImplementation {
           { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }), visualizePathStyle: {} }
         ); // even if already there, this will prevent shoving
       if (!creep.pos.isEqualTo(pos)) continue; // wait to get to position
+
+      // do any adjacent structures need energy?
+      const adjacentStructuresNeedEnergy =
+        shouldTransfer(structures.spawn) ||
+        structures.extensions.some(shouldTransfer) ||
+        shouldTransfer(structures.centerExtension);
+      const adjacentContainerNeedsEnergy = shouldTransfer(structures.container);
+      const transferFromOpposite =
+        structures.oppositeContainer &&
+        structures.container &&
+        structures.container.store[RESOURCE_ENERGY] <
+          structures.oppositeContainer.store[RESOURCE_ENERGY] - EXTENSION_ENERGY_CAPACITY[rcl(data.office)];
+      if (!adjacentStructuresNeedEnergy && !adjacentContainerNeedsEnergy) continue;
+
       if (creep.store.getFreeCapacity(RESOURCE_ENERGY)) {
         // Look for source
-        const sources = creep.pos.findInRange(FIND_STRUCTURES, 1).filter(s => 'store' in s && s.store[RESOURCE_ENERGY]);
-        const source = (sources.find(s => s.structureType === STRUCTURE_LINK) ??
-          sources.find(s => s.structureType === STRUCTURE_CONTAINER)) as StructureContainer | StructureLink | undefined;
+        let source;
+        if (link?.store[RESOURCE_ENERGY]) {
+          source = link;
+        } else if (structures.centerExtension && transferFromOpposite) {
+          source = structures.centerExtension;
+        } else if (structures.container?.store[RESOURCE_ENERGY] && adjacentStructuresNeedEnergy) {
+          source = structures.container;
+        }
         if (source) {
           creep.withdraw(source, RESOURCE_ENERGY);
+          viz(creep.pos.roomName).line(creep.pos, source.pos, { color: 'red' });
           source.store[RESOURCE_ENERGY] = Math.max(
             0,
             source.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity(RESOURCE_ENERGY)
@@ -90,15 +148,16 @@ export class FastfillerMission extends MissionImplementation {
       }
 
       if (creep.store.getUsedCapacity(RESOURCE_ENERGY)) {
-        const destination = creep.pos
-          .findInRange(FIND_STRUCTURES, 1)
-          .find(
-            s =>
-              (s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_EXTENSION) &&
-              s.store[RESOURCE_ENERGY] < s.store.getCapacity(RESOURCE_ENERGY)
-          ) as StructureSpawn | StructureExtension | undefined;
+        let destination = [
+          structures.spawn,
+          ...structures.extensions,
+          !transferFromOpposite ? structures.centerExtension : undefined,
+          structures.container
+        ].find(shouldTransfer);
+
         if (destination) {
           creep.transfer(destination, RESOURCE_ENERGY);
+          viz(creep.pos.roomName).line(creep.pos, destination.pos, { color: 'green' });
           destination.store[RESOURCE_ENERGY] = Math.min(
             destination.store.getCapacity(RESOURCE_ENERGY),
             destination.store[RESOURCE_ENERGY] + creep.store.getFreeCapacity(RESOURCE_ENERGY)

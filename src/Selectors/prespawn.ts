@@ -1,4 +1,5 @@
 /**
+ * Returns true if creep doesn't need to be replaced
  * Can filter a list of creeps to those that don't need to be replaced
  */
 export const prespawnByArrived = (creep: Creep) =>

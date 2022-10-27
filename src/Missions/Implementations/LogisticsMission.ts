@@ -44,7 +44,7 @@ export class LogisticsMission extends MissionImplementation {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.ESSENTIAL,
       body: energy =>
-        MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, this.calculated().roads, this.calculated().repair),
+        MinionBuilders[MinionTypes.ACCOUNTANT](energy / 2, 25, this.calculated().roads, this.calculated().repair),
       count: current => {
         const neededCapacity = missionsByOffice()
           [this.missionData.office].filter(isMission(HarvestMission))

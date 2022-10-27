@@ -35,7 +35,7 @@ let deserializedPlannedStructures = new Map<string, PlannedStructure>();
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
   public lastSurveyed = 0;
   private lastGet = 0;
-  private _structure: Structure<T> | undefined = undefined;
+  private _structure: ConcreteStructure<T> | undefined = undefined;
   constructor(public pos: RoomPosition, public structureType: T, public structureId?: Id<Structure<T>>) {
     const key = PackedStructureTypes[structureType] + packPos(pos);
     if (plannedStructures[key]) {
@@ -48,7 +48,7 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
   get structure() {
     if (Game.time !== this.lastGet) {
       this.survey();
-      this._structure = byId(this.structureId);
+      this._structure = byId(this.structureId) as ConcreteStructure<T> | undefined;
       this.lastGet = Game.time;
     }
     return this._structure;

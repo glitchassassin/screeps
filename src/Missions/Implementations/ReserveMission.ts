@@ -51,7 +51,7 @@ export class ReserveMission extends MissionImplementation {
           .map(({ room }) => room)
           .filter(room => room !== data.office)
       )
-    ];
+    ].filter(room => Memory.rooms[room].reserver !== 'LordGreywether' || (Memory.rooms[room]?.reservation ?? 0) < 3000);
     data.assignments ??= {};
     // remove no longer valid assignments
     const assigned: string[] = [];
@@ -61,7 +61,8 @@ export class ReserveMission extends MissionImplementation {
         delete data.assignments[assignment];
       } else if (!assigned.includes(data.assignments[assignment])) {
         unassignedCreeps.delete(assignment);
-        assigned.push(data.assignments[assignment]);
+
+        if (prespawnByArrived(Game.creeps[assignment])) assigned.push(data.assignments[assignment]);
       }
     }
     // create new assignments
