@@ -1,6 +1,6 @@
 import { calculateThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { roomIsEligibleForOffice } from 'Selectors/roomIsEligibleForOffice';
-import { packPos, packPosList } from 'utils/packrat';
+import { packPos } from 'utils/packrat';
 import { recalculateTerritoryOffices } from '../Territories/recalculateTerritoryOffices';
 
 export function initializeRoomMemory(room: string) {
@@ -17,7 +17,6 @@ export function initializeRoomMemory(room: string) {
       Memory.positions[m.id] = packPos(m.pos);
       return { mineralId: m.id, mineralType: m.mineralType };
     })[0] ?? {};
-  const exits = packPosList(Game.rooms[room].find(FIND_EXIT));
   const eligibleForOffice = roomIsEligibleForOffice(room);
 
   Memory.rooms[room] = {
@@ -28,8 +27,7 @@ export function initializeRoomMemory(room: string) {
     eligibleForOffice,
     officesInRange: '',
     franchises: {},
-    threatLevel: calculateThreatLevel(room),
-    exits
+    threatLevel: calculateThreatLevel(room)
   };
 
   // Calculate nearby offices and assign

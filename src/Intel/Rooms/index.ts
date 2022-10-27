@@ -49,7 +49,6 @@ declare global {
       >
     >;
     threatLevel?: [ThreatLevel, number];
-    exits?: string;
   }
   interface Memory {
     positions: Record<string, string>;

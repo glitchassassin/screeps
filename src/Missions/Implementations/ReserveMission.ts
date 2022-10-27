@@ -57,7 +57,7 @@ export class ReserveMission extends MissionImplementation {
     const assigned: string[] = [];
     const unassignedCreeps = new Set(marketers.map(c => c.name));
     for (const assignment in data.assignments) {
-      if (!Game.creeps[assignment] || !data.reserveTargets.includes(data.assignments[assignment])) {
+      if (!Game.creeps[assignment]) {
         delete data.assignments[assignment];
       } else if (!assigned.includes(data.assignments[assignment])) {
         unassignedCreeps.delete(assignment);

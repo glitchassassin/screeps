@@ -64,6 +64,7 @@ export class MineMission extends MissionImplementation {
       runStates(
         {
           [States.WORKING]: (data, miner) => {
+            if (mine.mineralAmount === 0) return States.RECYCLE;
             // Prefer to work from container position, fall back to adjacent position
             if (!miner.pos.isEqualTo(plan.container.pos) && plan.container.pos.lookFor(LOOK_CREEPS).length === 0) {
               moveTo(miner, { pos: plan.container.pos, range: 0 });
@@ -80,7 +81,8 @@ export class MineMission extends MissionImplementation {
               return States.WORKING;
             }
             return States.GET_BOOSTED;
-          }
+          },
+          [States.RECYCLE]: recycle
         },
         this.missionData,
         miner
@@ -101,7 +103,7 @@ export class MineMission extends MissionImplementation {
             return States.WITHDRAW;
           },
           [States.DEPOSIT]: (data, hauler) => {
-            if (!hauler.memory.state || hauler.store.getUsedCapacity() === 0) {
+            if (hauler.store.getUsedCapacity() === 0) {
               return States.WITHDRAW;
             }
             const terminal = roomPlans(data.office)?.headquarters?.terminal;
