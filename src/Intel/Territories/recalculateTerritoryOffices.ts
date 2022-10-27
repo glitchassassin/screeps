@@ -73,7 +73,8 @@ function calculateTerritoryData(office: string, territory: string): Record<Id<So
         plainCost: 2,
         swampCost: 2,
         roadCost: 1,
-        maxOps: 100000
+        maxOps: 100000,
+        reusePath: 100000 // recalculate periodically
       }
     );
     if (path) {
