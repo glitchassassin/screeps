@@ -7,7 +7,7 @@ export const recycle = (
     office: string;
   },
   creep: Creep
-) => {
+): States.RECYCLE => {
   const recycleTarget = roomPlans(data.office)?.fastfiller?.containers[0].pos;
   const recycleSpawn = roomPlans(data.office)?.fastfiller?.spawns[0].structure as StructureSpawn | undefined;
   if (!recycleTarget || !recycleSpawn) {

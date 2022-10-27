@@ -1,27 +1,24 @@
-import { logCpuStart } from 'utils/logCPU';
-
 declare global {
   interface CreepMemory {
     runState?: string;
   }
 }
 
-export function runStates<M extends {}>(
-  states: Record<string, (data: M, creep: Creep) => string>,
+export function runStates<M extends {}, ExtraStates extends string, States extends string>(
+  states: Record<States | ExtraStates, (data: M, creep: Creep) => States>,
   data: M,
-  creep: Creep,
-  profile = false
+  creep: Creep
 ) {
   const statesRun: string[] = [];
-  creep.memory.runState = creep.memory.runState ?? Object.keys(states)[0]; // First state is default
-  if (profile) logCpuStart();
-  while (!statesRun.includes(creep.memory.runState)) {
-    statesRun.push(creep.memory.runState);
-    if (!(creep.memory.runState in states)) {
-      const state = creep.memory.runState;
+  let state = (creep.memory.runState ?? Object.keys(states)[0]) as States | ExtraStates; // First state is default
+  creep.memory.runState = state;
+  while (!statesRun.includes(state)) {
+    statesRun.push(state);
+    if (!(state in states)) {
       delete creep.memory.runState;
       throw new Error(`Mission has no state: ${state}`);
     }
-    creep.memory.runState = states[creep.memory.runState](data, creep);
+    state = states[state](data, creep);
+    creep.memory.runState = state;
   }
 }
