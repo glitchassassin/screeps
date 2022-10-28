@@ -4,7 +4,7 @@ import { createEngineerOrder } from 'Missions/OldImplementations/Engineer';
 import { activeMissions, isMission } from 'Missions/Selectors';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { rcl } from 'Selectors/rcl';
-import { facilitiesCostPending } from 'Selectors/Structures/facilitiesWorkToDo';
+import { facilitiesCostPending } from 'Selectors/Structures/destroyUnplannedStructures';
 
 export default {
   name: 'Engineer',

@@ -13,6 +13,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget, getWithdrawLimit } from 'Missions/Budgets';
+import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
@@ -20,19 +21,13 @@ import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import {
-  facilitiesCostPending,
-  facilitiesWorkToDo,
-  plannedStructureNeedsWork
-} from 'Selectors/Structures/facilitiesWorkToDo';
-import { memoizeByTick } from 'utils/memoizeFunction';
+import { memoizeOncePerTick } from 'utils/memoizeFunction';
 
 export interface EngineerMissionData extends BaseMissionData {
   assignments?: Record<
     string,
     {
       facilitiesTarget?: string;
-      franchise?: Id<Source>;
     }
   >;
 }
@@ -48,11 +43,21 @@ export class EngineerMission extends MissionImplementation {
         const workPending = current
           .map(c => c.getActiveBodyparts(WORK) * (c.ticksToLive ?? CREEP_LIFE_TIME))
           .reduce(sum, 0);
-        let pendingCost = facilitiesCostPending(this.missionData.office);
+        let pendingCost = this.queue.analysis().workTicksRemaining;
         // If rcl < 2, engineers will also upgrade
         if (rcl(this.missionData.office) < 2) {
           const controller = Game.rooms[this.missionData.office].controller;
           pendingCost += (controller?.progressTotal ?? 0) - (controller?.progress ?? 0);
+        } else {
+          // above RCL2, let repair work accumulate before spawning
+          const engineerWork =
+            MinionBuilders[MinionTypes.ENGINEER](
+              Game.rooms[this.missionData.office].energyCapacityAvailable,
+              this.calculated().roads
+            ).filter(c => c === WORK).length * CREEP_LIFE_TIME;
+          if (this.queue.build.size === 0 && pendingCost < engineerWork / 2) {
+            pendingCost = 0;
+          }
         }
         if (workPending < pendingCost) return 1;
         return 0;
@@ -61,26 +66,30 @@ export class EngineerMission extends MissionImplementation {
   };
 
   priority = 8;
-
+  queue: EngineerQueue;
   constructor(public missionData: EngineerMissionData, id?: string) {
     super(missionData, id);
+    this.queue = new EngineerQueue(missionData.office);
   }
   static fromId(id: EngineerMission['id']) {
     return super.fromId(id) as EngineerMission;
   }
 
-  calculated = memoizeByTick(
-    () => '',
-    () => {
-      return {
-        roads: rcl(this.missionData.office) > 3
-      };
-    }
-  );
+  calculated = memoizeOncePerTick(() => {
+    return {
+      roads: rcl(this.missionData.office) > 3
+    };
+  });
 
   run(creeps: ResolvedCreeps<EngineerMission>, missions: ResolvedMissions<EngineerMission>, data: EngineerMissionData) {
+    this.queue.survey();
+
     const { engineers } = creeps;
     this.missionData.assignments ??= {};
+
+    const analysis = this.queue.analysis();
+
+    this.estimatedEnergyRemaining = analysis.energyRemaining;
 
     for (const creep of engineers) {
       this.missionData.assignments[creep.name] ??= {};
@@ -94,28 +103,26 @@ export class EngineerMission extends MissionImplementation {
         {
           [States.FIND_WORK]: (mission, creep) => {
             delete mission.facilitiesTarget;
-            const nextStructure = getClosestByRange(creep.pos, facilitiesWorkToDo(data.office));
+            const nextStructure = getClosestByRange(creep.pos, this.queue.workQueue());
             if (nextStructure) {
               mission.facilitiesTarget = nextStructure.serialize();
-              delete mission.franchise;
               return States.BUILDING;
             }
-            if (rcl(data.office) < 3) {
-              // Skip building roads until RCL3
-              delete mission.facilitiesTarget;
-              return States.UPGRADING;
-            }
+            delete mission.facilitiesTarget;
             if (rcl(data.office) < 8) return States.UPGRADING;
             return States.RECYCLE;
           },
           [States.GET_ENERGY]: (mission, creep) => {
+            const target = mission.facilitiesTarget
+              ? PlannedStructure.deserialize(mission.facilitiesTarget)
+              : undefined;
             if (
               creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 ||
               engineerGetEnergy(
                 creep,
                 data.office,
                 getWithdrawLimit(data.office, this.budget),
-                !!mission.franchise && !!mission.facilitiesTarget // currently building for a franchise
+                target?.pos.roomName !== this.missionData.office // currently building for a franchise
               ) === BehaviorResult.SUCCESS
             ) {
               return States.FIND_WORK;
@@ -127,7 +134,12 @@ export class EngineerMission extends MissionImplementation {
             if (!mission.facilitiesTarget) return States.FIND_WORK;
             const plan = PlannedStructure.deserialize(mission.facilitiesTarget);
 
-            if (!plannedStructureNeedsWork(plan, true)) return States.FIND_WORK;
+            plan.survey();
+
+            if (!plan.energyToBuild && !plan.energyToRepair) {
+              this.queue.complete(plan);
+              return States.FIND_WORK;
+            }
 
             if (!Game.rooms[plan.pos.roomName]?.controller?.my && Game.rooms[plan.pos.roomName]) {
               const obstacle = plan.pos
@@ -146,10 +158,6 @@ export class EngineerMission extends MissionImplementation {
 
             if (creep.pos.inRangeTo(plan.pos, 3)) {
               if (plan.structure && plan.structure.hits < plan.structure.hitsMax) {
-                if (mission.franchise) {
-                  // engineers should not be repairing
-                  return States.FIND_WORK;
-                }
                 if (creep.repair(plan.structure) === OK) {
                   const cost = REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
                   this.recordEnergy(cost);

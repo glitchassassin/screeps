@@ -1,4 +1,4 @@
-import { destroyUnplannedStructures } from 'Selectors/Structures/facilitiesWorkToDo';
+import { destroyUnplannedStructures } from 'Selectors/Structures/destroyUnplannedStructures';
 import { cityNames } from 'utils/CityNames';
 
 export function initializeOfficeMemory(room: string) {

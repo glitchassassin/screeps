@@ -1,16 +1,22 @@
 import { BARRIER_LEVEL, BARRIER_TYPES } from 'config';
+import { EngineerMission } from 'Missions/Implementations/EngineerMission';
+import { activeMissions, isMission } from 'Missions/Selectors';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { facilitiesCostPending, facilitiesWorkToDo } from 'Selectors/Structures/facilitiesWorkToDo';
 import { viz } from 'Selectors/viz';
 
 export default () => {
   for (let room in Memory.offices) {
+    const mission = activeMissions(room).find(isMission(EngineerMission));
+    if (!mission) continue;
     const visited = new Map<PlannedStructure, boolean>();
     const structureTypes: StructureConstant[] = [];
-    const workToDo = facilitiesWorkToDo(room).sort(
-      (a, b) => (a.structureType === STRUCTURE_RAMPART ? -1 : 0) - (b.structureType === STRUCTURE_RAMPART ? -1 : 0)
-    );
+    const workToDo = mission.queue
+      .allWorkQueue()
+      .slice()
+      .sort(
+        (a, b) => (a.structureType === STRUCTURE_RAMPART ? -1 : 0) - (b.structureType === STRUCTURE_RAMPART ? -1 : 0)
+      );
     workToDo.forEach(s => {
       if (visited.get(s)) console.log('Duplicate planned structure', s.pos);
       visited.set(s, true);
@@ -29,10 +35,11 @@ export default () => {
       }
     });
 
+    const analysis = mission.queue.analysis();
     const data = [
       ...structureTypes.map(t => ['', '', t]),
       ['---', '---', '---'],
-      [workToDo.length, facilitiesCostPending(room), '']
+      [analysis.count, analysis.energyRemaining, '']
     ];
 
     Dashboard({

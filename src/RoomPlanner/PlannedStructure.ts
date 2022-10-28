@@ -1,4 +1,6 @@
+import { BARRIER_LEVEL, BARRIER_TYPES } from 'config';
 import { byId } from 'Selectors/byId';
+import { rcl } from 'Selectors/rcl';
 import { viz } from 'Selectors/viz';
 import { packPos, unpackPos } from 'utils/packrat';
 import profiler from 'utils/profiler';
@@ -33,9 +35,6 @@ let plannedStructures: Record<string, PlannedStructure> = {};
 let deserializedPlannedStructures = new Map<string, PlannedStructure>();
 
 export class PlannedStructure<T extends BuildableStructureConstant = BuildableStructureConstant> {
-  public lastSurveyed = 0;
-  private lastGet = 0;
-  private _structure: ConcreteStructure<T> | undefined = undefined;
   constructor(public pos: RoomPosition, public structureType: T, public structureId?: Id<Structure<T>>) {
     const key = PackedStructureTypes[structureType] + packPos(pos);
     if (plannedStructures[key]) {
@@ -45,19 +44,18 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     }
   }
 
+  public energyToBuild = 0;
+  public energyToRepair = 0;
+
   get structure() {
-    if (Game.time !== this.lastGet) {
-      this.survey();
-      this._structure = byId(this.structureId) as ConcreteStructure<T> | undefined;
-      this.lastGet = Game.time;
-    }
-    return this._structure;
+    this.survey();
+    return byId(this.structureId) as ConcreteStructure<T> | undefined;
   }
 
+  public constructionSiteId?: Id<ConstructionSite<T>>;
   get constructionSite() {
-    return Game.rooms[this.pos.roomName]
-      ? this.pos.lookFor(LOOK_CONSTRUCTION_SITES).find(c => c.structureType === this.structureType)
-      : undefined;
+    this.survey();
+    return byId(this.constructionSiteId) as ConstructionSite<T> | undefined;
   }
 
   serialize() {
@@ -79,19 +77,42 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
       throw e;
     }
   }
+
+  public lastSurveyed = 0;
   survey() {
     if (Game.time === this.lastSurveyed) return !!this.structureId; // Only survey once per tick
     this.lastSurveyed = Game.time;
     if (Game.rooms[this.pos.roomName]) {
-      if (byId(this.structureId)) {
+      if (!byId(this.structureId)) {
+        this.structureId = undefined;
+      }
+      this.structureId ??= Game.rooms[this.pos.roomName]
+        .lookForAt(LOOK_STRUCTURES, this.pos)
+        .find(s => s.structureType === this.structureType && (!('my' in s) || (s as OwnedStructure).my))?.id as Id<
+        Structure<T>
+      >;
+      const structure = byId(this.structureId);
+      if (structure) {
+        this.energyToBuild = 0;
+        const hitsMax = BARRIER_TYPES.includes(structure.structureType)
+          ? BARRIER_LEVEL[rcl(structure.pos.roomName)]
+          : structure.hitsMax;
+        this.energyToRepair = (hitsMax - structure.hits) * REPAIR_COST;
         return true; // Actual structure is visible
       } else {
-        this.structureId = Game.rooms[this.pos.roomName]
-          .lookForAt(LOOK_STRUCTURES, this.pos)
-          .find(s => s.structureType === this.structureType && (!('my' in s) || (s as OwnedStructure).my))?.id as Id<
-          Structure<T>
-        >;
-        if (byId(this.structureId)) return true; // Found structure at expected position
+        if (!byId(this.constructionSiteId)) {
+          this.constructionSiteId = undefined;
+        }
+        this.constructionSiteId ??= Game.rooms[this.pos.roomName]
+          ? this.pos
+              .lookFor(LOOK_CONSTRUCTION_SITES)
+              .find((c): c is ConstructionSite<T> => c.my && c.structureType === this.structureType)?.id
+          : undefined;
+        const constructionSite = byId(this.constructionSiteId);
+        if (constructionSite) {
+          this.energyToBuild = constructionSite.progressTotal - constructionSite.progress;
+          this.energyToRepair = 0;
+        }
       }
     } else if (this.structureId) {
       return true; // Cached structure exists

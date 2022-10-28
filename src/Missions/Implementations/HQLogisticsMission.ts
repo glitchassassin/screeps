@@ -111,12 +111,19 @@ export class HQLogisticsMission extends MissionImplementation {
       creepEnergy -= Math.abs(linkAmountToTransfer);
     }
 
-    if (terminal && terminalAmountNeeded && terminalAmountNeeded > 0) {
-      const amount = Math.min(terminalAmountNeeded, clerk.store.getUsedCapacity(RESOURCE_ENERGY));
-      !transfer && clerk.transfer(terminal, RESOURCE_ENERGY, amount);
-      transfer = true;
-      creepEnergy -= amount;
-      // console.log(clerk.name, 'transferring', amount, 'to terminal')
+    if (terminal && terminalAmountNeeded) {
+      if (terminalAmountNeeded > 0) {
+        const amount = Math.min(terminalAmountNeeded, clerk.store.getUsedCapacity(RESOURCE_ENERGY));
+        !transfer && clerk.transfer(terminal, RESOURCE_ENERGY, amount);
+        transfer = true;
+        creepEnergy -= amount;
+        // console.log(clerk.name, 'transferring', amount, 'to terminal')
+      } else if (terminalAmountNeeded < 0) {
+        const amount = Math.min(-terminalAmountNeeded, clerk.store.getFreeCapacity(RESOURCE_ENERGY));
+        !withdraw && clerk.withdraw(terminal, RESOURCE_ENERGY, amount);
+        withdraw = true;
+        creepEnergy += amount;
+      }
     }
 
     if (extension && extensionAmountNeeded && extensionAmountNeeded > 0) {

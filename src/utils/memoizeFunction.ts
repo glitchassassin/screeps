@@ -20,3 +20,7 @@ export const memoize = <T extends Array<any>, U>(
 
 export const memoizeByTick = <T extends Array<any>, U>(indexer: (...args: T) => string, fn: (...args: T) => U) =>
   memoize(indexer, fn, 1);
+
+export const memoizeOnce = <T extends Array<any>, U>(fn: (...args: T) => U, resetAfterTicks = Infinity) =>
+  memoize(() => '', fn, resetAfterTicks);
+export const memoizeOncePerTick = <T extends Array<any>, U>(fn: (...args: T) => U) => memoize(() => '', fn, 1);

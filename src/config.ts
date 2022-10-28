@@ -64,10 +64,11 @@ export const BUILD_PRIORITIES: Record<BuildableStructureConstant, number> = {
   [STRUCTURE_TOWER]: 5,
   [STRUCTURE_WALL]: 5
 };
+
 /**
- * Health percentage before dispatching repairers
+ * Health amount before dispatching repairers
  */
-export const REPAIR_THRESHOLD = 0.5;
+export const REPAIR_THRESHOLD = CARRY_CAPACITY * 10;
 
 export const FRANCHISE_RETRY_INTERVAL = 100000;
 

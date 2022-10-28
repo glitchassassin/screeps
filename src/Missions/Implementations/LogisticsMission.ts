@@ -23,7 +23,6 @@ import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { plannedStructureNeedsWork } from 'Selectors/Structures/facilitiesWorkToDo';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
@@ -199,7 +198,7 @@ export class LogisticsMission extends MissionImplementation {
         roads: rcl(this.missionData.office) > 3 && franchisesThatNeedRoadWork(this.missionData.office).length <= 2,
         repair:
           rcl(this.missionData.office) > 3 &&
-          plannedTerritoryRoads(this.missionData.office).some(r => r.structure && plannedStructureNeedsWork(r))
+          plannedTerritoryRoads(this.missionData.office).some(r => r.energyToRepair > 0)
       };
     }
   );

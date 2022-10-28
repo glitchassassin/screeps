@@ -1,6 +1,7 @@
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { cachePath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
+import { getOfficeDistanceByRange } from 'Selectors/getOfficeDistance';
 import { adjacentWalkablePositions, getClosestOffice, isHighway, terrainCostAt } from 'Selectors/Map/MapCoordinates';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -52,11 +53,13 @@ export const evaluatePowerBanks = (room: string) => {
   if (!office) return;
   const storage = roomPlans(office)?.headquarters?.storage.pos;
   if (!storage) return;
-  for (const powerBank of Game.rooms[room].find<StructurePowerBank>(FIND_HOSTILE_STRUCTURES, {
-    filter: { structureType: STRUCTURE_POWER_BANK }
-  })) {
-    if (Memory.offices[office].powerbanks.some(r => r.id === powerBank.id)) continue; // already tracked
-    Memory.offices[office].powerbanks.push(evaluatePowerBank(office, storage, powerBank));
+  if (getOfficeDistanceByRange(room, office) < 10) {
+    for (const powerBank of Game.rooms[room].find<StructurePowerBank>(FIND_HOSTILE_STRUCTURES, {
+      filter: { structureType: STRUCTURE_POWER_BANK }
+    })) {
+      if (Memory.offices[office].powerbanks.some(r => r.id === powerBank.id)) continue; // already tracked
+      Memory.offices[office].powerbanks.push(evaluatePowerBank(office, storage, powerBank));
+    }
   }
 };
 
