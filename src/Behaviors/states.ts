@@ -22,7 +22,8 @@ export enum States {
   RECYCLE = 'RECYCLE',
   FIND_WORK = 'FIND_WORK',
   BUILDING = 'BUILDING',
-  UPGRADING = 'UPGRADING'
+  UPGRADING = 'UPGRADING',
+  DEFEND = 'DEFEND'
 }
 
 declare global {

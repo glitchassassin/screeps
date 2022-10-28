@@ -1,4 +1,7 @@
 import { guardKill } from 'Behaviors/guardKill';
+import { recycle } from 'Behaviors/recycle';
+import { runStates } from 'Behaviors/stateMachine';
+import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import {
@@ -40,11 +43,10 @@ export class KillCoreMission extends MissionImplementation {
 
   run(creeps: ResolvedCreeps<KillCoreMission>, missions: ResolvedMissions<KillCoreMission>, data: KillCoreMissionData) {
     const { guard } = creeps;
-    if (!guard && this.assembled()) {
+    if (this.creeps.guard.died) {
       this.status = MissionStatus.DONE;
       return;
     }
-    if (!guard) return;
 
     // If work is done, clear target
     if (data.targetRoom && !Memory.rooms[data.targetRoom].invaderCore) {
@@ -61,16 +63,32 @@ export class KillCoreMission extends MissionImplementation {
       }
     }
 
-    if (!data.targetRoom) return; // nothing to do
+    if (!guard) return;
 
-    // Go to room
-    if (guard.pos.roomName !== data.targetRoom) {
-      moveTo(guard, { pos: new RoomPosition(25, 25, data.targetRoom), range: 20 });
-    }
+    runStates(
+      {
+        [States.DEFEND]: (data, guard) => {
+          if (!data.targetRoom) return States.RECYCLE; // nothing to do
 
-    // Clear room
-    const target = findInvaderStructures(data.targetRoom)[0];
+          // Go to room
+          if (guard.pos.roomName !== data.targetRoom) {
+            moveTo(guard, { pos: new RoomPosition(25, 25, data.targetRoom), range: 20 });
+          }
 
-    guardKill(guard, target);
+          // Clear room
+          const target = findInvaderStructures(data.targetRoom)[0];
+
+          guardKill(guard, target);
+          return States.DEFEND;
+        },
+        [States.RECYCLE]: (data, guard) => {
+          if (data.targetRoom) return States.DEFEND;
+          recycle(data, guard);
+          return States.RECYCLE;
+        }
+      },
+      this.missionData,
+      guard
+    );
   }
 }

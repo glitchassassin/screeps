@@ -1,11 +1,14 @@
 import { MISSION_HISTORY_LIMIT } from 'config';
 import { initializeOfficeMissions } from 'Missions/initializeOfficeMissions';
+import { debugCPU } from 'utils/debugCPU';
 import { allMissions, MissionImplementation } from './MissionImplementation';
 
 export function runMissions() {
   initializeOfficeMissions();
+  debugCPU('Initializing missions', true);
   for (const mission of allMissions()) {
     mission.execute();
+    debugCPU(mission.constructor.name, true);
   }
   Memory.missionReports ??= [];
   Memory.missionReports = Memory.missionReports.filter(r => r.finished > Game.time - MISSION_HISTORY_LIMIT);

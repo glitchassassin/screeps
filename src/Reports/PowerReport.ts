@@ -1,3 +1,5 @@
+import { allMissions } from 'Missions/BaseClasses/MissionImplementation';
+import { PowerBankMission } from 'Missions/Implementations/PowerBankMission';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { creepStats } from 'Selectors/creepStats';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
@@ -9,6 +11,12 @@ export default () => {
   const minEnergyPrice = buyMarketPrice(RESOURCE_ENERGY);
   const powerEnergyPrice = minPowerPrice / minEnergyPrice;
   for (const office in Memory.offices) {
+    for (const mission of allMissions()) {
+      if (mission instanceof PowerBankMission) {
+        const bankPos = unpackPos(mission.missionData.powerBankPos);
+        Game.map.visual.line(new RoomPosition(25, 25, office), bankPos, { color: '#ff0000', width: 2 });
+      }
+    }
     const data = Memory.offices[office].powerbanks
       .filter(r => r.distance && r.distance < 500)
       .map(report => {
@@ -25,6 +33,11 @@ export default () => {
         Game.map.visual.text(
           (report.expires - Game.time).toFixed(0) + '⏰',
           new RoomPosition(5, 20, bankPos.roomName),
+          { fontSize: 10, align: 'left' }
+        );
+        Game.map.visual.text(
+          ((report.hits / POWER_BANK_HITS) * 100).toFixed(2) + '%',
+          new RoomPosition(5, 30, bankPos.roomName),
           { fontSize: 10, align: 'left' }
         );
 

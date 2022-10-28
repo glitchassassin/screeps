@@ -12,6 +12,7 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { roomPlans } from 'Selectors/roomPlans';
 import { unpackPos } from 'utils/packrat';
@@ -84,6 +85,10 @@ export class PowerBankMission extends MissionImplementation {
   ) {
     const { haulers } = creeps;
 
+    if (!this.report() && !haulers.length) {
+      this.status = MissionStatus.DONE;
+    }
+
     const powerBankPos = unpackPos(data.powerBankPos);
     const powerBankRuin = Game.rooms[powerBankPos.roomName]
       ? powerBankPos.lookFor(LOOK_RUINS).find(s => s.structure.structureType === STRUCTURE_POWER_BANK)
@@ -94,7 +99,14 @@ export class PowerBankMission extends MissionImplementation {
       runStates(
         {
           [States.WITHDRAW]: (mission, creep) => {
-            if (creep.store.getUsedCapacity(RESOURCE_POWER)) return States.DEPOSIT;
+            if (
+              creep.store.getUsedCapacity(RESOURCE_POWER) ||
+              (Game.rooms[powerBankPos.roomName] &&
+                !powerBankRuin &&
+                !Game.rooms[powerBankPos.roomName].find(FIND_DROPPED_RESOURCES, { filter: RESOURCE_POWER }).length)
+            ) {
+              return States.DEPOSIT;
+            }
             if (powerBankRuin) {
               moveTo(creep, powerBankRuin);
               creep.withdraw(powerBankRuin, RESOURCE_POWER);

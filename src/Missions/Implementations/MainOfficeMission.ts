@@ -67,7 +67,14 @@ export class MainOfficeMission extends MissionImplementation {
     powerBanks: new MultiMissionSpawner(PowerBankMission, current => {
       if (current.length || rcl(this.missionData.office) < 8) return []; // only one powerbank mission per office at a time
       const powerbank = Memory.offices[this.missionData.office].powerbanks
-        .filter(r => r.powerCost && r.powerCost < buyMarketPrice(RESOURCE_POWER) && r.hits === POWER_BANK_HITS)
+        .filter(
+          r =>
+            r.distance &&
+            r.distance < 500 &&
+            r.powerCost &&
+            r.powerCost < buyMarketPrice(RESOURCE_POWER) &&
+            r.hits === POWER_BANK_HITS
+        )
         .reduce(
           min(r => r.powerCost ?? Infinity),
           undefined
