@@ -25,12 +25,12 @@ export class PowerBankDuoMission extends MissionImplementation {
     attacker: new CreepSpawner('a', this.missionData.office, {
       role: MinionTypes.POWER_BANK_ATTACKER,
       budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.GUARD](energy, false)
+      body: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
     }),
     healer: new CreepSpawner('b', this.missionData.office, {
       role: MinionTypes.POWER_BANK_HEALER,
       budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.MEDIC](energy)
+      body: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
     })
   };
 

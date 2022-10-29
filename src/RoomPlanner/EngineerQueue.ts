@@ -2,6 +2,7 @@ import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
+import { schedule } from 'Selectors/scheduledCallbacks';
 import { memoize, memoizeOncePerTick } from 'utils/memoizeFunction';
 import { PlannedStructure } from './PlannedStructure';
 
@@ -63,8 +64,13 @@ export class EngineerQueue {
   workQueue = memoizeOncePerTick(() => {
     if (this.build.size) return [...this.build];
     const threatLevel = Memory.rooms[this.office].threatLevel?.[1] ?? 0;
-    if (threatLevel) return [...this.maintain_barriers, ...this.maintain_economy, ...this.maintain_other];
-    return [...this.maintain_economy, ...this.maintain_barriers, ...this.maintain_other];
+    if (threatLevel && this.maintain_barriers.size) {
+      return [...this.maintain_barriers];
+    } else if (this.maintain_economy.size) {
+      return [...this.maintain_economy];
+    } else {
+      return [...this.maintain_other];
+    }
   });
 
   analysis = memoizeOncePerTick(() => {
@@ -87,10 +93,11 @@ export class EngineerQueue {
   });
 
   complete(structure: PlannedStructure) {
+    this.workQueue().splice(this.workQueue().indexOf(structure), 1);
     this.build.delete(structure);
     this.maintain_barriers.delete(structure);
     this.maintain_economy.delete(structure);
     this.maintain_other.delete(structure);
-    this.surveyStructure(structure);
+    schedule(() => this.surveyStructure(structure), 1);
   }
 }

@@ -89,7 +89,10 @@ export class EngineerMission extends MissionImplementation {
 
     const analysis = this.queue.analysis();
 
-    this.estimatedEnergyRemaining = analysis.energyRemaining;
+    this.estimatedEnergyRemaining = Math.min(
+      engineers.map(c => c.getActiveBodyparts(WORK) * BUILD_POWER * (c.ticksToLive ?? CREEP_LIFE_TIME)).reduce(sum, 0),
+      analysis.energyRemaining
+    );
 
     for (const creep of engineers) {
       this.missionData.assignments[creep.name] ??= {};
@@ -161,6 +164,10 @@ export class EngineerMission extends MissionImplementation {
                 if (creep.repair(plan.structure) === OK) {
                   const cost = REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
                   this.recordEnergy(cost);
+                  if (cost >= plan.energyToRepair) {
+                    this.queue.complete(plan);
+                    return States.FIND_WORK;
+                  }
                 }
               } else {
                 // Create construction site if needed
@@ -182,6 +189,10 @@ export class EngineerMission extends MissionImplementation {
                   if (result === OK) {
                     const cost = BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
                     this.recordEnergy(cost);
+                    if (cost >= plan.energyToBuild) {
+                      this.queue.complete(plan);
+                      return States.FIND_WORK;
+                    }
                   } else if (result === ERR_NOT_ENOUGH_ENERGY) {
                     return States.GET_ENERGY;
                   }

@@ -6,6 +6,7 @@ import { planRooms } from 'RoomPlanner/planRooms';
 import { preTick, reconcileTraffic } from 'screeps-cartographer';
 import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl, displayGpl, displaySpawn } from 'Selectors/displayBucket';
+import { runScheduled } from 'Selectors/scheduledCallbacks';
 import { runStructures } from 'Structures';
 import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
 import { initializeSpawn } from 'utils/initializeSpawns';
@@ -18,6 +19,9 @@ export const gameLoop = () => {
   displaySpawn();
   resetDebugCPU(true);
   debugCPU('gameLoop setup', true);
+  runScheduled();
+  debugCPU('Scheduled tasks', true);
+
   // Cache data where needed
   scanRooms();
   debugCPU('scanRooms', true);
