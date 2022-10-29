@@ -132,7 +132,7 @@ export class FastfillerMission extends MissionImplementation {
         let source;
         if (link?.store[RESOURCE_ENERGY]) {
           source = link;
-        } else if (structures.centerExtension && transferFromOpposite) {
+        } else if (structures.centerExtension?.store[RESOURCE_ENERGY] && transferFromOpposite) {
           source = structures.centerExtension;
         } else if (structures.container?.store[RESOURCE_ENERGY] && adjacentStructuresNeedEnergy) {
           source = structures.container;
