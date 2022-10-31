@@ -23,6 +23,7 @@ import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
+import { logCpu, logCpuStart } from 'utils/logCPU';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
@@ -42,6 +43,7 @@ export class LogisticsMission extends MissionImplementation {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.ESSENTIAL,
+      estimatedCpuPerTick: 0.6,
       body: energy =>
         MinionBuilders[MinionTypes.ACCOUNTANT](energy / 2, 25, this.calculated().roads, this.calculated().repair),
       count: current => {
@@ -213,6 +215,8 @@ export class LogisticsMission extends MissionImplementation {
     const { haulers } = creeps;
     data.assignments ??= {};
 
+    logCpuStart();
+
     // clean up invalid assignments
     for (const assigned in this.missionData.assignments) {
       const assignment = this.missionData.assignments[assigned];
@@ -239,6 +243,7 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
     }
+    logCpu('cleanup');
 
     // add targets, if needed
 
@@ -251,6 +256,7 @@ export class LogisticsMission extends MissionImplementation {
         assignment.withdrawTarget = this.findBestWithdrawTarget(creep, true);
       }
     }
+    logCpu('add targets');
 
     // check for bucket brigade transfers
 
@@ -292,6 +298,7 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
     }
+    logCpu('bucket brigade');
 
     for (const creep of haulers) {
       const assignment = {
@@ -307,6 +314,7 @@ export class LogisticsMission extends MissionImplementation {
         assignment,
         creep
       );
+      logCpu('run creeps');
     }
   }
 }

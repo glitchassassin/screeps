@@ -1,3 +1,4 @@
+import { REPAIR_THRESHOLD } from 'config';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
@@ -31,7 +32,10 @@ export class EngineerQueue {
 
   surveyStructure(structure: PlannedStructure) {
     structure.survey();
-    if (!Game.rooms[structure.pos.roomName] || (structure.energyToBuild === 0 && structure.energyToRepair === 0))
+    if (
+      !Game.rooms[structure.pos.roomName] ||
+      (structure.energyToBuild === 0 && structure.energyToRepair < REPAIR_THRESHOLD)
+    )
       return; // only register if we can confirm work to be done
     if (!structure.structureId) {
       this.build.add(structure);
@@ -64,13 +68,16 @@ export class EngineerQueue {
   workQueue = memoizeOncePerTick(() => {
     if (this.build.size) return [...this.build];
     const threatLevel = Memory.rooms[this.office].threatLevel?.[1] ?? 0;
-    if (threatLevel && this.maintain_barriers.size) {
-      return [...this.maintain_barriers];
-    } else if (this.maintain_economy.size) {
-      return [...this.maintain_economy];
+    if (threatLevel) {
+      // wartime priority
+      if (this.maintain_barriers.size) return [...this.maintain_barriers];
+      if (this.maintain_economy.size) return [...this.maintain_economy];
     } else {
-      return [...this.maintain_other];
+      // peacetime priority
+      if (this.maintain_economy.size) return [...this.maintain_economy];
+      if (this.maintain_barriers.size) return [...this.maintain_barriers];
     }
+    return [...this.maintain_other];
   });
 
   analysis = memoizeOncePerTick(() => {

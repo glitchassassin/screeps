@@ -55,6 +55,7 @@ export class HQLogisticsMission extends MissionImplementation {
     const pos = getHeadquarterLogisticsLocation(data.office);
     if (!pos) return;
     moveTo(clerk, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
+    if (!clerk.pos.isEqualTo(pos)) return;
 
     // Check HQ state
     const hq = roomPlans(data.office)?.headquarters;

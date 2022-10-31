@@ -5,7 +5,6 @@ import { MissionStatus } from 'Missions/Mission';
 import { activeMissions, isMission, isStatus } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { byId } from 'Selectors/byId';
-import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { posById } from 'Selectors/posById';
@@ -29,14 +28,14 @@ export default () => {
       capacity: 0
     };
 
-    const data = franchisesByOffice(office, true).map(franchise => {
+    const data = franchisesByOffice(office).map(franchise => {
       let sourcePos = posById(franchise.source);
       Game.map.visual.text(franchiseEnergyAvailable(franchise.source).toFixed(0), sourcePos!, { fontSize: 5 });
-      let assigned = activeMissionsBySource[franchise.source]?.creeps.harvesters.resolved.length ?? 0;
-      let harvestRate = activeMissionsBySource[franchise.source]?.harvestRate() ?? 0;
-      let estimatedCapacity = harvestRate * franchise.distance * 2;
+      const mission = activeMissionsBySource[franchise.source];
+      let assigned = mission?.creeps.harvesters.resolved.length ?? 0;
+      let estimatedCapacity = mission?.haulingCapacityNeeded() ?? 0;
 
-      let disabled = !franchiseActive(office, franchise.source);
+      let disabled = !mission || mission?.disabled();
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 
@@ -57,7 +56,7 @@ export default () => {
 
       return [
         `${sourcePos}${disabled ? '' : ' ✓'}`,
-        franchise.distance,
+        mission?.missionData.distance ?? '--',
         assigned.toFixed(0),
         estimatedCapacity.toFixed(0),
         byId(franchise.source)?.energy.toFixed(0) ?? '--',

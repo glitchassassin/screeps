@@ -8,10 +8,10 @@ export interface ExtensionsPlan {
 
 export interface FranchisePlan {
   sourceId: Id<Source>;
-  link: PlannedStructure;
-  container: PlannedStructure;
-  extensions: PlannedStructure[];
-  ramparts: PlannedStructure[];
+  link: PlannedStructure<STRUCTURE_LINK>;
+  container: PlannedStructure<STRUCTURE_CONTAINER>;
+  extensions: PlannedStructure<STRUCTURE_EXTENSION>[];
+  ramparts: PlannedStructure<STRUCTURE_RAMPART>[];
 }
 
 export interface RoadsPlan {

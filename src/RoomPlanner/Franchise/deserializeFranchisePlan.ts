@@ -1,5 +1,6 @@
 import type { FranchisePlan } from 'RoomPlanner';
 import { deserializePlannedStructures } from 'Selectors/plannedStructures';
+import { isPlannedStructure } from 'Selectors/typeguards';
 import { validateFranchisePlan } from './validateFranchisePlan';
 
 export function deserializeFranchisePlan(serialized: string) {
@@ -11,10 +12,10 @@ export function deserializeFranchisePlan(serialized: string) {
     ramparts: []
   };
   for (const s of deserializePlannedStructures(serialized.slice(24))) {
-    if (s.structureType === STRUCTURE_LINK) plan.link = s;
-    if (s.structureType === STRUCTURE_CONTAINER) plan.container = s;
-    if (s.structureType === STRUCTURE_RAMPART) plan.ramparts?.push(s);
-    if (s.structureType === STRUCTURE_EXTENSION) plan.extensions?.push(s);
+    if (isPlannedStructure(STRUCTURE_LINK)(s)) plan.link = s;
+    if (isPlannedStructure(STRUCTURE_CONTAINER)(s)) plan.container = s;
+    if (isPlannedStructure(STRUCTURE_RAMPART)(s)) plan.ramparts?.push(s);
+    if (isPlannedStructure(STRUCTURE_EXTENSION)(s)) plan.extensions?.push(s);
   }
   return validateFranchisePlan(plan);
 }

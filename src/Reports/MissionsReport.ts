@@ -67,7 +67,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     actualEnergy += Math.min(o.estimate.energy, o.actual.energy);
   }
   table.push(['---', '---', '---', '---', '---']);
-  table.push(['Remaining', '', '', `${(estimatedCPU - actualCPU).toFixed(2)}`, `${estimatedEnergy - actualEnergy}`]);
+  table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`]);
   table.push(['Available', '', Game.time, missionCpuAvailable(room).toFixed(2), missionEnergyAvailable(room)]);
   return table;
 };

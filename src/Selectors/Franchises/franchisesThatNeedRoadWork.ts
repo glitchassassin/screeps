@@ -1,8 +1,8 @@
 import { nextFranchiseRoadToBuild } from '../plannedTerritoryRoads';
-import { franchisesByOffice } from './franchisesByOffice';
+import { activeFranchises } from './franchiseActive';
 
 export function franchisesThatNeedRoadWork(office: string) {
-  return franchisesByOffice(office)
+  return activeFranchises(office)
     .filter(({ remote, source, room }) => {
       return (
         remote &&

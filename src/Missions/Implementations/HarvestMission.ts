@@ -38,6 +38,9 @@ export class HarvestMission extends MissionImplementation {
         budget: Budget.ESSENTIAL,
         body: energy => MinionBuilders[MinionTypes.SALESMAN](energy, this.calculated().link, this.calculated().remote),
         count: current => {
+          if (this.disabled()) {
+            return 0; // disabled
+          }
           const harvestRate = current
             .filter(prespawnByArrived)
             .map(c => c.getActiveBodyparts(WORK) * HARVEST_POWER)
@@ -95,7 +98,16 @@ export class HarvestMission extends MissionImplementation {
     }
   );
 
+  active() {
+    return this.creeps.harvesters.resolved.length > 0;
+  }
+  disabled() {
+    return this.missionData.distance && this.missionData.distance > 250;
+  }
+
   haulingCapacityNeeded() {
+    const { link, container } = getFranchisePlanBySourceId(this.missionData.source) ?? {};
+    if (link?.structure && !container?.structure?.store.getUsedCapacity(RESOURCE_ENERGY)) return 0;
     const time = (this.missionData.distance ?? 50) * 2;
     return time * this.harvestRate();
   }

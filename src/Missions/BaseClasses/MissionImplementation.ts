@@ -78,7 +78,7 @@ export class MissionImplementation {
   }
 
   get status() {
-    return Memory.missions[this.id].status;
+    return Memory.missions[this.id]?.status;
   }
   set status(value: MissionStatus) {
     Memory.missions[this.id].status = value;

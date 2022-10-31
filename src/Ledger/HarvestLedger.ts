@@ -20,7 +20,7 @@ export class HarvestLedger {
 export function reportHarvestLedger() {
   console.log('\nHarvest Ledger\n');
   for (const office in Memory.offices) {
-    for (const { source, room } of franchisesByOffice(office, true)) {
+    for (const { source, room } of franchisesByOffice(office)) {
       // HarvestLedger.reset(office);
       const ledger = HarvestLedger.get(office, source);
       console.log(office, room, ledger.age, JSON.stringify(ledger.value));

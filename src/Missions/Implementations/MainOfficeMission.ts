@@ -36,7 +36,7 @@ export interface MainOfficeMissionData extends BaseMissionData {}
 export class MainOfficeMission extends MissionImplementation {
   public missions = {
     harvest: new MultiMissionSpawner(HarvestMission, current => {
-      const franchises = new Set(franchisesByOffice(this.missionData.office, true).map(({ source }) => source));
+      const franchises = new Set(franchisesByOffice(this.missionData.office).map(({ source }) => source));
       for (const mission of current) {
         franchises.delete(mission.missionData.source);
       }

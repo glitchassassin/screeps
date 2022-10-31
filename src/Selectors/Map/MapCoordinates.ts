@@ -1,5 +1,6 @@
-import { getCachedPath } from 'screeps-cartographer';
+import { cachePath, getCachedPath } from 'screeps-cartographer';
 import { rcl } from 'Selectors/rcl';
+import { roomPlans } from 'Selectors/roomPlans';
 import { memoize, memoizeByTick } from 'utils/memoizeFunction';
 
 export const calculateAdjacencyMatrix = memoize(
@@ -248,13 +249,16 @@ export const getClosestOfficeFromMemory = (roomName: string) => {
   let closest: string | undefined = undefined;
   let length = Infinity;
   for (let office in Memory.rooms[roomName].franchises) {
-    for (let franchise of Object.keys(Memory.rooms[roomName].franchises[office])) {
-      const path = getCachedPath(office + franchise);
-      if (!path) continue;
-      if (path.length < length) {
-        length = path.length;
-        closest = office;
-      }
+    const path = cachePath(
+      office + roomName,
+      roomPlans(office)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, office),
+      { pos: new RoomPosition(25, 25, roomName), range: 20 }
+    );
+
+    if (!path) continue;
+    if (path.length < length) {
+      length = path.length;
+      closest = office;
     }
   }
   return closest;

@@ -14,7 +14,7 @@ import { roomPlans } from 'Selectors/roomPlans';
 
 export default () => {
   for (const office in Memory.offices) {
-    for (const franchise of franchisesByOffice(office, true)) {
+    for (const franchise of franchisesByOffice(office)) {
       let sourcePos = posById(franchise.source);
       let storagePos = roomPlans(office)?.headquarters?.storage.pos;
       let disabled = !franchiseActive(office, franchise.source);

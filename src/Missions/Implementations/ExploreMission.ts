@@ -41,7 +41,7 @@ export class ExploreMission extends MissionImplementation {
     if (!explorer) return;
 
     // Select a target
-    if (!this.missionData.exploreTarget) {
+    if (!this.missionData.exploreTarget && Game.cpu.bucket > 1000) {
       // Ignore aggression on scouts
       explorer.notifyWhenAttacked(false);
 

@@ -5,6 +5,7 @@ import { getCostMatrix, getRoomPathDistance } from 'Selectors/Map/Pathing';
 import { sourceIds } from 'Selectors/roomCache';
 import { getFranchisePlanBySourceId, roomPlans } from 'Selectors/roomPlans';
 import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
+import { memoize } from 'utils/memoizeFunction';
 
 declare global {
   namespace NodeJS {
@@ -32,21 +33,24 @@ export function recalculateTerritoryOffices(room: string) {
       const range = getOfficeDistanceByRange(o, room);
       if (range > TERRITORY_RADIUS) return false;
       const distance = getRoomPathDistance(o, room);
-      if (distance === undefined || distance > TERRITORY_RADIUS) return false;
+      if (distance === undefined || distance > TERRITORY_RADIUS + 1) return false;
       return true;
     })
     .sort();
-  const key = officesInRange.join('_');
-  if (roomPlans(room) && Memory.rooms[room].officesInRange !== key) {
-    console.log('Offices in range of', room, 'have changed, recalculating paths');
-    Memory.rooms[room].officesInRange = key;
+  recalculate(room, officesInRange);
+}
+
+const recalculate = memoize(
+  (room, officesInRange) => room + officesInRange.join('_'),
+  (room: string, officesInRange: string[]) => {
     // Offices in range of this room have changed; recalculate paths, if needed
     for (const office of officesInRange) {
       const data = calculateTerritoryData(office, room);
       if (data) Memory.rooms[room].franchises[office] = data;
     }
-  }
-}
+  },
+  500
+);
 
 function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, { scores: [] }> | undefined {
   const data: Record<Id<Source>, { scores: [] }> = {};
