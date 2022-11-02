@@ -1,5 +1,5 @@
 import { LogisticsMission } from 'Missions/Implementations/LogisticsMission';
-import { isMission, missionsByOffice } from 'Missions/Selectors';
+import { activeMissions, isMission } from 'Missions/Selectors';
 import { Metrics } from 'screeps-viz';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchiseIncome } from 'Selectors/Franchises/franchiseIncome';
@@ -35,6 +35,7 @@ declare global {
           energyCapacityAvailable: number;
           spawnUptime: number;
           logisticsCapacity: number;
+          logisticsUsedCapacity: number;
           franchiseIncome: number;
           franchiseEnergy: number;
           storageLevel: number;
@@ -109,9 +110,13 @@ export const recordMetrics = profiler.registerFN(() => {
       spawnUptime: getSpawns(office).filter(s => s.spawning).length,
       storageLevel: storageEnergyAvailable(office),
       franchiseIncome: franchiseIncome(office),
-      logisticsCapacity: missionsByOffice()
-        [office].filter(isMission(LogisticsMission))
+      logisticsCapacity: activeMissions(office)
+        .filter(isMission(LogisticsMission))
         .map(m => m.capacity())
+        .reduce(sum, 0),
+      logisticsUsedCapacity: activeMissions(office)
+        .filter(isMission(LogisticsMission))
+        .map(m => m.usedCapacity())
         .reduce(sum, 0),
       franchiseEnergy: franchisesByOffice(office)
         .map(({ source }) => franchiseEnergyAvailable(source))

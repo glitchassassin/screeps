@@ -48,4 +48,4 @@ export const missionsByOffice = memoizeByTick(
   }
 );
 
-export const activeMissions = (office: string) => missionsByOffice()[office];
+export const activeMissions = (office: string) => missionsByOffice()[office] ?? [];

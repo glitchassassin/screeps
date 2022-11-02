@@ -10,6 +10,7 @@ import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMi
 import { refillSquares } from 'Reports/fastfillerPositions';
 import { byId } from 'Selectors/byId';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
+import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
 import { rcl } from 'Selectors/rcl';
@@ -44,14 +45,26 @@ export class MainOfficeMission extends MissionImplementation {
     }),
     logistics: new MissionSpawner(LogisticsMission, () => ({ ...this.missionData })),
     explore: new MissionSpawner(ExploreMission, () => ({ ...this.missionData })),
-    fastfiller: new MissionSpawner(FastfillerMission, () => ({
-      ...this.missionData,
-      refillSquares: refillSquares(this.missionData.office)
-    })),
+    fastfiller: new ConditionalMissionSpawner(
+      FastfillerMission,
+      () => ({
+        ...this.missionData,
+        refillSquares: refillSquares(this.missionData.office)
+      }),
+      () =>
+        Boolean(
+          roomPlans(this.missionData.office)?.fastfiller?.extensions.some(e => e.structure) &&
+            hasEnergyIncome(this.missionData.office)
+        )
+    ),
     mobileRefill: new MissionSpawner(MobileRefillMission, () => ({ ...this.missionData })),
     engineer: new MissionSpawner(EngineerMission, () => ({ ...this.missionData })),
     reserve: new MissionSpawner(ReserveMission, () => ({ ...this.missionData })),
-    hqLogistics: new MissionSpawner(HQLogisticsMission, () => ({ ...this.missionData })),
+    hqLogistics: new ConditionalMissionSpawner(
+      HQLogisticsMission,
+      () => ({ ...this.missionData }),
+      () => Boolean(roomPlans(this.missionData.office)?.headquarters?.link.structure)
+    ),
     upgrade: new MissionSpawner(UpgradeMission, () => ({ ...this.missionData })),
     science: new ConditionalMissionSpawner(
       ScienceMission,
@@ -62,7 +75,11 @@ export class MainOfficeMission extends MissionImplementation {
     mining: new ConditionalMissionSpawner(
       MineMission,
       () => ({ mineral: mineralId(this.missionData.office)!, ...this.missionData }),
-      () => Boolean(byId(mineralId(this.missionData.office))?.mineralAmount)
+      () =>
+        Boolean(
+          byId(mineralId(this.missionData.office))?.mineralAmount &&
+            roomPlans(this.missionData.office)?.mine?.extractor.structure
+        )
     ),
     powerBanks: new MultiMissionSpawner(PowerBankMission, current => {
       if (current.length || rcl(this.missionData.office) < 8) return []; // only one powerbank mission per office at a time

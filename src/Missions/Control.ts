@@ -8,13 +8,13 @@ import { runMissions, spawnMissions } from './BaseClasses/runMissions';
 import { getBudgetAdjustment } from './Budgets';
 
 export function runMissionControl() {
-  vacateSpawns();
   const before = Game.cpu.getUsed();
   executeMissions();
   recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
   debugCPU('executeMissions', true);
   allocateMissions();
   debugCPU('allocateMissions', true);
+  vacateSpawns();
 }
 
 function executeMissions() {
@@ -50,7 +50,10 @@ function allocateMissions() {
         if (cpuRemaining < 0) break;
         const order = missions.shift();
         if (!order) break;
-        if (!order.body.length) continue;
+        if (!order.body.length) {
+          console.log(order.name, 'empty body', order.body.length);
+          continue;
+        }
         const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
         const canStart = order.estimate.energy <= energyRemaining - adjustedBudget;
         // Mission can start

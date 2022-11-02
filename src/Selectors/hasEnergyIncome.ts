@@ -7,7 +7,7 @@ import { storageEnergyAvailable } from './storageEnergyAvailable';
 
 export const hasEnergyIncome = memoizeByTick(
   office => office,
-  (office: string) => {
+  (office: string): boolean => {
     const harvestMissions = activeMissions(office)
       .filter(isMission(HarvestMission))
       .some(m => m.harvestRate() > 0);

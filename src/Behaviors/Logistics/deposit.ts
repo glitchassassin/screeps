@@ -24,6 +24,7 @@ export const deposit = (
   let target = byId(data.depositTarget as Id<AnyStoreStructure | Creep>);
 
   if (!target || target.store[RESOURCE_ENERGY] >= target.store.getCapacity(RESOURCE_ENERGY)) {
+    delete data.depositTarget;
     return States.DEPOSIT;
   }
 
@@ -110,6 +111,7 @@ export const deposit = (
         target.store.getFreeCapacity(RESOURCE_ENERGY),
         creep.store.getUsedCapacity(RESOURCE_ENERGY)
       );
+      target.store[RESOURCE_ENERGY] += amount;
       if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
         // Record deposit amount
         HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);

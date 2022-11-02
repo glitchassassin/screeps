@@ -2,6 +2,7 @@ import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { fixedCount } from 'Missions/BaseClasses';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import { Budget } from 'Missions/Budgets';
+import { roomPlans } from 'Selectors/roomPlans';
 import { LogisticsMission, LogisticsMissionData } from './LogisticsMission';
 
 export interface MobileRefillMissionData extends LogisticsMissionData {
@@ -17,7 +18,7 @@ export class MobileRefillMission extends LogisticsMission {
       budget: Budget.ESSENTIAL,
       body: energy =>
         MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, this.calculated().roads, this.calculated().repair),
-      count: fixedCount(() => 1)
+      count: fixedCount(() => (roomPlans(this.missionData.office)?.headquarters?.storage.structure ? 1 : 0))
     })
   };
   priority = 11;

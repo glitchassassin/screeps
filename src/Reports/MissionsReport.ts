@@ -1,6 +1,6 @@
 import { MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { MissionStatus } from 'Missions/Mission';
-import { missionsByOffice } from 'Missions/Selectors';
+import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
@@ -46,7 +46,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     entry.count += mission.creepCount();
     entry.actual.cpu += mission.cpuUsed();
     entry.actual.energy += mission.energyUsed();
-    entry.estimate.cpu += mission.energyRemaining();
+    entry.estimate.cpu += mission.cpuRemaining();
     entry.estimate.energy += mission.energyRemaining();
     missionsList.set(key, entry);
   }
@@ -58,8 +58,8 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         `${o.type} (${o.count})`,
         o.priority.toFixed(2),
         o.status,
-        `${o.actual.cpu.toFixed(2)}/${o.estimate.cpu.toFixed(2)}`,
-        `${o.actual.energy}/${o.estimate.energy}`
+        `${o.estimate.cpu.toFixed(2)}`,
+        `${o.estimate.energy}`
       ]);
     estimatedCPU += o.estimate.cpu;
     estimatedEnergy += o.estimate.energy;
@@ -73,9 +73,8 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
 };
 
 export default () => {
-  const missions = missionsByOffice();
   for (const room in Memory.offices ?? []) {
-    const active = buildMissionsTable(room, missions[room]);
+    const active = buildMissionsTable(room, activeMissions(room));
     Dashboard({
       widgets: [
         {

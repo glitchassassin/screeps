@@ -16,6 +16,6 @@ export const recycle = (
     return States.RECYCLE;
   }
   moveTo(creep, { pos: recycleTarget, range: 0 });
-  recycleSpawn.recycleCreep(creep);
+  if (creep.pos.isEqualTo(recycleTarget)) recycleSpawn.recycleCreep(creep);
   return States.RECYCLE;
 };

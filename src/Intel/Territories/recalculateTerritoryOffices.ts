@@ -72,7 +72,7 @@ function calculateTerritoryData(office: string, territory: string): Record<Id<So
       {
         roomCallback: (room: string) => {
           if (getTerritoryIntent(room) === TerritoryIntent.AVOID) return false;
-          return getCostMatrix(room, false, { territoryPlannedRoadsCost: 1 });
+          return getCostMatrix(room, false, { territoryPlannedRoadsCost: 1, roomPlan: Boolean(Memory.offices[room]) });
         },
         plainCost: 2,
         swampCost: 2,

@@ -3,6 +3,7 @@ import { engineerGetEnergy } from 'Behaviors/engineerGetEnergy';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
+import { BARRIER_TYPES } from 'config';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
@@ -13,6 +14,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget, getWithdrawLimit } from 'Missions/Budgets';
+import { estimateMissionInterval } from 'Missions/Selectors';
 import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
@@ -45,7 +47,7 @@ export class EngineerMission extends MissionImplementation {
           .reduce(sum, 0);
         let pendingCost = this.queue.analysis().workTicksRemaining;
         // If rcl < 2, engineers will also upgrade
-        if (rcl(this.missionData.office) < 2) {
+        if (rcl(this.missionData.office) < 3) {
           const controller = Game.rooms[this.missionData.office].controller;
           pendingCost += (controller?.progressTotal ?? 0) - (controller?.progress ?? 0);
         } else {
@@ -90,7 +92,14 @@ export class EngineerMission extends MissionImplementation {
     const analysis = this.queue.analysis();
 
     this.estimatedEnergyRemaining = Math.min(
-      engineers.map(c => c.getActiveBodyparts(WORK) * BUILD_POWER * (c.ticksToLive ?? CREEP_LIFE_TIME)).reduce(sum, 0),
+      engineers
+        .map(
+          c =>
+            c.getActiveBodyparts(WORK) *
+            BUILD_POWER *
+            Math.min(estimateMissionInterval(this.missionData.office), c.ticksToLive ?? CREEP_LIFE_TIME)
+        )
+        .reduce(sum, 0),
       analysis.energyRemaining
     );
 
@@ -189,7 +198,7 @@ export class EngineerMission extends MissionImplementation {
                   if (result === OK) {
                     const cost = BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
                     this.recordEnergy(cost);
-                    if (cost >= plan.energyToBuild) {
+                    if (cost >= plan.energyToBuild && !BARRIER_TYPES.includes(plan.structureType)) {
                       this.queue.complete(plan);
                       return States.FIND_WORK;
                     }
@@ -209,6 +218,9 @@ export class EngineerMission extends MissionImplementation {
               storageEnergyAvailable(data.office) <= getWithdrawLimit(data.office, this.budget)
             )
               return States.FIND_WORK;
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+              return States.GET_ENERGY;
+            }
 
             // No construction - upgrade instead
             const controller = Game.rooms[data.office]?.controller;
@@ -216,7 +228,7 @@ export class EngineerMission extends MissionImplementation {
             moveTo(creep, { pos: controller.pos, range: 3 });
             const result = creep.upgradeController(controller);
             if (result == ERR_NOT_ENOUGH_ENERGY) {
-              return States.FIND_WORK;
+              return States.GET_ENERGY;
             } else if (result === OK) {
               this.recordEnergy(
                 UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER * creep.body.filter(p => p.type === WORK).length

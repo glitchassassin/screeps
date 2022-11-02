@@ -66,7 +66,14 @@ export class EngineerQueue {
   ]);
 
   workQueue = memoizeOncePerTick(() => {
-    if (this.build.size) return [...this.build];
+    if (this.build.size)
+      return [...this.build].filter(
+        // if room is owned or reserved by someone else, we can't place a construction site
+        s =>
+          s.constructionSite ||
+          ([undefined, 'LordGreywether'].includes(Memory.rooms[s.pos.roomName].reserver) &&
+            [undefined, 'LordGreywether'].includes(Memory.rooms[s.pos.roomName].owner))
+      );
     const threatLevel = Memory.rooms[this.office].threatLevel?.[1] ?? 0;
     if (threatLevel) {
       // wartime priority

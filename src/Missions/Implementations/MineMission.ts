@@ -58,7 +58,11 @@ export class MineMission extends MissionImplementation {
     }
     const plan = roomPlans(data.office)?.mine;
     const mine = byId(data.mineral);
-    if (!plan || !mine) return;
+    const extractor = plan?.extractor.structure;
+    if (!plan || !mine || !extractor) {
+      this.status = MissionStatus.DONE;
+      return;
+    }
 
     if (miner) {
       runStates(

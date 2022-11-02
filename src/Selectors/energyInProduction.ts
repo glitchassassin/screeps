@@ -13,7 +13,7 @@ export const energyInProduction = memoizeByTick(
         haulCapacity += mission.capacity();
       }
       if (isMission(HarvestMission)(mission)) {
-        harvestCapacity += mission.harvestRate();
+        harvestCapacity += mission.haulingCapacityNeeded();
       }
     }
     return Math.min(harvestCapacity, haulCapacity);

@@ -112,6 +112,9 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
         if (constructionSite) {
           this.energyToBuild = constructionSite.progressTotal - constructionSite.progress;
           this.energyToRepair = 0;
+        } else {
+          this.energyToBuild = CONSTRUCTION_COST[this.structureType];
+          this.energyToRepair = 0;
         }
       }
     } else if (this.structureId) {

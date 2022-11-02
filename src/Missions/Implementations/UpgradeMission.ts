@@ -29,6 +29,11 @@ export class UpgradeMission extends MissionImplementation {
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.RESEARCH](energy, this.calculated().maxWork),
       count: current => {
+        if (
+          rcl(this.missionData.office) < 3 &&
+          (Game.rooms[this.missionData.office].controller?.ticksToDowngrade ?? Infinity) > 3000
+        )
+          return 0; // engineers will upgrade
         if (rcl(this.missionData.office) === 8 && current.length) {
           return 0; // maintain one upgrader at RCL8
         }
@@ -71,7 +76,7 @@ export class UpgradeMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<UpgradeMission>, missions: ResolvedMissions<UpgradeMission>, data: UpgradeMissionData) {
     const { upgraders } = creeps;
 
-    if (Game.rooms[data.office].controller!.ticksToDowngrade < 10000) {
+    if (Game.rooms[data.office].controller!.ticksToDowngrade < 3000) {
       this.priority = 15;
     } else {
       this.priority = 7;
@@ -81,7 +86,7 @@ export class UpgradeMission extends MissionImplementation {
       .map(
         creep =>
           creep.body.filter(p => p.type === WORK).length *
-          Math.min(estimateMissionInterval(data.office), creep.ticksToLive ?? 0)
+          Math.min(estimateMissionInterval(data.office), creep.ticksToLive ?? CREEP_LIFE_TIME)
       )
       .reduce(sum, 0);
 
@@ -97,6 +102,7 @@ export class UpgradeMission extends MissionImplementation {
             if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) return States.WORKING;
             const container = roomPlans(mission.office)?.library?.container.structure as StructureContainer;
             const link = roomPlans(mission.office)?.library?.link.structure as StructureLink;
+
             if (link && link.store[RESOURCE_ENERGY]) {
               moveTo(creep, { pos: link.pos, range: 1 });
               if (creep.withdraw(link, RESOURCE_ENERGY) === OK) {
@@ -120,23 +126,43 @@ export class UpgradeMission extends MissionImplementation {
             return States.GET_ENERGY;
           },
           [States.WORKING]: (mission, creep) => {
+            let energyUsed =
+              UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER * creep.body.filter(p => p.type === WORK).length;
             const controller = Game.rooms[mission.office]?.controller;
             if (!controller) throw new Error(`No controller for upgrader ${creep.name} (${creep.pos})`);
+            const containerPos = roomPlans(mission.office)?.library?.container.pos ?? controller.pos;
+            // Try to share with other creeps
+            if (
+              creep.store.getUsedCapacity(RESOURCE_ENERGY) >
+              creep.store.getCapacity(RESOURCE_ENERGY) / 2 + energyUsed
+            ) {
+              const nearby = upgraders.find(
+                u =>
+                  u !== creep &&
+                  u.pos.isNearTo(creep) &&
+                  u.store.getUsedCapacity(RESOURCE_ENERGY) < u.store.getCapacity(RESOURCE_ENERGY) / 2 &&
+                  u.pos.getRangeTo(containerPos) > creep.pos.getRangeTo(containerPos)
+              );
+              if (nearby)
+                creep.transfer(
+                  nearby,
+                  RESOURCE_ENERGY,
+                  Math.min(nearby.store.getFreeCapacity(RESOURCE_ENERGY), creep.store.getCapacity(RESOURCE_ENERGY) / 2)
+                );
+            }
+
             // Move out of the way of other upgraders if needed
             const range = 3;
             // Memory.offices[mission.office].activeMissions.filter(m => m.type === MissionType.UPGRADE).length > 3 ? 1 : 3;
             moveTo(creep, { pos: controller.pos, range });
             const result = creep.upgradeController(controller);
             if (result === OK) {
-              let energyUsed =
-                UPGRADE_CONTROLLER_COST * UPGRADE_CONTROLLER_POWER * creep.body.filter(p => p.type === WORK).length;
               if (rcl(mission.office) === 8) energyUsed = Math.min(15, energyUsed);
               this.recordEnergy(energyUsed);
               if (creep.store[RESOURCE_ENERGY] <= energyUsed) return States.GET_ENERGY;
             } else if (result === ERR_NOT_ENOUGH_ENERGY) {
               return States.GET_ENERGY;
             }
-
             return States.WORKING;
           }
         },

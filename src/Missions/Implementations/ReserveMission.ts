@@ -26,6 +26,7 @@ export class ReserveMission extends MissionImplementation {
       budget: Budget.ECONOMY,
       body: energy => MinionBuilders[MinionTypes.MARKETER](energy),
       count: current => {
+        if (Game.rooms[this.missionData.office].energyCapacityAvailable < 650) return 0;
         const targets = this.missionData.reserveTargets?.length ?? 0;
         if (current.filter(prespawnByArrived).length < targets) return 1;
         return 0;

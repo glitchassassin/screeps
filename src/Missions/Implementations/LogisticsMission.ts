@@ -23,7 +23,8 @@ import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { logCpu, logCpuStart } from 'utils/logCPU';
+import { viz } from 'Selectors/viz';
+// import { logCpu, logCpuStart } from 'utils/logCPU';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
@@ -43,9 +44,14 @@ export class LogisticsMission extends MissionImplementation {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.ESSENTIAL,
-      estimatedCpuPerTick: 0.6,
+      estimatedCpuPerTick: 0.8,
       body: energy =>
-        MinionBuilders[MinionTypes.ACCOUNTANT](energy / 2, 25, this.calculated().roads, this.calculated().repair),
+        MinionBuilders[MinionTypes.ACCOUNTANT](
+          Math.max(SPAWN_ENERGY_CAPACITY, energy / 2),
+          25,
+          this.calculated().roads,
+          this.calculated().repair
+        ),
       count: current => {
         const neededCapacity = missionsByOffice()
           [this.missionData.office].filter(isMission(HarvestMission))
@@ -58,7 +64,7 @@ export class LogisticsMission extends MissionImplementation {
     })
   };
 
-  priority = 10;
+  priority = 11;
 
   constructor(public missionData: LogisticsMissionData, id?: string) {
     super(missionData, id);
@@ -99,6 +105,7 @@ export class LogisticsMission extends MissionImplementation {
       for (const assigned in this.missionData.assignments) {
         const assignment = this.missionData.assignments[assigned];
         const creep = Game.creeps[assigned];
+        if (!creep) continue;
         if (
           creep.memory.runState === States.WITHDRAW &&
           assignment.withdrawTarget &&
@@ -126,7 +133,7 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
 
-      return { withdrawAssignments, depositAssignments };
+      return { withdrawAssignments, depositAssignments, depositAssignmentIds };
     }
   );
 
@@ -215,9 +222,22 @@ export class LogisticsMission extends MissionImplementation {
     const { haulers } = creeps;
     data.assignments ??= {};
 
-    logCpuStart();
+    // Update priorities
+    const neededCapacity = missionsByOffice()
+      [this.missionData.office].filter(isMission(HarvestMission))
+      .filter(m => !m.calculated().remote)
+      .map(m => m.haulingCapacityNeeded())
+      .reduce(sum, 0);
+    if (neededCapacity < haulers.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)) {
+      this.priority = 3;
+    } else {
+      this.priority = 11;
+    }
+
+    // logCpuStart();
 
     // clean up invalid assignments
+    const { depositAssignmentIds } = this.assignedLogisticsCapacity();
     for (const assigned in this.missionData.assignments) {
       const assignment = this.missionData.assignments[assigned];
       const creep = Game.creeps[assigned];
@@ -225,12 +245,12 @@ export class LogisticsMission extends MissionImplementation {
         delete this.missionData.assignments[assigned];
         continue;
       }
-      if (creep?.memory.runState === States.DEPOSIT && assignment.depositTarget) {
-        const target = byId(assignment.depositTarget as Id<AnyStoreStructure | Creep>);
-
-        if (!target || target.store[RESOURCE_ENERGY] >= target.store.getCapacity(RESOURCE_ENERGY)) {
-          delete assignment.depositTarget;
-        }
+      if (
+        creep?.memory.runState === States.DEPOSIT &&
+        assignment.depositTarget &&
+        !depositAssignmentIds.has(assignment.depositTarget)
+      ) {
+        delete assignment.depositTarget;
       } else if (creep?.memory.runState === States.WITHDRAW && assignment.withdrawTarget) {
         const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
         if (target instanceof StructureStorage || target instanceof StructureContainer) {
@@ -243,7 +263,7 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
     }
-    logCpu('cleanup');
+    // logCpu('cleanup');
 
     // add targets, if needed
 
@@ -256,7 +276,7 @@ export class LogisticsMission extends MissionImplementation {
         assignment.withdrawTarget = this.findBestWithdrawTarget(creep, true);
       }
     }
-    logCpu('add targets');
+    // logCpu('add targets');
 
     // check for bucket brigade transfers
 
@@ -289,16 +309,20 @@ export class LogisticsMission extends MissionImplementation {
 
         // clear to swap
         if (deposit.transfer(withdraw, RESOURCE_ENERGY) === OK) {
+          viz(withdraw.pos.roomName).line(withdraw.pos, target, { color: 'red' });
+          viz(deposit.pos.roomName).line(deposit.pos, target, { color: 'green' });
           withdraw.memory.runState = States.DEPOSIT;
           deposit.memory.runState = States.WITHDRAW;
           data.assignments[withdraw.name] = depositAssignment;
           data.assignments[deposit.name] = withdrawAssignment;
+          withdraw.store[RESOURCE_ENERGY] += deposit.store[RESOURCE_ENERGY];
+          deposit.store[RESOURCE_ENERGY] = 0;
           hasBrigaded.add(withdraw);
           hasBrigaded.add(deposit);
         }
       }
     }
-    logCpu('bucket brigade');
+    // logCpu('bucket brigade');
 
     for (const creep of haulers) {
       const assignment = {
@@ -314,7 +338,7 @@ export class LogisticsMission extends MissionImplementation {
         assignment,
         creep
       );
-      logCpu('run creeps');
+      // logCpu('run creeps');
     }
   }
 }

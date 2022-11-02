@@ -113,6 +113,13 @@ export class HarvestMission extends MissionImplementation {
   }
 
   harvestRate() {
+    const pos = posById(this.missionData.source);
+    if (
+      ![undefined, 'LordGreywether'].includes(Memory.rooms[pos?.roomName ?? '']?.reserver) ||
+      ![undefined, 'LordGreywether'].includes(Memory.rooms[pos?.roomName ?? '']?.owner)
+    ) {
+      return 0; // reserved or owned by someone else
+    }
     const creepHarvestRate = this.creeps.harvesters.resolved
       .map(c => c.getActiveBodyparts(WORK) * HARVEST_POWER)
       .reduce(sum, 0);

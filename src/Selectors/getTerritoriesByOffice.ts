@@ -21,18 +21,8 @@ function recalculateTerritories() {
   lastCalculatedTick = Game.time;
 
   for (const office in Memory.offices) {
-    const targets = calculateNearbyRooms(office, TERRITORY_RADIUS, false).filter(t => {
-      console.log(
-        t,
-        !isSourceKeeperRoom(t),
-        Memory.rooms[t]?.franchises[office],
-        !Memory.offices[t],
-        getClosestOfficeFromMemory(t) === office,
-        Memory.rooms[t].threatLevel?.[0] !== ThreatLevel.OWNED,
-        !Memory.rooms[t].owner,
-        (Memory.rooms[t].threatLevel?.[1] ?? 0) <= THREAT_TOLERANCE.remote[rcl(office)]
-      );
-      return (
+    const targets = calculateNearbyRooms(office, TERRITORY_RADIUS, false).filter(
+      t =>
         !isSourceKeeperRoom(t) &&
         Memory.rooms[t]?.franchises[office] &&
         !Memory.offices[t] &&
@@ -40,8 +30,7 @@ function recalculateTerritories() {
         Memory.rooms[t].threatLevel?.[0] !== ThreatLevel.OWNED &&
         !Memory.rooms[t].owner &&
         (Memory.rooms[t].threatLevel?.[1] ?? 0) <= THREAT_TOLERANCE.remote[rcl(office)]
-      );
-    });
+    );
     Memory.offices[office].territories = [];
     targets.forEach(t => {
       Memory.rooms[t].office = office;

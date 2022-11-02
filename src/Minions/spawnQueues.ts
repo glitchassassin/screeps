@@ -43,7 +43,7 @@ export function vacateSpawns() {
             adjacentWalkablePositions(spawn.pos, true);
           for (const pos of spawningSquares) {
             for (const creep of pos.lookFor(LOOK_CREEPS)) {
-              if (creep.name.startsWith('REFILL')) continue; // don't shove refillers
+              if (creep.name.startsWith('FM_')) continue; // don't shove refillers
               moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
             }
           }

@@ -11,7 +11,7 @@ let initializedCreeps = false;
 const officeMissions = new Map<string, MainOfficeMission>();
 export function initializeOfficeMissions() {
   for (const office in Memory.offices) {
-    if (!officeMissions.has(office)) {
+    if (Memory.roomPlans[office]?.complete && !officeMissions.has(office)) {
       const mission = new MainOfficeMission({ office }, Memory.offices[office].missionId);
       mission.init();
       Memory.offices[office].missionId = mission.id;

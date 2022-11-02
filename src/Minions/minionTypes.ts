@@ -41,6 +41,9 @@ function buildFromSegment(energy: number, segment: BodyPartConstant[], opts: Par
   };
   energy -= minionCost(actualOpts.suffix);
   const segmentCost = minionCost(segment);
+  if (energy < segmentCost) {
+    console.log('Minion builder error:', energy, 'not enough for segment', JSON.stringify(segment));
+  }
   const segmentCount = Math.min(
     Math.floor(energy / segmentCost),
     Math.floor((50 - actualOpts.suffix.length) / segment.length),
@@ -62,10 +65,8 @@ export const MinionBuilders = {
       `${Math.round((energy * 2) / 100)} ${maxSegments} ${roads}`,
     (energy: number, maxSegments = 25, roads = false, repair = false) => {
       const suffix = repair ? (roads ? [WORK, CARRY, MOVE] : [WORK, MOVE]) : [];
-      if (energy < 200 || maxSegments === 0) {
+      if (energy < 100 || maxSegments === 0) {
         return [];
-      } else if (energy <= 300) {
-        return [CARRY, MOVE, CARRY, MOVE];
       } else if (energy < 5600) {
         // Before we have two spawns, create smaller haulers
         if (!roads) {
@@ -91,11 +92,10 @@ export const MinionBuilders = {
       }
     } else {
       if (roads) {
-        if (energy <= 300) return buildFromSegment(energy, [WORK, MOVE, CARRY, CARRY]);
+        if (energy <= 500) return buildFromSegment(energy, [WORK, MOVE, CARRY, CARRY]);
         return buildFromSegment(energy, [WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]);
       } else {
-        if (energy <= 300) return buildFromSegment(energy, [WORK, MOVE, MOVE, CARRY, CARRY]);
-        if (energy <= 550) return buildFromSegment(energy, [WORK, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY]);
+        if (energy <= 550) return buildFromSegment(energy, [WORK, MOVE, MOVE, CARRY, CARRY]);
         if (energy <= 1800)
           return buildFromSegment(energy, [WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]);
         // prettier-ignore
@@ -119,7 +119,7 @@ export const MinionBuilders = {
   [MinionTypes.GUARD]: (energy: number, heal = false) => {
     if (energy < 200) {
       return [];
-    } else if (heal) {
+    } else if (heal && energy >= 420) {
       // Add a heal part
       return buildFromSegment(energy, [ATTACK, MOVE], { sorted: true, suffix: [HEAL, MOVE] });
     } else {

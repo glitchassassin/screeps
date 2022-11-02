@@ -141,8 +141,8 @@ export function planMainStamps(room: string) {
       fastfiller.spawns = FASTFILLER_STAMP_SPAWN_ORDER.map(
         ([x, y]) => new PlannedStructure(new RoomPosition(pos.x + x, pos.y + y, room), STRUCTURE_SPAWN)
       );
-      for (let x = 0; x < stamps[i][0].length; x++) {
-        for (let y = 0; y < stamps[i].length; y++) {
+      for (let y = 0; y < stamps[i].length; y++) {
+        for (let x = 0; x < stamps[i][0].length; x++) {
           const cell = stamps[i][y][x];
           const p = new RoomPosition(pos.x + x, pos.y + y, room);
           if (cell === STRUCTURE_EXTENSION) {

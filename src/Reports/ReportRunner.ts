@@ -62,4 +62,4 @@ register('estimates', EstimatesReport);
 register('remotes', RemotesReport);
 register('power', PowerReport);
 
-global.d('territories');
+global.d('spawns');
