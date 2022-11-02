@@ -28,6 +28,12 @@ export interface SpawnOrder {
   directions?: DirectionConstant[];
 }
 
+declare global {
+  interface CreepMemory {
+    role: MinionTypes;
+  }
+}
+
 export function vacateSpawns() {
   for (const office in Memory.offices) {
     for (const spawn of getSpawns(office)) {

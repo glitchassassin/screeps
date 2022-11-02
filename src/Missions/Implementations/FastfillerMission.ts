@@ -72,29 +72,29 @@ export class FastfillerMission extends MissionImplementation {
         spawn: plan?.spawns[0]?.structure,
         container: plan?.containers[0]?.structure,
         oppositeContainer: plan?.containers[1]?.structure,
-        extensions: [0, 1, 2, 6].map(i => plan?.extensions[i]?.structure),
-        centerExtension: plan?.extensions[5]?.structure
+        extensions: [1, 2, 3, 6].map(i => plan?.extensions[i]?.structure),
+        centerExtension: plan?.extensions[0]?.structure
       },
       bottomLeft: {
         spawn: plan?.spawns[2]?.structure,
         container: plan?.containers[0]?.structure,
         oppositeContainer: plan?.containers[1]?.structure,
-        extensions: [6, 8, 11, 12].map(i => plan?.extensions[i]?.structure),
-        centerExtension: plan?.extensions[9]?.structure
+        extensions: [9, 11, 12, 6].map(i => plan?.extensions[i]?.structure),
+        centerExtension: plan?.extensions[8]?.structure
       },
       topRight: {
         spawn: plan?.spawns[1]?.structure,
         container: plan?.containers[1]?.structure,
         oppositeContainer: plan?.containers[0]?.structure,
-        extensions: [3, 4, 7, 2].map(i => plan?.extensions[i]?.structure),
-        centerExtension: plan?.extensions[5]?.structure
+        extensions: [4, 5, 3, 7].map(i => plan?.extensions[i]?.structure),
+        centerExtension: plan?.extensions[0]?.structure
       },
       bottomRight: {
         spawn: plan?.spawns[2]?.structure,
         container: plan?.containers[1]?.structure,
         oppositeContainer: plan?.containers[0]?.structure,
-        extensions: [13, 14, 7, 10].map(i => plan?.extensions[i]?.structure),
-        centerExtension: plan?.extensions[9]?.structure
+        extensions: [13, 14, 10, 7].map(i => plan?.extensions[i]?.structure),
+        centerExtension: plan?.extensions[8]?.structure
       }
     };
     const link = plan?.link.structure;

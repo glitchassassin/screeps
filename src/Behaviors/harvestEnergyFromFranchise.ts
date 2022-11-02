@@ -17,28 +17,26 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
 
   // Prefer to work from container position, fall back to adjacent position
   const start = Game.cpu.getUsed();
-  if (plan && creep.pos.isEqualTo(plan?.container.pos)) {
+  if (
+    plan &&
+    (creep.pos.isEqualTo(plan?.container.pos) ||
+      !Game.rooms[plan.container.pos.roomName] ||
+      plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0)
+  ) {
     // stay here
     moveTo(
       creep,
       { pos: plan.container.pos, range: 0 },
-      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) }
+      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }), priority: 3 }
     );
   } else if (
-    plan &&
-    (!Game.rooms[plan.container.pos.roomName] ||
-      plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0)
+    (plan && creep.pos.inRangeTo(plan.container.pos, 1)) ||
+    adjacentWalkablePositions(sourcePos, false).length
   ) {
-    creep.room.visual.line(creep.pos, plan.container.pos, { color: 'cyan' });
-    moveTo(
-      creep,
-      { pos: plan.container.pos, range: 0 },
-      { roomCallback: defaultRoomCallback({ ignoreFranchises: true }) }
-    );
-  } else if (adjacentWalkablePositions(sourcePos, false).length) {
     // available squares to target
     moveTo(creep, sourcePos, {
-      roomCallback: defaultRoomCallback({ ignoreFranchises: true })
+      roomCallback: defaultRoomCallback({ ignoreFranchises: true }),
+      priority: 3
     });
   } else {
     // stand by in area

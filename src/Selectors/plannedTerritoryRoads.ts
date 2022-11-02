@@ -31,7 +31,8 @@ export function plannedFranchiseRoads(office: string, source: Id<Source>) {
     path
       .filter(p => p.x !== 0 && p.x !== 49 && p.y !== 0 && p.y !== 49)
       .map(p => new PlannedStructure(p, STRUCTURE_ROAD));
-  if (structures.length) cachedPlans.set(key, structures);
+  if (!structures.length) return [];
+  cachedPlans.set(key, structures);
   if (containerPos) return [...structures, new PlannedStructure(containerPos, STRUCTURE_CONTAINER)];
   return structures;
 }

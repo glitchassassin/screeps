@@ -2,6 +2,7 @@ import { followPathHomeFromSource } from 'Behaviors/followPathHomeFromSource';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
+import { MinionTypes } from 'Minions/minionTypes';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
@@ -54,9 +55,9 @@ export const deposit = (
       if (opp.creep?.my) {
         if (
           opp.creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-          (((opp.creep.name.startsWith('ENGINEER') || opp.creep.name.startsWith('RESEARCH')) &&
+          (([MinionTypes.ENGINEER, MinionTypes.RESEARCH].includes(opp.creep.memory.role) &&
             fastfillerIsFull(data.office)) ||
-            opp.creep.name.startsWith('MOBILE_REFILL'))
+            opp.creep.name.startsWith('MRM_'))
         ) {
           if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
             const amount = Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);

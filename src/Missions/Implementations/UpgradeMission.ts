@@ -18,7 +18,6 @@ import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { memoizeByTick } from 'utils/memoizeFunction';
 
 export interface UpgradeMissionData extends BaseMissionData {}
 
@@ -27,10 +26,10 @@ export class UpgradeMission extends MissionImplementation {
     upgraders: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.RESEARCH,
       budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.RESEARCH](energy, this.calculated().maxWork),
+      body: energy => MinionBuilders[MinionTypes.RESEARCH](energy),
       count: current => {
         if (
-          rcl(this.missionData.office) < 3 &&
+          rcl(this.missionData.office) < 2 &&
           (Game.rooms[this.missionData.office].controller?.ticksToDowngrade ?? Infinity) > 3000
         )
           return 0; // engineers will upgrade
@@ -50,21 +49,6 @@ export class UpgradeMission extends MissionImplementation {
   static fromId(id: UpgradeMission['id']) {
     return super.fromId(id) as UpgradeMission;
   }
-
-  calculated = memoizeByTick(
-    () => '',
-    () => {
-      return {
-        maxWork:
-          rcl(this.missionData.office) === 8
-            ? 15
-            : Math.max(
-                1,
-                Math.floor((Game.rooms[this.missionData.office].energyCapacityAvailable * 5) / CREEP_LIFE_TIME)
-              )
-      };
-    }
-  );
 
   capacity() {
     return this.creeps.upgraders.resolved.map(c => c.store.getCapacity()).reduce(sum, 0);
@@ -141,7 +125,7 @@ export class UpgradeMission extends MissionImplementation {
                   u !== creep &&
                   u.pos.isNearTo(creep) &&
                   u.store.getUsedCapacity(RESOURCE_ENERGY) < u.store.getCapacity(RESOURCE_ENERGY) / 2 &&
-                  u.pos.getRangeTo(containerPos) > creep.pos.getRangeTo(containerPos)
+                  u.pos.getRangeTo(controller.pos) < creep.pos.getRangeTo(controller.pos)
               );
               if (nearby)
                 creep.transfer(

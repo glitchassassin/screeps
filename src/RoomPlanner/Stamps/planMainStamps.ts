@@ -204,6 +204,16 @@ export function planMainStamps(room: string) {
     }
   });
 
+  // make sure middle extensions get built in the right order
+  fastfiller.extensions = ([] as PlannedStructure<STRUCTURE_EXTENSION>[]).concat(
+    fastfiller.extensions![5], // [0]
+    fastfiller.extensions!.slice(0, 5), // [1-5]
+    fastfiller.extensions!.slice(6, 8), // [6-7]
+    fastfiller.extensions![9], // [8]
+    fastfiller.extensions!.slice(8, 9), // [9]
+    fastfiller.extensions!.slice(10) // [10-14]
+  );
+
   return {
     hq: validateHeadquartersPlan(hq),
     labs: validateLabsPlan(labs),

@@ -56,7 +56,7 @@ export default () => {
 
       return [
         `${sourcePos}${disabled ? '' : ' ✓'}`,
-        mission?.missionData.distance ?? '--',
+        mission?.missionData.distance ?? Infinity,
         assigned.toFixed(0),
         estimatedCapacity.toFixed(0),
         byId(franchise.source)?.energy.toFixed(0) ?? '--',
@@ -65,6 +65,7 @@ export default () => {
         `${perTick.toFixed(2)}${isValid ? '' : '?'} (${perTickAverage.toFixed(2)}/${scores?.length ?? '?'})`
       ];
     });
+    data.sort((a, b) => (a[1] as number) - (b[1] as number));
     data.push(['--', '--', '--', '--', '--', '--', '--', '--']);
     data.push([
       '',

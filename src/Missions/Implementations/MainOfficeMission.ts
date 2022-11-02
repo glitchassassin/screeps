@@ -53,7 +53,7 @@ export class MainOfficeMission extends MissionImplementation {
       }),
       () =>
         Boolean(
-          roomPlans(this.missionData.office)?.fastfiller?.extensions.some(e => e.structure) &&
+          roomPlans(this.missionData.office)?.fastfiller?.containers.some(e => e.structure) &&
             hasEnergyIncome(this.missionData.office)
         )
     ),

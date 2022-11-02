@@ -12,7 +12,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
-import { isMission, missionsByOffice } from 'Missions/Selectors';
+import { activeMissions, isMission } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
@@ -53,8 +53,8 @@ export class LogisticsMission extends MissionImplementation {
           this.calculated().repair
         ),
       count: current => {
-        const neededCapacity = missionsByOffice()
-          [this.missionData.office].filter(isMission(HarvestMission))
+        const neededCapacity = activeMissions(this.missionData.office)
+          .filter(isMission(HarvestMission))
           .map(m => m.haulingCapacityNeeded())
           .reduce(sum, 0);
         const currentCapacity = current.map(c => c.store.getCapacity()).reduce(sum, 0);
@@ -223,12 +223,13 @@ export class LogisticsMission extends MissionImplementation {
     data.assignments ??= {};
 
     // Update priorities
-    const neededCapacity = missionsByOffice()
-      [this.missionData.office].filter(isMission(HarvestMission))
+    const inRoomCapacity = activeMissions(this.missionData.office)
+      .filter(isMission(HarvestMission))
       .filter(m => !m.calculated().remote)
       .map(m => m.haulingCapacityNeeded())
       .reduce(sum, 0);
-    if (neededCapacity < haulers.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)) {
+
+    if (inRoomCapacity < haulers.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)) {
       this.priority = 3;
     } else {
       this.priority = 11;
@@ -302,15 +303,16 @@ export class LogisticsMission extends MissionImplementation {
         const withdrawAssignment = data.assignments[withdraw.name];
         const depositAssignment = data.assignments[deposit.name];
 
-        const target = byId(depositAssignment.depositTarget)?.pos;
-        if (!target) continue;
+        const target = byId(depositAssignment.depositTarget);
+        if (!target || target instanceof Creep) continue;
+        const targetPos = target.pos;
 
-        if (getRangeTo(withdraw.pos, target) >= getRangeTo(deposit.pos, target)) continue;
+        if (getRangeTo(withdraw.pos, targetPos) >= getRangeTo(deposit.pos, targetPos)) continue;
 
         // clear to swap
         if (deposit.transfer(withdraw, RESOURCE_ENERGY) === OK) {
-          viz(withdraw.pos.roomName).line(withdraw.pos, target, { color: 'red' });
-          viz(deposit.pos.roomName).line(deposit.pos, target, { color: 'green' });
+          viz(withdraw.pos.roomName).line(withdraw.pos, targetPos, { color: 'red' });
+          viz(deposit.pos.roomName).line(deposit.pos, targetPos, { color: 'green' });
           withdraw.memory.runState = States.DEPOSIT;
           deposit.memory.runState = States.WITHDRAW;
           data.assignments[withdraw.name] = depositAssignment;

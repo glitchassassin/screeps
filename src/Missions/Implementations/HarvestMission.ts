@@ -67,14 +67,13 @@ export class HarvestMission extends MissionImplementation {
 
     // set priority differently for remote sources
     const remote = this.missionData.office !== posById(this.missionData.source)?.roomName;
-    const distance = getFranchiseDistance(this.missionData.office, this.missionData.source);
-    this.missionData.distance = distance;
+    this.evaluateDistance();
     if (remote) {
       this.priority = 1;
-      if (distance) {
+      if (this.missionData.distance) {
         // Increase priority for closer franchises, up to 1 point for closer than 50 squares
         // Round priority to two places
-        this.priority += Math.round(100 * (Math.min(50, distance) / distance)) / 100;
+        this.priority += Math.round(100 * (Math.min(50, this.missionData.distance) / this.missionData.distance)) / 100;
       }
     } else {
       if (franchise1 === this.missionData.source) this.priority += 0.1;
@@ -105,6 +104,21 @@ export class HarvestMission extends MissionImplementation {
     return this.missionData.distance && this.missionData.distance > 250;
   }
 
+  evaluateDistance() {
+    if (this.missionData.distance) return;
+
+    const distance = getFranchiseDistance(this.missionData.office, this.missionData.source);
+    this.missionData.distance = distance;
+    if (this.calculated().remote) {
+      this.priority = 1;
+      if (distance) {
+        // Increase priority for closer franchises, up to 1 point for closer than 50 squares
+        // Round priority to two places
+        this.priority += Math.round(100 * (Math.min(50, distance) / distance)) / 100;
+      }
+    }
+  }
+
   haulingCapacityNeeded() {
     const { link, container } = getFranchisePlanBySourceId(this.missionData.source) ?? {};
     if (link?.structure && !container?.structure?.store.getUsedCapacity(RESOURCE_ENERGY)) return 0;
@@ -131,6 +145,8 @@ export class HarvestMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;
     const { source, office } = this.missionData;
+
+    this.evaluateDistance();
 
     const container = getFranchisePlanBySourceId(source)?.container.structureId;
     LogisticsLedger.record(

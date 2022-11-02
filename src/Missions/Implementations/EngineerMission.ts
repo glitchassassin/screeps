@@ -18,12 +18,13 @@ import { estimateMissionInterval } from 'Missions/Selectors';
 import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
+import { combatStats } from 'Selectors/Combat/combatStats';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { memoizeOncePerTick } from 'utils/memoizeFunction';
+import { memoize, memoizeOnce, memoizeOncePerTick } from 'utils/memoizeFunction';
 
 export interface EngineerMissionData extends BaseMissionData {
   assignments?: Record<
@@ -42,12 +43,9 @@ export class EngineerMission extends MissionImplementation {
       budget: this.budget,
       body: energy => MinionBuilders[MinionTypes.ENGINEER](energy, this.calculated().roads),
       count: current => {
-        const workPending = current
-          .map(c => c.getActiveBodyparts(WORK) * (c.ticksToLive ?? CREEP_LIFE_TIME))
-          .reduce(sum, 0);
-        let pendingCost = this.queue.analysis().workTicksRemaining;
+        let pendingCost = this.queue.analysis().energyRemaining;
         // If rcl < 2, engineers will also upgrade
-        if (rcl(this.missionData.office) < 3) {
+        if (rcl(this.missionData.office) < 2) {
           const controller = Game.rooms[this.missionData.office].controller;
           pendingCost += (controller?.progressTotal ?? 0) - (controller?.progress ?? 0);
         } else {
@@ -61,7 +59,7 @@ export class EngineerMission extends MissionImplementation {
             pendingCost = 0;
           }
         }
-        if (workPending < pendingCost) return 1;
+        if (this.estimatedEnergyRemaining < pendingCost) return 1;
         return 0;
       }
     })
@@ -83,30 +81,65 @@ export class EngineerMission extends MissionImplementation {
     };
   });
 
+  engineerStats = memoize(
+    (creepName: string) => creepName,
+    (creepName: string) => {
+      const creep = Game.creeps[creepName];
+      const stats = combatStats(creep);
+      return {
+        buildTicks: stats.carry / stats.build,
+        repairTicks: stats.carry / stats.repair,
+        speed: stats.speed
+      };
+    }
+  );
+
+  updateEstimatedEnergy = memoizeOnce(() => {
+    if (this.creeps.engineers.resolved.length === 0) {
+      this.estimatedEnergyRemaining = 0;
+      return;
+    }
+    const analysis = this.queue.analysis();
+    let energy = analysis.energyRemaining / analysis.workTicksRemaining;
+    if (isNaN(energy)) energy = 1;
+
+    const RANGE_OFFSET = 2; // approximate the difference between path and range distance
+
+    const workTicksRemaining = this.creeps.engineers.resolved
+      .map(c => {
+        const { buildTicks, repairTicks, speed } = this.engineerStats(c.name);
+        const workTicks = energy < 3 ? repairTicks : buildTicks;
+        const period = Math.min(estimateMissionInterval(this.missionData.office), c.ticksToLive ?? CREEP_LIFE_TIME);
+        const iterationTime = workTicks + analysis.averageRange * speed * 2 * RANGE_OFFSET;
+        const iterations = period / iterationTime;
+        const remaining = buildTicks * iterations;
+        if (isNaN(remaining)) return 0;
+        return remaining;
+      })
+      .reduce(sum, 0);
+
+    // add controller upgrading to total energy remaining
+    let energyRemaining = analysis.energyRemaining;
+    if (rcl(this.missionData.office) < 8) {
+      const controller = Game.rooms[this.missionData.office].controller;
+      energyRemaining += (controller?.progressTotal ?? 0) - (controller?.progress ?? 0);
+    }
+
+    this.estimatedEnergyRemaining = Math.min(energyRemaining, workTicksRemaining * energy);
+  }, 100);
+
   run(creeps: ResolvedCreeps<EngineerMission>, missions: ResolvedMissions<EngineerMission>, data: EngineerMissionData) {
     this.queue.survey();
 
     const { engineers } = creeps;
     this.missionData.assignments ??= {};
 
-    const analysis = this.queue.analysis();
-
-    this.estimatedEnergyRemaining = Math.min(
-      engineers
-        .map(
-          c =>
-            c.getActiveBodyparts(WORK) *
-            BUILD_POWER *
-            Math.min(estimateMissionInterval(this.missionData.office), c.ticksToLive ?? CREEP_LIFE_TIME)
-        )
-        .reduce(sum, 0),
-      analysis.energyRemaining
-    );
+    this.updateEstimatedEnergy();
 
     for (const creep of engineers) {
       this.missionData.assignments[creep.name] ??= {};
       const assignment = this.missionData.assignments[creep.name];
-      if (rcl(this.missionData.office) < 3) {
+      if (rcl(this.missionData.office) < 4) {
         CreepsThatNeedEnergy.add(creep.name);
       } else {
         CreepsThatNeedEnergy.delete(creep.name);
@@ -133,7 +166,7 @@ export class EngineerMission extends MissionImplementation {
               engineerGetEnergy(
                 creep,
                 data.office,
-                getWithdrawLimit(data.office, this.budget),
+                Math.max(Game.rooms[data.office].energyCapacityAvailable, getWithdrawLimit(data.office, this.budget)),
                 target?.pos.roomName !== this.missionData.office // currently building for a franchise
               ) === BehaviorResult.SUCCESS
             ) {
@@ -173,6 +206,7 @@ export class EngineerMission extends MissionImplementation {
                 if (creep.repair(plan.structure) === OK) {
                   const cost = REPAIR_COST * REPAIR_POWER * creep.body.filter(p => p.type === WORK).length;
                   this.recordEnergy(cost);
+                  this.estimatedEnergyRemaining -= cost;
                   if (cost >= plan.energyToRepair) {
                     this.queue.complete(plan);
                     return States.FIND_WORK;
@@ -198,6 +232,7 @@ export class EngineerMission extends MissionImplementation {
                   if (result === OK) {
                     const cost = BUILD_POWER * creep.body.filter(p => p.type === WORK).length;
                     this.recordEnergy(cost);
+                    this.estimatedEnergyRemaining -= cost;
                     if (cost >= plan.energyToBuild && !BARRIER_TYPES.includes(plan.structureType)) {
                       this.queue.complete(plan);
                       return States.FIND_WORK;
@@ -243,5 +278,7 @@ export class EngineerMission extends MissionImplementation {
         creep
       );
     }
+
+    this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining);
   }
 }

@@ -16,6 +16,10 @@ export default (visualizeRoom?: string) => {
           s.visualize();
         });
       viz(room).connectRoads();
+
+      roomPlans(room)?.fastfiller?.extensions.forEach((s, i) => {
+        viz(room).text(i.toFixed(0), s.pos.x, s.pos.y + 0.2);
+      });
     }
 
     const franchise1pos = roomPlans(room)?.franchise1?.container.pos;
