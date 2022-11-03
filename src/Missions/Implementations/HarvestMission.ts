@@ -121,7 +121,7 @@ export class HarvestMission extends MissionImplementation {
 
   haulingCapacityNeeded() {
     const { link, container } = getFranchisePlanBySourceId(this.missionData.source) ?? {};
-    if (link?.structure && !container?.structure?.store.getUsedCapacity(RESOURCE_ENERGY)) return 0;
+    if (link?.structure && !franchiseEnergyAvailable(this.missionData.source)) return 0;
     const time = (this.missionData.distance ?? 50) * 2;
     return time * this.harvestRate();
   }

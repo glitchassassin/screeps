@@ -46,6 +46,26 @@ export function missionById(id: MissionImplementation['id']) {
   return singletons.get(id);
 }
 
+export function cleanMissions() {
+  for (const mission of allMissions()) {
+    if (mission.status === MissionStatus.DONE) {
+      if (Memory.missions[mission.id]) {
+        // file mission report
+        Memory.missionReports.push({
+          type: mission.constructor.name,
+          duration: Game.time - Memory.missions[mission.id].started,
+          cpuUsed: Memory.missions[mission.id].cpuUsed,
+          energyUsed: Memory.missions[mission.id].energyUsed,
+          finished: Game.time,
+          office: mission.missionData.office
+        });
+      }
+      delete Memory.missions[mission.id];
+      singletons.delete(mission.id);
+    }
+  }
+}
+
 export class MissionImplementation {
   public creeps: Record<string, BaseCreepSpawner> = {};
   public missions: Record<string, BaseMissionSpawner<typeof MissionImplementation>> = {};
@@ -118,6 +138,8 @@ export class MissionImplementation {
     // clean up mission
     if (this.status === MissionStatus.PENDING) {
       this.onStart();
+      // Set status to RUNNING
+      this.status = MissionStatus.RUNNING;
     }
     if (this.status === MissionStatus.DONE) {
       this.onEnd();
@@ -186,27 +208,9 @@ export class MissionImplementation {
     throw new Error('Not implemented yet');
   }
 
-  onStart() {
-    // Set status to RUNNING
-    this.status = MissionStatus.RUNNING;
-  }
+  onStart() {}
 
-  onEnd() {
-    if (Memory.missions[this.id]) {
-      // file mission report
-      Memory.missionReports.push({
-        type: this.constructor.name,
-        duration: Game.time - Memory.missions[this.id].started,
-        cpuUsed: Memory.missions[this.id].cpuUsed,
-        energyUsed: Memory.missions[this.id].energyUsed,
-        finished: Game.time,
-        office: this.missionData.office
-      });
-      // Clean up the mission
-      delete Memory.missions[this.id];
-    }
-    singletons.delete(this.id);
-  }
+  onEnd() {}
 
   cpuRemaining() {
     return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0);

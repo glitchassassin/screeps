@@ -18,7 +18,11 @@ export class MobileRefillMission extends LogisticsMission {
       budget: Budget.ESSENTIAL,
       body: energy =>
         MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, this.calculated().roads, this.calculated().repair),
-      count: fixedCount(() => (roomPlans(this.missionData.office)?.headquarters?.storage.structure ? 1 : 0))
+      count: fixedCount(() =>
+        roomPlans(this.missionData.office)?.headquarters?.storage.structure?.store.getUsedCapacity(RESOURCE_ENERGY)
+          ? 1
+          : 0
+      )
     })
   };
   priority = 11;

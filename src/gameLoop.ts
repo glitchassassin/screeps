@@ -1,5 +1,6 @@
 import { scanRooms } from 'Intel/Rooms';
 import { recordMetrics } from 'Metrics/recordMetrics';
+import { cleanMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { runMissionControl } from 'Missions/Control';
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from 'RoomPlanner/planRooms';
@@ -8,11 +9,14 @@ import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl, displayGpl, displaySpawn } from 'Selectors/displayBucket';
 import { runScheduled } from 'Selectors/scheduledCallbacks';
 import { runStructures } from 'Structures';
+import { cleanUpCreeps } from 'utils/cleanUpCreeps';
 import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
 import { initializeSpawn } from 'utils/initializeSpawns';
 
 export const gameLoop = () => {
   preTick();
+  cleanUpCreeps();
+  cleanMissions();
   displayBucket();
   displayGcl();
   displayGpl();

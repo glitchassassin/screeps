@@ -63,7 +63,7 @@ export function spawnOrder(office: string, order: SpawnOrder) {
   let availableSpawns = getSpawns(office).filter(s => !s.spawning || s.spawning.remainingTime === 1);
 
   // console.log('availableSpawns', availableSpawns, JSON.stringify(order));
-  if (availableSpawns.length === 0) return false; // No more available spawns
+  if (availableSpawns.length === 0) return ERR_BUSY; // No more available spawns
   // Get next scheduled order per spawn
   const spawn = availableSpawns.find(s => {
     if (byId(order.spawn)) {
@@ -74,7 +74,7 @@ export function spawnOrder(office: string, order: SpawnOrder) {
   });
   if (!spawn) {
     // No more available spawns
-    return false;
+    return ERR_BUSY;
   }
   // Spawn is available
   // console.log(order.data.body, order.data.name);
@@ -83,19 +83,16 @@ export function spawnOrder(office: string, order: SpawnOrder) {
     memory: order.memory,
     energyStructures: getEnergyStructures(office)
   });
-  // console.log('spawn result', result);
+  // console.log(order.name, 'spawn result', result);
   if (result === OK) {
     availableSpawns = availableSpawns.filter(s => s !== spawn);
     orderBoosts(office, order);
-    return true;
-  } else if (result === ERR_NOT_ENOUGH_ENERGY || result === ERR_BUSY) {
-    return true; // spawn attempt will be successful
-  } else {
+  } else if (result !== ERR_NOT_ENOUGH_ENERGY && result !== ERR_BUSY) {
     // Spawn failed un-recoverably, abandon order
     console.log('Unrecoverable spawn error', result);
     console.log(order.name, order.body.length);
   }
-  return false;
+  return result;
 }
 
 const orderBoosts = (office: string, order: SpawnOrder) => {

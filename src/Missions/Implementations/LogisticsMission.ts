@@ -47,7 +47,7 @@ export class LogisticsMission extends MissionImplementation {
       estimatedCpuPerTick: 0.8,
       body: energy =>
         MinionBuilders[MinionTypes.ACCOUNTANT](
-          Math.max(SPAWN_ENERGY_CAPACITY, energy / 2),
+          Math.max(100, energy / 2),
           25,
           this.calculated().roads,
           this.calculated().repair

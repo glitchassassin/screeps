@@ -40,7 +40,7 @@ function allocateMissions() {
     const priorities = [...new Set(requests.map(o => o.priority))].sort((a, b) => b - a);
 
     // loop through priorities, highest to lowest
-    for (const priority of priorities) {
+    priorities: for (const priority of priorities) {
       if (!availableSpawns) break;
 
       const missions = requests.filter(o => o.priority === priority);
@@ -50,6 +50,7 @@ function allocateMissions() {
         if (cpuRemaining < 0) break;
         const order = missions.shift();
         if (!order) break;
+        // console.log(priority, order.name);
         if (!order.body.length) {
           console.log(order.name, 'empty body', order.body.length);
           continue;
@@ -57,10 +58,14 @@ function allocateMissions() {
         const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
         const canStart = order.estimate.energy <= energyRemaining - adjustedBudget;
         // Mission can start
-        if (canStart && spawnOrder(office, order)) {
-          availableSpawns -= 1;
-          cpuRemaining -= order.estimate.cpu;
-          energyRemaining -= order.estimate.energy;
+        if (canStart) {
+          const result = spawnOrder(office, order);
+          if (result === ERR_NOT_ENOUGH_ENERGY) break priorities; // wait for energy
+          if (result === OK) {
+            availableSpawns -= 1;
+            cpuRemaining -= order.estimate.cpu;
+            energyRemaining -= order.estimate.energy;
+          }
         }
       }
     }
