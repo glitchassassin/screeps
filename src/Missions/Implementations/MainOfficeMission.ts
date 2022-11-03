@@ -18,6 +18,7 @@ import { min } from 'Selectors/reducers';
 import { mineralId } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
 import { DefenseCoordinationMission } from './DefenseCoordinationMission';
+import { EmergencyUpgradeMission } from './EmergencyUpgradeMission';
 import { EngineerMission } from './EngineerMission';
 import { ExploreMission } from './ExploreMission';
 import { FastfillerMission } from './FastfillerMission';
@@ -66,6 +67,11 @@ export class MainOfficeMission extends MissionImplementation {
       () => Boolean(roomPlans(this.missionData.office)?.headquarters?.link.structure)
     ),
     upgrade: new MissionSpawner(UpgradeMission, () => ({ ...this.missionData })),
+    emergencyUpgrade: new ConditionalMissionSpawner(
+      EmergencyUpgradeMission,
+      () => ({ ...this.missionData }),
+      () => Game.rooms[this.missionData.office].controller!.ticksToDowngrade < 3000
+    ),
     science: new ConditionalMissionSpawner(
       ScienceMission,
       () => ({ ...this.missionData }),

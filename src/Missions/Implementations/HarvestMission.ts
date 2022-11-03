@@ -101,6 +101,14 @@ export class HarvestMission extends MissionImplementation {
     return this.creeps.harvesters.resolved.length > 0;
   }
   disabled() {
+    const pos = posById(this.missionData.source);
+    if (!pos) return true;
+    if (
+      ![undefined, 'LordGreywether'].includes(Memory.rooms[pos?.roomName ?? '']?.reserver) ||
+      ![undefined, 'LordGreywether'].includes(Memory.rooms[pos?.roomName ?? '']?.owner)
+    ) {
+      return true; // owned or reserved by another player
+    }
     return this.missionData.distance && this.missionData.distance > 250;
   }
 
@@ -127,11 +135,7 @@ export class HarvestMission extends MissionImplementation {
   }
 
   harvestRate() {
-    const pos = posById(this.missionData.source);
-    if (
-      ![undefined, 'LordGreywether'].includes(Memory.rooms[pos?.roomName ?? '']?.reserver) ||
-      ![undefined, 'LordGreywether'].includes(Memory.rooms[pos?.roomName ?? '']?.owner)
-    ) {
+    if (this.disabled()) {
       return 0; // reserved or owned by someone else
     }
     const creepHarvestRate = this.creeps.harvesters.resolved

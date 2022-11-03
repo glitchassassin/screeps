@@ -94,7 +94,8 @@ export class LogisticsMission extends MissionImplementation {
       const depositAssignments = new Map<[number, AnyStoreStructure | Creep], number>();
       const depositAssignmentIds = new Map<Id<AnyStoreStructure | Creep>, [number, AnyStoreStructure | Creep]>();
 
-      for (const { source } of franchisesByOffice(this.missionData.office)) {
+      for (const { source, room } of franchisesByOffice(this.missionData.office)) {
+        if ((Memory.rooms[room]?.threatLevel?.[1] ?? 0) > 0) continue;
         withdrawAssignments.set(source, 0);
       }
       for (const prioritizedStructure of storageStructureThatNeedsEnergy(this.missionData.office)) {

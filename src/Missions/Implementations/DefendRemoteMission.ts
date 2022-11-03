@@ -20,7 +20,7 @@ export class DefendRemoteMission extends MissionImplementation {
   public creeps = {
     blinkies: new MultiCreepSpawner('b', this.missionData.office, {
       role: MinionTypes.BLINKY,
-      budget: Budget.EFFICIENCY,
+      budget: Budget.ESSENTIAL,
       body: energy => MinionBuilders[MinionTypes.BLINKY](energy),
       count: current => {
         if (

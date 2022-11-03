@@ -60,12 +60,6 @@ export class UpgradeMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<UpgradeMission>, missions: ResolvedMissions<UpgradeMission>, data: UpgradeMissionData) {
     const { upgraders } = creeps;
 
-    if (Game.rooms[data.office].controller!.ticksToDowngrade < 3000) {
-      this.priority = 15;
-    } else {
-      this.priority = 7;
-    }
-
     this.estimatedEnergyRemaining = upgraders
       .map(
         creep =>
