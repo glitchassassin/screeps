@@ -103,7 +103,7 @@ export class EngineerMission extends MissionImplementation {
     let energy = analysis.energyRemaining / analysis.workTicksRemaining;
     if (isNaN(energy)) energy = 1;
 
-    const RANGE_OFFSET = 2; // approximate the difference between path and range distance
+    const RANGE_OFFSET = 1.5; // approximate the difference between path and range distance
 
     const workTicksRemaining = this.creeps.engineers.resolved
       .map(c => {
