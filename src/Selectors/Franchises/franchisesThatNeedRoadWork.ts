@@ -6,7 +6,7 @@ export function franchisesThatNeedRoadWork(office: string) {
     .filter(({ remote, source, room }) => {
       return (
         remote &&
-        (Memory.rooms[room]?.franchises?.[office]?.[source]?.lastHarvested ?? 0) + 1500 > Game.time &&
+        (Memory.rooms[room]?.franchises?.[office]?.[source]?.lastActive ?? 0) + 1500 > Game.time &&
         nextFranchiseRoadToBuild(office, source)
       );
     })

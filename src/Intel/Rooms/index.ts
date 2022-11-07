@@ -43,7 +43,7 @@ declare global {
       Record<
         Id<Source>,
         {
-          lastHarvested?: number;
+          lastActive?: number;
           scores: number[];
         }
       >

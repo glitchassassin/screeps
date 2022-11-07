@@ -64,7 +64,7 @@ export function plannedTerritoryRoads(office: string) {
     ...new Set(
       (Memory.offices[office]?.territories ?? [])
         .flatMap(t => Object.entries(Memory.rooms[t]?.franchises?.[office] ?? {}))
-        .filter(([_, franchise]) => franchise.lastHarvested && franchise.lastHarvested + 1000 > Game.time)
+        .filter(([_, franchise]) => franchise.lastActive && franchise.lastActive + 1000 > Game.time)
         .sort(([_a, a], [_b, b]) => (getCachedPath(office + a)?.length ?? 0) - (getCachedPath(office + b)?.length ?? 0))
         .flatMap(([source]) => {
           return plannedFranchiseRoads(office, source as Id<Source>);

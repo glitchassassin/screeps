@@ -30,7 +30,7 @@ export const scanTerritories = () => {
       if (ledger.age < 1500 || !Memory.rooms[room].franchises[office]?.[source]) continue;
 
       Memory.rooms[room].franchises[office][source].scores ??= [];
-      const { scores, lastHarvested } = Memory.rooms[room].franchises[office][source];
+      const { scores, lastActive: lastHarvested } = Memory.rooms[room].franchises[office][source];
 
       if (franchiseActive(office, source)) {
         // record score for previous 1500 ticks
