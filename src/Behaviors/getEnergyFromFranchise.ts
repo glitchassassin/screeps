@@ -16,7 +16,7 @@ export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, office:
     return BehaviorResult.INPROGRESS;
   }
 
-  if (franchiseEnergyAvailable(franchise) <= 50 || creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+  if (franchiseEnergyAvailable(franchise) < 50 || creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     return BehaviorResult.SUCCESS;
   } else {
     if (creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, pos, { color: '#ffff00' });

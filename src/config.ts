@@ -35,8 +35,8 @@ export const STORAGE_LEVEL: Record<number, number> = {
 export const BARRIER_LEVEL: Record<number, number> = {
   1: 3000,
   2: 3000,
-  3: 10000,
-  4: 50000,
+  3: 3000,
+  4: 100000,
   5: 100000,
   6: 300000,
   7: 1000000,
