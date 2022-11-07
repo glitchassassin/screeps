@@ -49,6 +49,7 @@ const roomSectionPlanner =
         Memory.roomPlans[room][plan] = serializer(plannedSection);
       } catch (e) {
         // console.log(`Error planning ${plan} for ${room}: ${e}`);
+        // console.log((e as any).stack);
         Memory.roomPlans[room][plan] = null;
       }
     }

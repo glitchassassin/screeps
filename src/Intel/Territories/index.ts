@@ -27,7 +27,7 @@ export const scanTerritories = () => {
     for (const { source, room } of remoteFranchises(office)) {
       const ledger = HarvestLedger.get(office, source);
 
-      if (ledger.age < 1500 || !Memory.rooms[room].franchises[office][source]) continue;
+      if (ledger.age < 1500 || !Memory.rooms[room].franchises[office]?.[source]) continue;
 
       Memory.rooms[room].franchises[office][source].scores ??= [];
       const { scores, lastHarvested } = Memory.rooms[room].franchises[office][source];

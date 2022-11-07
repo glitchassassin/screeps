@@ -73,7 +73,7 @@
     "reflect-metadata": "^0.1.13",
     "screeps-cache": "^1.0.11",
     "screeps-cartographer": "^1.4.2",
-    "screeps-viz": "^2.1.1",
+    "screeps-viz": "^2.1.2",
     "source-map": "~0.6.1",
     "table": "^6.0.3",
     "ts-polyfill": "^3.8.2",

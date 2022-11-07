@@ -1,9 +1,9 @@
-import { REPAIR_THRESHOLD } from 'config';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
 import { schedule } from 'Selectors/scheduledCallbacks';
+import { repairThreshold } from 'Selectors/Structures/repairThreshold';
 import { memoize, memoizeOncePerTick } from 'utils/memoizeFunction';
 import { PlannedStructure } from './PlannedStructure';
 
@@ -34,7 +34,7 @@ export class EngineerQueue {
     structure.survey();
     if (
       !Game.rooms[structure.pos.roomName] ||
-      (structure.energyToBuild === 0 && structure.energyToRepair < REPAIR_THRESHOLD)
+      (structure.energyToBuild === 0 && structure.energyToRepair <= repairThreshold(structure))
     )
       return; // only register if we can confirm work to be done
     if (!structure.structureId) {
@@ -59,21 +59,18 @@ export class EngineerQueue {
   }
 
   allWorkQueue = memoizeOncePerTick(() => [
-    ...this.build,
+    ...[...this.build].filter(s => s.canBuild()),
     ...this.maintain_economy,
     ...this.maintain_barriers,
     ...this.maintain_other
   ]);
 
   workQueue = memoizeOncePerTick(() => {
-    if (this.build.size)
-      return [...this.build].filter(
-        // if room is owned or reserved by someone else, we can't place a construction site
-        s =>
-          s.constructionSite ||
-          ([undefined, 'LordGreywether'].includes(Memory.rooms[s.pos.roomName].reserver) &&
-            [undefined, 'LordGreywether'].includes(Memory.rooms[s.pos.roomName].owner))
-      );
+    const build = [...this.build].filter(
+      // if room is owned or reserved by someone else, we can't place a construction site
+      s => s.canBuild()
+    );
+    if (build.length) return build;
     const threatLevel = Memory.rooms[this.office].threatLevel?.[1] ?? 0;
     if (threatLevel) {
       // wartime priority

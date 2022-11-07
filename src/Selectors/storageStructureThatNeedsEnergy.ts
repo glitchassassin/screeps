@@ -29,10 +29,10 @@ export function storageStructureThatNeedsEnergy(office: string): [number, AnySto
     .filter(c => c.store.getFreeCapacity(RESOURCE_ENERGY) > 10);
   const structures = ([] as [number, AnyStoreStructure | Creep][])
     .concat(
-      fastfiller?.containers.map(s => [10, s.structure as AnyStoreStructure]) ?? [],
-      getSpawns(office).map(s => [9, s as AnyStoreStructure]) ?? [],
-      getExtensions(office, false).map(s => [8, s.structure as AnyStoreStructure]),
-      backfill?.towers.map(s => [7, s.structure as AnyStoreStructure]) ?? [],
+      backfill?.towers.map(s => [10, s.structure as AnyStoreStructure]) ?? [],
+      fastfiller?.containers.map(s => [9, s.structure as AnyStoreStructure]) ?? [],
+      getSpawns(office).map(s => [8, s as AnyStoreStructure]) ?? [],
+      getExtensions(office, false).map(s => [7, s.structure as AnyStoreStructure]),
       labs?.labs.map(s => [6, s.structure as AnyStoreStructure]) ?? [],
       [[4, library?.container.structure as AnyStoreStructure]],
       creeps.map(e => [4, e]),

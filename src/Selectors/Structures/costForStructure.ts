@@ -1,7 +1,8 @@
-import { BARRIER_LEVEL, BARRIER_TYPES, REPAIR_THRESHOLD } from 'config';
+import { BARRIER_LEVEL, BARRIER_TYPES } from 'config';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { roomPlans } from 'Selectors/roomPlans';
+import { repairThreshold } from './repairThreshold';
 
 export const costForPlannedStructure = (structure: PlannedStructure, office: string) => {
   const cost = {
@@ -20,7 +21,7 @@ export const costForPlannedStructure = (structure: PlannedStructure, office: str
     cost.efficiency = workTime / (workTime + distance * 2);
     const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
     const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
-    if (structure.structure.hits > maxHits * REPAIR_THRESHOLD) {
+    if (structure.structure.hits >= maxHits * repairThreshold(structure)) {
       return cost;
     }
     const repairNeeded = maxHits - structure.structure.hits;
@@ -52,18 +53,15 @@ export const costForPlannedStructure = (structure: PlannedStructure, office: str
   return cost;
 };
 
-export const adjustedEnergyForPlannedStructure = (
-  structure: PlannedStructure,
-  distance: number,
-  threshold = REPAIR_THRESHOLD
-) => {
+export const adjustedEnergyForPlannedStructure = (structure: PlannedStructure, distance: number) => {
+  const threshold = repairThreshold(structure);
   // Calculation assumes Engineers have equal WORK and CARRY and can move 1 sq/tick (generally true with roads)
   if (structure.structure) {
     const workTime = CARRY_CAPACITY / (REPAIR_COST * REPAIR_POWER);
     const efficiency = workTime / (workTime + distance * 2);
     const rcl = Game.rooms[structure.pos.roomName]?.controller?.level ?? 0;
     const maxHits = BARRIER_TYPES.includes(structure.structureType) ? BARRIER_LEVEL[rcl] : structure.structure.hitsMax;
-    if (structure.structure.hits > maxHits * threshold) {
+    if (structure.structure.hits >= maxHits * threshold) {
       return 0;
     }
     const repairNeeded = maxHits - structure.structure.hits;

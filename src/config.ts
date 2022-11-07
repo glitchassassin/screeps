@@ -13,7 +13,7 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 1 : 3;
 /**
  * Number of offices to control
  */
-export const OFFICE_LIMIT = Game.shard.name === 'shard3' ? 1 : Infinity;
+export const OFFICE_LIMIT = 1; // Game.shard.name === 'shard3' ? 1 : Infinity;
 
 /**
  * Storage level targets by RCL

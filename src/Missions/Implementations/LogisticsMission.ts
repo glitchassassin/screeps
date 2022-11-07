@@ -23,7 +23,6 @@ import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { viz } from 'Selectors/viz';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
@@ -312,8 +311,6 @@ export class LogisticsMission extends MissionImplementation {
 
         // clear to swap
         if (deposit.transfer(withdraw, RESOURCE_ENERGY) === OK) {
-          viz(withdraw.pos.roomName).line(withdraw.pos, targetPos, { color: 'red' });
-          viz(deposit.pos.roomName).line(deposit.pos, targetPos, { color: 'green' });
           withdraw.memory.runState = States.DEPOSIT;
           deposit.memory.runState = States.WITHDRAW;
           data.assignments[withdraw.name] = depositAssignment;

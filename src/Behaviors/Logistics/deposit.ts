@@ -14,7 +14,6 @@ export const deposit = (
     office: string;
     withdrawTarget?: Id<Source>;
     depositTarget?: Id<AnyStoreStructure | Creep>;
-    repair?: boolean;
   },
   creep: Creep
 ) => {
@@ -29,7 +28,7 @@ export const deposit = (
     return States.DEPOSIT;
   }
 
-  if (data.repair) {
+  if (creep.getActiveBodyparts(WORK)) {
     const road = creep.pos
       .findInRange(FIND_STRUCTURES, 3)
       .find(s => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax);

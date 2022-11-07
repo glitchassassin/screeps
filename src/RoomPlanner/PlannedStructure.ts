@@ -123,6 +123,13 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
 
     return false; // Structure does not exist
   }
+  canBuild() {
+    return (
+      Boolean(this.constructionSiteId) ||
+      ([undefined, 'LordGreywether'].includes(Memory.rooms[this.pos.roomName].reserver) &&
+        [undefined, 'LordGreywether'].includes(Memory.rooms[this.pos.roomName].owner))
+    );
+  }
   visualize() {
     if (!this.structure) {
       viz(this.pos.roomName).structure(this.pos.x, this.pos.y, this.structureType);

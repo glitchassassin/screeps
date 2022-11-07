@@ -36,6 +36,7 @@ export const defaultRoomCallback = (opts?: getCostMatrixOptions) => (room: strin
 config.DEFAULT_MOVE_OPTS.routeCallback = defaultRouteCallback();
 config.DEFAULT_MOVE_OPTS.sourceKeeperRoomCost = Infinity;
 config.DEFAULT_MOVE_OPTS.roomCallback = defaultRoomCallback();
+config.DEFAULT_MOVE_OPTS.maxOpsPerRoom = 3000;
 
 interface getCostMatrixOptions {
   ignoreSourceKeepers?: boolean;
@@ -53,7 +54,7 @@ interface getCostMatrixOptions {
 export const getCostMatrix = memoizeByTick(
   (roomName: string, avoidCreeps: boolean = false, opts = {}) =>
     `${roomName} ${avoidCreeps ? 'Y' : 'N'} ${JSON.stringify(opts)} ${
-      opts.roomPlan ? Object.keys(Memory.roomPlans[roomName]).length : ''
+      opts.roomPlan ? Object.keys(Memory.roomPlans[roomName] ?? {}).length : ''
     }`,
   (roomName: string, avoidCreeps: boolean = false, opts?: getCostMatrixOptions) => {
     let room = Game.rooms[roomName];
