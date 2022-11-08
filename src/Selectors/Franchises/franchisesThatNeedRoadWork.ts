@@ -1,4 +1,4 @@
-import { nextFranchiseRoadToBuild } from '../plannedTerritoryRoads';
+import { nextFranchiseRoadToBuild } from '../plannedFranchiseRoads';
 import { activeFranchises } from './franchiseActive';
 
 export function franchisesThatNeedRoadWork(office: string) {

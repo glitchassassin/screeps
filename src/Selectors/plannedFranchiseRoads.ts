@@ -58,17 +58,3 @@ export const adjustedPlannedFranchiseRoadsCost = memoizeByTick(
       .reduce((sum, a) => sum + a, 0);
   }
 );
-
-export function plannedTerritoryRoads(office: string) {
-  return [
-    ...new Set(
-      (Memory.offices[office]?.territories ?? [])
-        .flatMap(t => Object.entries(Memory.rooms[t]?.franchises?.[office] ?? {}))
-        .filter(([_, franchise]) => franchise.lastActive && franchise.lastActive + 1000 > Game.time)
-        .sort(([_a, a], [_b, b]) => (getCachedPath(office + a)?.length ?? 0) - (getCachedPath(office + b)?.length ?? 0))
-        .flatMap(([source]) => {
-          return plannedFranchiseRoads(office, source as Id<Source>);
-        })
-    )
-  ];
-}

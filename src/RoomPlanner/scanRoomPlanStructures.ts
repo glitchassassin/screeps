@@ -1,5 +1,5 @@
+import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
-import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 
 let scanned: Record<string, number> = {};
 
@@ -11,7 +11,7 @@ export const scanRoomPlanStructures = (office: string) => {
     for (let s of plannedStructuresByRcl(office, 8)) {
       s.survey();
     }
-    for (let s of plannedTerritoryRoads(office)) {
+    for (let s of plannedActiveFranchiseRoads(office)) {
       s.survey();
     }
   }

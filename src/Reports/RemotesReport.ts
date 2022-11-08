@@ -9,8 +9,10 @@ import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAv
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { posById } from 'Selectors/posById';
 import { sum } from 'Selectors/reducers';
+import { visualizeHarassmentZones } from 'Strategy/Territories/HarassmentZones';
 
 export default () => {
+  visualizeHarassmentZones();
   for (const office in Memory.offices) {
     let actualLogisticsCapacity = 0;
     const activeMissionsBySource = activeMissions(office).reduce((obj, mission) => {
@@ -30,12 +32,17 @@ export default () => {
 
     const data = franchisesByOffice(office).map(franchise => {
       let sourcePos = posById(franchise.source);
-      Game.map.visual.text(franchiseEnergyAvailable(franchise.source).toFixed(0), sourcePos!, { fontSize: 5 });
       const mission = activeMissionsBySource[franchise.source];
       let assigned = mission?.creeps.harvesters.resolved.length ?? 0;
       let estimatedCapacity = mission?.haulingCapacityNeeded() ?? 0;
 
       let disabled = !mission || mission?.disabled();
+
+      Game.map.visual.text(
+        franchiseEnergyAvailable(franchise.source).toFixed(0) + (disabled ? ' N' : ' Y'),
+        sourcePos!,
+        { fontSize: 5 }
+      );
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 

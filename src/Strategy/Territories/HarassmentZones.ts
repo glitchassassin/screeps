@@ -1,7 +1,7 @@
 import { byId } from 'Selectors/byId';
 import { combatStats } from 'Selectors/Combat/combatStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
-import { franchisePath } from 'Selectors/plannedTerritoryRoads';
+import { franchisePath } from 'Selectors/plannedFranchiseRoads';
 import { visualizeRoomCluster } from 'utils/visualizeRoomCluster';
 
 interface Zone {
@@ -58,7 +58,7 @@ export const cleanThreats = () => {
   for (const attacker in Memory.zones) {
     const zone = Memory.zones[attacker];
     if (Game.time - zone.lastActive > zone.rhythm) {
-      // delete Memory.zones[attacker];
+      delete Memory.zones[attacker];
     }
   }
 };
@@ -72,9 +72,6 @@ export const isThreatened = (office: string, franchise: Id<Source>) => {
   for (const attacker in Memory.zones) {
     const zone = Memory.zones[attacker];
     if (rooms.some(r => zone.territories.includes(r))) {
-      rooms.forEach(room =>
-        Game.map.visual.text(zone.attacker + ' ' + zone.score, new RoomPosition(25, 5, room), { fontSize: 4 })
-      );
       return zone.confirmed;
     }
   }

@@ -19,10 +19,11 @@ import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
-import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
+import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
+import { isThreatened } from 'Strategy/Territories/HarassmentZones';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
@@ -94,7 +95,9 @@ export class LogisticsMission extends MissionImplementation {
       const depositAssignmentIds = new Map<Id<AnyStoreStructure | Creep>, [number, AnyStoreStructure | Creep]>();
 
       for (const { source, room } of franchisesByOffice(this.missionData.office)) {
-        if ((Memory.rooms[room]?.threatLevel?.[1] ?? 0) > 0) continue;
+        if (isThreatened(this.missionData.office, source)) {
+          continue;
+        }
         withdrawAssignments.set(source, 0);
       }
       for (const prioritizedStructure of storageStructureThatNeedsEnergy(this.missionData.office)) {
@@ -207,7 +210,7 @@ export class LogisticsMission extends MissionImplementation {
         roads: rcl(this.missionData.office) > 3 && franchisesThatNeedRoadWork(this.missionData.office).length <= 2,
         repair:
           rcl(this.missionData.office) > 3 &&
-          plannedTerritoryRoads(this.missionData.office).some(r => r.energyToRepair > 0)
+          plannedActiveFranchiseRoads(this.missionData.office).some(r => r.energyToRepair > 0)
       };
     }
   );
@@ -238,7 +241,7 @@ export class LogisticsMission extends MissionImplementation {
     // logCpuStart();
 
     // clean up invalid assignments
-    const { depositAssignmentIds } = this.assignedLogisticsCapacity();
+    const { depositAssignmentIds, withdrawAssignments } = this.assignedLogisticsCapacity();
     for (const assigned in this.missionData.assignments) {
       const assignment = this.missionData.assignments[assigned];
       const creep = Game.creeps[assigned];
@@ -253,14 +256,18 @@ export class LogisticsMission extends MissionImplementation {
       ) {
         delete assignment.depositTarget;
       } else if (creep?.memory.runState === States.WITHDRAW && assignment.withdrawTarget) {
-        const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
-        if (target instanceof StructureStorage || target instanceof StructureContainer) {
-          if (target.store[RESOURCE_ENERGY] < 0) {
-            // withdraw target is empty
+        if (!withdrawAssignments.has(assignment.withdrawTarget)) {
+          delete assignment.withdrawTarget;
+        } else {
+          const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
+          if (target instanceof StructureStorage || target instanceof StructureContainer) {
+            if (target.store[RESOURCE_ENERGY] < 0) {
+              // withdraw target is empty
+              delete assignment.withdrawTarget;
+            }
+          } else if (franchiseEnergyAvailable(assignment.withdrawTarget) <= 50) {
             delete assignment.withdrawTarget;
           }
-        } else if (franchiseEnergyAvailable(assignment.withdrawTarget) <= 50) {
-          delete assignment.withdrawTarget;
         }
       }
     }

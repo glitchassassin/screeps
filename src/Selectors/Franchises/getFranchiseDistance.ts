@@ -1,5 +1,5 @@
 import { terrainCostAt } from 'Selectors/Map/MapCoordinates';
-import { plannedFranchiseRoads } from 'Selectors/plannedTerritoryRoads';
+import { plannedFranchiseRoads } from 'Selectors/plannedFranchiseRoads';
 import { posById } from 'Selectors/posById';
 import { memoize } from 'utils/memoizeFunction';
 

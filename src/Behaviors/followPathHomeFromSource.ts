@@ -1,5 +1,5 @@
 import { moveByPath, moveTo } from 'screeps-cartographer';
-import { franchiseRoadsToBuild } from 'Selectors/plannedTerritoryRoads';
+import { franchiseRoadsToBuild } from 'Selectors/plannedFranchiseRoads';
 import { roomPlans } from 'Selectors/roomPlans';
 import { BehaviorResult } from './Behavior';
 

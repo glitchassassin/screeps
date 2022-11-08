@@ -4,8 +4,8 @@ import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { outsidePerimeter } from 'Selectors/perimeter';
+import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
-import { plannedTerritoryRoads } from 'Selectors/plannedTerritoryRoads';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { mineralPosition, sourceIds, sourcePositions } from 'Selectors/roomCache';
@@ -79,7 +79,7 @@ export const getCostMatrix = memoizeByTick(
 
     if (opts?.territoryPlannedRoadsCost) {
       for (const office in Memory.rooms[roomName]?.franchises ?? {}) {
-        for (const s of plannedTerritoryRoads(office)) {
+        for (const s of plannedActiveFranchiseRoads(office)) {
           if (s.pos.roomName === roomName) {
             costs.set(s.pos.x, s.pos.y, opts.territoryPlannedRoadsCost);
           }

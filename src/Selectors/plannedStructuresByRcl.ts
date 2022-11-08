@@ -1,6 +1,6 @@
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { calculateDefensiveThreatLevel } from './Combat/threatAnalysis';
-import { plannedTerritoryRoads } from './plannedTerritoryRoads';
+import { plannedActiveFranchiseRoads } from './plannedActiveFranchiseRoads';
 import { roomPlans } from './roomPlans';
 import { getExtensions } from './spawnsAndExtensionsDemand';
 import { isPlannedStructure } from './typeguards';
@@ -117,7 +117,7 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
       plans.headquarters?.roads ?? [],
       plans.extensions?.roads ?? [],
       plans.roads?.roads ?? [],
-      plannedTerritoryRoads(officeName)
+      plannedActiveFranchiseRoads(officeName)
     );
   }
   if (rcl >= 7) {
