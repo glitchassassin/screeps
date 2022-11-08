@@ -9,9 +9,9 @@ export const getExtensions = (room: string, includeFastfiller = true) => {
   return ([] as (PlannedStructure | undefined)[])
     .concat(
       includeFastfiller ? plan.fastfiller?.extensions ?? [] : [],
-      plan.headquarters?.extension,
       plan.franchise1?.extensions ?? [],
       plan.franchise2?.extensions ?? [],
+      plan.headquarters?.extension,
       plan.extensions?.extensions ?? [],
       plan.backfill?.extensions ?? []
     )

@@ -1,28 +1,23 @@
+import { LabMineralConstant } from 'Structures/Labs/LabOrder';
+import { boostLabsToEmpty } from 'Structures/Labs/labsToEmpty';
 import { getLabs } from './getLabs';
 import { roomPlans } from './roomPlans';
 
-export function boostLabsToEmpty(office: string) {
-  return getLabs(office).boosts.filter(lab => {
-    const target = Memory.offices[office].lab.boostingLabs.find(o => o.resource)?.resource;
-    const actual = (lab.structure as StructureLab | undefined)?.mineralType;
-    return actual && actual !== target;
-  });
-}
-
 export function boostLabsToFill(office: string) {
-  return getLabs(office).boosts.filter(lab => {
-    if (!lab.structure) return false;
-    const structure = lab.structure as StructureLab;
-    const boost = structure.mineralType;
-    const [boostNeeded, quantity] = boostsNeededForLab(office, structure.id);
-    return !boost || (boost == boostNeeded && structure.store.getUsedCapacity(boostNeeded) < (quantity ?? 0));
-  });
+  return getLabs(office)
+    .boosts.map(lab => lab.structure)
+    .filter((lab): lab is StructureLab => {
+      if (!lab) return false;
+      const boost = lab.mineralType;
+      const [boostNeeded, quantity] = boostsNeededForLab(office, lab.id);
+      return !boost || (boost == boostNeeded && lab.store.getUsedCapacity(boostNeeded) < (quantity ?? 0));
+    });
 }
 
 export function boostsNeededForLab(
   office: string,
   labId: Id<StructureLab> | undefined
-): [MineralCompoundConstant, number] | [] {
+): [LabMineralConstant, number] | [] {
   const resource = Memory.offices[office].lab.boostingLabs.find(l => l.id === labId)?.resource;
   if (!resource || !labId) return [];
 
@@ -56,12 +51,7 @@ export function shouldHandleBoosts(office: string) {
 /**
  * Sum of boosts in labs, Scientist inventories, and Terminal
  */
-export function boostsAvailable(
-  office: string,
-  boost: MineralCompoundConstant,
-  countReserved = true,
-  countLabs = true
-) {
+export function boostsAvailable(office: string, boost: LabMineralConstant, countReserved = true, countLabs = true) {
   let total =
     (countLabs
       ? getLabs(office).boosts.reduce(

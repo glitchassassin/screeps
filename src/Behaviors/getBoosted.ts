@@ -2,6 +2,7 @@ import { FEATURES } from 'config';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getScientists } from 'Selectors/getScientists';
+import { LabMineralConstant } from 'Structures/Labs/LabOrder';
 import { BehaviorResult } from './Behavior';
 
 export function getBoosted(creep: Creep, office: string) {
@@ -10,10 +11,9 @@ export function getBoosted(creep: Creep, office: string) {
 
   // Check if boosts are completed
   const boosts = creep.body.reduce((map, part) => {
-    if (part.boost)
-      map.set(part.boost as MineralCompoundConstant, (map.get(part.boost as MineralCompoundConstant) ?? 0) + 30);
+    if (part.boost) map.set(part.boost as LabMineralConstant, (map.get(part.boost as LabMineralConstant) ?? 0) + 30);
     return map;
-  }, new Map<MineralCompoundConstant, number>());
+  }, new Map<LabMineralConstant, number>());
   const outstanding =
     Memory.offices[office].lab.boosts
       .find(o => o.name === creep.name)

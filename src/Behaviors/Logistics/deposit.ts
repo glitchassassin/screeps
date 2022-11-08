@@ -28,6 +28,43 @@ export const deposit = (
     return States.DEPOSIT;
   }
 
+  if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
+    // Record deposit cost
+    HarvestLedger.record(data.office, data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
+  }
+
+  // travel home from a source
+  if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure) && creep.pos.roomName !== data.office) {
+    followPathHomeFromSource(creep, data.office, data.withdrawTarget);
+  } else {
+    moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+    if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
+      const amount = Math.min(
+        target.store.getFreeCapacity(RESOURCE_ENERGY),
+        creep.store.getUsedCapacity(RESOURCE_ENERGY)
+      );
+      target.store[RESOURCE_ENERGY] += amount;
+      if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
+        // Record deposit amount
+        HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);
+        LogisticsLedger.record(data.office, 'deposit', -amount);
+      }
+      delete data.depositTarget;
+    }
+    // If target is spawn, is not spawning, and is at capacity, renew this creep
+    if (
+      target instanceof StructureSpawn &&
+      !target.spawning &&
+      target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)
+    ) {
+      target.renewCreep(creep);
+    }
+  }
+
+  if (Game.cpu.bucket < 1000) return States.DEPOSIT;
+
+  // if we have CPU, repair and look for opportunity targets
+
   if (creep.getActiveBodyparts(WORK)) {
     const road = creep.pos
       .findInRange(FIND_STRUCTURES, 3)
@@ -43,6 +80,8 @@ export const deposit = (
       }
     }
   }
+
+  // only check for nearby targets if we have surplus CPU
 
   const nearby = lookNear(creep.pos);
 
@@ -92,40 +131,6 @@ export const deposit = (
     if (energyRemaining === 0) {
       delete data.withdrawTarget;
       return States.WITHDRAW;
-    }
-  }
-  if (!target) return States.DEPOSIT;
-
-  if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
-    // Record deposit cost
-    HarvestLedger.record(data.office, data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
-  }
-
-  // travel home from a source
-  if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure) && creep.pos.roomName !== data.office) {
-    followPathHomeFromSource(creep, data.office, data.withdrawTarget);
-  } else {
-    moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
-    if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
-      const amount = Math.min(
-        target.store.getFreeCapacity(RESOURCE_ENERGY),
-        creep.store.getUsedCapacity(RESOURCE_ENERGY)
-      );
-      target.store[RESOURCE_ENERGY] += amount;
-      if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
-        // Record deposit amount
-        HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);
-        LogisticsLedger.record(data.office, 'deposit', -amount);
-      }
-      delete data.depositTarget;
-    }
-    // If target is spawn, is not spawning, and is at capacity, renew this creep
-    if (
-      target instanceof StructureSpawn &&
-      !target.spawning &&
-      target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)
-    ) {
-      target.renewCreep(creep);
     }
   }
 
