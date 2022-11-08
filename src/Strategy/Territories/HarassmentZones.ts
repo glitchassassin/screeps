@@ -2,6 +2,7 @@ import { byId } from 'Selectors/byId';
 import { combatStats } from 'Selectors/Combat/combatStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
 import { franchisePath } from 'Selectors/plannedFranchiseRoads';
+import { memoizeByTick } from 'utils/memoizeFunction';
 import { visualizeRoomCluster } from 'utils/visualizeRoomCluster';
 
 interface Zone {
@@ -31,6 +32,11 @@ export const scanRoomForThreats = (territory: string) => {
   }
 };
 
+const totalThreatScore = memoizeByTick(
+  attacker => attacker,
+  attacker => ({ threat: 0 })
+);
+
 export const recordThreat = (attacker: string, score: number, territory: string) => {
   if (score <= 0) return;
   if (['Source Keeper', 'Invader'].includes(attacker)) return;
@@ -44,7 +50,11 @@ export const recordThreat = (attacker: string, score: number, territory: string)
   };
   Memory.zones[attacker] = zone;
 
-  zone.score = Math.max(zone.score, score);
+  // track the attacker's total visible threat for a given tick
+  const threatScore = totalThreatScore(attacker);
+  threatScore.threat += score;
+
+  zone.score = Math.max(zone.score, threatScore.threat);
   if (!zone.territories.includes(territory)) zone.territories.push(territory);
   zone.lastActive = Game.time;
 };
