@@ -11,8 +11,10 @@ import { posById } from 'Selectors/posById';
 import { sum } from 'Selectors/reducers';
 import { sourceIds } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
+import { visualizeHarassmentZones } from 'Strategy/Territories/HarassmentZones';
 
 export default () => {
+  visualizeHarassmentZones();
   for (const office in Memory.offices) {
     for (const franchise of franchisesByOffice(office)) {
       let sourcePos = posById(franchise.source);

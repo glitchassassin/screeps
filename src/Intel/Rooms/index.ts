@@ -10,6 +10,7 @@ import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { ownedMinerals } from 'Selectors/ownedMinerals';
 import { roomPlans } from 'Selectors/roomPlans';
 import { evaluatePowerBanks } from 'Strategy/ResourceAnalysis/PowerBank';
+import { cleanThreats, scanRoomForThreats } from 'Strategy/Territories/HarassmentZones';
 import profiler from 'utils/profiler';
 
 declare global {
@@ -61,6 +62,14 @@ export const scanRooms = profiler.registerFN(() => {
 
   // Purge dead offices
   purgeDeadOffices();
+
+  // clean up threat intel
+  cleanThreats();
+  for (const office in Memory.offices) {
+    for (const territory of Memory.offices[office].territories ?? []) {
+      scanRoomForThreats(territory);
+    }
+  }
 
   for (let room in Game.rooms) {
     // Only need to store this once
