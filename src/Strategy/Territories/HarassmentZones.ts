@@ -1,7 +1,9 @@
+import { THREAT_TOLERANCE } from 'config';
 import { byId } from 'Selectors/byId';
 import { combatStats } from 'Selectors/Combat/combatStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
 import { franchisePath } from 'Selectors/plannedFranchiseRoads';
+import { rcl } from 'Selectors/rcl';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { visualizeRoomCluster } from 'utils/visualizeRoomCluster';
 
@@ -79,13 +81,17 @@ export const isThreatened = (office: string, franchise: Id<Source>) => {
     return rooms;
   }, [] as string[]);
 
+  let threat = 0;
   for (const attacker in Memory.zones) {
     const zone = Memory.zones[attacker];
-    if (rooms.some(r => zone.territories.includes(r))) {
-      return zone.confirmed;
+    if (zone.confirmed && rooms.some(r => zone.territories.includes(r))) {
+      threat += zone.score;
     }
   }
 
+  if (threat > THREAT_TOLERANCE.remote[rcl(office)]) {
+    return true;
+  }
   return false;
 };
 

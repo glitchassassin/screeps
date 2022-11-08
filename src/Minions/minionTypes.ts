@@ -180,7 +180,7 @@ export const MinionBuilders = {
   [MinionTypes.BLINKY]: (energy: number) => {
     if (energy < 200) {
       return [];
-    } else if (energy < 5600) {
+    } else if (energy < 1000) {
       return buildFromSegment(energy, [RANGED_ATTACK, MOVE], { sorted: true });
     } else {
       return buildFromSegment(energy, [RANGED_ATTACK, MOVE, MOVE, HEAL], { sorted: true });
