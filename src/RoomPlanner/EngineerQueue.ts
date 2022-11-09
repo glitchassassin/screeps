@@ -97,7 +97,7 @@ export class EngineerQueue {
       data.count += 1;
       data.energyRemaining += s.energyToBuild + s.energyToRepair;
       data.workTicksRemaining += s.energyToBuild / BUILD_POWER + s.energyToRepair / (REPAIR_COST * REPAIR_POWER);
-      range + getRangeTo(storagePos, s.pos);
+      range += getRangeTo(storagePos, s.pos);
     });
     if (data.count) data.averageRange = range / data.count;
     return data;
