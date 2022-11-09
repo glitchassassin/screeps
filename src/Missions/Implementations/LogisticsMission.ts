@@ -4,6 +4,7 @@ import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { fixedCount } from 'Missions/BaseClasses';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -22,6 +23,7 @@ import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
+import { roomPlans } from 'Selectors/roomPlans';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { isThreatened } from 'Strategy/Territories/HarassmentZones';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
@@ -34,15 +36,24 @@ export interface LogisticsMissionData extends BaseMissionData {
     {
       withdrawTarget?: Id<Source>;
       depositTarget?: Id<AnyStoreStructure | Creep>;
-      repair?: boolean;
+      fromStorage?: boolean;
     }
   >;
+}
+
+declare global {
+  interface CreepMemory {
+    fromStorage?: boolean;
+  }
 }
 
 export class LogisticsMission extends MissionImplementation {
   public creeps = {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
+      spawnData: {
+        memory: { fromStorage: false }
+      },
       budget: Budget.ESSENTIAL,
       estimatedCpuPerTick: 0.8,
       body: energy =>
@@ -61,6 +72,26 @@ export class LogisticsMission extends MissionImplementation {
         if (currentCapacity < neededCapacity) return 1;
         return 0;
       }
+    }),
+    refillers: new MultiCreepSpawner('r', this.missionData.office, {
+      role: MinionTypes.ACCOUNTANT,
+      spawnData: {
+        memory: { fromStorage: true }
+      },
+      budget: Budget.ESSENTIAL,
+      estimatedCpuPerTick: 0.8,
+      body: energy =>
+        MinionBuilders[MinionTypes.ACCOUNTANT](
+          Math.max(100, energy / 2),
+          25,
+          this.calculated().roads,
+          this.calculated().repair
+        ),
+      count: fixedCount(() =>
+        roomPlans(this.missionData.office)?.headquarters?.storage.structure?.store.getUsedCapacity(RESOURCE_ENERGY)
+          ? 1
+          : 0
+      )
     })
   };
 
@@ -215,15 +246,16 @@ export class LogisticsMission extends MissionImplementation {
     }
   );
 
-  fromStorage = false;
-
   run(
     creeps: ResolvedCreeps<LogisticsMission>,
     missions: ResolvedMissions<LogisticsMission>,
     data: LogisticsMissionData
   ) {
-    const { haulers } = creeps;
+    const { haulers, refillers } = creeps;
+    const allHaulers = [...haulers, ...refillers];
     data.assignments ??= {};
+
+    // logCpuStart();
 
     // Update priorities
     const inRoomCapacity = activeMissions(this.missionData.office)
@@ -237,8 +269,6 @@ export class LogisticsMission extends MissionImplementation {
     } else {
       this.priority = 11;
     }
-
-    // logCpuStart();
 
     // clean up invalid assignments
     const { depositAssignmentIds, withdrawAssignments } = this.assignedLogisticsCapacity();
@@ -261,7 +291,7 @@ export class LogisticsMission extends MissionImplementation {
         } else {
           const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
           if (target instanceof StructureStorage || target instanceof StructureContainer) {
-            if (target.store[RESOURCE_ENERGY] < 0) {
+            if (target.store[RESOURCE_ENERGY] <= 0) {
               // withdraw target is empty
               delete assignment.withdrawTarget;
             }
@@ -275,12 +305,16 @@ export class LogisticsMission extends MissionImplementation {
 
     // add targets, if needed
 
-    for (const creep of haulers) {
+    for (const creep of allHaulers) {
       data.assignments[creep.name] ??= {};
       const assignment = data.assignments[creep.name];
       if (creep?.memory.runState === States.DEPOSIT && !assignment.depositTarget) {
-        assignment.depositTarget = this.findBestDepositTarget(creep, this.fromStorage, true)?.[1].id;
-      } else if (creep?.memory.runState === States.WITHDRAW && !assignment.withdrawTarget && !this.fromStorage) {
+        assignment.depositTarget = this.findBestDepositTarget(creep, creep.memory.fromStorage, true)?.[1].id;
+      } else if (
+        creep?.memory.runState === States.WITHDRAW &&
+        !assignment.withdrawTarget &&
+        !creep.memory.fromStorage
+      ) {
         assignment.withdrawTarget = this.findBestWithdrawTarget(creep, true);
       }
     }
@@ -329,17 +363,17 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
     }
-    // logCpu('bucket brigade');
+    // logCpu('prep');
 
-    for (const creep of haulers) {
+    for (const creep of allHaulers) {
       const assignment = {
         ...data.assignments[creep.name],
         office: data.office
       };
       runStates(
         {
-          [States.DEPOSIT]: deposit,
-          [States.WITHDRAW]: withdraw(this.fromStorage),
+          [States.DEPOSIT]: deposit(creep.memory.fromStorage),
+          [States.WITHDRAW]: withdraw(creep.memory.fromStorage),
           [States.RECYCLE]: recycle
         },
         assignment,

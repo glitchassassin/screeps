@@ -220,6 +220,8 @@ export class EngineerMission extends MissionImplementation {
                     // room reserved or claimed by a hostile actor
                     delete mission.facilitiesTarget;
                     return States.FIND_WORK;
+                  } else if (result !== OK) {
+                    console.log('Error creating construction site', plan.pos, plan.structureType, result);
                   }
                 }
                 // Shove creeps out of the way if needed

@@ -26,7 +26,6 @@ import { HarvestMission } from './HarvestMission';
 import { HQLogisticsMission } from './HQLogisticsMission';
 import { LogisticsMission } from './LogisticsMission';
 import { MineMission } from './MineMission';
-import { MobileRefillMission } from './MobileRefillMission';
 import { PlunderMission } from './PlunderMission';
 import { PowerBankMission } from './PowerBankMission';
 import { ReserveMission } from './ReserveMission';
@@ -58,7 +57,6 @@ export class MainOfficeMission extends MissionImplementation {
             hasEnergyIncome(this.missionData.office)
         )
     ),
-    mobileRefill: new MissionSpawner(MobileRefillMission, () => ({ ...this.missionData })),
     engineer: new MissionSpawner(EngineerMission, () => ({ ...this.missionData })),
     reserve: new MissionSpawner(ReserveMission, () => ({ ...this.missionData })),
     hqLogistics: new ConditionalMissionSpawner(
