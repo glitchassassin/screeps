@@ -49,7 +49,7 @@ const recalculate = memoize(
       if (data) Memory.rooms[room].franchises[office] = data;
     }
   },
-  500
+  100000
 );
 
 function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, { scores: [] }> | undefined {
