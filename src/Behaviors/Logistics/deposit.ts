@@ -8,7 +8,6 @@ import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
-import { viz } from 'Selectors/viz';
 
 export const deposit =
   (fromStorage?: boolean) =>
@@ -26,8 +25,6 @@ export const deposit =
       return States.WITHDRAW;
     }
     let target = byId(data.depositTarget as Id<AnyStoreStructure | Creep>);
-
-    if (target) viz(target.pos.roomName).line(target.pos, creep.pos);
 
     if (!target || target.store[RESOURCE_ENERGY] >= target.store.getCapacity(RESOURCE_ENERGY)) {
       delete data.depositTarget;
