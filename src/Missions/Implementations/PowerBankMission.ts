@@ -34,7 +34,6 @@ export class PowerBankMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.ACCOUNTANT,
-        budget: Budget.ESSENTIAL,
         body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
         count: fixedCount(() => {
           // wait to spawn until duos are about to crack the bank

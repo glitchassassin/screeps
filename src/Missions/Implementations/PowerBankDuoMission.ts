@@ -29,7 +29,6 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_ATTACKER,
-        budget: Budget.ESSENTIAL,
         body: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
       },
       creep => this.recordCreepEnergy(creep)
@@ -39,7 +38,6 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_HEALER,
-        budget: Budget.ESSENTIAL,
         body: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
       },
       creep => this.recordCreepEnergy(creep)

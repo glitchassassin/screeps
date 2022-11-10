@@ -59,7 +59,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         o.priority.toFixed(2),
         o.status,
         `${o.estimate.cpu.toFixed(2)}`,
-        `${o.estimate.energy}`
+        `${o.estimate.energy.toFixed(0)}`
       ]);
     estimatedCPU += o.estimate.cpu;
     estimatedEnergy += o.estimate.energy;

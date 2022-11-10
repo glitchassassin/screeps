@@ -24,7 +24,7 @@ export abstract class BaseCreepSpawner {
         directions?: DirectionConstant[];
       };
       body: (energy: number) => BodyPartConstant[];
-      budget: Budget;
+      budget?: Budget;
       estimatedCpuPerTick?: number;
       estimatedEnergy?: (body: BodyPartConstant[]) => number;
     },
@@ -45,7 +45,7 @@ export abstract class BaseCreepSpawner {
         ...this.props.spawnData,
         priority,
         office: this.office,
-        budget: this.props.budget,
+        budget: this.props.budget ?? Budget.ESSENTIAL,
         name: `${missionId}|${padding}`,
         body,
         estimate: {
