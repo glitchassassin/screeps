@@ -28,12 +28,12 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     }
   >();
   for (let mission of missions) {
-    const key = `${mission.priority}_${mission.constructor.name}_${mission.status}`;
+    const key = `${mission.id}`;
     const entry = missionsList.get(key) ?? {
       count: 0,
       priority: mission.priority,
       status: mission.status,
-      type: mission.constructor.name,
+      type: mission.toString(),
       actual: {
         cpu: 0,
         energy: 0

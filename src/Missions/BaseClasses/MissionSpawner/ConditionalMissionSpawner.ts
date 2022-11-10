@@ -6,7 +6,8 @@ export class ConditionalMissionSpawner<T extends typeof MissionImplementation> e
   constructor(
     public missionClass: T,
     public missionData: () => InstanceType<T>['missionData'],
-    public spawnWhen: () => boolean
+    public spawnWhen: () => boolean,
+    public onSpawn?: (mission: InstanceType<T>) => void
   ) {
     super();
   }
@@ -18,15 +19,19 @@ export class ConditionalMissionSpawner<T extends typeof MissionImplementation> e
     this.resolved?.init();
   }
 
-  get resolved() {
+  spawn() {
     let mission = this.missionClass.fromId(this.ids[0]) as InstanceType<T>;
     if (!mission || mission.status === MissionStatus.DONE) {
       this.ids.shift();
       if (this.spawnWhen()) {
         mission = new this.missionClass(this.missionData()) as InstanceType<T>;
+        this.onSpawn?.(mission);
         this.ids.push(mission.id);
       }
     }
-    return mission;
+  }
+
+  get resolved() {
+    return this.missionClass.fromId(this.ids[0]) as InstanceType<T>;
   }
 }

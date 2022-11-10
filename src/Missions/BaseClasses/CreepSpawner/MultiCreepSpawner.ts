@@ -31,6 +31,7 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
     if (!this._creeps.includes(creep.name)) {
       this._creeps.push(creep.name);
     }
+    this.checkOnSpawn(creep);
   }
 
   cpuRemaining(): number {

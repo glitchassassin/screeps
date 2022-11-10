@@ -14,6 +14,8 @@ import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMi
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
+import { byId } from 'Selectors/byId';
+import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { unpackPos } from 'utils/packrat';
 import { PowerBankDuoMission } from './PowerBankDuoMission';
@@ -21,44 +23,67 @@ import { PowerBankDuoMission } from './PowerBankDuoMission';
 export interface PowerBankMissionData extends BaseMissionData {
   powerBank: Id<StructurePowerBank>;
   powerBankPos: string;
+  duosSpawned?: number;
 }
 
 export class PowerBankMission extends MissionImplementation {
+  budget = Budget.SURPLUS;
   public creeps = {
-    haulers: new MultiCreepSpawner('h', this.missionData.office, {
-      role: MinionTypes.ACCOUNTANT,
-      budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
-      count: fixedCount(() => {
-        // wait to spawn until duos are about to crack the bank
-        const totalDamage = this.missions.duos.resolved.reduce((sum, d) => sum + (d?.damagePerTick() ?? 0), 0) * 750; // damage over next 750 ticks
-        if (totalDamage < (this.report()?.hits ?? Infinity)) {
-          return 0;
-        }
-        // spawn enough to haul all the power in one trip
-        return Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY));
-      })
-    })
+    haulers: new MultiCreepSpawner(
+      'h',
+      this.missionData.office,
+      {
+        role: MinionTypes.ACCOUNTANT,
+        budget: Budget.ESSENTIAL,
+        body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
+        count: fixedCount(() => {
+          // wait to spawn until duos are about to crack the bank
+          if (!this.willBreachIn(750)) {
+            return 0;
+          }
+          // spawn enough to haul all the power in one trip
+          return Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY));
+        })
+      },
+      creep => this.recordCreepEnergy(creep)
+    )
   };
 
   public missions = {
-    duos: new MultiMissionSpawner(PowerBankDuoMission, current => {
-      const totalDamage = current.reduce((sum, d) => sum + (d?.damageRemaining() ?? 0), 0);
-      if (
-        current.length < (this.report()?.adjacentSquares ?? 0) &&
-        current.every(d => d.assembled()) &&
-        totalDamage < (this.report()?.hits ?? 0)
-      ) {
-        return [this.missionData];
+    duos: new MultiMissionSpawner(
+      PowerBankDuoMission,
+      current => {
+        const duosCount = this.report()?.duoCount ?? 4;
+        if (
+          current.length < (this.report()?.adjacentSquares ?? 0) &&
+          current.every(d => d.assembled()) &&
+          (this.missionData.duosSpawned ?? 0) < duosCount
+        ) {
+          return [this.missionData];
+        }
+        return [];
+      },
+      mission => {
+        this.recordMissionEnergy(mission);
+        this.missionData.duosSpawned = (this.missionData.duosSpawned ?? 0) + 1;
       }
-      return [];
-    })
+    )
   };
 
   priority = 8;
 
   constructor(public missionData: PowerBankMissionData, id?: string) {
     super(missionData, id);
+
+    // calculate energy needed for mission
+    const powerCost = this.report()?.powerCost;
+    const amount = this.report()?.amount;
+    if (powerCost && amount) {
+      this.estimatedEnergyRemaining ??= powerCost * amount;
+    } else {
+      console.log('Unable to fetch report for powerbank mission', unpackPos(missionData.powerBankPos));
+      this.status = MissionStatus.DONE;
+    }
   }
   static fromId(id: PowerBankMission['id']) {
     return super.fromId(id) as PowerBankMission;
@@ -78,12 +103,25 @@ export class PowerBankMission extends MissionImplementation {
     return Memory.offices[this.missionData.office].powerbanks.find(p => p.id === this.missionData.powerBank);
   }
 
+  willBreachIn(ticks: number) {
+    const hits = this.report()?.hits ?? 0;
+    const damage = this.missions.duos.resolved.map(m => m.actualDamageRemaining(ticks)).reduce(sum, 0);
+    return damage >= hits;
+  }
+
   run(
     creeps: ResolvedCreeps<PowerBankMission>,
     missions: ResolvedMissions<PowerBankMission>,
     data: PowerBankMissionData
   ) {
     const { haulers } = creeps;
+
+    // short circuit
+    if ((this.report()?.expires ?? 0 - Game.time) < 2000 && this.report()?.hits === POWER_BANK_HITS) {
+      // less than 2000 ticks to decay and no damage done yet, abandon
+      this.status = MissionStatus.DONE;
+      return;
+    }
 
     if (!this.report() && !haulers.length) {
       this.status = MissionStatus.DONE;
@@ -102,6 +140,7 @@ export class PowerBankMission extends MissionImplementation {
             if (
               creep.store.getUsedCapacity(RESOURCE_POWER) ||
               (Game.rooms[powerBankPos.roomName] &&
+                !byId(this.report()?.id) &&
                 !powerBankRuin &&
                 !Game.rooms[powerBankPos.roomName].find(FIND_DROPPED_RESOURCES, { filter: RESOURCE_POWER }).length)
             ) {
@@ -111,7 +150,7 @@ export class PowerBankMission extends MissionImplementation {
               moveTo(creep, powerBankRuin);
               creep.withdraw(powerBankRuin, RESOURCE_POWER);
             } else {
-              moveTo(creep, { pos: powerBankPos, range: 3 });
+              moveTo(creep, { pos: powerBankPos, range: 3 }, { visualizePathStyle: {} });
             }
             Game.map.visual.line(creep.pos, powerBankPos);
             return States.WITHDRAW;

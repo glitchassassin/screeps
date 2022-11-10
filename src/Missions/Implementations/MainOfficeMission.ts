@@ -91,10 +91,11 @@ export class MainOfficeMission extends MissionImplementation {
         .filter(
           r =>
             r.distance &&
-            r.distance < 500 &&
+            r.distance < 550 &&
             r.powerCost &&
             r.powerCost < buyMarketPrice(RESOURCE_POWER) &&
-            r.hits === POWER_BANK_HITS
+            r.hits === POWER_BANK_HITS &&
+            r.expires - Game.time > 3000
         )
         .reduce(
           min(r => r.powerCost ?? Infinity),

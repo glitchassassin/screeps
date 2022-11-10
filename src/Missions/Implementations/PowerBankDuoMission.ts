@@ -6,7 +6,8 @@ import { MissionStatus } from 'Missions/Mission';
 import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
-import { logCpu, logCpuStart } from 'utils/logCPU';
+import { minionCost } from 'Selectors/minionCostPerTick';
+// import { logCpu, logCpuStart } from 'utils/logCPU';
 import { unpackPos } from 'utils/packrat';
 import {
   BaseMissionData,
@@ -21,23 +22,39 @@ export interface PowerBankDuoMissionData extends BaseMissionData {
 }
 
 export class PowerBankDuoMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
-    attacker: new CreepSpawner('a', this.missionData.office, {
-      role: MinionTypes.POWER_BANK_ATTACKER,
-      budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
-    }),
-    healer: new CreepSpawner('b', this.missionData.office, {
-      role: MinionTypes.POWER_BANK_HEALER,
-      budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
-    })
+    attacker: new CreepSpawner(
+      'a',
+      this.missionData.office,
+      {
+        role: MinionTypes.POWER_BANK_ATTACKER,
+        budget: Budget.ESSENTIAL,
+        body: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
+      },
+      creep => this.recordCreepEnergy(creep)
+    ),
+    healer: new CreepSpawner(
+      'b',
+      this.missionData.office,
+      {
+        role: MinionTypes.POWER_BANK_HEALER,
+        budget: Budget.ESSENTIAL,
+        body: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
+      },
+      creep => this.recordCreepEnergy(creep)
+    )
   };
 
   priority = 8;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
+
+    const energy = Game.rooms[missionData.office].energyCapacityAvailable;
+    this.estimatedEnergyRemaining ??=
+      minionCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)) +
+      minionCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1));
   }
   static fromId(id: PowerBankDuoMission['id']) {
     return super.fromId(id) as PowerBankDuoMission;
@@ -54,8 +71,20 @@ export class PowerBankDuoMission extends MissionImplementation {
     return getRangeTo(attacker.pos, healer.pos) === 1;
   }
 
-  damageRemaining() {
-    return this.damagePerTick() * (this.creeps.attacker.resolved?.ticksToLive ?? 0);
+  arrived() {
+    const report = this.report();
+    const attacker = this.creeps.attacker.resolved;
+    if (!attacker || !report) return false;
+    return getRangeTo(attacker.pos, unpackPos(report.pos)) === 1;
+  }
+
+  actualDamageRemaining(ticks: number = CREEP_LIFE_TIME) {
+    if (!this.arrived()) return 0;
+    return this.damageRemaining(ticks);
+  }
+
+  damageRemaining(ticks: number = CREEP_LIFE_TIME) {
+    return this.damagePerTick() * Math.min(Math.max(0, ticks), this.creeps.attacker.resolved?.ticksToLive ?? 0);
   }
 
   damagePerTick() {
@@ -63,12 +92,22 @@ export class PowerBankDuoMission extends MissionImplementation {
     return (this.creeps.attacker.resolved?.getActiveBodyparts(ATTACK) ?? 0) * ATTACK_POWER;
   }
 
+  onStart() {
+    super.onStart();
+    console.log('[PowerBankDuoMission] started targeting', unpackPos(this.missionData.powerBankPos));
+  }
+
+  onParentEnd() {
+    super.onParentEnd();
+    this.status = MissionStatus.DONE;
+  }
+
   run(
     creeps: ResolvedCreeps<PowerBankDuoMission>,
     missions: ResolvedMissions<PowerBankDuoMission>,
     data: PowerBankDuoMissionData
   ) {
-    logCpuStart();
+    // logCpuStart();
     const { attacker, healer } = creeps;
     const { powerBank: powerBankId } = data;
 
@@ -84,13 +123,13 @@ export class PowerBankDuoMission extends MissionImplementation {
       return;
     }
     if (!attacker || !healer) return; // wait for both creeps
-    logCpu('setup');
+    // logCpu('setup');
 
     const powerBank = byId(powerBankId);
     const powerBankPos = unpackPos(this.missionData.powerBankPos);
 
     const healTarget = healer.hits < healer.hitsMax ? healer : attacker;
-    logCpu('data');
+    // logCpu('data');
 
     // movement
     if (getRangeTo(attacker.pos, healer.pos) !== 1) {
@@ -101,7 +140,7 @@ export class PowerBankDuoMission extends MissionImplementation {
         moveTo(attacker, powerBankPos);
         moveTo(healer, attacker);
       }
-      logCpu('moving together');
+      // logCpu('moving together');
     } else {
       // duo is assembled
       if (this.report()) {
@@ -115,7 +154,7 @@ export class PowerBankDuoMission extends MissionImplementation {
         recycle(this.missionData, attacker);
         recycle(this.missionData, healer);
       }
-      logCpu('moving');
+      // logCpu('moving');
 
       // creep actions
       if (healer && healTarget) {
@@ -130,7 +169,7 @@ export class PowerBankDuoMission extends MissionImplementation {
         // attack target
         if (powerBank) attacker.attack(powerBank);
       }
-      logCpu('attacking');
+      // logCpu('attacking');
     }
   }
 }

@@ -3,6 +3,12 @@ import { SpawnOrder } from 'Minions/spawnQueues';
 import { Budget } from 'Missions/Budgets';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
 
+declare global {
+  interface CreepMemory {
+    spawned?: boolean;
+  }
+}
+
 export abstract class BaseCreepSpawner {
   defaultCpuPerTick = 0.4;
 
@@ -26,6 +32,7 @@ export abstract class BaseCreepSpawner {
   ) {}
 
   spawn(missionId: CreepMemory['missionId'], priority: number): SpawnOrder[] {
+    if (this.disabled) return [];
     const body = this.props.body(spawnEnergyAvailable(this.office));
     const lifetime = body.includes(CLAIM) ? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
 
@@ -59,6 +66,17 @@ export abstract class BaseCreepSpawner {
   public memory?: Record<string, any>;
   setMemory(memory: this['memory']) {
     this.memory = memory;
+  }
+
+  public disabled = false;
+  setDisabled(disabled = true) {
+    this.disabled = disabled;
+  }
+
+  checkOnSpawn(creep: Creep) {
+    if (creep.memory.spawned) return;
+    this.onSpawn?.(creep);
+    creep.memory.spawned = true;
   }
 
   abstract cpuRemaining(): number;

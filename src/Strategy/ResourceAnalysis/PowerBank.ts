@@ -17,6 +17,7 @@ interface PowerBankReport {
   amount: number;
   expires: number;
   duoSpeed?: number;
+  duoCount?: number;
   powerCost?: number;
 }
 
@@ -84,7 +85,8 @@ const evaluatePowerBank = (office: string, origin: RoomPosition, powerBank: Stru
   const duoSpeed = distance < 100 ? 2 : 1;
   report.duoSpeed = duoSpeed;
 
-  const duoCount = report.duoSpeed === 1 ? 3 : 2;
+  const duoCount = distance > 330 ? 4 : distance > 100 ? 3 : 2;
+  report.duoCount = duoCount;
   const haulerCount = Math.ceil(report.amount / (CARRY_CAPACITY * 25));
   const energy = Game.rooms[office].energyCapacityAvailable;
   const cost =

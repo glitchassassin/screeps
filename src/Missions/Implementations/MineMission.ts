@@ -46,11 +46,6 @@ export class MineMission extends MissionImplementation {
     return super.fromId(id) as MineMission;
   }
 
-  spawn() {
-    const orders = super.spawn();
-    return orders;
-  }
-
   run(creeps: ResolvedCreeps<MineMission>, missions: ResolvedMissions<MineMission>, data: MineMissionData) {
     const { miner, hauler } = creeps;
     if (this.creeps.miner.died && this.creeps.hauler.died) {

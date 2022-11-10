@@ -3,6 +3,7 @@ import { PowerBankMission } from 'Missions/Implementations/PowerBankMission';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { creepStats } from 'Selectors/creepStats';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
+import { sum } from 'Selectors/reducers';
 import { viz } from 'Selectors/viz';
 import { unpackPos } from 'utils/packrat';
 
@@ -11,14 +12,8 @@ export default () => {
   const minEnergyPrice = buyMarketPrice(RESOURCE_ENERGY);
   const powerEnergyPrice = minPowerPrice / minEnergyPrice;
   for (const office in Memory.offices) {
-    for (const mission of allMissions()) {
-      if (mission instanceof PowerBankMission) {
-        const bankPos = unpackPos(mission.missionData.powerBankPos);
-        Game.map.visual.line(new RoomPosition(25, 25, office), bankPos, { color: '#ff0000', width: 2 });
-      }
-    }
     const data = Memory.offices[office].powerbanks
-      .filter(r => r.distance && r.distance < 500)
+      .filter(r => r.distance && r.distance < 550)
       .map(report => {
         const bankPos = unpackPos(report.pos);
         Game.map.visual.rect(new RoomPosition(0, 0, bankPos.roomName), 50, 50, {
@@ -57,7 +52,7 @@ export default () => {
           report.expires - Game.time,
           `${((100 * (report.hits ?? POWER_BANK_HITS)) / POWER_BANK_HITS).toFixed(2)}%`,
           report.distance ?? '--',
-          report.duoSpeed ?? '--',
+          `${report.duoCount ?? '--'}/${report.duoSpeed ?? '--'}`,
           (report.powerCost?.toFixed(2) ?? '--') + (report.powerCost && report.powerCost < powerEnergyPrice ? ' ✓' : '')
         ];
       });
@@ -84,9 +79,49 @@ export default () => {
           widget: Rectangle({
             data: Table({
               config: {
-                headers: ['Power Bank', 'Amount', 'Expires', 'Hits', 'Distance', 'Duo Speed', 'Power (energy)']
+                headers: ['Power Bank', 'Amount', 'Expires', 'Hits', 'Distance', 'Duo Count/Speed', 'Power (energy)']
               },
               data
+            })
+          })
+        }
+      ],
+      config: { room: office }
+    });
+
+    // powerbank missions
+    const missionData = [];
+    for (const mission of allMissions()) {
+      if (mission instanceof PowerBankMission) {
+        const bankPos = unpackPos(mission.missionData.powerBankPos);
+        Game.map.visual.line(new RoomPosition(25, 25, office), bankPos, { color: '#ff0000', width: 2 });
+        const ticksToDecay = (mission.report()?.expires ?? Game.time) - Game.time;
+
+        missionData.push([
+          `${bankPos}`,
+          mission.missions.duos.resolved.length,
+          `${
+            (mission.report()?.hits ?? 0) -
+            mission.missions.duos.resolved.map(d => d.actualDamageRemaining()).reduce(sum, 0)
+          }`,
+          '' + ticksToDecay + ' ' + (mission.willBreachIn(ticksToDecay) ? 'Yes' : 'No'),
+          mission.creeps.haulers.resolved.length
+        ]);
+      }
+    }
+
+    Dashboard({
+      widgets: [
+        {
+          pos: { x: 1, y: 4 + Math.min(48, data.length * 1.5) },
+          width: 47,
+          height: 2 + Math.min(48, missionData.length * 1.5),
+          widget: Rectangle({
+            data: Table({
+              config: {
+                headers: ['Power Bank', 'Duos', 'Damage Remaining', 'Breaching?', 'Haulers']
+              },
+              data: missionData
             })
           })
         }

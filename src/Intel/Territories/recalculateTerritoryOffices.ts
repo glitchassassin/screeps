@@ -52,8 +52,13 @@ const recalculate = memoize(
   100000
 );
 
-function calculateTerritoryData(office: string, territory: string): Record<Id<Source>, { scores: [] }> | undefined {
-  const data: Record<Id<Source>, { scores: [] }> = {};
+function calculateTerritoryData(
+  office: string,
+  territory: string
+): Record<Id<Source>, { scores: number[] }> | undefined {
+  const data: Record<Id<Source>, { lastActive?: number; scores: number[] }> = Memory.rooms[territory].franchises[
+    office
+  ] ?? {};
 
   const storage = roomPlans(office)?.headquarters?.storage.pos;
   if (!storage) return undefined;
@@ -65,6 +70,7 @@ function calculateTerritoryData(office: string, territory: string): Record<Id<So
   for (const sourceId of sources) {
     const harvestPos = getFranchisePlanBySourceId(sourceId)?.container.pos;
     if (!harvestPos) continue;
+    resetCachedPath(office + sourceId);
     const path = cachePath(
       office + sourceId,
       storage,
@@ -77,8 +83,7 @@ function calculateTerritoryData(office: string, territory: string): Record<Id<So
         plainCost: 2,
         swampCost: 2,
         roadCost: 1,
-        maxOps: 100000,
-        reusePath: 100000 // recalculate periodically
+        maxOps: 100000
       }
     );
     if (path) {

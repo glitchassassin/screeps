@@ -34,7 +34,7 @@ declare global {
   }
 }
 
-export function vacateSpawns() {
+export function registerCreeps() {
   for (const office in Memory.offices) {
     for (const spawn of getSpawns(office)) {
       if (spawn.spawning) {
@@ -42,7 +42,15 @@ export function vacateSpawns() {
         const creep = spawn.spawning.name;
         const mission = missionById(Memory.creeps[creep].missionId.split('|')[0]);
         mission?.register(Game.creeps[creep]);
+      }
+    }
+  }
+}
 
+export function vacateSpawns() {
+  for (const office in Memory.offices) {
+    for (const spawn of getSpawns(office)) {
+      if (spawn.spawning) {
         if (spawn.spawning.remainingTime < 2) {
           const spawningSquares =
             spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??

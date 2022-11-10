@@ -1,4 +1,7 @@
+import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
+import { minionCost } from 'Selectors/minionCostPerTick';
+import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 import { sum } from 'Selectors/reducers';
 import { BaseCreepSpawner } from './CreepSpawner/BaseCreepSpawner';
 import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
@@ -17,6 +20,7 @@ declare global {
         status: MissionStatus;
         cpuUsed: number;
         energyUsed: number;
+        energyRemaining: number;
         missions: Record<string, string[]>;
         creeps: Record<string, any>;
       }
@@ -47,21 +51,22 @@ export function missionById(id: MissionImplementation['id']) {
 }
 
 export function cleanMissions() {
-  for (const mission of allMissions()) {
+  for (const missionId in Memory.missions) {
+    const mission = Memory.missions[missionId];
     if (mission.status === MissionStatus.DONE) {
-      if (Memory.missions[mission.id]) {
+      if (Memory.missions[missionId]) {
         // file mission report
         Memory.missionReports.push({
           type: mission.constructor.name,
-          duration: Game.time - Memory.missions[mission.id].started,
-          cpuUsed: Memory.missions[mission.id].cpuUsed,
-          energyUsed: Memory.missions[mission.id].energyUsed,
+          duration: Game.time - Memory.missions[missionId].started,
+          cpuUsed: Memory.missions[missionId].cpuUsed,
+          energyUsed: Memory.missions[missionId].energyUsed,
           finished: Game.time,
-          office: mission.missionData.office
+          office: mission.data.office
         });
       }
-      delete Memory.missions[mission.id];
-      singletons.delete(mission.id);
+      delete Memory.missions[missionId];
+      singletons.delete(missionId);
     }
   }
 }
@@ -71,7 +76,7 @@ export class MissionImplementation {
   public missions: Record<string, BaseMissionSpawner<typeof MissionImplementation>> = {};
   public id: string;
   public priority = 5;
-  public estimatedEnergyRemaining = 0;
+  public budget = Budget.ESSENTIAL;
   constructor(public missionData: { office: string }, id?: string) {
     const prefix = this.constructor.name
       .split('')
@@ -92,6 +97,7 @@ export class MissionImplementation {
       status: MissionStatus.PENDING,
       cpuUsed: 0,
       energyUsed: 0,
+      energyRemaining: 0,
       missions: {},
       creeps: {}
     };
@@ -102,6 +108,12 @@ export class MissionImplementation {
   }
   set status(value: MissionStatus) {
     Memory.missions[this.id].status = value;
+  }
+  get estimatedEnergyRemaining() {
+    return Memory.missions[this.id]?.energyRemaining ?? 0;
+  }
+  set estimatedEnergyRemaining(value: number) {
+    Memory.missions[this.id].energyRemaining = value;
   }
 
   initialized = false;
@@ -123,6 +135,7 @@ export class MissionImplementation {
   }
 
   spawn() {
+    if (this.status !== MissionStatus.RUNNING) return [];
     const orders = [];
     for (let key in this.creeps) {
       const prop = this.creeps[key];
@@ -132,6 +145,22 @@ export class MissionImplementation {
   }
 
   execute() {
+    // Mission Energy Budgeting
+    // By default, missions have an ESSENTIAL budget and ignore
+    // budget constraints. Giving them another type of budget and
+    // setting `estimatedEnergyRemaining` in the constructor will
+    // leave the mission as PENDING until there is enough energy
+    // in storage.
+    if (
+      this.status === MissionStatus.PENDING &&
+      (MissionEnergyAvailable[this.missionData.office] ?? 0) -
+        getBudgetAdjustment(this.missionData.office, this.budget) <
+        this.estimatedEnergyRemaining
+    ) {
+      return; // not enough energy to start yet
+    }
+
+    // Register (and generate) sub-missions
     this.init();
     const start = Game.cpu.getUsed();
 
@@ -156,13 +185,12 @@ export class MissionImplementation {
       this.creeps[spawner].setMemory(Memory.missions[this.id].creeps[spawner]);
     }
 
-    // resolve missions
-    const resolvedMissions: ResolvedMissions<MissionImplementation> = Object.keys(this.missions)
-      .map(k => ({ key: k, value: this.missions[k].resolved }))
-      .reduce((sum, { key, value }) => {
-        sum[key as keyof this['missions']] = value;
-        return sum;
-      }, {} as { [T in keyof this['missions']]: this['missions'][T]['resolved'] });
+    // spawn and resolve missions
+    const resolvedMissions: ResolvedMissions<MissionImplementation> = {};
+    for (const k in this.missions) {
+      this.missions[k].spawn();
+      resolvedMissions[k] = this.missions[k].resolved;
+    }
 
     // cache ids
     for (const mission in resolvedMissions) {
@@ -210,15 +238,30 @@ export class MissionImplementation {
 
   onStart() {}
 
-  onEnd() {}
+  onEnd() {
+    for (const mission in this.missions) {
+      const resolved = this.missions[mission].resolved;
+      if (resolved) {
+        if (Array.isArray(resolved)) {
+          resolved.forEach(m => m.onParentEnd());
+        } else {
+          resolved.onParentEnd();
+        }
+      }
+    }
+  }
+
+  onParentEnd() {}
 
   cpuRemaining() {
+    if (this.status !== MissionStatus.RUNNING) return 0;
     return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0);
   }
   cpuUsed() {
     return Memory.missions[this.id].cpuUsed;
   }
   energyRemaining() {
+    if (this.status !== MissionStatus.RUNNING) return 0;
     return this.estimatedEnergyRemaining;
   }
   energyUsed() {
@@ -226,6 +269,15 @@ export class MissionImplementation {
   }
   recordEnergy(energy: number) {
     Memory.missions[this.id].energyUsed += energy;
+  }
+  recordCreepEnergy(creep: Creep) {
+    const energy = minionCost(creep.body.map(p => p.type));
+    this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining - energy);
+    this.recordEnergy(energy);
+  }
+  recordMissionEnergy(mission: MissionImplementation) {
+    this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining - mission.estimatedEnergyRemaining);
+    // doesn't record energy, as this mission isn't actually the one spending it
   }
 
   creepCount() {

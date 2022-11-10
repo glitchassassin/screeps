@@ -5,4 +5,9 @@ export class BaseMissionSpawner<T extends typeof MissionImplementation> {
   get resolved(): InstanceType<T> | InstanceType<T>[] | undefined {
     return;
   }
+
+  /**
+   * Generate missions
+   */
+  spawn() {}
 }

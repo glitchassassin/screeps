@@ -1,7 +1,8 @@
-import { spawnOrder, SpawnOrder, vacateSpawns } from 'Minions/spawnQueues';
+import { registerCreeps, spawnOrder, SpawnOrder, vacateSpawns } from 'Minions/spawnQueues';
 import { recordMissionCpu } from 'Selectors/cpuOverhead';
 import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
-import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
+import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
+import { updateMissionEnergyAvailable } from 'Selectors/Missions/updateMissionEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
 import { debugCPU } from 'utils/debugCPU';
 import { runMissions, spawnMissions } from './BaseClasses/runMissions';
@@ -9,6 +10,8 @@ import { getBudgetAdjustment } from './Budgets';
 
 export function runMissionControl() {
   const before = Game.cpu.getUsed();
+  updateMissionEnergyAvailable();
+  registerCreeps();
   executeMissions();
   recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
   debugCPU('executeMissions', true);
@@ -34,7 +37,7 @@ function allocateMissions() {
 
     const requests = orders[office]?.orders ?? [];
     let cpuRemaining = missionCpuAvailable(office) - (orders[office]?.cpuAllocated ?? 0);
-    let energyRemaining = missionEnergyAvailable(office) - (orders[office]?.energyAllocated ?? 0);
+    let energyRemaining = MissionEnergyAvailable[office] ?? 0;
 
     spawnRequests.set(office, requests);
     const priorities = [...new Set(requests.map(o => o.priority))].sort((a, b) => b - a);

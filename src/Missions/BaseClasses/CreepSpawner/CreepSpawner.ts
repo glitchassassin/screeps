@@ -37,7 +37,7 @@ export class CreepSpawner extends BaseCreepSpawner {
   register(creep: Creep) {
     if (this.memory) {
       this.memory.spawned = true;
-      this.onSpawn?.(creep);
+      this.checkOnSpawn(creep);
     }
     this._creep = creep.name;
   }
