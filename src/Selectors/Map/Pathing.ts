@@ -1,10 +1,9 @@
 import { fastfillerPositions } from 'Reports/fastfillerPositions';
-import { config } from 'screeps-cartographer';
+import { config, getCachedPath } from 'screeps-cartographer';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
-import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
+import { activeFranchises, franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { outsidePerimeter } from 'Selectors/perimeter';
-import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
@@ -79,9 +78,9 @@ export const getCostMatrix = memoizeByTick(
 
     if (opts?.territoryPlannedRoadsCost) {
       for (const office in Memory.rooms[roomName]?.franchises ?? {}) {
-        for (const s of plannedActiveFranchiseRoads(office)) {
-          if (s.pos.roomName === roomName) {
-            costs.set(s.pos.x, s.pos.y, opts.territoryPlannedRoadsCost);
+        for (const s of activeFranchises(office).flatMap(({ source }) => getCachedPath(office + source) ?? [])) {
+          if (s.roomName === roomName) {
+            costs.set(s.x, s.y, opts.territoryPlannedRoadsCost);
           }
         }
       }

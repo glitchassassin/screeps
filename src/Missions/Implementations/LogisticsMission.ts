@@ -17,7 +17,6 @@ import { activeMissions, isMission } from 'Missions/Selectors';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
-import { franchisesThatNeedRoadWork } from 'Selectors/Franchises/franchisesThatNeedRoadWork';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
@@ -237,11 +236,22 @@ export class LogisticsMission extends MissionImplementation {
   calculated = memoizeByTick(
     () => '',
     () => {
+      if (rcl(this.missionData.office) <= 3) {
+        return {
+          roads: false,
+          repair: false
+        };
+      }
+      let roads = true;
+      let repair = false;
+      for (const r of plannedActiveFranchiseRoads(this.missionData.office)) {
+        roads &&= r.energyToBuild === 0; // all roads should be built
+        repair ||= r.energyToRepair >= (ROAD_HITS / 2) * REPAIR_COST; // any roads may need repairs
+        if (!roads && repair) break; // no need to scan further, results won't change
+      }
       return {
-        roads: rcl(this.missionData.office) > 3 && franchisesThatNeedRoadWork(this.missionData.office).length <= 2,
-        repair:
-          rcl(this.missionData.office) > 3 &&
-          plannedActiveFranchiseRoads(this.missionData.office).some(r => r.energyToRepair > 0)
+        roads,
+        repair
       };
     }
   );

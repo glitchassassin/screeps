@@ -4,9 +4,10 @@ import { initializeRoomMemory } from 'Intel/Rooms/initializeRoomMemory';
 import { purgeDeadOffices } from 'Intel/Rooms/purgeDeadOffices';
 import { refreshRoomMemory } from 'Intel/Rooms/refreshRoomMemory';
 import { scanTerritories } from 'Intel/Territories';
-import { recalculateTerritoryOffices } from 'Intel/Territories/recalculateTerritoryOffices';
 import { scanRoomPlanStructures } from 'RoomPlanner/scanRoomPlanStructures';
+import { resetCachedPath } from 'screeps-cartographer';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { ownedMinerals } from 'Selectors/ownedMinerals';
 import { roomPlans } from 'Selectors/roomPlans';
 import { evaluatePowerBanks } from 'Strategy/ResourceAnalysis/PowerBank';
@@ -84,8 +85,9 @@ export const scanRooms = profiler.registerFN(() => {
       Object.keys(Memory.rooms[room].franchises[room] ?? {}).length === 0
     ) {
       console.log('Recalculating internal franchise paths for office', room);
-      Memory.rooms[room].officesInRange = '';
-      recalculateTerritoryOffices(room);
+      for (const { source } of franchisesByOffice(room)) {
+        resetCachedPath(room + source);
+      }
     }
 
     // Refresh this when visible

@@ -1,6 +1,6 @@
 import { allMissions, missionById, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { MissionStatus } from 'Missions/Mission';
-import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/franchiseActive';
+import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/furthestActiveFranchiseRoundTripDistance';
 import { roomPlans } from 'Selectors/roomPlans';
 import { memoizeByTick } from 'utils/memoizeFunction';
 

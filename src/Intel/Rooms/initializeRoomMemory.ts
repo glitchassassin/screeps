@@ -1,7 +1,6 @@
 import { calculateThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { roomIsEligibleForOffice } from 'Selectors/roomIsEligibleForOffice';
 import { packPos } from 'utils/packrat';
-import { recalculateTerritoryOffices } from '../Territories/recalculateTerritoryOffices';
 
 export function initializeRoomMemory(room: string) {
   const controllerId = Game.rooms[room].controller?.id;
@@ -29,7 +28,4 @@ export function initializeRoomMemory(room: string) {
     franchises: {},
     threatLevel: calculateThreatLevel(room)
   };
-
-  // Calculate nearby offices and assign
-  recalculateTerritoryOffices(room);
 }
