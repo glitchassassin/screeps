@@ -1,6 +1,10 @@
+import { BOOSTS_BY_INTENT } from 'gameConstants';
+
 export const boostQuotas = (office: string) => {
-  return [
-    {boost: RESOURCE_GHODIUM_ACID, amount: 30 * 50},
-    {boost: RESOURCE_UTRIUM_ALKALIDE, amount: 30 * 50},
-  ]
-}
+  return [...BOOSTS_BY_INTENT.UPGRADE, ...BOOSTS_BY_INTENT.HARVEST]
+    .map(boost => ({
+      boost,
+      amount: 30 * 50
+    }))
+    .sort((a, b) => a.boost.length - b.boost.length); // sort T1 boosts to the front of the queue
+};
