@@ -32,11 +32,11 @@ export class ScienceMission extends MissionImplementation {
   public creeps = {
     scientist: new ConditionalCreepSpawner('s', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy),
+      budget: Budget.EFFICIENCY,
+      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, true, false),
       shouldSpawn: () =>
         Boolean(
-          Memory.offices[this.missionData.office].lab.orders.length !== 0 &&
+          Memory.offices[this.missionData.office].lab.orders.length !== 0 ||
             Memory.offices[this.missionData.office].lab.boosts.length !== 0
         )
     })
@@ -69,7 +69,7 @@ export class ScienceMission extends MissionImplementation {
       (!boosting && labsShouldBeEmptied(data.office) && scientist.store.getUsedCapacity() === 0)
     ) {
       scientist.memory.runState = States.EMPTY_LABS;
-    } else if (!scientist.memory.state) {
+    } else if (!scientist.memory.runState) {
       scientist.memory.runState = States.DEPOSIT;
     }
 
@@ -117,7 +117,12 @@ export class ScienceMission extends MissionImplementation {
           if (boosting) {
             return emptyLabs({ ...data, labs: boostLabsToEmpty(data.office) }, creep);
           } else {
-            return emptyLabs({ ...data, labs: reactionLabsToEmpty(data.office) }, creep);
+            const { inputs } = getLabs(data.office);
+            const [lab1, lab2] = inputs.map(s => s.structure);
+            // reaction is ongoing, let it pile up before emptying
+            const waitForReaction =
+              lab1?.mineralType === order?.ingredient1 && lab2?.mineralType === order?.ingredient2;
+            return emptyLabs({ ...data, labs: reactionLabsToEmpty(data.office), waitForReaction }, creep);
           }
         },
         [States.FILL_LABS]: (data, creep) => {

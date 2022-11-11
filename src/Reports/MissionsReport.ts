@@ -79,7 +79,7 @@ export default () => {
       widgets: [
         {
           pos: { x: 1, y: 1 },
-          width: 40,
+          width: 48,
           height: Math.min(24, active.length * 1.5),
           widget: Rectangle({
             data: Table({
