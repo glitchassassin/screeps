@@ -1,3 +1,4 @@
+import { FEATURES } from 'config';
 import {
   BaseMissionData,
   MissionImplementation,
@@ -73,7 +74,7 @@ export class MainOfficeMission extends MissionImplementation {
     science: new ConditionalMissionSpawner(
       ScienceMission,
       () => ({ ...this.missionData }),
-      () => Boolean(roomPlans(this.missionData.office)?.labs?.labs.filter(s => s.structure).length)
+      () => Boolean(FEATURES.LABS && roomPlans(this.missionData.office)?.labs?.labs.filter(s => s.structure).length)
     ),
     defense: new MissionSpawner(DefenseCoordinationMission, () => ({ ...this.missionData })),
     mining: new ConditionalMissionSpawner(
@@ -81,12 +82,13 @@ export class MainOfficeMission extends MissionImplementation {
       () => ({ mineral: mineralId(this.missionData.office)!, ...this.missionData }),
       () =>
         Boolean(
-          byId(mineralId(this.missionData.office))?.mineralAmount &&
+          FEATURES.MINING &&
+            byId(mineralId(this.missionData.office))?.mineralAmount &&
             roomPlans(this.missionData.office)?.mine?.extractor.structure
         )
     ),
     powerBanks: new MultiMissionSpawner(PowerBankMission, current => {
-      if (current.length || rcl(this.missionData.office) < 8) return []; // only one powerbank mission per office at a time
+      if (current.length || rcl(this.missionData.office) < 8 || !FEATURES.POWER) return []; // only one powerbank mission per office at a time
       const powerbank = Memory.offices[this.missionData.office].powerbanks
         .filter(
           r =>

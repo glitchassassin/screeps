@@ -1,3 +1,4 @@
+import { States } from 'Behaviors/states';
 import { FEATURES } from 'config';
 import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
@@ -23,7 +24,8 @@ export interface SpawnOrder {
     role: MinionTypes;
     missionId: string;
   } & Partial<CreepMemory>;
-  boosts?: MineralBoostConstant[];
+  // priority-sorted list of boosts (see BOOSTS_BY_INTENT)
+  boosts?: MineralBoostConstant[][];
   spawn?: Id<StructureSpawn>;
   directions?: DirectionConstant[];
 }
@@ -104,23 +106,30 @@ export function spawnOrder(office: string, order: SpawnOrder) {
 }
 
 const orderBoosts = (office: string, order: SpawnOrder) => {
-  for (const resource of order.boosts ?? []) {
-    const part = Object.entries(BOOSTS).find(([k, v]) => resource in v)?.[0] as BodyPartConstant | undefined;
-    if (!part) continue;
-    let available = FEATURES.LABS && boostsAvailable(office, resource, false);
-    const workParts = order.body.filter(p => p === part).length;
-    const target = workParts * LAB_BOOST_MINERAL;
-    if (available && available >= target) {
-      // We have enough minerals, enter a boost order
-      Memory.offices[office].lab.boosts.push({
-        boosts: [
-          {
-            type: resource,
-            count: target
-          }
-        ],
-        name: order.name
-      });
+  if (!FEATURES.LABS) return;
+  for (const resources of order.boosts ?? []) {
+    for (const resource of resources) {
+      const part = Object.entries(BOOSTS).find(([k, v]) => resource in v)?.[0] as BodyPartConstant | undefined;
+      if (!part) continue;
+      let available = boostsAvailable(office, resource, false);
+      const workParts = order.body.filter(p => p === part).length;
+      const target = workParts * LAB_BOOST_MINERAL;
+      console.log('boost request', order.name, resource, 'available', available, 'target', target);
+      if (available && available >= target) {
+        // We have enough minerals, enter a boost order
+        Memory.offices[office].lab.boosts.push({
+          boosts: [
+            {
+              type: resource,
+              count: target
+            }
+          ],
+          name: order.name
+        });
+        Memory.creeps[order.name].runState = States.GET_BOOSTED;
+        console.log('boost request filed');
+        break; // on to next boost archetype
+      }
     }
   }
 };

@@ -80,12 +80,7 @@ export class MineMission extends MissionImplementation {
 
             return States.WORKING;
           },
-          [States.GET_BOOSTED]: (data, miner) => {
-            if (getBoosted(miner, data.office) === BehaviorResult.INPROGRESS) {
-              return States.WORKING;
-            }
-            return States.GET_BOOSTED;
-          },
+          [States.GET_BOOSTED]: getBoosted(States.WORKING),
           [States.RECYCLE]: recycle
         },
         this.missionData,

@@ -1,49 +1,50 @@
 import { FEATURES } from 'config';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
-import { getScientists } from 'Selectors/getScientists';
 import { LabMineralConstant } from 'Structures/Labs/LabOrder';
-import { BehaviorResult } from './Behavior';
+import { States } from './states';
 
-export function getBoosted(creep: Creep, office: string) {
-  // If no Scientists are on duty, skip
-  if (!FEATURES.LABS || !getScientists(office).length) return BehaviorResult.FAILURE;
+export const getBoosted =
+  <T extends States>(nextState: T) =>
+  ({ office }: { office: string }, creep: Creep) => {
+    // If no Scientists are on duty, skip
+    if (!FEATURES.LABS) return nextState;
 
-  // Check if boosts are completed
-  const boosts = creep.body.reduce((map, part) => {
-    if (part.boost) map.set(part.boost as LabMineralConstant, (map.get(part.boost as LabMineralConstant) ?? 0) + 30);
-    return map;
-  }, new Map<LabMineralConstant, number>());
-  const outstanding =
-    Memory.offices[office].lab.boosts
-      .find(o => o.name === creep.name)
-      ?.boosts.filter(b => (boosts.get(b.type) ?? 0) < b.count) ?? [];
-  // We don't need to check count, only completeness
-  if (outstanding.length === 0) {
-    // All boosts accounted for, we're done
-    Memory.offices[office].lab.boosts = Memory.offices[office].lab.boosts.filter(o => o.name !== creep.name);
-    // console.log(office, 'Boosted creep', JSON.stringify(creep.body));
-    return BehaviorResult.SUCCESS;
-  }
+    // Check if boosts are completed
+    const boosts = creep.body.reduce((map, part) => {
+      if (part.boost) map.set(part.boost as LabMineralConstant, (map.get(part.boost as LabMineralConstant) ?? 0) + 30);
+      return map;
+    }, new Map<LabMineralConstant, number>());
+    const outstanding =
+      Memory.offices[office].lab.boosts
+        .find(o => o.name === creep.name)
+        ?.boosts.filter(b => (boosts.get(b.type) ?? 0) < b.count) ?? [];
+    // We don't need to check count, only completeness
+    if (outstanding.length === 0) {
+      // All boosts accounted for, we're done
+      Memory.offices[office].lab.boosts = Memory.offices[office].lab.boosts.filter(o => o.name !== creep.name);
+      // console.log(office, 'Boosted creep', JSON.stringify(creep.body));
+      return nextState;
+    }
 
-  // console.log(office, creep.name, JSON.stringify([...boosts.values()]))
+    // console.log(office, creep.name, JSON.stringify([...boosts.values()]))
 
-  // We still have some boosts outstanding
-  const targetLab = Memory.offices[office].lab.boostingLabs.find(l => outstanding.some(o => o.type === l.resource));
-  const lab = byId(targetLab?.id);
-  const targetBoostCount = outstanding.find(b => b.type === targetLab?.resource)?.count ?? 0;
-  if (lab) {
-    moveTo(creep, { pos: lab.pos, range: 1 });
-    if (
-      creep.pos.inRangeTo(lab, 1) &&
-      lab.mineralType &&
-      lab.store.getUsedCapacity(lab.mineralType) >= targetBoostCount
-    ) {
-      const result = lab.boostCreep(creep);
-      if (result === OK) {
-        const boostCost = Math.round((targetBoostCount * 2) / 3);
+    // We still have some boosts outstanding
+    const targetLab = Memory.offices[office].lab.boostingLabs.find(l => outstanding.some(o => o.type === l.resource));
+    const lab = byId(targetLab?.id);
+    const targetBoostCount = outstanding.find(b => b.type === targetLab?.resource)?.count ?? 0;
+    if (lab) {
+      moveTo(creep, { pos: lab.pos, range: 1 });
+      if (
+        creep.pos.inRangeTo(lab, 1) &&
+        lab.mineralType &&
+        lab.store.getUsedCapacity(lab.mineralType) >= targetBoostCount
+      ) {
+        const result = lab.boostCreep(creep);
+        if (result === OK) {
+          const boostCost = Math.round((targetBoostCount * 2) / 3);
+        }
       }
     }
-  }
-  return BehaviorResult.INPROGRESS;
-}
+    return States.GET_BOOSTED;
+  };

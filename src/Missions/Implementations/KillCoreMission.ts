@@ -59,6 +59,7 @@ export class KillCoreMission extends MissionImplementation {
         if (Memory.rooms[t].invaderCore) {
           // Invader core detected
           data.targetRoom = t;
+          break;
         }
       }
     }

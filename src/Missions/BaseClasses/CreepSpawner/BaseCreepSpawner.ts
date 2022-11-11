@@ -18,7 +18,7 @@ export abstract class BaseCreepSpawner {
     public props: {
       role: MinionTypes;
       spawnData?: {
-        boosts?: MineralBoostConstant[];
+        boosts?: MineralBoostConstant[][];
         memory?: Partial<CreepMemory>;
         spawn?: Id<StructureSpawn>;
         directions?: DirectionConstant[];

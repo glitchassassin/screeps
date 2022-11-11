@@ -1,8 +1,9 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
+import { getBoosted } from 'Behaviors/getBoosted';
 import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
+import { BOOSTS_BY_INTENT, UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
@@ -27,6 +28,9 @@ export class UpgradeMission extends MissionImplementation {
       role: MinionTypes.RESEARCH,
       budget: Budget.SURPLUS,
       body: energy => MinionBuilders[MinionTypes.RESEARCH](energy),
+      spawnData: {
+        boosts: [BOOSTS_BY_INTENT.UPGRADE]
+      },
       count: current => {
         if (
           rcl(this.missionData.office) < 2 &&
@@ -41,7 +45,7 @@ export class UpgradeMission extends MissionImplementation {
     })
   };
 
-  priority = 7;
+  priority = 5;
 
   constructor(public missionData: UpgradeMissionData, id?: string) {
     super(missionData, id);
@@ -76,8 +80,9 @@ export class UpgradeMission extends MissionImplementation {
       }
       runStates(
         {
+          [States.GET_BOOSTED]: getBoosted(States.GET_ENERGY),
           [States.GET_ENERGY]: (mission, creep) => {
-            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) return States.WORKING;
+            if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) return States.WORKING;
             const container = roomPlans(mission.office)?.library?.container.structure as StructureContainer;
             const link = roomPlans(mission.office)?.library?.link.structure as StructureLink;
 
@@ -137,7 +142,7 @@ export class UpgradeMission extends MissionImplementation {
             if (result === OK) {
               if (rcl(mission.office) === 8) energyUsed = Math.min(15, energyUsed);
               this.recordEnergy(energyUsed);
-              if (creep.store[RESOURCE_ENERGY] <= energyUsed) return States.GET_ENERGY;
+              if (creep.store[RESOURCE_ENERGY] <= creep.store.getCapacity() * 0.25) return States.GET_ENERGY;
             } else if (result === ERR_NOT_ENOUGH_ENERGY) {
               return States.GET_ENERGY;
             }

@@ -69,7 +69,7 @@ export class PowerBankMission extends MissionImplementation {
     )
   };
 
-  priority = 8;
+  priority = 6;
 
   constructor(public missionData: PowerBankMissionData, id?: string) {
     super(missionData, id);
