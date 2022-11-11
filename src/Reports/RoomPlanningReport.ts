@@ -1,4 +1,6 @@
 import { RoomPlan } from 'RoomPlanner';
+import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
+import { franchisePath } from 'Selectors/plannedFranchiseRoads';
 import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { sourceIds } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -20,6 +22,10 @@ export default (visualizeRoom?: string) => {
       roomPlans(room)?.fastfiller?.extensions.forEach((s, i) => {
         viz(room).text(i.toFixed(0), s.pos.x, s.pos.y + 0.2);
       });
+
+      for (const { source } of activeFranchises(room)) {
+        Game.map.visual.poly(franchisePath(room, source), { stroke: '#ffffff', fill: 'transparent' });
+      }
     }
 
     const franchise1pos = roomPlans(room)?.franchise1?.container.pos;
