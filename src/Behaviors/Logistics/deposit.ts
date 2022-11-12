@@ -7,6 +7,7 @@ import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
+import { plannedFranchiseRoads } from 'Selectors/plannedFranchiseRoads';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
 
 export const deposit =
@@ -69,11 +70,13 @@ export const deposit =
     // if we have CPU, repair and look for opportunity targets
 
     if (creep.getActiveBodyparts(WORK)) {
-      const road = creep.pos
-        .findInRange(FIND_STRUCTURES, 3)
-        .find(s => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax);
-      if (road) {
-        if (creep.repair(road) === OK) {
+      const road = data.withdrawTarget
+        ? plannedFranchiseRoads(data.office, data.withdrawTarget).find(
+            s => s.energyToRepair > 0 && s.pos.inRangeTo(creep.pos, 3)
+          )
+        : undefined;
+      if (road?.structure) {
+        if (creep.repair(road.structure) === OK) {
           const cost = REPAIR_COST * REPAIR_POWER * 1; // Haulers will only ever have one work part // creep.body.filter(p => p.type === WORK).length;
           if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
             // Record deposit cost

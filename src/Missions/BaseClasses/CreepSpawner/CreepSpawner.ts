@@ -34,10 +34,10 @@ export class CreepSpawner extends BaseCreepSpawner {
     return Boolean(this.memory?.spawned);
   }
 
-  register(creep: Creep) {
+  register(creep: Creep, onNew?: () => void) {
     if (this.memory) {
       this.memory.spawned = true;
-      this.checkOnSpawn(creep);
+      this.checkOnSpawn(creep, onNew);
     }
     this._creep = creep.name;
   }

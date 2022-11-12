@@ -223,7 +223,7 @@ export class MissionImplementation {
     for (let key in this.creeps) {
       const spawner = this.creeps[key];
       if (creep.memory.missionId === `${this.id}|${spawner.id}`) {
-        spawner.register(creep);
+        spawner.register(creep, () => this.recordEnergy(minionCost(creep.body.map(p => p.type))));
       }
     }
   }
@@ -270,10 +270,9 @@ export class MissionImplementation {
   recordEnergy(energy: number) {
     Memory.missions[this.id].energyUsed += energy;
   }
-  recordCreepEnergy(creep: Creep) {
+  recordCreepEnergy(creep: Creep, adjustEstimated = true) {
     const energy = minionCost(creep.body.map(p => p.type));
-    this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining - energy);
-    this.recordEnergy(energy);
+    if (adjustEstimated) this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining - energy);
   }
   recordMissionEnergy(mission: MissionImplementation) {
     this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining - mission.estimatedEnergyRemaining);

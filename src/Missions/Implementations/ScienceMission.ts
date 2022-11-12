@@ -20,6 +20,7 @@ import { ingredientsNeededForLabOrder } from 'Selectors/ingredientsNeededForLabO
 import { labsShouldBeEmptied } from 'Selectors/labsShouldBeEmptied';
 import { roomPlans } from 'Selectors/roomPlans';
 import { boostLabsToFill, boostsNeededForLab, shouldHandleBoosts } from 'Selectors/shouldHandleBoosts';
+import { getAvailableResourcesFromTerminal, getLabOrderDependencies } from 'Structures/Labs/getLabOrderDependencies';
 import { LabMineralConstant, LabOrder } from 'Structures/Labs/LabOrder';
 import { boostLabsToEmpty, reactionLabsToEmpty } from 'Structures/Labs/labsToEmpty';
 
@@ -103,6 +104,17 @@ export class ScienceMission extends MissionImplementation {
               Math.max(0, ingredientQuantity(ingredient2) - creep.store.getUsedCapacity(order.ingredient2)),
               creep.store.getFreeCapacity()
             );
+
+            if (
+              target1 > terminal.store.getUsedCapacity(order.ingredient1) ||
+              target2 > terminal.store.getUsedCapacity(order.ingredient2)
+            ) {
+              // not enough resources in terminal - recalculate lab orders
+              Memory.offices[data.office].lab.orders = getLabOrderDependencies(
+                order,
+                getAvailableResourcesFromTerminal(terminal)
+              ).concat(order);
+            }
 
             const withdrawResources = [
               [order.ingredient1, target1],

@@ -27,11 +27,11 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
     return creeps;
   }
 
-  register(creep: Creep) {
+  register(creep: Creep, onNew?: () => void) {
     if (!this._creeps.includes(creep.name)) {
       this._creeps.push(creep.name);
     }
-    this.checkOnSpawn(creep);
+    this.checkOnSpawn(creep, onNew);
   }
 
   cpuRemaining(): number {

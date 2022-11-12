@@ -61,7 +61,7 @@ export abstract class BaseCreepSpawner {
     ];
   }
   abstract get resolved(): Creep | Creep[] | undefined;
-  abstract register(creep: Creep): void;
+  abstract register(creep: Creep, onNew?: () => void): void;
 
   public memory?: Record<string, any>;
   setMemory(memory: this['memory']) {
@@ -73,9 +73,10 @@ export abstract class BaseCreepSpawner {
     this.disabled = disabled;
   }
 
-  checkOnSpawn(creep: Creep) {
+  checkOnSpawn(creep: Creep, onNew?: () => void) {
     if (creep.memory.spawned) return;
     this.onSpawn?.(creep);
+    onNew?.();
     creep.memory.spawned = true;
   }
 

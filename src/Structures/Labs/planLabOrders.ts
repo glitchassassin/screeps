@@ -13,7 +13,6 @@ export function planLabOrders(office: string) {
   if (Memory.offices[office].lab.orders.length === 0) {
     for (const { boost, amount } of boostQuotas(office)) {
       const difference = amount - terminal.store.getUsedCapacity(boost);
-      console.log(boost, amount, 'need', difference);
       if (difference > 0) {
         try {
           Memory.offices[office].lab.orders.push(...getLabOrders(boost, difference, terminal));
