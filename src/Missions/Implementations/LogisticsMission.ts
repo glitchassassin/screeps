@@ -55,7 +55,7 @@ export class LogisticsMission extends MissionImplementation {
       },
       budget: Budget.ESSENTIAL,
       estimatedCpuPerTick: 0.8,
-      body: energy =>
+      builds: energy =>
         MinionBuilders[MinionTypes.ACCOUNTANT](
           Math.max(100, energy / 2),
           25,
@@ -79,7 +79,7 @@ export class LogisticsMission extends MissionImplementation {
       },
       budget: Budget.ESSENTIAL,
       estimatedCpuPerTick: 0.8,
-      body: energy =>
+      builds: energy =>
         MinionBuilders[MinionTypes.ACCOUNTANT](
           Math.max(100, energy / 2),
           25,

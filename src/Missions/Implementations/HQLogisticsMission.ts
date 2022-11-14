@@ -20,7 +20,7 @@ export class HQLogisticsMission extends MissionImplementation {
     clerk: new ConditionalCreepSpawner('x', this.missionData.office, {
       role: MinionTypes.CLERK,
       budget: Budget.ESSENTIAL,
-      body: energy => MinionBuilders[MinionTypes.CLERK](energy),
+      builds: energy => MinionBuilders[MinionTypes.CLERK](energy),
       shouldSpawn: () => hasEnergyIncome(this.missionData.office)
     })
   };

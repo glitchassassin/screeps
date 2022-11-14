@@ -6,7 +6,6 @@ import { updateMissionEnergyAvailable } from 'Selectors/Missions/updateMissionEn
 import { getSpawns } from 'Selectors/roomPlans';
 import { debugCPU } from 'utils/debugCPU';
 import { runMissions, spawnMissions } from './BaseClasses/runMissions';
-import { getBudgetAdjustment } from './Budgets';
 
 export function runMissionControl() {
   const before = Game.cpu.getUsed();
@@ -36,8 +35,10 @@ function allocateMissions() {
     if (!availableSpawns) continue;
 
     const requests = orders[office]?.orders ?? [];
-    let cpuRemaining = missionCpuAvailable(office) - (orders[office]?.cpuAllocated ?? 0);
-    let energyRemaining = MissionEnergyAvailable[office] ?? 0;
+    const remaining = {
+      cpu: missionCpuAvailable(office) - (orders[office]?.cpuAllocated ?? 0),
+      energy: MissionEnergyAvailable[office] ?? 0
+    };
 
     spawnRequests.set(office, requests);
     const priorities = [...new Set(requests.map(o => o.priority))].sort((a, b) => b - a);
@@ -50,25 +51,16 @@ function allocateMissions() {
 
       while (missions.length) {
         if (!availableSpawns) break;
-        if (cpuRemaining < 0) break;
+        if (remaining.cpu <= 0) break;
         const order = missions.shift();
         if (!order) break;
-        // console.log(priority, order.name);
-        if (!order.body.length) {
-          console.log(order.name, 'empty body', order.body.length);
-          continue;
-        }
-        const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
-        const canStart = order.estimate.energy <= energyRemaining - adjustedBudget;
         // Mission can start
-        if (canStart) {
-          const result = spawnOrder(office, order);
-          if (result === ERR_NOT_ENOUGH_ENERGY) break priorities; // wait for energy
-          if (result === OK) {
-            availableSpawns -= 1;
-            cpuRemaining -= order.estimate.cpu;
-            energyRemaining -= order.estimate.energy;
-          }
+        const result = spawnOrder(office, order, remaining);
+        if (result) {
+          if (!result.spawned) break priorities; // valid build, wait for energy
+          availableSpawns -= 1;
+          remaining.cpu -= result.estimate.cpu;
+          remaining.energy -= result.estimate.energy;
         }
       }
     }

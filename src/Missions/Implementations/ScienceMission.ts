@@ -34,7 +34,7 @@ export class ScienceMission extends MissionImplementation {
     scientist: new ConditionalCreepSpawner('s', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.EFFICIENCY,
-      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, true, false),
+      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, true, false),
       shouldSpawn: () =>
         Boolean(
           Memory.offices[this.missionData.office].lab.orders.length !== 0 ||

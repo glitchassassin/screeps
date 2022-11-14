@@ -29,7 +29,7 @@ const fastfillerSpawner = (office: string, id: string, shouldSpawn = () => true)
   new ConditionalCreepSpawner(id, office, {
     role: MinionTypes.CLERK,
     budget: Budget.ESSENTIAL,
-    body: energy =>
+    builds: energy =>
       MinionBuilders[MinionTypes.CLERK](
         energy,
         (SPAWN_ENERGY_CAPACITY + EXTENSION_ENERGY_CAPACITY[rcl(office)]) / CARRY_CAPACITY,

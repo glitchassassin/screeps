@@ -24,7 +24,7 @@ export class KillCoreMission extends MissionImplementation {
     guard: new CreepSpawner('g', this.missionData.office, {
       role: MinionTypes.GUARD,
       budget: Budget.EFFICIENCY,
-      body: energy => MinionBuilders[MinionTypes.GUARD](energy)
+      builds: energy => MinionBuilders[MinionTypes.GUARD](energy)
     })
   };
 

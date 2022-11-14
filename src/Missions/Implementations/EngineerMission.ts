@@ -41,7 +41,7 @@ export class EngineerMission extends MissionImplementation {
     engineers: new MultiCreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
       budget: this.budget,
-      body: energy => MinionBuilders[MinionTypes.ENGINEER](energy, this.calculated().roads),
+      builds: energy => MinionBuilders[MinionTypes.ENGINEER](energy, this.calculated().roads),
       count: current => {
         let pendingCost = this.queue.analysis().energyRemaining;
         // If rcl < 2, engineers will also upgrade
@@ -50,12 +50,7 @@ export class EngineerMission extends MissionImplementation {
           pendingCost += (controller?.progressTotal ?? 0) - (controller?.progress ?? 0);
         } else {
           // above RCL2, let repair work accumulate before spawning
-          const engineerWork =
-            MinionBuilders[MinionTypes.ENGINEER](
-              Game.rooms[this.missionData.office].energyCapacityAvailable,
-              this.calculated().roads
-            ).filter(c => c === WORK).length * CREEP_LIFE_TIME;
-          if (this.queue.build.size === 0 && pendingCost < engineerWork / 2) {
+          if (this.queue.build.size === 0 && pendingCost < 1500) {
             pendingCost = 0;
           }
         }

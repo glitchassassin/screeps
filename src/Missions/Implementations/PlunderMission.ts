@@ -32,7 +32,7 @@ export class PlunderMission extends MissionImplementation {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.SURPLUS,
-      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy),
+      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy),
       count: current => {
         const capacity = Memory.rooms[this.missionData.targetRoom].plunder?.capacity ?? 0;
         if (capacity > current.map(c => c.store.getCapacity()).reduce(sum, 0)) {

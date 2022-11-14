@@ -1,4 +1,4 @@
-import { MinionTypes } from 'Minions/minionTypes';
+import { CreepBuild, MinionTypes } from 'Minions/minionTypes';
 import { SpawnOrder } from 'Minions/spawnQueues';
 import { Budget } from 'Missions/Budgets';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
@@ -18,23 +18,29 @@ export abstract class BaseCreepSpawner {
     public props: {
       role: MinionTypes;
       spawnData?: {
-        boosts?: MineralBoostConstant[][];
         memory?: Partial<CreepMemory>;
-        spawn?: Id<StructureSpawn>;
-        directions?: DirectionConstant[];
+        spawn?: SpawnOrder['spawn'];
+        directions?: SpawnOrder['directions'];
       };
-      body: (energy: number) => BodyPartConstant[];
-      budget?: Budget;
       estimatedCpuPerTick?: number;
-      estimatedEnergy?: (body: BodyPartConstant[]) => number;
+      builds: (energy: number) => CreepBuild[];
+      budget?: Budget;
+      estimate?: (build: CreepBuild) => { cpu: number; energy: number };
     },
     public onSpawn?: (creep: Creep) => void
   ) {}
 
   spawn(missionId: CreepMemory['missionId'], priority: number): SpawnOrder[] {
     if (this.disabled) return [];
-    const body = this.props.body(spawnEnergyAvailable(this.office));
-    const lifetime = body.includes(CLAIM) ? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
+    const builds = this.props.builds(spawnEnergyAvailable(this.office));
+
+    const defaultEstimate = (build: CreepBuild) => {
+      const lifetime = build.body.includes(CLAIM) ? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
+      return {
+        cpu: (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick) * lifetime,
+        energy: 0
+      };
+    };
 
     const padding = Number(Math.floor(Math.random() * 0xffff))
       .toString(16)
@@ -47,11 +53,8 @@ export abstract class BaseCreepSpawner {
         office: this.office,
         budget: this.props.budget ?? Budget.ESSENTIAL,
         name: `${missionId}|${padding}`,
-        body,
-        estimate: {
-          cpu: (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick) * lifetime,
-          energy: this.props.estimatedEnergy?.(body) ?? 0
-        },
+        builds,
+        estimate: this.props.estimate ?? defaultEstimate,
         memory: {
           ...this.props.spawnData?.memory,
           role: this.props.role,

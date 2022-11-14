@@ -25,12 +25,12 @@ export class DefendOfficeMission extends MissionImplementation {
     attacker: new CreepSpawner('a', this.missionData.office, {
       role: MinionTypes.GUARD,
       budget: Budget.ESSENTIAL,
-      body: energy => MinionBuilders[MinionTypes.GUARD](energy, false)
+      builds: energy => MinionBuilders[MinionTypes.GUARD](energy, false)
     }),
     healer: new CreepSpawner('b', this.missionData.office, {
       role: MinionTypes.MEDIC,
       budget: Budget.ESSENTIAL,
-      body: energy => MinionBuilders[MinionTypes.MEDIC](energy)
+      builds: energy => MinionBuilders[MinionTypes.MEDIC](energy)
     })
   };
 

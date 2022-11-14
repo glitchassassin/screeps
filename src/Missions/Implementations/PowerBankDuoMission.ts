@@ -6,7 +6,7 @@ import { MissionStatus } from 'Missions/Mission';
 import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
-import { minionCost } from 'Selectors/minionCostPerTick';
+import { maxBuildCost } from 'Selectors/minionCostPerTick';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
 import { unpackPos } from 'utils/packrat';
 import {
@@ -29,7 +29,7 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_ATTACKER,
-        body: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
+        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
       },
       creep => this.recordCreepEnergy(creep)
     ),
@@ -38,7 +38,7 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_HEALER,
-        body: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
+        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
       },
       creep => this.recordCreepEnergy(creep)
     )
@@ -51,8 +51,8 @@ export class PowerBankDuoMission extends MissionImplementation {
 
     const energy = Game.rooms[missionData.office].energyCapacityAvailable;
     this.estimatedEnergyRemaining ??=
-      minionCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)) +
-      minionCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1));
+      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)) +
+      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1));
   }
   static fromId(id: PowerBankDuoMission['id']) {
     return super.fromId(id) as PowerBankDuoMission;

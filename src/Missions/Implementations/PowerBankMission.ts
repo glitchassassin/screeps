@@ -34,7 +34,7 @@ export class PowerBankMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.ACCOUNTANT,
-        body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
+        builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
         count: fixedCount(() => {
           // wait to spawn until duos are about to crack the bank
           if (!this.willBreachIn(750)) {
@@ -52,7 +52,7 @@ export class PowerBankMission extends MissionImplementation {
     duos: new MultiMissionSpawner(
       PowerBankDuoMission,
       current => {
-        const duosCount = this.report()?.duoCount ?? 4;
+        const duosCount = 1; // boosted, only needs one // this.report()?.duoCount ?? 4;
         if (
           current.length < (this.report()?.adjacentSquares ?? 0) &&
           current.every(d => d.assembled()) &&

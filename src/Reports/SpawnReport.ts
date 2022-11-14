@@ -23,7 +23,8 @@ export default () => {
         s.memory.role,
         s.priority,
         s.budget,
-        energy - s.estimate.energy - getBudgetAdjustment(s.office, s.budget)
+        s.builds.length,
+        s.builds.map(build => energy - s.estimate(build).energy - getBudgetAdjustment(s.office, s.budget)).join('/')
       ]);
     }
     Dashboard({
@@ -34,7 +35,7 @@ export default () => {
           height: 2 + Math.min(48, table.length * 1.5),
           widget: Rectangle({
             data: Table({
-              config: { headers: ['Mission', 'Minion', 'Role', 'Priority', 'Budget', 'Energy'] },
+              config: { headers: ['Mission', 'Minion', 'Role', 'Priority', 'Budget', 'Builds', 'Energy'] },
               data: table
             })
           })

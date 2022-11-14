@@ -1,5 +1,15 @@
+import { CreepBuild } from 'Minions/minionTypes';
+
 export const minionCost = (body: BodyPartConstant[]) => {
   return body.reduce((sum, p) => sum + BODYPART_COST[p], 0);
+};
+
+export const buildCost = (build: CreepBuild) => {
+  return minionCost(build.body); // TODO: Add boost costs
+};
+
+export const maxBuildCost = (builds: CreepBuild[]) => {
+  return Math.max(...builds.map(buildCost));
 };
 
 export const minionCostPerTick = (body: BodyPartConstant[]) => {

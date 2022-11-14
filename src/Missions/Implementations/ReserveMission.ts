@@ -25,7 +25,7 @@ export class ReserveMission extends MissionImplementation {
     marketers: new MultiCreepSpawner('m', this.missionData.office, {
       role: MinionTypes.MARKETER,
       budget: Budget.ECONOMY,
-      body: energy => MinionBuilders[MinionTypes.MARKETER](energy),
+      builds: energy => MinionBuilders[MinionTypes.MARKETER](energy),
       count: current => {
         if (Game.rooms[this.missionData.office].energyCapacityAvailable < 650) return 0;
         const targets = this.missionData.reserveTargets?.length ?? 0;

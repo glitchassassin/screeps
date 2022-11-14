@@ -16,7 +16,7 @@ import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
-import { minionCost } from 'Selectors/minionCostPerTick';
+import { maxBuildCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export interface MineMissionData extends BaseMissionData {
@@ -29,11 +29,11 @@ export class MineMission extends MissionImplementation {
   public creeps = {
     miner: new CreepSpawner('m', this.missionData.office, {
       role: MinionTypes.FOREMAN,
-      body: energy => MinionBuilders[MinionTypes.FOREMAN](energy)
+      builds: energy => MinionBuilders[MinionTypes.FOREMAN](energy)
     }),
     hauler: new CreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      body: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy)
+      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy)
     })
   };
 
@@ -44,8 +44,8 @@ export class MineMission extends MissionImplementation {
 
     const energy = Game.rooms[this.missionData.office].energyCapacityAvailable;
     this.estimatedEnergyRemaining ??=
-      minionCost(MinionBuilders[MinionTypes.FOREMAN](energy)) +
-      minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](energy));
+      maxBuildCost(MinionBuilders[MinionTypes.FOREMAN](energy)) +
+      maxBuildCost(MinionBuilders[MinionTypes.ACCOUNTANT](energy));
   }
   static fromId(id: MineMission['id']) {
     return super.fromId(id) as MineMission;

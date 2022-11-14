@@ -37,7 +37,8 @@ export class HarvestMission extends MissionImplementation {
       {
         role: MinionTypes.SALESMAN,
         budget: Budget.ESSENTIAL,
-        body: energy => MinionBuilders[MinionTypes.SALESMAN](energy, this.calculated().link, this.calculated().remote),
+        builds: energy =>
+          MinionBuilders[MinionTypes.SALESMAN](energy, this.calculated().link, this.calculated().remote),
         count: current => {
           if (this.disabled()) {
             return 0; // disabled

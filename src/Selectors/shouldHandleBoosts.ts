@@ -39,7 +39,7 @@ export function boostsNeededForLab(
 
   // Cap at amount actually available in local economy
 
-  boostCount = Math.max(boostCount, Math.floor(boostsAvailable(office, resource, true, false) / 30));
+  boostCount = Math.max(boostCount, Math.floor(boostsAvailable(office, resource, false, false) / 30));
 
   return [resource, boostCount];
 }
@@ -51,16 +51,15 @@ export function shouldHandleBoosts(office: string) {
 /**
  * Sum of boosts in labs, Scientist inventories, and Terminal
  */
-export function boostsAvailable(office: string, boost: LabMineralConstant, countReserved = true, countLabs = true) {
-  let total =
-    (countLabs
-      ? getLabs(office).boosts.reduce(
-          (sum, lab) => ((lab.structure as StructureLab)?.store.getUsedCapacity(boost) ?? 0) + sum,
-          0
-        )
-      : 0) +
-    ((roomPlans(office)?.headquarters?.terminal.structure as StructureTerminal)?.store.getUsedCapacity(boost) ?? 0);
-  if (!countReserved) {
+export function boostsAvailable(office: string, boost: LabMineralConstant, subtractReserved = true, countLabs = true) {
+  let total = roomPlans(office)?.headquarters?.terminal.structure?.store.getUsedCapacity(boost) ?? 0;
+  if (countLabs) {
+    total += getLabs(office).boosts.reduce(
+      (sum, lab) => ((lab.structure as StructureLab)?.store.getUsedCapacity(boost) ?? 0) + sum,
+      0
+    );
+  }
+  if (subtractReserved) {
     total -= Memory.offices[office].lab.boosts.reduce(
       (sum, o) => sum + (o.boosts.find(b => b.type === boost)?.count ?? 0),
       0

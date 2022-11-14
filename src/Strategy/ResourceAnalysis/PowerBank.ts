@@ -3,7 +3,7 @@ import { cachePath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getOfficeDistanceByRange } from 'Selectors/getOfficeDistance';
 import { adjacentWalkablePositions, getClosestOffice, isHighway, terrainCostAt } from 'Selectors/Map/MapCoordinates';
-import { minionCost } from 'Selectors/minionCostPerTick';
+import { maxBuildCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { packPos, unpackPos } from 'utils/packrat';
@@ -90,9 +90,9 @@ const evaluatePowerBank = (office: string, origin: RoomPosition, powerBank: Stru
   const haulerCount = Math.ceil(report.amount / (CARRY_CAPACITY * 25));
   const energy = Game.rooms[office].energyCapacityAvailable;
   const cost =
-    minionCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, duoSpeed)) * duoCount +
-    minionCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, duoSpeed)) * duoCount +
-    minionCost(MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false)) * haulerCount;
+    maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, duoSpeed)) * duoCount +
+    maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, duoSpeed)) * duoCount +
+    maxBuildCost(MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false)) * haulerCount;
 
   const powerCost = cost / report.amount;
 

@@ -24,7 +24,7 @@ export class AcquireLawyerMission extends MissionImplementation {
     lawyer: new CreepSpawner('e', this.missionData.office, {
       role: MinionTypes.LAWYER,
       budget: this.budget,
-      body: energy => MinionBuilders[MinionTypes.LAWYER](energy)
+      builds: energy => MinionBuilders[MinionTypes.LAWYER](energy)
     })
   };
 

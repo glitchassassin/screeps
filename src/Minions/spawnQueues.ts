@@ -1,22 +1,23 @@
 import { States } from 'Behaviors/states';
 import { FEATURES } from 'config';
 import { missionById } from 'Missions/BaseClasses/MissionImplementation';
-import { Budget } from 'Missions/Budgets';
+import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
 import { getSpawns } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
-import { MinionTypes } from './minionTypes';
+import { BoostOrder } from 'Structures/Labs/LabOrder';
+import { CreepBuild, MinionTypes } from './minionTypes';
 
 export interface SpawnOrder {
   priority: number;
   office: string;
   budget: Budget;
   name: string;
-  body: BodyPartConstant[];
-  estimate: {
+  builds: CreepBuild[];
+  estimate: (build: CreepBuild) => {
     cpu: number;
     energy: number;
   };
@@ -24,8 +25,6 @@ export interface SpawnOrder {
     role: MinionTypes;
     missionId: string;
   } & Partial<CreepMemory>;
-  // priority-sorted list of boosts (see BOOSTS_BY_INTENT)
-  boosts?: MineralBoostConstant[][];
   spawn?: Id<StructureSpawn>;
   directions?: DirectionConstant[];
 }
@@ -69,11 +68,15 @@ export function vacateSpawns() {
   }
 }
 
-export function spawnOrder(office: string, order: SpawnOrder) {
+export function spawnOrder(
+  office: string,
+  order: SpawnOrder,
+  remaining: { energy: number; cpu: number }
+): { build: CreepBuild; estimate: { cpu: number; energy: number }; spawned: boolean } | undefined {
   let availableSpawns = getSpawns(office).filter(s => !s.spawning || s.spawning.remainingTime === 1);
 
   // console.log('availableSpawns', availableSpawns, JSON.stringify(order));
-  if (availableSpawns.length === 0) return ERR_BUSY; // No more available spawns
+  if (availableSpawns.length === 0) return undefined; // No more available spawns
   // Get next scheduled order per spawn
   const spawn = availableSpawns.find(s => {
     if (byId(order.spawn)) {
@@ -84,52 +87,70 @@ export function spawnOrder(office: string, order: SpawnOrder) {
   });
   if (!spawn) {
     // No more available spawns
-    return ERR_BUSY;
+    return undefined;
   }
-  // Spawn is available
-  // console.log(order.data.body, order.data.name);
-  const result = spawn.spawnCreep(order.body, order.name, {
-    directions: order.directions,
-    memory: order.memory,
-    energyStructures: getEnergyStructures(office)
-  });
-  // console.log(order.name, 'spawn result', result);
-  if (result === OK) {
-    availableSpawns = availableSpawns.filter(s => s !== spawn);
-    orderBoosts(office, order);
-  } else if (result !== ERR_NOT_ENOUGH_ENERGY && result !== ERR_BUSY) {
-    // Spawn failed un-recoverably, abandon order
-    console.log('Unrecoverable spawn error', result);
-    console.log(order.name, order.body.length);
+  for (const build of order.builds) {
+    const { body, boosts } = build;
+    const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
+    const estimate = order.estimate(build);
+    if (estimate.energy > remaining.energy - adjustedBudget || estimate.cpu > remaining.cpu) {
+      // build doesn't fit our budget
+      continue;
+    }
+    // check if boosts are available
+    let boostOrders: BoostOrder[] | undefined;
+    try {
+      boostOrders = orderBoosts(office, order.name, boosts);
+    } catch (e) {
+      console.log(e);
+      continue; // no distinction for not_enough_resources vs. energy
+    }
+    // Spawn is available
+    // console.log(order.data.body, order.data.name);
+    const result = spawn.spawnCreep(body, order.name, {
+      directions: order.directions,
+      memory: order.memory,
+      energyStructures: getEnergyStructures(office)
+    });
+    // console.log(order.name, 'spawn result', result);
+    if (result === OK) {
+      availableSpawns = availableSpawns.filter(s => s !== spawn);
+      if (boostOrders.length) {
+        Memory.offices[office].lab.boosts.push(...boostOrders);
+        Memory.creeps[order.name].runState = States.GET_BOOSTED;
+      }
+    } else if (result !== ERR_NOT_ENOUGH_ENERGY && result !== ERR_BUSY) {
+      // Spawn failed un-recoverably, abandon order
+      console.log('Unrecoverable spawn error', result);
+      console.log(order.name, body.length);
+    }
+    return {
+      build,
+      estimate,
+      spawned: result === OK
+    };
   }
-  return result;
+  return undefined; // no valid builds
 }
 
-const orderBoosts = (office: string, order: SpawnOrder) => {
-  if (!FEATURES.LABS) return;
-  for (const resources of order.boosts ?? []) {
-    for (const resource of resources) {
-      const part = Object.entries(BOOSTS).find(([k, v]) => resource in v)?.[0] as BodyPartConstant | undefined;
-      if (!part) continue;
-      let available = boostsAvailable(office, resource, false);
-      const workParts = order.body.filter(p => p === part).length;
-      const target = workParts * LAB_BOOST_MINERAL;
-      console.log('boost request', order.name, resource, 'available', available, 'target', target);
-      if (available && available >= target) {
-        // We have enough minerals, enter a boost order
-        Memory.offices[office].lab.boosts.push({
-          boosts: [
-            {
-              type: resource,
-              count: target
-            }
-          ],
-          name: order.name
-        });
-        Memory.creeps[order.name].runState = States.GET_BOOSTED;
-        console.log('boost request filed');
-        break; // on to next boost archetype
-      }
+const orderBoosts = (
+  office: string,
+  name: string,
+  boosts: { type: MineralBoostConstant; count: number }[]
+): BoostOrder[] => {
+  if (!FEATURES.LABS) return [];
+  const orders: BoostOrder[] = [];
+  for (const boost of boosts) {
+    let available = boostsAvailable(office, boost.type, true);
+    if (available && available >= boost.count) {
+      // We have enough minerals, enter a boost order
+      orders.push({
+        boosts: [boost],
+        name
+      });
+    } else {
+      throw new Error(`Not enough resources to boost order "${name}": ${JSON.stringify(boosts)}`);
     }
   }
+  return orders;
 };

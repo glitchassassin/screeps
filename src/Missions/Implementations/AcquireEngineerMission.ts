@@ -19,7 +19,8 @@ export class AcquireEngineerMission extends EngineerMission {
     engineer: new CreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
       budget: this.budget,
-      body: energy => MinionBuilders[MinionTypes.ENGINEER](energy, this.calculated().roads, !this.missionData.franchise)
+      builds: energy =>
+        MinionBuilders[MinionTypes.ENGINEER](energy, this.calculated().roads, !this.missionData.franchise)
     })
   };
 

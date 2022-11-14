@@ -21,7 +21,7 @@ export class DefendRemoteMission extends MissionImplementation {
     blinkies: new MultiCreepSpawner('b', this.missionData.office, {
       role: MinionTypes.BLINKY,
       budget: Budget.ESSENTIAL,
-      body: energy => MinionBuilders[MinionTypes.BLINKY](energy),
+      builds: energy => MinionBuilders[MinionTypes.BLINKY](energy),
       count: current => {
         if (
           this.missionData.targetRoom &&

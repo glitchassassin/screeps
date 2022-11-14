@@ -10,7 +10,7 @@ export class EmergencyUpgradeMission extends UpgradeMission {
     upgraders: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.RESEARCH,
       budget: Budget.ESSENTIAL,
-      body: energy => MinionBuilders[MinionTypes.RESEARCH](energy),
+      builds: energy => MinionBuilders[MinionTypes.RESEARCH](energy),
       count: current => {
         if (!this.emergency() || current.length) return 0;
         return 1;
