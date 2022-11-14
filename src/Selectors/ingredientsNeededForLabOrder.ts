@@ -20,8 +20,10 @@ export function ingredientsNeededForLabOrder(office: string, order: LabOrder, sc
 
   const target = order.amount - product;
 
+  const roundToNextHighest = (increment: number, value: number) => Math.ceil(value / increment) * increment;
+
   return {
-    ingredient1: Math.max(0, target - ingredient1),
-    ingredient2: Math.max(0, target - ingredient2)
+    ingredient1: roundToNextHighest(5, target - ingredient1),
+    ingredient2: roundToNextHighest(5, target - ingredient2)
   };
 }

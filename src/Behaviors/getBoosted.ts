@@ -12,7 +12,8 @@ export const getBoosted =
 
     // Check if boosts are completed
     const boosts = creep.body.reduce((map, part) => {
-      if (part.boost) map.set(part.boost as LabMineralConstant, (map.get(part.boost as LabMineralConstant) ?? 0) + 30);
+      if (part.boost)
+        map.set(part.boost as LabMineralConstant, (map.get(part.boost as LabMineralConstant) ?? 0) + LAB_BOOST_MINERAL);
       return map;
     }, new Map<LabMineralConstant, number>());
     const outstanding =
@@ -23,27 +24,25 @@ export const getBoosted =
     if (outstanding.length === 0) {
       // All boosts accounted for, we're done
       Memory.offices[office].lab.boosts = Memory.offices[office].lab.boosts.filter(o => o.name !== creep.name);
-      // console.log(office, 'Boosted creep', JSON.stringify(creep.body));
+      console.log(office, 'Boosted creep', creep.name, 'with', creep.ticksToLive, 'ticks remaining');
       return nextState;
     }
 
-    // console.log(office, creep.name, JSON.stringify([...boosts.values()]))
-
     // We still have some boosts outstanding
-    const targetLab = Memory.offices[office].lab.boostingLabs.find(l => outstanding.some(o => o.type === l.resource));
+    const targetLab = Memory.offices[office].lab.boostingLabs.find(l => {
+      const targetBoost = outstanding.find(b => b.type === l.resource);
+      if (!targetBoost) return false;
+      const lab = byId(l.id);
+      if (lab?.mineralType !== targetBoost.type || lab.store.getUsedCapacity(lab.mineralType) < targetBoost.count)
+        return false;
+      return true;
+    });
     const lab = byId(targetLab?.id);
-    const targetBoostCount = outstanding.find(b => b.type === targetLab?.resource)?.count ?? 0;
     if (lab) {
       moveTo(creep, { pos: lab.pos, range: 1 });
-      if (
-        creep.pos.inRangeTo(lab, 1) &&
-        lab.mineralType &&
-        lab.store.getUsedCapacity(lab.mineralType) >= targetBoostCount
-      ) {
+      if (creep.pos.inRangeTo(lab, 1)) {
         const result = lab.boostCreep(creep);
-        if (result === OK) {
-          const boostCost = Math.round((targetBoostCount * 2) / 3);
-        }
+        // console.log(creep.name, lab.mineralType, 'result', result);
       }
     }
     return States.GET_BOOSTED;

@@ -6,7 +6,10 @@ export function runLabLogic(roomName: string) {
   const newBoostingLabs: {
     id: Id<StructureLab>;
     resource: MineralBoostConstant;
-  }[] = [];
+  }[] =
+    Memory.offices[roomName].lab.boostingLabs.filter(({ resource }) =>
+      Memory.offices[roomName].lab.boosts.some(o => o.boosts.some(b => b.type === resource))
+    ) ?? [];
   set_boosting_labs: for (const order of Memory.offices[roomName].lab.boosts) {
     if (Memory.creeps[order.name]?.runState !== States.GET_BOOSTED) {
       // either undefined, if creep is dead, or something else, if state changed
@@ -16,7 +19,7 @@ export function runLabLogic(roomName: string) {
     }
     if (Game.creeps[order.name]?.spawning) continue; // creep is not dead, so is still spawning
     for (let boost of order.boosts) {
-      const boostingLab = Memory.offices[roomName].lab.boostingLabs.find(l => l.resource === boost.type);
+      const boostingLab = newBoostingLabs.find(l => l.resource === boost.type);
       if (boostingLab && !newBoostingLabs.includes(boostingLab)) {
         newBoostingLabs.push(boostingLab);
       } else if (!newBoostingLabs.some(l => l.resource === boost.type)) {
@@ -24,7 +27,7 @@ export function runLabLogic(roomName: string) {
         const labs = getLabs(roomName);
         const availableLab = labs.inputs
           .concat(labs.outputs)
-          .filter(l => l.structureId)
+          .filter(l => l.structureId && !newBoostingLabs.some(bl => bl.id === l.structureId))
           .slice(-1)[0];
         if (!availableLab) break set_boosting_labs;
         newBoostingLabs.push({
@@ -44,6 +47,7 @@ export function runLabLogic(roomName: string) {
   if (!lab1?.store.getUsedCapacity(order.ingredient1) || !lab2?.store.getUsedCapacity(order.ingredient2)) return;
   for (let lab of outputs) {
     const result = (lab.structure as StructureLab | undefined)?.runReaction(lab1, lab2);
-    // if (result !== undefined) console.log('lab result:', result)
+    if (result === OK) break;
+    // if (result !== undefined) console.log('lab result:', result);
   }
 }

@@ -98,9 +98,9 @@ export function spawnOrder(
       continue;
     }
     // check if boosts are available
-    let boostOrders: BoostOrder[] | undefined;
+    let boostOrder: BoostOrder | undefined;
     try {
-      boostOrders = orderBoosts(office, order.name, boosts);
+      boostOrder = orderBoosts(office, order.name, boosts);
     } catch (e) {
       console.log(e);
       continue; // no distinction for not_enough_resources vs. energy
@@ -115,8 +115,8 @@ export function spawnOrder(
     // console.log(order.name, 'spawn result', result);
     if (result === OK) {
       availableSpawns = availableSpawns.filter(s => s !== spawn);
-      if (boostOrders.length) {
-        Memory.offices[office].lab.boosts.push(...boostOrders);
+      if (boostOrder) {
+        Memory.offices[office].lab.boosts.push(boostOrder);
         Memory.creeps[order.name].runState = States.GET_BOOSTED;
       }
     } else if (result !== ERR_NOT_ENOUGH_ENERGY && result !== ERR_BUSY) {
@@ -137,20 +137,24 @@ const orderBoosts = (
   office: string,
   name: string,
   boosts: { type: MineralBoostConstant; count: number }[]
-): BoostOrder[] => {
-  if (!FEATURES.LABS) return [];
-  const orders: BoostOrder[] = [];
+): BoostOrder | undefined => {
+  if (!boosts.length) return undefined;
+  if (!FEATURES.LABS) throw new Error('Boosts disabled');
+  const order: BoostOrder = {
+    name,
+    boosts: []
+  };
   for (const boost of boosts) {
     let available = boostsAvailable(office, boost.type, true);
-    if (available && available >= boost.count) {
+    if (available && available >= boost.count * LAB_BOOST_MINERAL) {
       // We have enough minerals, enter a boost order
-      orders.push({
-        boosts: [boost],
-        name
+      order.boosts.push({
+        type: boost.type,
+        count: boost.count * LAB_BOOST_MINERAL
       });
     } else {
       throw new Error(`Not enough resources to boost order "${name}": ${JSON.stringify(boosts)}`);
     }
   }
-  return orders;
+  return order;
 };

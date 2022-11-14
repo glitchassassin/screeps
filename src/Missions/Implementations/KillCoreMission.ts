@@ -74,6 +74,7 @@ export class KillCoreMission extends MissionImplementation {
           // Go to room
           if (guard.pos.roomName !== data.targetRoom) {
             moveTo(guard, { pos: new RoomPosition(25, 25, data.targetRoom), range: 20 });
+            return States.DEFEND;
           }
 
           // Clear room

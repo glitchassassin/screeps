@@ -1,3 +1,4 @@
+import { BOOSTS_BY_INTENT } from 'gameConstants';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { memoize } from 'utils/memoizeFunction';
 
@@ -121,12 +122,19 @@ export const MinionBuilders = {
       }
     }
   },
-  [MinionTypes.FOREMAN]: (energy: number): CreepBuild[] => {
+  [MinionTypes.FOREMAN]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
+    const tiers = [3, 2, 1, undefined].filter(tier => !tier || tier <= maxTier);
     if (energy < 550) {
       return [];
     } else {
       // Maintain 4-1 WORK-MOVE ratio
-      return unboosted(buildFromSegment(energy, [WORK, WORK, WORK, WORK, MOVE]));
+      const body = buildFromSegment(energy, [WORK, WORK, WORK, WORK, MOVE]);
+      const count = body.filter(p => p === WORK).length;
+      // boost, when available
+      return tiers.map(tier => ({
+        body,
+        boosts: tier ? [{ type: BOOSTS_BY_INTENT.UPGRADE[tier - 1], count }] : []
+      }));
     }
   },
   [MinionTypes.GUARD]: (energy: number, heal = false): CreepBuild[] => {
@@ -165,13 +173,18 @@ export const MinionBuilders = {
       let carryParts = Math.max(1, Math.min(3, Math.floor((energy * 1) / 13 / 50)));
       let moveParts = Math.max(1, Math.min(6, Math.floor((energy * 2) / 13 / 50)));
       // console.log(energy, maxWorkParts, workParts)
-      return unboosted(
-        ([] as BodyPartConstant[]).concat(
-          Array(workParts).fill(WORK),
-          Array(carryParts).fill(CARRY),
-          Array(moveParts).fill(MOVE)
-        )
+      const body = ([] as BodyPartConstant[]).concat(
+        Array(workParts).fill(WORK),
+        Array(carryParts).fill(CARRY),
+        Array(moveParts).fill(MOVE)
       );
+      // any level of boosts, depending on availability
+      return [
+        { body, boosts: [{ type: BOOSTS_BY_INTENT.UPGRADE[2], count: workParts }] },
+        { body, boosts: [{ type: BOOSTS_BY_INTENT.UPGRADE[1], count: workParts }] },
+        { body, boosts: [{ type: BOOSTS_BY_INTENT.UPGRADE[0], count: workParts }] },
+        { body, boosts: [] }
+      ];
     }
   },
   [MinionTypes.SALESMAN]: (energy: number, link = false, remote = false): CreepBuild[] => {
@@ -210,24 +223,48 @@ export const MinionBuilders = {
       return unboosted(buildFromSegment(energy, [HEAL, MOVE], { sorted: true }));
     }
   },
-  [MinionTypes.POWER_BANK_ATTACKER]: (energy: number, speed: number): CreepBuild[] => {
-    const attackParts = speed === 1 ? 22 : 29;
-    const moveParts = speed === 1 ? 28 : 21;
-    const body = ([] as BodyPartConstant[]).concat(Array(moveParts).fill(MOVE), Array(attackParts).fill(ATTACK));
-    if (energy < minionCost(body)) {
-      return [];
-    } else {
-      return unboosted(body);
+  [MinionTypes.POWER_BANK_ATTACKER]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
+    const builds: CreepBuild[] = [];
+    const tiers = [
+      { attack: 35, move: 15, tier: 3 },
+      { attack: 33, move: 17, tier: 2 },
+      { attack: 29, move: 21, tier: 1 }
+      // { attack: 22, move: 28 }, // no unboosted power bank duos
+    ].filter(({ tier }) => !tier || tier <= maxTier);
+    for (const { attack, move, tier } of tiers) {
+      const body = ([] as BodyPartConstant[]).concat(Array(move).fill(MOVE), Array(attack).fill(ATTACK));
+      builds.push({
+        body,
+        boosts: tier
+          ? [
+              { type: BOOSTS_BY_INTENT.ATTACK[tier - 1], count: attack },
+              { type: BOOSTS_BY_INTENT.MOVE[tier - 1], count: move }
+            ]
+          : []
+      });
     }
+    return builds;
   },
-  [MinionTypes.POWER_BANK_HEALER]: (energy: number, speed: number): CreepBuild[] => {
-    const healParts = speed === 1 ? 28 : 37;
-    const moveParts = speed === 1 ? 22 : 13;
-    const body = ([] as BodyPartConstant[]).concat(Array(moveParts).fill(MOVE), Array(healParts).fill(HEAL));
-    if (energy < minionCost(body)) {
-      return [];
-    } else {
-      return unboosted(body);
+  [MinionTypes.POWER_BANK_HEALER]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
+    const builds: CreepBuild[] = [];
+    const tiers = [
+      { heal: 45, move: 5, tier: 3 },
+      { heal: 42, move: 8, tier: 2 },
+      { heal: 37, move: 13, tier: 1 }
+      // { heal: 28, move: 22 }, // no unboosted power bank duos
+    ].filter(({ tier }) => !tier || tier <= maxTier);
+    for (const { heal, move, tier } of tiers) {
+      const body = ([] as BodyPartConstant[]).concat(Array(move).fill(MOVE), Array(heal).fill(HEAL));
+      builds.push({
+        body,
+        boosts: tier
+          ? [
+              { type: BOOSTS_BY_INTENT.HEAL[tier - 1], count: heal },
+              { type: BOOSTS_BY_INTENT.MOVE[tier - 1], count: move }
+            ]
+          : []
+      });
     }
+    return builds;
   }
 };

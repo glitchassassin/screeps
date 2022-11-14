@@ -16,6 +16,7 @@ import {
 import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { getLabs } from 'Selectors/getLabs';
+import { registerScientists } from 'Selectors/getScientists';
 import { ingredientsNeededForLabOrder } from 'Selectors/ingredientsNeededForLabOrder';
 import { labsShouldBeEmptied } from 'Selectors/labsShouldBeEmptied';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -55,6 +56,7 @@ export class ScienceMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<ScienceMission>, missions: ResolvedMissions<ScienceMission>, data: ScienceMissionData) {
     const { scientist } = creeps;
     if (!scientist) return;
+    registerScientists(data.office, [scientist]);
 
     const terminal = roomPlans(data.office)?.headquarters?.terminal.structure as StructureTerminal | undefined;
     if (!terminal) return;
@@ -62,6 +64,7 @@ export class ScienceMission extends MissionImplementation {
     const order = Memory.offices[data.office].lab.orders.find(o => o.amount > 0) as LabOrder | undefined;
 
     const boosting = shouldHandleBoosts(data.office);
+    if (boosting) console.log('boosting');
 
     if ((scientist.ticksToLive ?? 1500) < 200) {
       scientist.memory.runState = States.RECYCLE;
@@ -82,7 +85,6 @@ export class ScienceMission extends MissionImplementation {
             const withdrawResources = boostLabsToFill(data.office)
               .map(lab => boostsNeededForLab(data.office, lab.id))
               .filter((request): request is [LabMineralConstant, number] => Boolean(request[0] && request[1]));
-
             return withdrawResourcesFromTerminal({ office: data.office, withdrawResources }, creep);
           } else if (order) {
             const { ingredient1, ingredient2 } = ingredientsNeededForLabOrder(data.office, order, []);
@@ -133,20 +135,26 @@ export class ScienceMission extends MissionImplementation {
             const [lab1, lab2] = inputs.map(s => s.structure);
             // reaction is ongoing, let it pile up before emptying
             const waitForReaction =
-              lab1?.mineralType === order?.ingredient1 && lab2?.mineralType === order?.ingredient2;
+              lab1 &&
+              lab1.mineralType === order?.ingredient1 &&
+              lab1.store.getUsedCapacity(lab1.mineralType) > 5 &&
+              lab2 &&
+              lab2.mineralType === order?.ingredient2 &&
+              lab2.store.getUsedCapacity(lab2.mineralType) > 5;
             return emptyLabs({ ...data, labs: reactionLabsToEmpty(data.office), waitForReaction }, creep);
           }
         },
         [States.FILL_LABS]: (data, creep) => {
           if (boosting) {
+            const fillOrders = boostLabsToFill(data.office)
+              .map(lab => {
+                const [resource, amount] = boostsNeededForLab(data.office, lab.id);
+                return [lab, resource, amount];
+              })
+              .filter((order): order is [StructureLab, LabMineralConstant, number] => Boolean(order[1] && order[2]));
             return fillLabs(
               {
-                fillOrders: boostLabsToFill(data.office)
-                  .map(lab => {
-                    const [resource, amount] = boostsNeededForLab(data.office, lab.id);
-                    return [lab, resource, amount];
-                  })
-                  .filter((order): order is [StructureLab, LabMineralConstant, number] => Boolean(order[1] && order[2]))
+                fillOrders
               },
               creep
             );

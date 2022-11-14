@@ -67,20 +67,17 @@ export class MineMission extends MissionImplementation {
     if (miner) {
       runStates(
         {
+          [States.GET_BOOSTED]: getBoosted(States.WORKING),
           [States.WORKING]: (data, miner) => {
             if (mine.mineralAmount === 0) return States.RECYCLE;
-            // Prefer to work from container position, fall back to adjacent position
-            if (!miner.pos.isEqualTo(plan.container.pos) && plan.container.pos.lookFor(LOOK_CREEPS).length === 0) {
-              moveTo(miner, { pos: plan.container.pos, range: 0 });
-            } else if (!miner.pos.isNearTo(mine.pos!)) {
-              moveTo(miner, { pos: mine.pos, range: 1 });
+            // Always work from container position
+            moveTo(miner, { pos: plan.container.pos, range: 0 });
+            if (miner.pos.isEqualTo(plan.container.pos)) {
+              miner.harvest(mine);
             }
-
-            miner.harvest(mine);
 
             return States.WORKING;
           },
-          [States.GET_BOOSTED]: getBoosted(States.WORKING),
           [States.RECYCLE]: recycle
         },
         this.missionData,

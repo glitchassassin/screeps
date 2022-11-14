@@ -1,12 +1,16 @@
+import { getBoosted } from 'Behaviors/getBoosted';
 import { recycle } from 'Behaviors/recycle';
+import { States } from 'Behaviors/states';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
+import { combatStats } from 'Selectors/Combat/combatStats';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { maxBuildCost } from 'Selectors/minionCostPerTick';
+import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
 import { unpackPos } from 'utils/packrat';
 import {
@@ -29,7 +33,7 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_ATTACKER,
-        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)
+        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.maxTier)
       },
       creep => this.recordCreepEnergy(creep)
     ),
@@ -38,24 +42,43 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_HEALER,
-        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1)
+        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.maxTier)
       },
       creep => this.recordCreepEnergy(creep)
     )
   };
 
   priority = 8;
+  maxTier: 0 | 1 | 2 | 3 = 3;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
 
     const energy = Game.rooms[missionData.office].energyCapacityAvailable;
     this.estimatedEnergyRemaining ??=
-      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.report()?.duoSpeed ?? 1)) +
-      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.report()?.duoSpeed ?? 1));
+      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy)) +
+      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy));
+
+    this.maxTier = PowerBankDuoMission.boostsAvailable(missionData.office);
   }
   static fromId(id: PowerBankDuoMission['id']) {
     return super.fromId(id) as PowerBankDuoMission;
+  }
+
+  static boostsAvailable(office: string): 0 | 1 | 2 | 3 {
+    const energy = Game.rooms[office].energyCapacityAvailable;
+    const attacker = MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy);
+    const healer = MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy);
+    for (let i = 0; i < 3; i++) {
+      const boosts = attacker[i].boosts.concat(healer[i].boosts).reduce((sum, boost) => {
+        sum[boost.type] = boost.count * LAB_BOOST_MINERAL;
+        return sum;
+      }, {} as Record<string, number>);
+      if (Object.keys(boosts).every(boost => boostsAvailable(office, boost as MineralBoostConstant) >= boosts[boost])) {
+        return (3 - i) as 1 | 2 | 3; // boost tier
+      }
+    }
+    return 0; // no boosts available
   }
 
   report() {
@@ -86,8 +109,8 @@ export class PowerBankDuoMission extends MissionImplementation {
   }
 
   damagePerTick() {
-    // only count damage when at power bank
-    return (this.creeps.attacker.resolved?.getActiveBodyparts(ATTACK) ?? 0) * ATTACK_POWER;
+    if (!this.creeps.attacker.resolved) return 0;
+    return combatStats(this.creeps.attacker.resolved).attack;
   }
 
   onStart() {
@@ -118,6 +141,14 @@ export class PowerBankDuoMission extends MissionImplementation {
       // duo has been broken
       attacker && recycle(this.missionData, attacker);
       healer && recycle(this.missionData, healer);
+      return;
+    } else if (attacker?.memory.runState === States.GET_BOOSTED || healer?.memory.runState === States.GET_BOOSTED) {
+      if (attacker) {
+        attacker.memory.runState = getBoosted(States.WORKING)(data, attacker);
+      }
+      if (healer) {
+        healer.memory.runState = getBoosted(States.WORKING)(data, healer);
+      }
       return;
     }
     if (!attacker || !healer) return; // wait for both creeps

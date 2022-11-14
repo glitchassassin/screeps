@@ -1,8 +1,13 @@
 import { BOOSTS_BY_INTENT } from 'gameConstants';
 
 export const boostQuotas = (office: string) => {
-  return [...BOOSTS_BY_INTENT.UPGRADE, ...BOOSTS_BY_INTENT.HARVEST]
-    .filter(<T>(b: T): b is Exclude<T, null> => b !== null)
+  return [
+    ...BOOSTS_BY_INTENT.UPGRADE,
+    ...BOOSTS_BY_INTENT.HARVEST,
+    ...BOOSTS_BY_INTENT.ATTACK,
+    ...BOOSTS_BY_INTENT.MOVE,
+    ...BOOSTS_BY_INTENT.HEAL
+  ]
     .map(boost => ({
       boost,
       amount: 30 * 50

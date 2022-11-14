@@ -52,15 +52,23 @@ export class PowerBankMission extends MissionImplementation {
     duos: new MultiMissionSpawner(
       PowerBankDuoMission,
       current => {
-        const duosCount = 1; // boosted, only needs one // this.report()?.duoCount ?? 4;
+        const duosCount = 1; // boosted, only needs one
         if (
-          current.length < (this.report()?.adjacentSquares ?? 0) &&
-          current.every(d => d.assembled()) &&
-          (this.missionData.duosSpawned ?? 0) < duosCount
+          current.length >= (this.report()?.adjacentSquares ?? 0) ||
+          current.some(d => !d.assembled()) ||
+          current.length >= duosCount
         ) {
-          return [this.missionData];
+          return []; // enough missions already
         }
-        return [];
+        const boostsAvailable = PowerBankDuoMission.boostsAvailable(this.missionData.office);
+        const distance = this.report()?.distance ?? 500;
+        const timeToCrack = { 0: 3031, 1: 1150, 2: 674, 3: 477 }[boostsAvailable];
+        const timeToBoost = 200;
+        const maxDistance = CREEP_LIFE_TIME - timeToBoost - timeToCrack;
+        if (boostsAvailable === 0 || distance > maxDistance) {
+          return []; // not enough boosts, or not enough for a single duo at this range
+        }
+        return [this.missionData];
       },
       mission => {
         this.recordMissionEnergy(mission);
@@ -116,8 +124,8 @@ export class PowerBankMission extends MissionImplementation {
     const { haulers } = creeps;
 
     // short circuit
-    if ((this.report()?.expires ?? 0 - Game.time) < 2000 && this.report()?.hits === POWER_BANK_HITS) {
-      // less than 2000 ticks to decay and no damage done yet, abandon
+    if ((this.report()?.expires ?? 0 - Game.time) < 1800 && this.report()?.hits === POWER_BANK_HITS) {
+      // less than 1800 ticks to decay and no damage done yet, abandon
       this.status = MissionStatus.DONE;
       return;
     }

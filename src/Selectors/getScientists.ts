@@ -1,8 +1,13 @@
-import { ScienceMission } from 'Missions/Implementations/ScienceMission';
-import { activeMissions, isMission } from 'Missions/Selectors';
+const cache = new Map<string, string[]>();
 
-export const getScientists = (office: string) =>
-  activeMissions(office)
-    .filter(isMission(ScienceMission))
-    .map(m => m.creeps.scientist.resolved)
-    .filter((c): c is Creep => Boolean(c));
+export const registerScientists = (office: string, creeps: Creep[]) => {
+  cache.set(
+    office,
+    creeps.map(c => c.name)
+  );
+};
+export const getScientists = (office: string) => {
+  const creeps = (cache.get(office) ?? []).map(name => Game.creeps[name]).filter(c => !!c);
+  registerScientists(office, creeps);
+  return creeps;
+};

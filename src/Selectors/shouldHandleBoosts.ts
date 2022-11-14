@@ -1,6 +1,7 @@
 import { LabMineralConstant } from 'Structures/Labs/LabOrder';
 import { boostLabsToEmpty } from 'Structures/Labs/labsToEmpty';
 import { getLabs } from './getLabs';
+import { getScientists } from './getScientists';
 import { roomPlans } from './roomPlans';
 
 export function boostLabsToFill(office: string) {
@@ -28,10 +29,10 @@ export function boostsNeededForLab(
   for (const order of boostOrders) {
     // Subtract any already-boosted parts from the orders
     const c = Game.creeps[order.name];
-    let orderResources = order.boosts.reduce((sum, boost) => (boost.type === resource ? boost.count : 0), 0);
+    let orderResources = order.boosts.find(boost => boost.type === resource)?.count ?? 0;
     if (!c) continue;
     c.body.forEach(part => {
-      if (part.boost === resource) orderResources -= 1;
+      if (part.boost === resource) orderResources -= LAB_BOOST_MINERAL;
     });
 
     boostCount += Math.max(0, orderResources);
@@ -39,7 +40,7 @@ export function boostsNeededForLab(
 
   // Cap at amount actually available in local economy
 
-  boostCount = Math.max(boostCount, Math.floor(boostsAvailable(office, resource, false, false) / 30));
+  boostCount = Math.min(boostCount, boostsAvailable(office, resource, false, false), LAB_MINERAL_CAPACITY);
 
   return [resource, boostCount];
 }
@@ -53,6 +54,7 @@ export function shouldHandleBoosts(office: string) {
  */
 export function boostsAvailable(office: string, boost: LabMineralConstant, subtractReserved = true, countLabs = true) {
   let total = roomPlans(office)?.headquarters?.terminal.structure?.store.getUsedCapacity(boost) ?? 0;
+  total += getScientists(office).reduce((sum, creep) => sum + creep.store.getUsedCapacity(boost), 0);
   if (countLabs) {
     total += getLabs(office).boosts.reduce(
       (sum, lab) => ((lab.structure as StructureLab)?.store.getUsedCapacity(boost) ?? 0) + sum,
