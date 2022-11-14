@@ -64,7 +64,7 @@ export class ScienceMission extends MissionImplementation {
     const order = Memory.offices[data.office].lab.orders.find(o => o.amount > 0) as LabOrder | undefined;
 
     const boosting = shouldHandleBoosts(data.office);
-    if (boosting) console.log('boosting');
+    // if (boosting) console.log('boosting');
 
     if ((scientist.ticksToLive ?? 1500) < 200) {
       scientist.memory.runState = States.RECYCLE;
