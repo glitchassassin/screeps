@@ -18,7 +18,7 @@ import { estimateMissionInterval } from 'Missions/Selectors';
 import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
-import { combatStats } from 'Selectors/Combat/combatStats';
+import { combatPower } from 'Selectors/Combat/combatStats';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
@@ -80,10 +80,10 @@ export class EngineerMission extends MissionImplementation {
     (creepName: string) => creepName,
     (creepName: string) => {
       const creep = Game.creeps[creepName];
-      const stats = combatStats(creep);
+      const stats = combatPower(creep);
       return {
         buildTicks: stats.carry / stats.build,
-        repairTicks: stats.carry / stats.repair,
+        repairTicks: stats.carry / (stats.repair * REPAIR_COST),
         speed: stats.speed
       };
     }

@@ -58,7 +58,7 @@ export const combatStats = memoize(
           }
           stats.rangedAttack += rangedAttack;
         } else if (p.type === CARRY) {
-          let carry = CARRY_CAPACITY;
+          let carry = 1;
           if (p.boost) {
             carry *= BOOSTS[CARRY][p.boost].capacity;
           }

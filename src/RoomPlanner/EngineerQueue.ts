@@ -27,7 +27,7 @@ export class EngineerQueue {
         this.surveyStructure(structure);
       }
     },
-    500
+    100
   );
 
   surveyStructure(structure: PlannedStructure) {
