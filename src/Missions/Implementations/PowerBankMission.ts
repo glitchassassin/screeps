@@ -61,11 +61,9 @@ export class PowerBankMission extends MissionImplementation {
           return []; // enough missions already
         }
         const boostsAvailable = PowerBankDuoMission.boostsAvailable(this.missionData.office);
-        const distance = this.report()?.distance ?? 500;
-        const timeToCrack = { 0: 3031, 1: 1150, 2: 674, 3: 477 }[boostsAvailable];
-        const timeToBoost = 200;
-        const maxDistance = CREEP_LIFE_TIME - timeToBoost - timeToCrack;
-        if (boostsAvailable === 0 || distance > maxDistance) {
+        const minTier = PowerBankDuoMission.minTier(this.report()?.distance ?? 500);
+        if (Game.time % 100 === 0) console.log(this.toString(), 'waiting for duo boosts');
+        if (boostsAvailable === 0 || minTier > boostsAvailable) {
           return []; // not enough boosts, or not enough for a single duo at this range
         }
         return [this.missionData];

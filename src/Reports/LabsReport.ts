@@ -1,5 +1,9 @@
 import { RES_COLORS } from 'gameConstants';
-import { Dashboard, Rectangle, Table } from 'screeps-viz';
+import { Bar, Dashboard, Grid, Rectangle, Table } from 'screeps-viz';
+import { boostQuotas } from 'Selectors/boostQuotas';
+import { getLabs } from 'Selectors/getLabs';
+import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
+import { viz } from 'Selectors/viz';
 
 function drawLab(lab: StructureLab, position: RoomPosition) {}
 
@@ -26,6 +30,11 @@ export default () => {
         color: RES_COLORS[order.output]
       });
     });
+    const { boosts, inputs, outputs } = getLabs(office);
+    [...boosts, ...inputs, ...outputs].forEach(
+      ({ structure }) =>
+        structure?.mineralType && viz(office).resource(structure.mineralType, structure.pos.x, structure.pos.y)
+    );
 
     // Labs
 
@@ -64,6 +73,32 @@ export default () => {
                 order.name,
                 order.boosts.map(b => `${b.type}x${b.count}`).join(', ')
               ])
+            })
+          })
+        }
+      ]
+    });
+
+    // quotas
+    Dashboard({
+      config: { room: office },
+      widgets: [
+        {
+          pos: { x: 27, y: 1 },
+          width: 21,
+          height: 47,
+          widget: Rectangle({
+            data: Grid({
+              config: {
+                columns: 6,
+                rows: 7
+              },
+              data: boostQuotas(office).map(({ boost, amount }) =>
+                Bar({
+                  data: { maxValue: amount, value: boostsAvailable(office, boost, true, true) },
+                  config: { label: boost, style: { fill: RES_COLORS[boost], stroke: RES_COLORS[boost] } }
+                })
+              )
             })
           })
         }

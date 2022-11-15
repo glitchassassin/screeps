@@ -33,7 +33,11 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_ATTACKER,
-        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, this.maxTier)
+        builds: energy =>
+          MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](
+            energy,
+            Math.min(PowerBankDuoMission.minTier(this.report()?.distance ?? 500), this.maxTier)
+          )
       },
       creep => this.recordCreepEnergy(creep)
     ),
@@ -42,14 +46,18 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_HEALER,
-        builds: energy => MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, this.maxTier)
+        builds: energy =>
+          MinionBuilders[MinionTypes.POWER_BANK_HEALER](
+            energy,
+            Math.min(PowerBankDuoMission.minTier(this.report()?.distance ?? 500), this.maxTier)
+          )
       },
       creep => this.recordCreepEnergy(creep)
     )
   };
 
   priority = 8;
-  maxTier: 0 | 1 | 2 | 3 = 3;
+  maxTier = 3;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
@@ -65,7 +73,7 @@ export class PowerBankDuoMission extends MissionImplementation {
     return super.fromId(id) as PowerBankDuoMission;
   }
 
-  static boostsAvailable(office: string): 0 | 1 | 2 | 3 {
+  static boostsAvailable(office: string) {
     const energy = Game.rooms[office].energyCapacityAvailable;
     const attacker = MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy);
     const healer = MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy);
@@ -79,6 +87,12 @@ export class PowerBankDuoMission extends MissionImplementation {
       }
     }
     return 0; // no boosts available
+  }
+
+  static minTier(distance: number) {
+    const timeToBoost = 200;
+    const timeToCrack = CREEP_LIFE_TIME - timeToBoost - distance;
+    return [3031, 1112, 654, 439].findIndex(t => t < timeToCrack);
   }
 
   report() {
@@ -115,7 +129,14 @@ export class PowerBankDuoMission extends MissionImplementation {
 
   onStart() {
     super.onStart();
-    console.log('[PowerBankDuoMission] started targeting', unpackPos(this.missionData.powerBankPos));
+    console.log(
+      '[PowerBankDuoMission] started targeting',
+      unpackPos(this.missionData.powerBankPos),
+      'with tier',
+      Math.min(PowerBankDuoMission.minTier(this.report()?.distance ?? 500), this.maxTier),
+      'boosts. Max tier available:',
+      this.maxTier
+    );
   }
 
   onParentEnd() {

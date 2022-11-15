@@ -223,7 +223,7 @@ export const MinionBuilders = {
       return unboosted(buildFromSegment(energy, [HEAL, MOVE], { sorted: true }));
     }
   },
-  [MinionTypes.POWER_BANK_ATTACKER]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
+  [MinionTypes.POWER_BANK_ATTACKER]: (energy: number, maxTier: number = 3): CreepBuild[] => {
     const builds: CreepBuild[] = [];
     const tiers = [
       { tough: 2, attack: 38, move: 10, tier: 3 },
@@ -250,7 +250,7 @@ export const MinionBuilders = {
     }
     return builds;
   },
-  [MinionTypes.POWER_BANK_HEALER]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
+  [MinionTypes.POWER_BANK_HEALER]: (energy: number, maxTier: number = 3): CreepBuild[] => {
     const builds: CreepBuild[] = [];
     const tiers = [
       { heal: 38, move: 10, tier: 3 },
