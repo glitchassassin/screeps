@@ -7,7 +7,7 @@ import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
-import { combatStats } from 'Selectors/Combat/combatStats';
+import { combatPower } from 'Selectors/Combat/combatStats';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { maxBuildCost } from 'Selectors/minionCostPerTick';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
@@ -110,7 +110,7 @@ export class PowerBankDuoMission extends MissionImplementation {
 
   damagePerTick() {
     if (!this.creeps.attacker.resolved) return 0;
-    return combatStats(this.creeps.attacker.resolved).attack;
+    return combatPower(this.creeps.attacker.resolved).attack;
   }
 
   onStart() {
@@ -143,10 +143,10 @@ export class PowerBankDuoMission extends MissionImplementation {
       healer && recycle(this.missionData, healer);
       return;
     } else if (attacker?.memory.runState === States.GET_BOOSTED || healer?.memory.runState === States.GET_BOOSTED) {
-      if (attacker) {
+      if (attacker?.memory.runState === States.GET_BOOSTED) {
         attacker.memory.runState = getBoosted(States.WORKING)(data, attacker);
       }
-      if (healer) {
+      if (healer?.memory.runState === States.GET_BOOSTED) {
         healer.memory.runState = getBoosted(States.WORKING)(data, healer);
       }
       return;

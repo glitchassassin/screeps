@@ -72,7 +72,7 @@
     "@types/screeps-profiler": "^1.2.2",
     "reflect-metadata": "^0.1.13",
     "screeps-cache": "^1.0.11",
-    "screeps-cartographer": "^1.4.3",
+    "screeps-cartographer": "^1.4.4",
     "screeps-viz": "^2.1.2",
     "source-map": "~0.6.1",
     "table": "^6.0.3",

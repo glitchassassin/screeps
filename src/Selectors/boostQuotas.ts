@@ -4,6 +4,7 @@ export const boostQuotas = (office: string) => {
   return [
     ...BOOSTS_BY_INTENT.UPGRADE,
     ...BOOSTS_BY_INTENT.HARVEST,
+    ...BOOSTS_BY_INTENT.TOUGH,
     ...BOOSTS_BY_INTENT.ATTACK,
     ...BOOSTS_BY_INTENT.MOVE,
     ...BOOSTS_BY_INTENT.HEAL

@@ -2,7 +2,7 @@ import { States } from 'Behaviors/states';
 import { FEATURES } from 'config';
 import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
-import { moveTo } from 'screeps-cartographer';
+import { move, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
 import { getSpawns } from 'Selectors/roomPlans';
@@ -53,9 +53,11 @@ export function vacateSpawns() {
     for (const spawn of getSpawns(office)) {
       if (spawn.spawning) {
         if (spawn.spawning.remainingTime < 2) {
+          const spawningCreep = Game.creeps[spawn.spawning.name];
           const spawningSquares =
             spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??
             adjacentWalkablePositions(spawn.pos, true);
+          move(spawningCreep, spawningSquares, 100);
           for (const pos of spawningSquares) {
             for (const creep of pos.lookFor(LOOK_CREEPS)) {
               if (creep.name.startsWith('FM_')) continue; // don't shove refillers

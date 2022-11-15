@@ -1,5 +1,6 @@
 import { moveTo } from 'screeps-cartographer';
 import { roomPlans } from 'Selectors/roomPlans';
+import { viz } from 'Selectors/viz';
 import { States } from './states';
 
 export const recycle = (
@@ -15,6 +16,7 @@ export const recycle = (
     creep.suicide();
     return States.RECYCLE;
   }
+  viz(creep.pos.roomName).line(creep.pos, recycleTarget, { color: 'red' });
   moveTo(creep, { pos: recycleTarget, range: 0 });
   if (creep.pos.isEqualTo(recycleTarget)) recycleSpawn.recycleCreep(creep);
   return States.RECYCLE;

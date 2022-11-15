@@ -102,6 +102,22 @@ export const combatStats = memoize(
   }
 );
 
+export const combatPower = (creep: Creep): ReturnType<typeof combatStats> => {
+  const stats = combatStats(creep);
+  return {
+    ...stats,
+    attack: stats.attack * ATTACK_POWER,
+    rangedAttack: stats.rangedAttack * RANGED_ATTACK_POWER,
+    heal: stats.heal * HEAL_POWER,
+    rangedHeal: stats.rangedHeal * RANGED_HEAL_POWER,
+    build: stats.build * BUILD_POWER,
+    repair: stats.repair * REPAIR_POWER,
+    carry: stats.carry * CARRY_CAPACITY,
+    dismantle: stats.dismantle * DISMANTLE_POWER,
+    harvest: stats.harvest * HARVEST_POWER
+  };
+};
+
 export const totalCreepStats = (creeps: Creep[]) => {
   const sum = creeps.reduce(
     (sum, creep) => {
@@ -141,6 +157,22 @@ export const totalCreepStats = (creeps: Creep[]) => {
 
   sum.mitigation /= sum.count;
   return sum;
+};
+
+export const totalCreepPower = (creeps: Creep[]): ReturnType<typeof totalCreepStats> => {
+  const stats = totalCreepStats(creeps);
+  return {
+    ...stats,
+    attack: stats.attack * ATTACK_POWER,
+    rangedAttack: stats.rangedAttack * RANGED_ATTACK_POWER,
+    heal: stats.heal * HEAL_POWER,
+    rangedHeal: stats.rangedHeal * RANGED_HEAL_POWER,
+    build: stats.build * BUILD_POWER,
+    repair: stats.repair * REPAIR_POWER,
+    carry: stats.carry * CARRY_CAPACITY,
+    dismantle: stats.dismantle * DISMANTLE_POWER,
+    harvest: stats.harvest * HARVEST_POWER
+  };
 };
 
 export const isAttacker = (creep: Creep) => {

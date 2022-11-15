@@ -1,7 +1,7 @@
 import { allMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { PowerBankMission } from 'Missions/Implementations/PowerBankMission';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { creepStats } from 'Selectors/creepStats';
+import { totalCreepPower } from 'Selectors/Combat/combatStats';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
 import { sum } from 'Selectors/reducers';
 import { viz } from 'Selectors/viz';
@@ -38,7 +38,7 @@ export default () => {
 
         // time to crack
         if (Game.rooms[bankPos.roomName]) {
-          const totalAttack = creepStats(bankPos.findInRange(FIND_CREEPS, 1)).attack;
+          const totalAttack = totalCreepPower(bankPos.findInRange(FIND_CREEPS, 1)).attack;
           const timeToCrack = report.hits / totalAttack;
           viz(bankPos.roomName).text(
             `${Math.ceil(timeToCrack).toFixed(0)} ✹`,

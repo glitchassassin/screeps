@@ -226,17 +226,22 @@ export const MinionBuilders = {
   [MinionTypes.POWER_BANK_ATTACKER]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
     const builds: CreepBuild[] = [];
     const tiers = [
-      { attack: 35, move: 15, tier: 3 },
-      { attack: 33, move: 17, tier: 2 },
-      { attack: 29, move: 21, tier: 1 }
+      { tough: 2, attack: 38, move: 10, tier: 3 },
+      { tough: 3, attack: 34, move: 13, tier: 2 },
+      { tough: 3, attack: 30, move: 17, tier: 1 }
       // { attack: 22, move: 28 }, // no unboosted power bank duos
     ].filter(({ tier }) => !tier || tier <= maxTier);
-    for (const { attack, move, tier } of tiers) {
-      const body = ([] as BodyPartConstant[]).concat(Array(move).fill(MOVE), Array(attack).fill(ATTACK));
+    for (const { tough, attack, move, tier } of tiers) {
+      const body = ([] as BodyPartConstant[]).concat(
+        Array(tough).fill(TOUGH),
+        Array(move).fill(MOVE),
+        Array(attack).fill(ATTACK)
+      );
       builds.push({
         body,
         boosts: tier
           ? [
+              { type: BOOSTS_BY_INTENT.TOUGH[tier - 1], count: tough },
               { type: BOOSTS_BY_INTENT.ATTACK[tier - 1], count: attack },
               { type: BOOSTS_BY_INTENT.MOVE[tier - 1], count: move }
             ]
@@ -248,9 +253,9 @@ export const MinionBuilders = {
   [MinionTypes.POWER_BANK_HEALER]: (energy: number, maxTier: 0 | 1 | 2 | 3 = 3): CreepBuild[] => {
     const builds: CreepBuild[] = [];
     const tiers = [
-      { heal: 45, move: 5, tier: 3 },
-      { heal: 42, move: 8, tier: 2 },
-      { heal: 37, move: 13, tier: 1 }
+      { heal: 38, move: 10, tier: 3 },
+      { heal: 35, move: 11, tier: 2 },
+      { heal: 33, move: 16, tier: 1 }
       // { heal: 28, move: 22 }, // no unboosted power bank duos
     ].filter(({ tier }) => !tier || tier <= maxTier);
     for (const { heal, move, tier } of tiers) {

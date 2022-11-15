@@ -23,7 +23,7 @@ export function ingredientsNeededForLabOrder(office: string, order: LabOrder, sc
   const roundToNextHighest = (increment: number, value: number) => Math.ceil(value / increment) * increment;
 
   return {
-    ingredient1: roundToNextHighest(5, target - ingredient1),
-    ingredient2: roundToNextHighest(5, target - ingredient2)
+    ingredient1: Math.max(0, roundToNextHighest(5, target - ingredient1)),
+    ingredient2: Math.max(0, roundToNextHighest(5, target - ingredient2))
   };
 }

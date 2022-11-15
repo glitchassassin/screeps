@@ -124,7 +124,7 @@ export class PowerBankMission extends MissionImplementation {
     const { haulers } = creeps;
 
     // short circuit
-    if ((this.report()?.expires ?? 0 - Game.time) < 1800 && this.report()?.hits === POWER_BANK_HITS) {
+    if ((this.report()?.expires ?? 0) - Game.time < 1800 && this.report()?.hits === POWER_BANK_HITS) {
       // less than 1800 ticks to decay and no damage done yet, abandon
       this.status = MissionStatus.DONE;
       return;

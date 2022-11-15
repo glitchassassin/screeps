@@ -40,7 +40,7 @@ export function boostsNeededForLab(
 
   // Cap at amount actually available in local economy
 
-  boostCount = Math.min(boostCount, boostsAvailable(office, resource, false, false), LAB_MINERAL_CAPACITY);
+  boostCount = Math.min(boostCount, boostsAvailable(office, resource, false, true), LAB_MINERAL_CAPACITY);
 
   return [resource, boostCount];
 }

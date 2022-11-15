@@ -18,6 +18,7 @@ import { rcl } from 'Selectors/rcl';
 import { min } from 'Selectors/reducers';
 import { mineralId } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
+import { CleanupMission } from './CleanupMission';
 import { DefenseCoordinationMission } from './DefenseCoordinationMission';
 import { EmergencyUpgradeMission } from './EmergencyUpgradeMission';
 import { EngineerMission } from './EngineerMission';
@@ -60,6 +61,7 @@ export class MainOfficeMission extends MissionImplementation {
     ),
     engineer: new MissionSpawner(EngineerMission, () => ({ ...this.missionData })),
     reserve: new MissionSpawner(ReserveMission, () => ({ ...this.missionData })),
+    cleanup: new MissionSpawner(CleanupMission, () => ({ ...this.missionData })),
     hqLogistics: new ConditionalMissionSpawner(
       HQLogisticsMission,
       () => ({ ...this.missionData }),
