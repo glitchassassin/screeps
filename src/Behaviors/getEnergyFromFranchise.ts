@@ -3,7 +3,6 @@ import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAv
 import { posById } from 'Selectors/posById';
 import { resourcesNearPos } from 'Selectors/resourcesNearPos';
 import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
-import { viz } from 'Selectors/viz';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
 
@@ -38,7 +37,6 @@ export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, office:
       // Otherwise, pick up loose resources
       const res = resources.shift();
       if (res) {
-        if (pos.roomName === 'E32N19') viz(creep.pos.roomName).line(creep.pos, res.pos);
         moveTo(creep, { pos: res.pos, range: 1 });
         if (creep.pos.inRangeTo(res, 1)) {
           const result = creep.pickup(res);

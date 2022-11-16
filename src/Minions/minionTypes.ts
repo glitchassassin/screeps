@@ -53,6 +53,7 @@ function buildFromSegment(energy: number, segment: BodyPartConstant[], opts: Par
   const segmentCost = minionCost(segment);
   if (energy < segmentCost) {
     console.log('Minion builder error:', energy, 'not enough for segment', JSON.stringify(segment));
+    return [];
   }
   const segmentCount = Math.min(
     Math.floor(energy / segmentCost),
@@ -74,7 +75,7 @@ export const MinionBuilders = {
     (energy: number, maxSegments = 25, roads = false, repair = false) =>
       `${Math.round((energy * 2) / 100)} ${maxSegments} ${roads}`,
     (energy: number, maxSegments = 25, roads = false, repair = false): CreepBuild[] => {
-      const suffix = repair ? (roads ? [WORK, CARRY, MOVE] : [WORK, MOVE]) : [];
+      const suffix = energy < 300 ? [] : repair ? (roads ? [WORK, CARRY, MOVE] : [WORK, MOVE]) : [];
       if (energy < 100 || maxSegments === 0) {
         return [];
       } else if (energy < 5600) {

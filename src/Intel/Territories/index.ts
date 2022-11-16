@@ -3,9 +3,14 @@ import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { franchiseActive } from 'Selectors/Franchises/franchiseActive';
 import { planFranchisePath } from 'Selectors/Franchises/planFranchisePath';
 import { remoteFranchises } from 'Selectors/Franchises/remoteFranchises';
+import { sourceIds } from 'Selectors/roomCache';
 
 export const scanTerritories = () => {
   for (const office in Memory.offices) {
+    for (const source of sourceIds(office)) {
+      // update local paths, if needed
+      planFranchisePath(office, source);
+    }
     for (const { source, room } of remoteFranchises(office)) {
       // update paths, if needed
       planFranchisePath(office, source);

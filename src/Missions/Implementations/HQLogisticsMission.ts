@@ -29,6 +29,7 @@ export class HQLogisticsMission extends MissionImplementation {
 
   constructor(public missionData: HQLogisticsMissionData, id?: string) {
     super(missionData, id);
+    this.setPriority();
   }
   static fromId(id: HQLogisticsMission['id']) {
     return super.fromId(id) as HQLogisticsMission;
@@ -38,13 +39,22 @@ export class HQLogisticsMission extends MissionImplementation {
     super.onStart();
   }
 
+  setPriority() {
+    const plans = roomPlans(this.missionData.office);
+    if (plans?.headquarters?.link.structure && plans.fastfiller?.link.structure) {
+      this.priority = 15; // key to keeping fastfiller running
+    } else {
+      this.priority = 9; // keeps upgrading going
+    }
+  }
+
   run(
     creeps: ResolvedCreeps<HQLogisticsMission>,
     missions: ResolvedMissions<HQLogisticsMission>,
     data: HQLogisticsMissionData
   ) {
+    this.setPriority();
     const { clerk } = creeps;
-
     if (!clerk) return;
 
     // Priorities:

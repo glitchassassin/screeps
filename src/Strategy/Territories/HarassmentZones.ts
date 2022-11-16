@@ -3,6 +3,7 @@ import { getCachedPath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { combatStats } from 'Selectors/Combat/combatStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
+import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { visualizeRoomCluster } from 'utils/visualizeRoomCluster';
@@ -76,6 +77,7 @@ export const cleanThreats = () => {
 };
 
 export const isThreatened = (office: string, franchise: Id<Source>) => {
+  if (posById(franchise)?.roomName === office) return false;
   const rooms = (getCachedPath(office + franchise) ?? []).reduce((rooms, pos) => {
     if (!rooms.includes(pos.roomName)) rooms.push(pos.roomName);
     return rooms;
