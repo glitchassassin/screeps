@@ -105,7 +105,7 @@ export class EngineerMission extends MissionImplementation {
         const { buildTicks, repairTicks, speed } = this.engineerStats(c.name);
         const workTicks = energy < 3 ? repairTicks : buildTicks;
         const period = Math.min(estimateMissionInterval(this.missionData.office), c.ticksToLive ?? CREEP_LIFE_TIME);
-        const iterationTime = workTicks + analysis.averageRange * speed * 2 * RANGE_OFFSET;
+        const iterationTime = workTicks + analysis.minRange * speed * 2 * RANGE_OFFSET;
         const iterations = period / iterationTime;
         const remaining = workTicks * iterations;
         if (isNaN(remaining)) return 0;

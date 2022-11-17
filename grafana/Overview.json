@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1659482558804,
+  "iteration": 1668634245258,
   "links": [],
   "panels": [
     {
@@ -370,6 +370,13 @@
           "refCount": 0,
           "refId": "A",
           "target": "sortByTotal(aliasByMetric(stats.gauges.$world.profiling.*))",
+          "textEditor": false
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "B",
+          "target": "alias(sumSeries(aliasByMetric(stats.gauges.$world.profiling.*)), 'Total')",
           "textEditor": false
         }
       ],
@@ -1516,6 +1523,11 @@
           "$$hashKey": "object:724",
           "alias": "Logistics Capacity",
           "yaxis": 2
+        },
+        {
+          "$$hashKey": "object:384",
+          "alias": "Hauling Energy",
+          "yaxis": 2
         }
       ],
       "spaceLength": 10,
@@ -1539,6 +1551,12 @@
           "refCount": 0,
           "refId": "C",
           "target": "alias(stats.gauges.$world.offices.$office.logisticsCapacity, 'Logistics Capacity')"
+        },
+        {
+          "hide": false,
+          "refCount": 0,
+          "refId": "D",
+          "target": "alias(stats.gauges.$world.offices.$office.logisticsUsedCapacity, 'Hauling Energy')"
         }
       ],
       "thresholds": [],
@@ -1829,14 +1847,7 @@
       "points": false,
       "renderer": "flot",
       "repeatIteration": 1473912580654,
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:326",
-          "alias": "Total",
-          "lines": false,
-          "stack": false
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -1847,17 +1858,16 @@
           "target": "alias(stats.gauges.$world.offices.$office.energyAvailable, 'Spawns and Extensions')"
         },
         {
-          "refCount": 0,
-          "refId": "D",
-          "target": "alias(sumSeries(#A, #B, #C), \"Total\")",
-          "targetFull": "alias(sumSeries(alias(stats.gauges.$world.offices.$office.storageEnergy, 'Storage'), alias(stats.gauges.$world.offices.$office.energyAvailable, 'Spawns and Extensions'), alias(stats.gauges.$world.offices.$office.terminalEnergy, 'Terminal')), \"Total\")",
-          "textEditor": true
-        },
-        {
           "hide": false,
           "refCount": 0,
           "refId": "E",
-          "target": "alias(stats.gauges.$world.offices.$office.energyCapacityAvailable, 'Spawns and Extensions')"
+          "target": "alias(stats.gauges.$world.offices.$office.energyCapacityAvailable, 'Room Capacity')"
+        },
+        {
+          "hide": false,
+          "refCount": 1,
+          "refId": "A",
+          "target": "alias(stats.gauges.$world.offices.$office.libraryEnergyAvailable, 'Library')"
         }
       ],
       "thresholds": [],
@@ -2074,14 +2084,14 @@
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(stats.gauges.$world.offices.$office.missions.*.count, 6)"
+          "target": "aliasByNode(nonNegativeDerivative(stats.gauges.$world.offices.$office.missions.*.cpu), 6)"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Running Missions",
+      "title": "Mission CPU",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -2185,14 +2195,14 @@
           "hide": false,
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(stats.gauges.$world.offices.$office.missions.*.efficiency, 6)"
+          "target": "aliasByNode(sortByTotal(movingAverage(nonNegativeDerivative(stats.gauges.$world.offices.$office.missions.*.energy), '5min')), 6)"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Mission Efficiency",
+      "title": "Mission Energy",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -2290,7 +2300,7 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -2300,5 +2310,5 @@
   "timezone": "browser",
   "title": "Overview",
   "uid": "a-YBxxz4z",
-  "version": 3
+  "version": 12
 }

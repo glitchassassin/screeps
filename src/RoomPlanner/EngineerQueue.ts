@@ -89,6 +89,7 @@ export class EngineerQueue {
       energyRemaining: 0,
       workTicksRemaining: 0,
       averageRange: 0,
+      minRange: Infinity,
       count: 0
     };
     let storagePos = roomPlans(this.office)?.headquarters?.storage.pos ?? new RoomPosition(25, 25, this.office);
@@ -97,6 +98,7 @@ export class EngineerQueue {
       data.count += 1;
       data.energyRemaining += s.energyToBuild + s.energyToRepair;
       data.workTicksRemaining += s.energyToBuild / BUILD_POWER + s.energyToRepair / (REPAIR_COST * REPAIR_POWER);
+      data.minRange = Math.min(data.minRange, getRangeTo(storagePos, s.pos));
       range += getRangeTo(storagePos, s.pos);
     });
     if (data.count) data.averageRange = range / data.count;

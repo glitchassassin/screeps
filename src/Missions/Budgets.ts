@@ -1,3 +1,4 @@
+import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export function getWithdrawLimit(office: string, budget: Budget) {
@@ -24,16 +25,27 @@ export function getBudgetAdjustment(office: string, budget: Budget) {
     } else {
       return 0;
     }
-  } else {
+  } else if (rcl(office) < 8) {
     // Storage allows more fine-grained capacity management
     if ([Budget.ESSENTIAL, Budget.ECONOMY].includes(budget)) {
       return -Infinity;
     } else if ([Budget.EFFICIENCY].includes(budget)) {
-      return Game.rooms[office].energyCapacityAvailable ?? 1500;
+      return Game.rooms[office].energyCapacityAvailable * 2;
     } else if ([Budget.SURPLUS].includes(budget)) {
       return 100000;
     } else {
       return 60000;
+    }
+  } else {
+    // At RCL8 we bump up the storage reservoir
+    if ([Budget.ESSENTIAL, Budget.ECONOMY].includes(budget)) {
+      return -Infinity;
+    } else if ([Budget.EFFICIENCY].includes(budget)) {
+      return 60000;
+    } else if ([Budget.SURPLUS].includes(budget)) {
+      return 200000;
+    } else {
+      return 100000;
     }
   }
 }
