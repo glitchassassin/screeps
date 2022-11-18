@@ -18,6 +18,8 @@ import { rcl } from 'Selectors/rcl';
 import { min } from 'Selectors/reducers';
 import { mineralId } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
+import { findAcquireTarget, officeShouldAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
+import { AcquireMission } from './AcquireMission';
 import { CleanupMission } from './CleanupMission';
 import { DefenseCoordinationMission } from './DefenseCoordinationMission';
 import { EmergencyUpgradeMission } from './EmergencyUpgradeMission';
@@ -115,6 +117,14 @@ export class MainOfficeMission extends MissionImplementation {
       );
       if (!targetRoom) return [];
       return [{ ...this.missionData, targetRoom }];
+    }),
+    acquire: new MultiMissionSpawner(AcquireMission, current => {
+      if (current.length) return [];
+      const targetOffice = findAcquireTarget();
+      if (targetOffice && officeShouldAcquireTarget(this.missionData.office)) {
+        return [{ ...this.missionData, targetOffice }];
+      }
+      return [];
     })
   };
 

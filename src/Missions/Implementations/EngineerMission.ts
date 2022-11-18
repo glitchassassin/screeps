@@ -19,6 +19,7 @@ import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { combatPower } from 'Selectors/Combat/combatStats';
+import { isSpawned } from 'Selectors/isSpawned';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
@@ -131,13 +132,17 @@ export class EngineerMission extends MissionImplementation {
 
     this.updateEstimatedEnergy();
 
-    for (const creep of engineers) {
+    for (const creep of engineers.filter(isSpawned)) {
       this.missionData.assignments[creep.name] ??= {};
       const assignment = this.missionData.assignments[creep.name];
       if (rcl(this.missionData.office) < 4) {
-        CreepsThatNeedEnergy.add(creep.name);
+        CreepsThatNeedEnergy.set(
+          this.missionData.office,
+          CreepsThatNeedEnergy.get(this.missionData.office) ?? new Set()
+        );
+        CreepsThatNeedEnergy.get(this.missionData.office)?.add(creep.name);
       } else {
-        CreepsThatNeedEnergy.delete(creep.name);
+        CreepsThatNeedEnergy.get(this.missionData.office)?.delete(creep.name);
       }
       runStates(
         {

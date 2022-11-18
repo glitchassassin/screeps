@@ -8,8 +8,7 @@ import { plannedOfficeStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { mineralPosition, sourceIds, sourcePositions } from 'Selectors/roomCache';
-import { getTerritoryIntent, TerritoryIntent } from 'Selectors/territoryIntent';
-import { memoize, memoizeByTick } from 'utils/memoizeFunction';
+import { memoizeByTick } from 'utils/memoizeFunction';
 import {
   adjacentWalkablePositions,
   calculateNearbyPositions,
@@ -195,14 +194,3 @@ export const getRangeByPath = (from: RoomPosition, to: RoomPosition, range: numb
   const path = getPath(from, to, range, ignoreRoads);
   return !path || path?.incomplete ? undefined : path.cost;
 };
-
-export const getRoomPathDistance = memoize(
-  (room1: string, room2: string) => [room1, room2].sort().join(''),
-  (room1: string, room2: string) => {
-    const newRoute = Game.map.findRoute(room1, room2, {
-      routeCallback: room => (getTerritoryIntent(room) === TerritoryIntent.AVOID ? Infinity : 0)
-    });
-    if (newRoute === -2) return undefined;
-    return newRoute.length;
-  }
-);

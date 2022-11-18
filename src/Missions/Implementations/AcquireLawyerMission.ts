@@ -19,7 +19,7 @@ export interface AcquireLawyerMissionData extends BaseMissionData {
 }
 
 export class AcquireLawyerMission extends MissionImplementation {
-  budget = Budget.ECONOMY;
+  budget = Budget.EFFICIENCY;
   public creeps = {
     lawyer: new CreepSpawner('e', this.missionData.office, {
       role: MinionTypes.LAWYER,

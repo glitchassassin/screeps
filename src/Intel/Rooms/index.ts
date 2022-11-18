@@ -5,11 +5,8 @@ import { purgeDeadOffices } from 'Intel/Rooms/purgeDeadOffices';
 import { refreshRoomMemory } from 'Intel/Rooms/refreshRoomMemory';
 import { scanTerritories } from 'Intel/Territories';
 import { scanRoomPlanStructures } from 'RoomPlanner/scanRoomPlanStructures';
-import { resetCachedPath } from 'screeps-cartographer';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
-import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { ownedMinerals } from 'Selectors/ownedMinerals';
-import { roomPlans } from 'Selectors/roomPlans';
 import { evaluatePowerBanks } from 'Strategy/ResourceAnalysis/PowerBank';
 import { cleanThreats, scanRoomForThreats } from 'Strategy/Territories/HarassmentZones';
 import profiler from 'utils/profiler';
@@ -79,16 +76,17 @@ export const scanRooms = profiler.registerFN(() => {
     }
 
     // Recalculate territory paths when room planning is complete
-    if (
-      room in Memory.offices &&
-      roomPlans(room)?.headquarters &&
-      Object.keys(Memory.rooms[room].franchises[room] ?? {}).length === 0
-    ) {
-      console.log('Recalculating internal franchise paths for office', room);
-      for (const { source } of franchisesByOffice(room)) {
-        resetCachedPath(room + source);
-      }
-    }
+    // if (
+    //   room in Memory.offices &&
+    //   roomPlans(room)?.headquarters &&
+    //   Object.keys(Memory.rooms[room].franchises[room] ?? {}).length === 0
+    // ) {
+    //   console.log('Recalculating internal franchise paths for office', room);
+    //   Memory.rooms[room].franchises[room] = {}
+    //   for (const { source } of franchisesByOffice(room)) {
+    //     resetCachedPath(room + source);
+    //   }
+    // }
 
     // Refresh this when visible
     refreshRoomMemory(room);

@@ -1,5 +1,6 @@
 import { TERRITORY_RADIUS, THREAT_TOLERANCE } from 'config';
 import { ThreatLevel } from './Combat/threatAnalysis';
+import { getRoomPathDistance } from './Map/getRoomPathDistance';
 import { calculateNearbyRooms, getClosestOfficeFromMemory, isSourceKeeperRoom } from './Map/MapCoordinates';
 import { rcl } from './rcl';
 
@@ -24,8 +25,8 @@ function recalculateTerritories() {
     const targets = calculateNearbyRooms(office, TERRITORY_RADIUS, false).filter(
       t =>
         !isSourceKeeperRoom(t) &&
-        Memory.rooms[t]?.franchises[office] &&
         !Memory.offices[t] &&
+        (getRoomPathDistance(office, t) ?? Infinity) < TERRITORY_RADIUS + 1 &&
         getClosestOfficeFromMemory(t) === office &&
         Memory.rooms[t].threatLevel?.[0] !== ThreatLevel.OWNED &&
         !Memory.rooms[t].owner &&

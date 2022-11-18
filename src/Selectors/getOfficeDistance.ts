@@ -1,9 +1,10 @@
-import { getPath, getRoomPathDistance } from "./Map/Pathing";
-import { roomPlans } from "./roomPlans";
+import { getRoomPathDistance } from './Map/getRoomPathDistance';
+import { getPath } from './Map/Pathing';
+import { roomPlans } from './roomPlans';
 
 export const getOfficeDistanceByRange = (office1: string, office2: string) => {
   return Game.map.getRoomLinearDistance(office1, office2);
-}
+};
 
 const pathCache = new Map<string, PathFinderPath>();
 export const getOfficeDistanceByPath = (office1: string, office2: string) => {
@@ -15,7 +16,7 @@ export const getOfficeDistanceByPath = (office1: string, office2: string) => {
     if (path) pathCache.set(key, path);
   }
   return pathCache.get(key)?.cost;
-}
+};
 
 const roomPathCache = new Map<string, number>();
 export const getOfficeDistanceByRoomPath = (office1: string, office2: string) => {
@@ -25,4 +26,4 @@ export const getOfficeDistanceByRoomPath = (office1: string, office2: string) =>
     if (distance) roomPathCache.set(key, distance);
   }
   return roomPathCache.get(key);
-}
+};

@@ -1,7 +1,7 @@
 import { resourcesToPlunder } from 'Selectors/Combat/shouldPlunder';
 import { calculateThreatLevel, ThreatLevel } from 'Selectors/Combat/threatAnalysis';
+import { getRoomPathDistance } from 'Selectors/Map/getRoomPathDistance';
 import { getClosestOffice } from 'Selectors/Map/MapCoordinates';
-import { getRoomPathDistance } from 'Selectors/Map/Pathing';
 
 export function refreshRoomMemory(room: string) {
   Memory.rooms[room].rcl = Game.rooms[room].controller?.level;

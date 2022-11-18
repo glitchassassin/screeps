@@ -11,6 +11,7 @@ import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { findClosestHostileCreepByRange, findHostileCreeps, findInvaderStructures } from 'Selectors/findHostileCreeps';
+import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
 
 export interface DefendRemoteMissionData extends BaseMissionData {
   targetRoom?: string;
@@ -63,10 +64,10 @@ export class DefendRemoteMission extends MissionImplementation {
 
     // If no target, pick one
     if (!data.targetRoom) {
-      for (const t of Memory.offices[data.office].territories ?? []) {
-        if (Memory.rooms[t].invaderCore || Memory.rooms[t].lastHostileSeen === Memory.rooms[t].scanned) {
+      for (const { room } of activeFranchises(data.office) ?? []) {
+        if (Memory.rooms[room].invaderCore || Memory.rooms[room].lastHostileSeen === Memory.rooms[room].scanned) {
           // Hostile minions or invader core detected
-          data.targetRoom = t;
+          data.targetRoom = room;
         }
       }
     }

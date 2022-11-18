@@ -71,9 +71,13 @@ export class UpgradeMission extends MissionImplementation {
 
     for (const creep of upgraders) {
       if (this.needsSupplementalEnergy()) {
-        CreepsThatNeedEnergy.add(creep.name);
+        CreepsThatNeedEnergy.set(
+          this.missionData.office,
+          CreepsThatNeedEnergy.get(this.missionData.office) ?? new Set()
+        );
+        CreepsThatNeedEnergy.get(this.missionData.office)?.add(creep.name);
       } else {
-        CreepsThatNeedEnergy.delete(creep.name);
+        CreepsThatNeedEnergy.get(this.missionData.office)?.delete(creep.name);
       }
       runStates(
         {

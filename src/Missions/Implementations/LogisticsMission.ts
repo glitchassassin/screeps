@@ -25,7 +25,7 @@ import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { isThreatened } from 'Strategy/Territories/HarassmentZones';
-// import { logCpu, logCpuStart } from 'utils/logCPU';
+import { logCpu, logCpuStart } from 'utils/logCPU';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
@@ -265,7 +265,7 @@ export class LogisticsMission extends MissionImplementation {
     const allHaulers = [...haulers, ...refillers];
     data.assignments ??= {};
 
-    // logCpuStart();
+    logCpuStart();
 
     // Update priorities
     const inRoomCapacity = activeMissions(this.missionData.office)
@@ -373,7 +373,7 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
     }
-    // logCpu('prep');
+    logCpu('prep');
 
     for (const creep of allHaulers) {
       const assignment = {
@@ -389,7 +389,7 @@ export class LogisticsMission extends MissionImplementation {
         assignment,
         creep
       );
-      // logCpu('run creeps');
+      logCpu('run creeps');
     }
   }
 }
