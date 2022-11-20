@@ -13,6 +13,8 @@ import { cleanUpCreeps } from 'utils/cleanUpCreeps';
 import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
 import { initializeSpawn } from 'utils/initializeSpawns';
 
+const DEBUG_IN_MEMORY = true;
+
 export const gameLoop = () => {
   preTick();
   cleanUpCreeps();
@@ -21,28 +23,28 @@ export const gameLoop = () => {
   displayGcl();
   displayGpl();
   displaySpawn();
-  resetDebugCPU(true);
-  debugCPU('gameLoop setup', true);
+  resetDebugCPU(DEBUG_IN_MEMORY);
+  debugCPU('gameLoop setup');
   runScheduled();
-  debugCPU('Scheduled tasks', true);
+  debugCPU('Scheduled tasks');
 
   // Cache data where needed
   scanRooms();
-  debugCPU('scanRooms', true);
+  debugCPU('scanRooms');
 
   // Office loop
   // logCpuStart()
   runMissionControl();
-  debugCPU('Missions', true);
+  debugCPU('Missions');
 
   reconcileTraffic({ visualize: false });
-  debugCPU('Traffic Management', true);
+  debugCPU('Traffic Management');
 
   runStructures();
-  debugCPU('Structures', true);
+  debugCPU('Structures');
 
   planRooms();
-  debugCPU('planRooms', true);
+  debugCPU('planRooms');
 
   recordMetrics();
 
@@ -50,6 +52,8 @@ export const gameLoop = () => {
 
   // Setup first spawn if needed
   initializeSpawn();
+
+  debugCPU('metrics');
 
   recordOverhead();
 

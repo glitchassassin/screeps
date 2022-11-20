@@ -4,7 +4,7 @@ declare global {
   }
 }
 
-const overhead: number[] = new Array(500).map(i => Memory.overhead ?? 0);
+const overhead: number[] = new Array(500).fill(Memory.overhead ?? 0);
 
 let missionCpu = 0;
 export function recordMissionCpu(cpu: number) {

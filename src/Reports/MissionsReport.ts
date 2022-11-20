@@ -10,6 +10,8 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
   let estimatedEnergy = 0;
   let actualCPU = 0;
   let actualEnergy = 0;
+  let cpuDelta = 0;
+  let creepCount = 0;
   let missionsList = new Map<
     string,
     {
@@ -20,10 +22,12 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
       actual: {
         cpu: number;
         energy: number;
+        cpuPerCreep: number;
       };
       estimate: {
         cpu: number;
         energy: number;
+        cpuPerCreep: number;
       };
     }
   >();
@@ -36,18 +40,22 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
       type: mission.toString(),
       actual: {
         cpu: 0,
-        energy: 0
+        energy: 0,
+        cpuPerCreep: 0
       },
       estimate: {
         cpu: 0,
-        energy: 0
+        energy: 0,
+        cpuPerCreep: 0
       }
     };
     entry.count += mission.creepCount();
     entry.actual.cpu += mission.cpuUsed();
     entry.actual.energy += mission.energyUsed();
+    entry.actual.cpuPerCreep = mission.actualCpuPerCreep();
     entry.estimate.cpu += mission.cpuRemaining();
     entry.estimate.energy += mission.energyRemaining();
+    entry.estimate.cpuPerCreep = mission.estimatedCpuPerCreep();
     missionsList.set(key, entry);
   }
   let table = [];
@@ -59,16 +67,22 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         o.priority.toFixed(2),
         o.status,
         `${o.estimate.cpu.toFixed(2)}`,
-        `${o.estimate.energy.toFixed(0)}`
+        `${o.estimate.energy.toFixed(0)}`,
+        `${(o.actual.cpuPerCreep - o.estimate.cpuPerCreep).toFixed(2)}`
       ]);
     estimatedCPU += o.estimate.cpu;
     estimatedEnergy += o.estimate.energy;
     actualCPU += Math.min(o.estimate.cpu, o.actual.cpu);
     actualEnergy += Math.min(o.estimate.energy, o.actual.energy);
+    cpuDelta = o.actual.cpuPerCreep - o.estimate.cpuPerCreep;
+    creepCount += o.count;
+    if (cpuDelta * o.count > 1) console.log(o.type, cpuDelta.toFixed(2), o.count, (cpuDelta * o.count).toFixed(2));
   }
-  table.push(['---', '---', '---', '---', '---']);
-  table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`]);
-  table.push(['Available', '', Game.time, missionCpuAvailable(room).toFixed(2), missionEnergyAvailable(room)]);
+  table.push(['---', '---', '---', '---', '---', '---']);
+  table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`, '']);
+  table.push(['Available', '', Game.time, missionCpuAvailable(room).toFixed(2), missionEnergyAvailable(room), '']);
+  table.push(['Accuracy', '', '', '', '', cpuDelta]);
+  // console.log(room, cpuDelta, cpuDelta * creepCount);
   return table;
 };
 
@@ -83,7 +97,7 @@ export default () => {
           height: Math.min(24, active.length * 1.5),
           widget: Rectangle({
             data: Table({
-              config: { headers: ['Mission', 'Priority', 'Status', 'CPU', 'Energy'] },
+              config: { headers: ['Mission', 'Priority', 'Status', 'CPU', 'Energy', 'Actual/Est'] },
               data: active
             })
           })

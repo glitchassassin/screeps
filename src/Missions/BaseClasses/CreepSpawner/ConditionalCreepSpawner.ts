@@ -1,3 +1,4 @@
+import { cpuEstimatePeriod } from 'Selectors/missionCpuAvailable';
 import { BaseCreepSpawner } from './BaseCreepSpawner';
 
 declare global {
@@ -39,6 +40,9 @@ export class ConditionalCreepSpawner extends BaseCreepSpawner {
   }
 
   cpuRemaining(): number {
-    return (this.resolved?.ticksToLive ?? 0) * (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick);
+    return (
+      Math.min(cpuEstimatePeriod(), this.resolved?.ticksToLive ?? Infinity) *
+      (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick)
+    );
   }
 }

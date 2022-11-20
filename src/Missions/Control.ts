@@ -13,9 +13,9 @@ export function runMissionControl() {
   registerCreeps();
   executeMissions();
   recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
-  debugCPU('executeMissions', true);
+  debugCPU('executeMissions');
   allocateMissions();
-  debugCPU('allocateMissions', true);
+  debugCPU('allocateMissions');
   vacateSpawns();
 }
 

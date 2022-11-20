@@ -25,8 +25,7 @@ import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { isThreatened } from 'Strategy/Territories/HarassmentZones';
-import { logCpu, logCpuStart } from 'utils/logCPU';
-import { memoizeByTick } from 'utils/memoizeFunction';
+import { memoizeByTick, memoizeOnce } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
 export interface LogisticsMissionData extends BaseMissionData {
@@ -117,58 +116,42 @@ export class LogisticsMission extends MissionImplementation {
     }
   );
 
-  assignedLogisticsCapacity = memoizeByTick(
-    () => '',
-    () => {
-      const withdrawAssignments = new Map<Id<Source>, number>();
-      const depositAssignments = new Map<[number, AnyStoreStructure | Creep], number>();
-      const depositAssignmentIds = new Map<Id<AnyStoreStructure | Creep>, [number, AnyStoreStructure | Creep]>();
+  assignedLogisticsCapacity = memoizeOnce(() => {
+    const withdrawAssignments = new Map<Id<Source>, number>();
+    const depositAssignments = new Map<Id<AnyStoreStructure | Creep>, number>();
 
-      for (const { source, room } of franchisesByOffice(this.missionData.office)) {
-        if (isThreatened(this.missionData.office, source)) {
-          continue;
-        }
-        withdrawAssignments.set(source, 0);
+    for (const { source } of franchisesByOffice(this.missionData.office)) {
+      if (isThreatened(this.missionData.office, source)) {
+        continue;
       }
-      for (const prioritizedStructure of storageStructureThatNeedsEnergy(this.missionData.office)) {
-        depositAssignments.set(prioritizedStructure, 0);
-        depositAssignmentIds.set(prioritizedStructure[1].id, prioritizedStructure);
-      }
-
-      for (const assigned in this.missionData.assignments) {
-        const assignment = this.missionData.assignments[assigned];
-        const creep = Game.creeps[assigned];
-        if (!creep) continue;
-        if (
-          creep.memory.runState === States.WITHDRAW &&
-          assignment.withdrawTarget &&
-          withdrawAssignments.has(assignment.withdrawTarget as Id<Source>)
-        ) {
-          withdrawAssignments.set(
-            assignment.withdrawTarget as Id<Source>,
-            (withdrawAssignments.get(assignment.withdrawTarget as Id<Source>) ?? 0) + creep.store.getFreeCapacity()
-          );
-        }
-        if (
-          creep.memory.runState === States.DEPOSIT &&
-          assignment.depositTarget &&
-          depositAssignmentIds.has(assignment.depositTarget)
-        ) {
-          const target = depositAssignmentIds.get(assignment.depositTarget);
-          if (!target) continue;
-          depositAssignments.set(
-            target,
-            Math.min(
-              target[1].store.getFreeCapacity(RESOURCE_ENERGY),
-              (depositAssignments.get(target) ?? 0) + creep.store[RESOURCE_ENERGY]
-            )
-          );
-        }
-      }
-
-      return { withdrawAssignments, depositAssignments, depositAssignmentIds };
+      withdrawAssignments.set(source, 0);
     }
-  );
+
+    for (const assigned in this.missionData.assignments) {
+      const assignment = this.missionData.assignments[assigned];
+      const creep = Game.creeps[assigned];
+      if (!creep) continue;
+      if (creep.memory.runState === States.WITHDRAW && assignment.withdrawTarget) {
+        withdrawAssignments.set(
+          assignment.withdrawTarget as Id<Source>,
+          (withdrawAssignments.get(assignment.withdrawTarget as Id<Source>) ?? 0) + creep.store.getFreeCapacity()
+        );
+      }
+      if (creep.memory.runState === States.DEPOSIT && assignment.depositTarget) {
+        const target = byId(assignment.depositTarget);
+        if (!target) continue;
+        depositAssignments.set(
+          assignment.depositTarget,
+          Math.min(
+            target.store.getFreeCapacity(RESOURCE_ENERGY),
+            (depositAssignments.get(assignment.depositTarget) ?? 0) + creep.store[RESOURCE_ENERGY]
+          )
+        );
+      }
+    }
+
+    return { withdrawAssignments, depositAssignments };
+  }, 10);
 
   findBestDepositTarget(creep: Creep, ignoreStorage = false, assign = true) {
     const { depositAssignments } = this.assignedLogisticsCapacity();
@@ -176,9 +159,9 @@ export class LogisticsMission extends MissionImplementation {
     let bestAmount = -Infinity;
     let bestPriority = 0;
     let bestDistance = Infinity;
-    for (const [prioritizedStructure, capacity] of depositAssignments) {
-      const [priority, target] = prioritizedStructure;
-      if (target instanceof StructureStorage && ignoreStorage) continue;
+    for (const [priority, target] of storageStructureThatNeedsEnergy(this.missionData.office)) {
+      const capacity = depositAssignments.get(target.id) ?? 0;
+      if (!target || (target instanceof StructureStorage && ignoreStorage)) continue;
       const amount = (target.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) - capacity;
       const distance = getRangeTo(creep.pos, target.pos);
       if (
@@ -188,7 +171,7 @@ export class LogisticsMission extends MissionImplementation {
           amount >= Math.min(bestAmount, creep.store.getFreeCapacity(RESOURCE_ENERGY))) ||
         (priority === bestPriority && amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))
       ) {
-        bestTarget = prioritizedStructure;
+        bestTarget = target.id;
         bestAmount = amount;
         bestDistance = distance;
         bestPriority = priority;
@@ -196,7 +179,8 @@ export class LogisticsMission extends MissionImplementation {
     }
 
     if (assign && bestTarget) {
-      depositAssignments.set(bestTarget, (depositAssignments.get(bestTarget) ?? 0) + creep.store[RESOURCE_ENERGY]);
+      const capacity = depositAssignments.get(bestTarget) ?? 0;
+      depositAssignments.set(bestTarget, capacity + creep.store[RESOURCE_ENERGY]);
     }
     return bestTarget;
   }
@@ -256,6 +240,21 @@ export class LogisticsMission extends MissionImplementation {
     }
   );
 
+  updatePriorities = memoizeOnce(() => {
+    // Update priorities
+    const inRoomCapacity = activeMissions(this.missionData.office)
+      .filter(isMission(HarvestMission))
+      .filter(m => !m.calculated().remote)
+      .map(m => m.haulingCapacityNeeded())
+      .reduce(sum, 0);
+
+    if (inRoomCapacity < this.creeps.haulers.resolved.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)) {
+      this.priority = 3;
+    } else {
+      this.priority = 11;
+    }
+  }, 100);
+
   run(
     creeps: ResolvedCreeps<LogisticsMission>,
     missions: ResolvedMissions<LogisticsMission>,
@@ -265,23 +264,10 @@ export class LogisticsMission extends MissionImplementation {
     const allHaulers = [...haulers, ...refillers];
     data.assignments ??= {};
 
-    logCpuStart();
-
-    // Update priorities
-    const inRoomCapacity = activeMissions(this.missionData.office)
-      .filter(isMission(HarvestMission))
-      .filter(m => !m.calculated().remote)
-      .map(m => m.haulingCapacityNeeded())
-      .reduce(sum, 0);
-
-    if (inRoomCapacity < haulers.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)) {
-      this.priority = 3;
-    } else {
-      this.priority = 11;
-    }
+    this.updatePriorities();
 
     // clean up invalid assignments
-    const { depositAssignmentIds, withdrawAssignments } = this.assignedLogisticsCapacity();
+    const { depositAssignments, withdrawAssignments } = this.assignedLogisticsCapacity();
     for (const assigned in this.missionData.assignments) {
       const assignment = this.missionData.assignments[assigned];
       const creep = Game.creeps[assigned];
@@ -292,26 +278,36 @@ export class LogisticsMission extends MissionImplementation {
       if (
         creep?.memory.runState === States.DEPOSIT &&
         assignment.depositTarget &&
-        !depositAssignmentIds.has(assignment.depositTarget)
+        !byId(assignment.depositTarget)?.store.getFreeCapacity()
       ) {
+        if (depositAssignments.has(assignment.depositTarget)) {
+          depositAssignments.set(
+            assignment.depositTarget,
+            Math.max(
+              0,
+              (depositAssignments.get(assignment.depositTarget) ?? 0) - creep.store.getUsedCapacity(RESOURCE_ENERGY)
+            )
+          );
+        }
         delete assignment.depositTarget;
       } else if (creep?.memory.runState === States.WITHDRAW && assignment.withdrawTarget) {
-        if (!withdrawAssignments.has(assignment.withdrawTarget)) {
-          delete assignment.withdrawTarget;
-        } else {
-          const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
-          if (target instanceof StructureStorage || target instanceof StructureContainer) {
-            if (target.store[RESOURCE_ENERGY] <= 0) {
-              // withdraw target is empty
-              delete assignment.withdrawTarget;
-            }
-          } else if (franchiseEnergyAvailable(assignment.withdrawTarget) <= 50) {
-            delete assignment.withdrawTarget;
+        const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
+        if (
+          ((target instanceof StructureStorage || target instanceof StructureContainer) &&
+            target.store[RESOURCE_ENERGY] <= 0) ||
+          franchiseEnergyAvailable(assignment.withdrawTarget) <= 50
+        ) {
+          // withdraw target is empty
+          if (withdrawAssignments.has(assignment.withdrawTarget)) {
+            withdrawAssignments.set(
+              assignment.withdrawTarget,
+              Math.max(0, (withdrawAssignments.get(assignment.withdrawTarget) ?? 0) - creep.store.getFreeCapacity())
+            );
           }
+          delete assignment.withdrawTarget;
         }
       }
     }
-    // logCpu('cleanup');
 
     // add targets, if needed
 
@@ -319,7 +315,7 @@ export class LogisticsMission extends MissionImplementation {
       data.assignments[creep.name] ??= {};
       const assignment = data.assignments[creep.name];
       if (creep?.memory.runState === States.DEPOSIT && !assignment.depositTarget) {
-        assignment.depositTarget = this.findBestDepositTarget(creep, creep.memory.fromStorage, true)?.[1].id;
+        assignment.depositTarget = this.findBestDepositTarget(creep, creep.memory.fromStorage, true);
       } else if (
         creep?.memory.runState === States.WITHDRAW &&
         !assignment.withdrawTarget &&
@@ -328,7 +324,6 @@ export class LogisticsMission extends MissionImplementation {
         assignment.withdrawTarget = this.findBestWithdrawTarget(creep, true);
       }
     }
-    // logCpu('add targets');
 
     // check for bucket brigade transfers
 
@@ -373,7 +368,6 @@ export class LogisticsMission extends MissionImplementation {
         }
       }
     }
-    logCpu('prep');
 
     for (const creep of allHaulers) {
       const assignment = {
@@ -389,7 +383,6 @@ export class LogisticsMission extends MissionImplementation {
         assignment,
         creep
       );
-      logCpu('run creeps');
     }
   }
 }

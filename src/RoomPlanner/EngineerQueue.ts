@@ -21,7 +21,7 @@ export class EngineerQueue {
   maintain_other = new Set<PlannedStructure>();
 
   survey = memoize(
-    () => `${rcl(this.office)}${Game.rooms[this.office].find(FIND_STRUCTURES).length}`,
+    () => `${rcl(this.office)}${Game.rooms[this.office]?.find(FIND_STRUCTURES).length}`,
     () => {
       for (const structure of plannedStructuresByRcl(this.office)) {
         this.surveyStructure(structure);

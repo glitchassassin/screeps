@@ -31,7 +31,8 @@ export class ReserveMission extends MissionImplementation {
         const targets = this.missionData.reserveTargets?.length ?? 0;
         if (current.filter(prespawnByArrived).length < targets) return 1;
         return 0;
-      }
+      },
+      estimatedCpuPerTick: 1.5
     })
   };
 

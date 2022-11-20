@@ -51,7 +51,8 @@ export class HarvestMission extends MissionImplementation {
             return 1;
           }
           return 0;
-        }
+        },
+        estimatedCpuPerTick: 0.8
       },
       creep =>
         HarvestLedger.record(this.missionData.office, this.missionData.source, 'spawn_harvest', -creepCost(creep))

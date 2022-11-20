@@ -1,3 +1,4 @@
+import { cpuEstimatePeriod } from 'Selectors/missionCpuAvailable';
 import { isCreep } from 'Selectors/typeguards';
 import { BaseCreepSpawner } from './BaseCreepSpawner';
 
@@ -36,7 +37,7 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
 
   cpuRemaining(): number {
     return (
-      this.resolved.reduce((sum, c) => sum + (c.ticksToLive ?? 0), 0) *
+      this.resolved.reduce((sum, c) => sum + Math.min(cpuEstimatePeriod(), c.ticksToLive ?? Infinity), 0) *
       (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick)
     );
   }

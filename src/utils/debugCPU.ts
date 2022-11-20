@@ -1,7 +1,9 @@
 let start = 0;
 let current = 0;
+let saveInMemory = false;
 
 export const resetDebugCPU = (inMemory = false) => {
+  saveInMemory = inMemory;
   start = Game.cpu.getUsed();
   current = start;
   if (!inMemory) {
@@ -10,10 +12,10 @@ export const resetDebugCPU = (inMemory = false) => {
     Memory.stats.profiling = {};
   }
 };
-export const debugCPU = (context: string, inMemory = false) => {
+export const debugCPU = (context: string) => {
   let previous = current;
   current = Game.cpu.getUsed();
-  if (!inMemory) {
+  if (!saveInMemory) {
     console.log(`${context.padEnd(35)} [ ${(current - previous).toFixed(3)} | ${(current - start).toFixed(3)} ]`);
   } else {
     if (!Memory.stats) return;

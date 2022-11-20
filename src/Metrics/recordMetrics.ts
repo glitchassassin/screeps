@@ -125,7 +125,7 @@ export const recordMetrics = profiler.registerFN(() => {
       terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
       missions: activeMissions(office).reduce((sum, mission) => {
         sum[mission.constructor.name] ??= { cpu: 0, energy: 0 };
-        sum[mission.constructor.name].cpu += mission.cpuUsed();
+        sum[mission.constructor.name].cpu = mission.actualCpuPerCreep() - mission.estimatedCpuPerCreep();
         sum[mission.constructor.name].energy += mission.energyUsed();
         return sum;
       }, {} as Record<string, { cpu: number; energy: number }>)
