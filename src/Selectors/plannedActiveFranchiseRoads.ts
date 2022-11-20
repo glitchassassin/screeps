@@ -11,11 +11,11 @@ export function plannedActiveFranchiseRoads(office: string) {
         .filter(
           source =>
             (Memory.offices[office].franchises[source]?.lastActive ?? 0) + 1000 > Game.time &&
-            !isThreatened(office, source as Id<Source>)
+            !isThreatened(office, source)
         )
-        .sort(([_a, a], [_b, b]) => (getCachedPath(office + a)?.length ?? 0) - (getCachedPath(office + b)?.length ?? 0))
-        .flatMap(([source]) => {
-          return plannedFranchiseRoads(office, source as Id<Source>);
+        .sort((a, b) => (getCachedPath(office + a)?.length ?? 0) - (getCachedPath(office + b)?.length ?? 0))
+        .flatMap(source => {
+          return plannedFranchiseRoads(office, source);
         })
     )
   ];
