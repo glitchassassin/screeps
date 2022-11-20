@@ -18,7 +18,7 @@ export default () => {
       let sourcePos = posById(franchise.source);
       let storagePos = roomPlans(office)?.headquarters?.storage.pos;
       let disabled = !franchiseActive(office, franchise.source);
-      const { scores } = Memory.rooms[franchise.room].franchises[office][franchise.source];
+      const { scores } = Memory.offices[office].franchises[franchise.source];
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 

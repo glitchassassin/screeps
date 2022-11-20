@@ -17,10 +17,10 @@ export const scanTerritories = () => {
 
       const ledger = HarvestLedger.get(office, source);
 
-      if (ledger.age < 1500 || !Memory.rooms[room].franchises[office]?.[source]) continue;
+      if (ledger.age < 1500 || !Memory.offices[office].franchises[source]) continue;
 
-      Memory.rooms[room].franchises[office][source].scores ??= [];
-      const { scores, lastActive: lastHarvested } = Memory.rooms[room].franchises[office][source];
+      Memory.offices[office].franchises[source].scores ??= [];
+      const { scores, lastActive: lastHarvested } = Memory.offices[office].franchises[source];
 
       if (franchiseActive(office, source)) {
         // record score for previous 1500 ticks

@@ -166,7 +166,8 @@ export class HarvestMission extends MissionImplementation {
     const franchisePos = posById(source);
 
     for (const creep of harvesters) {
-      const franchise = Memory.rooms[franchisePos!.roomName]?.franchises[office]?.[data.source];
+      const franchise = Memory.offices[office].franchises[data.source] ?? { scores: [] };
+      Memory.offices[office].franchises[data.source] = franchise;
       if (franchise) franchise.lastActive = Game.time;
       if ((franchisePos?.getRangeTo(creep.pos) ?? Infinity) <= 1) {
         setArrived(creep);

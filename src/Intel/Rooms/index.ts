@@ -37,16 +37,6 @@ declare global {
     };
     office?: string;
     officesInRange: string;
-    franchises: Record<
-      string,
-      Record<
-        Id<Source>,
-        {
-          lastActive?: number;
-          scores: number[];
-        }
-      >
-    >;
     threatLevel?: [ThreatLevel, number];
   }
   interface Memory {

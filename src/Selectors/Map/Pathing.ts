@@ -76,7 +76,8 @@ export const getCostMatrix = memoizeByTick(
     }
 
     if (opts?.territoryPlannedRoadsCost) {
-      for (const office in Memory.rooms[roomName]?.franchises ?? {}) {
+      const office = Memory.rooms[roomName]?.office;
+      if (office) {
         for (const s of activeFranchises(office).flatMap(({ source }) => getCachedPath(office + source) ?? [])) {
           if (s.roomName === roomName) {
             costs.set(s.x, s.y, opts.territoryPlannedRoadsCost);

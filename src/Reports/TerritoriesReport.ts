@@ -3,6 +3,7 @@ import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { getTerritoriesByOffice } from 'Selectors/getTerritoriesByOffice';
 import { calculateNearbyRooms, isSourceKeeperRoom } from 'Selectors/Map/MapCoordinates';
+import { sourceIds } from 'Selectors/roomCache';
 
 const colors = {
   [ThreatLevel.FRIENDLY]: '#00ff00',
@@ -53,10 +54,9 @@ export default () => {
           widget: Rectangle({
             data: Table({
               data: allTerritories.map(t => {
-                const data = Memory.rooms[t].franchises[Memory.rooms[t].office ?? ''];
-                const reserved = Memory.rooms[t].reserver === 'LordGreywether';
-                if (!data) return [t, '--'];
-                return [t + (territories.includes(t) ? ' ✓' : ''), Object.keys(data).length];
+                const sources = sourceIds(t);
+                if (!sources) return [t, '--'];
+                return [t + (territories.includes(t) ? ' ✓' : ''), sources.length];
               }),
               config: {
                 headers: ['Territory', 'Sources']

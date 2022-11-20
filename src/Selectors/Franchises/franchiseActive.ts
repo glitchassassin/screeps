@@ -3,7 +3,7 @@ import { franchisesByOffice } from './franchisesByOffice';
 
 export const franchiseActive = (office: string, source: Id<Source>, sinceTicks = 1500) => {
   const room = posById(source)?.roomName ?? '';
-  const lastHarvested = Memory.rooms[room]?.franchises[office]?.[source]?.lastActive;
+  const lastHarvested = Memory.offices[office]?.franchises[source]?.lastActive;
   return lastHarvested && lastHarvested + sinceTicks >= Game.time;
 };
 

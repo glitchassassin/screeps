@@ -80,7 +80,7 @@ export class ExploreMission extends MissionImplementation {
           ) !== OK
         ) {
           // console.log('Failed to path', explorer.pos, this.missionData.exploreTarget);
-          Memory.rooms[this.missionData.exploreTarget] ??= { officesInRange: '', franchises: {} }; // Unable to path
+          Memory.rooms[this.missionData.exploreTarget] ??= { officesInRange: '' }; // Unable to path
           Memory.rooms[this.missionData.exploreTarget].scanned = Game.time;
           delete this.missionData.exploreTarget;
           // logCpu('failed move to target room');

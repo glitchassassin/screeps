@@ -25,7 +25,6 @@ export function initializeRoomMemory(room: string) {
     mineralType,
     eligibleForOffice,
     officesInRange: '',
-    franchises: {},
     threatLevel: calculateThreatLevel(room)
   };
 }

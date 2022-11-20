@@ -7,6 +7,13 @@ import { rcl } from './rcl';
 declare global {
   interface OfficeMemory {
     territories?: string[];
+    franchises: Record<
+      Id<Source>,
+      {
+        lastActive?: number;
+        scores: number[];
+      }
+    >;
   }
 }
 
@@ -24,6 +31,7 @@ function recalculateTerritories() {
   for (const office in Memory.offices) {
     const targets = calculateNearbyRooms(office, TERRITORY_RADIUS, false).filter(
       t =>
+        Memory.rooms[t] &&
         !isSourceKeeperRoom(t) &&
         !Memory.offices[t] &&
         (getRoomPathDistance(office, t) ?? Infinity) < TERRITORY_RADIUS + 1 &&
@@ -33,6 +41,7 @@ function recalculateTerritories() {
         (Memory.rooms[t].threatLevel?.[1] ?? 0) <= THREAT_TOLERANCE.remote[rcl(office)]
     );
     Memory.offices[office].territories = [];
+    Memory.offices[office].franchises ??= {};
     targets.forEach(t => {
       Memory.rooms[t].office = office;
       Memory.offices[office].territories?.push(t);
