@@ -50,7 +50,7 @@ export class ReserveMission extends MissionImplementation {
 
     data.reserveTargets = [
       ...new Set(
-        activeFranchises(data.office, 0)
+        activeFranchises(data.office, 1)
           .filter(({ source }) => !isThreatened(data.office, source))
           .map(({ room }) => room)
           .filter(room => room !== data.office)
