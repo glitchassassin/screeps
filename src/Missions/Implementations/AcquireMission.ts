@@ -1,3 +1,4 @@
+import { ACQUIRE_MAX_RCL } from 'config';
 import { BaseMissionData, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/ConditionalMissionSpawner';
 import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
@@ -45,7 +46,7 @@ export class AcquireMission extends MissionImplementation {
   }
 
   run() {
-    if (rcl(this.missionData.targetOffice) > 4) {
+    if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL) {
       this.status = MissionStatus.DONE;
     }
   }

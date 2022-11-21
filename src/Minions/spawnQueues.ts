@@ -5,7 +5,7 @@ import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
 import { move, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
-import { getSpawns } from 'Selectors/roomPlans';
+import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
 import { BoostOrder } from 'Structures/Labs/LabOrder';
@@ -140,7 +140,7 @@ const orderBoosts = (
   name: string,
   boosts: { type: MineralBoostConstant; count: number }[]
 ): BoostOrder | undefined => {
-  if (!boosts.length) return undefined;
+  if (!boosts.length || !roomPlans(office)?.labs?.labs.some(l => l.structure)) return undefined;
   if (!FEATURES.LABS) throw new Error('Boosts disabled');
   const order: BoostOrder = {
     name,

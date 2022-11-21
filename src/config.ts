@@ -16,6 +16,11 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard3' ? 1 : 3;
 export const OFFICE_LIMIT = Game.shard.name === 'shard2' ? 1 : Infinity;
 
 /**
+ * Support new rooms until they reach this RCL
+ */
+export const ACQUIRE_MAX_RCL = 4;
+
+/**
  * Storage level targets by RCL
  */
 export const STORAGE_LEVEL: Record<number, number> = {

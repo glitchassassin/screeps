@@ -62,4 +62,4 @@ register('estimates', EstimatesReport);
 register('remotes', RemotesReport);
 register('power', PowerReport);
 
-global.d('milestones');
+global.d('remotes');

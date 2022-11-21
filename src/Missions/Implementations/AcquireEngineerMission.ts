@@ -2,6 +2,7 @@ import { withdraw } from 'Behaviors/Logistics/withdraw';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
+import { ACQUIRE_MAX_RCL } from 'config';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import { ResolvedCreeps, ResolvedMissions } from 'Missions/BaseClasses/MissionImplementation';
@@ -26,7 +27,7 @@ export class AcquireEngineerMission extends EngineerMission {
       role: MinionTypes.ACCOUNTANT,
       builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
       count: current => {
-        if (rcl(this.missionData.targetOffice) > 4) return 0;
+        if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL) return 0;
         const controller = Game.rooms[this.missionData.targetOffice]?.controller;
         if (!controller) return 0;
         if (current.length < this.creeps.engineers.resolved.length) return 1;
@@ -38,7 +39,7 @@ export class AcquireEngineerMission extends EngineerMission {
       role: MinionTypes.ENGINEER,
       builds: energy => MinionBuilders[MinionTypes.ENGINEER](energy, false),
       count: current => {
-        if (rcl(this.missionData.targetOffice) > 4) return 0;
+        if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL) return 0;
         const controller = Game.rooms[this.missionData.targetOffice]?.controller;
         if (!controller) return 0;
         let pendingCost = this.queue.analysis().energyRemaining;
@@ -83,7 +84,7 @@ export class AcquireEngineerMission extends EngineerMission {
 
     cachePath(this.id, from, { pos: to, range: 1 }, { reusePath: 1500 });
 
-    if (rcl(this.missionData.targetOffice) > 4 && engineers.length === 0) {
+    if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL && engineers.length === 0) {
       this.status = MissionStatus.DONE;
     }
 
