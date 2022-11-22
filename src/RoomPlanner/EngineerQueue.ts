@@ -1,4 +1,4 @@
-import { getRangeTo } from 'Selectors/Map/MapCoordinates';
+import { getClosestByRange, getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -83,6 +83,17 @@ export class EngineerQueue {
     }
     return [...this.maintain_other];
   });
+
+  getNextStructure(creep: Creep) {
+    const queue = this.workQueue();
+    if (queue[0].structureType === STRUCTURE_ROAD) {
+      console.log('getting closest structure by range');
+      return getClosestByRange(creep.pos, queue); // build roads based on whatever's closest
+    } else {
+      console.log('getting first structure in queue');
+      return queue[0]; // otherwise, build in queue order (ramparts are sorted by hits automatically)
+    }
+  }
 
   analysis = memoizeOncePerTick(() => {
     const data = {

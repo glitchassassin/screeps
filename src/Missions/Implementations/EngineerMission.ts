@@ -20,7 +20,6 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { combatPower } from 'Selectors/Combat/combatStats';
 import { isSpawned } from 'Selectors/isSpawned';
-import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -148,7 +147,7 @@ export class EngineerMission extends MissionImplementation {
         {
           [States.FIND_WORK]: (mission, creep) => {
             delete mission.facilitiesTarget;
-            const nextStructure = getClosestByRange(creep.pos, this.queue.workQueue());
+            const nextStructure = this.queue.getNextStructure(creep);
             if (nextStructure) {
               mission.facilitiesTarget = nextStructure.serialize();
               return States.BUILDING;
