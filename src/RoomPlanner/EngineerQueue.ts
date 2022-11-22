@@ -1,3 +1,4 @@
+import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
 import { getClosestByRange, getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
@@ -72,7 +73,7 @@ export class EngineerQueue {
     );
     if (build.length) return build;
     const threatLevel = Memory.rooms[this.office].threatLevel?.[1] ?? 0;
-    if (threatLevel) {
+    if (threatLevel || (rcl(this.office) > 4 && rampartsAreBroken(this.office))) {
       // wartime priority
       if (this.maintain_barriers.size) return [...this.maintain_barriers];
       if (this.maintain_economy.size) return [...this.maintain_economy];
@@ -86,7 +87,7 @@ export class EngineerQueue {
 
   getNextStructure(creep: Creep) {
     const queue = this.workQueue();
-    if (queue[0].structureType === STRUCTURE_ROAD) {
+    if (queue[0]?.structureType === STRUCTURE_ROAD) {
       console.log('getting closest structure by range');
       return getClosestByRange(creep.pos, queue); // build roads based on whatever's closest
     } else {
