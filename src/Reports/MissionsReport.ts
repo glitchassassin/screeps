@@ -78,7 +78,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     actualEnergy += Math.min(o.estimate.energy, o.actual.energy);
     cpuDelta = o.actual.cpuPerCreep - o.estimate.cpuPerCreep;
     creepCount += o.count;
-    if (cpuDelta * o.count > 1) console.log(o.type, cpuDelta.toFixed(2), o.count, (cpuDelta * o.count).toFixed(2));
+    // if (cpuDelta * o.count > 1) console.log(o.type, cpuDelta.toFixed(2), o.count, (cpuDelta * o.count).toFixed(2));
   }
   table.push(['---', '---', '---', '---', '---', '---']);
   table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`, '']);

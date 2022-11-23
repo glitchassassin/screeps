@@ -1,6 +1,6 @@
 import { allMissions, missionById, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { MissionStatus } from 'Missions/Mission';
-import { furthestActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/furthestActiveFranchiseRoundTripDistance';
+import { averageActiveFranchiseRoundTripDistance } from 'Selectors/Franchises/furthestActiveFranchiseRoundTripDistance';
 import { roomPlans } from 'Selectors/roomPlans';
 import { memoizeByTick } from 'utils/memoizeFunction';
 
@@ -32,7 +32,7 @@ export function estimateMissionInterval(office: string) {
   if (roomPlans(office)?.headquarters?.storage.structure) {
     return CREEP_LIFE_TIME;
   } else {
-    return Math.max(100, furthestActiveFranchiseRoundTripDistance(office) * 1.2); // This worked best in my tests to balance income with expenses
+    return Math.max(50, averageActiveFranchiseRoundTripDistance(office) * 1.2); // This worked best in my tests to balance income with expenses
   }
 }
 

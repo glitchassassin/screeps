@@ -19,11 +19,17 @@ export class EngineerQueue {
   build = new Set<PlannedStructure>();
   maintain_barriers = new Set<PlannedStructure>();
   maintain_economy = new Set<PlannedStructure>();
+  maintain_roads = new Set<PlannedStructure>();
   maintain_other = new Set<PlannedStructure>();
 
   survey = memoize(
     () => `${rcl(this.office)}${Game.rooms[this.office]?.find(FIND_STRUCTURES).length}`,
     () => {
+      this.build = new Set();
+      this.maintain_barriers = new Set();
+      this.maintain_economy = new Set();
+      this.maintain_roads = new Set();
+      this.maintain_other = new Set();
       for (const structure of plannedStructuresByRcl(this.office)) {
         this.surveyStructure(structure);
       }
@@ -47,6 +53,8 @@ export class EngineerQueue {
           this.maintain_barriers.add(structure);
           break;
         case STRUCTURE_ROAD:
+          this.maintain_roads.add(structure);
+          break;
         case STRUCTURE_CONTAINER:
         case STRUCTURE_LINK:
         case STRUCTURE_SPAWN:
@@ -63,6 +71,7 @@ export class EngineerQueue {
     ...[...this.build].filter(s => s.canBuild()),
     ...this.maintain_economy,
     ...this.maintain_barriers,
+    ...this.maintain_roads,
     ...this.maintain_other
   ]);
 
@@ -77,9 +86,11 @@ export class EngineerQueue {
       // wartime priority
       if (this.maintain_barriers.size) return [...this.maintain_barriers];
       if (this.maintain_economy.size) return [...this.maintain_economy];
+      if (this.maintain_roads.size) return [...this.maintain_roads];
     } else {
       // peacetime priority
       if (this.maintain_economy.size) return [...this.maintain_economy];
+      if (this.maintain_roads.size) return [...this.maintain_roads];
       if (this.maintain_barriers.size) return [...this.maintain_barriers];
     }
     return [...this.maintain_other];
@@ -88,10 +99,8 @@ export class EngineerQueue {
   getNextStructure(creep: Creep) {
     const queue = this.workQueue();
     if (queue[0]?.structureType === STRUCTURE_ROAD) {
-      console.log('getting closest structure by range');
       return getClosestByRange(creep.pos, queue); // build roads based on whatever's closest
     } else {
-      console.log('getting first structure in queue');
       return queue[0]; // otherwise, build in queue order (ramparts are sorted by hits automatically)
     }
   }
@@ -122,6 +131,7 @@ export class EngineerQueue {
     this.build.delete(structure);
     this.maintain_barriers.delete(structure);
     this.maintain_economy.delete(structure);
+    this.maintain_roads.delete(structure);
     this.maintain_other.delete(structure);
     schedule(() => this.surveyStructure(structure), 1);
   }

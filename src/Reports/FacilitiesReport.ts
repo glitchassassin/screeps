@@ -1,17 +1,15 @@
 import { BARRIER_LEVEL, BARRIER_TYPES } from 'config';
-import { EngineerMission } from 'Missions/Implementations/EngineerMission';
-import { activeMissions, isMission } from 'Missions/Selectors';
+import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { viz } from 'Selectors/viz';
 
 export default () => {
   for (let room in Memory.offices) {
-    const mission = activeMissions(room).find(isMission(EngineerMission));
-    if (!mission) continue;
+    const queue = new EngineerQueue(room);
     const visited = new Map<PlannedStructure, boolean>();
     const structureTypes: StructureConstant[] = [];
-    const workToDo = mission.queue
+    const workToDo = queue
       .allWorkQueue()
       .slice()
       .sort(
@@ -35,7 +33,7 @@ export default () => {
       }
     });
 
-    const analysis = mission.queue.analysis();
+    const analysis = queue.analysis();
     const data = [
       ...structureTypes.map(t => ['', '', t]),
       ['---', '---', '---'],

@@ -22,6 +22,8 @@ export function getBudgetAdjustment(office: string, budget: Budget) {
     // No storage yet - minimal capacities enforced, except for income missions
     if ([Budget.ESSENTIAL, Budget.ECONOMY].includes(budget)) {
       return -Infinity;
+    } else if ([Budget.SURPLUS].includes(budget)) {
+      return Game.rooms[office].energyCapacityAvailable;
     } else {
       return 0;
     }

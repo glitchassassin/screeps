@@ -2,9 +2,9 @@ import { States } from 'Behaviors/states';
 import { FEATURES } from 'config';
 import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
-import { move, moveTo } from 'screeps-cartographer';
+import { blockSquare, move } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
-import { adjacentWalkablePositions, posAtDirection } from 'Selectors/Map/MapCoordinates';
+import { posAtDirection } from 'Selectors/Map/MapCoordinates';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
@@ -54,15 +54,12 @@ export function vacateSpawns() {
       if (spawn.spawning) {
         if (spawn.spawning.remainingTime < 2) {
           const spawningCreep = Game.creeps[spawn.spawning.name];
-          const spawningSquares =
-            spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ??
-            adjacentWalkablePositions(spawn.pos, true);
+          const spawningSquares = spawn.spawning.directions?.map(d => posAtDirection(spawn.pos, d)) ?? [
+            posAtDirection(spawn.pos, BOTTOM)
+          ];
           move(spawningCreep, spawningSquares, 100);
           for (const pos of spawningSquares) {
-            for (const creep of pos.lookFor(LOOK_CREEPS)) {
-              if (creep.name.startsWith('FM_')) continue; // don't shove refillers
-              moveTo(creep, { pos: spawn.pos, range: 2 }, { flee: true });
-            }
+            blockSquare(pos);
           }
         }
       }

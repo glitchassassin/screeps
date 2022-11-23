@@ -1,7 +1,7 @@
 import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { getBudgetAdjustment } from 'Missions/Budgets';
 import { spawnRequests } from 'Missions/Control';
-import { missionsByOffice } from 'Missions/Selectors';
+import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
 import { sum } from 'Selectors/reducers';
@@ -12,8 +12,8 @@ export default () => {
     const data = (spawnRequests.get(room) ?? []).sort((a, b) => b.priority - a.priority);
     const energy =
       missionEnergyAvailable(room) -
-      missionsByOffice()
-        [room].map(m => m.energyRemaining())
+      activeMissions(room)
+        .map(m => m.energyRemaining())
         .reduce(sum, 0);
     for (let s of data) {
       const mission = missionById(s.memory.missionId.split('|')[0])?.constructor.name;
@@ -24,7 +24,9 @@ export default () => {
         s.priority,
         s.budget,
         s.builds.length,
-        s.builds.map(build => energy - s.estimate(build).energy - getBudgetAdjustment(s.office, s.budget)).join('/')
+        s.builds
+          .map(build => (energy - s.estimate(build).energy - getBudgetAdjustment(s.office, s.budget)).toFixed(0))
+          .join('/')
       ]);
     }
     Dashboard({

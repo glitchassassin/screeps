@@ -1,5 +1,6 @@
 import { moveTo } from 'screeps-cartographer';
 import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
+import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 import { roomPlans } from 'Selectors/roomPlans';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
@@ -14,7 +15,10 @@ export const getEnergyFromStorage = profiler.registerFN(
       roomPlans(office)?.fastfiller?.containers.map(c => c.structure as StructureContainer | undefined) ?? [];
     if (library?.container.structure) containers.unshift(library.container.structure as StructureContainer);
     const container =
-      containers.find(c => c?.store[RESOURCE_ENERGY]) ?? (containers[0] as StructureContainer | undefined);
+      getClosestByRange(
+        creep.pos,
+        containers.filter((c): c is StructureContainer => !!c?.store[RESOURCE_ENERGY])
+      ) ?? (containers[0] as StructureContainer | undefined);
     const spawn = getPrimarySpawn(office) as StructureSpawn | undefined;
 
     const withdrawLimit = limit ?? Game.rooms[office]?.energyCapacityAvailable;

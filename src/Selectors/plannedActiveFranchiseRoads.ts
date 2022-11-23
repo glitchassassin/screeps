@@ -10,7 +10,7 @@ export function plannedActiveFranchiseRoads(office: string) {
         .flatMap(t => sourceIds(t))
         .filter(
           source =>
-            (Memory.offices[office].franchises[source]?.lastActive ?? 0) + 1000 > Game.time &&
+            (Memory.offices[office].franchises[source]?.lastActive ?? 0) + 2000 > Game.time &&
             !isThreatened(office, source)
         )
         .sort((a, b) => (getCachedPath(office + a)?.length ?? 0) - (getCachedPath(office + b)?.length ?? 0))

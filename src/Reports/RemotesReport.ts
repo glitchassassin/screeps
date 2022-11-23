@@ -46,7 +46,7 @@ export default () => {
 
       const { perTick, isValid } = HarvestLedger.get(office, franchise.source);
 
-      const { scores } = Memory.offices[office].franchises[franchise.source] ?? {};
+      const { scores, lastActive } = Memory.offices[office].franchises[franchise.source] ?? {};
       const perTickAverage = scores ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
       const assignedLogistics = activeMissions(office)
@@ -65,6 +65,7 @@ export default () => {
         `${sourcePos}${disabled ? '' : ' ✓'}`,
         mission?.missionData.distance ?? Infinity,
         assigned.toFixed(0),
+        lastActive ? (lastActive - Game.time).toFixed(0) : '--',
         estimatedCapacity.toFixed(0),
         byId(franchise.source)?.energy.toFixed(0) ?? '--',
         harvested.toFixed(0),
@@ -73,8 +74,9 @@ export default () => {
       ];
     });
     data.sort((a, b) => (a[1] as number) - (b[1] as number));
-    data.push(['--', '--', '--', '--', '--', '--', '--', '--']);
+    data.push(['--', '--', '--', '--', '--', '--', '--', '--', '--']);
     data.push([
+      '',
       '',
       '',
       '',
@@ -98,7 +100,8 @@ export default () => {
                   'Franchise',
                   'Distance',
                   'Assigned',
-                  'Estimated Capacity',
+                  'Active',
+                  'Capacity',
                   'Energy',
                   'Harvested',
                   'Hauling',
