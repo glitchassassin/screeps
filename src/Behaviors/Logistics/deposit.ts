@@ -44,7 +44,8 @@ export const deposit =
     } else {
       viz(creep.pos.roomName).line(creep.pos, target.pos, { color: 'green' });
       moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
-      if (creep.transfer(target, RESOURCE_ENERGY) === OK) {
+      const result = creep.transfer(target, RESOURCE_ENERGY);
+      if (result === OK) {
         const amount = Math.min(
           target.store.getFreeCapacity(RESOURCE_ENERGY),
           creep.store.getUsedCapacity(RESOURCE_ENERGY)
@@ -55,6 +56,8 @@ export const deposit =
           HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);
           LogisticsLedger.record(data.office, 'deposit', -amount);
         }
+        delete data.depositTarget;
+      } else if (result === ERR_FULL) {
         delete data.depositTarget;
       }
       // If target is spawn, is not spawning, and is at capacity, renew this creep
