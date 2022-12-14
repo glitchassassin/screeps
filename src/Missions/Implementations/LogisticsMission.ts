@@ -47,6 +47,26 @@ declare global {
 
 export class LogisticsMission extends MissionImplementation {
   public creeps = {
+    refillers: new MultiCreepSpawner('r', this.missionData.office, {
+      role: MinionTypes.ACCOUNTANT,
+      spawnData: {
+        memory: { fromStorage: true }
+      },
+      budget: Budget.ESSENTIAL,
+      estimatedCpuPerTick: 0.8,
+      builds: energy =>
+        MinionBuilders[MinionTypes.ACCOUNTANT](
+          Math.max(100, energy / 2),
+          25,
+          this.calculated().roads,
+          this.calculated().repair
+        ),
+      count: fixedCount(() =>
+        roomPlans(this.missionData.office)?.headquarters?.storage.structure?.store.getUsedCapacity(RESOURCE_ENERGY)
+          ? 1
+          : 0
+      )
+    }),
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       spawnData: {
@@ -70,26 +90,6 @@ export class LogisticsMission extends MissionImplementation {
         if (currentCapacity < neededCapacity) return 1;
         return 0;
       }
-    }),
-    refillers: new MultiCreepSpawner('r', this.missionData.office, {
-      role: MinionTypes.ACCOUNTANT,
-      spawnData: {
-        memory: { fromStorage: true }
-      },
-      budget: Budget.ESSENTIAL,
-      estimatedCpuPerTick: 0.8,
-      builds: energy =>
-        MinionBuilders[MinionTypes.ACCOUNTANT](
-          Math.max(100, energy / 2),
-          25,
-          this.calculated().roads,
-          this.calculated().repair
-        ),
-      count: fixedCount(() =>
-        roomPlans(this.missionData.office)?.headquarters?.storage.structure?.store.getUsedCapacity(RESOURCE_ENERGY)
-          ? 1
-          : 0
-      )
     })
   };
 
@@ -248,7 +248,14 @@ export class LogisticsMission extends MissionImplementation {
       .map(m => m.haulingCapacityNeeded())
       .reduce(sum, 0);
 
-    if (inRoomCapacity < this.creeps.haulers.resolved.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)) {
+    const refillersNeeded =
+      this.creeps.refillers.resolved.length === 0 &&
+      roomPlans(this.missionData.office)?.headquarters?.storage.structure?.store.getUsedCapacity(RESOURCE_ENERGY);
+
+    if (
+      !refillersNeeded &&
+      inRoomCapacity < this.creeps.haulers.resolved.map(h => h.store.getCapacity(RESOURCE_ENERGY)).reduce(sum, 0)
+    ) {
       this.priority = 3;
     } else {
       this.priority = 11;
