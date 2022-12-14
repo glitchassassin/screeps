@@ -24,7 +24,7 @@ export const getBoosted =
     if (outstanding.length === 0) {
       // All boosts accounted for, we're done
       Memory.offices[office].lab.boosts = Memory.offices[office].lab.boosts.filter(o => o.name !== creep.name);
-      console.log(office, 'Boosted creep', creep.name, 'with', creep.ticksToLive, 'ticks remaining');
+      // console.log(office, 'Boosted creep', creep.name, 'with', creep.ticksToLive, 'ticks remaining');
       return nextState;
     }
 

@@ -1,4 +1,5 @@
 import { PlannedStructure } from './PlannedStructure';
+import './scanRoomPlanStructures';
 
 export interface ExtensionsPlan {
   extensions: PlannedStructure<STRUCTURE_EXTENSION>[];

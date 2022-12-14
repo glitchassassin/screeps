@@ -1,9 +1,10 @@
+import { ScannedRoomEvent } from 'Intel/events';
 import { resourcesToPlunder } from 'Selectors/Combat/shouldPlunder';
 import { calculateThreatLevel, ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { getRoomPathDistance } from 'Selectors/Map/getRoomPathDistance';
 import { getClosestOffice } from 'Selectors/Map/MapCoordinates';
 
-export function refreshRoomMemory(room: string) {
+export const refreshRoomMemory = ({ room }: ScannedRoomEvent) => {
   Memory.rooms[room].rcl = Game.rooms[room].controller?.level;
   Memory.rooms[room].owner = Game.rooms[room].controller?.owner?.username;
   Memory.rooms[room].reserver = Game.rooms[room].controller?.reservation?.username;
@@ -65,4 +66,4 @@ export function refreshRoomMemory(room: string) {
       }
     }
   }
-}
+};

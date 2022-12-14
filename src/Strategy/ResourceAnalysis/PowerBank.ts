@@ -1,3 +1,4 @@
+import { ScannedRoomEvent } from 'Intel/events';
 import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
 import { cachePath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
@@ -5,7 +6,7 @@ import { getOfficeDistanceByRange } from 'Selectors/getOfficeDistance';
 import { adjacentWalkablePositions, getClosestOffice, isHighway, terrainCostAt } from 'Selectors/Map/MapCoordinates';
 import { maxBuildCost } from 'Selectors/minionCostPerTick';
 import { roomPlans } from 'Selectors/roomPlans';
-import { memoizeByTick } from 'utils/memoizeFunction';
+import { memoizeOncePerTick } from 'utils/memoizeFunction';
 import { packPos, unpackPos } from 'utils/packrat';
 
 interface PowerBankReport {
@@ -30,25 +31,21 @@ declare global {
 /**
  * Run once per tick
  */
-const cleanPowerBankReports = memoizeByTick(
-  () => '',
-  () => {
-    for (const office in Memory.offices) {
-      Memory.offices[office].powerbanks ??= [];
-      Memory.offices[office].powerbanks = Memory.offices[office].powerbanks.filter(r => {
-        if (r.expires < Game.time) return false;
-        const pos = unpackPos(r.pos);
-        const powerBank = byId(r.id);
-        if (Game.rooms[pos.roomName] && !powerBank) return false; // power bank is gone
-        if (powerBank) r.hits = powerBank.hits;
-        return true;
-      });
-    }
+export const cleanPowerBankReports = memoizeOncePerTick(() => {
+  for (const office in Memory.offices) {
+    Memory.offices[office].powerbanks ??= [];
+    Memory.offices[office].powerbanks = Memory.offices[office].powerbanks.filter(r => {
+      if (r.expires < Game.time) return false;
+      const pos = unpackPos(r.pos);
+      const powerBank = byId(r.id);
+      if (Game.rooms[pos.roomName] && !powerBank) return false; // power bank is gone
+      if (powerBank) r.hits = powerBank.hits;
+      return true;
+    });
   }
-);
+});
 
-export const evaluatePowerBanks = (room: string) => {
-  cleanPowerBankReports();
+export const scanPowerBanks = ({ room }: ScannedRoomEvent) => {
   if (!isHighway(room)) return;
   const office = getClosestOffice(room, 8);
   if (!office) return;

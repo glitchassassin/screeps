@@ -1,4 +1,4 @@
-import { scanRooms } from 'Intel/Rooms';
+import { runIntel } from 'Intel';
 import { recordMetrics } from 'Metrics/recordMetrics';
 import { cleanMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { runMissionControl } from 'Missions/Control';
@@ -29,8 +29,8 @@ export const gameLoop = () => {
   debugCPU('Scheduled tasks');
 
   // Cache data where needed
-  scanRooms();
-  debugCPU('scanRooms');
+  runIntel();
+  debugCPU('runIntel');
 
   // Office loop
   // logCpuStart()

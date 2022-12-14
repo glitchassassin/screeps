@@ -1,4 +1,5 @@
 import { THREAT_TOLERANCE } from 'config';
+import { ScannedRoomEvent } from 'Intel/events';
 import { getCachedPath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { combatStats } from 'Selectors/Combat/combatStats';
@@ -18,22 +19,6 @@ interface Zone {
 }
 
 Memory.zones ??= {};
-
-export const scanRoomForThreats = (territory: string) => {
-  const hostiles = findHostileCreeps(territory);
-  hostiles.forEach(h => recordThreat(h.owner.username, combatStats(h).score, territory));
-  if (hostiles.length) {
-    Game.rooms[territory].getEventLog().forEach(e => {
-      if (e.event === EVENT_ATTACK) {
-        const attacker = byId(e.objectId as Id<Creep>);
-        const defender = byId(e.data.targetId as Id<AnyCreep | AnyOwnedStructure>);
-        if (attacker && defender?.my && !attacker?.my) {
-          confirmThreat(attacker.owner.username);
-        }
-      }
-    });
-  }
-};
 
 const totalThreatScore = memoizeByTick(
   attacker => attacker,
@@ -73,6 +58,22 @@ export const cleanThreats = () => {
     if (Game.time - zone.lastActive > zone.rhythm) {
       delete Memory.zones[attacker];
     }
+  }
+};
+
+export const scanRoomForThreats = ({ room }: ScannedRoomEvent) => {
+  const hostiles = findHostileCreeps(room);
+  hostiles.forEach(h => recordThreat(h.owner.username, combatStats(h).score, room));
+  if (hostiles.length) {
+    Game.rooms[room].getEventLog().forEach(e => {
+      if (e.event === EVENT_ATTACK) {
+        const attacker = byId(e.objectId as Id<Creep>);
+        const defender = byId(e.data.targetId as Id<AnyCreep | AnyOwnedStructure>);
+        if (attacker && defender?.my && !attacker?.my) {
+          confirmThreat(attacker.owner.username);
+        }
+      }
+    });
   }
 };
 
