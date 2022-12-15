@@ -10,9 +10,11 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { adjacentWalkablePositions, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
+import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { creepCost } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
@@ -153,6 +155,12 @@ export class HarvestMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;
     const { source, office } = this.missionData;
+
+    if (!franchisesByOffice(office).some(f => f.source === source)) {
+      // No longer a valid franchise
+      this.status = MissionStatus.DONE;
+      return;
+    }
 
     this.evaluateDistance();
 
