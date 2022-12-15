@@ -20,6 +20,7 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { combatPower } from 'Selectors/Combat/combatStats';
 import { isSpawned } from 'Selectors/isSpawned';
+import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
@@ -221,6 +222,20 @@ export class EngineerMission extends MissionImplementation {
                     return States.FIND_WORK;
                   } else if (result !== OK) {
                     console.log('Error creating construction site', plan.pos, plan.structureType, result);
+                    // Check if we need to destroy something
+                    for (const existing of Game.rooms[plan.pos.roomName]
+                      ?.find(FIND_STRUCTURES)
+                      .filter(s => s.structureType === plan.structureType) ?? []) {
+                      if (
+                        plannedStructuresByRcl(plan.pos.roomName, rcl(this.missionData.office)).every(
+                          s => !s.pos.isEqualTo(existing.pos)
+                        )
+                      ) {
+                        console.log('Need to destroy', existing.pos, existing.structureType);
+                        // existing.destroy(); // not a planned structure
+                        break;
+                      }
+                    }
                   }
                 }
                 // Shove creeps out of the way if needed

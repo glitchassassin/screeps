@@ -24,6 +24,7 @@ declare global {
         bucket: number;
         limit: number;
         used: number;
+        heap: number;
       };
       offices: {
         [id: string]: {
@@ -52,6 +53,7 @@ declare global {
 }
 
 export const recordMetrics = profiler.registerFN(() => {
+  let heapStats = Game.cpu.getHeapStatistics?.();
   let stats = {
     time: Game.time,
     gcl: {
@@ -62,7 +64,10 @@ export const recordMetrics = profiler.registerFN(() => {
     cpu: {
       bucket: Game.cpu.bucket,
       limit: Game.cpu.limit,
-      used: Game.cpu.getUsed()
+      used: Game.cpu.getUsed(),
+      heap: heapStats
+        ? (heapStats.total_heap_size + heapStats.externally_allocated_size) / heapStats.heap_size_limit
+        : 0
     },
     creepCount: Object.keys(Game.creeps).length,
     officeCount: Object.keys(Memory.offices).length

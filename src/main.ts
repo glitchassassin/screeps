@@ -22,6 +22,7 @@ global.purge = () => {
   Memory.powerCreeps = {};
   Memory.offices = {};
   Memory.roomPlans = {};
+  Memory.positions = {};
   Memory.stats = {
     time: Game.time,
     gcl: {
@@ -32,7 +33,8 @@ global.purge = () => {
     cpu: {
       bucket: Game.cpu.bucket,
       limit: Game.cpu.limit,
-      used: Game.cpu.getUsed()
+      used: Game.cpu.getUsed(),
+      heap: 0
     },
     creepCount: Object.keys(Game.creeps).length,
     officeCount: Object.keys(Memory.offices).length,
