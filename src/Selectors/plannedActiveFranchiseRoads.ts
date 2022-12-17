@@ -1,5 +1,5 @@
 import { getCachedPath } from 'screeps-cartographer';
-import { isThreatened } from 'Strategy/Territories/HarassmentZones';
+import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
 import { plannedFranchiseRoads } from './plannedFranchiseRoads';
 import { sourceIds } from './roomCache';
 
@@ -11,7 +11,7 @@ export function plannedActiveFranchiseRoads(office: string) {
         .filter(
           source =>
             (Memory.offices[office].franchises[source]?.lastActive ?? 0) + 2000 > Game.time &&
-            !isThreatened(office, source)
+            !franchiseIsThreatened(office, source)
         )
         .sort((a, b) => (getCachedPath(office + a)?.length ?? 0) - (getCachedPath(office + b)?.length ?? 0))
         .flatMap(source => {

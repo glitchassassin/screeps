@@ -22,7 +22,7 @@ import { prespawnByArrived, setArrived } from 'Selectors/prespawn';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
-import { isThreatened } from 'Strategy/Territories/HarassmentZones';
+import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
 import { memoizeByTick } from 'utils/memoizeFunction';
 
 export interface HarvestMissionData extends BaseMissionData {
@@ -114,7 +114,7 @@ export class HarvestMission extends MissionImplementation {
     ) {
       return true; // owned or reserved by another player
     }
-    if (isThreatened(this.missionData.office, this.missionData.source)) return true; // tracking an active threat
+    if (franchiseIsThreatened(this.missionData.office, this.missionData.source)) return true; // tracking an active threat
     return this.missionData.distance && this.missionData.distance > 250;
   }
 

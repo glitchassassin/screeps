@@ -1,18 +1,13 @@
 import { OFFICE_LIMIT } from 'config';
-import { roomPlans } from 'Selectors/roomPlans';
 import { getOfficeDistanceByRoomPath } from '../../Selectors/getOfficeDistance';
 import { rcl } from '../../Selectors/rcl';
 import { scoreAcquireTarget } from './scoreAcquireTarget';
 
-let cachedAcquireTarget: string | undefined;
-
 declare global {
-  interface RoomMemory {
-    acquire?: boolean;
+  interface Memory {
+    acquireTarget?: string;
   }
 }
-
-const timeSince = (time: number | undefined) => Game.time - (time ?? 0);
 
 /**
  * If GCL <= Memory.offices.length, return
@@ -25,12 +20,17 @@ export const findAcquireTarget = () => {
 
   if (offices.length >= OFFICE_LIMIT || Game.cpu.limit / offices.length <= 5) return undefined; // Don't spread ourselves out too thin
 
-  if (cachedAcquireTarget && acquireTargetIsValid(cachedAcquireTarget) && !shouldPostponeAcquire(cachedAcquireTarget)) {
-    return cachedAcquireTarget;
+  if (
+    Memory.acquireTarget &&
+    acquireTargetIsValid(Memory.acquireTarget) &&
+    !shouldPostponeAcquire(Memory.acquireTarget)
+  ) {
+    return Memory.acquireTarget;
   } else {
-    cachedAcquireTarget = undefined;
+    Memory.acquireTarget = undefined;
   }
 
+  // Evaluate a new target every 50 ticks
   if ((Game.time + 25) % 50 !== 0) return undefined;
 
   // No cached target, scan for an acceptable one
@@ -42,7 +42,6 @@ export const findAcquireTarget = () => {
 
   for (const room of targetRooms) {
     if (!acquireTargetIsValid(room) || shouldPostponeAcquire(room)) {
-      delete Memory.rooms[room].acquire;
       continue;
     }
 
@@ -53,14 +52,7 @@ export const findAcquireTarget = () => {
       Infinity
     );
     if (distance * 50 > CREEP_CLAIM_LIFE_TIME) {
-      delete Memory.rooms[room].acquire;
       continue;
-    }
-
-    if (Memory.rooms[room].acquire) {
-      delete Memory.rooms[room].lastAcquireAttempt;
-      cachedAcquireTarget = room;
-      return room;
     }
     const score = scoreAcquireTarget(room);
 
@@ -74,12 +66,11 @@ export const findAcquireTarget = () => {
   }
 
   if (bestTarget) {
-    Memory.rooms[bestTarget].acquire = true;
     delete Memory.rooms[bestTarget].lastAcquireAttempt;
-    cachedAcquireTarget = bestTarget;
+    Memory.acquireTarget = bestTarget;
   }
 
-  return cachedAcquireTarget;
+  return Memory.acquireTarget;
 };
 
 /**
@@ -87,6 +78,7 @@ export const findAcquireTarget = () => {
  * 20k ticks after first failure, 40k ticks after second, etc.
  */
 const shouldPostponeAcquire = (roomName: string) => {
+  if (Game.rooms[roomName].controller?.my) return false; // already claimed
   // If it's less than five ticks since Lawyer checked in,
   // or Lawyer hasn't checked in yet, ignore
   const timeSinceLastAttempt = Game.time - (Memory.rooms[roomName].lastAcquireAttempt ?? Game.time);
@@ -106,7 +98,8 @@ export const acquireTargetIsValid = (roomName: string) => {
     (!Memory.rooms[roomName].owner ||
       (Memory.rooms[roomName].owner === 'LordGreywether' && (Game.rooms[roomName]?.controller?.level ?? 0) < 4)) &&
     (!Memory.rooms[roomName].reserver || Memory.rooms[roomName].reserver === 'LordGreywether') &&
-    Memory.roomPlans[roomName]?.office
+    Memory.roomPlans[roomName]?.office &&
+    (Memory.rooms[roomName].owner === 'LordGreywether' || (Memory.rooms[roomName].safeModeCooldown ?? 0) < Game.time)
   );
 };
 
@@ -127,8 +120,8 @@ export const officeShouldClaimAcquireTarget = (officeName: string) => {
   if (!officeShouldAcquireTarget(officeName)) return false;
 
   // Evaluate further if claiming is actually necessary
-  if (!cachedAcquireTarget) return false;
-  return !Memory.offices[cachedAcquireTarget];
+  if (!Memory.acquireTarget) return false;
+  return !Memory.offices[Memory.acquireTarget];
 };
 
 export const officeShouldSupportAcquireTarget = (officeName: string) => {
@@ -137,9 +130,9 @@ export const officeShouldSupportAcquireTarget = (officeName: string) => {
   if (!officeShouldAcquireTarget(officeName)) return false;
 
   // Evaluate further if claiming or support are necessary
-  if (!cachedAcquireTarget) return false;
-  if (roomPlans(cachedAcquireTarget)?.fastfiller?.spawns[0].structure) return false; // don't bother supporting once we have a spawn
-  const controller = Game.rooms[cachedAcquireTarget]?.controller;
+  if (!Memory.acquireTarget) return false;
+  // if (roomPlans(Memory.acquireTarget)?.fastfiller?.spawns[0].structure) return false; // don't bother supporting once we have a spawn
+  const controller = Game.rooms[Memory.acquireTarget]?.controller;
   if (!controller) return false;
   return controller.my && controller.level < 4;
 };

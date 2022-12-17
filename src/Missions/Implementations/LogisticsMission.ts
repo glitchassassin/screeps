@@ -24,7 +24,7 @@ import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { isThreatened } from 'Strategy/Territories/HarassmentZones';
+import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
 import { memoizeByTick, memoizeOnce } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
@@ -121,7 +121,7 @@ export class LogisticsMission extends MissionImplementation {
     const depositAssignments = new Map<Id<AnyStoreStructure | Creep>, number>();
 
     for (const { source } of franchisesByOffice(this.missionData.office)) {
-      if (isThreatened(this.missionData.office, source)) {
+      if (franchiseIsThreatened(this.missionData.office, source)) {
         continue;
       }
       withdrawAssignments.set(source, 0);

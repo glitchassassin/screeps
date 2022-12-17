@@ -96,7 +96,7 @@ export const combatStats = memoize(
     stats.speed = fatigueMitigation ? Math.min(1, fatigueGeneration / fatigueMitigation) : 0;
 
     // Overall danger heuristic, stolen from Overmind
-    stats.score = stats.rangedAttack + stats.attack / 2 + stats.heal / stats.mitigation;
+    stats.score = stats.rangedAttack + stats.attack * 3 + stats.heal / stats.mitigation;
 
     return stats;
   }

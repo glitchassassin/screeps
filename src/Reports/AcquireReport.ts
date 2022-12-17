@@ -4,6 +4,7 @@ import {
   officeShouldClaimAcquireTarget,
   officeShouldSupportAcquireTarget
 } from 'Strategy/Acquire/findAcquireTarget';
+import { roomThreatLevel } from 'Strategy/Territories/HarassmentZones';
 
 export default () => {
   const target = findAcquireTarget();
@@ -39,6 +40,10 @@ export default () => {
     fill: '#00ff00',
     stroke: 'transparent',
     opacity: 0.5
+  });
+  Game.map.visual.text('Threat level: ' + roomThreatLevel(target).toFixed(0), new RoomPosition(5, 5, target), {
+    fontSize: 4,
+    align: 'left'
   });
   for (let room in Memory.offices) {
     if (officeShouldClaimAcquireTarget(room)) {

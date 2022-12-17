@@ -8,6 +8,7 @@ import {
 import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/ConditionalMissionSpawner';
 import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
+import { MissionStatus } from 'Missions/Mission';
 import { refillSquares } from 'Reports/fastfillerPositions';
 import { byId } from 'Selectors/byId';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
@@ -140,5 +141,10 @@ export class MainOfficeMission extends MissionImplementation {
     creeps: ResolvedCreeps<MainOfficeMission>,
     missions: ResolvedMissions<MainOfficeMission>,
     data: MainOfficeMissionData
-  ) {}
+  ) {
+    if (!Game.rooms[data.office]) {
+      this.status = MissionStatus.DONE;
+    }
+    return;
+  }
 }

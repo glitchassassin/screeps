@@ -1,5 +1,5 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
-import { engineerGetEnergy } from 'Behaviors/engineerGetEnergy';
+import { engineerGetEnergy } from 'Behaviors/GetEnergy/engineerGetEnergy';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';

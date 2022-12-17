@@ -77,7 +77,7 @@ export const scanRoomForThreats = ({ room }: ScannedRoomEvent) => {
   }
 };
 
-export const isThreatened = (office: string, franchise: Id<Source>) => {
+export const franchiseIsThreatened = (office: string, franchise: Id<Source>) => {
   if (posById(franchise)?.roomName === office) return false;
   const rooms = (getCachedPath(office + franchise) ?? []).reduce((rooms, pos) => {
     if (!rooms.includes(pos.roomName)) rooms.push(pos.roomName);
@@ -98,13 +98,27 @@ export const isThreatened = (office: string, franchise: Id<Source>) => {
   return false;
 };
 
+export const roomThreatLevel = (room: string) => {
+  let threat = 0;
+
+  for (const attacker in Memory.zones) {
+    const zone = Memory.zones[attacker];
+    if (zone.confirmed && zone.territories.includes(room)) {
+      threat += zone.score;
+    }
+  }
+
+  return threat;
+};
+
 export const visualizeHarassmentZones = () => {
   for (const attacker in Memory.zones) {
     const zone = Memory.zones[attacker];
     visualizeRoomCluster(zone.territories, { color: zone.confirmed ? '#ff0000' : '#ffff00', width: 1 });
-    zone.territories.forEach(room =>
-      Game.map.visual.text(zone.attacker, new RoomPosition(5, 5, room), { align: 'left', fontSize: 4 })
-    );
+    zone.territories.forEach(room => {
+      Game.map.visual.text(zone.attacker, new RoomPosition(5, 5, room), { align: 'left', fontSize: 4 });
+      Game.map.visual.text(zone.score.toFixed(0), new RoomPosition(5, 10, room), { align: 'left', fontSize: 4 });
+    });
   }
 };
 

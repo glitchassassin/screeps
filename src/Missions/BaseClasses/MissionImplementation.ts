@@ -189,30 +189,39 @@ export class MissionImplementation {
 
     // spawn and resolve missions
     const resolvedMissions: ResolvedMissions<MissionImplementation> = {};
-    for (const k in this.missions) {
-      this.missions[k].spawn();
-      resolvedMissions[k] = this.missions[k].resolved;
-    }
-
-    // cache ids
-    for (const mission in resolvedMissions) {
-      const resolved = resolvedMissions[mission];
-      if (Array.isArray(resolved)) {
-        Memory.missions[this.id].missions[mission] = resolved.map(m => m.id);
-      } else if (resolved) {
-        Memory.missions[this.id].missions[mission] = [resolved.id];
-      } else {
-        Memory.missions[this.id].missions[mission] = [];
+    try {
+      for (const k in this.missions) {
+        this.missions[k].spawn();
+        resolvedMissions[k] = this.missions[k].resolved;
       }
+
+      // cache ids
+      for (const mission in resolvedMissions) {
+        const resolved = resolvedMissions[mission];
+        if (Array.isArray(resolved)) {
+          Memory.missions[this.id].missions[mission] = resolved.map(m => m.id);
+        } else if (resolved) {
+          Memory.missions[this.id].missions[mission] = [resolved.id];
+        } else {
+          Memory.missions[this.id].missions[mission] = [];
+        }
+      }
+    } catch (e) {
+      console.log('Error spawning missions', this.id, e);
     }
 
     // resolve creeps
-    const resolvedCreeps = Object.keys(this.creeps)
-      .map(k => ({ key: k, value: this.creeps[k].resolved }))
-      .reduce((sum, { key, value }) => {
-        sum[key as keyof this['creeps']] = value;
-        return sum;
-      }, {} as { [T in keyof this['creeps']]: this['creeps'][T]['resolved'] });
+    const resolvedCreeps = {} as { [T in keyof this['creeps']]: this['creeps'][T]['resolved'] };
+
+    try {
+      Object.keys(this.creeps)
+        .map(k => ({ key: k, value: this.creeps[k].resolved }))
+        .forEach(({ key, value }) => {
+          resolvedCreeps[key as keyof this['creeps']] = value;
+        });
+    } catch (e) {
+      console.log('Error resolving creeps', this.id, e);
+    }
 
     // run logic
     this.run(resolvedCreeps, resolvedMissions, this.missionData);

@@ -13,7 +13,7 @@ import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { prespawnByArrived, setArrived } from 'Selectors/prespawn';
 import { controllerPosition } from 'Selectors/roomCache';
-import { isThreatened } from 'Strategy/Territories/HarassmentZones';
+import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
 
 export interface ReserveMissionData extends BaseMissionData {
   reserveTargets?: string[];
@@ -51,7 +51,7 @@ export class ReserveMission extends MissionImplementation {
     data.reserveTargets = [
       ...new Set(
         activeFranchises(data.office, 1)
-          .filter(({ source }) => !isThreatened(data.office, source))
+          .filter(({ source }) => !franchiseIsThreatened(data.office, source))
           .map(({ room }) => room)
           .filter(room => room !== data.office)
       )

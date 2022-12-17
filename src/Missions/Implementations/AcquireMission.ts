@@ -2,12 +2,17 @@ import { ACQUIRE_MAX_RCL } from 'config';
 import { BaseMissionData, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/ConditionalMissionSpawner';
 import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
+import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { rcl } from 'Selectors/rcl';
+import { sum } from 'Selectors/reducers';
+import { officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
+import { roomThreatLevel } from 'Strategy/Territories/HarassmentZones';
 import { unpackPos } from 'utils/packrat';
 import { AcquireEngineerMission } from './AcquireEngineerMission';
 import { AcquireLawyerMission } from './AcquireLawyerMission';
+import { DefendAcquireMission } from './DefendAcquireMission';
 
 export interface AcquireMissionData extends BaseMissionData {
   targetOffice: string;
@@ -23,7 +28,27 @@ export class AcquireMission extends MissionImplementation {
       () => this.missionData,
       () => !Game.rooms[this.missionData.targetOffice]?.controller?.my
     ),
-    engineers: new MissionSpawner(AcquireEngineerMission, () => this.missionData)
+    engineers: new MissionSpawner(AcquireEngineerMission, () => this.missionData),
+    defenders: new MultiMissionSpawner(DefendAcquireMission, current => {
+      if (current.some(m => !m.assembled())) return []; // re-evaluate after finishing this duo
+      const hostileScore = roomThreatLevel(this.missionData.targetOffice);
+      const allyScore = current
+        .filter(m => {
+          // ignore attackers that are about to die
+          const ttl = m.creeps.attacker.resolved?.ticksToLive;
+          return !m.missionData.arrived || !ttl || ttl > m.missionData.arrived;
+        })
+        .map(m => m.score())
+        .reduce(sum, 0);
+      console.log(
+        allyScore,
+        current.map(m => m.score())
+      );
+      if (hostileScore > allyScore) {
+        return [this.missionData];
+      }
+      return [];
+    })
   };
 
   priority = 7;
@@ -46,7 +71,10 @@ export class AcquireMission extends MissionImplementation {
   }
 
   run() {
-    if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL) {
+    if (
+      rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL ||
+      !officeShouldSupportAcquireTarget(this.missionData.targetOffice)
+    ) {
       this.status = MissionStatus.DONE;
     }
   }

@@ -12,6 +12,7 @@ import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { posById } from 'Selectors/posById';
+import { officeShouldClaimAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
 
 export interface AcquireLawyerMissionData extends BaseMissionData {
   targetOffice: string;
@@ -28,7 +29,7 @@ export class AcquireLawyerMission extends MissionImplementation {
     })
   };
 
-  priority = 8.2;
+  priority = 7.6;
 
   constructor(public missionData: AcquireLawyerMissionData, id?: string) {
     super(missionData, id);
@@ -37,12 +38,24 @@ export class AcquireLawyerMission extends MissionImplementation {
     return super.fromId(id) as AcquireLawyerMission;
   }
 
+  onParentEnd() {
+    this.status = MissionStatus.DONE;
+  }
+
   run(
     creeps: ResolvedCreeps<AcquireLawyerMission>,
     missions: ResolvedMissions<AcquireLawyerMission>,
     data: AcquireLawyerMissionData
   ) {
     const { lawyer } = creeps;
+
+    if (!officeShouldClaimAcquireTarget(data.office)) {
+      this.status = MissionStatus.DONE;
+    }
+
+    if (this.creeps.lawyer.died && !Game.rooms[data.targetOffice]?.controller?.my) {
+      this.status = MissionStatus.DONE;
+    }
     if (!lawyer) return;
 
     if (data.targetOffice && Memory.rooms[data.targetOffice]) {

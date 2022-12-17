@@ -32,6 +32,7 @@ declare global {
     office?: string;
     officesInRange: string;
     threatLevel?: [ThreatLevel, number];
+    safeModeCooldown?: number;
   }
   interface Memory {
     positions: Record<string, string>;
@@ -63,6 +64,7 @@ export const initializeRoomMemory = ({ room }: ScannedRoomEvent) => {
     mineralType,
     eligibleForOffice,
     officesInRange: '',
-    threatLevel: calculateThreatLevel(room)
+    threatLevel: calculateThreatLevel(room),
+    safeModeCooldown: Game.rooms[room].controller?.safeModeCooldown ?? undefined
   };
 };

@@ -13,6 +13,7 @@ import { cachePath, moveByPath, moveTo } from 'screeps-cartographer';
 import { isSpawned } from 'Selectors/isSpawned';
 import { rcl } from 'Selectors/rcl';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
 import { EngineerMission, EngineerMissionData } from './EngineerMission';
 
 export interface AcquireEngineerMissionData extends EngineerMissionData {
@@ -59,7 +60,7 @@ export class AcquireEngineerMission extends EngineerMission {
     })
   };
 
-  priority = 8;
+  priority = 7.5;
   queue: EngineerQueue;
   constructor(public missionData: AcquireEngineerMissionData, id?: string) {
     super(missionData, id);
@@ -70,12 +71,20 @@ export class AcquireEngineerMission extends EngineerMission {
     return super.fromId(id) as AcquireEngineerMission;
   }
 
+  onParentEnd() {
+    this.status = MissionStatus.DONE;
+  }
+
   run(
     creeps: ResolvedCreeps<AcquireEngineerMission>,
     missions: ResolvedMissions<AcquireEngineerMission>,
     data: AcquireEngineerMissionData
   ) {
     const { engineers, haulers } = creeps;
+
+    if (!officeShouldSupportAcquireTarget(data.office)) {
+      this.status = MissionStatus.DONE;
+    }
 
     // cache inter-room route
     const from = roomPlans(data.office)?.headquarters?.storage.pos;

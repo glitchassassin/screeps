@@ -10,6 +10,7 @@ import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { sum } from 'Selectors/reducers';
+import { findAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
 import { DefendOfficeMission } from './DefendOfficeMission';
 import { DefendRemoteMission } from './DefendRemoteMission';
 import { KillCoreMission } from './KillCoreMission';
@@ -19,6 +20,7 @@ export interface DefenseCoordinationMissionData extends BaseMissionData {}
 export class DefenseCoordinationMission extends MissionImplementation {
   public missions = {
     defendOffice: new MultiMissionSpawner(DefendOfficeMission, current => {
+      if (findAcquireTarget() === this.missionData.office) return []; // if we're acquiring, parent office will defend
       if (current.some(m => !m.assembled())) return []; // re-evaluate after finishing this duo
       const hostileScore = totalCreepStats(findHostileCreeps(this.missionData.office)).score;
       const allyScore = current.map(m => m.score()).reduce(sum, 0);

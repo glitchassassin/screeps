@@ -9,6 +9,8 @@ export const refreshRoomMemory = ({ room }: ScannedRoomEvent) => {
   Memory.rooms[room].owner = Game.rooms[room].controller?.owner?.username;
   Memory.rooms[room].reserver = Game.rooms[room].controller?.reservation?.username;
   Memory.rooms[room].reservation = Game.rooms[room].controller?.reservation?.ticksToEnd;
+  const cooldown = Game.rooms[room].controller?.safeModeCooldown;
+  Memory.rooms[room].safeModeCooldown = cooldown ? Game.time + cooldown : undefined;
   Memory.rooms[room].scanned = Game.time;
 
   const threatLevel = calculateThreatLevel(room);

@@ -7,7 +7,11 @@ export function runMissions() {
   initializeOfficeMissions();
   // debugCPU('Initializing missions');
   for (const mission of allMissions()) {
-    mission.execute();
+    try {
+      mission.execute();
+    } catch (e) {
+      console.log(`Error in mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
+    }
     // debugCPU(mission.constructor.name);
   }
   Memory.missionReports ??= [];
@@ -25,18 +29,22 @@ export function spawnMissions() {
   > = {};
   const officesToSpawn = Object.keys(Memory.offices).filter(o => getSpawns(o).some(s => s && !s.spawning));
   for (const mission of allMissions()) {
-    orders[mission.missionData.office] ??= {
-      orders: [],
-      energyAllocated: 0,
-      cpuAllocated: 0
-    };
-    if (officesToSpawn.includes(mission.missionData.office)) {
-      for (const order of mission.spawn()) {
-        orders[order.office].orders.push(order);
+    try {
+      orders[mission.missionData.office] ??= {
+        orders: [],
+        energyAllocated: 0,
+        cpuAllocated: 0
+      };
+      if (officesToSpawn.includes(mission.missionData.office)) {
+        for (const order of mission.spawn()) {
+          orders[order.office].orders.push(order);
+        }
       }
+      orders[mission.missionData.office].cpuAllocated += mission.cpuRemaining();
+      orders[mission.missionData.office].energyAllocated += mission.energyRemaining();
+    } catch (e) {
+      console.log(`Error spawning for mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
     }
-    orders[mission.missionData.office].cpuAllocated += mission.cpuRemaining();
-    orders[mission.missionData.office].energyAllocated += mission.energyRemaining();
   }
   return orders;
 }
