@@ -60,6 +60,10 @@ export const engineerGetEnergy = (
   } else if (source instanceof Resource) {
     return fromDroppedResource(creep, source.id);
   } else {
+    if (source.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+      delete creep.memory.getEnergySource;
+      return BehaviorResult.FAILURE;
+    }
     return fromStorageStructure(creep, source.id);
   }
 };

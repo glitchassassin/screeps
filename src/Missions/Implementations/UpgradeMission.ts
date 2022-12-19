@@ -35,7 +35,7 @@ export class UpgradeMission extends MissionImplementation {
           (Game.rooms[this.missionData.office].controller?.ticksToDowngrade ?? Infinity) > 3000
         )
           return 0; // engineers will upgrade
-        if (new EngineerQueue(this.missionData.office).analysis().count > 0) return 0; // don't upgrade while construction to do
+        if (new EngineerQueue(this.missionData.office).analysis().energyRemaining > 1500) return 0; // don't upgrade while construction to do
         if (rcl(this.missionData.office) === 8 && current.length) {
           return 0; // maintain one upgrader at RCL8
         }

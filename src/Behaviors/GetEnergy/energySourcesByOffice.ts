@@ -4,6 +4,7 @@ import { franchiseIsFull } from 'Selectors/Franchises/franchiseIsFull';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { posById } from 'Selectors/posById';
+import { sum } from 'Selectors/reducers';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { memoizeByTick } from 'utils/memoizeFunction';
@@ -41,19 +42,24 @@ export const energySourcesByOffice = memoizeByTick(
     // storage
     const storage = [] as AnyStoreStructure[];
     if (roomPlans(office)?.headquarters?.storage.structure)
-      storage.push(roomPlans(office)!.headquarters!.storage.structure as AnyStoreStructure);
-    if ((roomPlans(office)?.library?.container.structure as AnyStoreStructure)?.store[RESOURCE_ENERGY])
-      storage.push(roomPlans(office)!.library!.container.structure as AnyStoreStructure);
-    if ((roomPlans(office)?.library?.link.structure as AnyStoreStructure)?.store[RESOURCE_ENERGY])
-      storage.push(roomPlans(office)!.library!.link.structure as AnyStoreStructure);
-    if (!roomPlans(office)?.headquarters?.storage.structure)
+      storage.push(roomPlans(office)!.headquarters!.storage.structure!);
+    if (roomPlans(office)?.library?.container.structure?.store[RESOURCE_ENERGY])
+      storage.push(roomPlans(office)!.library!.container.structure!);
+    if (roomPlans(office)?.library?.link.structure?.store[RESOURCE_ENERGY])
+      storage.push(roomPlans(office)!.library!.link.structure!);
+    if (
+      !roomPlans(office)?.headquarters?.storage.structure &&
+      (roomPlans(office)
+        ?.fastfiller?.containers.map(c => c.structure?.store[RESOURCE_ENERGY] ?? 0)
+        .reduce(sum, 0) ?? 0) > withdrawLimit
+    )
       roomPlans(office)
-        ?.fastfiller?.containers.filter(c => c.structure && (c.structure as AnyStoreStructure).store[RESOURCE_ENERGY])
-        .forEach(c => storage.push(c.structure as AnyStoreStructure));
+        ?.fastfiller?.containers.filter(c => c.structure && c.structure.store[RESOURCE_ENERGY])
+        .forEach(c => storage.push(c.structure!));
     if (!storage.length)
       getSpawns(office)
         .filter(c => c.store[RESOURCE_ENERGY])
-        .forEach(c => storage.push(c as AnyStoreStructure));
+        .forEach(c => storage.push(c));
     if (storage.length) {
       // && !remote
       sources.push(...storage);

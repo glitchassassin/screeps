@@ -119,6 +119,7 @@ export class LogisticsMission extends MissionImplementation {
   assignedLogisticsCapacity = memoizeOnce(() => {
     const withdrawAssignments = new Map<Id<Source>, number>();
     const depositAssignments = new Map<Id<AnyStoreStructure | Creep>, number>();
+    const priorities = storageStructureThatNeedsEnergy(this.missionData.office).sort((a, b) => b[0] - a[0]);
 
     for (const { source } of franchisesByOffice(this.missionData.office)) {
       if (franchiseIsThreatened(this.missionData.office, source)) {
@@ -138,8 +139,31 @@ export class LogisticsMission extends MissionImplementation {
         );
       }
       if (creep.memory.runState === States.DEPOSIT && assignment.depositTarget) {
-        const target = byId(assignment.depositTarget);
+        let target = byId(assignment.depositTarget);
         if (!target) continue;
+        const [bestPriority, bestTarget] = priorities[0];
+        const actualPriority = priorities.find(([priority, structure]) => structure.id === target!.id)?.[0] ?? 0;
+        if (actualPriority < bestPriority) {
+          const assignedToBestTarget = depositAssignments.get(bestTarget.id) ?? 0;
+          console.log(
+            'Reassigning hauler from',
+            target,
+            'priority',
+            actualPriority,
+            'to',
+            bestTarget,
+            'priority',
+            bestPriority
+          );
+          assignment.depositTarget = bestTarget.id;
+          target = bestTarget;
+          if (
+            creep.store.getUsedCapacity(RESOURCE_ENERGY) + assignedToBestTarget >=
+            bestTarget.store.getFreeCapacity(RESOURCE_ENERGY)
+          ) {
+            priorities.shift(); // fully assigned
+          }
+        }
         depositAssignments.set(
           assignment.depositTarget,
           Math.min(
