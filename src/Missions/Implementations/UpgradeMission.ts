@@ -125,13 +125,17 @@ export class UpgradeMission extends MissionImplementation {
                     link.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity()
                   );
                 }
-              } else if (container && container.store[RESOURCE_ENERGY]) {
-                moveTo(creep, { pos: container.pos, range: 1 });
-                if (creep.withdraw(container, RESOURCE_ENERGY) === OK) {
-                  container.store[RESOURCE_ENERGY] = Math.max(
-                    0,
-                    container.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity()
-                  );
+              } else if (container) {
+                if (container.store[RESOURCE_ENERGY]) {
+                  moveTo(creep, { pos: container.pos, range: 1 });
+                  if (creep.withdraw(container, RESOURCE_ENERGY) === OK) {
+                    container.store[RESOURCE_ENERGY] = Math.max(
+                      0,
+                      container.store[RESOURCE_ENERGY] - creep.store.getFreeCapacity()
+                    );
+                  }
+                } else {
+                  moveTo(creep, { pos: container.pos, range: 3 }); // wait for energy
                 }
               } else if (!link && !container) {
                 if (getEnergyFromStorage(creep, mission.office) === BehaviorResult.SUCCESS) {

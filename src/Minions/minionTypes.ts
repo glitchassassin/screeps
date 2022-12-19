@@ -75,7 +75,7 @@ export const MinionBuilders = {
     (energy: number, maxSegments = 25, roads = false, repair = false) =>
       `${Math.round((energy * 2) / 100)} ${maxSegments} ${roads}`,
     (energy: number, maxSegments = 25, roads = false, repair = false): CreepBuild[] => {
-      const suffix = energy < 300 ? [] : repair ? (roads ? [WORK, CARRY, MOVE] : [WORK, MOVE]) : [];
+      const suffix = energy < 350 ? [] : repair ? (roads ? [WORK, CARRY, MOVE] : [WORK, MOVE]) : [];
       if (energy < 100 || maxSegments === 0) {
         return [];
       } else if (energy < 5600) {

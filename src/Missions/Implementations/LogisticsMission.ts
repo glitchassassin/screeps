@@ -145,16 +145,6 @@ export class LogisticsMission extends MissionImplementation {
         const actualPriority = priorities.find(([priority, structure]) => structure.id === target!.id)?.[0] ?? 0;
         if (actualPriority < bestPriority) {
           const assignedToBestTarget = depositAssignments.get(bestTarget.id) ?? 0;
-          console.log(
-            'Reassigning hauler from',
-            target,
-            'priority',
-            actualPriority,
-            'to',
-            bestTarget,
-            'priority',
-            bestPriority
-          );
           assignment.depositTarget = bestTarget.id;
           target = bestTarget;
           if (
