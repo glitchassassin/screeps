@@ -141,17 +141,19 @@ export class LogisticsMission extends MissionImplementation {
       if (creep.memory.runState === States.DEPOSIT && assignment.depositTarget) {
         let target = byId(assignment.depositTarget);
         if (!target) continue;
-        const [bestPriority, bestTarget] = priorities[0];
-        const actualPriority = priorities.find(([priority, structure]) => structure.id === target!.id)?.[0] ?? 0;
-        if (actualPriority < bestPriority) {
-          const assignedToBestTarget = depositAssignments.get(bestTarget.id) ?? 0;
-          assignment.depositTarget = bestTarget.id;
-          target = bestTarget;
-          if (
-            creep.store.getUsedCapacity(RESOURCE_ENERGY) + assignedToBestTarget >=
-            bestTarget.store.getFreeCapacity(RESOURCE_ENERGY)
-          ) {
-            priorities.shift(); // fully assigned
+        if (priorities.length) {
+          const [bestPriority, bestTarget] = priorities[0];
+          const actualPriority = priorities.find(([priority, structure]) => structure.id === target!.id)?.[0] ?? 0;
+          if (actualPriority < bestPriority) {
+            const assignedToBestTarget = depositAssignments.get(bestTarget.id) ?? 0;
+            assignment.depositTarget = bestTarget.id;
+            target = bestTarget;
+            if (
+              creep.store.getUsedCapacity(RESOURCE_ENERGY) + assignedToBestTarget >=
+              bestTarget.store.getFreeCapacity(RESOURCE_ENERGY)
+            ) {
+              priorities.shift(); // fully assigned
+            }
           }
         }
         depositAssignments.set(

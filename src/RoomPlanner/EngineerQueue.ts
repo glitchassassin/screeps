@@ -127,7 +127,9 @@ export class EngineerQueue {
   });
 
   complete(structure: PlannedStructure) {
-    this.workQueue().splice(this.workQueue().indexOf(structure), 1);
+    if (this.workQueue().includes(structure)) {
+      this.workQueue().splice(this.workQueue().indexOf(structure), 1);
+    }
     this.build.delete(structure);
     this.maintain_barriers.delete(structure);
     this.maintain_economy.delete(structure);
