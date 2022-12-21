@@ -1,9 +1,9 @@
 import { THREAT_TOLERANCE } from 'config';
 import { ScannedRoomEvent } from 'Intel/events';
-import { getCachedPath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { combatStats } from 'Selectors/Combat/combatStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
+import { franchiseDefenseRooms } from 'Selectors/Franchises/franchiseDefenseRooms';
 import { posById } from 'Selectors/posById';
 import { rcl } from 'Selectors/rcl';
 import { memoizeByTick } from 'utils/memoizeFunction';
@@ -28,6 +28,7 @@ const totalThreatScore = memoizeByTick(
 export const recordThreat = (attacker: string, score: number, territory: string) => {
   if (score <= 0) return;
   if (['Source Keeper', 'Invader'].includes(attacker)) return;
+  if (Game.rooms[territory]?.controller?.my) return; // ignore threats in office rooms
   const zone = Memory.zones[attacker] ?? {
     score: 0,
     rhythm: 3000,
@@ -79,10 +80,7 @@ export const scanRoomForThreats = ({ room }: ScannedRoomEvent) => {
 
 export const franchiseIsThreatened = (office: string, franchise: Id<Source>) => {
   if (posById(franchise)?.roomName === office) return false;
-  const rooms = (getCachedPath(office + franchise) ?? []).reduce((rooms, pos) => {
-    if (!rooms.includes(pos.roomName)) rooms.push(pos.roomName);
-    return rooms;
-  }, [] as string[]);
+  const rooms = franchiseDefenseRooms(office, franchise);
 
   let threat = 0;
   for (const attacker in Memory.zones) {

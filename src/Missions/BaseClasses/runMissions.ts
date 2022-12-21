@@ -12,7 +12,7 @@ export function runMissions() {
     } catch (e) {
       console.log(`Error in mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
     }
-    // debugCPU(mission.constructor.name);
+    // debugCPU(mission.constructor.name + ' ' + mission.missionData.office);
   }
   Memory.missionReports ??= [];
   Memory.missionReports = Memory.missionReports.filter(r => r.finished > Game.time - MISSION_HISTORY_LIMIT);

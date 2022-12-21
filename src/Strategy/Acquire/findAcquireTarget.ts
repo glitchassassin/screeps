@@ -78,7 +78,7 @@ export const findAcquireTarget = () => {
  * 20k ticks after first failure, 40k ticks after second, etc.
  */
 const shouldPostponeAcquire = (roomName: string) => {
-  if (Game.rooms[roomName].controller?.my) return false; // already claimed
+  if (Game.rooms[roomName]?.controller?.my) return false; // already claimed
   // If it's less than five ticks since Lawyer checked in,
   // or Lawyer hasn't checked in yet, ignore
   const timeSinceLastAttempt = Game.time - (Memory.rooms[roomName].lastAcquireAttempt ?? Game.time);

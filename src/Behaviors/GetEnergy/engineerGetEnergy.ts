@@ -40,12 +40,13 @@ export const engineerGetEnergy = (
     return BehaviorResult.SUCCESS;
   }
 
+  let result = BehaviorResult.INPROGRESS;
+
   if (!source || source instanceof Source) {
     // is a source or remote franchise with no visibility, or is gone
     if (!source && !posById(creep.memory.getEnergySource)) {
       // source is gone
-      delete creep.memory.getEnergySource;
-      return BehaviorResult.FAILURE;
+      result = BehaviorResult.FAILURE;
     }
     if (
       activeMissions(office)
@@ -53,17 +54,22 @@ export const engineerGetEnergy = (
         .some(m => m.missionData.source === creep.memory.getEnergySource && m.harvestRate() > 0)
     ) {
       // source is being harvested by another creep
-      return fromFranchise(creep, creep.memory.getEnergySource as Id<Source>);
+      result = fromFranchise(creep, creep.memory.getEnergySource as Id<Source>);
     } else {
-      return fromSource(creep, creep.memory.getEnergySource as Id<Source>);
+      result = fromSource(creep, creep.memory.getEnergySource as Id<Source>);
     }
   } else if (source instanceof Resource) {
-    return fromDroppedResource(creep, source.id);
+    result = fromDroppedResource(creep, source.id);
   } else {
     if (source.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
-      delete creep.memory.getEnergySource;
-      return BehaviorResult.FAILURE;
+      result = BehaviorResult.FAILURE;
     }
-    return fromStorageStructure(creep, source.id);
+    result = fromStorageStructure(creep, source.id);
   }
+
+  if (result !== BehaviorResult.INPROGRESS) {
+    delete creep.memory.getEnergySource;
+  }
+
+  return result;
 };

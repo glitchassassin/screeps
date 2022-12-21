@@ -52,23 +52,33 @@ export function missionById(id: MissionImplementation['id']) {
 
 export function cleanMissions() {
   for (const missionId in Memory.missions) {
-    const mission = Memory.missions[missionId];
-    if (mission.status === MissionStatus.DONE) {
-      if (Memory.missions[missionId]) {
-        // file mission report
-        Memory.missionReports.push({
-          type: mission.constructor.name,
-          duration: Game.time - Memory.missions[missionId].started,
-          cpuUsed: Memory.missions[missionId].cpuUsed,
-          energyUsed: Memory.missions[missionId].energyUsed,
-          finished: Game.time,
-          office: mission.data.office
-        });
-      }
-      delete Memory.missions[missionId];
-      singletons.delete(missionId);
+    if (Memory.missions[missionId].status === MissionStatus.DONE) {
+      endAndReportMission(missionId);
     }
   }
+}
+
+export function purgeOrphanedMissions() {
+  for (const missionId in Memory.missions) {
+    if (singletons.has(missionId)) continue;
+    endAndReportMission(missionId);
+  }
+}
+
+function endAndReportMission(missionId: MissionImplementation['id']) {
+  const mission = Memory.missions[missionId];
+  if (!mission) return;
+  // file mission report
+  Memory.missionReports.push({
+    type: mission.constructor.name,
+    duration: Game.time - Memory.missions[missionId].started,
+    cpuUsed: Memory.missions[missionId].cpuUsed,
+    energyUsed: Memory.missions[missionId].energyUsed,
+    finished: Game.time,
+    office: mission.data.office
+  });
+  delete Memory.missions[missionId];
+  singletons.delete(missionId);
 }
 
 export class MissionImplementation {

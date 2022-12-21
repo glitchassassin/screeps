@@ -12,6 +12,7 @@ import { moveTo } from 'screeps-cartographer';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { findClosestHostileCreepByRange, findHostileCreeps, findInvaderStructures } from 'Selectors/findHostileCreeps';
 import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
+import { franchiseDefenseRooms } from 'Selectors/Franchises/franchiseDefenseRooms';
 
 export interface DefendRemoteMissionData extends BaseMissionData {
   targetRoom?: string;
@@ -64,13 +65,17 @@ export class DefendRemoteMission extends MissionImplementation {
 
     // If no target, pick one
     if (!data.targetRoom) {
-      for (const { room } of activeFranchises(data.office) ?? []) {
+      for (const room of activeFranchises(data.office).flatMap(({ source }) =>
+        franchiseDefenseRooms(data.office, source)
+      )) {
         if (Memory.rooms[room].invaderCore || Memory.rooms[room].lastHostileSeen === Memory.rooms[room].scanned) {
           // Hostile minions or invader core detected
           data.targetRoom = room;
         }
       }
     }
+
+    console.log('defending remote', data.targetRoom);
 
     for (const creep of blinkies) {
       // Try to heal

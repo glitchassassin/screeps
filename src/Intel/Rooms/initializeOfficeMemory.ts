@@ -20,7 +20,7 @@ export const initializeOfficeMemory = ({ room, office }: ScannedRoomEvent) => {
     franchises: {}
   };
 
-  Memory.rooms[room].rclMilestones ??= {};
+  Memory.rooms[room].rclMilestones = {};
   Memory.rooms[room].rclMilestones![Game.rooms[room].controller!.level] ??= Game.time;
 
   destroyUnplannedStructures(room);

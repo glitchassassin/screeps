@@ -20,9 +20,11 @@ import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { moveTo } from 'screeps-cartographer';
 import { combatPower } from 'Selectors/Combat/combatStats';
 import { isSpawned } from 'Selectors/isSpawned';
+import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
+import { roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { memoize, memoizeOnce, memoizeOncePerTick } from 'utils/memoizeFunction';
@@ -130,12 +132,19 @@ export class EngineerMission extends MissionImplementation {
     const { engineers } = creeps;
     this.missionData.assignments ??= {};
 
+    const plannedFranchiseRoads = plannedActiveFranchiseRoads(this.missionData.office);
+    // If we have less than 80% of planned roads complete, request energy from haulers
+    const shouldRequestEnergy =
+      roomPlans(this.missionData.office)?.fastfiller?.containers.every(c => !c.survey()) ||
+      (rcl(this.missionData.office) < 4 &&
+        plannedFranchiseRoads.filter(r => !r.survey()).length / plannedFranchiseRoads.length < 0.8);
+
     this.updateEstimatedEnergy();
 
     for (const creep of engineers.filter(isSpawned)) {
       this.missionData.assignments[creep.name] ??= {};
       const assignment = this.missionData.assignments[creep.name];
-      if (rcl(this.missionData.office) < 4) {
+      if (shouldRequestEnergy) {
         CreepsThatNeedEnergy.set(
           this.missionData.office,
           CreepsThatNeedEnergy.get(this.missionData.office) ?? new Set()
@@ -147,6 +156,7 @@ export class EngineerMission extends MissionImplementation {
       runStates(
         {
           [States.FIND_WORK]: (mission, creep) => {
+            if (rcl(data.office) < 2) return States.UPGRADING; // get to RCL2 first, enables safe mode
             delete mission.facilitiesTarget;
             const nextStructure = this.queue.getNextStructure(creep);
             if (nextStructure) {
@@ -154,7 +164,7 @@ export class EngineerMission extends MissionImplementation {
               return States.BUILDING;
             }
             delete mission.facilitiesTarget;
-            if (rcl(data.office) < 8) return States.UPGRADING;
+            if (rcl(data.office) < 3) return States.UPGRADING; // At RCL3+, just recycle if no work to do
             return States.RECYCLE;
           },
           [States.GET_ENERGY]: (mission, creep) => {
@@ -231,8 +241,7 @@ export class EngineerMission extends MissionImplementation {
                           s => !s.pos.isEqualTo(existing.pos)
                         )
                       ) {
-                        console.log('Need to destroy', existing.pos, existing.structureType);
-                        // existing.destroy(); // not a planned structure
+                        existing.destroy(); // not a planned structure
                         break;
                       }
                     }

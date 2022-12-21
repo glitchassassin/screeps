@@ -1,13 +1,12 @@
 import { ACQUIRE_MAX_RCL } from 'config';
 import { BaseMissionData, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/ConditionalMissionSpawner';
-import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
-import { officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
+import { officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
 import { roomThreatLevel } from 'Strategy/Territories/HarassmentZones';
 import { unpackPos } from 'utils/packrat';
 import { AcquireEngineerMission } from './AcquireEngineerMission';
@@ -26,9 +25,13 @@ export class AcquireMission extends MissionImplementation {
     claim: new ConditionalMissionSpawner(
       AcquireLawyerMission,
       () => this.missionData,
-      () => !Game.rooms[this.missionData.targetOffice]?.controller?.my
+      () => officeShouldClaimAcquireTarget(this.missionData.office)
     ),
-    engineers: new MissionSpawner(AcquireEngineerMission, () => this.missionData),
+    engineers: new ConditionalMissionSpawner(
+      AcquireEngineerMission,
+      () => this.missionData,
+      () => officeShouldSupportAcquireTarget(this.missionData.office)
+    ),
     defenders: new MultiMissionSpawner(DefendAcquireMission, current => {
       if (current.some(m => !m.assembled())) return []; // re-evaluate after finishing this duo
       const hostileScore = roomThreatLevel(this.missionData.targetOffice);
@@ -40,10 +43,6 @@ export class AcquireMission extends MissionImplementation {
         })
         .map(m => m.score())
         .reduce(sum, 0);
-      console.log(
-        allyScore,
-        current.map(m => m.score())
-      );
       if (hostileScore > allyScore) {
         return [this.missionData];
       }
@@ -73,7 +72,8 @@ export class AcquireMission extends MissionImplementation {
   run() {
     if (
       rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL ||
-      !officeShouldSupportAcquireTarget(this.missionData.targetOffice)
+      (!officeShouldSupportAcquireTarget(this.missionData.office) &&
+        !officeShouldClaimAcquireTarget(this.missionData.office))
     ) {
       this.status = MissionStatus.DONE;
     }

@@ -143,6 +143,7 @@ export class LogisticsMission extends MissionImplementation {
         if (!target) continue;
         if (priorities.length) {
           const [bestPriority, bestTarget] = priorities[0];
+          if (bestTarget instanceof StructureStorage && creep.memory.fromStorage) continue; // don't assign refillers to storage
           const actualPriority = priorities.find(([priority, structure]) => structure.id === target!.id)?.[0] ?? 0;
           if (actualPriority < bestPriority) {
             const assignedToBestTarget = depositAssignments.get(bestTarget.id) ?? 0;

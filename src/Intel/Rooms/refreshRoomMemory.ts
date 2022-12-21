@@ -26,6 +26,11 @@ export const refreshRoomMemory = ({ room }: ScannedRoomEvent) => {
     delete Memory.rooms[room].invaderCore;
   }
 
+  if (Game.rooms[room].controller?.my) {
+    Memory.rooms[room].rclMilestones ??= {};
+    Memory.rooms[room].rclMilestones![Game.rooms[room].controller!.level] ??= Game.time;
+  }
+
   if ((Memory.rooms[room].plunder?.scanned ?? 0) + 500 < Game.time) {
     // If room is unowned and has resources, let's loot it!
     if (![ThreatLevel.OWNED, ThreatLevel.FRIENDLY].includes(threatLevel[0])) {

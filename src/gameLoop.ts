@@ -1,6 +1,6 @@
 import { runIntel } from 'Intel';
 import { recordMetrics } from 'Metrics/recordMetrics';
-import { cleanMissions } from 'Missions/BaseClasses/MissionImplementation';
+import { cleanMissions, purgeOrphanedMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { runMissionControl } from 'Missions/Control';
 import { run as runReports } from 'Reports/ReportRunner';
 import { planRooms } from 'RoomPlanner/planRooms';
@@ -36,6 +36,8 @@ export const gameLoop = () => {
   // logCpuStart()
   runMissionControl();
   debugCPU('Missions');
+
+  purgeOrphanedMissions();
 
   reconcileTraffic({ visualize: false });
   debugCPU('Traffic Management');

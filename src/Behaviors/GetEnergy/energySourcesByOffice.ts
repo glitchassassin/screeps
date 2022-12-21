@@ -58,7 +58,7 @@ export const energySourcesByOffice = memoizeByTick(
         .forEach(c => storage.push(c.structure!));
     if (!storage.length)
       getSpawns(office)
-        .filter(c => c.store[RESOURCE_ENERGY])
+        .filter(c => c.store[RESOURCE_ENERGY] > withdrawLimit)
         .forEach(c => storage.push(c));
     if (storage.length) {
       // && !remote

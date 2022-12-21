@@ -194,7 +194,9 @@ export const MinionBuilders = {
     } else if (energy < 550) {
       return unboosted([WORK, WORK, MOVE]);
     } else if (energy === 550) {
-      return link ? unboosted([WORK, WORK, WORK, CARRY, MOVE]) : unboosted([WORK, WORK, WORK, WORK, WORK, MOVE]);
+      return link || remote
+        ? unboosted([WORK, WORK, WORK, CARRY, MOVE])
+        : unboosted([WORK, WORK, WORK, WORK, WORK, MOVE]);
     }
 
     if (remote) {
