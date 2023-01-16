@@ -5,7 +5,8 @@ import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { BARRIER_TYPES } from 'config';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildEngineer } from 'Minions/Builds/engineer';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -44,7 +45,7 @@ export class EngineerMission extends MissionImplementation {
     engineers: new MultiCreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
       budget: this.budget,
-      builds: energy => MinionBuilders[MinionTypes.ENGINEER](energy, this.calculated().roads),
+      builds: energy => buildEngineer(energy, this.calculated().roads),
       count: current => {
         let pendingCost = this.queue.analysis().energyRemaining;
         // If rcl < 2, engineers will also upgrade
@@ -297,7 +298,10 @@ export class EngineerMission extends MissionImplementation {
             if (Game.time % 10 === 0) return States.FIND_WORK;
             return States.UPGRADING;
           },
-          [States.RECYCLE]: (mission, creep) => recycle(this.missionData, creep)
+          [States.RECYCLE]: (mission, creep) => {
+            recycle(this.missionData, creep);
+            return States.FIND_WORK;
+          }
         },
         assignment,
         creep

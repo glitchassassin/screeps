@@ -1,5 +1,6 @@
 import { signRoom } from 'Behaviors/signRoom';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildLawyer } from 'Minions/Builds/lawyer';
+import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import {
   BaseMissionData,
@@ -25,7 +26,7 @@ export class AcquireLawyerMission extends MissionImplementation {
     lawyer: new CreepSpawner('e', this.missionData.office, {
       role: MinionTypes.LAWYER,
       budget: this.budget,
-      builds: energy => MinionBuilders[MinionTypes.LAWYER](energy)
+      builds: energy => buildLawyer(energy)
     })
   };
 

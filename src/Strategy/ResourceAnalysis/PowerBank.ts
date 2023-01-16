@@ -1,5 +1,6 @@
 import { ScannedRoomEvent } from 'Intel/events';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { PowerBankDuoMission } from 'Missions/Implementations/PowerBankDuoMission';
 import { cachePath } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getOfficeDistanceByRange } from 'Selectors/getOfficeDistance';
@@ -9,7 +10,7 @@ import { roomPlans } from 'Selectors/roomPlans';
 import { memoizeOncePerTick } from 'utils/memoizeFunction';
 import { packPos, unpackPos } from 'utils/packrat';
 
-interface PowerBankReport {
+export interface PowerBankReport {
   id: Id<StructurePowerBank>;
   pos: string;
   adjacentSquares: number;
@@ -86,10 +87,11 @@ const evaluatePowerBank = (office: string, origin: RoomPosition, powerBank: Stru
   report.duoCount = duoCount;
   const haulerCount = Math.ceil(report.amount / (CARRY_CAPACITY * 25));
   const energy = Game.rooms[office].energyCapacityAvailable;
-  const cost =
-    maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy, duoSpeed)) * duoCount +
-    maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy, duoSpeed)) * duoCount +
-    maxBuildCost(MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false)) * haulerCount;
+  const costAnalysis = PowerBankDuoMission.costAnalysis(office, report);
+  console.log(office, powerBank.pos, JSON.stringify(costAnalysis));
+  const duoCost = costAnalysis.costToCrack ?? Infinity;
+
+  const cost = duoCost + maxBuildCost(buildAccountant(energy, 25, false, false)) * haulerCount;
 
   const powerCost = cost / report.amount;
 

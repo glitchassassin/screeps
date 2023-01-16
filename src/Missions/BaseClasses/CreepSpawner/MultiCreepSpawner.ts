@@ -7,9 +7,9 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
     id: string,
     office: string,
     public props: BaseCreepSpawner['props'] & { count: (current: Creep[]) => number },
-    public onSpawn?: BaseCreepSpawner['onSpawn']
+    public eventHandlers?: BaseCreepSpawner['eventHandlers']
   ) {
-    super(id, office, props, onSpawn);
+    super(id, office, props, eventHandlers);
   }
 
   spawn(missionId: CreepMemory['missionId'], priority: number) {

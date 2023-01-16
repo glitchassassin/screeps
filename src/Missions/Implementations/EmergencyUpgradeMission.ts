@@ -1,4 +1,5 @@
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildResearch } from 'Minions/Builds/research';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import { ResolvedCreeps, ResolvedMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
@@ -10,7 +11,7 @@ export class EmergencyUpgradeMission extends UpgradeMission {
     upgraders: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.RESEARCH,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.RESEARCH](energy),
+      builds: energy => buildResearch(energy),
       count: current => {
         if (!this.emergency() || current.length) return 0;
         return 1;

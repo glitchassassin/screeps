@@ -1,5 +1,6 @@
 import { signRoom } from 'Behaviors/signRoom';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildMarketer } from 'Minions/Builds/marketer';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -25,7 +26,7 @@ export class ReserveMission extends MissionImplementation {
     marketers: new MultiCreepSpawner('m', this.missionData.office, {
       role: MinionTypes.MARKETER,
       budget: Budget.ECONOMY,
-      builds: energy => MinionBuilders[MinionTypes.MARKETER](energy),
+      builds: energy => buildMarketer(energy),
       count: current => {
         if (Game.rooms[this.missionData.office].energyCapacityAvailable < 650) return 0;
         const targets = this.missionData.reserveTargets?.length ?? 0;

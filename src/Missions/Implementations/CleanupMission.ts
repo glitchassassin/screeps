@@ -1,7 +1,8 @@
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { MinionTypes } from 'Minions/minionTypes';
 import { ConditionalCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/ConditionalCreepSpawner';
 import {
   BaseMissionData,
@@ -26,7 +27,7 @@ export class CleanupMission extends MissionImplementation {
     janitor: new ConditionalCreepSpawner('j', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 5),
+      builds: energy => buildAccountant(energy, 5),
       shouldSpawn: () => hasEnergyIncome(this.missionData.office) && this.misplacedResources().length > 0
     })
   };

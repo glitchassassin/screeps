@@ -1,7 +1,8 @@
 import { harvestEnergyFromFranchise } from 'Behaviors/harvestEnergyFromFranchise';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildSalesman } from 'Minions/Builds/salesman';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -39,8 +40,7 @@ export class HarvestMission extends MissionImplementation {
       {
         role: MinionTypes.SALESMAN,
         budget: Budget.ESSENTIAL,
-        builds: energy =>
-          MinionBuilders[MinionTypes.SALESMAN](energy, this.calculated().link, this.calculated().remote),
+        builds: energy => buildSalesman(energy, this.calculated().link, this.calculated().remote),
         count: current => {
           if (this.disabled()) {
             return 0; // disabled
@@ -56,8 +56,10 @@ export class HarvestMission extends MissionImplementation {
         },
         estimatedCpuPerTick: 0.8
       },
-      creep =>
-        HarvestLedger.record(this.missionData.office, this.missionData.source, 'spawn_harvest', -creepCost(creep))
+      {
+        onSpawn: creep =>
+          HarvestLedger.record(this.missionData.office, this.missionData.source, 'spawn_harvest', -creepCost(creep))
+      }
     )
   };
 

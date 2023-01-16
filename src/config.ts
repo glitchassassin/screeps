@@ -45,7 +45,7 @@ export const BARRIER_LEVEL: Record<number, number> = {
   5: 100000,
   6: 300000,
   7: 1000000,
-  8: 10000000
+  8: 3000000
 };
 export const BARRIER_TYPES: StructureConstant[] = [STRUCTURE_WALL, STRUCTURE_RAMPART];
 /**

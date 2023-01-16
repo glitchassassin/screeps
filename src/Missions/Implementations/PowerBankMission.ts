@@ -1,7 +1,8 @@
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { MinionTypes } from 'Minions/minionTypes';
 import { fixedCount } from 'Missions/BaseClasses';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
@@ -24,6 +25,8 @@ export interface PowerBankMissionData extends BaseMissionData {
   powerBank: Id<StructurePowerBank>;
   powerBankPos: string;
   duosSpawned?: number;
+  powerToRetrieve?: number;
+  powerRetrieved?: number;
 }
 
 export class PowerBankMission extends MissionImplementation {
@@ -34,7 +37,7 @@ export class PowerBankMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.ACCOUNTANT,
-        builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
+        builds: energy => buildAccountant(energy, 25, false, false),
         count: fixedCount(() => {
           // wait to spawn until duos are about to crack the bank
           if (!this.willBreachIn(750)) {
@@ -44,7 +47,7 @@ export class PowerBankMission extends MissionImplementation {
           return Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY));
         })
       },
-      creep => this.recordCreepEnergy(creep)
+      { onSpawn: creep => this.recordCreepEnergy(creep) }
     )
   };
 
@@ -52,7 +55,7 @@ export class PowerBankMission extends MissionImplementation {
     duos: new MultiMissionSpawner(
       PowerBankDuoMission,
       current => {
-        const duosCount = 1; // boosted, only needs one
+        const duosCount = this.report()?.duoCount ?? 1; // if boosted, only needs one
         if (
           current.length >= (this.report()?.adjacentSquares ?? 0) ||
           current.some(d => !d.assembled()) ||
@@ -60,13 +63,14 @@ export class PowerBankMission extends MissionImplementation {
         ) {
           return []; // enough missions already
         }
-        const boostsAvailable = PowerBankDuoMission.boostsAvailable(this.missionData.office);
-        const minTier = PowerBankDuoMission.minTier(this.report()?.distance ?? 500);
-        if (Game.time % 100 === 0) console.log(this.toString(), 'waiting for duo boosts');
-        if (boostsAvailable === 0 || minTier > boostsAvailable) {
-          return []; // not enough boosts, or not enough for a single duo at this range
+        const analysis = PowerBankDuoMission.costAnalysis(this.missionData.office, this.report()!);
+
+        // console.log(JSON.stringify(analysis));
+
+        if (analysis.bestTier === undefined) {
+          return []; // no viable builds
         }
-        return [this.missionData];
+        return [{ ...this.missionData, boostTier: analysis.bestTier }];
       },
       mission => {
         this.recordMissionEnergy(mission);
@@ -85,6 +89,7 @@ export class PowerBankMission extends MissionImplementation {
     const amount = this.report()?.amount;
     if (powerCost && amount) {
       this.estimatedEnergyRemaining ??= powerCost * amount;
+      missionData.powerToRetrieve = amount;
     } else {
       console.log('Unable to fetch report for powerbank mission', unpackPos(missionData.powerBankPos));
       this.status = MissionStatus.DONE;
@@ -102,6 +107,11 @@ export class PowerBankMission extends MissionImplementation {
   onEnd() {
     super.onEnd();
     console.log('[PowerBankMission] finished in', unpackPos(this.missionData.powerBankPos));
+    if (this.missionData.powerToRetrieve) {
+      const retrieved = this.missionData.powerRetrieved ?? 0;
+      const percent = (retrieved / this.missionData.powerToRetrieve) * 100;
+      console.log(`[PowerBankMission] retrieved ${retrieved} of ${this.missionData.powerToRetrieve} (${percent}%)`);
+    }
   }
 
   report() {
@@ -136,6 +146,9 @@ export class PowerBankMission extends MissionImplementation {
     const powerBankRuin = Game.rooms[powerBankPos.roomName]
       ? powerBankPos.lookFor(LOOK_RUINS).find(s => s.structure.structureType === STRUCTURE_POWER_BANK)
       : undefined;
+    const powerBankResources = Game.rooms[powerBankPos.roomName]
+      ? powerBankPos.lookFor(LOOK_RESOURCES).find(s => s.resourceType === RESOURCE_POWER)
+      : undefined;
     const terminal = roomPlans(data.office)?.headquarters?.terminal.structure;
 
     for (const hauler of haulers) {
@@ -154,6 +167,9 @@ export class PowerBankMission extends MissionImplementation {
             if (powerBankRuin) {
               moveTo(creep, powerBankRuin);
               creep.withdraw(powerBankRuin, RESOURCE_POWER);
+            } else if (powerBankResources) {
+              moveTo(creep, powerBankResources);
+              creep.pickup(powerBankResources);
             } else {
               moveTo(creep, { pos: powerBankPos, range: 3 }, { visualizePathStyle: {} });
             }
@@ -163,7 +179,14 @@ export class PowerBankMission extends MissionImplementation {
           [States.DEPOSIT]: (mission, creep) => {
             if (!creep.store.getUsedCapacity(RESOURCE_POWER) || !terminal) return States.RECYCLE;
             moveTo(creep, terminal);
-            creep.transfer(terminal, RESOURCE_POWER);
+            const result = creep.transfer(terminal, RESOURCE_POWER);
+            if (result === OK) {
+              data.powerRetrieved ??= 0;
+              data.powerRetrieved += Math.min(
+                creep.store.getUsedCapacity(RESOURCE_POWER),
+                terminal.store.getFreeCapacity(RESOURCE_POWER)
+              );
+            }
             return States.DEPOSIT;
           },
           [States.RECYCLE]: recycle

@@ -1,4 +1,6 @@
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildGuard } from 'Minions/Builds/guard';
+import { buildMedic } from 'Minions/Builds/medic';
+import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
@@ -25,12 +27,12 @@ export class BaseDuoMission extends MissionImplementation {
     attacker: new CreepSpawner('a', this.missionData.office, {
       role: MinionTypes.GUARD,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.GUARD](energy, false)
+      builds: energy => buildGuard(energy, false)
     }),
     healer: new CreepSpawner('b', this.missionData.office, {
       role: MinionTypes.MEDIC,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.MEDIC](energy)
+      builds: energy => buildMedic(energy)
     })
   };
 
@@ -74,8 +76,12 @@ export class BaseDuoMission extends MissionImplementation {
       // attacker movement
       if (killTarget) {
         if (data.stayInRamparts && rampartsIntact) {
-          const moveTarget = closestRampartSection(killTarget.pos);
-          if (moveTarget)
+          let moveTarget = closestRampartSection(killTarget.pos);
+          if (moveTarget) {
+            const adjacentMoveTargets = moveTarget.filter(pos => pos.isNearTo(killTarget.pos));
+            if (adjacentMoveTargets.length) {
+              moveTarget = adjacentMoveTargets;
+            }
             moveTo(
               attacker,
               moveTarget.map(pos => ({ pos, range: 0 })),
@@ -90,6 +96,7 @@ export class BaseDuoMission extends MissionImplementation {
                 visualizePathStyle: {}
               }
             );
+          }
         } else {
           moveTo(attacker, { pos: killTarget.pos, range: 1 });
         }

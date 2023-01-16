@@ -4,7 +4,10 @@ import { getResourcesFromMineContainer } from 'Behaviors/getResourcesFromMineCon
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { bestTierAvailable } from 'Minions/bestBuildTier';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { buildForeman } from 'Minions/Builds/foreman';
+import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import {
   BaseMissionData,
@@ -29,11 +32,11 @@ export class MineMission extends MissionImplementation {
   public creeps = {
     miner: new CreepSpawner('m', this.missionData.office, {
       role: MinionTypes.FOREMAN,
-      builds: energy => MinionBuilders[MinionTypes.FOREMAN](energy)
+      builds: energy => bestTierAvailable(this.missionData.office, buildForeman(energy))
     }),
     hauler: new CreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy)
+      builds: energy => buildAccountant(energy)
     })
   };
 
@@ -43,9 +46,7 @@ export class MineMission extends MissionImplementation {
     super(missionData, id);
 
     const energy = Game.rooms[this.missionData.office].energyCapacityAvailable;
-    this.estimatedEnergyRemaining ??=
-      maxBuildCost(MinionBuilders[MinionTypes.FOREMAN](energy)) +
-      maxBuildCost(MinionBuilders[MinionTypes.ACCOUNTANT](energy));
+    this.estimatedEnergyRemaining ??= maxBuildCost(buildForeman(energy)) + maxBuildCost(buildAccountant(energy));
   }
   static fromId(id: MineMission['id']) {
     return super.fromId(id) as MineMission;

@@ -1,7 +1,8 @@
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -10,6 +11,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
@@ -32,7 +34,7 @@ export class PlunderMission extends MissionImplementation {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.SURPLUS,
-      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy),
+      builds: energy => buildAccountant(energy),
       count: current => {
         const capacity = Memory.rooms[this.missionData.targetRoom].plunder?.capacity ?? 0;
         if (capacity > current.map(c => c.store.getCapacity()).reduce(sum, 0)) {
@@ -75,6 +77,10 @@ export class PlunderMission extends MissionImplementation {
     const { haulers } = creeps;
     data.assignments ??= {};
     const plunder = Memory.rooms[data.targetRoom]?.plunder;
+    console.log('office', data.office, 'targetRoom', data.targetRoom, 'plunder', JSON.stringify(plunder));
+    if (!plunder && haulers.length === 0) {
+      this.status = MissionStatus.DONE;
+    }
     const { resources } = plunder ?? {};
 
     for (const creep of haulers) {

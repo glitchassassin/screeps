@@ -9,7 +9,9 @@ import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
 import { BoostOrder } from 'Structures/Labs/LabOrder';
-import { CreepBuild, MinionTypes } from './minionTypes';
+import { bestBuildTier } from './bestBuildTier';
+import { CreepBuild } from './Builds/utils';
+import { MinionTypes } from './minionTypes';
 
 export interface SpawnOrder {
   priority: number;
@@ -21,6 +23,7 @@ export interface SpawnOrder {
     cpu: number;
     energy: number;
   };
+  onFailure: (reason: 'NO_BOOSTS' | 'OTHER') => void;
   memory: {
     role: MinionTypes;
     missionId: string;
@@ -88,48 +91,54 @@ export function spawnOrder(
     // No more available spawns
     return undefined;
   }
-  for (const build of order.builds) {
-    const { body, boosts } = build;
-    const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
-    const estimate = order.estimate(build);
-    if (estimate.energy > remaining.energy - adjustedBudget || estimate.cpu > remaining.cpu) {
-      // build doesn't fit our budget
-      continue;
-    }
-    // check if boosts are available
-    let boostOrder: BoostOrder | undefined;
-    try {
-      boostOrder = orderBoosts(office, order.name, boosts);
-    } catch (e) {
-      console.log(e);
-      continue; // no distinction for not_enough_resources vs. energy
-    }
-    // Spawn is available
-    // console.log(order.data.body, order.data.name);
-    const result = spawn.spawnCreep(body, order.name, {
-      directions: order.directions,
-      memory: order.memory,
-      energyStructures: getEnergyStructures(office)
-    });
-    // console.log(order.name, 'spawn result', result);
-    if (result === OK) {
-      availableSpawns = availableSpawns.filter(s => s !== spawn);
-      if (boostOrder) {
-        Memory.offices[office].lab.boosts.push(boostOrder);
-        Memory.creeps[order.name].runState = States.GET_BOOSTED;
-      }
-    } else if (result !== ERR_NOT_ENOUGH_ENERGY && result !== ERR_BUSY) {
-      // Spawn failed un-recoverably, abandon order
-      console.log('Unrecoverable spawn error', result);
-      console.log(order.name, body.length);
-    }
-    return {
-      build,
-      estimate,
-      spawned: result === OK
-    };
+  const tier = bestBuildTier(office, [order.builds]);
+  const build = order.builds.find(b => b.tier === tier);
+  if (!build) {
+    // No valid builds
+    return undefined;
   }
-  return undefined; // no valid builds
+  const { body, boosts } = build;
+  const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
+  const estimate = order.estimate(build);
+  if (estimate.energy > remaining.energy - adjustedBudget || estimate.cpu > remaining.cpu) {
+    // No valid builds
+    return undefined;
+  }
+  // check if boosts are available
+  let boostOrder: BoostOrder | undefined;
+  try {
+    boostOrder = orderBoosts(office, order.name, boosts);
+  } catch (e) {
+    console.log(e);
+    // No valid builds
+    order.onFailure('NO_BOOSTS');
+    return undefined;
+  }
+  // Spawn is available
+  // console.log(order.data.body, order.data.name);
+  const result = spawn.spawnCreep(body, order.name, {
+    directions: order.directions,
+    memory: order.memory,
+    energyStructures: getEnergyStructures(office)
+  });
+  // console.log(order.name, 'spawn result', result);
+  if (result === OK) {
+    availableSpawns = availableSpawns.filter(s => s !== spawn);
+    if (boostOrder) {
+      Memory.offices[office].lab.boosts.push(boostOrder);
+      Memory.creeps[order.name].runState = States.GET_BOOSTED;
+    }
+  } else if (result !== ERR_NOT_ENOUGH_ENERGY && result !== ERR_BUSY) {
+    // Spawn failed un-recoverably, abandon order
+    console.log('Unrecoverable spawn error', result);
+    console.log(order.name, body.length);
+    order.onFailure('OTHER');
+  }
+  return {
+    build,
+    estimate,
+    spawned: result === OK
+  };
 }
 
 const orderBoosts = (

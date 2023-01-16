@@ -5,7 +5,8 @@ import { withdrawResourcesFromTerminal } from 'Behaviors/Labs/withdrawResources'
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { MinionTypes } from 'Minions/minionTypes';
 import { ConditionalCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/ConditionalCreepSpawner';
 import {
   BaseMissionData,
@@ -35,7 +36,7 @@ export class ScienceMission extends MissionImplementation {
     scientist: new ConditionalCreepSpawner('s', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.EFFICIENCY,
-      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, true, false),
+      builds: energy => buildAccountant(energy, 25, true, false),
       shouldSpawn: () =>
         Boolean(
           Memory.offices[this.missionData.office].lab.orders.length !== 0 ||

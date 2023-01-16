@@ -1,6 +1,7 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { signRoom } from 'Behaviors/signRoom';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAuditor } from 'Minions/Builds/auditor';
+import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import {
   BaseMissionData,
@@ -21,7 +22,7 @@ export class ExploreMission extends MissionImplementation {
     explorer: new CreepSpawner('x', this.missionData.office, {
       role: MinionTypes.AUDITOR,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.AUDITOR](energy),
+      builds: energy => buildAuditor(),
       respawn: () => true
     })
   };

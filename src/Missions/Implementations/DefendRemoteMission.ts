@@ -1,5 +1,6 @@
 import { blinkyKill } from 'Behaviors/blinkyKill';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildBlinky } from 'Minions/Builds/blinky';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -23,7 +24,7 @@ export class DefendRemoteMission extends MissionImplementation {
     blinkies: new MultiCreepSpawner('b', this.missionData.office, {
       role: MinionTypes.BLINKY,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.BLINKY](energy),
+      builds: energy => buildBlinky(energy),
       count: current => {
         if (
           this.missionData.targetRoom &&
@@ -75,7 +76,7 @@ export class DefendRemoteMission extends MissionImplementation {
       }
     }
 
-    console.log('defending remote', data.targetRoom);
+    // console.log('defending remote', data.targetRoom);
 
     for (const creep of blinkies) {
       // Try to heal

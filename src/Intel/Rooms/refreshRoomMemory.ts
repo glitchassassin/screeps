@@ -2,7 +2,7 @@ import { ScannedRoomEvent } from 'Intel/events';
 import { resourcesToPlunder } from 'Selectors/Combat/shouldPlunder';
 import { calculateThreatLevel, ThreatLevel } from 'Selectors/Combat/threatAnalysis';
 import { getRoomPathDistance } from 'Selectors/Map/getRoomPathDistance';
-import { getClosestOffice } from 'Selectors/Map/MapCoordinates';
+import { getClosestOffice, isHighway, isSourceKeeperRoom } from 'Selectors/Map/MapCoordinates';
 
 export const refreshRoomMemory = ({ room }: ScannedRoomEvent) => {
   Memory.rooms[room].rcl = Game.rooms[room].controller?.level;
@@ -31,7 +31,7 @@ export const refreshRoomMemory = ({ room }: ScannedRoomEvent) => {
     Memory.rooms[room].rclMilestones![Game.rooms[room].controller!.level] ??= Game.time;
   }
 
-  if ((Memory.rooms[room].plunder?.scanned ?? 0) + 500 < Game.time) {
+  if ((Memory.rooms[room].plunder?.scanned ?? 0) + 500 < Game.time && !isSourceKeeperRoom(room) && !isHighway(room)) {
     // If room is unowned and has resources, let's loot it!
     if (![ThreatLevel.OWNED, ThreatLevel.FRIENDLY].includes(threatLevel[0])) {
       // select plundering office

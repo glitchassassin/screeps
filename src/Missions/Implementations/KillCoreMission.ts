@@ -2,7 +2,8 @@ import { guardKill } from 'Behaviors/guardKill';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildGuard } from 'Minions/Builds/guard';
+import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import {
   BaseMissionData,
@@ -24,7 +25,7 @@ export class KillCoreMission extends MissionImplementation {
     guard: new CreepSpawner('g', this.missionData.office, {
       role: MinionTypes.GUARD,
       budget: Budget.EFFICIENCY,
-      builds: energy => MinionBuilders[MinionTypes.GUARD](energy)
+      builds: energy => buildGuard(energy)
     })
   };
 

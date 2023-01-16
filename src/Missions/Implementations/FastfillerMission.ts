@@ -1,4 +1,5 @@
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildClerk } from 'Minions/Builds/clerk';
+import { MinionTypes } from 'Minions/minionTypes';
 import { ConditionalCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/ConditionalCreepSpawner';
 import {
   BaseMissionData,
@@ -12,7 +13,7 @@ import { moveTo } from 'screeps-cartographer';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { rcl } from 'Selectors/rcl';
-import { getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { roomPlans } from 'Selectors/roomPlans';
 import { viz } from 'Selectors/viz';
 import { unpackPos } from 'utils/packrat';
 
@@ -30,10 +31,10 @@ const fastfillerSpawner = (office: string, id: string, shouldSpawn = () => true)
     role: MinionTypes.CLERK,
     budget: Budget.ESSENTIAL,
     builds: energy =>
-      MinionBuilders[MinionTypes.CLERK](
+      buildClerk(
         energy,
         (SPAWN_ENERGY_CAPACITY + EXTENSION_ENERGY_CAPACITY[rcl(office)]) / CARRY_CAPACITY,
-        getSpawns(office).length !== 3
+        true // getSpawns(office).length !== 3 // fixed-pos fastfillers don't spawn correctly consistently
       ),
     shouldSpawn: () => hasEnergyIncome(office) && shouldSpawn()
   });

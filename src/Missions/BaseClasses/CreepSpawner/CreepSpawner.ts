@@ -13,9 +13,9 @@ export class CreepSpawner extends BaseCreepSpawner {
     id: string,
     office: string,
     public props: BaseCreepSpawner['props'] & { prespawn?: boolean; respawn?: () => boolean },
-    public onSpawn?: BaseCreepSpawner['onSpawn']
+    public eventHandlers?: BaseCreepSpawner['eventHandlers']
   ) {
-    super(id, office, props, onSpawn);
+    super(id, office, props, eventHandlers);
   }
 
   spawn(missionId: CreepMemory['missionId'], priority: number) {

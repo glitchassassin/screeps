@@ -1,4 +1,5 @@
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildClerk } from 'Minions/Builds/clerk';
+import { MinionTypes } from 'Minions/minionTypes';
 import { ConditionalCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/ConditionalCreepSpawner';
 import {
   BaseMissionData,
@@ -20,7 +21,7 @@ export class HQLogisticsMission extends MissionImplementation {
     clerk: new ConditionalCreepSpawner('x', this.missionData.office, {
       role: MinionTypes.CLERK,
       budget: Budget.ESSENTIAL,
-      builds: energy => MinionBuilders[MinionTypes.CLERK](energy),
+      builds: energy => buildClerk(energy, undefined, true),
       shouldSpawn: () => hasEnergyIncome(this.missionData.office)
     })
   };

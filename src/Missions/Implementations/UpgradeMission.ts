@@ -4,7 +4,9 @@ import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { bestTierAvailable } from 'Minions/bestBuildTier';
+import { buildResearch } from 'Minions/Builds/research';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
   BaseMissionData,
@@ -28,7 +30,7 @@ export class UpgradeMission extends MissionImplementation {
     upgraders: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.RESEARCH,
       budget: Budget.SURPLUS,
-      builds: energy => MinionBuilders[MinionTypes.RESEARCH](energy),
+      builds: energy => bestTierAvailable(this.missionData.office, buildResearch(energy)),
       count: current => {
         if (
           rcl(this.missionData.office) < 2 &&

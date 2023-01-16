@@ -32,7 +32,7 @@ export function getBudgetAdjustment(office: string, budget: Budget) {
     if ([Budget.ESSENTIAL, Budget.ECONOMY].includes(budget)) {
       return -Infinity;
     } else if ([Budget.EFFICIENCY].includes(budget)) {
-      return Game.rooms[office].energyCapacityAvailable * 2;
+      return Game.rooms[office].energyCapacityAvailable * (rcl(office) / 2);
     } else if ([Budget.SURPLUS].includes(budget)) {
       return 100000;
     } else {

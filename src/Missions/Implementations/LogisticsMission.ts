@@ -3,7 +3,8 @@ import { withdraw } from 'Behaviors/Logistics/withdraw';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { MinionTypes } from 'Minions/minionTypes';
 import { fixedCount } from 'Missions/BaseClasses';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
@@ -55,12 +56,7 @@ export class LogisticsMission extends MissionImplementation {
       budget: Budget.ESSENTIAL,
       estimatedCpuPerTick: 0.8,
       builds: energy =>
-        MinionBuilders[MinionTypes.ACCOUNTANT](
-          Math.max(100, energy / 2),
-          25,
-          this.calculated().roads,
-          this.calculated().repair
-        ),
+        buildAccountant(Math.max(100, energy / 2), 25, this.calculated().roads, this.calculated().repair),
       count: fixedCount(() =>
         roomPlans(this.missionData.office)?.headquarters?.storage.structure?.store.getUsedCapacity(RESOURCE_ENERGY)
           ? 1
@@ -75,12 +71,7 @@ export class LogisticsMission extends MissionImplementation {
       budget: Budget.ESSENTIAL,
       estimatedCpuPerTick: 0.8,
       builds: energy =>
-        MinionBuilders[MinionTypes.ACCOUNTANT](
-          Math.max(100, energy / 2),
-          25,
-          this.calculated().roads,
-          this.calculated().repair
-        ),
+        buildAccountant(Math.max(100, energy / 2), 25, this.calculated().roads, this.calculated().repair),
       count: current => {
         const neededCapacity = activeMissions(this.missionData.office)
           .filter(isMission(HarvestMission))

@@ -5,6 +5,15 @@ export const buyMarketPrice = memoizeByTick(
   (resourceType: MarketResourceConstant) =>
     Math.min(...Game.market.getAllOrders({ type: ORDER_SELL, resourceType }).map(o => o.price), Infinity)
 );
+export const buyMarketEnergyPrice = memoizeByTick(
+  (resourceType: MarketResourceConstant) => resourceType,
+  (resourceType: MarketResourceConstant) => {
+    const energyPrice = buyMarketPrice(RESOURCE_ENERGY);
+    const resourcePrice = buyMarketPrice(resourceType);
+    if (energyPrice === Infinity || energyPrice === 0) return resourcePrice;
+    return resourcePrice / energyPrice;
+  }
+);
 export const sellMarketPrice = memoizeByTick(
   (resourceType: MarketResourceConstant) => resourceType,
   (resourceType: MarketResourceConstant) =>

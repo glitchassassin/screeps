@@ -3,7 +3,9 @@ import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { ACQUIRE_MAX_RCL } from 'config';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { buildAccountant } from 'Minions/Builds/accountant';
+import { buildEngineer } from 'Minions/Builds/engineer';
+import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import { ResolvedCreeps, ResolvedMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
@@ -27,7 +29,7 @@ export class AcquireEngineerMission extends EngineerMission {
   public creeps = {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      builds: energy => MinionBuilders[MinionTypes.ACCOUNTANT](energy, 25, false, false),
+      builds: energy => buildAccountant(energy, 25, false, false),
       count: current => {
         if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL) return 0;
         const controller = Game.rooms[this.missionData.targetOffice]?.controller;
@@ -39,7 +41,7 @@ export class AcquireEngineerMission extends EngineerMission {
     }),
     engineers: new MultiCreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
-      builds: energy => MinionBuilders[MinionTypes.ENGINEER](energy, false),
+      builds: energy => buildEngineer(energy, false),
       count: current => {
         if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL) return 0;
         const controller = Game.rooms[this.missionData.targetOffice]?.controller;

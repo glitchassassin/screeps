@@ -1,16 +1,20 @@
 import { getBoosted } from 'Behaviors/getBoosted';
 import { recycle } from 'Behaviors/recycle';
 import { States } from 'Behaviors/states';
-import { MinionBuilders, MinionTypes } from 'Minions/minionTypes';
+import { bestBuildTier } from 'Minions/bestBuildTier';
+import { buildPowerbankAttacker, buildPowerbankHealer } from 'Minions/Builds/powerbank';
+import { atLeastTier, isTier } from 'Minions/Builds/utils';
+import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
+import { and, or } from 'Missions/Selectors';
 import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { combatPower } from 'Selectors/Combat/combatStats';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { maxBuildCost } from 'Selectors/minionCostPerTick';
-import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
+import { PowerBankReport } from 'Strategy/ResourceAnalysis/PowerBank';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
 import { unpackPos } from 'utils/packrat';
 import {
@@ -23,6 +27,7 @@ import {
 export interface PowerBankDuoMissionData extends BaseMissionData {
   powerBank: Id<StructurePowerBank>;
   powerBankPos: string;
+  boostTier: number;
 }
 
 export class PowerBankDuoMission extends MissionImplementation {
@@ -33,66 +38,93 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_ATTACKER,
-        builds: energy =>
-          MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](
-            energy,
-            Math.min(PowerBankDuoMission.minTier(this.report()?.distance ?? 500), this.maxTier)
-          )
+        builds: energy => buildPowerbankAttacker().filter(isTier(this.missionData.boostTier))
       },
-      creep => this.recordCreepEnergy(creep)
+      {
+        onSpawn: creep => this.recordCreepEnergy(creep),
+        onNoBoosts: () => (this.status = MissionStatus.DONE) // cancel this mission and try a new one
+      }
     ),
     healer: new CreepSpawner(
       'b',
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_HEALER,
-        builds: energy =>
-          MinionBuilders[MinionTypes.POWER_BANK_HEALER](
-            energy,
-            Math.min(PowerBankDuoMission.minTier(this.report()?.distance ?? 500), this.maxTier)
-          )
+        builds: energy => buildPowerbankHealer().filter(isTier(this.missionData.boostTier))
       },
-      creep => this.recordCreepEnergy(creep)
+      {
+        onSpawn: creep => this.recordCreepEnergy(creep),
+        onNoBoosts: () => (this.status = MissionStatus.DONE) // cancel this mission and try a new one
+      }
     )
   };
 
   priority = 8;
-  maxTier = 3;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
 
-    const energy = Game.rooms[missionData.office].energyCapacityAvailable;
-    this.estimatedEnergyRemaining ??=
-      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy)) +
-      maxBuildCost(MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy));
-
-    this.maxTier = PowerBankDuoMission.boostsAvailable(missionData.office);
+    this.estimatedEnergyRemaining ??= maxBuildCost(buildPowerbankAttacker()) + maxBuildCost(buildPowerbankHealer());
   }
   static fromId(id: PowerBankDuoMission['id']) {
     return super.fromId(id) as PowerBankDuoMission;
   }
 
-  static boostsAvailable(office: string) {
-    const energy = Game.rooms[office].energyCapacityAvailable;
-    const attacker = MinionBuilders[MinionTypes.POWER_BANK_ATTACKER](energy);
-    const healer = MinionBuilders[MinionTypes.POWER_BANK_HEALER](energy);
-    for (let i = 0; i < 3; i++) {
-      const boosts = attacker[i].boosts.concat(healer[i].boosts).reduce((sum, boost) => {
-        sum[boost.type] = boost.count * LAB_BOOST_MINERAL;
-        return sum;
-      }, {} as Record<string, number>);
-      if (Object.keys(boosts).every(boost => boostsAvailable(office, boost as MineralBoostConstant) >= boosts[boost])) {
-        return (3 - i) as 1 | 2 | 3; // boost tier
-      }
-    }
-    return 0; // no boosts available
-  }
+  static costAnalysis(office: string, report: PowerBankReport) {
+    if (!report.distance) return {};
+    // Do we have time to crack with multiple unboosted duos?
+    const timeRemaining = report.expires - Game.time;
+    const unboostedTimeToCrack = CREEP_LIFE_TIME - report.distance;
+    const timeToSpawn = 100 * CREEP_SPAWN_TIME;
 
-  static minTier(distance: number) {
+    const unboostedAttackerBuild = buildPowerbankAttacker().filter(isTier(0));
+    const unboostedAttackerDamagePerTick = unboostedAttackerBuild[0].body.reduce(
+      (sum, p) => sum + (p === ATTACK ? ATTACK_POWER : 0),
+      0
+    );
+
+    // underestimates, because spawn time assumes a single spawn instead of three at RCL8
+    const maxUnboostedDuos = (timeRemaining - unboostedTimeToCrack) / timeToSpawn;
+    const maxDamage = maxUnboostedDuos * unboostedAttackerDamagePerTick * unboostedTimeToCrack;
+
+    const canUseUnboostedDuos = maxDamage >= report.hits;
+
+    // collect viable builds
+
     const timeToBoost = 200;
-    const timeToCrack = CREEP_LIFE_TIME - timeToBoost - distance;
-    return [3031, 1112, 654, 439].findIndex(t => t < timeToCrack);
+    const timeToCrack = CREEP_LIFE_TIME - timeToBoost - report.distance;
+    const minTier = [3031, 1112, 654, 439].findIndex(t => t < timeToCrack);
+    if (minTier === -1) return {}; // if a boosted duo can't crack it, don't bother
+
+    const attackerBuilds = buildPowerbankAttacker().filter(
+      or(
+        atLeastTier(minTier),
+        and(() => canUseUnboostedDuos, isTier(0))
+      )
+    );
+    const healerBuilds = buildPowerbankHealer().filter(
+      or(
+        atLeastTier(minTier),
+        and(() => canUseUnboostedDuos, isTier(0))
+      )
+    );
+
+    // update cost to reflect multiple tier-0 duos
+    const duoCountRemaining = Math.ceil((report.duoCount ?? 1) * (report.hits / POWER_BANK_HITS));
+    [...attackerBuilds, ...healerBuilds].forEach(b => {
+      if (b.tier === 0) b.cost *= duoCountRemaining;
+    });
+
+    // get best tier
+    const bestTier = bestBuildTier(office, [attackerBuilds, healerBuilds]);
+
+    if (bestTier === undefined) return {};
+
+    // get cost to crack
+    const costToCrack =
+      maxBuildCost(attackerBuilds.filter(isTier(bestTier))) + maxBuildCost(healerBuilds.filter(atLeastTier(bestTier)));
+
+    return { attackerBuilds, healerBuilds, bestTier, costToCrack };
   }
 
   report() {
@@ -129,14 +161,7 @@ export class PowerBankDuoMission extends MissionImplementation {
 
   onStart() {
     super.onStart();
-    console.log(
-      '[PowerBankDuoMission] started targeting',
-      unpackPos(this.missionData.powerBankPos),
-      'with tier',
-      Math.min(PowerBankDuoMission.minTier(this.report()?.distance ?? 500), this.maxTier),
-      'boosts. Max tier available:',
-      this.maxTier
-    );
+    console.log('[PowerBankDuoMission] started targeting', unpackPos(this.missionData.powerBankPos));
   }
 
   onParentEnd() {

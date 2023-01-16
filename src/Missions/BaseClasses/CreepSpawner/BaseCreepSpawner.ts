@@ -1,4 +1,5 @@
-import { CreepBuild, MinionTypes } from 'Minions/minionTypes';
+import { CreepBuild } from 'Minions/Builds/utils';
+import { MinionTypes } from 'Minions/minionTypes';
 import { SpawnOrder } from 'Minions/spawnQueues';
 import { Budget } from 'Missions/Budgets';
 import { cpuEstimatePeriod } from 'Selectors/missionCpuAvailable';
@@ -8,6 +9,11 @@ declare global {
   interface CreepMemory {
     spawned?: boolean;
   }
+}
+
+export interface BaseCreepSpawnerEventHandlers {
+  onSpawn?: (creep: Creep) => void;
+  onNoBoosts?: () => void;
 }
 
 export abstract class BaseCreepSpawner {
@@ -28,7 +34,7 @@ export abstract class BaseCreepSpawner {
       budget?: Budget;
       estimate?: (build: CreepBuild) => { cpu: number; energy: number };
     },
-    public onSpawn?: (creep: Creep) => void
+    public eventHandlers?: BaseCreepSpawnerEventHandlers
   ) {}
 
   spawn(missionId: CreepMemory['missionId'], priority: number): SpawnOrder[] {
@@ -56,6 +62,11 @@ export abstract class BaseCreepSpawner {
         name: `${missionId}|${padding}`,
         builds,
         estimate: this.props.estimate ?? defaultEstimate,
+        onFailure: reason => {
+          if (reason === 'NO_BOOSTS') {
+            this.eventHandlers?.onNoBoosts?.();
+          }
+        },
         memory: {
           ...this.props.spawnData?.memory,
           role: this.props.role,
@@ -79,7 +90,7 @@ export abstract class BaseCreepSpawner {
 
   checkOnSpawn(creep: Creep, onNew?: () => void) {
     if (creep.memory.spawned) return;
-    this.onSpawn?.(creep);
+    this.eventHandlers?.onSpawn?.(creep);
     onNew?.();
     creep.memory.spawned = true;
   }
