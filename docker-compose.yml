@@ -1,0 +1,20 @@
+## Clone screeps-launcher to the same parent directory.
+## Then add the following to .env to include screeps-launcher services:
+## COMPOSE_PATH_SEPARATOR=:
+## COMPOSE_FILE=docker-compose.yml:../screeps-launcher/docker-compose.yml
+
+version: '3'
+services:
+  # Add screeps-steamless-client to screeps-launcher
+  client:
+    image: node:16
+    working_dir: /home/root/client
+    command: sh -c 'npm install --log-level=error --no-progress laverdet/screeps-steamless-client && npx screeps-steamless-client --package /screeps.nw --host 0.0.0.0 --internal_backend http://screeps:21025 --backend http://localhost:21025'
+    environment:
+      SCREEPS_NW_PATH: ${SCREEPS_NW_PATH:?"Missing screeps nw file"}
+    volumes:
+      - ${SCREEPS_NW_PATH}:/screeps.nw
+
+    ports:
+      - 8080:8080/tcp
+    restart: unless-stopped
