@@ -50,12 +50,6 @@ export function bestBuildTier(office: string, minions: CreepBuild[][]): number |
  */
 export function bestTierAvailable(office: string, builds: CreepBuild[]): CreepBuild[] {
   const bestBuild = builds.reduce((best, build) => {
-    if (!best) {
-      return build;
-    }
-    if (build.tier < best.tier) {
-      return best;
-    }
     const boostsNeeded = build.boosts.reduce((needed, b) => {
       needed[b.type] ??= 0;
       needed[b.type] += b.count;
@@ -64,6 +58,13 @@ export function bestTierAvailable(office: string, builds: CreepBuild[]): CreepBu
     const available = Object.entries(boostsNeeded).every(
       ([type, count]) => boostsAvailable(office, type as MineralBoostConstant, true) >= count
     );
+    if (!available) return best;
+    if (!best) {
+      return build;
+    }
+    if (build.tier < best.tier) {
+      return best;
+    }
     return available ? build : best;
   }, undefined as undefined | CreepBuild);
   if (bestBuild) return [bestBuild];
