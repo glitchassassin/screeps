@@ -9,7 +9,6 @@ import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { plannedFranchiseRoads } from 'Selectors/plannedFranchiseRoads';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
-import { viz } from 'Selectors/viz';
 
 export const deposit =
   (fromStorage?: boolean) =>
@@ -42,7 +41,6 @@ export const deposit =
     if (data.withdrawTarget && !fromStorage && creep.pos.roomName !== data.office) {
       followPathHomeFromSource(creep, data.office, data.withdrawTarget);
     } else {
-      viz(creep.pos.roomName).line(creep.pos, target.pos, { color: 'green' });
       moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
       const result = creep.transfer(target, RESOURCE_ENERGY);
       if (result === OK) {

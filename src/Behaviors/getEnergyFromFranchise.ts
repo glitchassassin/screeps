@@ -1,8 +1,8 @@
-import { moveTo } from 'screeps-cartographer';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { posById } from 'Selectors/posById';
 import { resourcesNearPos } from 'Selectors/resourcesNearPos';
 import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
+import { moveTo } from 'screeps-cartographer';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
 
@@ -18,7 +18,6 @@ export const getEnergyFromFranchise = profiler.registerFN((creep: Creep, office:
   if (franchiseEnergyAvailable(franchise) < 50 || creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     return BehaviorResult.SUCCESS;
   } else {
-    if (creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, pos, { color: '#ffff00' });
     // First, pick up from container
     const container = getFranchisePlanBySourceId(franchise)?.container.structure as StructureContainer | undefined;
     const resources = resourcesNearPos(pos, 1, RESOURCE_ENERGY);

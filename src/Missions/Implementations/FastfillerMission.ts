@@ -14,7 +14,6 @@ import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
-import { viz } from 'Selectors/viz';
 import { unpackPos } from 'utils/packrat';
 
 export interface FastfillerMissionData extends BaseMissionData {
@@ -141,7 +140,6 @@ export class FastfillerMission extends MissionImplementation {
         if (source) {
           const amount = Math.min(creep.store.getFreeCapacity(RESOURCE_ENERGY), source.store[RESOURCE_ENERGY]);
           creep.withdraw(source, RESOURCE_ENERGY, amount);
-          viz(creep.pos.roomName).line(creep.pos, source.pos, { color: 'red' });
           source.store[RESOURCE_ENERGY] -= amount;
         }
       }
@@ -155,7 +153,6 @@ export class FastfillerMission extends MissionImplementation {
 
         if (destination) {
           creep.transfer(destination, RESOURCE_ENERGY);
-          viz(creep.pos.roomName).line(creep.pos, destination.pos, { color: 'green' });
           destination.store[RESOURCE_ENERGY] = Math.min(
             destination.store.getCapacity(RESOURCE_ENERGY),
             destination.store[RESOURCE_ENERGY] + creep.store.getFreeCapacity(RESOURCE_ENERGY)

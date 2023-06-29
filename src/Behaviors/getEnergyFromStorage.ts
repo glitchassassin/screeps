@@ -1,7 +1,7 @@
-import { moveTo } from 'screeps-cartographer';
-import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
+import { getPrimarySpawn } from 'Selectors/getPrimarySpawn';
 import { roomPlans } from 'Selectors/roomPlans';
+import { moveTo } from 'screeps-cartographer';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
 
@@ -37,8 +37,6 @@ export const getEnergyFromStorage = profiler.registerFN(
     if (!target) {
       return BehaviorResult.FAILURE;
     }
-
-    if (creep.name.startsWith('ENGINEER')) Game.map.visual.line(creep.pos, target.pos, { color: '#00ffff' });
 
     moveTo(creep, { pos: target.pos, range: 1 });
     if (creep.withdraw(target, RESOURCE_ENERGY) === OK) {

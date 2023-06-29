@@ -14,10 +14,10 @@ import {
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
-import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
+import { moveTo } from 'screeps-cartographer';
 import { unpackPos } from 'utils/packrat';
 import { PowerBankDuoMission } from './PowerBankDuoMission';
 
@@ -173,7 +173,6 @@ export class PowerBankMission extends MissionImplementation {
             } else {
               moveTo(creep, { pos: powerBankPos, range: 3 }, { visualizePathStyle: {} });
             }
-            Game.map.visual.line(creep.pos, powerBankPos);
             return States.WITHDRAW;
           },
           [States.DEPOSIT]: (mission, creep) => {
