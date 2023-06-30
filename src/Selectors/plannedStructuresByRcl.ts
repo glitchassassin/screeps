@@ -122,10 +122,18 @@ export const plannedOfficeStructuresByRcl = (officeName: string, targetRcl?: num
   if (rcl >= 3) {
     energyStructures = energyStructures.concat(
       plans.fastfiller?.roads ?? [],
-      plans.headquarters?.roads ?? [],
-      plans.extensions?.roads ?? [],
       plans.roads?.roads ?? [],
       plannedActiveFranchiseRoads(officeName)
+    );
+  }
+  if (rcl >= 4) {
+    energyStructures = energyStructures.concat(
+      plans.headquarters?.roads ?? [],
+    );
+  }
+  if (rcl >= 5) {
+    energyStructures = energyStructures.concat(
+      plans.extensions?.roads ?? [],
     );
   }
   if (rcl >= 7) {
