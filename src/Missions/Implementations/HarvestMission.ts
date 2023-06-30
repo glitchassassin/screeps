@@ -24,7 +24,7 @@ import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
-import { memoizeByTick } from 'utils/memoizeFunction';
+import { memoizeByTick, memoizeOncePerTick } from 'utils/memoizeFunction';
 
 export interface HarvestMissionData extends BaseMissionData {
   source: Id<Source>;
@@ -153,6 +153,12 @@ export class HarvestMission extends MissionImplementation {
       (byId(this.missionData.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
     return Math.min(creepHarvestRate, maxHarvestRate);
   }
+
+  creepCost = memoizeOncePerTick(
+    () => {
+      return this.creeps.harvesters.resolved.map(creepCost).reduce(sum, 0);
+    }
+  );
 
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;

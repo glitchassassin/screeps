@@ -15,18 +15,19 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { activeMissions, isMission } from 'Missions/Selectors';
-import { byId } from 'Selectors/byId';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getFranchiseDistance } from 'Selectors/Franchises/getFranchiseDistance';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
+import { byId } from 'Selectors/byId';
+import { creepCost } from 'Selectors/minionCostPerTick';
 import { plannedActiveFranchiseRoads } from 'Selectors/plannedActiveFranchiseRoads';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { storageStructureThatNeedsEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
-import { memoizeByTick, memoizeOnce } from 'utils/memoizeFunction';
+import { memoizeByTick, memoizeOnce, memoizeOncePerTick } from 'utils/memoizeFunction';
 import { HarvestMission } from './HarvestMission';
 
 export interface LogisticsMissionData extends BaseMissionData {
@@ -93,15 +94,19 @@ export class LogisticsMission extends MissionImplementation {
     return super.fromId(id) as LogisticsMission;
   }
 
-  capacity = memoizeByTick(
-    () => '',
+  capacity = memoizeOncePerTick(
     () => {
       return this.creeps.haulers.resolved.map(c => c.store.getCapacity()).reduce(sum, 0);
     }
   );
 
-  usedCapacity = memoizeByTick(
-    () => '',
+  creepCost = memoizeOncePerTick(
+    () => {
+      return this.creeps.haulers.resolved.map(creepCost).reduce(sum, 0);
+    }
+  );
+
+  usedCapacity = memoizeOncePerTick(
     () => {
       return this.creeps.haulers.resolved.map(c => c.store.getUsedCapacity(RESOURCE_ENERGY)).reduce(sum, 0);
     }

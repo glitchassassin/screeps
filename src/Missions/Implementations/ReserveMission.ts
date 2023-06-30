@@ -12,9 +12,12 @@ import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
+import { creepCost } from 'Selectors/minionCostPerTick';
 import { prespawnByArrived, setArrived } from 'Selectors/prespawn';
+import { sum } from 'Selectors/reducers';
 import { controllerPosition } from 'Selectors/roomCache';
 import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
+import { memoizeOncePerTick } from 'utils/memoizeFunction';
 
 export interface ReserveMissionData extends BaseMissionData {
   reserveTargets?: string[];
@@ -45,6 +48,12 @@ export class ReserveMission extends MissionImplementation {
   static fromId(id: ReserveMission['id']) {
     return super.fromId(id) as ReserveMission;
   }
+
+  creepCost = memoizeOncePerTick(
+    () => {
+      return this.creeps.marketers.resolved.map(creepCost).reduce(sum, 0);
+    }
+  );
 
   run(creeps: ResolvedCreeps<ReserveMission>, missions: ResolvedMissions<ReserveMission>, data: ReserveMissionData) {
     const { marketers } = creeps;
