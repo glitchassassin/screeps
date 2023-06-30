@@ -2,7 +2,6 @@ import { withdraw } from 'Behaviors/Logistics/withdraw';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
-import { ACQUIRE_MAX_RCL } from 'config';
 import { buildAccountant } from 'Minions/Builds/accountant';
 import { buildEngineer } from 'Minions/Builds/engineer';
 import { MinionTypes } from 'Minions/minionTypes';
@@ -11,12 +10,12 @@ import { ResolvedCreeps, ResolvedMissions } from 'Missions/BaseClasses/MissionIm
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
-import { cachePath, moveByPath, moveTo } from 'screeps-cartographer';
 import { isSpawned } from 'Selectors/isSpawned';
 import { rcl } from 'Selectors/rcl';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
-import { logCpu, logCpuStart } from 'utils/logCPU';
+import { ACQUIRE_MAX_RCL } from 'config';
+import { cachePath, moveByPath, moveTo } from 'screeps-cartographer';
 import { EngineerMission, EngineerMissionData } from './EngineerMission';
 
 export interface AcquireEngineerMissionData extends EngineerMissionData {
@@ -85,24 +84,18 @@ export class AcquireEngineerMission extends EngineerMission {
   ) {
     const { engineers, haulers } = creeps;
 
-    logCpuStart();
-
     if (!officeShouldSupportAcquireTarget(data.office)) {
       this.status = MissionStatus.DONE;
     }
-
-    logCpu('should support acquire target');
 
     // cache inter-room route
     const from = roomPlans(data.office)?.headquarters?.storage.pos;
     const to = roomPlans(data.targetOffice)?.headquarters?.storage.pos;
     if (!from || !to) return;
 
-    console.log('Caching path', this.id);
     const path = cachePath(this.id, from, { pos: to, range: 1 }, { reusePath: 1500 });
 
     if (!path) console.log('Engineer cached path failed');
-    logCpu('Engineer cached path');
 
     if (rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL && engineers.length === 0) {
       this.status = MissionStatus.DONE;
@@ -122,7 +115,6 @@ export class AcquireEngineerMission extends EngineerMission {
     super.run({ engineers: engineers.filter(e => data.initialized?.includes(e.name)) }, missions, {
       office: data.targetOffice
     });
-    logCpu('running engineers');
 
     // run haulers
     const spawn = getSpawns(data.targetOffice).find(s => s.store.getFreeCapacity(RESOURCE_ENERGY));
@@ -169,6 +161,5 @@ export class AcquireEngineerMission extends EngineerMission {
         hauler
       );
     }
-    logCpu('running haulers');
   }
 }
