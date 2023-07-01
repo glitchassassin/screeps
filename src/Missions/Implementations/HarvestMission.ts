@@ -147,6 +147,7 @@ export class HarvestMission extends MissionImplementation {
       return 0; // reserved or owned by someone else
     }
     const creepHarvestRate = this.creeps.harvesters.resolved
+      .filter(prespawnByArrived) // ignore creeps that will soon die
       .map(c => c.getActiveBodyparts(WORK) * HARVEST_POWER)
       .reduce(sum, 0);
     const maxHarvestRate =
