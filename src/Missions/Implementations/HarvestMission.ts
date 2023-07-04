@@ -152,7 +152,8 @@ export class HarvestMission extends MissionImplementation {
       .reduce(sum, 0);
     const maxHarvestRate =
       (byId(this.missionData.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
-    return Math.min(creepHarvestRate, maxHarvestRate);
+    const noContainer = !getFranchisePlanBySourceId(this.missionData.source)?.container.structure;
+    return Math.max(Math.min(creepHarvestRate, maxHarvestRate) - (noContainer ? 1 : 0), 0)
   }
 
   creepCost = memoizeOncePerTick(
