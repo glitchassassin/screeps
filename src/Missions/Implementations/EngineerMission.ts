@@ -28,7 +28,6 @@ import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
-import { logCpu, logCpuStart } from 'utils/logCPU';
 import { memoize, memoizeOnce, memoizeOncePerTick } from 'utils/memoizeFunction';
 
 export interface EngineerMissionData extends BaseMissionData {
@@ -129,9 +128,7 @@ export class EngineerMission extends MissionImplementation {
   }, 100);
 
   run(creeps: ResolvedCreeps<EngineerMission>, missions: ResolvedMissions<EngineerMission>, data: EngineerMissionData) {
-    logCpuStart()
     this.queue.survey();
-    logCpu('survey');
 
     const { engineers } = creeps;
     this.missionData.assignments ??= {};
@@ -143,11 +140,7 @@ export class EngineerMission extends MissionImplementation {
       (rcl(this.missionData.office) < 4 &&
         plannedFranchiseRoads.filter(r => !r.survey()).length / plannedFranchiseRoads.length < 0.8);
 
-    logCpu('shouldRequestEnergy');
-
     this.updateEstimatedEnergy();
-
-    logCpu('updateEstimatedEnergy');
 
     for (const creep of engineers.filter(isSpawned)) {
       this.missionData.assignments[creep.name] ??= {};
@@ -314,7 +307,6 @@ export class EngineerMission extends MissionImplementation {
         creep
       );
     }
-    logCpu('run creeps');
 
     this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining);
   }
