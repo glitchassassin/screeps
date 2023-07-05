@@ -1,5 +1,6 @@
 import { deposit } from 'Behaviors/Logistics/deposit';
 import { withdraw } from 'Behaviors/Logistics/withdraw';
+import { isCloserToDestination } from 'Behaviors/followPathHomeFromSource';
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
@@ -371,9 +372,14 @@ export class LogisticsMission extends MissionImplementation {
 
         const target = byId(depositAssignment.depositTarget);
         if (!target || target instanceof Creep) continue;
-        const targetPos = target.pos;
 
-        if (getRangeTo(withdraw.pos, targetPos) >= getRangeTo(deposit.pos, targetPos)) continue;
+        // check if target creep is closer
+        if (!isCloserToDestination(
+          deposit,
+          withdraw,
+          this.missionData.office,
+          depositAssignment.withdrawTarget
+        )) continue;
 
         // clear to swap
         if (deposit.transfer(withdraw, RESOURCE_ENERGY) === OK) {
