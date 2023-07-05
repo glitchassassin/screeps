@@ -9,7 +9,7 @@ export const repairThreshold = (structure: PlannedStructure<BuildableStructureCo
   if (structure.structureType === STRUCTURE_ROAD) {
     return (structure.structure?.hitsMax ?? ROAD_HITS) * 0.5;
   } else if (barrierThresholdTypes.includes(structure.structureType)) {
-    return CARRY_CAPACITY * 10;
+    return CARRY_CAPACITY * REPAIR_POWER * 0.1; // 10% of a carry's worth of repair hits
   } else {
     return 0;
   }
