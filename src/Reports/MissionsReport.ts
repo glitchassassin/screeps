@@ -3,7 +3,7 @@ import { MissionStatus } from 'Missions/Mission';
 import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
-import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
+import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 
 const buildMissionsTable = (room: string, missions: MissionImplementation[]) => {
   let estimatedCPU = 0;
@@ -82,7 +82,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
   }
   table.push(['---', '---', '---', '---', '---', '---']);
   table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`, '']);
-  table.push(['Available', '', Game.time, missionCpuAvailable(room).toFixed(2), missionEnergyAvailable(room), '']);
+  table.push(['Available', '', Game.time, missionCpuAvailable(room).toFixed(2), MissionEnergyAvailable[room], '']);
   table.push(['Accuracy', '', '', '', '', cpuDelta.toFixed(2)]);
   // console.log(room, cpuDelta, cpuDelta * creepCount);
   return table;

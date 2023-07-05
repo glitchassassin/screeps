@@ -1,7 +1,7 @@
 import { MISSION_HISTORY_LIMIT } from 'config';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
 import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
-import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
+import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 
 const missionsStatsTable = (room: string) => {
   const missionStats: Record<
@@ -55,7 +55,7 @@ const missionsStatsTable = (room: string) => {
   table.push([
     'Available',
     missionCpuAvailable(room).toFixed(2),
-    missionEnergyAvailable(room),
+    MissionEnergyAvailable[room],
     `${totalEnergy} (${(totalEnergy / MISSION_HISTORY_LIMIT).toFixed(0)}/t)`
   ]);
   return table;

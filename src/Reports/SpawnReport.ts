@@ -3,7 +3,7 @@ import { getBudgetAdjustment } from 'Missions/Budgets';
 import { spawnRequests } from 'Missions/Control';
 import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { missionEnergyAvailable } from 'Selectors/missionEnergyAvailable';
+import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 import { sum } from 'Selectors/reducers';
 
 export default () => {
@@ -11,7 +11,7 @@ export default () => {
     let table = [];
     const data = (spawnRequests.get(room) ?? []).sort((a, b) => b.priority - a.priority);
     const energy =
-      missionEnergyAvailable(room) -
+      MissionEnergyAvailable[room] -
       activeMissions(room)
         .map(m => m.energyRemaining())
         .reduce(sum, 0);
