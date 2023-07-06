@@ -16,7 +16,7 @@ export const followPathHomeFromSource = (creep: Creep, office: string, sourceId:
 
 export function isCloserToDestination(origin: Creep, target: Creep, office: string, sourceId?: Id<Source>) {
   // default to "go home" path
-  let creepPath = getCachedPath(office + sourceId);
+  let creepPath = getCachedPath(office + sourceId)?.reverse();
   if (!sourceId || origin.pos.roomName === office || franchiseRoadsToBuild(office, sourceId).length || !creepPath) {
     // use creep-cached path instead
     creepPath = getCachedPath(Keys.creepKey(origin, '_cp'), { cache: CachingStrategies.HeapCache })
