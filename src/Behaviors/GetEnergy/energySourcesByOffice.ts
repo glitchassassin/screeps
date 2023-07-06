@@ -34,7 +34,6 @@ export const energySourcesByOffice = memoizeByTick(
       }))
       .filter(
         source =>
-          (shouldHarvest || source.pos.roomName !== office) &&
           ((shouldGetFromFranchise && franchiseEnergyAvailable(source.id) >= 50) ||
             (shouldHarvest && !franchiseIsFull(office, source.id) && source.energy > 0))
       )
