@@ -94,6 +94,7 @@ const shouldPostponeAcquire = (roomName: string) => {
 
 export const acquireTargetIsValid = (roomName: string) => {
   return (
+    Memory.rooms[roomName] &&
     Memory.rooms[roomName].eligibleForOffice &&
     (!Memory.rooms[roomName].owner ||
       (Memory.rooms[roomName].owner === 'LordGreywether' && (Game.rooms[roomName]?.controller?.level ?? 0) < 4)) &&
