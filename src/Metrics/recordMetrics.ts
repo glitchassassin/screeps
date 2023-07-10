@@ -1,14 +1,13 @@
+import { HarvestMission } from 'Missions/Implementations/HarvestMission';
 import { LogisticsMission } from 'Missions/Implementations/LogisticsMission';
 import { activeMissions, isMission } from 'Missions/Selectors';
-import { Metrics } from 'screeps-viz';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
-import { franchiseIncome } from 'Selectors/Franchises/franchiseIncome';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getActualEnergyAvailable } from 'Selectors/getActualEnergyAvailable';
 import { sum } from 'Selectors/reducers';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
-import profiler from 'utils/profiler';
+import { Metrics } from 'screeps-viz';
 import { heapMetrics } from './heapMetrics';
 
 declare global {
@@ -52,7 +51,7 @@ declare global {
   }
 }
 
-export const recordMetrics = profiler.registerFN(() => {
+export const recordMetrics = () => {
   let heapStats = Game.cpu.getHeapStatistics?.();
   let stats = {
     time: Game.time,
@@ -100,6 +99,31 @@ export const recordMetrics = profiler.registerFN(() => {
     const spawnEfficiency = spawns.length ? spawns.filter(s => s.spawning).length / spawns.length : 0;
     Metrics.update(heapMetrics[office].spawnEfficiency, spawnEfficiency, 100);
 
+    // mission statistics
+    const { franchiseIncome, logisticsCapacity, logisticsUsedCapacity, missionStats } = activeMissions(office)
+      .reduce(
+        (sum, mission) => {
+          if (isMission(LogisticsMission)(mission)) {
+            sum.logisticsCapacity += mission.capacity();
+            sum.logisticsUsedCapacity += mission.usedCapacity();
+          } else if (isMission(HarvestMission)(mission)) {
+            sum.franchiseIncome += mission.harvestRate();
+          }
+
+          sum.missionStats[mission.constructor.name] ??= { cpu: 0, energy: 0 };
+          sum.missionStats[mission.constructor.name].cpu = mission.actualCpuPerCreep() - mission.estimatedCpuPerCreep();
+          sum.missionStats[mission.constructor.name].energy += mission.energyUsed();
+
+          return sum;
+        },
+        {
+          franchiseIncome: 0,
+          logisticsCapacity: 0,
+          logisticsUsedCapacity: 0,
+          missionStats: {} as Record<string, { cpu: number; energy: number }>
+        }
+      )
+
     Memory.stats.offices[office] = {
       ...Memory.stats.offices[office],
       controllerProgress: Game.rooms[office].controller?.progress ?? 0,
@@ -115,25 +139,14 @@ export const recordMetrics = profiler.registerFN(() => {
       energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
       spawnUptime: getSpawns(office).filter(s => s.spawning).length,
       storageLevel: storageEnergyAvailable(office),
-      franchiseIncome: franchiseIncome(office),
-      logisticsCapacity: activeMissions(office)
-        .filter(isMission(LogisticsMission))
-        .map(m => m.capacity())
-        .reduce(sum, 0),
-      logisticsUsedCapacity: activeMissions(office)
-        .filter(isMission(LogisticsMission))
-        .map(m => m.usedCapacity())
-        .reduce(sum, 0),
+      franchiseIncome,
+      logisticsCapacity,
+      logisticsUsedCapacity,
       franchiseEnergy: franchisesByOffice(office)
         .map(({ source }) => franchiseEnergyAvailable(source))
         .reduce(sum, 0),
       terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
-      missions: activeMissions(office).reduce((sum, mission) => {
-        sum[mission.constructor.name] ??= { cpu: 0, energy: 0 };
-        sum[mission.constructor.name].cpu = mission.actualCpuPerCreep() - mission.estimatedCpuPerCreep();
-        sum[mission.constructor.name].energy += mission.energyUsed();
-        return sum;
-      }, {} as Record<string, { cpu: number; energy: number }>)
+      missions: missionStats
     };
   }
-}, 'recordMetrics');
+};

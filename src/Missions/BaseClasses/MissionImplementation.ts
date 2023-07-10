@@ -1,7 +1,7 @@
 import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
-import { minionCost } from 'Selectors/minionCostPerTick';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
+import { minionCost } from 'Selectors/minionCostPerTick';
 import { sum } from 'Selectors/reducers';
 import { BaseCreepSpawner } from './CreepSpawner/BaseCreepSpawner';
 import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
@@ -59,9 +59,19 @@ export function cleanMissions() {
 }
 
 export function purgeOrphanedMissions() {
-  for (const missionId in Memory.missions) {
-    if (singletons.has(missionId)) continue;
-    endAndReportMission(missionId);
+  if (Game.time % 100 === 0) {
+    // Clean up unparented missions
+    for (const missionId in Memory.missions) {
+      if (singletons.has(missionId)) continue;
+      endAndReportMission(missionId);
+    }
+    // purge lingering singletons
+    for (const id of singletons.keys()) {
+      if (!Memory.missions[id]) {
+        console.log("Lingering singleton detected")
+        singletons.delete(id);
+      }
+    }
   }
 }
 
