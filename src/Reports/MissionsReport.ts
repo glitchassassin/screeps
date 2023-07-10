@@ -2,7 +2,7 @@ import { MissionImplementation } from 'Missions/BaseClasses/MissionImplementatio
 import { MissionStatus } from 'Missions/Mission';
 import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
+import { cpuEstimatePeriod, missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 
 const buildMissionsTable = (room: string, missions: MissionImplementation[]) => {
@@ -49,8 +49,9 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         cpuPerCreep: 0
       }
     };
+    const duration = (Game.time - Memory.missions[mission.id].started);
     entry.count += mission.creepCount();
-    entry.actual.cpu += mission.cpuUsed();
+    entry.actual.cpu += (mission.cpuUsed() / duration) * cpuEstimatePeriod(); // average actual CPU over estimate period
     entry.actual.energy += mission.energyUsed();
     entry.actual.cpuPerCreep = mission.actualCpuPerCreep();
     entry.estimate.cpu += mission.cpuRemaining();
@@ -66,7 +67,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         `${o.type} (${o.count})`,
         o.priority.toFixed(2),
         o.status,
-        `${o.estimate.cpu.toFixed(2)}`,
+        `${o.actual.cpu.toFixed(2)}/${o.estimate.cpu.toFixed(2)}`,
         `${o.estimate.energy.toFixed(0)}`,
         `${((o.actual.cpuPerCreep - o.estimate.cpuPerCreep) * o.count).toFixed(2)} (${(
           o.actual.cpuPerCreep - o.estimate.cpuPerCreep

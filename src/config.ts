@@ -13,11 +13,11 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard2' ? 0 : 3;
 /**
  * Number of offices to control
  */
-export const OFFICE_LIMIT = () => {
+export const OFFICE_LIMIT = (() => {
   if (Game.shard.name === 'shard2') return 1;
   if (Game.shard.name === 'screepsplus0') return 1;
   return Infinity;
-}
+})();
 
 /**
  * Support new rooms until they reach this RCL

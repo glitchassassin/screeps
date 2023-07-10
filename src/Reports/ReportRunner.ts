@@ -3,7 +3,6 @@ import FacilitiesReport from 'Reports/FacilitiesReport';
 import MilestonesReport from 'Reports/MilestonesReport';
 import RoomPlanningReport from 'Reports/RoomPlanningReport';
 import profiler from 'utils/profiler';
-import EstimatesReport from './EstimatesReport';
 import FranchiseReport from './FranchiseReport';
 import LabsReport from './LabsReport';
 import MarketReport from './MarketReport';
@@ -58,8 +57,7 @@ register('office', OfficeReport);
 register('missions', MissionsReport);
 register('spawns', SpawnReport);
 register('franchise', FranchiseReport);
-register('estimates', EstimatesReport);
 register('remotes', RemotesReport);
 register('power', PowerReport);
 
-global.d('milestones');
+global.d('missions');
