@@ -2,11 +2,12 @@
 import 'Missions/MemoryFixes';
 import 'reflect-metadata';
 import 'ts-polyfill/lib/es2019-array';
+import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import MemHack from 'utils/memhack';
 import profiler from 'utils/profiler';
-import { onRespawn } from 'utils/ResetMemoryOnRespawn';
 import './utils/RoomVisual';
 // game loop
+import { cpuOverhead } from 'Selectors/cpuOverhead';
 import { gameLoop } from 'gameLoop';
 
 try {
@@ -50,10 +51,19 @@ onRespawn(global.purge);
 
 export const loop = () => {
   if (Game.cpu.bucket < 500) {
-    console.log(`Waiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
+    console.log(`\nWaiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
+    let missionsCpu = 0;
+    let otherCpu = 0;
     for (const k in Memory.stats.profiling) {
       console.log('-', k, Memory.stats.profiling[k]);
+      if (k === 'executeMissions' || k === 'allocateMissions') {
+        missionsCpu += Memory.stats.profiling[k];
+      } else {
+        otherCpu += Memory.stats.profiling[k];
+      }
     }
+    console.log(`Missions CPU: ${missionsCpu} / ${Game.cpu.limit - cpuOverhead()}`);
+    console.log(`Other CPU: ${otherCpu} / ${cpuOverhead()}`);
     return; // If the bucket gets really low, let it rebuild
   }
   MemHack.pretick();

@@ -2,8 +2,8 @@ import { CreepBuild } from 'Minions/Builds/utils';
 import { MinionTypes } from 'Minions/minionTypes';
 import { SpawnOrder } from 'Minions/spawnQueues';
 import { Budget } from 'Missions/Budgets';
-import { cpuEstimatePeriod } from 'Selectors/missionCpuAvailable';
 import { spawnEnergyAvailable } from 'Selectors/spawnEnergyAvailable';
+import { CPU_ESTIMATE_PERIOD } from 'config';
 
 declare global {
   interface CreepMemory {
@@ -44,7 +44,7 @@ export abstract class BaseCreepSpawner {
     const defaultEstimate = (build: CreepBuild) => {
       const lifetime = build.body.includes(CLAIM) ? CREEP_CLAIM_LIFE_TIME : CREEP_LIFE_TIME;
       return {
-        cpu: (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick) * Math.min(cpuEstimatePeriod(), lifetime),
+        cpu: (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick) * Math.min(CPU_ESTIMATE_PERIOD, lifetime),
         energy: 0
       };
     };

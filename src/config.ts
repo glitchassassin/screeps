@@ -114,3 +114,5 @@ export const THREAT_TOLERANCE = {
     8: 120
   } as Record<number, number>
 };
+
+export const CPU_ESTIMATE_PERIOD = 10000 / Game.cpu.limit;

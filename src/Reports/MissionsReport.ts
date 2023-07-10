@@ -1,8 +1,9 @@
+import { CPU_ESTIMATE_PERIOD } from 'config';
 import { MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { MissionStatus } from 'Missions/Mission';
 import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
-import { cpuEstimatePeriod, missionCpuAvailable } from 'Selectors/missionCpuAvailable';
+import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 
 const buildMissionsTable = (room: string, missions: MissionImplementation[]) => {
@@ -51,7 +52,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     };
     const duration = (Game.time - Memory.missions[mission.id].started);
     entry.count += mission.creepCount();
-    entry.actual.cpu += (mission.cpuUsed() / duration) * cpuEstimatePeriod(); // average actual CPU over estimate period
+    entry.actual.cpu += (mission.cpuUsed() / duration) * CPU_ESTIMATE_PERIOD; // average actual CPU over estimate period
     entry.actual.energy += mission.energyUsed();
     entry.actual.cpuPerCreep = mission.actualCpuPerCreep();
     entry.estimate.cpu += mission.cpuRemaining();

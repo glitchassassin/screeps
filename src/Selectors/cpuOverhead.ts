@@ -1,10 +1,12 @@
+import { CPU_ESTIMATE_PERIOD } from "config";
+
 declare global {
   interface Memory {
     overhead: number;
   }
 }
 
-const overhead: number[] = new Array(500).fill(Memory.overhead ?? 0);
+const overhead: number[] = new Array(CPU_ESTIMATE_PERIOD).fill(Memory.overhead ?? 0);
 
 let missionCpu = 0;
 export function recordMissionCpu(cpu: number) {
