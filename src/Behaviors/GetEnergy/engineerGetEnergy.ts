@@ -1,8 +1,8 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { HarvestMission } from 'Missions/Implementations/HarvestMission';
 import { activeMissions, isMission } from 'Missions/Selectors';
-import { byId } from 'Selectors/byId';
 import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
+import { byId } from 'Selectors/byId';
 import { posById } from 'Selectors/posById';
 import { energySourcesByOffice } from './energySourcesByOffice';
 import { fromDroppedResource } from './fromDroppedResource';
@@ -43,11 +43,6 @@ export const engineerGetEnergy = (
   let result = BehaviorResult.INPROGRESS;
 
   if (!source || source instanceof Source) {
-    // is a source or remote franchise with no visibility, or is gone
-    if (!source && !posById(creep.memory.getEnergySource)) {
-      // source is gone
-      result = BehaviorResult.FAILURE;
-    }
     if (
       activeMissions(office)
         .filter(isMission(HarvestMission))
@@ -55,8 +50,12 @@ export const engineerGetEnergy = (
     ) {
       // source is being harvested by another creep
       result = fromFranchise(creep, creep.memory.getEnergySource as Id<Source>);
-    } else {
+    } else if (posById(creep.memory.getEnergySource)) {
+      // Known source, but not being harvested
       result = fromSource(creep, creep.memory.getEnergySource as Id<Source>);
+    } else {
+      // not a source (or is gone?)
+      result = BehaviorResult.FAILURE;
     }
   } else if (source instanceof Resource) {
     result = fromDroppedResource(creep, source.id);

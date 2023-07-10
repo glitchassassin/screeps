@@ -6,6 +6,7 @@ let reportedTick = 0;
 export const logCpuStart = () => (last = Game.cpu.getUsed());
 export const logCpu = (context: string) => {
   if (reportedTick !== Game.time) {
+    console.log('--- logCpu ---');
     for (let [c, data] of log) {
       const invocationsPerTick = data[0] / loggedTicks;
       const averagePerInvocation = data[1] / data[0];

@@ -1,6 +1,7 @@
-import { moveTo } from 'screeps-cartographer';
+import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { byId } from 'Selectors/byId';
 import { posById } from 'Selectors/posById';
+import { moveTo } from 'screeps-cartographer';
 import { BehaviorResult } from '../Behavior';
 
 /**
@@ -10,7 +11,11 @@ import { BehaviorResult } from '../Behavior';
 export const fromSource = (creep: Creep, sourceId: Id<Source>) => {
   const sourcePos = posById(sourceId);
   if (!sourcePos) return BehaviorResult.FAILURE;
-  moveTo(creep, { pos: sourcePos, range: 1 });
+  moveTo(
+    creep,
+    { pos: sourcePos, range: 1 },
+    { roomCallback: defaultRoomCallback({ ignoreFranchises: true }), }
+  );
 
   // failure cases
   const source = byId(sourceId);

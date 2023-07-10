@@ -103,6 +103,7 @@ export class AcquireEngineerMission extends EngineerMission {
 
     // run engineers
     data.initialized ??= [];
+    data.initialized = data.initialized.filter(name => Game.creeps[name]); // purge dead creeps
     for (const engineer of engineers) {
       // move engineer to target room by following preset path
       if (data.initialized.includes(engineer.name)) continue;
