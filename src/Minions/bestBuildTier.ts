@@ -12,8 +12,6 @@ export function bestBuildTier(office: string, minions: CreepBuild[][]): number |
     return undefined;
   }
 
-  if (minions.length > 1) console.log('evaluating multiple minions for office', office);
-
   // collect minions by tier
   const minionsByTier = tiers.reduce((byTier, t) => {
     byTier[t] = minions.map(m => m.find(b => b.tier === t)!);
@@ -38,7 +36,6 @@ export function bestBuildTier(office: string, minions: CreepBuild[][]): number |
   return availableTiers.reduce(
     (best, t) => {
       const cost = minions.reduce((sum, m) => sum + m.find(b => b.tier === t)!.cost, 0);
-      if (minions.length > 1) console.log('tier', t, 'cost', cost, 'best', best.cost);
       return cost < best.cost ? { tier: t, cost } : best;
     },
     { tier: 0, cost: Infinity }
@@ -68,9 +65,5 @@ export function bestTierAvailable(office: string, builds: CreepBuild[]): CreepBu
     return available ? build : best;
   }, undefined as undefined | CreepBuild);
   if (bestBuild) return [bestBuild];
-  console.log('No builds available:');
-  for (const build of builds) {
-    console.log(JSON.stringify(build));
-  }
   return [];
 }
