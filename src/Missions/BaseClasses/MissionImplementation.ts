@@ -76,19 +76,13 @@ export function purgeOrphanedMissions() {
 }
 
 function endAndReportMission(missionId: MissionImplementation['id']) {
-  const mission = Memory.missions[missionId];
-  if (!mission) return;
-  // file mission report
-  Memory.missionReports.push({
-    type: mission.constructor.name,
-    duration: Game.time - Memory.missions[missionId].started,
-    cpuUsed: Memory.missions[missionId].cpuUsed,
-    energyUsed: Memory.missions[missionId].energyUsed,
-    finished: Game.time,
-    office: mission.data.office
-  });
+  const mission = singletons.get(missionId);
+  if (mission) {
+    // file mission report
+    Memory.missionReports.push(mission.missionReport());
+    singletons.delete(missionId);
+  }
   delete Memory.missions[missionId];
-  singletons.delete(missionId);
 }
 
 export class MissionImplementation {
@@ -121,6 +115,17 @@ export class MissionImplementation {
       missions: {},
       creeps: {}
     };
+  }
+
+  missionReport() {
+    return {
+      type: this.constructor.name,
+      duration: Game.time - Memory.missions[this.id].started,
+      cpuUsed: Memory.missions[this.id].cpuUsed,
+      energyUsed: Memory.missions[this.id].energyUsed,
+      finished: Game.time,
+      office: this.missionData.office
+    }
   }
 
   get status() {
