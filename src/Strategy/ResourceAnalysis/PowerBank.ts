@@ -88,7 +88,6 @@ const evaluatePowerBank = (office: string, origin: RoomPosition, powerBank: Stru
   const haulerCount = Math.ceil(report.amount / (CARRY_CAPACITY * 25));
   const energy = Game.rooms[office].energyCapacityAvailable;
   const costAnalysis = PowerBankDuoMission.costAnalysis(office, report);
-  console.log(office, powerBank.pos, JSON.stringify(costAnalysis));
   const duoCost = costAnalysis.costToCrack ?? Infinity;
 
   const cost = duoCost + maxBuildCost(buildAccountant(energy, 25, false, false)) * haulerCount;
