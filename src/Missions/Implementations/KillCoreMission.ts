@@ -65,6 +65,8 @@ export class KillCoreMission extends MissionImplementation {
       }
     }
 
+    this.logCpu("overhead");
+
     if (!guard) return;
 
     runStates(
@@ -93,5 +95,7 @@ export class KillCoreMission extends MissionImplementation {
       this.missionData,
       guard
     );
+
+    this.logCpu("creeps");
   }
 }

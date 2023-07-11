@@ -57,6 +57,9 @@ export class AcquireLawyerMission extends MissionImplementation {
     if (this.creeps.lawyer.died && !Game.rooms[data.targetOffice]?.controller?.my) {
       this.status = MissionStatus.DONE;
     }
+
+    this.logCpu("overhead");
+
     if (!lawyer) return;
 
     if (data.targetOffice && Memory.rooms[data.targetOffice]) {
@@ -84,5 +87,7 @@ export class AcquireLawyerMission extends MissionImplementation {
       signRoom(lawyer, pos.roomName);
       lawyer.claimController(controller);
     }
+
+    this.logCpu("creeps");
   }
 }

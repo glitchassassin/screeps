@@ -110,6 +110,8 @@ export class FastfillerMission extends MissionImplementation {
     const shouldTransfer = (s: AnyStoreStructure | undefined) =>
       s && s.store[RESOURCE_ENERGY] < s.store.getCapacity(RESOURCE_ENERGY);
 
+    this.logCpu("overhead");
+
     for (const { creep, pos, structures } of positions) {
       if (!creep) continue;
       if (creep) moveTo(creep, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) }); // even if already there, this will prevent shoving
@@ -161,5 +163,7 @@ export class FastfillerMission extends MissionImplementation {
         }
       }
     }
+
+    this.logCpu("creeps");
   }
 }

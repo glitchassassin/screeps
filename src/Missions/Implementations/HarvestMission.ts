@@ -186,6 +186,8 @@ export class HarvestMission extends MissionImplementation {
 
     const franchisePos = posById(source);
 
+    this.logCpu("overhead");
+
     for (const creep of harvesters) {
       const franchise = Memory.offices[office].franchises[data.source] ?? { scores: [] };
       Memory.offices[office].franchises[data.source] = franchise;
@@ -271,5 +273,7 @@ export class HarvestMission extends MissionImplementation {
         LogisticsLedger.record(office, 'harvest', amount);
       }
     }
+
+    this.logCpu("creeps");
   }
 }

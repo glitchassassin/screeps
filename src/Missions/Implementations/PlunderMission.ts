@@ -83,6 +83,8 @@ export class PlunderMission extends MissionImplementation {
     }
     const { resources } = plunder ?? {};
 
+    this.logCpu("overhead");
+
     for (const creep of haulers) {
       data.assignments[creep.name] ??= {};
       runStates(
@@ -178,5 +180,7 @@ export class PlunderMission extends MissionImplementation {
         creep
       );
     }
+
+    this.logCpu("creeps");
   }
 }

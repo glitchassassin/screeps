@@ -96,6 +96,8 @@ export class HQLogisticsMission extends MissionImplementation {
 
     const powerSpawnPowerNeeded = powerSpawn ? powerSpawn.store.getFreeCapacity(RESOURCE_POWER) : 0;
 
+    this.logCpu("overhead");
+
     // Emergency provision for over-full Storage
     if (storage && storage.store.getFreeCapacity() < 5000) {
       !withdraw && clerk.withdraw(storage, RESOURCE_ENERGY);
@@ -181,5 +183,7 @@ export class HQLogisticsMission extends MissionImplementation {
       transfer = true;
       // console.log(clerk.name, 'transferring', amount, 'to storage')
     }
+
+    this.logCpu("creeps");
   }
 }

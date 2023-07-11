@@ -76,6 +76,8 @@ export class DefendRemoteMission extends MissionImplementation {
       }
     }
 
+    this.logCpu("overhead");
+
     // console.log('defending remote', data.targetRoom);
 
     for (const creep of blinkies) {
@@ -96,5 +98,7 @@ export class DefendRemoteMission extends MissionImplementation {
 
       blinkyKill(creep, target);
     }
+
+    this.logCpu("creeps");
   }
 }

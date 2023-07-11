@@ -409,5 +409,7 @@ export class LogisticsMission extends MissionImplementation {
         creep
       );
     }
+
+    this.logCpu("creeps");
   }
 }

@@ -143,6 +143,8 @@ export class EngineerMission extends MissionImplementation {
 
     this.updateEstimatedEnergy();
 
+    this.logCpu("overhead");
+
     for (const creep of engineers.filter(isSpawned)) {
       this.missionData.assignments[creep.name] ??= {};
       const assignment = this.missionData.assignments[creep.name];
@@ -308,6 +310,8 @@ export class EngineerMission extends MissionImplementation {
         creep
       );
     }
+
+    this.logCpu("creeps");
 
     this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining);
   }

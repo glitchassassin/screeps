@@ -42,7 +42,8 @@ export class UpgradeMission extends MissionImplementation {
         )
           return 0; // engineers will upgrade
         return 1; // spawn as many as we can use
-      }
+      },
+      estimatedCpuPerTick: 0.8,
     })
   };
 
@@ -159,5 +160,7 @@ export class UpgradeMission extends MissionImplementation {
         creep
       );
     }
+
+    this.logCpu("creeps");
   }
 }

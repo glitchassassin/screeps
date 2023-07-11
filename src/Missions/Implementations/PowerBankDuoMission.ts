@@ -246,5 +246,7 @@ export class PowerBankDuoMission extends MissionImplementation {
       }
       // logCpu('attacking');
     }
+
+    this.logCpu("creeps");
   }
 }

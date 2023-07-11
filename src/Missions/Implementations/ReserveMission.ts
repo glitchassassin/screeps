@@ -94,6 +94,8 @@ export class ReserveMission extends MissionImplementation {
       }
     }
 
+    this.logCpu("overhead");
+
     for (const creep of marketers) {
       const target = data.assignments[creep.name];
       if (!target) continue;
@@ -117,5 +119,7 @@ export class ReserveMission extends MissionImplementation {
         signRoom(creep, target);
       }
     }
+
+    this.logCpu("creeps");
   }
 }

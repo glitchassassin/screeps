@@ -101,6 +101,8 @@ export class AcquireEngineerMission extends EngineerMission {
       this.status = MissionStatus.DONE;
     }
 
+    this.logCpu("overhead");
+
     // run engineers
     data.initialized ??= [];
     data.initialized = data.initialized.filter(name => Game.creeps[name]); // purge dead creeps
@@ -162,5 +164,7 @@ export class AcquireEngineerMission extends EngineerMission {
         hauler
       );
     }
+
+    this.logCpu("creeps");
   }
 }

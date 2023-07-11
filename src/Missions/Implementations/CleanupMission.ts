@@ -111,5 +111,7 @@ export class CleanupMission extends MissionImplementation {
       data,
       janitor
     );
+
+    this.logCpu("creeps");
   }
 }

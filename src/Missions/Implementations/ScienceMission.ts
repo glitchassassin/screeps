@@ -78,6 +78,8 @@ export class ScienceMission extends MissionImplementation {
       scientist.memory.runState = States.DEPOSIT;
     }
 
+    this.logCpu("overhead");
+
     runStates(
       {
         [States.DEPOSIT]: deposit(order),
@@ -193,5 +195,7 @@ export class ScienceMission extends MissionImplementation {
       this.missionData,
       scientist
     );
+
+    this.logCpu("creeps");
   }
 }

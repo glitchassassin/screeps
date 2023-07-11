@@ -65,6 +65,8 @@ export class ExploreMission extends MissionImplementation {
       // logCpu('select a target');
     }
 
+    this.logCpu("overhead");
+
     // Do work
     if (this.missionData.exploreTarget) {
       if (!Game.rooms[this.missionData.exploreTarget]) {
@@ -106,5 +108,7 @@ export class ExploreMission extends MissionImplementation {
         return;
       }
     }
+
+    this.logCpu("creeps");
   }
 }

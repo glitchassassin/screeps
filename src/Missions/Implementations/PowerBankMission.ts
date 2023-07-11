@@ -151,6 +151,8 @@ export class PowerBankMission extends MissionImplementation {
       : undefined;
     const terminal = roomPlans(data.office)?.headquarters?.terminal.structure;
 
+    this.logCpu("overhead");
+
     for (const hauler of haulers) {
       runStates(
         {
@@ -194,5 +196,7 @@ export class PowerBankMission extends MissionImplementation {
         hauler
       );
     }
+
+    this.logCpu("creeps");
   }
 }

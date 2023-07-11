@@ -7,7 +7,7 @@ import MemHack from 'utils/memhack';
 import profiler from 'utils/profiler';
 import './utils/RoomVisual';
 // game loop
-import { cpuOverhead } from 'Selectors/cpuOverhead';
+import { allMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { gameLoop } from 'gameLoop';
 
 try {
@@ -51,22 +51,36 @@ onRespawn(global.purge);
 
 export const loop = () => {
   if (Game.cpu.bucket < 500) {
-    console.log(`\nWaiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
-    let missionsCpu = 0;
-    let otherCpu = 0;
-    for (const k in Memory.stats.profiling) {
-      console.log('-', k, Memory.stats.profiling[k]);
-      if (k === 'runMissionControl' || k === 'reconcileTraffic') {
-        missionsCpu += Memory.stats.profiling[k];
-      } else {
-        otherCpu += Memory.stats.profiling[k];
-      }
-    }
-    console.log(`Missions CPU: ${missionsCpu} / ${Game.cpu.limit - cpuOverhead()}`);
-    console.log(`Other CPU: ${otherCpu} / ${cpuOverhead()}`);
+    // console.log(`\nWaiting for bucket to reach 200 (currently ${Game.cpu.bucket})`);
+    // let missionsCpu = 0;
+    // let otherCpu = 0;
+    // for (const k in Memory.stats.profiling) {
+    //   console.log('-', k, Memory.stats.profiling[k]);
+    //   if (k === 'runMissionControl' || k === 'reconcileTraffic') {
+    //     missionsCpu += Memory.stats.profiling[k];
+    //   } else {
+    //     otherCpu += Memory.stats.profiling[k];
+    //   }
+    // }
+    // console.log(`Missions CPU: ${missionsCpu} / ${Game.cpu.limit - cpuOverhead()}`);
+    // console.log(`Other CPU: ${otherCpu} / ${cpuOverhead()}`);
     return; // If the bucket gets really low, let it rebuild
   }
   MemHack.pretick();
   // ErrorMapper.wrapLoop(mainLoop)();
   profiler.wrap(gameLoop);
+
+  const cpuStats: Record<string, {perCreep: number, overhead: number}[]> = {}
+  for (const mission of allMissions()) {
+    cpuStats[mission.constructor.name] ??= [];
+    cpuStats[mission.constructor.name].push(mission.cpuStats());
+  }
+  for (const k in cpuStats) {
+    if (cpuStats[k].length === 0) continue;
+    const { perCreep, overhead } = cpuStats[k].reduce((a, b) => ({
+      perCreep: a.perCreep + b.perCreep,
+      overhead: a.overhead + b.overhead
+    }), { perCreep: 0, overhead: 0 });
+    console.log(`${k}: perCreep (${(perCreep / cpuStats[k].length).toFixed(2)}) overhead (${(overhead / cpuStats[k].length).toFixed(2)})`);
+  }
 };

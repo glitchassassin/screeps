@@ -60,6 +60,8 @@ export class MineMission extends MissionImplementation {
     const plan = roomPlans(data.office)?.mine;
     const mine = byId(data.mineral);
     const extractor = plan?.extractor.structure;
+
+    this.logCpu("overhead");
     if (!plan || !mine || !extractor) {
       this.status = MissionStatus.DONE;
       return;
@@ -124,5 +126,7 @@ export class MineMission extends MissionImplementation {
         hauler
       );
     }
+
+    this.logCpu("creeps");
   }
 }
