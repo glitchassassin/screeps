@@ -1,8 +1,8 @@
-import { adjacentWalkablePositions, moveTo } from 'screeps-cartographer';
-import { byId } from 'Selectors/byId';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
+import { byId } from 'Selectors/byId';
 import { posById } from 'Selectors/posById';
 import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
+import { adjacentWalkablePositions, move, moveTo } from 'screeps-cartographer';
 import profiler from 'utils/profiler';
 import { BehaviorResult } from './Behavior';
 
@@ -16,14 +16,17 @@ export const harvestEnergyFromFranchise = profiler.registerFN((creep: Creep, fra
   }
 
   // Prefer to work from container position, fall back to adjacent position
-  const start = Game.cpu.getUsed();
   if (
-    plan &&
-    (creep.pos.isEqualTo(plan?.container.pos) ||
-      !Game.rooms[plan.container.pos.roomName] ||
-      plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0)
+    plan && creep.pos.isEqualTo(plan.container.pos)
   ) {
     // stay here
+    move(creep, [plan.container.pos], 3);
+  } else if (
+    plan &&
+    (!Game.rooms[plan.container.pos.roomName] ||
+      plan.container.pos.lookFor(LOOK_CREEPS).filter(c => c.id !== creep.id).length === 0)
+  ) {
+    // go to container
     moveTo(
       creep,
       { pos: plan.container.pos, range: 0 },

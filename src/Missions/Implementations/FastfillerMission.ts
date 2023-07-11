@@ -9,11 +9,12 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { refillSquares } from 'Reports/fastfillerPositions';
-import { moveTo } from 'screeps-cartographer';
+import { move, moveTo } from 'screeps-cartographer';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { rcl } from 'Selectors/rcl';
 import { roomPlans } from 'Selectors/roomPlans';
+import { memoizeOnce } from 'utils/memoizeFunction';
 import { unpackPos } from 'utils/packrat';
 
 export interface FastfillerMissionData extends BaseMissionData {
@@ -56,6 +57,15 @@ export class FastfillerMission extends MissionImplementation {
   static fromId(id: FastfillerMission['id']) {
     return super.fromId(id) as FastfillerMission;
   }
+
+  positions = memoizeOnce(() => {
+    return {
+      topLeft: unpackPos(this.missionData.refillSquares.topLeft),
+      topRight: unpackPos(this.missionData.refillSquares.topRight),
+      bottomLeft: unpackPos(this.missionData.refillSquares.bottomLeft),
+      bottomRight: unpackPos(this.missionData.refillSquares.bottomRight)
+    };
+  })
 
   run(
     creeps: ResolvedCreeps<FastfillerMission>,
@@ -102,10 +112,10 @@ export class FastfillerMission extends MissionImplementation {
     const link = plan?.link.structure;
 
     const positions = [
-      { creep: topLeft, pos: unpackPos(data.refillSquares.topLeft), structures: structures.topLeft },
-      { creep: topRight, pos: unpackPos(data.refillSquares.topRight), structures: structures.topRight },
-      { creep: bottomLeft, pos: unpackPos(data.refillSquares.bottomLeft), structures: structures.bottomLeft },
-      { creep: bottomRight, pos: unpackPos(data.refillSquares.bottomRight), structures: structures.bottomRight }
+      { creep: topLeft, pos: this.positions().topLeft, structures: structures.topLeft },
+      { creep: topRight, pos: this.positions().topRight, structures: structures.topRight },
+      { creep: bottomLeft, pos: this.positions().bottomLeft, structures: structures.bottomLeft },
+      { creep: bottomRight, pos: this.positions().bottomRight, structures: structures.bottomRight }
     ];
 
     const shouldTransfer = (s: AnyStoreStructure | undefined) =>
@@ -115,8 +125,13 @@ export class FastfillerMission extends MissionImplementation {
 
     for (const { creep, pos, structures } of positions) {
       if (!creep) continue;
-      if (creep) moveTo(creep, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) }); // even if already there, this will prevent shoving
-      if (!creep.pos.isEqualTo(pos)) continue; // wait to get to position
+
+      if (!creep.pos.isEqualTo(pos)) {
+        moveTo(creep, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) });
+        continue
+      } else {
+        move(creep, [pos], 10); // this will prevent shoving
+      }
 
       // do any adjacent structures need energy?
       const adjacentStructuresNeedEnergy =

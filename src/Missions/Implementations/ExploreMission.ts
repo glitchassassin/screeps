@@ -12,6 +12,7 @@ import {
 import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { getPatrolRoute } from 'Selectors/getPatrolRoute';
+import { roomPlans } from 'Selectors/roomPlans';
 
 export interface ExploreMissionData extends BaseMissionData {
   exploreTarget?: string | undefined;
@@ -23,7 +24,7 @@ export class ExploreMission extends MissionImplementation {
       role: MinionTypes.AUDITOR,
       budget: Budget.ESSENTIAL,
       builds: energy => buildAuditor(),
-      respawn: () => true
+      respawn: () => !roomPlans(this.missionData.office)?.backfill?.observer.structure // skip explorers once we have an observer
     })
   };
 
