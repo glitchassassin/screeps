@@ -56,7 +56,7 @@ export const loop = () => {
     let otherCpu = 0;
     for (const k in Memory.stats.profiling) {
       console.log('-', k, Memory.stats.profiling[k]);
-      if (k === 'executeMissions' || k === 'allocateMissions') {
+      if (k === 'runMissionControl' || k === 'reconcileTraffic') {
         missionsCpu += Memory.stats.profiling[k];
       } else {
         otherCpu += Memory.stats.profiling[k];

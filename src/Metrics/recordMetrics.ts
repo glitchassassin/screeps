@@ -1,12 +1,5 @@
-import { HarvestMission } from 'Missions/Implementations/HarvestMission';
-import { LogisticsMission } from 'Missions/Implementations/LogisticsMission';
-import { activeMissions, isMission } from 'Missions/Selectors';
-import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
-import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { getActualEnergyAvailable } from 'Selectors/getActualEnergyAvailable';
-import { sum } from 'Selectors/reducers';
-import { getSpawns, roomPlans } from 'Selectors/roomPlans';
-import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
+import { getSpawns } from 'Selectors/roomPlans';
 import { Metrics } from 'screeps-viz';
 import { heapMetrics } from './heapMetrics';
 
@@ -89,64 +82,61 @@ export const recordMetrics = () => {
   for (let office in Memory.offices) {
     heapMetrics[office] ??= {
       roomEnergy: Metrics.newTimeseries(),
-      buildEfficiency: Metrics.newTimeseries(),
-      storageLevel: Metrics.newTimeseries(),
       spawnEfficiency: Metrics.newTimeseries()
     };
     Metrics.update(heapMetrics[office].roomEnergy, getActualEnergyAvailable(office), 300);
-    Metrics.update(heapMetrics[office].storageLevel, storageEnergyAvailable(office), 100);
     const spawns = getSpawns(office);
     const spawnEfficiency = spawns.length ? spawns.filter(s => s.spawning).length / spawns.length : 0;
     Metrics.update(heapMetrics[office].spawnEfficiency, spawnEfficiency, 100);
 
     // mission statistics
-    const { franchiseIncome, logisticsCapacity, logisticsUsedCapacity, missionStats } = activeMissions(office)
-      .reduce(
-        (sum, mission) => {
-          if (isMission(LogisticsMission)(mission)) {
-            sum.logisticsCapacity += mission.capacity();
-            sum.logisticsUsedCapacity += mission.usedCapacity();
-          } else if (isMission(HarvestMission)(mission)) {
-            sum.franchiseIncome += mission.harvestRate();
-          }
+    // const { franchiseIncome, logisticsCapacity, logisticsUsedCapacity, missionStats } = activeMissions(office)
+    //   .reduce(
+    //     (sum, mission) => {
+    //       if (isMission(LogisticsMission)(mission)) {
+    //         sum.logisticsCapacity += mission.capacity();
+    //         sum.logisticsUsedCapacity += mission.usedCapacity();
+    //       } else if (isMission(HarvestMission)(mission)) {
+    //         sum.franchiseIncome += mission.harvestRate();
+    //       }
 
-          sum.missionStats[mission.constructor.name] ??= { cpu: 0, energy: 0 };
-          sum.missionStats[mission.constructor.name].cpu = mission.actualCpuPerCreep() - mission.estimatedCpuPerCreep();
-          sum.missionStats[mission.constructor.name].energy += mission.energyUsed();
+    //       sum.missionStats[mission.constructor.name] ??= { cpu: 0, energy: 0 };
+    //       sum.missionStats[mission.constructor.name].cpu = mission.actualCpuPerCreep() - mission.estimatedCpuPerCreep();
+    //       sum.missionStats[mission.constructor.name].energy += mission.energyUsed();
 
-          return sum;
-        },
-        {
-          franchiseIncome: 0,
-          logisticsCapacity: 0,
-          logisticsUsedCapacity: 0,
-          missionStats: {} as Record<string, { cpu: number; energy: number }>
-        }
-      )
+    //       return sum;
+    //     },
+    //     {
+    //       franchiseIncome: 0,
+    //       logisticsCapacity: 0,
+    //       logisticsUsedCapacity: 0,
+    //       missionStats: {} as Record<string, { cpu: number; energy: number }>
+    //     }
+    //   )
 
-    Memory.stats.offices[office] = {
-      ...Memory.stats.offices[office],
-      controllerProgress: Game.rooms[office].controller?.progress ?? 0,
-      controllerProgressTotal: Game.rooms[office].controller?.progressTotal ?? 0,
-      controllerLevel: Game.rooms[office].controller?.level ?? 0,
-      libraryEnergyAvailable:
-        (
-          (roomPlans(office)?.library?.link.structure ?? roomPlans(office)?.library?.container.structure) as
-            | StructureContainer
-            | StructureLink
-        )?.store[RESOURCE_ENERGY] ?? 0,
-      energyAvailable: Game.rooms[office].energyAvailable,
-      energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
-      spawnUptime: getSpawns(office).filter(s => s.spawning).length,
-      storageLevel: storageEnergyAvailable(office),
-      franchiseIncome,
-      logisticsCapacity,
-      logisticsUsedCapacity,
-      franchiseEnergy: franchisesByOffice(office)
-        .map(({ source }) => franchiseEnergyAvailable(source))
-        .reduce(sum, 0),
-      terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
-      missions: missionStats
-    };
+    // Memory.stats.offices[office] = {
+    //   ...Memory.stats.offices[office],
+    //   controllerProgress: Game.rooms[office].controller?.progress ?? 0,
+    //   controllerProgressTotal: Game.rooms[office].controller?.progressTotal ?? 0,
+    //   controllerLevel: Game.rooms[office].controller?.level ?? 0,
+    //   libraryEnergyAvailable:
+    //     (
+    //       (roomPlans(office)?.library?.link.structure ?? roomPlans(office)?.library?.container.structure) as
+    //         | StructureContainer
+    //         | StructureLink
+    //     )?.store[RESOURCE_ENERGY] ?? 0,
+    //   energyAvailable: Game.rooms[office].energyAvailable,
+    //   energyCapacityAvailable: Game.rooms[office].energyCapacityAvailable,
+    //   spawnUptime: getSpawns(office).filter(s => s.spawning).length,
+    //   storageLevel: storageEnergyAvailable(office),
+    //   franchiseIncome,
+    //   logisticsCapacity,
+    //   logisticsUsedCapacity,
+    //   franchiseEnergy: franchisesByOffice(office)
+    //     .map(({ source }) => franchiseEnergyAvailable(source))
+    //     .reduce(sum, 0),
+    //   terminalLevel: Game.rooms[office].terminal?.store.getUsedCapacity(RESOURCE_ENERGY) ?? 0,
+    //   missions: missionStats
+    // };
   }
 };

@@ -4,23 +4,16 @@ import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 import { updateMissionEnergyAvailable } from 'Selectors/Missions/updateMissionEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
-import { debugCPU } from 'utils/debugCPU';
 import { runMissions, spawnMissions } from './BaseClasses/runMissions';
 
 export function runMissionControl() {
   const before = Game.cpu.getUsed();
   updateMissionEnergyAvailable();
   registerCreeps();
-  executeMissions();
-  recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
-  debugCPU('executeMissions');
-  allocateMissions();
-  debugCPU('allocateMissions');
-  vacateSpawns();
-}
-
-function executeMissions() {
   runMissions();
+  recordMissionCpu(Math.max(0, Game.cpu.getUsed() - before));
+  allocateMissions();
+  vacateSpawns();
 }
 
 export const spawnRequests = new Map<string, SpawnOrder[]>();

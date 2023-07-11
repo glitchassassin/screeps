@@ -21,5 +21,5 @@ export function recordOverhead() {
 }
 
 export function cpuOverhead() {
-  return overhead.reduce((a, b) => a + b, 0) / overhead.length;
+  return Game.cpu.limit * 0.4 // overhead.reduce((a, b) => a + b, 0) / overhead.length;
 }

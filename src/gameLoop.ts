@@ -9,63 +9,34 @@ import { recordOverhead } from 'Selectors/cpuOverhead';
 import { displayBucket, displayGcl, displayGpl, displaySpawn } from 'Selectors/displayBucket';
 import { runScheduled } from 'Selectors/scheduledCallbacks';
 import { runStructures } from 'Structures';
+import { runTaskManager } from 'TaskManager';
 import { cleanUpCreeps } from 'utils/cleanUpCreeps';
-import { debugCPU, resetDebugCPU } from 'utils/debugCPU';
 import { initializeSpawn } from 'utils/initializeSpawns';
 
-const DEBUG_IN_MEMORY = true;
-
 export const gameLoop = () => {
-  preTick();
-  cleanUpCreeps();
-  cleanMissions();
-  displayBucket();
-  displayGcl();
-  displayGpl();
-  displaySpawn();
-  resetDebugCPU(DEBUG_IN_MEMORY);
-  debugCPU('gameLoop setup');
-  runScheduled();
-  debugCPU('Scheduled tasks');
+  runTaskManager([
+    { name: 'preTick', fn: preTick, mandatory: true }, // must run first
 
-  // Cache data where needed
-  runIntel();
-  debugCPU('runIntel');
+    { name: 'cleanUpCreeps', fn: cleanUpCreeps, runEvery: 10 },
+    { name: 'cleanMissions', fn: cleanMissions },
+    { name: 'displayBucket', fn: displayBucket },
+    { name: 'displayGcl', fn: displayGcl },
+    { name: 'displayGpl', fn: displayGpl },
+    { name: 'displaySpawn', fn: displaySpawn },
+    { name: 'runScheduled', fn: runScheduled, mandatory: true },
+    { name: 'runIntel', fn: runIntel, mandatory: true },
+    { name: 'runStructures', fn: runStructures, mandatory: true },
+    { name: 'planRooms', fn: planRooms, threshold: 5000, },
+    { name: 'recordMetrics', fn: recordMetrics },
+    { name: 'purgeOrphanedMissions', fn: purgeOrphanedMissions },
+    { name: 'runReports', fn: runReports, threshold: 1000, },
 
-  // Office loop
-  // logCpuStart()
-  runMissionControl();
-  debugCPU('Missions');
+    { name: 'runMissionControl', fn: runMissionControl, mandatory: true },
+    { name: 'reconcileTraffic', fn: reconcileTraffic, mandatory: true }, // must run after missions
+    { name: 'initializeSpawn', fn: initializeSpawn, mandatory: true },
+    { name: 'recordOverhead', fn: recordOverhead, mandatory: true }, // must run last
+  ], Game.cpu.limit * 0.4, false);
 
-  purgeOrphanedMissions();
-
-  reconcileTraffic({ visualize: false });
-  debugCPU('Traffic Management');
-
-  runStructures();
-  debugCPU('Structures');
-
-  planRooms();
-  debugCPU('planRooms');
-
-  recordMetrics();
-
-  runReports();
-
-  // Setup first spawn if needed
-  initializeSpawn();
-
-  debugCPU('metrics');
-
-  recordOverhead();
-
-  // roomPlans('W12S3')?.perimeter?.ramparts.forEach(r =>
-  //   viz(r.pos.roomName).circle(r.pos.x, r.pos.y, { radius: 0.5, fill: r.structure ? 'green' : 'red' })
-  // );
-
-  // if (Game.time % 100 === 0) reportAccuracyLedger();
-  // if (Game.time % 100 === 0) reportLogisticsLedger();
-  // if (Game.time % 100 === 0) reportHarvestLedger();
   if (Game.time % 100 === 0) {
     const memorySize = JSON.stringify(Memory).length;
     if (memorySize > 1000000) {

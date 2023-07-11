@@ -1,18 +1,18 @@
-import { MISSION_HISTORY_LIMIT } from 'config';
 import { initializeOfficeMissions } from 'Missions/initializeOfficeMissions';
 import { getSpawns } from 'Selectors/roomPlans';
-import { allMissions, MissionImplementation } from './MissionImplementation';
+import { MISSION_HISTORY_LIMIT } from 'config';
+import { MissionImplementation, allMissions } from './MissionImplementation';
 
 export function runMissions() {
   initializeOfficeMissions();
-  // debugCPU('Initializing missions');
+  // resetDebugCPU(true);
   for (const mission of allMissions()) {
     try {
       mission.execute();
     } catch (e) {
       console.log(`Error in mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
     }
-    // debugCPU(mission.constructor.name + ' ' + mission.missionData.office);
+    // debugCPU(mission.constructor.name);
   }
   Memory.missionReports ??= [];
   Memory.missionReports = Memory.missionReports.filter(r => r.finished > Game.time - MISSION_HISTORY_LIMIT);
@@ -45,6 +45,7 @@ export function spawnMissions() {
     } catch (e) {
       console.log(`Error spawning for mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
     }
+    // debugCPU("spawning " + mission.constructor.name);
   }
   return orders;
 }
