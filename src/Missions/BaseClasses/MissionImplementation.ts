@@ -21,6 +21,8 @@ declare global {
         started: number;
         status: MissionStatus;
         cpuUsed: number;
+        cpuOverhead?: number;
+        cpuPerCreep?: number;
         energyUsed: number;
         energyRemaining: number;
         missions: Record<string, string[]>;
@@ -159,8 +161,8 @@ export class MissionImplementation {
     this._cpuLog = Array(this._cpuLogCount)
       .fill(0)
       .map(() => ({
-        perCreep,
-        overhead: this.initialEstimatedCpuOverhead
+        perCreep: Memory.missions[this.id].cpuPerCreep ?? perCreep,
+        overhead: Memory.missions[this.id].cpuOverhead ?? this.initialEstimatedCpuOverhead
       }));
     this.initialized = true;
   }
@@ -272,6 +274,9 @@ export class MissionImplementation {
     if (this._cpuLog.length > this._cpuLogCount) {
       this._cpuLog = this._cpuLog.slice(this._cpuLog.length - this._cpuLogCount);
     }
+    const { overhead, perCreep } = this.cpuStats();
+    Memory.missions[this.id].cpuOverhead = overhead;
+    Memory.missions[this.id].cpuPerCreep = perCreep;
   }
 
   initialEstimatedCpuOverhead = 0.05;
@@ -287,7 +292,9 @@ export class MissionImplementation {
       this._cpuTick = Game.time;
       this._lastCpu = Game.cpu.getUsed();
     }
-    this._cpuTickLog[category] = Game.cpu.getUsed() - this._lastCpu;
+    const current = Game.cpu.getUsed();
+    this._cpuTickLog[category] = current - this._lastCpu;
+    this._lastCpu = current;
   }
   private _cpuLog: { perCreep: number, overhead: number }[] = [];
   private _cpuLogCount = <const>1000;

@@ -73,7 +73,7 @@ export class LogisticsMission extends MissionImplementation {
         memory: { fromStorage: false }
       },
       budget: Budget.ESSENTIAL,
-      estimatedCpuPerTick: 0.8,
+      estimatedCpuPerTick: 2,
       builds: energy =>
         buildAccountant(Math.max(100, energy / 2), 25, this.calculated().roads, this.calculated().repair),
       count: current => {
@@ -86,7 +86,6 @@ export class LogisticsMission extends MissionImplementation {
   };
 
   priority = 11;
-  initialEstimatedCpuOverhead = 2;
 
   constructor(public missionData: LogisticsMissionData, id?: string) {
     super(missionData, id);
@@ -281,11 +280,14 @@ export class LogisticsMission extends MissionImplementation {
     missions: ResolvedMissions<LogisticsMission>,
     data: LogisticsMissionData
   ) {
+    // logCpuStart()
     const { haulers, refillers } = creeps;
     const allHaulers = [...haulers, ...refillers];
     data.assignments ??= {};
 
     this.updatePriorities();
+
+    // logCpu('updatePriorities')
 
     // clean up invalid assignments
     const { depositAssignments, withdrawAssignments } = this.assignedLogisticsCapacity();
@@ -330,6 +332,8 @@ export class LogisticsMission extends MissionImplementation {
       }
     }
 
+    // logCpu('clean up invalid assignments')
+
     // add targets, if needed
 
     for (const creep of allHaulers) {
@@ -345,6 +349,8 @@ export class LogisticsMission extends MissionImplementation {
         assignment.withdrawTarget = this.findBestWithdrawTarget(creep, true);
       }
     }
+
+    // logCpu('add targets, if needed')
 
     // check for bucket brigade transfers
 
@@ -395,6 +401,8 @@ export class LogisticsMission extends MissionImplementation {
       }
     }
 
+    // logCpu('check for bucket brigade transfers')
+
     for (const creep of allHaulers) {
       const assignment = {
         ...data.assignments[creep.name],
@@ -410,6 +418,8 @@ export class LogisticsMission extends MissionImplementation {
         creep
       );
     }
+
+    // logCpu('run creeps')
 
     this.logCpu("creeps");
   }

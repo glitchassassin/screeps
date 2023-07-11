@@ -83,8 +83,8 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     // if (cpuDelta * o.count > 1) console.log(o.type, cpuDelta.toFixed(2), o.count, (cpuDelta * o.count).toFixed(2));
   }
   table.push(['---', '---', '---', '---', '---', '---']);
-  table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`, '']);
-  table.push(['Available', '', Game.time, (missionCpuAvailable(room) - estimatedCPU).toFixed(2), MissionEnergyAvailable[room], '']);
+  table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy.toFixed(0)}`, '']);
+  table.push(['Available', '', Game.time, (missionCpuAvailable(room) - estimatedCPU).toFixed(2), MissionEnergyAvailable[room]?.toFixed(0), '']);
   // console.log(room, cpuDelta, cpuDelta * creepCount);
   return table;
 };
