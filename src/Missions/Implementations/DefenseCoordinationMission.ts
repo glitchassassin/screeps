@@ -7,8 +7,8 @@ import {
 import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
-import { findHostileCreeps } from 'Selectors/findHostileCreeps';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
+import { findHostileCreeps } from 'Selectors/findHostileCreeps';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { findAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
@@ -44,6 +44,7 @@ export class DefenseCoordinationMission extends MissionImplementation {
   };
 
   priority = 20;
+  initialEstimatedCpuOverhead = 0.2
 
   constructor(public missionData: DefenseCoordinationMissionData, id?: string) {
     super(missionData, id);

@@ -19,7 +19,7 @@ export function runMissions() {
   Memory.missionReports = Memory.missionReports.filter(r => r.finished > Game.time - MISSION_HISTORY_LIMIT);
 }
 
-export function spawnMissions() {
+export function allocatedResources() {
   const orders: Record<
     string,
     {

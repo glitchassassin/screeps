@@ -7,7 +7,6 @@ import MemHack from 'utils/memhack';
 import profiler from 'utils/profiler';
 import './utils/RoomVisual';
 // game loop
-import { allMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { gameLoop } from 'gameLoop';
 
 try {
@@ -70,17 +69,17 @@ export const loop = () => {
   // ErrorMapper.wrapLoop(mainLoop)();
   profiler.wrap(gameLoop);
 
-  const cpuStats: Record<string, {perCreep: number, overhead: number}[]> = {}
-  for (const mission of allMissions()) {
-    cpuStats[mission.constructor.name] ??= [];
-    cpuStats[mission.constructor.name].push(mission.cpuStats());
-  }
-  for (const k in cpuStats) {
-    if (cpuStats[k].length === 0) continue;
-    const { perCreep, overhead } = cpuStats[k].reduce((a, b) => ({
-      perCreep: a.perCreep + b.perCreep,
-      overhead: a.overhead + b.overhead
-    }), { perCreep: 0, overhead: 0 });
-    console.log(`${k}: perCreep (${(perCreep / cpuStats[k].length).toFixed(2)}) overhead (${(overhead / cpuStats[k].length).toFixed(2)})`);
-  }
+  // const cpuStats: Record<string, {perCreep: number, overhead: number}[]> = {}
+  // for (const mission of allMissions()) {
+  //   cpuStats[mission.constructor.name] ??= [];
+  //   cpuStats[mission.constructor.name].push(mission.cpuStats());
+  // }
+  // for (const k in cpuStats) {
+  //   if (cpuStats[k].length === 0) continue;
+  //   const { perCreep, overhead } = cpuStats[k].reduce((a, b) => ({
+  //     perCreep: a.perCreep + b.perCreep,
+  //     overhead: a.overhead + b.overhead
+  //   }), { perCreep: 0, overhead: 0 });
+  //   console.log(`${k}: perCreep (${(perCreep / cpuStats[k].length).toFixed(2)}) overhead (${(overhead / cpuStats[k].length).toFixed(2)})`);
+  // }
 };

@@ -95,5 +95,10 @@ export abstract class BaseCreepSpawner {
     creep.memory.spawned = true;
   }
 
+  get cpuPerTick() {
+    return this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick;
+  }
+
   abstract cpuRemaining(): number;
+  abstract ttlRemaining(): number;
 }

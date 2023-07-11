@@ -66,6 +66,8 @@ export class EngineerMission extends MissionImplementation {
   };
 
   priority = 8;
+  initialEstimatedCpuOverhead = 0.25;
+
   queue: EngineerQueue;
   constructor(public missionData: EngineerMissionData, id?: string) {
     super(missionData, id);

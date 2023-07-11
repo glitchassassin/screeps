@@ -1,4 +1,4 @@
-import { debugCPU, resetDebugCPU } from "utils/debugCPU";
+import { logCpu, logCpuStart } from "utils/logCPU";
 
 interface Task {
   name: string;
@@ -12,7 +12,7 @@ const lastRun = new Map<string, number>();
 
 export function runTaskManager(tasks: Task[], cpuLimit: number, debug = false) {
   const start = Game.cpu.getUsed();
-  if (debug) resetDebugCPU(true);
+  if (debug) logCpuStart();
   for (const task of tasks) {
     if (!task.mandatory && Game.cpu.getUsed() - start > cpuLimit) {
       if (debug) console.log(Game.time, 'skipping task', task.name);
@@ -26,7 +26,7 @@ export function runTaskManager(tasks: Task[], cpuLimit: number, debug = false) {
       (!task.runEvery || (lastRun.get(task.name) ?? 0) + task.runEvery < Game.time)
     ) {
       task.fn();
-      if (debug) debugCPU(task.name);
+      if (debug) logCpu(task.name);
       lastRun.set(task.name, Game.time);
     }
   }

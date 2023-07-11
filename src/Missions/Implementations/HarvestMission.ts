@@ -65,6 +65,7 @@ export class HarvestMission extends MissionImplementation {
   };
 
   priority = 10;
+  initialEstimatedCpuOverhead = 0.2;
 
   constructor(public missionData: HarvestMissionData, id?: string) {
     super(missionData, id);

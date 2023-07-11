@@ -28,6 +28,7 @@ export class ExploreMission extends MissionImplementation {
   };
 
   priority = 15;
+  initialEstimatedCpuOverhead = 0.25
 
   constructor(public missionData: ExploreMissionData, id?: string) {
     super(missionData, id);

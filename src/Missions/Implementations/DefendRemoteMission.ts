@@ -38,6 +38,7 @@ export class DefendRemoteMission extends MissionImplementation {
   };
 
   priority = 12;
+  initialEstimatedCpuOverhead = 0.2;
 
   constructor(public missionData: DefendRemoteMissionData, id?: string) {
     super(missionData, id);

@@ -23,11 +23,12 @@ export class HQLogisticsMission extends MissionImplementation {
       budget: Budget.ESSENTIAL,
       builds: energy => buildClerk(energy, undefined, true),
       shouldSpawn: () => hasEnergyIncome(this.missionData.office),
-      estimatedCpuPerTick: 0.7
+      estimatedCpuPerTick: 0.6
     })
   };
 
   priority = 15;
+  initialEstimatedCpuOverhead = 0.5
 
   constructor(public missionData: HQLogisticsMissionData, id?: string) {
     super(missionData, id);

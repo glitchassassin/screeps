@@ -152,6 +152,16 @@ export class MissionImplementation {
       Memory.missions[this.id].missions[mission] ??= [];
       spawner.register(Memory.missions[this.id].missions[mission]);
     }
+
+    // initialize CPU log
+    const spawners = Object.keys(this.creeps)
+    const perCreep = spawners.length ? spawners.reduce((sum, spawner) => this.creeps[spawner].cpuPerTick + sum, 0) / spawners.length : 0;
+    this._cpuLog = Array(this._cpuLogCount)
+      .fill(0)
+      .map(() => ({
+        perCreep,
+        overhead: this.initialEstimatedCpuOverhead
+      }));
     this.initialized = true;
   }
 
@@ -256,13 +266,15 @@ export class MissionImplementation {
     this.logCpu('overhead');
     const count = this.creepCount();
     this._cpuLog.push({
-      perCreep: count ? this._cpuTickLog.creeps / count : 0,
+      perCreep: count ? this._cpuTickLog.creeps / count : this.cpuStats().perCreep, // track average perCreep even when we have no creeps
       overhead: this._cpuTickLog.overhead
     });
-    if (this._cpuLog.length > 100) {
-      this._cpuLog = this._cpuLog.slice(this._cpuLog.length - 100);
+    if (this._cpuLog.length > this._cpuLogCount) {
+      this._cpuLog = this._cpuLog.slice(this._cpuLog.length - this._cpuLogCount);
     }
   }
+
+  initialEstimatedCpuOverhead = 0.05;
 
   private _cpuTickLog = {
     creeps: 0,
@@ -278,6 +290,7 @@ export class MissionImplementation {
     this._cpuTickLog[category] = Game.cpu.getUsed() - this._lastCpu;
   }
   private _cpuLog: { perCreep: number, overhead: number }[] = [];
+  private _cpuLogCount = <const>1000;
 
   cpuStats = memoizeOncePerTick(() => {
     const { perCreep, overhead } = this._cpuLog.reduce(
@@ -329,33 +342,20 @@ export class MissionImplementation {
 
   cpuRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;
-    return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0) + (this.estimatedCpuPerTick * CPU_ESTIMATE_PERIOD);
+    const { perCreep, overhead } = this.cpuStats();
+    return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].ttlRemaining() + sum, 0) * perCreep + (overhead * CPU_ESTIMATE_PERIOD);
   }
   cpuUsed() {
     return Memory.missions[this.id].cpuUsed;
   }
-  estimatedCpuPerTick = 0.05;
 
   estimatedCpuPerCreep() {
     if (this.status !== MissionStatus.RUNNING) return 0;
-    let totalCreeps = 0;
-    let totalCpu = 0;
-    for (const k in this.creeps) {
-      let spawnerInstance = this.creeps[k];
-      const creepCount =
-        spawnerInstance instanceof MultiCreepSpawner
-          ? spawnerInstance.resolved.length
-          : spawnerInstance.resolved
-          ? 1
-          : 0;
-      totalCpu += (spawnerInstance.props.estimatedCpuPerTick ?? spawnerInstance.defaultCpuPerTick) * creepCount;
-      totalCreeps += creepCount;
-    }
-    return totalCreeps ? totalCpu / totalCreeps : totalCpu;
+    return this.cpuStats().perCreep;
   }
-  estimatedCpuOverhead() {
-    return this.estimatedCpuPerTick;
-  }
+  estimatedCpuOverhead = memoizeOncePerTick(() => {
+    return this.cpuStats().overhead;
+  })
   energyRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;
     return this.estimatedEnergyRemaining;

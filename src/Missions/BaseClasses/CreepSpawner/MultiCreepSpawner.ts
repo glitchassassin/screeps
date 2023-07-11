@@ -37,8 +37,11 @@ export class MultiCreepSpawner extends BaseCreepSpawner {
 
   cpuRemaining(): number {
     return (
-      this.resolved.reduce((sum, c) => sum + Math.min(CPU_ESTIMATE_PERIOD, c.ticksToLive ?? Infinity), 0) *
-      (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick)
+      this.resolved.reduce((sum, c) => sum + Math.min(CPU_ESTIMATE_PERIOD, c.ticksToLive ?? Infinity), 0) * this.cpuPerTick
     );
+  }
+
+  ttlRemaining(): number {
+    return this.resolved.reduce((sum, c) => sum + Math.min(CPU_ESTIMATE_PERIOD, c.ticksToLive ?? Infinity), 0);
   }
 }

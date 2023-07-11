@@ -86,6 +86,7 @@ export class LogisticsMission extends MissionImplementation {
   };
 
   priority = 11;
+  initialEstimatedCpuOverhead = 2;
 
   constructor(public missionData: LogisticsMissionData, id?: string) {
     super(missionData, id);

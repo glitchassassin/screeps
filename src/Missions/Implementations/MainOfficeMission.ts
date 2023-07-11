@@ -1,4 +1,3 @@
-import { FEATURES } from 'config';
 import {
   BaseMissionData,
   MissionImplementation,
@@ -10,16 +9,17 @@ import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawn
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { MissionStatus } from 'Missions/Mission';
 import { refillSquares } from 'Reports/fastfillerPositions';
-import { byId } from 'Selectors/byId';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
-import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
+import { byId } from 'Selectors/byId';
+import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { rcl } from 'Selectors/rcl';
 import { min } from 'Selectors/reducers';
 import { mineralId } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
 import { findAcquireTarget, officeShouldAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
+import { FEATURES } from 'config';
 import { AcquireMission } from './AcquireMission';
 import { CleanupMission } from './CleanupMission';
 import { DefenseCoordinationMission } from './DefenseCoordinationMission';
@@ -27,8 +27,8 @@ import { EmergencyUpgradeMission } from './EmergencyUpgradeMission';
 import { EngineerMission } from './EngineerMission';
 import { ExploreMission } from './ExploreMission';
 import { FastfillerMission } from './FastfillerMission';
-import { HarvestMission } from './HarvestMission';
 import { HQLogisticsMission } from './HQLogisticsMission';
+import { HarvestMission } from './HarvestMission';
 import { LogisticsMission } from './LogisticsMission';
 import { MineMission } from './MineMission';
 import { PlunderMission } from './PlunderMission';
@@ -130,6 +130,7 @@ export class MainOfficeMission extends MissionImplementation {
   };
 
   priority = 20;
+  initialEstimatedCpuOverhead = 0.3;
 
   constructor(public missionData: MainOfficeMissionData, id?: string) {
     super(missionData, id);

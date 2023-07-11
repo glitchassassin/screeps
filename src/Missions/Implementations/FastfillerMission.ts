@@ -48,6 +48,7 @@ export class FastfillerMission extends MissionImplementation {
   };
 
   priority = 15;
+  initialEstimatedCpuOverhead = 1;
 
   constructor(public missionData: FastfillerMissionData, id?: string) {
     super(missionData, id);

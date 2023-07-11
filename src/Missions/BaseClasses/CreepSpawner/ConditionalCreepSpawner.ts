@@ -41,8 +41,11 @@ export class ConditionalCreepSpawner extends BaseCreepSpawner {
 
   cpuRemaining(): number {
     return (
-      Math.min(CPU_ESTIMATE_PERIOD, this.resolved?.ticksToLive ?? Infinity) *
-      (this.props.estimatedCpuPerTick ?? this.defaultCpuPerTick)
+      Math.min(CPU_ESTIMATE_PERIOD, this.resolved?.ticksToLive ?? Infinity) * this.cpuPerTick
     );
+  }
+
+  ttlRemaining(): number {
+    return Math.min(CPU_ESTIMATE_PERIOD, this.resolved?.ticksToLive ?? Infinity)
   }
 }

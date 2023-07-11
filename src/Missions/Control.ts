@@ -4,7 +4,7 @@ import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 import { updateMissionEnergyAvailable } from 'Selectors/Missions/updateMissionEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
-import { runMissions, spawnMissions } from './BaseClasses/runMissions';
+import { allocatedResources, runMissions } from './BaseClasses/runMissions';
 import { activeMissions } from './Selectors';
 
 export function runMissionControl() {
@@ -20,7 +20,7 @@ export function runMissionControl() {
 export const spawnRequests = new Map<string, SpawnOrder[]>();
 
 function allocateMissions() {
-  const orders = spawnMissions();
+  const orders = allocatedResources();
 
   // Calculate already-allocated resources
   for (const office in Memory.offices) {
@@ -42,7 +42,7 @@ function allocateMissions() {
     let waitForEnergy = false;
     missions: for (const mission of missionsByPriority) {
       // attempt other missions with the same priority, but if a higher-priority
-      // mission is waiting for energy, don't try to spawn lower-priority missions
+      // mission is waiting for cpu/energy, don't try to spawn lower-priority missions
       if (mission.priority !== lastPriority && waitForEnergy) break missions;
       lastPriority = mission.priority;
 

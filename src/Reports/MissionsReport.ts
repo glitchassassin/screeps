@@ -2,6 +2,7 @@ import { MissionImplementation } from 'Missions/BaseClasses/MissionImplementatio
 import { MissionStatus } from 'Missions/Mission';
 import { activeMissions } from 'Missions/Selectors';
 import { Dashboard, Rectangle, Table } from 'screeps-viz';
+import { missionCpuAvailable } from 'Selectors/missionCpuAvailable';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 
 const buildMissionsTable = (room: string, missions: MissionImplementation[]) => {
@@ -24,6 +25,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         cpuPerCreep: number;
       };
       estimate: {
+        cpuRemaining: number;
         cpuOverhead: number;
         energy: number;
         cpuPerCreep: number;
@@ -43,6 +45,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         cpuPerCreep: 0
       },
       estimate: {
+        cpuRemaining: 0,
         cpuOverhead: 0,
         energy: 0,
         cpuPerCreep: 0
@@ -53,6 +56,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     entry.actual.cpuOverhead += overhead;
     entry.actual.energy += mission.energyUsed();
     entry.actual.cpuPerCreep = perCreep;
+    entry.estimate.cpuRemaining = mission.cpuRemaining();
     entry.estimate.cpuOverhead += mission.estimatedCpuOverhead();
     entry.estimate.energy += mission.energyRemaining();
     entry.estimate.cpuPerCreep = mission.estimatedCpuPerCreep();
@@ -66,13 +70,11 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         `${o.type} (${o.count})`,
         o.priority.toFixed(2),
         o.status,
-        `${o.actual.cpuOverhead.toFixed(2)}/${o.estimate.cpuOverhead.toFixed(2)}`,
+        `${o.estimate.cpuRemaining.toFixed(2)}`,
         `${o.estimate.energy.toFixed(0)}`,
-        `${((o.actual.cpuPerCreep - o.estimate.cpuPerCreep) * o.count).toFixed(2)} (${(
-          o.actual.cpuPerCreep - o.estimate.cpuPerCreep
-        ).toFixed(2)})`
+        `${o.actual.cpuOverhead.toFixed(2)}/${o.actual.cpuPerCreep.toFixed(2)}`,
       ]);
-    estimatedCPU += o.estimate.cpuOverhead;
+    estimatedCPU += o.estimate.cpuRemaining;
     estimatedEnergy += o.estimate.energy;
     actualCPU += Math.min(o.estimate.cpuOverhead, o.actual.cpuOverhead);
     actualEnergy += Math.min(o.estimate.energy, o.actual.energy);
@@ -81,9 +83,8 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     // if (cpuDelta * o.count > 1) console.log(o.type, cpuDelta.toFixed(2), o.count, (cpuDelta * o.count).toFixed(2));
   }
   table.push(['---', '---', '---', '---', '---', '---']);
-  table.push(['Remaining', '', '', '', `${estimatedEnergy}`, '']);
-  table.push(['Available', '', Game.time, '', MissionEnergyAvailable[room], '']);
-  table.push(['Accuracy', '', '', '', '', cpuDelta.toFixed(2)]);
+  table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy}`, '']);
+  table.push(['Available', '', Game.time, (missionCpuAvailable(room) - estimatedCPU).toFixed(2), MissionEnergyAvailable[room], '']);
   // console.log(room, cpuDelta, cpuDelta * creepCount);
   return table;
 };
@@ -99,7 +100,7 @@ export default () => {
           height: Math.min(24, active.length * 1.5),
           widget: Rectangle({
             data: Table({
-              config: { headers: ['Mission', 'Priority', 'Status', 'CPU', 'Energy', 'Actual/Est'] },
+              config: { headers: ['Mission', 'Priority', 'Status', 'CPU', 'Energy', 'Overhead/Per Creep'] },
               data: active
             })
           })

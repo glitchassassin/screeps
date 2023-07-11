@@ -41,6 +41,7 @@ export class ReserveMission extends MissionImplementation {
   };
 
   priority = 9;
+  initialEstimatedCpuOverhead = 0.2
 
   constructor(public missionData: ReserveMissionData, id?: string) {
     super(missionData, id);
