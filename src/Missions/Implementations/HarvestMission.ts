@@ -24,7 +24,7 @@ import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
-import { memoizeByTick, memoizeOncePerTick } from 'utils/memoizeFunction';
+import { memoizeOnce, memoizeOncePerTick } from 'utils/memoizeFunction';
 
 export interface HarvestMissionData extends BaseMissionData {
   source: Id<Source>;
@@ -42,17 +42,18 @@ export class HarvestMission extends MissionImplementation {
         budget: Budget.ESSENTIAL,
         builds: energy => buildSalesman(energy, this.calculated().link, this.calculated().remote),
         count: current => {
-          if (this.disabled()) {
-            return 0; // disabled
-          }
           const harvestRate = current
             .filter(prespawnByArrived)
             .map(c => c.getActiveBodyparts(WORK) * HARVEST_POWER)
             .reduce(sum, 0);
-          if (harvestRate < 10 && current.length < this.calculated().maxHarvesters) {
-            return 1;
-          }
-          return 0;
+          if (harvestRate >= 10) return 0; // source is saturated
+
+          const maxHarvesters = this.maxHarvesters();
+          if (current.length >= maxHarvesters) return 0; // no space for more harvesters
+
+          if (this.disabled()) return 0;
+
+          return 1;
         },
         estimatedCpuPerTick: 0.8
       },
@@ -90,19 +91,21 @@ export class HarvestMission extends MissionImplementation {
     return super.fromId(id) as HarvestMission;
   }
 
-  calculated = memoizeByTick(
-    () => '',
+  calculated = memoizeOncePerTick(
     () => {
       return {
         link:
           !!getFranchisePlanBySourceId(this.missionData.source)?.link.structure ||
           getFranchisePlanBySourceId(this.missionData.source)?.extensions.some(s => s.structure),
         remote: posById(this.missionData.source)?.roomName !== this.missionData.office,
-        maxHarvesters: adjacentWalkablePositions(posById(this.missionData.source)!, true).length,
         source: byId(this.missionData.source)
       };
     }
   );
+
+  maxHarvesters = memoizeOnce(
+    () => adjacentWalkablePositions(posById(this.missionData.source)!, true).length
+  )
 
   active() {
     return this.creeps.harvesters.resolved.length > 0;

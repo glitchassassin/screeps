@@ -32,15 +32,15 @@ export class UpgradeMission extends MissionImplementation {
       budget: Budget.SURPLUS,
       builds: energy => bestTierAvailable(this.missionData.office, buildResearch(energy)),
       count: current => {
+        if (rcl(this.missionData.office) === 8 && current.length) {
+          return 0; // maintain one upgrader at RCL8
+        }
+        if (new EngineerQueue(this.missionData.office).analysis().energyRemaining > 1500) return 0; // don't upgrade while construction to do
         if (
           rcl(this.missionData.office) < 2 &&
           (Game.rooms[this.missionData.office].controller?.ticksToDowngrade ?? Infinity) > 3000
         )
           return 0; // engineers will upgrade
-        if (new EngineerQueue(this.missionData.office).analysis().energyRemaining > 1500) return 0; // don't upgrade while construction to do
-        if (rcl(this.missionData.office) === 8 && current.length) {
-          return 0; // maintain one upgrader at RCL8
-        }
         return 1; // spawn as many as we can use
       }
     })

@@ -4,7 +4,7 @@ import { memoize } from 'utils/memoizeFunction';
  * Returns base multipliers, e.g. `stats.heal * HEAL_POWER` to calculate actual healing potential
  */
 export const combatStats = memoize(
-  creep => creep.name,
+  creep => creep.name + creep.hits,
   (creep: Creep) => {
     const stats = {
       hits: creep.hits,
