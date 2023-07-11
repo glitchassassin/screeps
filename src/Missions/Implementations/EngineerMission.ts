@@ -60,7 +60,8 @@ export class EngineerMission extends MissionImplementation {
         }
         if (this.estimatedEnergyRemaining < pendingCost) return 1;
         return 0;
-      }
+      },
+      estimatedCpuPerTick: 0.7
     })
   };
 

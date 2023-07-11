@@ -36,7 +36,7 @@ export class ReserveMission extends MissionImplementation {
         if (current.filter(prespawnByArrived).length < targets) return 1;
         return 0;
       },
-      estimatedCpuPerTick: 1.5
+      estimatedCpuPerTick: 1.7
     })
   };
 

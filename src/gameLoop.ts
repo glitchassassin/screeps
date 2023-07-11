@@ -29,7 +29,7 @@ export const gameLoop = () => {
     { name: 'planRooms', fn: planRooms, threshold: 5000, },
     { name: 'recordMetrics', fn: recordMetrics },
     { name: 'purgeOrphanedMissions', fn: purgeOrphanedMissions },
-    { name: 'runReports', fn: runReports, threshold: 1000, },
+    { name: 'runReports', fn: runReports, mandatory: true },
 
     { name: 'runMissionControl', fn: runMissionControl, mandatory: true },
     { name: 'reconcileTraffic', fn: reconcileTraffic, mandatory: true }, // must run after missions

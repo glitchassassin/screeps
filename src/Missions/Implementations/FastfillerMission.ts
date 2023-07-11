@@ -35,7 +35,8 @@ const fastfillerSpawner = (office: string, id: string, shouldSpawn = () => true)
         (SPAWN_ENERGY_CAPACITY + EXTENSION_ENERGY_CAPACITY[rcl(office)]) / CARRY_CAPACITY,
         true // getSpawns(office).length !== 3 // fixed-pos fastfillers don't spawn correctly consistently
       ),
-    shouldSpawn: () => hasEnergyIncome(office) && shouldSpawn()
+    shouldSpawn: () => hasEnergyIncome(office) && shouldSpawn(),
+    estimatedCpuPerTick: 0.6
   });
 
 export class FastfillerMission extends MissionImplementation {

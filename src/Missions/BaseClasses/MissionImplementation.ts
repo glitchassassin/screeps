@@ -3,6 +3,8 @@ import { MissionStatus } from 'Missions/Mission';
 import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailable';
 import { minionCost } from 'Selectors/minionCostPerTick';
 import { sum } from 'Selectors/reducers';
+import { CPU_ESTIMATE_PERIOD } from 'config';
+import { memoizeOncePerTick } from 'utils/memoizeFunction';
 import { BaseCreepSpawner } from './CreepSpawner/BaseCreepSpawner';
 import { MultiCreepSpawner } from './CreepSpawner/MultiCreepSpawner';
 import { BaseMissionSpawner } from './MissionSpawner/BaseMissionSpawner';
@@ -169,8 +171,6 @@ export class MissionImplementation {
     return orders;
   }
 
-  cpuPerCreep: number[] = [];
-
   execute() {
     // Mission Energy Budgeting
     // By default, missions have an ESSENTIAL budget and ignore
@@ -187,9 +187,10 @@ export class MissionImplementation {
       return; // not enough energy to start yet
     }
 
+    this.logCpu('overhead');
+
     // Register (and generate) sub-missions
     this.init();
-    const start = Game.cpu.getUsed();
 
     // clean up mission
     if (this.status === MissionStatus.PENDING) {
@@ -252,11 +253,45 @@ export class MissionImplementation {
     this.run(resolvedCreeps, resolvedMissions, this.missionData);
 
     // log CPU usage
-    const cpuUsed = Math.max(0, Game.cpu.getUsed() - start);
-    Memory.missions[this.id].cpuUsed += cpuUsed;
-    const cpuPerCreep = cpuUsed / this.creepCount();
-    this.cpuPerCreep.push(cpuPerCreep === Infinity ? cpuUsed : cpuPerCreep);
+    this.logCpu('overhead');
+    const count = this.creepCount();
+    this._cpuLog.push({
+      perCreep: count ? this._cpuTickLog.creeps / count : 0,
+      overhead: this._cpuTickLog.overhead
+    });
+    if (this._cpuLog.length > 100) {
+      this._cpuLog = this._cpuLog.slice(this._cpuLog.length - 100);
+    }
   }
+
+  private _cpuTickLog = {
+    creeps: 0,
+    overhead: 0
+  };
+  private _cpuTick = 0;
+  private _lastCpu = 0;
+  logCpu(category: keyof typeof this._cpuTickLog) {
+    if (this._cpuTick !== Game.time) {
+      this._cpuTick = Game.time;
+      this._lastCpu = Game.cpu.getUsed();
+    }
+    this._cpuTickLog[category] = Game.cpu.getUsed() - this._lastCpu;
+  }
+  private _cpuLog: { perCreep: number, overhead: number }[] = [];
+
+  cpuStats = memoizeOncePerTick(() => {
+    const { perCreep, overhead } = this._cpuLog.reduce(
+      (acc, cur) => ({
+        perCreep: acc.perCreep + cur.perCreep,
+        overhead: acc.overhead + cur.overhead
+      }),
+      { perCreep: 0, overhead: 0 }
+    );
+    return {
+      perCreep: perCreep / this._cpuLog.length,
+      overhead: overhead / this._cpuLog.length
+    };
+  })
 
   register(creep: Creep) {
     for (let key in this.creeps) {
@@ -294,14 +329,13 @@ export class MissionImplementation {
 
   cpuRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;
-    return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0);
+    return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].cpuRemaining() + sum, 0) + (this.estimatedCpuPerTick * CPU_ESTIMATE_PERIOD);
   }
   cpuUsed() {
     return Memory.missions[this.id].cpuUsed;
   }
-  actualCpuPerCreep() {
-    return this.cpuPerCreep.length ? this.cpuPerCreep.reduce(sum, 0) / this.cpuPerCreep.length : 0;
-  }
+  estimatedCpuPerTick = 0.05;
+
   estimatedCpuPerCreep() {
     if (this.status !== MissionStatus.RUNNING) return 0;
     let totalCreeps = 0;
@@ -318,6 +352,9 @@ export class MissionImplementation {
       totalCreeps += creepCount;
     }
     return totalCreeps ? totalCpu / totalCreeps : totalCpu;
+  }
+  estimatedCpuOverhead() {
+    return this.estimatedCpuPerTick;
   }
   energyRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;

@@ -22,7 +22,8 @@ export class HQLogisticsMission extends MissionImplementation {
       role: MinionTypes.CLERK,
       budget: Budget.ESSENTIAL,
       builds: energy => buildClerk(energy, undefined, true),
-      shouldSpawn: () => hasEnergyIncome(this.missionData.office)
+      shouldSpawn: () => hasEnergyIncome(this.missionData.office),
+      estimatedCpuPerTick: 0.7
     })
   };
 

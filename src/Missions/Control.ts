@@ -5,6 +5,7 @@ import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailabl
 import { updateMissionEnergyAvailable } from 'Selectors/Missions/updateMissionEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
 import { runMissions, spawnMissions } from './BaseClasses/runMissions';
+import { activeMissions } from './Selectors';
 
 export function runMissionControl() {
   const before = Game.cpu.getUsed();
@@ -27,35 +28,45 @@ function allocateMissions() {
     let availableSpawns = getSpawns(office).filter(s => !s.spawning).length;
     if (!availableSpawns) continue;
 
-    const requests = orders[office]?.orders ?? [];
     const remaining = {
       cpu: missionCpuAvailable(office) - (orders[office]?.cpuAllocated ?? 0),
       energy: MissionEnergyAvailable[office] ?? 0
     };
 
-    spawnRequests.set(office, requests);
-    const priorities = [...new Set(requests.map(o => o.priority))].sort((a, b) => b - a);
+    // get missions by office
+    const missionsByPriority = activeMissions(office).sort((a, b) => b.priority - a.priority)
+    const requests = [];
 
     // loop through priorities, highest to lowest
-    priorities: for (const priority of priorities) {
-      if (!availableSpawns) break;
+    let lastPriority = 0;
+    let waitForEnergy = false;
+    missions: for (const mission of missionsByPriority) {
+      // attempt other missions with the same priority, but if a higher-priority
+      // mission is waiting for energy, don't try to spawn lower-priority missions
+      if (mission.priority !== lastPriority && waitForEnergy) break missions;
+      lastPriority = mission.priority;
 
-      const missions = requests.filter(o => o.priority === priority);
-
-      while (missions.length) {
-        if (!availableSpawns) break;
-        if (remaining.cpu <= 0) break;
-        const order = missions.shift();
-        if (!order) break;
-        // Mission can start
-        const result = spawnOrder(office, order, remaining);
-        if (result) {
-          if (!result.spawned) break priorities; // valid build, wait for energy
-          availableSpawns -= 1;
-          remaining.cpu -= result.estimate.cpu;
-          remaining.energy -= result.estimate.energy;
+      try {
+        for (const order of mission.spawn()) {
+          if (!availableSpawns) break missions;
+          if (remaining.cpu <= 0) break missions;
+          // Mission can start
+          requests.push(order);
+          const result = spawnOrder(office, order, remaining);
+          if (result) {
+            if (!result.spawned) {
+              waitForEnergy = true; // valid build, wait for energy
+            }
+            availableSpawns -= 1;
+            remaining.cpu -= result.estimate.cpu;
+            remaining.energy -= result.estimate.energy;
+          }
         }
+      } catch (e) {
+        console.log(`Error spawning for mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
       }
     }
+
+    spawnRequests.set(office, requests);
   }
 }
