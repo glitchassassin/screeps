@@ -8,7 +8,7 @@ export const FEATURES = {
 /**
  * Rooms around an Office to control as remote territories
  */
-export const TERRITORY_RADIUS = Game.shard.name === 'shard2' ? 0 : 3;
+export const TERRITORY_RADIUS = Game.shard.name === 'shard2' ? 1 : 3;
 
 /**
  * Number of offices to control
