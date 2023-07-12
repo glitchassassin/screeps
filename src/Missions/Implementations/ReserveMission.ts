@@ -9,7 +9,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
-import { moveTo } from 'screeps-cartographer';
+import { adjacentWalkablePositions, move, moveTo } from 'screeps-cartographer';
 import { activeFranchises } from 'Selectors/Franchises/franchiseActive';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { creepCost } from 'Selectors/minionCostPerTick';
@@ -110,14 +110,19 @@ export class ReserveMission extends MissionImplementation {
       }
 
       // Move to controller
-      moveTo(creep, { pos: controllerPos, range: 1 });
+
       if (creep.pos.inRangeTo(controllerPos, 1)) {
+        move(creep, adjacentWalkablePositions(controllerPos, true))
         // Reserve controller
         const controller = Game.rooms[target].controller;
         if (controller) {
           creep.reserveController(controller);
+          if (controller.sign?.username !== 'LordGreywether') {
+            signRoom(creep, target);
+          }
         }
-        signRoom(creep, target);
+      } else {
+        moveTo(creep, { pos: controllerPos, range: 1 });
       }
     }
 
