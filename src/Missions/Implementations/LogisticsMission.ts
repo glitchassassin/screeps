@@ -16,7 +16,7 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { activeMissions, isMission } from 'Missions/Selectors';
-import { combatStats } from 'Selectors/Combat/combatStats';
+import { combatPower } from 'Selectors/Combat/combatStats';
 import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAvailable';
 import { franchiseCapacity } from 'Selectors/Franchises/franchiseIncome';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
@@ -78,7 +78,7 @@ export class LogisticsMission extends MissionImplementation {
         buildAccountant(Math.max(100, energy / 2), 25, this.calculated().roads, this.calculated().repair),
       count: current => {
         const neededCapacity = franchiseCapacity(this.missionData.office);
-        const currentCapacity = current.map(c => combatStats(c).carry).reduce(sum, 0);
+        const currentCapacity = current.map(c => combatPower(c).carry).reduce(sum, 0);
         if (currentCapacity < neededCapacity) return 1;
         return 0;
       }

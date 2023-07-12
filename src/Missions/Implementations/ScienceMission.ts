@@ -5,9 +5,10 @@ import { withdrawResourcesFromTerminal } from 'Behaviors/Labs/withdrawResources'
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
+import { FEATURES } from 'config';
 import { buildAccountant } from 'Minions/Builds/accountant';
 import { MinionTypes } from 'Minions/minionTypes';
-import { ConditionalCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/ConditionalCreepSpawner';
+import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import {
   BaseMissionData,
   MissionImplementation,
@@ -15,6 +16,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { getLabs } from 'Selectors/getLabs';
 import { registerScientists } from 'Selectors/getScientists';
@@ -33,15 +35,10 @@ export interface ScienceMissionData extends BaseMissionData {
 
 export class ScienceMission extends MissionImplementation {
   public creeps = {
-    scientist: new ConditionalCreepSpawner('s', this.missionData.office, {
+    scientist: new CreepSpawner('s', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.EFFICIENCY,
       builds: energy => buildAccountant(energy, 25, true, false),
-      shouldSpawn: () =>
-        Boolean(
-          Memory.offices[this.missionData.office].lab.orders.length !== 0 ||
-            Memory.offices[this.missionData.office].lab.boosts.length !== 0
-        )
     })
   };
 
@@ -54,9 +51,23 @@ export class ScienceMission extends MissionImplementation {
     return super.fromId(id) as ScienceMission;
   }
 
+  static shouldRun(office: string) {
+    return Boolean(
+      FEATURES.LABS &&
+      roomPlans(office)?.labs?.labs.filter(s => s.structure).length &&
+      (Memory.offices[office].lab.orders.length !== 0 ||
+      Memory.offices[office].lab.boosts.length !== 0)
+    )
+  }
+
   run(creeps: ResolvedCreeps<ScienceMission>, missions: ResolvedMissions<ScienceMission>, data: ScienceMissionData) {
     const { scientist } = creeps;
-    if (!scientist) return;
+    if (!scientist) {
+      if (!ScienceMission.shouldRun(data.office)) {
+        this.status = MissionStatus.DONE;
+      }
+      return;
+    }
     registerScientists(data.office, [scientist]);
 
     const terminal = roomPlans(data.office)?.headquarters?.terminal.structure as StructureTerminal | undefined;

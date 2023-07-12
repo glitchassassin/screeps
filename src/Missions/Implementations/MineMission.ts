@@ -4,6 +4,7 @@ import { getResourcesFromMineContainer } from 'Behaviors/getResourcesFromMineCon
 import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
+import { FEATURES } from 'config';
 import { bestTierAvailable } from 'Minions/bestBuildTier';
 import { buildAccountant } from 'Minions/Builds/accountant';
 import { buildForeman } from 'Minions/Builds/foreman';
@@ -20,6 +21,7 @@ import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { maxBuildCost } from 'Selectors/minionCostPerTick';
+import { mineralId } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
 
 export interface MineMissionData extends BaseMissionData {
@@ -50,6 +52,14 @@ export class MineMission extends MissionImplementation {
   }
   static fromId(id: MineMission['id']) {
     return super.fromId(id) as MineMission;
+  }
+
+  static shouldRun(office: string) {
+    return Boolean(
+      FEATURES.MINING &&
+        byId(mineralId(office))?.mineralAmount &&
+        roomPlans(office)?.mine?.extractor.structure
+    )
   }
 
   run(creeps: ResolvedCreeps<MineMission>, missions: ResolvedMissions<MineMission>, data: MineMissionData) {

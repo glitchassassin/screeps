@@ -12,7 +12,6 @@ import { refillSquares } from 'Reports/fastfillerPositions';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
 import { buyMarketPrice } from 'Selectors/Market/marketPrice';
-import { byId } from 'Selectors/byId';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { rcl } from 'Selectors/rcl';
 import { min } from 'Selectors/reducers';
@@ -79,18 +78,13 @@ export class MainOfficeMission extends MissionImplementation {
     science: new ConditionalMissionSpawner(
       ScienceMission,
       () => ({ ...this.missionData }),
-      () => Boolean(FEATURES.LABS && roomPlans(this.missionData.office)?.labs?.labs.filter(s => s.structure).length)
+      () => ScienceMission.shouldRun(this.missionData.office)
     ),
     defense: new MissionSpawner(DefenseCoordinationMission, () => ({ ...this.missionData })),
     mining: new ConditionalMissionSpawner(
       MineMission,
       () => ({ mineral: mineralId(this.missionData.office)!, ...this.missionData }),
-      () =>
-        Boolean(
-          FEATURES.MINING &&
-            byId(mineralId(this.missionData.office))?.mineralAmount &&
-            roomPlans(this.missionData.office)?.mine?.extractor.structure
-        )
+      () => MineMission.shouldRun(this.missionData.office)
     ),
     powerBanks: new MultiMissionSpawner(PowerBankMission, current => {
       if (current.length || rcl(this.missionData.office) < 8 || !FEATURES.POWER) return []; // only one powerbank mission per office at a time
