@@ -5,7 +5,7 @@ export const buildSalesman = (energy: number, link = false, remote = false): Cre
     return [];
   } else if (energy < 550) {
     return unboosted([WORK, WORK, MOVE]);
-  } else if (energy === 550) {
+  } else if (energy < 600) {
     return link || remote
       ? unboosted([WORK, WORK, WORK, CARRY, MOVE])
       : unboosted([WORK, WORK, WORK, WORK, WORK, MOVE]);
@@ -13,7 +13,7 @@ export const buildSalesman = (energy: number, link = false, remote = false): Cre
 
   if (remote) {
     return unboosted(buildFromSegment(energy, [WORK, WORK, WORK, MOVE], { maxSegments: 2, suffix: [CARRY] }));
-  } else {
+  } else { // costs 600 with link
     return unboosted(
       buildFromSegment(energy, [WORK, WORK, WORK, WORK, WORK, MOVE], {
         maxSegments: 2,
