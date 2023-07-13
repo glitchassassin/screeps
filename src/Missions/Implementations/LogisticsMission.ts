@@ -112,16 +112,21 @@ export class LogisticsMission extends MissionImplementation {
     }
   );
 
-  assignedLogisticsCapacity = memoizeOnce(() => {
-    const withdrawAssignments = new Map<Id<Source>, number>();
-    const depositAssignments = new Map<Id<AnyStoreStructure | Creep>, number>();
+  withdrawLedger = new Map<Id<Source>, number>();
+  depositLedger = new Map<Id<AnyStoreStructure | Creep>, number>();
+  depositLedgerPriority = new Map<Id<AnyStoreStructure | Creep>, number>();
+  recalculateAssignmentLedgers = memoizeOnce(() => {
     const priorities = storageStructureThatNeedsEnergy(this.missionData.office).sort((a, b) => b[0] - a[0]);
+
+    priorities.forEach(([priority, structure]) => {
+      this.depositLedgerPriority.set(structure.id as Id<AnyStoreStructure | Creep>, priority);
+    });
 
     for (const { source } of franchisesByOffice(this.missionData.office)) {
       if (franchiseIsThreatened(this.missionData.office, source)) {
         continue;
       }
-      withdrawAssignments.set(source, 0);
+      this.withdrawLedger.set(source, 0);
     }
 
     for (const assigned in this.missionData.assignments) {
@@ -129,9 +134,9 @@ export class LogisticsMission extends MissionImplementation {
       const creep = Game.creeps[assigned];
       if (!creep) continue;
       if (creep.memory.runState === States.WITHDRAW && assignment.withdrawTarget) {
-        withdrawAssignments.set(
+        this.withdrawLedger.set(
           assignment.withdrawTarget as Id<Source>,
-          (withdrawAssignments.get(assignment.withdrawTarget as Id<Source>) ?? 0) + creep.store.getFreeCapacity()
+          (this.withdrawLedger.get(assignment.withdrawTarget as Id<Source>) ?? 0) + creep.store.getFreeCapacity()
         );
       }
       if (creep.memory.runState === States.DEPOSIT && assignment.depositTarget) {
@@ -142,7 +147,7 @@ export class LogisticsMission extends MissionImplementation {
           if (bestTarget instanceof StructureStorage && creep.memory.fromStorage) continue; // don't assign refillers to storage
           const actualPriority = priorities.find(([priority, structure]) => structure.id === target!.id)?.[0] ?? 0;
           if (actualPriority < bestPriority) {
-            const assignedToBestTarget = depositAssignments.get(bestTarget.id) ?? 0;
+            const assignedToBestTarget = this.depositLedger.get(bestTarget.id) ?? 0;
             assignment.depositTarget = bestTarget.id;
             target = bestTarget;
             if (
@@ -153,36 +158,37 @@ export class LogisticsMission extends MissionImplementation {
             }
           }
         }
-        depositAssignments.set(
+        this.depositLedger.set(
           assignment.depositTarget,
           Math.min(
             target.store.getFreeCapacity(RESOURCE_ENERGY),
-            (depositAssignments.get(assignment.depositTarget) ?? 0) + creep.store[RESOURCE_ENERGY]
+            (this.depositLedger.get(assignment.depositTarget) ?? 0) + creep.store[RESOURCE_ENERGY]
           )
         );
       }
     }
-
-    return { withdrawAssignments, depositAssignments };
   }, 10);
 
   findBestDepositTarget(creep: Creep, ignoreStorage = false, assign = true) {
-    const { depositAssignments } = this.assignedLogisticsCapacity();
+    this.recalculateAssignmentLedgers();
     let bestTarget = undefined;
     let bestAmount = -Infinity;
     let bestPriority = 0;
     let bestDistance = Infinity;
-    for (const [priority, target] of storageStructureThatNeedsEnergy(this.missionData.office)) {
-      const capacity = depositAssignments.get(target.id) ?? 0;
+    const structures = [...this.depositLedgerPriority.entries()].sort((a, b) => b[1] - a[1]);
+    for (const [targetId, priority] of structures) {
+      if (priority < bestPriority) break; // we've already found a target that's better than this one
+      const target = byId(targetId);
       if (!target || (target instanceof StructureStorage && ignoreStorage)) continue;
-      const amount = (target.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0) - capacity;
+      const capacity = this.depositLedger.get(targetId) ?? 0;
+      const freeCapacity = (target.store.getFreeCapacity(RESOURCE_ENERGY) ?? 0);
+      if (!freeCapacity) continue;
+      const amount = freeCapacity - capacity;
       const distance = getRangeTo(creep.pos, target.pos);
       if (
-        priority > bestPriority ||
-        (priority === bestPriority &&
-          distance < bestDistance &&
+        (distance < bestDistance &&
           amount >= Math.min(bestAmount, creep.store.getFreeCapacity(RESOURCE_ENERGY))) ||
-        (priority === bestPriority && amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))
+        (amount > bestAmount && bestAmount < creep.store.getFreeCapacity(RESOURCE_ENERGY))
       ) {
         bestTarget = target.id;
         bestAmount = amount;
@@ -192,20 +198,20 @@ export class LogisticsMission extends MissionImplementation {
     }
 
     if (assign && bestTarget) {
-      const capacity = depositAssignments.get(bestTarget) ?? 0;
-      depositAssignments.set(bestTarget, capacity + creep.store[RESOURCE_ENERGY]);
+      const capacity = this.depositLedger.get(bestTarget) ?? 0;
+      this.depositLedger.set(bestTarget, capacity + creep.store[RESOURCE_ENERGY]);
     }
     return bestTarget;
   }
 
   findBestWithdrawTarget(creep: Creep, assign = true) {
-    const { withdrawAssignments } = this.assignedLogisticsCapacity();
+    this.recalculateAssignmentLedgers();
     const maxDistance = (creep.ticksToLive ?? CREEP_LIFE_TIME) * 0.8;
     let bestTarget = undefined;
     let bestCreepAmount = 0;
     let bestTotalAmount = 0;
     let bestDistance = Infinity;
-    for (const [source, capacity] of withdrawAssignments) {
+    for (const [source, capacity] of this.withdrawLedger) {
       // total stockpile at the source
       const totalAmount = franchiseEnergyAvailable(source);
       // total this creep can get (after reservations)
@@ -222,9 +228,9 @@ export class LogisticsMission extends MissionImplementation {
       }
     }
     if (assign && bestTarget) {
-      withdrawAssignments.set(
+      this.withdrawLedger.set(
         bestTarget,
-        (withdrawAssignments.get(bestTarget) ?? 0) + creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY
+        (this.withdrawLedger.get(bestTarget) ?? 0) + creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY
       );
     }
     return bestTarget;
@@ -280,17 +286,13 @@ export class LogisticsMission extends MissionImplementation {
     missions: ResolvedMissions<LogisticsMission>,
     data: LogisticsMissionData
   ) {
-    // logCpuStart()
     const { haulers, refillers } = creeps;
     const allHaulers = [...haulers, ...refillers];
     data.assignments ??= {};
 
     this.updatePriorities();
 
-    // logCpu('updatePriorities')
-
     // clean up invalid assignments
-    const { depositAssignments, withdrawAssignments } = this.assignedLogisticsCapacity();
     for (const assigned in this.missionData.assignments) {
       const assignment = this.missionData.assignments[assigned];
       const creep = Game.creeps[assigned];
@@ -303,12 +305,12 @@ export class LogisticsMission extends MissionImplementation {
         assignment.depositTarget &&
         !byId(assignment.depositTarget)?.store.getFreeCapacity()
       ) {
-        if (depositAssignments.has(assignment.depositTarget)) {
-          depositAssignments.set(
+        if (this.depositLedger.has(assignment.depositTarget)) {
+          this.depositLedger.set(
             assignment.depositTarget,
             Math.max(
               0,
-              (depositAssignments.get(assignment.depositTarget) ?? 0) - creep.store.getUsedCapacity(RESOURCE_ENERGY)
+              (this.depositLedger.get(assignment.depositTarget) ?? 0) - creep.store.getUsedCapacity(RESOURCE_ENERGY)
             )
           );
         }
@@ -321,10 +323,10 @@ export class LogisticsMission extends MissionImplementation {
           franchiseEnergyAvailable(assignment.withdrawTarget) <= 50
         ) {
           // withdraw target is empty
-          if (withdrawAssignments.has(assignment.withdrawTarget)) {
-            withdrawAssignments.set(
+          if (this.withdrawLedger.has(assignment.withdrawTarget)) {
+            this.withdrawLedger.set(
               assignment.withdrawTarget,
-              Math.max(0, (withdrawAssignments.get(assignment.withdrawTarget) ?? 0) - creep.store.getFreeCapacity())
+              Math.max(0, (this.withdrawLedger.get(assignment.withdrawTarget) ?? 0) - creep.store.getFreeCapacity())
             );
           }
           delete assignment.withdrawTarget;
@@ -332,14 +334,16 @@ export class LogisticsMission extends MissionImplementation {
       }
     }
 
-    // logCpu('clean up invalid assignments')
-
     // add targets, if needed
 
     for (const creep of allHaulers) {
       data.assignments[creep.name] ??= {};
       const assignment = data.assignments[creep.name];
-      if (creep?.memory.runState === States.DEPOSIT && !assignment.depositTarget) {
+      if (
+        creep?.memory.runState === States.DEPOSIT &&
+        !assignment.depositTarget &&
+        creep.pos.roomName === this.missionData.office // wait to set deposit target until creep is in office
+      ) {
         assignment.depositTarget = this.findBestDepositTarget(creep, creep.memory.fromStorage, true);
       } else if (
         creep?.memory.runState === States.WITHDRAW &&
@@ -349,8 +353,6 @@ export class LogisticsMission extends MissionImplementation {
         assignment.withdrawTarget = this.findBestWithdrawTarget(creep, true);
       }
     }
-
-    // logCpu('add targets, if needed')
 
     // check for bucket brigade transfers
 
@@ -401,7 +403,7 @@ export class LogisticsMission extends MissionImplementation {
       }
     }
 
-    // logCpu('check for bucket brigade transfers')
+    this.logCpu("overhead");
 
     for (const creep of allHaulers) {
       const assignment = {
@@ -415,11 +417,9 @@ export class LogisticsMission extends MissionImplementation {
           [States.RECYCLE]: recycle
         },
         assignment,
-        creep
+        creep,
       );
     }
-
-    // logCpu('run creeps')
 
     this.logCpu("creeps");
   }

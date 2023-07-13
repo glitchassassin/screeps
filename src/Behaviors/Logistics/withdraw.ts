@@ -47,7 +47,7 @@ export const withdraw =
       HarvestLedger.record(data.office, data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
     }
 
-    if (Game.cpu.bucket < 1000) return States.WITHDRAW;
+    if (Game.cpu.bucket < 10000) return States.WITHDRAW;
 
     // only check for nearby targets if we have surplus CPU
 

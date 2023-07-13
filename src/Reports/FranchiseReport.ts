@@ -58,7 +58,7 @@ export default () => {
 
       const assignedLogistics = activeMissions(office)
         .filter(isMission(LogisticsMission))
-        .map(m => m.assignedLogisticsCapacity().withdrawAssignments.get(source!.id) ?? 0)
+        .map(m => m.withdrawLedger.get(source!.id) ?? 0)
         .reduce(sum, 0);
       // console.log(source.pos, assignedLogistics);
 

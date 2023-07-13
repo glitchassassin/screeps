@@ -51,7 +51,7 @@ export default () => {
 
       const assignedLogistics = activeMissions(office)
         .filter(isMission(LogisticsMission))
-        .map(m => m.assignedLogisticsCapacity().withdrawAssignments.get(franchise.source) ?? 0)
+        .map(m => m.withdrawLedger.get(franchise.source) ?? 0)
         .reduce(sum, 0);
 
       const harvested = franchiseEnergyAvailable(franchise.source);
