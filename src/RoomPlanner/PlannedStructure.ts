@@ -1,7 +1,9 @@
 import { BARRIER_LEVEL, BARRIER_TYPES } from 'config';
 import { byId } from 'Selectors/byId';
+import { officeIsDownleveled } from 'Selectors/officeIsDownleveled';
 import { rcl } from 'Selectors/rcl';
 import { viz } from 'Selectors/viz';
+import { memoize } from 'utils/memoizeFunction';
 import { packPos, unpackPos } from 'utils/packrat';
 import profiler from 'utils/profiler';
 
@@ -51,6 +53,14 @@ export class PlannedStructure<T extends BuildableStructureConstant = BuildableSt
     this.survey();
     return byId(this.structureId) as ConcreteStructure<T> | undefined;
   }
+
+  isActive = memoize(
+    () => `${rcl(this.pos.roomName)}${officeIsDownleveled(this.pos.roomName)}`,
+    () => {
+      if (!officeIsDownleveled(this.pos.roomName)) return !!this.structure;
+      return this.structure?.isActive() ?? false;
+    }
+  );
 
   public constructionSiteId?: Id<ConstructionSite<T>>;
   get constructionSite() {
