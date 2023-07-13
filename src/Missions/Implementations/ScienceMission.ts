@@ -39,6 +39,7 @@ export class ScienceMission extends MissionImplementation {
       role: MinionTypes.ACCOUNTANT,
       budget: Budget.EFFICIENCY,
       builds: energy => buildAccountant(energy, 25, true, false),
+      respawn: () => ScienceMission.shouldRun(this.missionData.office),
     })
   };
 
