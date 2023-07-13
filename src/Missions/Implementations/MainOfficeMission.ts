@@ -73,7 +73,7 @@ export class MainOfficeMission extends MissionImplementation {
     emergencyUpgrade: new ConditionalMissionSpawner(
       EmergencyUpgradeMission,
       () => ({ ...this.missionData }),
-      () => Game.rooms[this.missionData.office].controller!.ticksToDowngrade < 3000
+      () => EmergencyUpgradeMission.shouldRun(this.missionData.office)
     ),
     science: new ConditionalMissionSpawner(
       ScienceMission,

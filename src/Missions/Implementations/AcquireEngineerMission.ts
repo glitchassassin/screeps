@@ -156,7 +156,7 @@ export class AcquireEngineerMission extends EngineerMission {
               moveByPath(creep, this.id, { reverse: true });
               return States.WITHDRAW;
             }
-            return withdraw(true)({ office: data.office }, creep);
+            return withdraw(true)({ office: data.office, assignment: {} }, creep);
           },
           [States.RECYCLE]: recycle
         },

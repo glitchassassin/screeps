@@ -5,6 +5,7 @@ import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { MinionTypes } from 'Minions/minionTypes';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
+import { estimatedFreeCapacity, estimatedUsedCapacity, updateUsedCapacity } from 'Selectors/Logistics/predictiveCapacity';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { plannedFranchiseRoads } from 'Selectors/plannedFranchiseRoads';
@@ -16,41 +17,37 @@ export const deposit =
   (
     data: {
       office: string;
-      withdrawTarget?: Id<Source>;
-      depositTarget?: Id<AnyStoreStructure | Creep>;
+      assignment: {
+        withdrawTarget?: Id<Source>;
+        depositTarget?: Id<AnyStoreStructure | Creep>;
+      }
     },
     creep: Creep
   ) => {
-    if (creep.store[RESOURCE_ENERGY] <= 0) {
-      delete data.withdrawTarget;
-      delete data.depositTarget;
-      return States.WITHDRAW;
-    }
-
-    let target = byId(data.depositTarget as Id<AnyStoreStructure | Creep>);
+    let target = byId(data.assignment.depositTarget as Id<AnyStoreStructure | Creep>);
     const targetPos = target?.pos ?? roomPlans(data.office)?.headquarters?.storage.pos;
-    if ((data.depositTarget && !target) || !targetPos) { // invalid target
-      delete data.depositTarget;
+    if ((data.assignment.depositTarget && !target) || !targetPos) { // invalid target
+      delete data.assignment.depositTarget;
       return States.DEPOSIT;
     }
 
-    if (data.withdrawTarget && !fromStorage) {
+    if (data.assignment.withdrawTarget && !fromStorage) {
       // Record deposit cost
-      HarvestLedger.record(data.office, data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
+      HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
     }
 
     // travel home from a source
-    if (data.withdrawTarget && !fromStorage && creep.pos.roomName !== data.office) {
-      followPathHomeFromSource(creep, data.office, data.withdrawTarget);
+    if (data.assignment.withdrawTarget && !fromStorage && creep.pos.roomName !== data.office) {
+      followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget);
     } else {
       // verify target
       if (creep.pos.roomName === data.office && !target) {
         // no assignment, stand by
-        delete data.depositTarget;
+        delete data.assignment.depositTarget;
         return States.DEPOSIT;
       }
       // move to target, or storage if target not assigned yet
-      if (target || (creep.pos.roomName !== data.office && !data.depositTarget)) {
+      if (target || (creep.pos.roomName !== data.office && !data.assignment.depositTarget)) {
         moveTo(creep, { pos: targetPos, range: 1 }, { priority: 3 });
       }
 
@@ -59,25 +56,25 @@ export const deposit =
         const result = creep.transfer(target, RESOURCE_ENERGY);
         if (result === OK) {
           const amount = Math.min(
-            target.store.getFreeCapacity(RESOURCE_ENERGY),
-            creep.store.getUsedCapacity(RESOURCE_ENERGY)
+            estimatedFreeCapacity(target),
+            estimatedUsedCapacity(creep)
           );
-          target.store[RESOURCE_ENERGY] += amount;
-          if (data.withdrawTarget && !fromStorage) {
+          updateUsedCapacity(target, amount);
+          if (data.assignment.withdrawTarget && !fromStorage) {
             // Record deposit amount
-            HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);
+            HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'deposit', amount);
             LogisticsLedger.record(data.office, 'deposit', -amount);
           }
-          delete data.depositTarget;
+          delete data.assignment.depositTarget;
         } else if (result === ERR_FULL) {
-          delete data.depositTarget;
+          delete data.assignment.depositTarget;
         }
         // If target is spawn, is not spawning, and is at capacity, renew this creep
         if (
           Game.cpu.bucket >= 10000 &&
           target instanceof StructureSpawn &&
           !target.spawning &&
-          target.store.getUsedCapacity(RESOURCE_ENERGY) + creep.store.getUsedCapacity(RESOURCE_ENERGY)
+          estimatedUsedCapacity(target) + estimatedUsedCapacity(creep)
         ) {
           target.renewCreep(creep);
         }
@@ -89,17 +86,17 @@ export const deposit =
     // if we have CPU, repair and look for opportunity targets
 
     if (creep.getActiveBodyparts(WORK)) {
-      const road = data.withdrawTarget
-        ? plannedFranchiseRoads(data.office, data.withdrawTarget).find(
+      const road = data.assignment.withdrawTarget
+        ? plannedFranchiseRoads(data.office, data.assignment.withdrawTarget).find(
             s => s.energyToRepair > 0 && s.pos.inRangeTo(creep.pos, 3)
           )
         : undefined;
       if (road?.structure) {
         if (creep.repair(road.structure) === OK) {
           const cost = REPAIR_COST * REPAIR_POWER * 1; // Haulers will only ever have one work part // creep.body.filter(p => p.type === WORK).length;
-          if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
+          if (data.assignment.withdrawTarget && !(byId(data.assignment.withdrawTarget) instanceof Structure)) {
             // Record deposit cost
-            HarvestLedger.record(data.office, data.withdrawTarget, 'repair', -cost);
+            HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'repair', -cost);
             LogisticsLedger.record(data.office, 'deposit', -cost);
           }
         }
@@ -112,7 +109,6 @@ export const deposit =
 
     if (!target || creep.pos.getRangeTo(target) > 1) {
       // Check for nearby targets of opportunity
-      let energyRemaining = creep.store[RESOURCE_ENERGY];
 
       for (const opp of nearby) {
         if (opp.creep?.my) {
@@ -123,11 +119,11 @@ export const deposit =
               opp.creep.name.startsWith('MRM_'))
           ) {
             if (creep.transfer(opp.creep, RESOURCE_ENERGY) === OK) {
-              const amount = Math.min(opp.creep.store.getFreeCapacity(), energyRemaining);
-              energyRemaining -= amount;
-              if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof Structure)) {
+              const amount = Math.min(estimatedFreeCapacity(opp.creep), estimatedUsedCapacity(creep));
+              updateUsedCapacity(creep, -amount);
+              if (data.assignment.withdrawTarget && !(byId(data.assignment.withdrawTarget) instanceof Structure)) {
                 // Record deposit amount
-                HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);
+                HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'deposit', amount);
                 LogisticsLedger.record(data.office, 'deposit', -amount);
               }
               break;
@@ -135,26 +131,25 @@ export const deposit =
           }
         } else if (
           (opp.structure?.structureType === STRUCTURE_EXTENSION || opp.structure?.structureType === STRUCTURE_SPAWN) &&
-          (opp.structure as AnyStoreStructure).store[RESOURCE_ENERGY] <
-            (opp.structure as AnyStoreStructure).store.getCapacity(RESOURCE_ENERGY)
+          estimatedFreeCapacity(opp.structure as AnyStoreStructure) > 0
         ) {
           if (creep.transfer(opp.structure, RESOURCE_ENERGY) === OK) {
             const amount = Math.min(
-              (opp.structure as AnyStoreStructure).store.getFreeCapacity(RESOURCE_ENERGY),
-              energyRemaining
+              estimatedFreeCapacity(opp.structure as AnyStoreStructure),
+              estimatedUsedCapacity(creep)
             );
-            energyRemaining -= amount;
-            if (data.withdrawTarget && !(byId(data.withdrawTarget) instanceof StructureStorage)) {
+            updateUsedCapacity(creep, -amount);
+            if (data.assignment.withdrawTarget && !(byId(data.assignment.withdrawTarget) instanceof StructureStorage)) {
               // Record deposit amount
-              HarvestLedger.record(data.office, data.withdrawTarget, 'deposit', amount);
+              HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'deposit', amount);
               LogisticsLedger.record(data.office, 'deposit', -amount);
             }
             break;
           }
         }
       }
-      if (energyRemaining === 0) {
-        delete data.withdrawTarget;
+      if (estimatedUsedCapacity(creep) === 0) {
+        delete data.assignment.withdrawTarget;
         return States.WITHDRAW;
       }
     }

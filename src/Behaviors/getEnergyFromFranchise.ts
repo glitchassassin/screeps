@@ -2,16 +2,15 @@ import { franchiseEnergyAvailable } from 'Selectors/Franchises/franchiseEnergyAv
 import { posById } from 'Selectors/posById';
 import { resourcesNearPos } from 'Selectors/resourcesNearPos';
 import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
-import { moveTo } from 'screeps-cartographer';
-import { logCpu } from 'utils/logCPU';
+import { moveByPath, moveTo } from 'screeps-cartographer';
 import { BehaviorResult } from './Behavior';
 
 export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: Id<Source>) => {
   const pos = posById(franchise);
   if (!pos) return BehaviorResult.FAILURE;
-
-  if (!creep.pos.inRangeTo(pos, 5)) {
-    moveTo(creep, { pos, range: 2 });
+  if (creep.pos.roomName !== pos.roomName) {
+    moveByPath(creep, office + franchise);
+    // moveTo(creep, { pos, range: 2 });
     return BehaviorResult.INPROGRESS;
   }
 
@@ -22,7 +21,7 @@ export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: 
   // First, pick up from container
   const container = getFranchisePlanBySourceId(franchise)?.container.structure as StructureContainer | undefined;
   if (container && container.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
-    moveTo(creep, { pos: container.pos, range: 1 });
+    moveByPath(creep, office + franchise);
     if (creep.pos.inRangeTo(container, 1)) {
       const result = creep.withdraw(container, RESOURCE_ENERGY);
       // if (result === OK)
@@ -52,8 +51,6 @@ export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: 
       }
     }
   }
-
-  logCpu('getEnergyFromFranchise.resources')
 
   return BehaviorResult.INPROGRESS;
 }

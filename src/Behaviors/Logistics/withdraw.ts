@@ -4,6 +4,7 @@ import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
+import { estimatedFreeCapacity, estimatedUsedCapacity, updateUsedCapacity } from 'Selectors/Logistics/predictiveCapacity';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
@@ -14,9 +15,11 @@ export const withdraw =
   (
     data: {
       office: string;
-      withdrawTarget?: Id<Source>;
-      depositTarget?: Id<AnyStoreStructure | Creep>;
-      repair?: boolean;
+      assignment: {
+        withdrawTarget?: Id<Source>;
+        depositTarget?: Id<AnyStoreStructure | Creep>;
+        repair?: boolean;
+      }
     },
     creep: Creep
   ) => {
@@ -25,26 +28,22 @@ export const withdraw =
       return States.RECYCLE;
     }
 
-    let energyCapacity = creep.store.getCapacity(RESOURCE_ENERGY) - creep.store[RESOURCE_ENERGY];
-
-    if (energyCapacity === 0) return States.DEPOSIT;
-
     const storage = roomPlans(data.office)?.headquarters?.storage.structure as StructureStorage | undefined;
     if (fromStorage && storage?.store.getUsedCapacity(RESOURCE_ENERGY)) {
       moveTo(creep, { pos: storage.pos, range: 1 });
       creep.withdraw(storage, RESOURCE_ENERGY);
     } else {
       // Otherwise, continue to main withdraw target (set by src\Strategy\Logistics\LogisticsTargets.ts)
-      const target = byId(data.withdrawTarget as Id<Source | StructureStorage>);
-      const pos = posById(data.withdrawTarget) ?? target?.pos;
-      if (!data.withdrawTarget || !pos) {
+      const target = byId(data.assignment.withdrawTarget as Id<Source | StructureStorage>);
+      const pos = posById(data.assignment.withdrawTarget) ?? target?.pos;
+      if (!data.assignment.withdrawTarget || !pos) {
         return States.WITHDRAW;
       }
 
       // Target identified
-      getEnergyFromFranchise(creep, data.office, data.withdrawTarget as Id<Source>);
+      getEnergyFromFranchise(creep, data.office, data.assignment.withdrawTarget as Id<Source>);
       // Record cost
-      HarvestLedger.record(data.office, data.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
+      HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
     }
 
     if (Game.cpu.bucket < 10000) return States.WITHDRAW;
@@ -54,29 +53,30 @@ export const withdraw =
     const nearby = lookNear(creep.pos);
 
     // Look for opportunity targets
-    if (energyCapacity > 0) {
+    if (estimatedFreeCapacity(creep) > 0) {
       // Dropped resources
       const resource = nearby.find(r => r.resource?.resourceType === RESOURCE_ENERGY);
       if (resource?.resource) {
-        creep.pickup(resource.resource);
-        energyCapacity = Math.max(0, energyCapacity - resource.resource.amount);
-        LogisticsLedger.record(data.office, 'recover', Math.min(energyCapacity, resource.resource.amount));
+        if (creep.pickup(resource.resource) === OK) {
+          const recovered = Math.min(resource.resource.amount, estimatedFreeCapacity(creep))
+          LogisticsLedger.record(data.office, 'recover', recovered);
+          updateUsedCapacity(creep, recovered);
+        }
       }
 
       // Tombstones
-      const tombstone = nearby.find(r => r.tombstone?.store[RESOURCE_ENERGY]);
+      const tombstone = nearby.find(r => estimatedUsedCapacity(r.tombstone));
       if (tombstone?.tombstone) {
-        creep.withdraw(tombstone.tombstone, RESOURCE_ENERGY);
-        tombstone.tombstone.store[RESOURCE_ENERGY] = Math.max(
-          0,
-          tombstone.tombstone?.store[RESOURCE_ENERGY] - energyCapacity
-        );
-        LogisticsLedger.record(
-          data.office,
-          'recover',
-          Math.min(energyCapacity, tombstone.tombstone?.store[RESOURCE_ENERGY])
-        );
-        energyCapacity = Math.max(0, energyCapacity - tombstone.tombstone?.store[RESOURCE_ENERGY]);
+        if (creep.withdraw(tombstone.tombstone, RESOURCE_ENERGY) === OK) {
+          const recovered = Math.min(estimatedUsedCapacity(tombstone.tombstone), estimatedFreeCapacity(creep))
+          LogisticsLedger.record(
+            data.office,
+            'recover',
+            recovered
+          );
+          updateUsedCapacity(tombstone.tombstone, -recovered);
+          updateUsedCapacity(creep, recovered);
+        }
       }
     }
 

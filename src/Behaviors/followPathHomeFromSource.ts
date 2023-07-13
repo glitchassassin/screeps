@@ -6,10 +6,10 @@ import { BehaviorResult } from './Behavior';
 
 export const followPathHomeFromSource = (creep: Creep, office: string, sourceId: Id<Source>) => {
   if (creep.pos.roomName === office) return BehaviorResult.SUCCESS;
-  if (franchiseRoadsToBuild(office, sourceId).length) {
+  if (franchiseRoadsToBuild(office, sourceId).length > 10) {
     moveTo(creep, roomPlans(office)?.headquarters?.storage.pos ?? { pos: new RoomPosition(25, 25, office), range: 20 });
   } else {
-    moveByPath(creep, office + sourceId, { reverse: true, visualizePathStyle: { stroke: 'cyan' } });
+    moveByPath(creep, office + sourceId, { reverse: true });
   }
   return BehaviorResult.INPROGRESS;
 };

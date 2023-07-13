@@ -4,6 +4,7 @@ import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepS
 import { ResolvedCreeps, ResolvedMissions } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
+import { rcl } from 'Selectors/rcl';
 import { UpgradeMission, UpgradeMissionData } from './UpgradeMission';
 
 export class EmergencyUpgradeMission extends UpgradeMission {
@@ -13,14 +14,15 @@ export class EmergencyUpgradeMission extends UpgradeMission {
       budget: Budget.ESSENTIAL,
       builds: energy => buildResearch(energy),
       count: current => {
-        if (!this.emergency() || current.length) return 0;
+        if (!EmergencyUpgradeMission.shouldRun(this.missionData.office) || current.length) return 0;
         return 1;
       }
     })
   };
 
-  emergency() {
-    return (Game.rooms[this.missionData.office].controller?.ticksToDowngrade ?? 0) < 3000;
+  static shouldRun(office: string) {
+    return Game.rooms[office].controller!.ticksToDowngrade < 3000 ||
+    rcl(office) < Math.max(...Object.keys(Memory.rooms[office].rclMilestones ?? {}).map(Number))
   }
 
   priority = 15;
@@ -30,7 +32,7 @@ export class EmergencyUpgradeMission extends UpgradeMission {
 
   run(creeps: ResolvedCreeps<UpgradeMission>, missions: ResolvedMissions<UpgradeMission>, data: UpgradeMissionData) {
     super.run(creeps, missions, data);
-    if (!this.emergency() && !creeps.upgraders.length) {
+    if (!EmergencyUpgradeMission.shouldRun(data.office) && !creeps.upgraders.length) {
       this.status = MissionStatus.DONE;
     }
   }
