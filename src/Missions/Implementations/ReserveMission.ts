@@ -81,9 +81,10 @@ export class ReserveMission extends MissionImplementation {
       }
     }
     // create new assignments
-    for (const target of data.reserveTargets) {
-      if (assigned.includes(target)) continue;
-      for (const name of unassignedCreeps) {
+
+    for (const name of unassignedCreeps) {
+      for (const target of data.reserveTargets) {
+        if (assigned.includes(target)) continue;
         const creep = Game.creeps[name];
         if (!creep.ticksToLive || creep.ticksToLive <= getRangeTo(creep.pos, new RoomPosition(25, 25, target)))
           continue;
