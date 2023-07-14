@@ -96,7 +96,6 @@ export function spawnOrder(
   const build = order.builds.find(b => b.tier === tier);
   if (!build) {
     // No valid builds
-    if (office === "W9N9") console.log('No valid builds', tier, JSON.stringify(order.builds))
     return undefined;
   }
   const { body, boosts } = build;
