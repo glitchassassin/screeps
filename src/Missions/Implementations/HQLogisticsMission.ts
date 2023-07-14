@@ -8,11 +8,12 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
-import { moveTo } from 'screeps-cartographer';
+import { move, moveTo } from 'screeps-cartographer';
 import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { roomPlans } from 'Selectors/roomPlans';
+import { logCpu, logCpuStart } from 'utils/logCPU';
 
 export interface HQLogisticsMissionData extends BaseMissionData {}
 
@@ -56,9 +57,12 @@ export class HQLogisticsMission extends MissionImplementation {
     missions: ResolvedMissions<HQLogisticsMission>,
     data: HQLogisticsMissionData
   ) {
+    logCpuStart();
     this.setPriority();
     const { clerk } = creeps;
     if (!clerk) return;
+
+    logCpu("setPriority")
 
     // Priorities:
     // Link -> Storage
@@ -67,8 +71,18 @@ export class HQLogisticsMission extends MissionImplementation {
 
     const pos = getHeadquarterLogisticsLocation(data.office);
     if (!pos) return;
-    moveTo(clerk, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
-    if (!clerk.pos.isEqualTo(pos)) return;
+    logCpu("getHeadquarterLogisticsLocation")
+
+    this.logCpu("overhead")
+
+    if (!clerk.pos.isEqualTo(pos)) {
+      moveTo(clerk, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
+      return;
+    }
+    move(clerk, [pos], 10); // maintain position
+    logCpu("move")
+
+    this.logCpu("creeps")
 
     // Check HQ state
     const hq = roomPlans(data.office)?.headquarters;
@@ -97,6 +111,7 @@ export class HQLogisticsMission extends MissionImplementation {
 
     const powerSpawnPowerNeeded = powerSpawn ? powerSpawn.store.getFreeCapacity(RESOURCE_POWER) : 0;
 
+    logCpu("get capacities")
     this.logCpu("overhead");
 
     // Emergency provision for over-full Storage
@@ -115,7 +130,6 @@ export class HQLogisticsMission extends MissionImplementation {
         clerk.withdraw(link, RESOURCE_ENERGY, Math.min(clerk.store.getFreeCapacity(), Math.abs(linkAmountToTransfer)));
       withdraw = true;
       creepEnergy += Math.abs(linkAmountToTransfer);
-      // console.log(clerk.name, 'withdrawing', linkAmountAvailable, 'from link')
     } else if (link && linkAmountToTransfer > 0) {
       !transfer &&
         clerk.transfer(
@@ -128,26 +142,24 @@ export class HQLogisticsMission extends MissionImplementation {
     }
 
     if (terminal && terminalAmountNeeded) {
-      if (terminalAmountNeeded > 0) {
+      if (terminalAmountNeeded > 0 && !transfer) {
         const amount = Math.min(terminalAmountNeeded, clerk.store.getUsedCapacity(RESOURCE_ENERGY));
-        !transfer && clerk.transfer(terminal, RESOURCE_ENERGY, amount);
+        clerk.transfer(terminal, RESOURCE_ENERGY, amount);
         transfer = true;
         creepEnergy -= amount;
-        // console.log(clerk.name, 'transferring', amount, 'to terminal')
-      } else if (terminalAmountNeeded < 0) {
+      } else if (terminalAmountNeeded < 0 && !withdraw) {
         const amount = Math.min(-terminalAmountNeeded, clerk.store.getFreeCapacity(RESOURCE_ENERGY));
-        !withdraw && clerk.withdraw(terminal, RESOURCE_ENERGY, amount);
+        clerk.withdraw(terminal, RESOURCE_ENERGY, amount);
         withdraw = true;
         creepEnergy += amount;
       }
     }
 
-    if (extension && extensionAmountNeeded && extensionAmountNeeded > 0) {
+    if (extension && extensionAmountNeeded && extensionAmountNeeded > 0 && !transfer) {
       const amount = Math.min(extensionAmountNeeded, clerk.store.getUsedCapacity(RESOURCE_ENERGY));
-      !transfer && clerk.transfer(extension, RESOURCE_ENERGY, amount);
+      clerk.transfer(extension, RESOURCE_ENERGY, amount);
       transfer = true;
       creepEnergy -= amount;
-      // console.log(clerk.name, 'transferring', amount, 'to extension')
     }
 
     // Power spawn
@@ -157,33 +169,31 @@ export class HQLogisticsMission extends MissionImplementation {
         terminal.store.getUsedCapacity(RESOURCE_POWER),
         clerk.store.getFreeCapacity(RESOURCE_POWER)
       );
-      if (amountToWithdraw) {
-        !withdraw && clerk.withdraw(terminal, RESOURCE_POWER, amountToWithdraw);
+      if (!withdraw && amountToWithdraw) {
+        clerk.withdraw(terminal, RESOURCE_POWER, amountToWithdraw);
         withdraw = true;
       }
-      if (clerk.store.getUsedCapacity(RESOURCE_POWER)) {
-        !transfer && clerk.transfer(powerSpawn, RESOURCE_POWER);
+      if (!transfer && clerk.store.getUsedCapacity(RESOURCE_POWER)) {
+        clerk.transfer(powerSpawn, RESOURCE_POWER);
         transfer = true;
       }
     }
-    if (powerSpawn && powerSpawnAmountNeeded && powerSpawnAmountNeeded > 0) {
+    if (!transfer && powerSpawn && powerSpawnAmountNeeded && powerSpawnAmountNeeded > 0) {
       const amount = Math.min(powerSpawnAmountNeeded, clerk.store.getUsedCapacity(RESOURCE_ENERGY));
-      !transfer && clerk.transfer(powerSpawn, RESOURCE_ENERGY, amount);
+      clerk.transfer(powerSpawn, RESOURCE_ENERGY, amount);
       transfer = true;
       creepEnergy -= amount;
-      // console.log(clerk.name, 'transferring', amount, 'to extension')
     }
 
-    if (storage && creepEnergy < clerk.store.getCapacity() / 2) {
-      !withdraw && clerk.withdraw(storage, RESOURCE_ENERGY);
+    if (!withdraw && storage && creepEnergy < clerk.store.getCapacity() / 2) {
+      clerk.withdraw(storage, RESOURCE_ENERGY);
       withdraw = true;
-      // console.log(clerk.name, 'withdrawing extra from storage')
-    } else if (storage && creepEnergy > clerk.store.getCapacity() / 2) {
+    } else if (!transfer && storage && creepEnergy > clerk.store.getCapacity() / 2) {
       const amount = creepEnergy - clerk.store.getCapacity() / 2;
-      !transfer && clerk.transfer(storage, RESOURCE_ENERGY, amount);
+      clerk.transfer(storage, RESOURCE_ENERGY, amount);
       transfer = true;
-      // console.log(clerk.name, 'transferring', amount, 'to storage')
     }
+    logCpu("transfers")
 
     this.logCpu("creeps");
   }

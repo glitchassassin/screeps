@@ -10,7 +10,6 @@ import { deserializeFastfillerPlan } from 'RoomPlanner/Stamps/deserializeFastfil
 import { deserializeHeadquartersPlan } from 'RoomPlanner/Stamps/deserializeHeadquartersPlan';
 import { deserializeLabsPlan } from 'RoomPlanner/Stamps/deserializeLabsPlan';
 import { memoizeByTick } from 'utils/memoizeFunction';
-import profiler from 'utils/profiler';
 import { posById } from './posById';
 
 const plans: Map<string, RoomPlan> = new Map();
@@ -54,32 +53,35 @@ global.resetRoomPlan = (room?: string) => {
   }
 };
 
-export const roomPlans = profiler.registerFN((roomName: string) => {
-  Memory.roomPlans ??= {};
+export const roomPlans = memoizeByTick(
+  roomName => roomName,
+  (roomName: string) => {
+    Memory.roomPlans ??= {};
 
-  let plan = Memory.roomPlans[roomName];
-  if (!plan) {
-    plans.delete(roomName);
-    return;
+    let plan = Memory.roomPlans[roomName];
+    if (!plan) {
+      plans.delete(roomName);
+      return;
+    }
+    let cachedPlan = plans.get(roomName) ?? {};
+    plans.set(roomName, cachedPlan);
+
+    // Check if room plan needs to be updated
+    updateRoomPlan(roomName, 'franchise1', deserializeFranchisePlan);
+    updateRoomPlan(roomName, 'franchise2', deserializeFranchisePlan);
+    updateRoomPlan(roomName, 'mine', deserializeMinePlan);
+    updateRoomPlan(roomName, 'library', deserializeLibraryPlan);
+    updateRoomPlan(roomName, 'headquarters', deserializeHeadquartersPlan);
+    updateRoomPlan(roomName, 'labs', deserializeLabsPlan);
+    updateRoomPlan(roomName, 'fastfiller', deserializeFastfillerPlan);
+    updateRoomPlan(roomName, 'extensions', deserializeExtensionsPlan);
+    updateRoomPlan(roomName, 'backfill', deserializeBackfillPlan);
+    updateRoomPlan(roomName, 'perimeter', deserializePerimeterPlan);
+    updateRoomPlan(roomName, 'roads', deserializeRoadsPlan);
+
+    return cachedPlan;
   }
-  let cachedPlan = plans.get(roomName) ?? {};
-  plans.set(roomName, cachedPlan);
-
-  // Check if room plan needs to be updated
-  updateRoomPlan(roomName, 'franchise1', deserializeFranchisePlan);
-  updateRoomPlan(roomName, 'franchise2', deserializeFranchisePlan);
-  updateRoomPlan(roomName, 'mine', deserializeMinePlan);
-  updateRoomPlan(roomName, 'library', deserializeLibraryPlan);
-  updateRoomPlan(roomName, 'headquarters', deserializeHeadquartersPlan);
-  updateRoomPlan(roomName, 'labs', deserializeLabsPlan);
-  updateRoomPlan(roomName, 'fastfiller', deserializeFastfillerPlan);
-  updateRoomPlan(roomName, 'extensions', deserializeExtensionsPlan);
-  updateRoomPlan(roomName, 'backfill', deserializeBackfillPlan);
-  updateRoomPlan(roomName, 'perimeter', deserializePerimeterPlan);
-  updateRoomPlan(roomName, 'roads', deserializeRoadsPlan);
-
-  return cachedPlan;
-}, 'roomPlans') as (roomName: string) => RoomPlan | undefined;
+)
 
 export const getSpawns = memoizeByTick(
   roomName => roomName,
