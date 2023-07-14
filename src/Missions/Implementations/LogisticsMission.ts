@@ -257,7 +257,7 @@ export class LogisticsMission extends MissionImplementation {
       }
       return {
         roads,
-        repair
+        repair: repair && Game.cpu.bucket === 10000 // don't repair if we're dipping into bucket
       };
     }
   );

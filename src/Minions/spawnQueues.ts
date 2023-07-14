@@ -111,9 +111,17 @@ export function spawnOrder(
   }
   const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
   const estimate = order.estimate(build);
-  // check if sufficient energy/cpu budgeted
-  if (estimate.energy > remaining.energy - adjustedBudget || estimate.cpu > remaining.cpu) {
+  // check if sufficient energy budgeted; if not, skip
+  if (estimate.energy > remaining.energy - adjustedBudget) {
     return undefined;
+  }
+  // if we have the energy budget but not the CPU, halt spawning
+  if (estimate.cpu > remaining.cpu) {
+    return {
+      build,
+      estimate,
+      spawned: false
+    }
   }
   // Spawn is available
   // console.log(order.data.body, order.data.name);

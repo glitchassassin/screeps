@@ -290,10 +290,14 @@ export class MissionImplementation {
   logCpu(category: keyof typeof this._cpuTickLog) {
     if (this._cpuTick !== Game.time) {
       this._cpuTick = Game.time;
-      this._lastCpu = Game.cpu.getUsed();
+      this._lastCpu = Math.max(0, Game.cpu.getUsed());
+      this._cpuTickLog = {
+        creeps: 0,
+        overhead: 0
+      };
     }
-    const current = Game.cpu.getUsed();
-    this._cpuTickLog[category] = current - this._lastCpu;
+    const current = Math.max(0, Game.cpu.getUsed());
+    this._cpuTickLog[category] += current - this._lastCpu;
     this._lastCpu = current;
   }
   private _cpuLog: { perCreep: number, overhead: number }[] = [];
