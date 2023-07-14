@@ -53,7 +53,7 @@ export function bestTierAvailable(office: string, builds: CreepBuild[]): CreepBu
       return needed;
     }, {} as Record<MineralBoostConstant, number>);
     const available = Object.entries(boostsNeeded).every(
-      ([type, count]) => boostsAvailable(office, type as MineralBoostConstant, true) >= count
+      ([type, count]) => boostsAvailable(office, type as MineralBoostConstant, true) >= count * LAB_BOOST_MINERAL
     );
     if (!available) return best;
     if (!best) {
