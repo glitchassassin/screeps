@@ -432,7 +432,7 @@ export class LogisticsMission extends MissionImplementation {
         },
         { assignment: data.assignments[creep.name], office: data.office },
         creep,
-        { cpu: true }
+        // { cpu: true }
       );
     }
 

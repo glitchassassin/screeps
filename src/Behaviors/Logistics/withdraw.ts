@@ -1,15 +1,14 @@
 import { getEnergyFromFranchise } from 'Behaviors/getEnergyFromFranchise';
+import { moveByFlowfield } from 'Behaviors/Movement/moveByFlowfield';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
-import { moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { estimatedFreeCapacity, estimatedUsedCapacity, updateUsedCapacity } from 'Selectors/Logistics/predictiveCapacity';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { roomPlans } from 'Selectors/roomPlans';
-import { logCpu, logCpuStart } from 'utils/logCPU';
 
 export const withdraw =
   (fromStorage?: boolean) =>
@@ -24,7 +23,6 @@ export const withdraw =
     },
     creep: Creep
   ) => {
-    logCpuStart()
     if (creep.ticksToLive && creep.ticksToLive < 100) {
       // no work within range and creep is dying
       return States.RECYCLE;
@@ -32,7 +30,7 @@ export const withdraw =
 
     const storage = roomPlans(data.office)?.headquarters?.storage.structure as StructureStorage | undefined;
     if (fromStorage && storage?.store.getUsedCapacity(RESOURCE_ENERGY)) {
-      moveTo(creep, { pos: storage.pos, range: 1 });
+      moveByFlowfield(creep, storage.pos);
       creep.withdraw(storage, RESOURCE_ENERGY);
     } else {
       // Otherwise, continue to main withdraw target (set by src\Strategy\Logistics\LogisticsTargets.ts)
@@ -81,8 +79,6 @@ export const withdraw =
         }
       }
     }
-
-    logCpu("opportunity targets")
 
     return States.WITHDRAW;
   };

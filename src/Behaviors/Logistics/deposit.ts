@@ -1,4 +1,6 @@
+import { BehaviorResult } from 'Behaviors/Behavior';
 import { followPathHomeFromSource } from 'Behaviors/followPathHomeFromSource';
+import { moveByFlowfield } from 'Behaviors/Movement/moveByFlowfield';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
@@ -49,7 +51,9 @@ export const deposit =
 
       if (target instanceof StructureStorage && data.assignment.withdrawTarget) {
         // if target is storage, use cached path
-        followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget);
+        if (followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget) === BehaviorResult.SUCCESS) {
+          moveByFlowfield(creep, target.pos);
+        }
       } else if (target || (creep.pos.roomName !== data.office && !data.assignment.depositTarget)) {
         // move to target, or storage if target not assigned yet
         moveTo(creep, { pos: targetPos, range: 1 }, { priority: 3 });
