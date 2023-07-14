@@ -1,16 +1,17 @@
 import { States } from 'Behaviors/states';
-import { FEATURES } from 'config';
 import { missionById } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget, getBudgetAdjustment } from 'Missions/Budgets';
-import { blockSquare, move } from 'screeps-cartographer';
-import { byId } from 'Selectors/byId';
 import { posAtDirection } from 'Selectors/Map/MapCoordinates';
+import { byId } from 'Selectors/byId';
+import { officeIsDownleveled } from 'Selectors/officeIsDownleveled';
 import { getSpawns, roomPlans } from 'Selectors/roomPlans';
 import { boostsAvailable } from 'Selectors/shouldHandleBoosts';
 import { getEnergyStructures } from 'Selectors/spawnsAndExtensionsDemand';
 import { BoostOrder } from 'Structures/Labs/LabOrder';
-import { bestBuildTier } from './bestBuildTier';
+import { FEATURES } from 'config';
+import { blockSquare, move } from 'screeps-cartographer';
 import { CreepBuild } from './Builds/utils';
+import { bestBuildTier } from './bestBuildTier';
 import { MinionTypes } from './minionTypes';
 
 export interface SpawnOrder {
@@ -98,12 +99,6 @@ export function spawnOrder(
     return undefined;
   }
   const { body, boosts } = build;
-  const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
-  const estimate = order.estimate(build);
-  if (estimate.energy > remaining.energy - adjustedBudget || estimate.cpu > remaining.cpu) {
-    // No valid builds
-    return undefined;
-  }
   // check if boosts are available
   let boostOrder: BoostOrder | undefined;
   try {
@@ -112,6 +107,12 @@ export function spawnOrder(
     console.log(e);
     // No valid builds
     order.onFailure('NO_BOOSTS');
+    return undefined;
+  }
+  const adjustedBudget = getBudgetAdjustment(order.office, order.budget);
+  const estimate = order.estimate(build);
+  // check if sufficient energy/cpu budgeted
+  if (estimate.energy > remaining.energy - adjustedBudget || estimate.cpu > remaining.cpu) {
     return undefined;
   }
   // Spawn is available
@@ -146,7 +147,7 @@ const orderBoosts = (
   name: string,
   boosts: { type: MineralBoostConstant; count: number }[]
 ): BoostOrder | undefined => {
-  if (!boosts.length || !roomPlans(office)?.labs?.labs.some(l => l.structure)) return undefined;
+  if (!boosts.length || officeIsDownleveled(office) || !roomPlans(office)?.labs?.labs.some(l => l.structure)) return undefined;
   if (!FEATURES.LABS) throw new Error('Boosts disabled');
   const order: BoostOrder = {
     name,

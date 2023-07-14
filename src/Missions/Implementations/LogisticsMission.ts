@@ -117,6 +117,7 @@ export class LogisticsMission extends MissionImplementation {
   depositLedger = new Map<Id<AnyStoreStructure | Creep>, number>();
   depositLedgerPriority = new Map<Id<AnyStoreStructure | Creep>, number>();
   recalculateAssignmentLedgers = memoizeOnce(() => {
+    this.depositLedgerPriority.clear();
     const priorities = storageStructureThatNeedsEnergy(this.missionData.office).sort((a, b) => b[0] - a[0]);
 
     priorities.forEach(([priority, structure]) => {

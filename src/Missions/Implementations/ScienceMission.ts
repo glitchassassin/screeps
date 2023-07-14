@@ -22,6 +22,7 @@ import { getLabs } from 'Selectors/getLabs';
 import { registerScientists } from 'Selectors/getScientists';
 import { ingredientsNeededForLabOrder } from 'Selectors/ingredientsNeededForLabOrder';
 import { labsShouldBeEmptied } from 'Selectors/labsShouldBeEmptied';
+import { officeIsDownleveled } from 'Selectors/officeIsDownleveled';
 import { roomPlans } from 'Selectors/roomPlans';
 import { boostLabsToFill, boostsNeededForLab, shouldHandleBoosts } from 'Selectors/shouldHandleBoosts';
 import { getAvailableResourcesFromTerminal, getLabOrderDependencies } from 'Structures/Labs/getLabOrderDependencies';
@@ -55,6 +56,7 @@ export class ScienceMission extends MissionImplementation {
   static shouldRun(office: string) {
     return Boolean(
       FEATURES.LABS &&
+      !officeIsDownleveled(office) &&
       roomPlans(office)?.labs?.labs.filter(s => s.structure).length &&
       (Memory.offices[office].lab.orders.length !== 0 ||
       Memory.offices[office].lab.boosts.length !== 0)
