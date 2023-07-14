@@ -3,16 +3,13 @@ import { posById } from 'Selectors/posById';
 import { resourcesNearPos } from 'Selectors/resourcesNearPos';
 import { getFranchisePlanBySourceId } from 'Selectors/roomPlans';
 import { moveByPath, moveTo } from 'screeps-cartographer';
-import { logCpu, logCpuStart } from 'utils/logCPU';
 import { BehaviorResult } from './Behavior';
 
 export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: Id<Source>) => {
-  logCpuStart()
   const pos = posById(franchise);
   if (!pos) return BehaviorResult.FAILURE;
   if (creep.pos.roomName !== pos.roomName) {
     moveByPath(creep, office + franchise);
-    logCpu('moveByPath');
     return BehaviorResult.INPROGRESS;
   }
 
@@ -25,7 +22,6 @@ export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: 
   if (container && container.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
     moveByPath(creep, office + franchise);
     creep.withdraw(container, RESOURCE_ENERGY);
-    logCpu('withdraw');
     return BehaviorResult.INPROGRESS;
   }
 
@@ -36,7 +32,6 @@ export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: 
     if (res) {
       moveTo(creep, { pos: res.pos, range: 1 });
       creep.pickup(res);
-      logCpu('pickup');
     }
   }
 
