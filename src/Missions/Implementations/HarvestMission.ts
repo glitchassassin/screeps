@@ -23,6 +23,7 @@ import { prespawnByArrived, setArrived } from 'Selectors/prespawn';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { getFranchisePlanBySourceId, getSpawns, roomPlans } from 'Selectors/roomPlans';
+import { storageEnergyAvailable } from 'Selectors/storageEnergyAvailable';
 import { franchiseIsThreatened } from 'Strategy/Territories/HarassmentZones';
 import { memoizeOnce, memoizeOncePerTick } from 'utils/memoizeFunction';
 
@@ -121,6 +122,7 @@ export class HarvestMission extends MissionImplementation {
       return true; // owned or reserved by another player
     }
     if (franchiseIsThreatened(this.missionData.office, this.missionData.source)) return true; // tracking an active threat
+    if (storageEnergyAvailable(this.missionData.office) > STORAGE_CAPACITY * 0.75) return true; // plenty of energy in storage
     return this.missionData.distance && this.missionData.distance > 250;
   }
 

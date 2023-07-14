@@ -16,7 +16,6 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { estimateMissionInterval } from 'Missions/Selectors';
-import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { moveTo } from 'screeps-cartographer';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
@@ -35,12 +34,22 @@ export class UpgradeMission extends MissionImplementation {
         if (rcl(this.missionData.office) === 8 && current.length) {
           return 0; // maintain one upgrader at RCL8
         }
-        if (new EngineerQueue(this.missionData.office).analysis().energyRemaining > 1500) return 0; // don't upgrade while construction to do
+        // if (new EngineerQueue(this.missionData.office).analysis().energyRemaining > 1500) return 0; // don't upgrade while construction to do
         if (
           rcl(this.missionData.office) < 2 &&
           (Game.rooms[this.missionData.office].controller?.ticksToDowngrade ?? Infinity) > 3000
         )
           return 0; // engineers will upgrade
+
+        // cap at link throughput
+        const from = roomPlans(this.missionData.office)?.headquarters?.link.pos
+        const to = roomPlans(this.missionData.office)?.library?.link.pos
+        if (from && to) {
+          const cooldown = from.getRangeTo(to)
+          const energyPerTick = LINK_CAPACITY / cooldown
+          const upgraderEnergyCapacity = UPGRADE_CONTROLLER_COST * current.map(c => c.getActiveBodyparts(WORK)).reduce(sum, 0)
+          if (upgraderEnergyCapacity > energyPerTick) return 0;
+        }
         return 1; // spawn as many as we can use
       },
       estimatedCpuPerTick: 0.8,
