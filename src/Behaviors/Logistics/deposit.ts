@@ -46,8 +46,12 @@ export const deposit =
         delete data.assignment.depositTarget;
         return States.DEPOSIT;
       }
-      // move to target, or storage if target not assigned yet
-      if (target || (creep.pos.roomName !== data.office && !data.assignment.depositTarget)) {
+
+      if (target instanceof StructureStorage && data.assignment.withdrawTarget) {
+        // if target is storage, use cached path
+        followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget);
+      } else if (target || (creep.pos.roomName !== data.office && !data.assignment.depositTarget)) {
+        // move to target, or storage if target not assigned yet
         moveTo(creep, { pos: targetPos, range: 1 }, { priority: 3 });
       }
 

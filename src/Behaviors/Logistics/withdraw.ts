@@ -9,6 +9,7 @@ import { lookNear } from 'Selectors/Map/MapCoordinates';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { posById } from 'Selectors/posById';
 import { roomPlans } from 'Selectors/roomPlans';
+import { logCpu, logCpuStart } from 'utils/logCPU';
 
 export const withdraw =
   (fromStorage?: boolean) =>
@@ -23,6 +24,7 @@ export const withdraw =
     },
     creep: Creep
   ) => {
+    logCpuStart()
     if (creep.ticksToLive && creep.ticksToLive < 100) {
       // no work within range and creep is dying
       return States.RECYCLE;
@@ -79,6 +81,8 @@ export const withdraw =
         }
       }
     }
+
+    logCpu("opportunity targets")
 
     return States.WITHDRAW;
   };

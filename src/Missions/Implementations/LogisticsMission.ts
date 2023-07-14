@@ -174,6 +174,11 @@ export class LogisticsMission extends MissionImplementation {
 
   findBestDepositTarget(creep: Creep, ignoreStorage = false, assign = true) {
     this.recalculateAssignmentLedgers();
+    if (!ignoreStorage && Game.cpu.bucket < 10000) {
+      // optimization to deliver everything to storage when low on CPU
+      const storage = roomPlans(this.missionData.office)?.headquarters?.storage.structure;
+      if (storage) return storage.id;
+    }
     let bestTarget = undefined;
     let bestAmount = -Infinity;
     let bestPriority = 0;
@@ -427,6 +432,7 @@ export class LogisticsMission extends MissionImplementation {
         },
         { assignment: data.assignments[creep.name], office: data.office },
         creep,
+        { cpu: true }
       );
     }
 

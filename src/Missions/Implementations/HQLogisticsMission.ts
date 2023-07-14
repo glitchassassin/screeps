@@ -13,7 +13,6 @@ import { getHeadquarterLogisticsLocation } from 'Selectors/getHqLocations';
 import { hasEnergyIncome } from 'Selectors/hasEnergyIncome';
 import { defaultRoomCallback } from 'Selectors/Map/Pathing';
 import { roomPlans } from 'Selectors/roomPlans';
-import { logCpu, logCpuStart } from 'utils/logCPU';
 
 export interface HQLogisticsMissionData extends BaseMissionData {}
 
@@ -57,12 +56,9 @@ export class HQLogisticsMission extends MissionImplementation {
     missions: ResolvedMissions<HQLogisticsMission>,
     data: HQLogisticsMissionData
   ) {
-    logCpuStart();
     this.setPriority();
     const { clerk } = creeps;
     if (!clerk) return;
-
-    logCpu("setPriority")
 
     // Priorities:
     // Link -> Storage
@@ -71,7 +67,6 @@ export class HQLogisticsMission extends MissionImplementation {
 
     const pos = getHeadquarterLogisticsLocation(data.office);
     if (!pos) return;
-    logCpu("getHeadquarterLogisticsLocation")
 
     this.logCpu("overhead")
 
@@ -80,7 +75,6 @@ export class HQLogisticsMission extends MissionImplementation {
       return;
     }
     move(clerk, [pos], 10); // maintain position
-    logCpu("move")
 
     this.logCpu("creeps")
 
@@ -111,7 +105,6 @@ export class HQLogisticsMission extends MissionImplementation {
 
     const powerSpawnPowerNeeded = powerSpawn ? powerSpawn.store.getFreeCapacity(RESOURCE_POWER) : 0;
 
-    logCpu("get capacities")
     this.logCpu("overhead");
 
     // Emergency provision for over-full Storage
@@ -193,7 +186,6 @@ export class HQLogisticsMission extends MissionImplementation {
       clerk.transfer(storage, RESOURCE_ENERGY, amount);
       transfer = true;
     }
-    logCpu("transfers")
 
     this.logCpu("creeps");
   }
