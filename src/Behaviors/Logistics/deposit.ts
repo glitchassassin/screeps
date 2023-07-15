@@ -26,9 +26,10 @@ export const deposit =
     },
     creep: Creep
   ) => {
+    creep.say('deposit');
     let target = byId(data.assignment.depositTarget as Id<AnyStoreStructure | Creep>);
-    const targetPos = target?.pos ?? roomPlans(data.office)?.headquarters?.storage.pos;
-    if ((data.assignment.depositTarget && !target) || !targetPos) { // invalid target
+    const storage = roomPlans(data.office)?.headquarters?.storage.structure;
+    if ((data.assignment.depositTarget && !target) || !storage) { // invalid target
       delete data.assignment.depositTarget;
       return States.DEPOSIT;
     }
@@ -42,24 +43,24 @@ export const deposit =
     if (data.assignment.withdrawTarget && !fromStorage && creep.pos.roomName !== data.office) {
       followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget);
     } else {
-      // verify target
-      if (creep.pos.roomName === data.office && !target) {
-        // no assignment, stand by
-        delete data.assignment.depositTarget;
-        return States.DEPOSIT;
-      }
-
-      if (target instanceof StructureStorage && data.assignment.withdrawTarget) {
-        // if target is storage, use cached path
-        if (followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget) === BehaviorResult.SUCCESS) {
-          moveByFlowfield(creep, target.pos);
-        }
-      } else if (target || (creep.pos.roomName !== data.office && !data.assignment.depositTarget)) {
+      if (target && !(target instanceof StructureStorage)) {
         // move to target, or storage if target not assigned yet
-        moveTo(creep, { pos: targetPos, range: 1 }, { priority: 3 });
+        creep.say(`d-${target.pos.x}x${target.pos.y}`);
+        moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+      } else if (!fromStorage) {
+        // if target is storage, use cached path
+        creep.say('d-storage');
+        if (
+          !data.assignment.withdrawTarget ||
+          followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget) === BehaviorResult.SUCCESS
+        ) {
+          moveByFlowfield(creep, storage.pos);
+        }
       }
 
       // try to transfer to target
+
+      if (!fromStorage) target ??= storage;
       if (target) {
         const result = creep.transfer(target, RESOURCE_ENERGY);
         if (result === OK) {

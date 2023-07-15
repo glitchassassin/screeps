@@ -335,8 +335,10 @@ export class LogisticsMission extends MissionImplementation {
         } else if (assignment.withdrawTarget) {
           const target = byId(assignment.withdrawTarget as Id<Source | StructureStorage | StructureContainer>);
           if (
-            ((target instanceof StructureStorage || target instanceof StructureContainer) &&
-            estimatedUsedCapacity(target) <= 0) ||
+            (
+              (target instanceof StructureStorage || target instanceof StructureContainer) &&
+              estimatedUsedCapacity(target) <= 0
+            ) ||
             franchiseEnergyAvailable(assignment.withdrawTarget) <= 50
           ) {
             // withdraw target is empty
@@ -347,6 +349,10 @@ export class LogisticsMission extends MissionImplementation {
               );
             }
             delete assignment.withdrawTarget;
+            if (estimatedUsedCapacity(creep) > 0) {
+              // creep has something to drop off
+              creep.memory.runState = States.DEPOSIT;
+            }
           }
         }
       }

@@ -52,6 +52,12 @@ export const moveByFlowfield = (creep: Creep, target: RoomPosition) => {
     moveTo(creep, target);
     return;
   }
+  if (creep.pos.inRangeTo(target, 1)) {
+    const positions = [creep.pos, ...calculateNearbyPositions(creep.pos, 1).filter(p => p.getRangeTo(target) === 1)];
+    positions.forEach(p => viz(creep.room.name).line(creep.pos, p, { color: "red" }));
+    move(creep, positions);
+    return;
+  }
   const flowfield = generateFlowfield(creep.room.name, [target]);
 
   // debug(creep.room.name, flowfield)

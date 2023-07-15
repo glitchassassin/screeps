@@ -36,6 +36,7 @@ export const withdraw =
       // Otherwise, continue to main withdraw target (set by src\Strategy\Logistics\LogisticsTargets.ts)
       const target = byId(data.assignment.withdrawTarget as Id<Source | StructureStorage>);
       const pos = posById(data.assignment.withdrawTarget) ?? target?.pos;
+      creep.say(`w-${target?.pos.x ?? '_'}x${target?.pos.y ?? '_'}`);
       if (!data.assignment.withdrawTarget || !pos) {
         return States.WITHDRAW;
       }
