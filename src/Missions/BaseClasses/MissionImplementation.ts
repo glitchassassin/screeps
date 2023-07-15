@@ -347,6 +347,7 @@ export class MissionImplementation {
         }
       }
     }
+    this.status = MissionStatus.CLEANUP;
   }
 
   onParentEnd() {}

@@ -33,6 +33,6 @@ export class MultiMissionSpawner<T extends typeof MissionImplementation> extends
     });
     return this.ids
       .map(id => this.missionClass.fromId(id) as InstanceType<T>)
-      .filter(mission => mission?.status !== MissionStatus.DONE);
+      .filter(mission => mission?.status !== MissionStatus.CLEANUP);
   }
 }

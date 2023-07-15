@@ -59,7 +59,7 @@ export class PowerBankDuoMission extends MissionImplementation {
     )
   };
 
-  priority = 8;
+  priority = 6;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
@@ -242,7 +242,17 @@ export class PowerBankDuoMission extends MissionImplementation {
 
       if (attacker) {
         // attack target
-        if (powerBank) attacker.attack(powerBank);
+        if (powerBank) {
+          // if no haulers are present, wait for them before cracking the bank
+          if (
+            powerBank.hits > this.damagePerTick() * 25 ||
+            attacker.room.find(FIND_MY_CREEPS).some(c => c.name.startsWith('PBM'))
+          ) {
+            attacker.attack(powerBank);
+          } else {
+            attacker.say("Waiting")
+          }
+        }
       }
       // logCpu('attacking');
     }

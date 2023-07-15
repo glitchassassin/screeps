@@ -79,7 +79,7 @@ export class PowerBankMission extends MissionImplementation {
     )
   };
 
-  priority = 6;
+  priority = 6.1;
 
   constructor(public missionData: PowerBankMissionData, id?: string) {
     super(missionData, id);
@@ -101,7 +101,7 @@ export class PowerBankMission extends MissionImplementation {
 
   onStart() {
     super.onStart();
-    console.log('[PowerBankMission] started targeting', unpackPos(this.missionData.powerBankPos));
+    console.log('[PowerBankMission] started targeting', this.missionData.powerToRetrieve, 'power at', unpackPos(this.missionData.powerBankPos));
   }
 
   onEnd() {
@@ -111,6 +111,8 @@ export class PowerBankMission extends MissionImplementation {
       const retrieved = this.missionData.powerRetrieved ?? 0;
       const percent = (retrieved / this.missionData.powerToRetrieve) * 100;
       console.log(`[PowerBankMission] retrieved ${retrieved} of ${this.missionData.powerToRetrieve} (${percent}%)`);
+    } else {
+      console.log(`[PowerBankMission] retrieved ${this.missionData.powerRetrieved ?? 0} from ${unpackPos(this.missionData.powerBankPos)}`);
     }
   }
 

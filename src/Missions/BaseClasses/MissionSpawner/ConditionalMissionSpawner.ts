@@ -21,7 +21,7 @@ export class ConditionalMissionSpawner<T extends typeof MissionImplementation> e
 
   spawn() {
     let mission = this.missionClass.fromId(this.ids[0]) as InstanceType<T>;
-    if (!mission || mission.status === MissionStatus.DONE) {
+    if (!mission || mission.status === MissionStatus.CLEANUP) {
       this.ids.shift();
       if (this.spawnWhen()) {
         mission = new this.missionClass(this.missionData()) as InstanceType<T>;

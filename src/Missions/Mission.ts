@@ -1,7 +1,8 @@
 export enum MissionStatus {
   PENDING = 'PENDING',
   RUNNING = 'RUNNING',
-  DONE = 'DONE'
+  DONE = 'DONE',
+  CLEANUP = 'CLEANUP'
 }
 
 export function generateMissionId() {
