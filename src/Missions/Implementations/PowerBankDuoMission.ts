@@ -1,5 +1,4 @@
 import { getBoosted } from 'Behaviors/getBoosted';
-import { recycle } from 'Behaviors/recycle';
 import { States } from 'Behaviors/states';
 import { bestBuildTier } from 'Minions/bestBuildTier';
 import { buildPowerbankAttacker, buildPowerbankHealer } from 'Minions/Builds/powerbank';
@@ -9,13 +8,15 @@ import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { and, or } from 'Missions/Selectors';
-import { follow, isExit, moveTo } from 'screeps-cartographer';
+import { follow, isExit, move, MoveOpts, MoveTarget, moveTo } from 'screeps-cartographer';
 import { byId } from 'Selectors/byId';
 import { combatPower } from 'Selectors/Combat/combatStats';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { maxBuildCost } from 'Selectors/minionCostPerTick';
 import { PowerBankReport } from 'Strategy/ResourceAnalysis/PowerBank';
 // import { logCpu, logCpuStart } from 'utils/logCPU';
+import { sum } from 'Selectors/reducers';
+import { roomPlans } from 'Selectors/roomPlans';
 import { unpackPos } from 'utils/packrat';
 import {
   BaseMissionData,
@@ -29,6 +30,7 @@ export interface PowerBankDuoMissionData extends BaseMissionData {
   powerBankPos: string;
   boostTier: number;
   leftHome?: number;
+  cleanup?: boolean;
 }
 
 export class PowerBankDuoMission extends MissionImplementation {
@@ -60,7 +62,7 @@ export class PowerBankDuoMission extends MissionImplementation {
     )
   };
 
-  priority = 8;
+  priority = 12;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
@@ -163,7 +165,51 @@ export class PowerBankDuoMission extends MissionImplementation {
 
   onParentEnd() {
     super.onParentEnd();
-    this.status = MissionStatus.DONE;
+    this.missionData.cleanup = true;
+  }
+
+  moveTo(creeps: ResolvedCreeps<PowerBankDuoMission>, target: MoveTarget, opts?: MoveOpts) {
+    const { attacker, healer } = creeps;
+    if (!attacker || !healer) {
+      attacker && moveTo(attacker, target, opts);
+      healer && moveTo(healer, target, opts);
+      return;
+    }
+    if (getRangeTo(attacker.pos, healer.pos) !== 1) {
+      // assemble duo
+      if (isExit(attacker.pos)) {
+        // clear exit square
+        moveTo(attacker, target, opts);
+        moveTo(healer, attacker);
+      } else {
+        // come together
+        move(attacker, [attacker.pos]) // wait for healer
+        moveTo(healer, attacker);
+      }
+    } else {
+      // duo is assembled
+      moveTo(attacker, target, opts);
+      follow(healer, attacker);
+    }
+  }
+
+  recycle(creeps: ResolvedCreeps<PowerBankDuoMission>) {
+    const { attacker, healer } = creeps;
+
+    const recycleTarget = roomPlans(this.missionData.office)?.fastfiller?.containers[0].pos;
+    const recycleSpawn = roomPlans(this.missionData.office)?.fastfiller?.spawns[0].structure as StructureSpawn | undefined;
+    if (!recycleTarget || !recycleSpawn) {
+      // oh well, we tried
+      attacker?.suicide();
+      healer?.suicide()
+      return States.RECYCLE;
+    }
+    this.moveTo(creeps, { pos: recycleTarget, range: 0 });
+
+    if (attacker?.pos.isEqualTo(recycleTarget)) recycleSpawn.recycleCreep(attacker);
+    if (healer?.pos.isEqualTo(recycleTarget)) recycleSpawn.recycleCreep(healer);
+
+    return States.RECYCLE;
   }
 
   run(
@@ -175,15 +221,14 @@ export class PowerBankDuoMission extends MissionImplementation {
     const { attacker, healer } = creeps;
     const { powerBank: powerBankId } = data;
 
+    if (!this.report()) this.missionData.cleanup = true;
+
     if (this.creeps.attacker.died && this.creeps.healer.died) {
       this.status = MissionStatus.DONE;
       return;
-    } else if (this.creeps.attacker.died || this.creeps.healer.died) {
-      attacker?.say('broken');
-      healer?.say('broken');
-      // duo has been broken
-      attacker && recycle(this.missionData, attacker);
-      healer && recycle(this.missionData, healer);
+    } else if (this.creeps.attacker.died || this.creeps.healer.died || this.missionData.cleanup) {
+      // duo has been broken or needs to be cleaned up
+      this.recycle(creeps);
       return;
     } else if (attacker?.memory.runState === States.GET_BOOSTED || healer?.memory.runState === States.GET_BOOSTED) {
       if (attacker?.memory.runState === States.GET_BOOSTED) {
@@ -206,55 +251,36 @@ export class PowerBankDuoMission extends MissionImplementation {
     // logCpu('data');
 
     // movement
-    if (getRangeTo(attacker.pos, healer.pos) !== 1) {
-      if (!isExit(attacker.pos)) {
-        // come together
-        moveTo(healer, attacker);
-      } else {
-        moveTo(attacker, powerBankPos);
-        moveTo(healer, attacker);
-      }
-      // logCpu('moving together');
-    } else {
-      // duo is assembled
-      if (this.report()) {
-        attacker.say('Power!');
-        // attacker movement
-        moveTo(attacker, { pos: powerBankPos, range: 1 });
-        // healer movement
-        follow(healer, attacker);
-      } else {
-        attacker.say('Recycling');
-        recycle(this.missionData, attacker);
-        recycle(this.missionData, healer);
-      }
-      // logCpu('moving');
+    this.moveTo(creeps, { pos: powerBankPos, range: 1 });
 
-      // creep actions
-      if (healer && healTarget) {
-        if (getRangeTo(healer.pos, healTarget.pos) > 1) {
-          healer.rangedHeal(healTarget);
-        } else {
-          healer.heal(healTarget);
-        }
+    // creep actions
+    if (healer && healTarget) {
+      if (getRangeTo(healer.pos, healTarget.pos) > 1) {
+        healer.rangedHeal(healTarget);
+      } else {
+        healer.heal(healTarget);
       }
-
-      if (attacker) {
-        // attack target
-        if (powerBank) {
-          // if no haulers are present, wait for them before cracking the bank
-          if (
-            powerBank.hits > this.damagePerTick() * 25 ||
-            attacker.room.find(FIND_MY_CREEPS).some(c => c.name.startsWith('PBM'))
-          ) {
-            attacker.attack(powerBank);
-          } else {
-            attacker.say("Waiting")
-          }
-        }
-      }
-      // logCpu('attacking');
     }
+
+    if (attacker && attacker.pos.inRangeTo(healer, 1)) {
+      // attack target (if healer is in range)
+      if (powerBank) {
+        // if haulers aren't present, wait for them before cracking the bank
+        if (
+          powerBank.ticksToDecay < 100 ||
+          powerBank.hits > this.damagePerTick() * 25 ||
+          attacker.room.find(FIND_MY_CREEPS)
+            .filter(c => c.name.startsWith('PBM'))
+            .map(c => combatPower(c).carry)
+            .reduce(sum, 0) >= powerBank.power
+        ) {
+          attacker.attack(powerBank);
+        } else {
+          attacker.say("Waiting")
+        }
+      }
+    }
+    // logCpu('attacking');
 
     this.logCpu("creeps");
   }

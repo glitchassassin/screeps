@@ -42,7 +42,7 @@ export class PowerBankMission extends MissionImplementation {
         builds: energy => buildAccountant(energy, 25, false, false),
         count: fixedCount(() => {
           // wait to spawn until duos are about to crack the bank
-          if (!this.willBreachIn(750)) {
+          if (!this.willBreachIn(CREEP_LIFE_TIME - (this.report()?.distance ?? 375) * 2)) {
             return 0;
           }
           // spawn enough to haul all the power in one trip
@@ -88,7 +88,7 @@ export class PowerBankMission extends MissionImplementation {
     )
   };
 
-  priority = 8.1;
+  priority = 12.1;
 
   constructor(public missionData: PowerBankMissionData, id?: string) {
     super(missionData, id);
@@ -187,7 +187,7 @@ export class PowerBankMission extends MissionImplementation {
               (Game.rooms[powerBankPos.roomName] &&
                 !byId(this.report()?.id) &&
                 !powerBankRuin &&
-                !Game.rooms[powerBankPos.roomName].find(FIND_DROPPED_RESOURCES, { filter: RESOURCE_POWER }).length)
+                !powerBankResources)
             ) {
               return States.DEPOSIT;
             }
