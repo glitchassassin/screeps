@@ -98,7 +98,7 @@ export default () => {
         const ticksToDecay = (mission.report()?.expires ?? Game.time) - Game.time;
 
         missionData.push([
-          `${bankPos}`,
+          `${mission.missionData.office}: ${bankPos}`,
           mission.missions.duos.resolved.length,
           `${
             (mission.report()?.hits ?? 0) -

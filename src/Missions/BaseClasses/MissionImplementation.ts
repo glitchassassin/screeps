@@ -196,6 +196,7 @@ export class MissionImplementation {
         getBudgetAdjustment(this.missionData.office, this.budget) <
         this.estimatedEnergyRemaining
     ) {
+      this.onPending();
       return; // not enough energy to start yet
     }
 
@@ -333,6 +334,8 @@ export class MissionImplementation {
   ) {
     throw new Error('Not implemented yet');
   }
+
+  onPending() {}
 
   onStart() {}
 

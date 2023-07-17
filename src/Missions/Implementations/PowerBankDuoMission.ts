@@ -28,6 +28,7 @@ export interface PowerBankDuoMissionData extends BaseMissionData {
   powerBank: Id<StructurePowerBank>;
   powerBankPos: string;
   boostTier: number;
+  leftHome?: number;
 }
 
 export class PowerBankDuoMission extends MissionImplementation {
@@ -59,7 +60,7 @@ export class PowerBankDuoMission extends MissionImplementation {
     )
   };
 
-  priority = 6;
+  priority = 8;
 
   constructor(public missionData: PowerBankDuoMissionData, id?: string) {
     super(missionData, id);
@@ -132,10 +133,7 @@ export class PowerBankDuoMission extends MissionImplementation {
   }
 
   assembled() {
-    const attacker = this.creeps.attacker.resolved;
-    const healer = this.creeps.healer.resolved;
-    if (!attacker || !healer) return false;
-    return getRangeTo(attacker.pos, healer.pos) === 1;
+    return this.missionData.leftHome !== undefined;
   }
 
   arrived() {
@@ -146,8 +144,12 @@ export class PowerBankDuoMission extends MissionImplementation {
   }
 
   actualDamageRemaining(ticks: number = CREEP_LIFE_TIME) {
-    if (!this.arrived()) return 0;
-    return this.damageRemaining(ticks);
+    if (this.arrived()) return this.damageRemaining(ticks);
+    // predict damage remaining based on distance
+    const report = this.report();
+    if (!this.missionData.leftHome || !report?.distance) return 0;
+    const ticksUntilArrival = report.distance - this.missionData.leftHome;
+    return this.damageRemaining(ticks - ticksUntilArrival);
   }
 
   damageRemaining(ticks: number = CREEP_LIFE_TIME) {
@@ -157,11 +159,6 @@ export class PowerBankDuoMission extends MissionImplementation {
   damagePerTick() {
     if (!this.creeps.attacker.resolved) return 0;
     return combatPower(this.creeps.attacker.resolved).attack;
-  }
-
-  onStart() {
-    super.onStart();
-    console.log('[PowerBankDuoMission] started targeting', unpackPos(this.missionData.powerBankPos));
   }
 
   onParentEnd() {
@@ -198,6 +195,8 @@ export class PowerBankDuoMission extends MissionImplementation {
       return;
     }
     if (!attacker || !healer) return; // wait for both creeps
+    // attacker and healer are both alive and boosted now
+    data.leftHome ??= Game.time;
     // logCpu('setup');
 
     const powerBank = byId(powerBankId);
