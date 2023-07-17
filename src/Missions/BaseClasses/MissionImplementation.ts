@@ -56,7 +56,7 @@ export function missionById(id: MissionImplementation['id']) {
 
 export function cleanMissions() {
   for (const missionId in Memory.missions) {
-    if (Memory.missions[missionId].status === MissionStatus.DONE) {
+    if (Memory.missions[missionId].status === MissionStatus.CLEANUP) {
       endAndReportMission(missionId);
     }
   }
