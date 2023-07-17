@@ -4,20 +4,22 @@ import { roomPlans } from 'Selectors/roomPlans';
 const DEBUG = true;
 
 export const runObserver = () => {
+  let plannedTargets: string[] = [];
   for (const office in Memory.offices) {
     const observer = roomPlans(office)?.backfill?.observer.structure as StructureObserver | undefined;
     if (!observer) continue;
     const observerTargets = calculateNearbyRooms(office, 10, false).filter(r => isHighway(r));
     if (!observerTargets.length) continue;
     const bestTarget = observerTargets.reduce((best, current) => {
-      if (!Memory.rooms[best]?.scanned) return best;
-      if (!Memory.rooms[current]?.scanned) return current;
+      if (!Memory.rooms[best]?.scanned || plannedTargets.includes(current)) return best;
+      if (!Memory.rooms[current]?.scanned || plannedTargets.includes(best)) return current;
       if (Memory.rooms[best].scanned! > Memory.rooms[current].scanned!) return current;
       return best;
     });
 
     if (DEBUG) visualize(observer.pos, bestTarget);
     observer.observeRoom(bestTarget);
+    plannedTargets.push(bestTarget);
   }
 };
 
