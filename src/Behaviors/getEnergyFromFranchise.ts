@@ -8,6 +8,9 @@ import { BehaviorResult } from './Behavior';
 export const getEnergyFromFranchise = (creep: Creep, office: string, franchise: Id<Source>) => {
   const pos = posById(franchise);
   if (!pos) return BehaviorResult.FAILURE;
+
+  // TODO: This is vulnerable to edge cases where the creep needs to pick up a resource, but
+  // the shortest path leads outside the room.
   if (creep.pos.roomName !== pos.roomName) {
     moveByPath(creep, office + franchise);
     return BehaviorResult.INPROGRESS;
