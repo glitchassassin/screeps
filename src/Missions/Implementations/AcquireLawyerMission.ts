@@ -39,10 +39,6 @@ export class AcquireLawyerMission extends MissionImplementation {
     return super.fromId(id) as AcquireLawyerMission;
   }
 
-  onParentEnd() {
-    this.status = MissionStatus.DONE;
-  }
-
   run(
     creeps: ResolvedCreeps<AcquireLawyerMission>,
     missions: ResolvedMissions<AcquireLawyerMission>,

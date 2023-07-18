@@ -73,10 +73,6 @@ export class AcquireEngineerMission extends EngineerMission {
     return super.fromId(id) as AcquireEngineerMission;
   }
 
-  onParentEnd() {
-    this.status = MissionStatus.DONE;
-  }
-
   run(
     creeps: ResolvedCreeps<AcquireEngineerMission>,
     missions: ResolvedMissions<AcquireEngineerMission>,

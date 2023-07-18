@@ -164,7 +164,6 @@ export class PowerBankDuoMission extends MissionImplementation {
   }
 
   onParentEnd() {
-    super.onParentEnd();
     this.missionData.cleanup = true;
   }
 

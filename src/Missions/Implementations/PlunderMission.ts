@@ -77,7 +77,6 @@ export class PlunderMission extends MissionImplementation {
     const { haulers } = creeps;
     data.assignments ??= {};
     const plunder = Memory.rooms[data.targetRoom]?.plunder;
-    console.log('office', data.office, 'targetRoom', data.targetRoom, 'plunder', JSON.stringify(plunder));
     if (!plunder && haulers.length === 0) {
       this.status = MissionStatus.DONE;
     }

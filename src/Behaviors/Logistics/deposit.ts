@@ -29,7 +29,7 @@ export const deposit =
     creep.say('deposit');
     let target = byId(data.assignment.depositTarget as Id<AnyStoreStructure | Creep>);
     const storage = roomPlans(data.office)?.headquarters?.storage.structure;
-    if ((data.assignment.depositTarget && !target) || !storage) { // invalid target
+    if ((data.assignment.depositTarget && !target) && !storage) { // invalid target
       delete data.assignment.depositTarget;
       return States.DEPOSIT;
     }
@@ -54,7 +54,7 @@ export const deposit =
           !data.assignment.withdrawTarget ||
           followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget) === BehaviorResult.SUCCESS
         ) {
-          moveByFlowfield(creep, storage.pos);
+          storage && moveByFlowfield(creep, storage.pos);
         }
       }
 

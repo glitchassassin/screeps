@@ -353,7 +353,9 @@ export class MissionImplementation {
     this.status = MissionStatus.CLEANUP;
   }
 
-  onParentEnd() {}
+  onParentEnd() {
+    this.status = MissionStatus.DONE;
+  }
 
   cpuRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;
