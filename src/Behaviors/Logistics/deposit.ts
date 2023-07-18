@@ -26,7 +26,6 @@ export const deposit =
     },
     creep: Creep
   ) => {
-    creep.say('deposit');
     let target = byId(data.assignment.depositTarget as Id<AnyStoreStructure | Creep>);
     const storage = roomPlans(data.office)?.headquarters?.storage.structure;
     if ((data.assignment.depositTarget && !target) && !storage) { // invalid target
@@ -45,11 +44,9 @@ export const deposit =
     } else {
       if (target && !(target instanceof StructureStorage)) {
         // move to target, or storage if target not assigned yet
-        creep.say(`d-${target.pos.x}x${target.pos.y}`);
         moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
       } else if (!fromStorage) {
         // if target is storage, use cached path
-        creep.say('d-storage');
         if (
           !data.assignment.withdrawTarget ||
           followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget) === BehaviorResult.SUCCESS
