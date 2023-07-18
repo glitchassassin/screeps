@@ -1,12 +1,10 @@
-import { ACQUIRE_MAX_RCL } from 'config';
 import { BaseMissionData, MissionImplementation } from 'Missions/BaseClasses/MissionImplementation';
 import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/ConditionalMissionSpawner';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
-import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
-import { officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
+import { findAcquireTarget, officeShouldAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
 import { roomThreatLevel } from 'Strategy/Territories/HarassmentZones';
 import { unpackPos } from 'utils/packrat';
 import { AcquireEngineerMission } from './AcquireEngineerMission';
@@ -69,12 +67,13 @@ export class AcquireMission extends MissionImplementation {
     console.log('[AcquireMission] finished in', unpackPos(this.missionData.targetOffice));
   }
 
+  static shouldRun(office: string) {
+    const targetOffice = findAcquireTarget();
+    return !!targetOffice && officeShouldAcquireTarget(office);
+  }
+
   run() {
-    if (
-      rcl(this.missionData.targetOffice) >= ACQUIRE_MAX_RCL ||
-      (!officeShouldSupportAcquireTarget(this.missionData.office) &&
-        !officeShouldClaimAcquireTarget(this.missionData.office))
-    ) {
+    if (!AcquireMission.shouldRun(this.missionData.office)) {
       this.status = MissionStatus.DONE;
     }
   }

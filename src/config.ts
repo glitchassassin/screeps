@@ -16,7 +16,7 @@ export const TERRITORY_RADIUS = Game.shard.name === 'shard2' ? 1 : 3;
 export const OFFICE_LIMIT = (() => {
   if (Game.shard.name === 'shard2') return 1;
   if (Game.shard.name === 'screepsplus0') return 1;
-  return 2;
+  return 4;
 })();
 
 /**

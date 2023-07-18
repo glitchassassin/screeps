@@ -58,6 +58,10 @@ export class AcquireLawyerMission extends MissionImplementation {
 
     if (!lawyer) return;
 
+    if (data.targetOffice === Memory.claim?.target) {
+      Memory.claim.claimer = lawyer.name;
+    }
+
     if (data.targetOffice && Memory.rooms[data.targetOffice]) {
       Memory.rooms[data.targetOffice].lastAcquireAttempt = Game.time;
     }

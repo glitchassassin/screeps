@@ -1,12 +1,21 @@
-import { OFFICE_LIMIT } from 'config';
+import { ACQUIRE_MAX_RCL, OFFICE_LIMIT } from 'config';
 import { getOfficeDistanceByRoomPath } from '../../Selectors/getOfficeDistance';
 import { rcl } from '../../Selectors/rcl';
 import { scoreAcquireTarget } from './scoreAcquireTarget';
 
 declare global {
   interface Memory {
-    acquireTarget?: string;
+    claim?: {
+      target: string;
+      claimer?: string; // creep name
+    }
   }
+}
+
+export enum AcquireStatus {
+  CLAIM = 'claim',
+  SUPPORT = 'support',
+  DONE = 'done'
 }
 
 /**
@@ -16,29 +25,28 @@ declare global {
  * already an office. The closest is the winner.
  */
 export const findAcquireTarget = () => {
-  const offices = Object.keys(Memory.offices);
-
-  if (offices.length >= OFFICE_LIMIT || Game.cpu.limit / offices.length <= 5) return undefined; // Don't spread ourselves out too thin
-
   if (
-    Memory.acquireTarget &&
-    acquireTargetIsValid(Memory.acquireTarget) &&
-    !shouldPostponeAcquire(Memory.acquireTarget)
+    Memory.claim &&
+    acquireTargetIsValid(Memory.claim.target) &&
+    !shouldPostponeAcquire(Memory.claim.target)
   ) {
-    return Memory.acquireTarget;
+    return Memory.claim.target;
   } else {
-    Memory.acquireTarget = undefined;
+    Memory.claim = undefined;
   }
+
+  const shouldAcquire = Object.keys(Memory.offices).length < OFFICE_LIMIT;
 
   // Evaluate a new target every 50 ticks
   if ((Game.time + 25) % 50 !== 0) return undefined;
 
   // No cached target, scan for an acceptable one
+  const offices = Object.keys(Memory.offices);
   let bestTarget: string | undefined;
   let bestScore: number = Infinity;
 
   // Look for acquire/support target in Offices if GCL = offices count
-  let targetRooms = Game.gcl.level <= offices.length ? Object.keys(Memory.offices) : Object.keys(Memory.rooms);
+  let targetRooms = shouldAcquire ? Object.keys(Memory.rooms) : Object.keys(Memory.offices);
 
   for (const room of targetRooms) {
     if (!acquireTargetIsValid(room) || shouldPostponeAcquire(room)) {
@@ -67,10 +75,10 @@ export const findAcquireTarget = () => {
 
   if (bestTarget) {
     delete Memory.rooms[bestTarget].lastAcquireAttempt;
-    Memory.acquireTarget = bestTarget;
+    Memory.claim = { target: bestTarget };
   }
 
-  return Memory.acquireTarget;
+  return Memory.claim?.target;
 };
 
 /**
@@ -104,6 +112,13 @@ export const acquireTargetIsValid = (roomName: string) => {
   );
 };
 
+export const acquireStatus = () => {
+  if (!Memory.claim) return AcquireStatus.DONE;
+  if (!Game.rooms[Memory.claim.target]?.controller?.my) return AcquireStatus.CLAIM;
+  if (rcl(Memory.claim.target) < ACQUIRE_MAX_RCL) return AcquireStatus.SUPPORT;
+  return AcquireStatus.DONE;
+}
+
 export const officeShouldAcquireTarget = (officeName: string) => {
   const room = findAcquireTarget();
   if (!room) return false;
@@ -112,7 +127,7 @@ export const officeShouldAcquireTarget = (officeName: string) => {
 
   const distance = getOfficeDistanceByRoomPath(officeName, room);
 
-  return distance && distance < CREEP_CLAIM_LIFE_TIME;
+  return distance && distance < CREEP_CLAIM_LIFE_TIME / 50;
 };
 
 export const officeShouldClaimAcquireTarget = (officeName: string) => {
@@ -120,9 +135,7 @@ export const officeShouldClaimAcquireTarget = (officeName: string) => {
   // support, we should not claim either.
   if (!officeShouldAcquireTarget(officeName)) return false;
 
-  // Evaluate further if claiming is actually necessary
-  if (!Memory.acquireTarget) return false;
-  return !Memory.offices[Memory.acquireTarget];
+  return acquireStatus() === AcquireStatus.CLAIM;
 };
 
 export const officeShouldSupportAcquireTarget = (officeName: string) => {
@@ -130,10 +143,5 @@ export const officeShouldSupportAcquireTarget = (officeName: string) => {
   // support, we should not claim either.
   if (!officeShouldAcquireTarget(officeName)) return false;
 
-  // Evaluate further if claiming or support are necessary
-  if (!Memory.acquireTarget) return false;
-  // if (roomPlans(Memory.acquireTarget)?.fastfiller?.spawns[0].structure) return false; // don't bother supporting once we have a spawn
-  const controller = Game.rooms[Memory.acquireTarget]?.controller;
-  if (!controller) return false;
-  return controller.my && controller.level < 4;
+  return acquireStatus() !== AcquireStatus.DONE;
 };
