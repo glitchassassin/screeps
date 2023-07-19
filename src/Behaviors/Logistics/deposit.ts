@@ -1,18 +1,21 @@
-import { BehaviorResult } from 'Behaviors/Behavior';
-import { followPathHomeFromSource } from 'Behaviors/followPathHomeFromSource';
 import { moveByFlowfield } from 'Behaviors/Movement/moveByFlowfield';
+import { followPathHomeFromSource } from 'Behaviors/followPathHomeFromSource';
 import { States } from 'Behaviors/states';
 import { HarvestLedger } from 'Ledger/HarvestLedger';
 import { LogisticsLedger } from 'Ledger/LogisticsLedger';
 import { MinionTypes } from 'Minions/minionTypes';
-import { moveTo } from 'screeps-cartographer';
-import { byId } from 'Selectors/byId';
-import { estimatedFreeCapacity, estimatedUsedCapacity, updateUsedCapacity } from 'Selectors/Logistics/predictiveCapacity';
+import {
+  estimatedFreeCapacity,
+  estimatedUsedCapacity,
+  updateUsedCapacity
+} from 'Selectors/Logistics/predictiveCapacity';
 import { lookNear } from 'Selectors/Map/MapCoordinates';
+import { byId } from 'Selectors/byId';
 import { creepCostPerTick } from 'Selectors/minionCostPerTick';
 import { plannedFranchiseRoads } from 'Selectors/plannedFranchiseRoads';
 import { roomPlans } from 'Selectors/roomPlans';
 import { fastfillerIsFull } from 'Selectors/storageEnergyAvailable';
+import { moveTo } from 'screeps-cartographer';
 
 export const deposit =
   (fromStorage?: boolean) =>
@@ -22,69 +25,75 @@ export const deposit =
       assignment: {
         withdrawTarget?: Id<Source>;
         depositTarget?: Id<AnyStoreStructure | Creep>;
-      }
+      };
     },
     creep: Creep
   ) => {
     let target = byId(data.assignment.depositTarget as Id<AnyStoreStructure | Creep>);
     const storage = roomPlans(data.office)?.headquarters?.storage.structure;
-    if ((data.assignment.depositTarget && !target) && !storage) { // invalid target
+    if (data.assignment.depositTarget && !target) {
+      // invalid target
       delete data.assignment.depositTarget;
-      return States.DEPOSIT;
     }
+    if (!fromStorage) target ??= storage;
 
     if (data.assignment.withdrawTarget && !fromStorage) {
       // Record deposit cost
       HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'spawn_logistics', -creepCostPerTick(creep));
     }
 
-    // travel home from a source
-    if (data.assignment.withdrawTarget && !fromStorage && creep.pos.roomName !== data.office) {
-      followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget);
-    } else {
-      if (target && !(target instanceof StructureStorage)) {
-        // move to target, or storage if target not assigned yet
+    // move to target
+    if (fromStorage && target) {
+      // refiller - just move to target
+      moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+    } else if (!fromStorage) {
+      // travel home from a source
+      if (
+        data.assignment.withdrawTarget &&
+        creep.pos.roomName !== data.office &&
+        (!target || target?.pos.roomName === data.office)
+      ) {
+        // if out of the room (or target is storage), head towards storage
+        followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget);
+      } else if (target instanceof StructureStorage) {
+        if (creep.pos.roomName === data.office) {
+          // if in the room, use flowfield
+          moveByFlowfield(creep, target.pos);
+        } else {
+          // just head towards storage
+          moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+        }
+      } else if (target) {
+        // move to other target
         moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
-      } else if (!fromStorage) {
-        // if target is storage, use cached path
-        if (
-          !data.assignment.withdrawTarget ||
-          followPathHomeFromSource(creep, data.office, data.assignment.withdrawTarget) === BehaviorResult.SUCCESS
-        ) {
-          storage && moveByFlowfield(creep, storage.pos);
-        }
       }
+    }
 
-      // try to transfer to target
-
-      if (!fromStorage) target ??= storage;
-      if (target) {
-        const result = creep.transfer(target, RESOURCE_ENERGY);
-        if (result === OK) {
-          const amount = Math.min(
-            estimatedFreeCapacity(target),
-            estimatedUsedCapacity(creep)
-          );
-          updateUsedCapacity(target, amount);
-          if (data.assignment.withdrawTarget && !fromStorage) {
-            // Record deposit amount
-            HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'deposit', amount);
-            LogisticsLedger.record(data.office, 'deposit', -amount);
-          }
-          delete data.assignment.depositTarget;
-        } else if (result === ERR_FULL) {
-          delete data.assignment.depositTarget;
+    // try to transfer to target
+    if (target) {
+      const result = creep.transfer(target, RESOURCE_ENERGY);
+      if (result === OK) {
+        const amount = Math.min(estimatedFreeCapacity(target), estimatedUsedCapacity(creep));
+        updateUsedCapacity(target, amount);
+        if (data.assignment.withdrawTarget && !fromStorage) {
+          // Record deposit amount
+          HarvestLedger.record(data.office, data.assignment.withdrawTarget, 'deposit', amount);
+          LogisticsLedger.record(data.office, 'deposit', -amount);
         }
-        // If target is spawn, is not spawning, and is at capacity, renew this creep
-        if (
-          Game.cpu.bucket >= 10000 &&
-          target instanceof StructureSpawn &&
-          !target.spawning &&
-          estimatedUsedCapacity(target) + estimatedUsedCapacity(creep)
-        ) {
-          target.renewCreep(creep);
-        }
+        delete data.assignment.depositTarget;
+      } else if (result === ERR_FULL) {
+        delete data.assignment.depositTarget;
       }
+    }
+
+    // If target is spawn, is not spawning, and is at capacity, renew this creep
+    if (
+      Game.cpu.bucket >= 10000 &&
+      target instanceof StructureSpawn &&
+      !target.spawning &&
+      estimatedUsedCapacity(target) + estimatedUsedCapacity(creep)
+    ) {
+      target.renewCreep(creep);
     }
 
     if (Game.cpu.bucket < 10000) return States.DEPOSIT;

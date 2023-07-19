@@ -36,8 +36,7 @@ export default {
     resolve(),
     commonjs({
       namedExports: {
-        'node_modules/class-transformer/index.js': ['Transform', 'Type', 'Exclude'],
-        'node_modules/typescript-memoize/dist/memoize-decorator.js': ['Memoize']
+        'node_modules/class-transformer/index.js': ['Transform', 'Type', 'Exclude']
       }
     }),
     typescript({ tsconfig: './tsconfig.json' }),

@@ -46,7 +46,7 @@ export class EngineerMission extends MissionImplementation {
       role: MinionTypes.ENGINEER,
       budget: this.budget,
       builds: energy => buildEngineer(energy, this.calculated().roads),
-      count: current => {
+      count: () => {
         let pendingCost = this.queue.analysis().energyRemaining;
         // If rcl < 2, engineers will also upgrade
         if (rcl(this.missionData.office) < 2) {
@@ -145,19 +145,19 @@ export class EngineerMission extends MissionImplementation {
 
     this.updateEstimatedEnergy();
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
-    for (const creep of engineers.filter(isSpawned)) {
-      this.missionData.assignments[creep.name] ??= {};
-      const assignment = this.missionData.assignments[creep.name];
+    for (const engineer of engineers.filter(isSpawned)) {
+      this.missionData.assignments[engineer.name] ??= {};
+      const assignment = this.missionData.assignments[engineer.name];
       if (shouldRequestEnergy) {
         CreepsThatNeedEnergy.set(
           this.missionData.office,
           CreepsThatNeedEnergy.get(this.missionData.office) ?? new Set()
         );
-        CreepsThatNeedEnergy.get(this.missionData.office)?.add(creep.name);
+        CreepsThatNeedEnergy.get(this.missionData.office)?.add(engineer.name);
       } else {
-        CreepsThatNeedEnergy.get(this.missionData.office)?.delete(creep.name);
+        CreepsThatNeedEnergy.get(this.missionData.office)?.delete(engineer.name);
       }
       runStates(
         {
@@ -293,7 +293,7 @@ export class EngineerMission extends MissionImplementation {
             if (!controller) return States.FIND_WORK;
             moveTo(creep, { pos: controller.pos, range: 3 });
             const result = creep.upgradeController(controller);
-            if (result == ERR_NOT_ENOUGH_ENERGY) {
+            if (result === ERR_NOT_ENOUGH_ENERGY) {
               return States.GET_ENERGY;
             } else if (result === OK) {
               this.recordEnergy(
@@ -309,11 +309,11 @@ export class EngineerMission extends MissionImplementation {
           }
         },
         assignment,
-        creep
+        engineer
       );
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
 
     this.estimatedEnergyRemaining = Math.max(0, this.estimatedEnergyRemaining);
   }
