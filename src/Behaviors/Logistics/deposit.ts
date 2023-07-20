@@ -45,7 +45,7 @@ export const deposit =
     // move to target
     if (fromStorage && target) {
       // refiller - just move to target
-      moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+      moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3, plainCost: 2, swampCost: 10 });
     } else if (!fromStorage) {
       // travel home from a source
       if (
@@ -61,11 +61,11 @@ export const deposit =
           moveByFlowfield(creep, target.pos);
         } else {
           // just head towards storage
-          moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+          moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3, plainCost: 2, swampCost: 10 });
         }
       } else if (target) {
         // move to other target
-        moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3 });
+        moveTo(creep, { pos: target.pos, range: 1 }, { priority: 3, plainCost: 2, swampCost: 10 });
       }
     }
 

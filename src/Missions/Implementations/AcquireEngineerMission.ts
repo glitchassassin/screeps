@@ -104,7 +104,10 @@ export class AcquireEngineerMission extends MissionImplementation {
   }, 100);
 
   calculateHaulingCapacity() {
-    if (this.missionData.haulingCapacity !== undefined || !this.creeps.engineer.resolved) return;
+    if (!this.creeps.engineer.resolved) {
+      this.missionData.haulingCapacity = 0;
+      return;
+    }
     const path = this.cachedPath();
     if (!path) return;
     const distance = path.length * 2;
@@ -150,6 +153,7 @@ export class AcquireEngineerMission extends MissionImplementation {
     engineer && this.runEngineer(engineer);
 
     // target engineer with the most free capacity
+    const containers = roomPlans(data.targetOffice)?.fastfiller?.containers.map(c => c.structure);
     const library = roomPlans(data.targetOffice)?.library?.container.structure;
     for (const hauler of haulers.filter(isSpawned)) {
       // Load up with energy from sponsor office
@@ -157,12 +161,13 @@ export class AcquireEngineerMission extends MissionImplementation {
         {
           [States.DEPOSIT]: (data, creep) => {
             if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.WITHDRAW;
+            const containerTarget = containers?.find(c => estimatedFreeCapacity(c) > 0) ?? library;
             if (engineer && isSpawned(engineer) && this.missionData.initialized) {
               moveTo(creep, engineer);
               creep.transfer(engineer, RESOURCE_ENERGY);
-            } else if (library && estimatedFreeCapacity(library) > 0) {
-              moveTo(creep, library);
-              creep.transfer(library, RESOURCE_ENERGY);
+            } else if (containerTarget && estimatedFreeCapacity(containerTarget) > 0) {
+              moveTo(creep, containerTarget);
+              creep.transfer(containerTarget, RESOURCE_ENERGY);
             } else {
               moveTo(creep, { pos: new RoomPosition(25, 25, data.targetOffice), range: 20 });
             }
@@ -220,7 +225,6 @@ export class AcquireEngineerMission extends MissionImplementation {
           return States.RECYCLE;
         },
         [States.BUILDING]: (mission, creep) => {
-          if (!creep.store.getUsedCapacity(RESOURCE_ENERGY)) return States.BUILDING;
           if (!mission.facilitiesTarget) return States.FIND_WORK;
           const plan = PlannedStructure.deserialize(mission.facilitiesTarget);
 

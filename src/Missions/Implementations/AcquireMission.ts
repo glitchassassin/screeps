@@ -4,9 +4,13 @@ import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMi
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
 import { sum } from 'Selectors/reducers';
-import { findAcquireTarget, officeShouldAcquireTarget, officeShouldClaimAcquireTarget, officeShouldSupportAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
+import {
+  findAcquireTarget,
+  officeShouldAcquireTarget,
+  officeShouldClaimAcquireTarget,
+  officeShouldSupportAcquireTarget
+} from 'Strategy/Acquire/findAcquireTarget';
 import { roomThreatLevel } from 'Strategy/Territories/HarassmentZones';
-import { unpackPos } from 'utils/packrat';
 import { AcquireEngineerMission } from './AcquireEngineerMission';
 import { AcquireLawyerMission } from './AcquireLawyerMission';
 import { DefendAcquireMission } from './DefendAcquireMission';
@@ -50,7 +54,10 @@ export class AcquireMission extends MissionImplementation {
 
   priority = 7;
 
-  constructor(public missionData: AcquireMissionData, id?: string) {
+  constructor(
+    public missionData: AcquireMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: AcquireMission['id']) {
@@ -59,12 +66,12 @@ export class AcquireMission extends MissionImplementation {
 
   onStart() {
     super.onStart();
-    console.log('[AcquireMission] started targeting', unpackPos(this.missionData.targetOffice));
+    console.log('[AcquireMission] started targeting', this.missionData.targetOffice);
   }
 
   onEnd() {
     super.onEnd();
-    console.log('[AcquireMission] finished in', unpackPos(this.missionData.targetOffice));
+    console.log('[AcquireMission] finished in', this.missionData.targetOffice);
   }
 
   static shouldRun(office: string) {
