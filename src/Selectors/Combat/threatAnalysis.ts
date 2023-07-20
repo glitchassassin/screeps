@@ -1,7 +1,7 @@
-import { FEATURES, WHITELIST } from 'config';
+import { isSourceKeeperRoom } from 'Selectors/Map/MapCoordinates';
 import { creepStats } from 'Selectors/creepStats';
 import { findHostileCreeps } from 'Selectors/findHostileCreeps';
-import { isSourceKeeperRoom } from 'Selectors/Map/MapCoordinates';
+import { FEATURES, WHITELIST } from 'config';
 import { memoizeByTick } from 'utils/memoizeFunction';
 import { totalCreepStats } from './combatStats';
 
@@ -18,7 +18,7 @@ export enum ThreatLevel {
 // TODO: Update with threat from towers
 export const calculateThreatLevel = (room: string): [ThreatLevel, number] => {
   const controller = Game.rooms[room].controller;
-  const hostiles = totalCreepStats(findHostileCreeps(room));
+  const hostiles = totalCreepStats(findHostileCreeps(room), true);
 
   // No controller, no hostile creeps
   if (!controller) {

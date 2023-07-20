@@ -1,8 +1,9 @@
 import { moveTo } from 'screeps-cartographer';
+import { isAttacker } from 'Selectors/Combat/combatStats';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 
 export const blinkyKill = (creep: Creep, target?: Creep | Structure) => {
-  const kite = target instanceof Creep && target.body.some(p => p.type === ATTACK);
+  const kite = target instanceof Creep && isAttacker(target);
   if (target) {
     if (kite && getRangeTo(creep.pos, target.pos) < 3) {
       moveTo(creep, { pos: target.pos, range: 3 }, { flee: true });

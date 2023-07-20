@@ -3,6 +3,7 @@ import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/C
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
+import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { sum } from 'Selectors/reducers';
 import {
   findAcquireTarget,
@@ -59,6 +60,8 @@ export class AcquireMission extends MissionImplementation {
     id?: string
   ) {
     super(missionData, id);
+    // estimate energy remaining for upgrade
+    this.updateEstimatedEnergyRemaining();
   }
   static fromId(id: AcquireMission['id']) {
     return super.fromId(id) as AcquireMission;
@@ -79,9 +82,19 @@ export class AcquireMission extends MissionImplementation {
     return !!targetOffice && officeShouldAcquireTarget(office);
   }
 
+  updateEstimatedEnergyRemaining() {
+    const energyToUpgradeRcl4 = CONTROLLER_LEVELS[1] + CONTROLLER_LEVELS[2] + CONTROLLER_LEVELS[3];
+    const progress = Game.rooms[this.missionData.targetOffice]?.controller?.progress ?? 0;
+    const structureEnergyRemaining = plannedStructuresByRcl(this.missionData.targetOffice, 4)
+      .map(s => s.energyToBuild + s.energyToRepair)
+      .reduce(sum, 0);
+    this.estimatedEnergyRemaining = energyToUpgradeRcl4 - progress + structureEnergyRemaining;
+  }
+
   run() {
     if (!AcquireMission.shouldRun(this.missionData.office)) {
       this.status = MissionStatus.DONE;
     }
+    if (Game.time % 10 === 0) this.updateEstimatedEnergyRemaining();
   }
 }

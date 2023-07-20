@@ -4,8 +4,8 @@ import { memoize } from 'utils/memoizeFunction';
  * Returns base multipliers, e.g. `stats.heal * HEAL_POWER` to calculate actual healing potential
  */
 export const combatStats = memoize(
-  creep => creep.name + creep.hits,
-  (creep: Creep) => {
+  (creep: Creep, ignoreDamage?: boolean) => creep.name + (ignoreDamage ? creep.hits : ''),
+  (creep: Creep, ignoreDamage?: boolean) => {
     const stats = {
       hits: creep.hits,
       hitsMax: creep.hitsMax,
@@ -35,7 +35,7 @@ export const combatStats = memoize(
     let fatigueMitigation = 0;
 
     for (const p of creep.body) {
-      if (p.hits) {
+      if (p.hits || ignoreDamage) {
         if (p.type === HEAL) {
           let heal = 1;
           let rangedHeal = 1;
@@ -102,8 +102,8 @@ export const combatStats = memoize(
   }
 );
 
-export const combatPower = (creep: Creep): ReturnType<typeof combatStats> => {
-  const stats = combatStats(creep);
+export const combatPower = (creep: Creep, ignoreDamage?: boolean): ReturnType<typeof combatStats> => {
+  const stats = combatStats(creep, ignoreDamage);
   return {
     ...stats,
     attack: stats.attack * ATTACK_POWER,
@@ -118,11 +118,11 @@ export const combatPower = (creep: Creep): ReturnType<typeof combatStats> => {
   };
 };
 
-export const totalCreepStats = (creeps: Creep[]) => {
+export const totalCreepStats = (creeps: Creep[], ignoreDamage?: boolean) => {
   const sum = creeps.reduce(
     (sum, creep) => {
       sum.count += 1;
-      const stats = combatStats(creep);
+      const stats = combatStats(creep, ignoreDamage);
       sum.hits += stats.hits;
       sum.carry += stats.carry;
       sum.attack += stats.attack;
@@ -159,8 +159,8 @@ export const totalCreepStats = (creeps: Creep[]) => {
   return sum;
 };
 
-export const totalCreepPower = (creeps: Creep[]): ReturnType<typeof totalCreepStats> => {
-  const stats = totalCreepStats(creeps);
+export const totalCreepPower = (creeps: Creep[], ignoreDamage?: boolean): ReturnType<typeof totalCreepStats> => {
+  const stats = totalCreepStats(creeps, ignoreDamage);
   return {
     ...stats,
     attack: stats.attack * ATTACK_POWER,
@@ -176,14 +176,14 @@ export const totalCreepPower = (creeps: Creep[]): ReturnType<typeof totalCreepSt
 };
 
 export const isAttacker = (creep: Creep) => {
-  return combatStats(creep).attack > 0;
+  return combatStats(creep, true).attack > 0;
 };
 export const isHealer = (creep: Creep) => {
-  return combatStats(creep).heal > 0;
+  return combatStats(creep, true).heal > 0;
 };
 export const isRangedAttacker = (creep: Creep) => {
-  return combatStats(creep).rangedAttack > 0;
+  return combatStats(creep, true).rangedAttack > 0;
 };
 export const isHarvester = (creep: Creep) => {
-  return combatStats(creep).rangedAttack > 0;
+  return combatStats(creep, true).rangedAttack > 0;
 };
