@@ -43,26 +43,30 @@ export class AcquireEngineerMission extends MissionImplementation {
       builds: energy => buildAccountant(energy, 25, false, false),
       count: current => {
         if (this.missionData.haulingCapacity === undefined) return 0;
-        if (
-          current
-            .map(c => combatPower(c).carry)
-            .reduce(sum, 0) >= this.missionData.haulingCapacity
-        ) return 0;
+        if (current.map(c => combatPower(c).carry).reduce(sum, 0) >= this.missionData.haulingCapacity) return 0;
         return 1;
       },
       estimatedCpuPerTick: 1
     }),
-    engineer: new CreepSpawner('e', this.missionData.office, {
-      role: MinionTypes.ENGINEER,
-      builds: energy => buildEngineer(energy, false, true),
-      estimatedCpuPerTick: 1,
-      respawn: () => officeShouldSupportAcquireTarget(this.missionData.office)
-    }, { onSpawn: () => this.missionData.initialized = false })
+    engineer: new CreepSpawner(
+      'e',
+      this.missionData.office,
+      {
+        role: MinionTypes.ENGINEER,
+        builds: energy => buildEngineer(energy, false, true),
+        estimatedCpuPerTick: 1,
+        respawn: () => officeShouldSupportAcquireTarget(this.missionData.office)
+      },
+      { onSpawn: () => (this.missionData.initialized = false) }
+    )
   };
 
   priority = 7.5;
   queue: EngineerQueue;
-  constructor(public missionData: AcquireEngineerMissionData, id?: string) {
+  constructor(
+    public missionData: AcquireEngineerMissionData,
+    id?: string
+  ) {
     super(missionData, id);
     this.queue = new EngineerQueue(missionData.targetOffice);
   }
@@ -81,22 +85,17 @@ export class AcquireEngineerMission extends MissionImplementation {
     let energy = analysis.energyRemaining / analysis.workTicksRemaining;
     if (isNaN(energy)) energy = 1;
 
-    const RANGE_OFFSET = 1.5; // approximate the difference between path and range distance
-
     const stats = combatPower(engineer);
     const buildTicks = stats.carry / stats.build;
     const repairTicks = stats.carry / (stats.repair * REPAIR_COST);
-    const speed = stats.speed
     const workTicks = energy < 3 ? repairTicks : buildTicks;
     const period = Math.min(estimateMissionInterval(this.missionData.office), engineer.ticksToLive ?? CREEP_LIFE_TIME);
-    const iterationTime = workTicks + analysis.minRange * speed * 2 * RANGE_OFFSET;
-    const iterations = period / iterationTime;
-    const remaining = workTicks * iterations;
+    const remaining = workTicks * period;
     const workTicksRemaining = isNaN(remaining) ? 0 : remaining;
 
     // add controller upgrading to total energy remaining
     let energyRemaining = analysis.energyRemaining;
-    if (rcl(this.missionData.targetOffice) < 8) {
+    if (rcl(this.missionData.targetOffice) < 4) {
       const controller = Game.rooms[this.missionData.targetOffice].controller;
       energyRemaining += (controller?.progressTotal ?? 0) - (controller?.progress ?? 0);
     }
@@ -119,7 +118,7 @@ export class AcquireEngineerMission extends MissionImplementation {
     const to = roomPlans(this.missionData.targetOffice)?.headquarters?.storage.pos;
     if (!from || !to) return;
     return cachePath(this.id, from, { pos: to, range: 1 }, { reusePath: 1500 });
-  })
+  });
 
   run(
     creeps: ResolvedCreeps<AcquireEngineerMission>,
@@ -137,7 +136,7 @@ export class AcquireEngineerMission extends MissionImplementation {
         this.status = MissionStatus.DONE;
         return;
       }
-      engineer && recycle({ office: data.targetOffice }, engineer)
+      engineer && recycle({ office: data.targetOffice }, engineer);
       haulers.forEach(h => recycle({ office: data.targetOffice }, h));
     }
 
@@ -145,7 +144,7 @@ export class AcquireEngineerMission extends MissionImplementation {
     const path = this.cachedPath();
     if (!path) console.log('Engineer cached path failed');
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     // run engineers
     engineer && this.runEngineer(engineer);
@@ -191,7 +190,7 @@ export class AcquireEngineerMission extends MissionImplementation {
       );
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 
   runEngineer(engineer: Creep) {
@@ -311,7 +310,8 @@ export class AcquireEngineerMission extends MissionImplementation {
         [States.UPGRADING]: (mission, creep) => {
           if (
             rcl(this.missionData.targetOffice) >= 4 &&
-            storageEnergyAvailable(this.missionData.targetOffice) <= getWithdrawLimit(this.missionData.targetOffice, this.budget)
+            storageEnergyAvailable(this.missionData.targetOffice) <=
+              getWithdrawLimit(this.missionData.targetOffice, this.budget)
           )
             return States.FIND_WORK;
 
@@ -336,7 +336,7 @@ export class AcquireEngineerMission extends MissionImplementation {
         }
       },
       this.missionData,
-      engineer,
+      engineer
     );
   }
 }

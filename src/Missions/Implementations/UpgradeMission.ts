@@ -1,10 +1,13 @@
 import { BehaviorResult } from 'Behaviors/Behavior';
 import { getBoosted } from 'Behaviors/getBoosted';
 import { getEnergyFromStorage } from 'Behaviors/getEnergyFromStorage';
+import { withdraw } from 'Behaviors/Logistics/withdraw';
+import { recycle } from 'Behaviors/recycle';
 import { runStates } from 'Behaviors/stateMachine';
 import { States } from 'Behaviors/states';
 import { UPGRADE_CONTROLLER_COST } from 'gameConstants';
 import { bestTierAvailable } from 'Minions/bestBuildTier';
+import { buildAccountant } from 'Minions/Builds/accountant';
 import { buildResearch } from 'Minions/Builds/research';
 import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
@@ -16,17 +19,23 @@ import {
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
 import { estimateMissionInterval } from 'Missions/Selectors';
-import { moveTo } from 'screeps-cartographer';
+import { generatePath, moveTo } from 'screeps-cartographer';
+import { combatPower } from 'Selectors/Combat/combatStats';
+import { isSpawned } from 'Selectors/isSpawned';
+import { estimatedFreeCapacity } from 'Selectors/Logistics/predictiveCapacity';
 import { rcl } from 'Selectors/rcl';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
-import { CreepsThatNeedEnergy } from 'Selectors/storageStructureThatNeedsEnergy';
 
-export interface UpgradeMissionData extends BaseMissionData {}
+export interface UpgradeMissionData extends BaseMissionData {
+  targetHaulingCapacity?: number;
+  actualHaulingCapacity?: number;
+  distance?: number;
+}
 
 export class UpgradeMission extends MissionImplementation {
   public creeps = {
-    upgraders: new MultiCreepSpawner('h', this.missionData.office, {
+    upgraders: new MultiCreepSpawner('u', this.missionData.office, {
       role: MinionTypes.RESEARCH,
       budget: Budget.SURPLUS,
       builds: energy => bestTierAvailable(this.missionData.office, buildResearch(energy)),
@@ -41,24 +50,37 @@ export class UpgradeMission extends MissionImplementation {
         )
           return 0; // engineers will upgrade
 
-        // cap at link throughput
-        const from = roomPlans(this.missionData.office)?.headquarters?.link.pos
-        const to = roomPlans(this.missionData.office)?.library?.link.pos
-        if (from && to) {
-          const cooldown = from.getRangeTo(to)
-          const energyPerTick = LINK_CAPACITY / cooldown
-          const upgraderEnergyCapacity = UPGRADE_CONTROLLER_COST * current.map(c => c.getActiveBodyparts(WORK)).reduce(sum, 0)
-          if (upgraderEnergyCapacity > energyPerTick) return 0;
+        // wait for haulers if needed
+        if (
+          this.missionData.targetHaulingCapacity !== undefined &&
+          this.missionData.actualHaulingCapacity !== undefined &&
+          this.missionData.targetHaulingCapacity > this.missionData.actualHaulingCapacity
+        ) {
+          return 0;
         }
+
         return 1; // spawn as many as we can use
       },
-      estimatedCpuPerTick: 0.8,
+      estimatedCpuPerTick: 0.8
+    }),
+    haulers: new MultiCreepSpawner('h', this.missionData.office, {
+      role: MinionTypes.ACCOUNTANT,
+      builds: energy => buildAccountant(energy, 25, true, false),
+      count: current => {
+        if (this.missionData.targetHaulingCapacity === undefined) return 0;
+        if (current.map(c => combatPower(c).carry).reduce(sum, 0) >= this.missionData.targetHaulingCapacity) return 0;
+        return 1;
+      },
+      estimatedCpuPerTick: 1
     })
   };
 
   priority = 5;
 
-  constructor(public missionData: UpgradeMissionData, id?: string) {
+  constructor(
+    public missionData: UpgradeMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: UpgradeMission['id']) {
@@ -68,12 +90,9 @@ export class UpgradeMission extends MissionImplementation {
   capacity() {
     return this.creeps.upgraders.resolved.map(c => c.store.getCapacity()).reduce(sum, 0);
   }
-  needsSupplementalEnergy() {
-    return this.capacity() > LINK_CAPACITY / 2;
-  }
 
   run(creeps: ResolvedCreeps<UpgradeMission>, missions: ResolvedMissions<UpgradeMission>, data: UpgradeMissionData) {
-    const { upgraders } = creeps;
+    const { upgraders, haulers } = creeps;
 
     this.estimatedEnergyRemaining = upgraders
       .map(
@@ -83,16 +102,34 @@ export class UpgradeMission extends MissionImplementation {
       )
       .reduce(sum, 0);
 
-    for (const creep of upgraders) {
-      if (this.needsSupplementalEnergy()) {
-        CreepsThatNeedEnergy.set(
-          this.missionData.office,
-          CreepsThatNeedEnergy.get(this.missionData.office) ?? new Set()
-        );
-        CreepsThatNeedEnergy.get(this.missionData.office)?.add(creep.name);
-      } else {
-        CreepsThatNeedEnergy.get(this.missionData.office)?.delete(creep.name);
+    // set distance
+    const storage = roomPlans(this.missionData.office)?.headquarters?.storage;
+    if (this.missionData.distance === undefined) {
+      const storagePos = storage?.pos;
+      const controllerPos = Game.rooms[this.missionData.office].controller?.pos;
+      if (storagePos && controllerPos) {
+        this.missionData.distance = generatePath(storagePos, [{ pos: controllerPos, range: 3 }])?.length;
       }
+    }
+
+    // set hauling capacity if we have links and a storage
+    const from = roomPlans(this.missionData.office)?.headquarters?.link;
+    const to = roomPlans(this.missionData.office)?.library?.link;
+    if (from && to && storage?.structure && this.missionData.distance !== undefined) {
+      const cooldown = from.pos.getRangeTo(to.pos);
+      const energyPerTick = LINK_CAPACITY / cooldown;
+      const upgraderEnergyCapacity =
+        UPGRADE_CONTROLLER_COST * upgraders.map(c => c.getActiveBodyparts(WORK)).reduce(sum, 0);
+      this.missionData.targetHaulingCapacity = Math.max(
+        0,
+        (energyPerTick - upgraderEnergyCapacity) * this.missionData.distance
+      );
+    } else {
+      this.missionData.targetHaulingCapacity = 0;
+    }
+    this.missionData.actualHaulingCapacity = haulers.map(c => combatPower(c).carry).reduce(sum, 0);
+
+    for (const creep of upgraders) {
       runStates(
         {
           [States.GET_BOOSTED]: getBoosted(States.WORKING),
@@ -170,6 +207,41 @@ export class UpgradeMission extends MissionImplementation {
       );
     }
 
-    this.logCpu("creeps");
+    const upgraderToFill = upgraders
+      .filter(u => isSpawned(u) && estimatedFreeCapacity(u) >= u.store.getCapacity(RESOURCE_ENERGY) / 2)
+      .reduce((best, current) => {
+        if (estimatedFreeCapacity(current) > estimatedFreeCapacity(best)) return current;
+        return best;
+      }, upgraders[0]);
+
+    for (const hauler of haulers) {
+      runStates(
+        {
+          [States.DEPOSIT]: (data, creep) => {
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.WITHDRAW;
+
+            if (upgraderToFill && isSpawned(upgraderToFill)) {
+              moveTo(creep, upgraderToFill);
+              creep.transfer(upgraderToFill, RESOURCE_ENERGY);
+            } else if (to?.structure && estimatedFreeCapacity(to.structure) > 0) {
+              moveTo(creep, to.structure);
+              creep.transfer(to.structure, RESOURCE_ENERGY);
+            } else {
+              moveTo(creep, { pos: Game.rooms[data.office].controller!.pos, range: 10 });
+            }
+            return States.DEPOSIT;
+          },
+          [States.WITHDRAW]: (data, creep) => {
+            if (estimatedFreeCapacity(creep) === 0) return States.DEPOSIT;
+            return withdraw(true)({ office: data.office, assignment: {} }, creep);
+          },
+          [States.RECYCLE]: recycle
+        },
+        data,
+        hauler
+      );
+    }
+
+    this.logCpu('creeps');
   }
 }

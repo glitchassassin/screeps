@@ -8,7 +8,7 @@ declare global {
     claim?: {
       target: string;
       claimer?: string; // creep name
-    }
+    };
   }
 }
 
@@ -25,17 +25,13 @@ export enum AcquireStatus {
  * already an office. The closest is the winner.
  */
 export const findAcquireTarget = () => {
-  if (
-    Memory.claim &&
-    acquireTargetIsValid(Memory.claim.target) &&
-    !shouldPostponeAcquire(Memory.claim.target)
-  ) {
+  if (Memory.claim && acquireTargetIsValid(Memory.claim.target) && !shouldPostponeAcquire(Memory.claim.target)) {
     return Memory.claim.target;
   } else {
     Memory.claim = undefined;
   }
 
-  const shouldAcquire = Object.keys(Memory.offices).length < OFFICE_LIMIT;
+  const shouldAcquire = Object.keys(Memory.offices).length < Math.min(OFFICE_LIMIT, Game.gcl.level);
 
   // Evaluate a new target every 50 ticks
   if ((Game.time + 25) % 50 !== 0) return undefined;
@@ -117,7 +113,7 @@ export const acquireStatus = () => {
   if (!Game.rooms[Memory.claim.target]?.controller?.my) return AcquireStatus.CLAIM;
   if (rcl(Memory.claim.target) < ACQUIRE_MAX_RCL) return AcquireStatus.SUPPORT;
   return AcquireStatus.DONE;
-}
+};
 
 export const officeShouldAcquireTarget = (officeName: string) => {
   const room = findAcquireTarget();
@@ -143,5 +139,5 @@ export const officeShouldSupportAcquireTarget = (officeName: string) => {
   // support, we should not claim either.
   if (!officeShouldAcquireTarget(officeName)) return false;
 
-  return acquireStatus() !== AcquireStatus.DONE;
+  return acquireStatus() === AcquireStatus.SUPPORT;
 };
