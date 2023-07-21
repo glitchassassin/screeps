@@ -32,14 +32,28 @@ export interface MineMissionData extends BaseMissionData {
 export class MineMission extends MissionImplementation {
   budget = Budget.SURPLUS;
   public creeps = {
-    miner: new CreepSpawner('m', this.missionData.office, {
-      role: MinionTypes.FOREMAN,
-      builds: energy => bestTierAvailable(this.missionData.office, buildForeman(energy))
-    }),
-    hauler: new CreepSpawner('h', this.missionData.office, {
-      role: MinionTypes.ACCOUNTANT,
-      builds: energy => buildAccountant(energy)
-    })
+    miner: new CreepSpawner(
+      'm',
+      this.missionData.office,
+      {
+        role: MinionTypes.FOREMAN,
+        builds: energy => bestTierAvailable(this.missionData.office, buildForeman(energy))
+      },
+      {
+        onSpawn: creep => this.recordCreepEnergy(creep)
+      }
+    ),
+    hauler: new CreepSpawner(
+      'h',
+      this.missionData.office,
+      {
+        role: MinionTypes.ACCOUNTANT,
+        builds: energy => buildAccountant(energy)
+      },
+      {
+        onSpawn: creep => this.recordCreepEnergy(creep)
+      }
+    )
   };
 
   priority = 7;
