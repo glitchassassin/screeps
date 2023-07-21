@@ -44,11 +44,14 @@ export class MineMission extends MissionImplementation {
 
   priority = 7;
 
-  constructor(public missionData: MineMissionData, id?: string) {
+  constructor(
+    public missionData: MineMissionData,
+    id?: string
+  ) {
     super(missionData, id);
 
     const energy = Game.rooms[this.missionData.office].energyCapacityAvailable;
-    this.estimatedEnergyRemaining ??= maxBuildCost(buildForeman(energy)) + maxBuildCost(buildAccountant(energy));
+    this.estimatedEnergyRemaining = maxBuildCost(buildForeman(energy)) + maxBuildCost(buildAccountant(energy));
   }
   static fromId(id: MineMission['id']) {
     return super.fromId(id) as MineMission;
@@ -56,10 +59,8 @@ export class MineMission extends MissionImplementation {
 
   static shouldRun(office: string) {
     return Boolean(
-      FEATURES.MINING &&
-        byId(mineralId(office))?.mineralAmount &&
-        roomPlans(office)?.mine?.extractor.structure
-    )
+      FEATURES.MINING && byId(mineralId(office))?.mineralAmount && roomPlans(office)?.mine?.extractor.structure
+    );
   }
 
   run(creeps: ResolvedCreeps<MineMission>, missions: ResolvedMissions<MineMission>, data: MineMissionData) {
@@ -71,7 +72,7 @@ export class MineMission extends MissionImplementation {
     const mine = byId(data.mineral);
     const extractor = plan?.extractor.structure;
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
     if (!plan || !mine || !extractor) {
       this.status = MissionStatus.DONE;
       return;
@@ -137,6 +138,6 @@ export class MineMission extends MissionImplementation {
       );
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }
