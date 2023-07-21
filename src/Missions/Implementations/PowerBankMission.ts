@@ -39,6 +39,7 @@ export class PowerBankMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.ACCOUNTANT,
+        budget: Budget.ESSENTIAL, // energy budgeted at mission level
         builds: energy => buildAccountant(energy, 25, false, false),
         count: fixedCount(() => {
           // wait to spawn until duos are about to crack the bank
@@ -49,11 +50,13 @@ export class PowerBankMission extends MissionImplementation {
           return Math.ceil((this.report()?.amount ?? 0) / (25 * CARRY_CAPACITY));
         })
       },
-      { onSpawn: creep => {
-        this.missionData.haulerCapacitySpawned ??= 0;
-        this.missionData.haulerCapacitySpawned += combatPower(creep).carry;
-        this.recordCreepEnergy(creep)
-      } }
+      {
+        onSpawn: creep => {
+          this.missionData.haulerCapacitySpawned ??= 0;
+          this.missionData.haulerCapacitySpawned += combatPower(creep).carry;
+          this.recordCreepEnergy(creep);
+        }
+      }
     )
   };
 
@@ -90,7 +93,10 @@ export class PowerBankMission extends MissionImplementation {
 
   priority = 12.1;
 
-  constructor(public missionData: PowerBankMissionData, id?: string) {
+  constructor(
+    public missionData: PowerBankMissionData,
+    id?: string
+  ) {
     super(missionData, id);
 
     // calculate energy needed for mission
@@ -110,20 +116,32 @@ export class PowerBankMission extends MissionImplementation {
 
   onStart() {
     super.onStart();
-    console.log(`[PowerBankMission:${this.missionData.office}] started targeting ${this.missionData.powerToRetrieve} power at ${unpackPos(this.missionData.powerBankPos)}`);
+    console.log(
+      `[PowerBankMission:${this.missionData.office}] started targeting ${
+        this.missionData.powerToRetrieve
+      } power at ${unpackPos(this.missionData.powerBankPos)}`
+    );
   }
 
   onEnd() {
     super.onEnd();
-    console.log(`[PowerBankMission:${this.missionData.office}] finished in ${unpackPos(this.missionData.powerBankPos)}`);
+    console.log(
+      `[PowerBankMission:${this.missionData.office}] finished in ${unpackPos(this.missionData.powerBankPos)}`
+    );
     const energySpent = this.energyUsed() + this.missions.duos.resolved.map(m => m.energyUsed()).reduce(sum, 0);
     if (energySpent && this.missionData.powerToRetrieve) {
       const retrieved = this.missionData.powerRetrieved ?? 0;
       const percent = (retrieved / this.missionData.powerToRetrieve) * 100;
       const energySpent = this.energyUsed() + this.missions.duos.resolved.map(m => m.energyUsed()).reduce(sum, 0);
-      console.log(`[PowerBankMission:${this.missionData.office}] retrieved ${retrieved} of ${this.missionData.powerToRetrieve} (${percent.toFixed(0)}%). Spent ${energySpent} energy. Cost of power ${(energySpent / retrieved).toFixed(2)}`);
+      console.log(
+        `[PowerBankMission:${this.missionData.office}] retrieved ${retrieved} of ${
+          this.missionData.powerToRetrieve
+        } (${percent.toFixed(0)}%). Spent ${energySpent} energy. Cost of power ${(energySpent / retrieved).toFixed(2)}`
+      );
       if (percent < 100) {
-        console.log(`[PowerBankMission:${this.missionData.office}] spawned ${this.missionData.haulerCapacitySpawned} hauler capacity`);
+        console.log(
+          `[PowerBankMission:${this.missionData.office}] spawned ${this.missionData.haulerCapacitySpawned} hauler capacity`
+        );
       }
     } else {
       console.log(`[PowerBankMission] for ${unpackPos(this.missionData.powerBankPos)} canceled`);
@@ -176,7 +194,7 @@ export class PowerBankMission extends MissionImplementation {
       : undefined;
     const terminal = roomPlans(data.office)?.headquarters?.terminal.structure;
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     for (const hauler of haulers) {
       runStates(
@@ -184,10 +202,7 @@ export class PowerBankMission extends MissionImplementation {
           [States.WITHDRAW]: (mission, creep) => {
             if (
               creep.store.getUsedCapacity(RESOURCE_POWER) ||
-              (Game.rooms[powerBankPos.roomName] &&
-                !byId(this.report()?.id) &&
-                !powerBankRuin &&
-                !powerBankResources)
+              (Game.rooms[powerBankPos.roomName] && !byId(this.report()?.id) && !powerBankRuin && !powerBankResources)
             ) {
               return States.DEPOSIT;
             }
@@ -222,6 +237,6 @@ export class PowerBankMission extends MissionImplementation {
       );
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

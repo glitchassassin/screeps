@@ -37,6 +37,7 @@ export class MineMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.FOREMAN,
+        budget: Budget.ESSENTIAL, // energy budgeted at mission level
         builds: energy => bestTierAvailable(this.missionData.office, buildForeman(energy))
       },
       {
@@ -48,6 +49,7 @@ export class MineMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.ACCOUNTANT,
+        budget: Budget.ESSENTIAL, // energy budgeted at mission level
         builds: energy => buildAccountant(energy)
       },
       {

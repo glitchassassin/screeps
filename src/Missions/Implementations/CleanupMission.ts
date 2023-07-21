@@ -23,10 +23,11 @@ export interface CleanupMissionData extends BaseMissionData {
 }
 
 export class CleanupMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     janitor: new ConditionalCreepSpawner('j', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildAccountant(energy, 5),
       shouldSpawn: () => hasEnergyIncome(this.missionData.office) && this.misplacedResources().length > 0
     })
@@ -50,7 +51,10 @@ export class CleanupMission extends MissionImplementation {
     return misplaced;
   });
 
-  constructor(public missionData: CleanupMissionData, id?: string) {
+  constructor(
+    public missionData: CleanupMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: CleanupMission['id']) {
@@ -112,6 +116,6 @@ export class CleanupMission extends MissionImplementation {
       janitor
     );
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

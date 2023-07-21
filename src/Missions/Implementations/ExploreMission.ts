@@ -19,19 +19,23 @@ export interface ExploreMissionData extends BaseMissionData {
 }
 
 export class ExploreMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     explorer: new CreepSpawner('x', this.missionData.office, {
       role: MinionTypes.AUDITOR,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildAuditor(),
       respawn: () => !roomPlans(this.missionData.office)?.backfill?.observer.structure // skip explorers once we have an observer
     })
   };
 
   priority = 15;
-  initialEstimatedCpuOverhead = 0.25
+  initialEstimatedCpuOverhead = 0.25;
 
-  constructor(public missionData: ExploreMissionData, id?: string) {
+  constructor(
+    public missionData: ExploreMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: ExploreMission['id']) {
@@ -67,7 +71,7 @@ export class ExploreMission extends MissionImplementation {
       // logCpu('select a target');
     }
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     // Do work
     if (this.missionData.exploreTarget) {
@@ -111,6 +115,6 @@ export class ExploreMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

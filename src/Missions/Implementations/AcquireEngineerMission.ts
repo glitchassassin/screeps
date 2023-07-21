@@ -44,6 +44,7 @@ export class AcquireEngineerMission extends EngineerMission {
   public creeps = {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
+      budget: this.budget,
       builds: energy => buildAccountant(energy, 25, false, false),
       count: current => {
         if (this.missionData.targetHaulingCapacity === undefined) return 0;
@@ -54,6 +55,7 @@ export class AcquireEngineerMission extends EngineerMission {
     }),
     engineers: new MultiCreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
+      budget: this.budget,
       builds: energy => buildEngineer(energy, false, false),
       estimatedCpuPerTick: 1,
       count: current => {

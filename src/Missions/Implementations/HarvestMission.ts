@@ -34,13 +34,14 @@ export interface HarvestMissionData extends BaseMissionData {
 }
 
 export class HarvestMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     harvesters: new MultiCreepSpawner(
       'h',
       this.missionData.office,
       {
         role: MinionTypes.SALESMAN,
-        budget: Budget.ESSENTIAL,
+        budget: this.budget,
         builds: energy => buildSalesman(energy, this.calculated().link, this.calculated().remote),
         count: current => {
           const harvestRate = current
@@ -68,7 +69,10 @@ export class HarvestMission extends MissionImplementation {
   priority = 10;
   initialEstimatedCpuOverhead = 0.2;
 
-  constructor(public missionData: HarvestMissionData, id?: string) {
+  constructor(
+    public missionData: HarvestMissionData,
+    id?: string
+  ) {
     super(missionData, id);
     // Make sure that if room plans aren't finished we still prioritize the closest source
     const franchise1 =
@@ -93,21 +97,17 @@ export class HarvestMission extends MissionImplementation {
     return super.fromId(id) as HarvestMission;
   }
 
-  calculated = memoizeOncePerTick(
-    () => {
-      return {
-        link:
-          !!getFranchisePlanBySourceId(this.missionData.source)?.link.structure ||
-          getFranchisePlanBySourceId(this.missionData.source)?.extensions.some(s => s.structure),
-        remote: posById(this.missionData.source)?.roomName !== this.missionData.office,
-        source: byId(this.missionData.source)
-      };
-    }
-  );
+  calculated = memoizeOncePerTick(() => {
+    return {
+      link:
+        !!getFranchisePlanBySourceId(this.missionData.source)?.link.structure ||
+        getFranchisePlanBySourceId(this.missionData.source)?.extensions.some(s => s.structure),
+      remote: posById(this.missionData.source)?.roomName !== this.missionData.office,
+      source: byId(this.missionData.source)
+    };
+  });
 
-  maxHarvesters = memoizeOnce(
-    () => adjacentWalkablePositions(posById(this.missionData.source)!, true).length
-  )
+  maxHarvesters = memoizeOnce(() => adjacentWalkablePositions(posById(this.missionData.source)!, true).length);
 
   active() {
     return this.creeps.harvesters.resolved.length > 0;
@@ -159,14 +159,12 @@ export class HarvestMission extends MissionImplementation {
     const maxHarvestRate =
       (byId(this.missionData.source)?.energyCapacity ?? SOURCE_ENERGY_NEUTRAL_CAPACITY) / ENERGY_REGEN_TIME;
     const noContainer = !getFranchisePlanBySourceId(this.missionData.source)?.container.structure;
-    return Math.max(Math.min(creepHarvestRate, maxHarvestRate) - (noContainer ? 1 : 0), 0)
+    return Math.max(Math.min(creepHarvestRate, maxHarvestRate) - (noContainer ? 1 : 0), 0);
   }
 
-  creepCost = memoizeOncePerTick(
-    () => {
-      return this.creeps.harvesters.resolved.map(creepCost).reduce(sum, 0);
-    }
-  );
+  creepCost = memoizeOncePerTick(() => {
+    return this.creeps.harvesters.resolved.map(creepCost).reduce(sum, 0);
+  });
 
   run(creeps: ResolvedCreeps<HarvestMission>, missions: ResolvedMissions<HarvestMission>, data: HarvestMissionData) {
     const { harvesters } = creeps;
@@ -189,7 +187,7 @@ export class HarvestMission extends MissionImplementation {
 
     const franchisePos = posById(source);
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     for (const creep of harvesters) {
       const franchise = Memory.offices[office].franchises[data.source] ?? { scores: [] };
@@ -277,6 +275,6 @@ export class HarvestMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

@@ -41,6 +41,7 @@ const fastfillerSpawner = (office: string, id: string, shouldSpawn = () => true)
   });
 
 export class FastfillerMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     topLeft: fastfillerSpawner(this.missionData.office, 'a'),
     topRight: fastfillerSpawner(this.missionData.office, 'b'),
@@ -51,7 +52,10 @@ export class FastfillerMission extends MissionImplementation {
   priority = 15;
   initialEstimatedCpuOverhead = 1;
 
-  constructor(public missionData: FastfillerMissionData, id?: string) {
+  constructor(
+    public missionData: FastfillerMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: FastfillerMission['id']) {
@@ -65,7 +69,7 @@ export class FastfillerMission extends MissionImplementation {
       bottomLeft: unpackPos(this.missionData.refillSquares.bottomLeft),
       bottomRight: unpackPos(this.missionData.refillSquares.bottomRight)
     };
-  })
+  });
 
   run(
     creeps: ResolvedCreeps<FastfillerMission>,
@@ -121,14 +125,14 @@ export class FastfillerMission extends MissionImplementation {
     const shouldTransfer = (s: AnyStoreStructure | undefined) =>
       s && s.store[RESOURCE_ENERGY] < s.store.getCapacity(RESOURCE_ENERGY);
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     for (const { creep, pos, structures } of positions) {
       if (!creep) continue;
 
       if (!creep.pos.isEqualTo(pos)) {
         moveTo(creep, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreFastfiller: true }) });
-        continue
+        continue;
       } else {
         move(creep, [pos], 10); // this will prevent shoving
       }
@@ -180,6 +184,6 @@ export class FastfillerMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

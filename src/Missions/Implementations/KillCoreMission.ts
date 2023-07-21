@@ -21,17 +21,21 @@ export interface KillCoreMissionData extends BaseMissionData {
 }
 
 export class KillCoreMission extends MissionImplementation {
+  budget = Budget.EFFICIENCY;
   public creeps = {
     guard: new CreepSpawner('g', this.missionData.office, {
       role: MinionTypes.GUARD,
-      budget: Budget.EFFICIENCY,
+      budget: this.budget,
       builds: energy => buildGuard(energy)
     })
   };
 
   priority = 9.5;
 
-  constructor(public missionData: KillCoreMissionData, id?: string) {
+  constructor(
+    public missionData: KillCoreMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: KillCoreMission['id']) {
@@ -65,7 +69,7 @@ export class KillCoreMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     if (!guard) return;
 
@@ -96,6 +100,6 @@ export class KillCoreMission extends MissionImplementation {
       guard
     );
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

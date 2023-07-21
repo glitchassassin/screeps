@@ -4,15 +4,15 @@ import { MinionTypes } from 'Minions/minionTypes';
 import { CreepSpawner } from 'Missions/BaseClasses/CreepSpawner/CreepSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
-import { follow, moveTo } from 'screeps-cartographer';
-import { byId } from 'Selectors/byId';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { rampartsAreBroken } from 'Selectors/Combat/defenseRamparts';
-import { findHostileCreepsInRange } from 'Selectors/findHostileCreeps';
 import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { getCostMatrix } from 'Selectors/Map/Pathing';
+import { byId } from 'Selectors/byId';
+import { findHostileCreepsInRange } from 'Selectors/findHostileCreeps';
 import { closestRampartSection } from 'Selectors/perimeter';
 import { isCreep } from 'Selectors/typeguards';
+import { follow, moveTo } from 'screeps-cartographer';
 import { unpackPos } from 'utils/packrat';
 import { BaseMissionData, MissionImplementation, ResolvedCreeps, ResolvedMissions } from './MissionImplementation';
 
@@ -23,22 +23,26 @@ export interface BaseDuoMissionData extends BaseMissionData {
 }
 
 export class BaseDuoMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     attacker: new CreepSpawner('a', this.missionData.office, {
       role: MinionTypes.GUARD,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildGuard(energy, false)
     }),
     healer: new CreepSpawner('b', this.missionData.office, {
       role: MinionTypes.MEDIC,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildMedic(energy)
     })
   };
 
   priority = 5;
 
-  constructor(public missionData: BaseDuoMissionData, id?: string) {
+  constructor(
+    public missionData: BaseDuoMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: BaseDuoMission['id']) {

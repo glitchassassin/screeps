@@ -9,10 +9,11 @@ import { rcl } from 'Selectors/rcl';
 import { UpgradeMission, UpgradeMissionData } from './UpgradeMission';
 
 export class EmergencyUpgradeMission extends UpgradeMission {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     upgraders: new MultiCreepSpawner('u', this.missionData.office, {
       role: MinionTypes.RESEARCH,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildResearch(energy),
       count: current => {
         if (!EmergencyUpgradeMission.shouldRun(this.missionData.office) || current.length) return 0;
@@ -21,6 +22,7 @@ export class EmergencyUpgradeMission extends UpgradeMission {
     }),
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
+      budget: this.budget,
       builds: energy => buildAccountant(energy, 25, true, false),
       count: () => 0, // don't spawn haulers for emergency upgrade
       estimatedCpuPerTick: 1

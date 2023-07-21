@@ -41,6 +41,7 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_ATTACKER,
+        budget: this.budget,
         builds: energy => buildPowerbankAttacker().filter(isTier(this.missionData.boostTier))
       },
       {
@@ -53,6 +54,7 @@ export class PowerBankDuoMission extends MissionImplementation {
       this.missionData.office,
       {
         role: MinionTypes.POWER_BANK_HEALER,
+        budget: this.budget,
         builds: energy => buildPowerbankHealer().filter(isTier(this.missionData.boostTier))
       },
       {
@@ -64,7 +66,10 @@ export class PowerBankDuoMission extends MissionImplementation {
 
   priority = 12;
 
-  constructor(public missionData: PowerBankDuoMissionData, id?: string) {
+  constructor(
+    public missionData: PowerBankDuoMissionData,
+    id?: string
+  ) {
     super(missionData, id);
 
     this.estimatedEnergyRemaining ??= maxBuildCost(buildPowerbankAttacker()) + maxBuildCost(buildPowerbankHealer());
@@ -182,7 +187,7 @@ export class PowerBankDuoMission extends MissionImplementation {
         moveTo(healer, attacker);
       } else {
         // come together
-        move(attacker, [attacker.pos]) // wait for healer
+        move(attacker, [attacker.pos]); // wait for healer
         moveTo(healer, attacker);
       }
     } else {
@@ -196,11 +201,13 @@ export class PowerBankDuoMission extends MissionImplementation {
     const { attacker, healer } = creeps;
 
     const recycleTarget = roomPlans(this.missionData.office)?.fastfiller?.containers[0].pos;
-    const recycleSpawn = roomPlans(this.missionData.office)?.fastfiller?.spawns[0].structure as StructureSpawn | undefined;
+    const recycleSpawn = roomPlans(this.missionData.office)?.fastfiller?.spawns[0].structure as
+      | StructureSpawn
+      | undefined;
     if (!recycleTarget || !recycleSpawn) {
       // oh well, we tried
       attacker?.suicide();
-      healer?.suicide()
+      healer?.suicide();
       return States.RECYCLE;
     }
     this.moveTo(creeps, { pos: recycleTarget, range: 0 });
@@ -268,19 +275,20 @@ export class PowerBankDuoMission extends MissionImplementation {
         if (
           powerBank.ticksToDecay < 100 ||
           powerBank.hits > this.damagePerTick() * 25 ||
-          attacker.room.find(FIND_MY_CREEPS)
+          attacker.room
+            .find(FIND_MY_CREEPS)
             .filter(c => c.name.startsWith('PBM'))
             .map(c => combatPower(c).carry)
             .reduce(sum, 0) >= powerBank.power
         ) {
           attacker.attack(powerBank);
         } else {
-          attacker.say("Waiting")
+          attacker.say('Waiting');
         }
       }
     }
     // logCpu('attacking');
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

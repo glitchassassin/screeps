@@ -31,10 +31,11 @@ export interface PlunderMissionData extends BaseMissionData {
 }
 
 export class PlunderMission extends MissionImplementation {
+  budget = Budget.SURPLUS;
   public creeps = {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      budget: Budget.SURPLUS,
+      budget: this.budget,
       builds: energy => buildAccountant(energy),
       count: current => {
         const capacity = Memory.rooms[this.missionData.targetRoom].plunder?.capacity ?? 0;

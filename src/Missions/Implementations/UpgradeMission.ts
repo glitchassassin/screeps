@@ -34,10 +34,11 @@ export interface UpgradeMissionData extends BaseMissionData {
 }
 
 export class UpgradeMission extends MissionImplementation {
+  budget = Budget.SURPLUS;
   public creeps = {
     upgraders: new MultiCreepSpawner('u', this.missionData.office, {
       role: MinionTypes.RESEARCH,
-      budget: Budget.SURPLUS,
+      budget: this.budget,
       builds: energy => bestTierAvailable(this.missionData.office, buildResearch(energy)),
       count: current => {
         if (rcl(this.missionData.office) === 8 && current.length) {
@@ -65,6 +66,7 @@ export class UpgradeMission extends MissionImplementation {
     }),
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
+      budget: this.budget,
       builds: energy => buildAccountant(energy, 25, true, false),
       count: current => {
         if (this.missionData.targetHaulingCapacity === undefined) return 0;

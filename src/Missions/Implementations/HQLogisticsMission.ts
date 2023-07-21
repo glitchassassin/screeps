@@ -17,10 +17,11 @@ import { roomPlans } from 'Selectors/roomPlans';
 export interface HQLogisticsMissionData extends BaseMissionData {}
 
 export class HQLogisticsMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     clerk: new ConditionalCreepSpawner('x', this.missionData.office, {
       role: MinionTypes.CLERK,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildClerk(energy, undefined, true),
       shouldSpawn: () => hasEnergyIncome(this.missionData.office),
       estimatedCpuPerTick: 0.6
@@ -28,9 +29,12 @@ export class HQLogisticsMission extends MissionImplementation {
   };
 
   priority = 15;
-  initialEstimatedCpuOverhead = 0.5
+  initialEstimatedCpuOverhead = 0.5;
 
-  constructor(public missionData: HQLogisticsMissionData, id?: string) {
+  constructor(
+    public missionData: HQLogisticsMissionData,
+    id?: string
+  ) {
     super(missionData, id);
     this.setPriority();
   }
@@ -68,7 +72,7 @@ export class HQLogisticsMission extends MissionImplementation {
     const pos = getHeadquarterLogisticsLocation(data.office);
     if (!pos) return;
 
-    this.logCpu("overhead")
+    this.logCpu('overhead');
 
     if (!clerk.pos.isEqualTo(pos)) {
       moveTo(clerk, { pos, range: 0 }, { roomCallback: defaultRoomCallback({ ignoreHQLogistics: true }) });
@@ -76,7 +80,7 @@ export class HQLogisticsMission extends MissionImplementation {
     }
     move(clerk, [pos], 10); // maintain position
 
-    this.logCpu("creeps")
+    this.logCpu('creeps');
 
     // Check HQ state
     const hq = roomPlans(data.office)?.headquarters;
@@ -105,7 +109,7 @@ export class HQLogisticsMission extends MissionImplementation {
 
     const powerSpawnPowerNeeded = powerSpawn ? powerSpawn.store.getFreeCapacity(RESOURCE_POWER) : 0;
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     // Emergency provision for over-full Storage
     if (storage && storage.store.getFreeCapacity() < 5000) {
@@ -187,6 +191,6 @@ export class HQLogisticsMission extends MissionImplementation {
       transfer = true;
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

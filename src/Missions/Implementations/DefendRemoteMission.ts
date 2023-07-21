@@ -20,10 +20,11 @@ export interface DefendRemoteMissionData extends BaseMissionData {
 }
 
 export class DefendRemoteMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     blinkies: new MultiCreepSpawner('b', this.missionData.office, {
       role: MinionTypes.BLINKY,
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       builds: energy => buildBlinky(energy),
       count: current => {
         if (
@@ -40,7 +41,10 @@ export class DefendRemoteMission extends MissionImplementation {
   priority = 12;
   initialEstimatedCpuOverhead = 0.2;
 
-  constructor(public missionData: DefendRemoteMissionData, id?: string) {
+  constructor(
+    public missionData: DefendRemoteMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: DefendRemoteMission['id']) {
@@ -77,7 +81,7 @@ export class DefendRemoteMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     // console.log('defending remote', data.targetRoom);
 
@@ -100,6 +104,6 @@ export class DefendRemoteMission extends MissionImplementation {
       blinkyKill(creep, target);
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

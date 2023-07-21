@@ -35,18 +35,22 @@ export interface ScienceMissionData extends BaseMissionData {
 }
 
 export class ScienceMission extends MissionImplementation {
+  budget = Budget.EFFICIENCY;
   public creeps = {
     scientist: new CreepSpawner('s', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
-      budget: Budget.EFFICIENCY,
+      budget: this.budget,
       builds: energy => buildAccountant(energy, 25, true, false),
-      respawn: () => ScienceMission.shouldRun(this.missionData.office),
+      respawn: () => ScienceMission.shouldRun(this.missionData.office)
     })
   };
 
   priority = 9;
 
-  constructor(public missionData: ScienceMissionData, id?: string) {
+  constructor(
+    public missionData: ScienceMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: ScienceMission['id']) {
@@ -56,11 +60,10 @@ export class ScienceMission extends MissionImplementation {
   static shouldRun(office: string) {
     return Boolean(
       FEATURES.LABS &&
-      !officeIsDownleveled(office) &&
-      roomPlans(office)?.labs?.labs.filter(s => s.structure).length &&
-      (Memory.offices[office].lab.orders.length !== 0 ||
-      Memory.offices[office].lab.boosts.length !== 0)
-    )
+        !officeIsDownleveled(office) &&
+        roomPlans(office)?.labs?.labs.filter(s => s.structure).length &&
+        (Memory.offices[office].lab.orders.length !== 0 || Memory.offices[office].lab.boosts.length !== 0)
+    );
   }
 
   run(creeps: ResolvedCreeps<ScienceMission>, missions: ResolvedMissions<ScienceMission>, data: ScienceMissionData) {
@@ -92,7 +95,7 @@ export class ScienceMission extends MissionImplementation {
       scientist.memory.runState = States.DEPOSIT;
     }
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     runStates(
       {
@@ -210,6 +213,6 @@ export class ScienceMission extends MissionImplementation {
       scientist
     );
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

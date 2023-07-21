@@ -25,10 +25,11 @@ export interface ReserveMissionData extends BaseMissionData {
 }
 
 export class ReserveMission extends MissionImplementation {
+  budget = Budget.ECONOMY;
   public creeps = {
     marketers: new MultiCreepSpawner('m', this.missionData.office, {
       role: MinionTypes.MARKETER,
-      budget: Budget.ECONOMY,
+      budget: this.budget,
       builds: energy => buildMarketer(energy),
       count: current => {
         if (Game.rooms[this.missionData.office].energyCapacityAvailable < 650) return 0;
@@ -41,20 +42,21 @@ export class ReserveMission extends MissionImplementation {
   };
 
   priority = 9;
-  initialEstimatedCpuOverhead = 0.2
+  initialEstimatedCpuOverhead = 0.2;
 
-  constructor(public missionData: ReserveMissionData, id?: string) {
+  constructor(
+    public missionData: ReserveMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: ReserveMission['id']) {
     return super.fromId(id) as ReserveMission;
   }
 
-  creepCost = memoizeOncePerTick(
-    () => {
-      return this.creeps.marketers.resolved.map(creepCost).reduce(sum, 0);
-    }
-  );
+  creepCost = memoizeOncePerTick(() => {
+    return this.creeps.marketers.resolved.map(creepCost).reduce(sum, 0);
+  });
 
   run(creeps: ResolvedCreeps<ReserveMission>, missions: ResolvedMissions<ReserveMission>, data: ReserveMissionData) {
     const { marketers } = creeps;
@@ -96,7 +98,7 @@ export class ReserveMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     for (const creep of marketers) {
       const target = data.assignments[creep.name];
@@ -113,7 +115,7 @@ export class ReserveMission extends MissionImplementation {
       // Move to controller
 
       if (creep.pos.inRangeTo(controllerPos, 1)) {
-        move(creep, adjacentWalkablePositions(controllerPos, true))
+        move(creep, adjacentWalkablePositions(controllerPos, true));
         // Reserve controller
         const controller = Game.rooms[target].controller;
         if (controller) {
@@ -127,6 +129,6 @@ export class ReserveMission extends MissionImplementation {
       }
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }

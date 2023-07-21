@@ -56,13 +56,14 @@ declare global {
 }
 
 export class LogisticsMission extends MissionImplementation {
+  budget = Budget.ESSENTIAL;
   public creeps = {
     refillers: new MultiCreepSpawner('r', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
       spawnData: {
         memory: { fromStorage: true }
       },
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       estimatedCpuPerTick: 0.8,
       builds: energy =>
         buildAccountant(Math.max(100, energy / 2), 25, this.calculated().roads, this.calculated().repair),
@@ -77,7 +78,7 @@ export class LogisticsMission extends MissionImplementation {
       spawnData: {
         memory: { fromStorage: false }
       },
-      budget: Budget.ESSENTIAL,
+      budget: this.budget,
       estimatedCpuPerTick: 2,
       builds: energy =>
         buildAccountant(Math.max(100, energy / 2), 25, this.calculated().roads, this.calculated().repair),
@@ -92,7 +93,10 @@ export class LogisticsMission extends MissionImplementation {
 
   priority = 11;
 
-  constructor(public missionData: LogisticsMissionData, id?: string) {
+  constructor(
+    public missionData: LogisticsMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: LogisticsMission['id']) {
