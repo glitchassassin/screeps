@@ -7,7 +7,7 @@ import {
 import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/ConditionalMissionSpawner';
 import { MissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MissionSpawner';
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
-import { MissionStatus } from 'Missions/Mission';
+import { activeMissions } from 'Missions/Selectors';
 import { refillSquares } from 'Reports/fastfillerPositions';
 import { franchisesByOffice } from 'Selectors/Franchises/franchisesByOffice';
 import { calculateNearbyRooms } from 'Selectors/Map/MapCoordinates';
@@ -126,7 +126,10 @@ export class MainOfficeMission extends MissionImplementation {
   priority = 20;
   initialEstimatedCpuOverhead = 0.3;
 
-  constructor(public missionData: MainOfficeMissionData, id?: string) {
+  constructor(
+    public missionData: MainOfficeMissionData,
+    id?: string
+  ) {
     super(missionData, id);
   }
   static fromId(id: MainOfficeMission['id']) {
@@ -138,7 +141,7 @@ export class MainOfficeMission extends MissionImplementation {
     data: MainOfficeMissionData
   ) {
     if (!Game.rooms[data.office]) {
-      this.status = MissionStatus.DONE;
+      activeMissions(this.missionData.office).forEach(m => m.kill());
     }
     return;
   }

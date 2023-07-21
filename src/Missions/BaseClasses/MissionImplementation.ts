@@ -72,7 +72,7 @@ export function purgeOrphanedMissions() {
     // purge lingering singletons
     for (const id of singletons.keys()) {
       if (!Memory.missions[id]) {
-        console.log("Lingering singleton detected")
+        console.log('Lingering singleton detected');
         singletons.delete(id);
       }
     }
@@ -95,7 +95,10 @@ export class MissionImplementation {
   public id: string;
   public priority = 5;
   public budget = Budget.ESSENTIAL;
-  constructor(public missionData: { office: string }, id?: string) {
+  constructor(
+    public missionData: { office: string },
+    id?: string
+  ) {
     const prefix = this.constructor.name
       .split('')
       .filter(c => c === c.toUpperCase())
@@ -129,7 +132,11 @@ export class MissionImplementation {
       energyUsed: Memory.missions[this.id].energyUsed,
       finished: Game.time,
       office: this.missionData.office
-    }
+    };
+  }
+
+  kill() {
+    endAndReportMission(this.id);
   }
 
   get status() {
@@ -156,8 +163,10 @@ export class MissionImplementation {
     }
 
     // initialize CPU log
-    const spawners = Object.keys(this.creeps)
-    const perCreep = spawners.length ? spawners.reduce((sum, spawner) => this.creeps[spawner].cpuPerTick + sum, 0) / spawners.length : 0;
+    const spawners = Object.keys(this.creeps);
+    const perCreep = spawners.length
+      ? spawners.reduce((sum, spawner) => this.creeps[spawner].cpuPerTick + sum, 0) / spawners.length
+      : 0;
     this._cpuLog = Array(this._cpuLogCount)
       .fill(0)
       .map(() => ({
@@ -301,7 +310,7 @@ export class MissionImplementation {
     this._cpuTickLog[category] += current - this._lastCpu;
     this._lastCpu = current;
   }
-  private _cpuLog: { perCreep: number, overhead: number }[] = [];
+  private _cpuLog: { perCreep: number; overhead: number }[] = [];
   private _cpuLogCount = <const>1000;
 
   cpuStats = memoizeOncePerTick(() => {
@@ -316,7 +325,7 @@ export class MissionImplementation {
       perCreep: perCreep / this._cpuLog.length,
       overhead: overhead / this._cpuLog.length
     };
-  })
+  });
 
   register(creep: Creep) {
     for (let key in this.creeps) {
@@ -360,7 +369,10 @@ export class MissionImplementation {
   cpuRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;
     const { perCreep, overhead } = this.cpuStats();
-    return Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].ttlRemaining() + sum, 0) * perCreep + (overhead * CPU_ESTIMATE_PERIOD);
+    return (
+      Object.keys(this.creeps).reduce((sum, spawner) => this.creeps[spawner].ttlRemaining() + sum, 0) * perCreep +
+      overhead * CPU_ESTIMATE_PERIOD
+    );
   }
   cpuUsed() {
     return Memory.missions[this.id].cpuUsed;
@@ -372,7 +384,7 @@ export class MissionImplementation {
   }
   estimatedCpuOverhead = memoizeOncePerTick(() => {
     return this.cpuStats().overhead;
-  })
+  });
   energyRemaining() {
     if (this.status !== MissionStatus.RUNNING) return 0;
     return this.estimatedEnergyRemaining;

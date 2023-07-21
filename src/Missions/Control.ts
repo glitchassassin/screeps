@@ -5,6 +5,7 @@ import { MissionEnergyAvailable } from 'Selectors/Missions/missionEnergyAvailabl
 import { updateMissionEnergyAvailable } from 'Selectors/Missions/updateMissionEnergyAvailable';
 import { getSpawns } from 'Selectors/roomPlans';
 import { allocatedResources, runMissions } from './BaseClasses/runMissions';
+import { MissionStatus } from './Mission';
 import { activeMissions } from './Selectors';
 
 export function runMissionControl() {
@@ -34,7 +35,7 @@ function allocateMissions() {
     };
 
     // get missions by office
-    const missionsByPriority = activeMissions(office).sort((a, b) => b.priority - a.priority)
+    const missionsByPriority = activeMissions(office).sort((a, b) => b.priority - a.priority);
     const requests = [];
 
     // loop through priorities, highest to lowest
@@ -45,6 +46,13 @@ function allocateMissions() {
       // mission is waiting for cpu/energy, don't try to spawn lower-priority missions
       if (mission.priority !== lastPriority && waitForEnergy) break missions;
       lastPriority = mission.priority;
+
+      if (mission.status === MissionStatus.PENDING) {
+        // mission is saving energy for something - lower-priority missions should
+        // adjust their budgets accordingly
+        remaining.energy = Math.max(0, remaining.energy - mission.estimatedEnergyRemaining);
+        continue;
+      }
 
       try {
         for (const order of mission.spawn()) {
@@ -63,7 +71,9 @@ function allocateMissions() {
           }
         }
       } catch (e) {
-        console.log(`Error spawning for mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
+        console.log(
+          `Error spawning for mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`
+        );
       }
     }
 
