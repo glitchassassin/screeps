@@ -1,3 +1,4 @@
+import { roomPlans } from 'Selectors/roomPlans';
 import { ACQUIRE_MAX_RCL, OFFICE_LIMIT } from 'config';
 import { getOfficeDistanceByRoomPath } from '../../Selectors/getOfficeDistance';
 import { rcl } from '../../Selectors/rcl';
@@ -111,7 +112,12 @@ export const acquireTargetIsValid = (roomName: string) => {
 export const acquireStatus = () => {
   if (!Memory.claim) return AcquireStatus.DONE;
   if (!Game.rooms[Memory.claim.target]?.controller?.my) return AcquireStatus.CLAIM;
-  if (rcl(Memory.claim.target) < ACQUIRE_MAX_RCL) return AcquireStatus.SUPPORT;
+  if (
+    // support until ACQUIRE_MAX_RCL and storage is complete
+    rcl(Memory.claim.target) <= ACQUIRE_MAX_RCL &&
+    !roomPlans(Memory.claim.target)?.headquarters?.storage.structure
+  )
+    return AcquireStatus.SUPPORT;
   return AcquireStatus.DONE;
 };
 
@@ -123,7 +129,7 @@ export const officeShouldAcquireTarget = (officeName: string) => {
 
   const distance = getOfficeDistanceByRoomPath(officeName, room);
 
-  return distance && distance < CREEP_CLAIM_LIFE_TIME / 50;
+  return distance && distance < CREEP_CLAIM_LIFE_TIME / 50 && acquireStatus() !== AcquireStatus.DONE;
 };
 
 export const officeShouldClaimAcquireTarget = (officeName: string) => {
