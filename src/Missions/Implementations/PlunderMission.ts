@@ -18,6 +18,7 @@ import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { setArrived } from 'Selectors/prespawn';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
+import { dump } from 'utils/dump';
 
 export interface PlunderMissionData extends BaseMissionData {
   targetRoom: string;
@@ -47,7 +48,10 @@ export class PlunderMission extends MissionImplementation {
 
   priority = 5;
 
-  constructor(public missionData: PlunderMissionData, id?: string) {
+  constructor(
+    public missionData: PlunderMissionData,
+    id?: string
+  ) {
     super(missionData, id);
     let distance = getRangeTo(
       new RoomPosition(25, 25, missionData.office),
@@ -73,16 +77,20 @@ export class PlunderMission extends MissionImplementation {
     console.log('[PlunderMission] finished for', this.missionData.targetRoom);
   }
 
+  static shouldRun(targetRoom: string) {
+    return Memory.rooms[targetRoom]?.plunder?.capacity ?? 0 > 0;
+  }
+
   run(creeps: ResolvedCreeps<PlunderMission>, missions: ResolvedMissions<PlunderMission>, data: PlunderMissionData) {
     const { haulers } = creeps;
     data.assignments ??= {};
-    const plunder = Memory.rooms[data.targetRoom]?.plunder;
-    if (!plunder && haulers.length === 0) {
+    const plunder = dump(Memory.rooms[data.targetRoom]?.plunder);
+    if (!PlunderMission.shouldRun(data.targetRoom) && haulers.length === 0) {
       this.status = MissionStatus.DONE;
     }
     const { resources } = plunder ?? {};
 
-    this.logCpu("overhead");
+    this.logCpu('overhead');
 
     for (const creep of haulers) {
       data.assignments[creep.name] ??= {};
@@ -126,8 +134,8 @@ export class PlunderMission extends MissionImplementation {
                   .findInRange(FIND_HOSTILE_STRUCTURES, 1)
                   .find(s => 'store' in s && Object.keys(s.store).length) as AnyStoreStructure | undefined;
                 if (opportunityTarget) {
-                  const opportunityResource = Object.keys(opportunityTarget.store).find(k =>
-                    resources?.includes(k as ResourceConstant)
+                  const opportunityResource = Object.keys(opportunityTarget.store).find(
+                    k => resources?.includes(k as ResourceConstant)
                   ) as ResourceConstant | undefined;
                   if (opportunityResource) {
                     creep.withdraw(opportunityTarget, opportunityResource);
@@ -180,6 +188,6 @@ export class PlunderMission extends MissionImplementation {
       );
     }
 
-    this.logCpu("creeps");
+    this.logCpu('creeps');
   }
 }
