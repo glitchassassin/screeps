@@ -54,7 +54,7 @@ global.resetRoomPlan = (room?: string) => {
 };
 
 export const roomPlans = memoizeByTick(
-  roomName => roomName,
+  roomName => roomName + Object.keys(Memory.roomPlans[roomName] ?? {}).join(''),
   (roomName: string) => {
     Memory.roomPlans ??= {};
 
@@ -81,7 +81,7 @@ export const roomPlans = memoizeByTick(
 
     return cachedPlan;
   }
-)
+);
 
 export const getSpawns = memoizeByTick(
   roomName => roomName,
