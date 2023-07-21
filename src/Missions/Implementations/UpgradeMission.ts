@@ -122,7 +122,7 @@ export class UpgradeMission extends MissionImplementation {
         UPGRADE_CONTROLLER_COST * upgraders.map(c => c.getActiveBodyparts(WORK)).reduce(sum, 0);
       this.missionData.targetHaulingCapacity = Math.max(
         0,
-        (energyPerTick - upgraderEnergyCapacity) * this.missionData.distance
+        (upgraderEnergyCapacity - energyPerTick) * this.missionData.distance
       );
     } else {
       this.missionData.targetHaulingCapacity = 0;

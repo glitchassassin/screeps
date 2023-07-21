@@ -13,7 +13,11 @@ import { estimateMissionInterval } from 'Missions/Selectors';
 import { EngineerQueue } from 'RoomPlanner/EngineerQueue';
 import { PlannedStructure } from 'RoomPlanner/PlannedStructure';
 import { combatPower } from 'Selectors/Combat/combatStats';
-import { estimatedFreeCapacity } from 'Selectors/Logistics/predictiveCapacity';
+import {
+  estimatedFreeCapacity,
+  estimatedUsedCapacity,
+  updateUsedCapacity
+} from 'Selectors/Logistics/predictiveCapacity';
 import { isSpawned } from 'Selectors/isSpawned';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { rcl } from 'Selectors/rcl';
@@ -36,7 +40,7 @@ export interface AcquireEngineerMissionData extends EngineerMissionData {
 }
 
 export class AcquireEngineerMission extends EngineerMission {
-  budget = Budget.ESSENTIAL;
+  budget = Budget.EFFICIENCY;
   public creeps = {
     haulers: new MultiCreepSpawner('h', this.missionData.office, {
       role: MinionTypes.ACCOUNTANT,
@@ -50,7 +54,7 @@ export class AcquireEngineerMission extends EngineerMission {
     }),
     engineers: new MultiCreepSpawner('e', this.missionData.office, {
       role: MinionTypes.ENGINEER,
-      builds: energy => buildEngineer(energy, false, true),
+      builds: energy => buildEngineer(energy, false, false),
       estimatedCpuPerTick: 1,
       count: current => {
         if (!officeShouldSupportAcquireTarget(this.missionData.office)) return 0;
@@ -158,7 +162,7 @@ export class AcquireEngineerMission extends EngineerMission {
     engineers.forEach(engineer => this.runEngineer(engineer));
 
     const engineerToFill = engineers
-      .filter(u => isSpawned(u) && estimatedFreeCapacity(u) >= u.store.getCapacity(RESOURCE_ENERGY) / 2)
+      .filter(u => this.missionData.initialized?.includes(u.name))
       .reduce((best, current) => {
         if (estimatedFreeCapacity(current) > estimatedFreeCapacity(best)) return current;
         return best;
@@ -174,12 +178,41 @@ export class AcquireEngineerMission extends EngineerMission {
           [States.DEPOSIT]: (data, creep) => {
             if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) return States.WITHDRAW;
             const containerTarget = containers?.find(c => estimatedFreeCapacity(c) > 0) ?? library;
-            if (engineerToFill && this.missionData.initialized) {
-              moveTo(creep, engineerToFill, { plainCost: 2, swampCost: 10 });
-              creep.transfer(engineerToFill, RESOURCE_ENERGY);
+            if (engineerToFill) {
+              // if other hauler is already filling this engineer, wait our turn
+              if (estimatedFreeCapacity(engineerToFill) > 0) {
+                moveTo(creep, engineerToFill, { plainCost: 2, swampCost: 10 });
+                const result = creep.transfer(engineerToFill, RESOURCE_ENERGY);
+                if (result === OK) {
+                  updateUsedCapacity(
+                    engineerToFill,
+                    Math.min(estimatedFreeCapacity(engineerToFill), estimatedUsedCapacity(creep))
+                  );
+                }
+              } else if (
+                engineerToFill.memory.runState === States.UPGRADING &&
+                library &&
+                estimatedFreeCapacity(library) > 0
+              ) {
+                // engineer is upgrading - dump excess to library
+                moveTo(creep, library, { plainCost: 2, swampCost: 10 });
+                const result = creep.transfer(library, RESOURCE_ENERGY);
+                if (result === OK) {
+                  updateUsedCapacity(library, Math.min(estimatedFreeCapacity(library), estimatedUsedCapacity(creep)));
+                }
+              } else {
+                // wait near engineer for our turn
+                moveTo(creep, { pos: engineerToFill.pos, range: 3 }, { plainCost: 2, swampCost: 10 });
+              }
             } else if (containerTarget && estimatedFreeCapacity(containerTarget) > 0) {
               moveTo(creep, containerTarget, { plainCost: 2, swampCost: 10 });
-              creep.transfer(containerTarget, RESOURCE_ENERGY);
+              const result = creep.transfer(containerTarget, RESOURCE_ENERGY);
+              if (result === OK) {
+                updateUsedCapacity(
+                  containerTarget,
+                  Math.min(estimatedFreeCapacity(containerTarget), estimatedUsedCapacity(creep))
+                );
+              }
             } else {
               moveTo(
                 creep,
@@ -190,7 +223,7 @@ export class AcquireEngineerMission extends EngineerMission {
             return States.DEPOSIT;
           },
           [States.WORKING]: (data, creep) => {
-            if (creep.pos.roomName !== data.targetOffice) {
+            if (creep.pos.roomName !== data.targetOffice && creep.pos.roomName !== engineerToFill?.pos.roomName) {
               moveByPath(creep, this.id);
               return States.WORKING;
             }
