@@ -58,7 +58,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
     entry.actual.cpuPerCreep = perCreep;
     entry.estimate.cpuRemaining = mission.cpuRemaining();
     entry.estimate.cpuOverhead += mission.estimatedCpuOverhead();
-    entry.estimate.energy += mission.energyRemaining();
+    entry.estimate.energy += mission.estimatedEnergyRemaining;
     entry.estimate.cpuPerCreep = mission.estimatedCpuPerCreep();
     missionsList.set(key, entry);
   }
@@ -72,7 +72,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
         o.status,
         `${o.estimate.cpuRemaining.toFixed(2)}`,
         `${o.estimate.energy.toFixed(0)}`,
-        `${o.actual.cpuOverhead.toFixed(2)}/${o.actual.cpuPerCreep.toFixed(2)}`,
+        `${o.actual.cpuOverhead.toFixed(2)}/${o.actual.cpuPerCreep.toFixed(2)}`
       ]);
     estimatedCPU += o.estimate.cpuRemaining;
     estimatedEnergy += o.estimate.energy;
@@ -84,7 +84,14 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
   }
   table.push(['---', '---', '---', '---', '---', '---']);
   table.push(['Remaining', '', '', `${estimatedCPU.toFixed(2)}`, `${estimatedEnergy.toFixed(0)}`, '']);
-  table.push(['Available', '', Game.time, (missionCpuAvailable(room) - estimatedCPU).toFixed(2), MissionEnergyAvailable[room]?.toFixed(0), '']);
+  table.push([
+    'Available',
+    '',
+    Game.time,
+    (missionCpuAvailable(room) - estimatedCPU).toFixed(2),
+    MissionEnergyAvailable[room]?.toFixed(0),
+    ''
+  ]);
   // console.log(room, cpuDelta, cpuDelta * creepCount);
   return table;
 };
