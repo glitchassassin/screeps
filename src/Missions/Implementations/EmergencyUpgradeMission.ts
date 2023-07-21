@@ -10,7 +10,7 @@ import { UpgradeMission, UpgradeMissionData } from './UpgradeMission';
 
 export class EmergencyUpgradeMission extends UpgradeMission {
   public creeps = {
-    upgraders: new MultiCreepSpawner('h', this.missionData.office, {
+    upgraders: new MultiCreepSpawner('u', this.missionData.office, {
       role: MinionTypes.RESEARCH,
       budget: Budget.ESSENTIAL,
       builds: energy => buildResearch(energy),

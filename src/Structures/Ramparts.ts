@@ -21,11 +21,12 @@ export const runRamparts = () => {
     }
 
     // auto safe mode if ramparts are broken and we have hostile creeps or no tower
+    const hostileScore = totalCreepStats(findHostileCreeps(room), true).score;
     if (
       rampartsAreBroken(room) &&
       !Game.rooms[room].controller?.safeMode &&
       Game.rooms[room].controller?.safeModeAvailable &&
-      (totalCreepStats(findHostileCreeps(room)).score > 30 || roomPlans(room)?.backfill?.towers.every(t => !t.survey()))
+      (hostileScore > 30 || (hostileScore > 0 && roomPlans(room)?.backfill?.towers.every(t => !t.survey())))
     ) {
       Game.rooms[room].controller?.activateSafeMode();
     }
