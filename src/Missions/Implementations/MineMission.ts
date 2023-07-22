@@ -39,6 +39,7 @@ export class MineMission extends MissionImplementation {
         role: MinionTypes.FOREMAN,
         budget: Budget.ESSENTIAL, // energy budgeted at mission level
         builds: energy => bestTierAvailable(this.missionData.office, buildForeman(energy))
+        // respawn: () => MineMission.shouldRun(this.missionData.office)
       },
       {
         onSpawn: creep => this.recordCreepEnergy(creep)
@@ -51,6 +52,7 @@ export class MineMission extends MissionImplementation {
         role: MinionTypes.ACCOUNTANT,
         budget: Budget.ESSENTIAL, // energy budgeted at mission level
         builds: energy => buildAccountant(energy)
+        // respawn: () => (roomPlans(this.missionData.office)?.mine?.container.structure?.store.getUsedCapacity() ?? 0) > 0
       },
       {
         onSpawn: creep => this.recordCreepEnergy(creep)
@@ -65,6 +67,8 @@ export class MineMission extends MissionImplementation {
     id?: string
   ) {
     super(missionData, id);
+
+    // TODO: Estimate cost of *entire* mining operation (if it takes multiple Foremen)
 
     const energy = Game.rooms[this.missionData.office].energyCapacityAvailable;
     this.estimatedEnergyRemaining = maxBuildCost(buildForeman(energy)) + maxBuildCost(buildAccountant(energy));

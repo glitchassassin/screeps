@@ -44,8 +44,8 @@ export interface LabsPlan {
 }
 
 export interface MinePlan {
-  extractor: PlannedStructure;
-  container: PlannedStructure;
+  extractor: PlannedStructure<STRUCTURE_EXTRACTOR>;
+  container: PlannedStructure<STRUCTURE_CONTAINER>;
 }
 
 export interface PerimeterPlan {
