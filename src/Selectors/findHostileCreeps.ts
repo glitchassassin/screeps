@@ -1,4 +1,5 @@
 import { WHITELIST } from "config";
+import { memoizeByTick } from "utils/memoizeFunction";
 
 export const findHostileCreeps = (room: string) => {
     if (!Game.rooms[room]) return [];
@@ -9,6 +10,19 @@ export const findHostileCreeps = (room: string) => {
         {filter: creep => !WHITELIST.includes(creep.owner.username)}
     )
 }
+
+export const findHostileStructures = memoizeByTick(
+    room => room,
+    (room: string) => {
+        if (!Game.rooms[room]) return [];
+
+        // Return hostile creeps, if they aren't whitelisted
+        return Game.rooms[room].find(
+            FIND_HOSTILE_STRUCTURES,
+            {filter: structure => structure.owner?.username && !WHITELIST.includes(structure.owner?.username)}
+        )
+    }
+);
 
 export const findInvaderStructures = (room: string) => {
     if (!Game.rooms[room]) return [];

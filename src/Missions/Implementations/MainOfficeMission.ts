@@ -29,6 +29,7 @@ import { FastfillerMission } from './FastfillerMission';
 import { HQLogisticsMission } from './HQLogisticsMission';
 import { HarvestMission } from './HarvestMission';
 import { LogisticsMission } from './LogisticsMission';
+import { ManualAttackMission } from './ManualAttackMission';
 import { MineMission } from './MineMission';
 import { PlunderMission } from './PlunderMission';
 import { PowerBankMission } from './PowerBankMission';
@@ -118,6 +119,17 @@ export class MainOfficeMission extends MissionImplementation {
         return [{ ...this.missionData, targetOffice }];
       }
       return [];
+    }),
+    manualAttack: new MultiMissionSpawner(ManualAttackMission, current => {
+      const attackFlags = Object.values(Game.flags).filter(flag => (
+        flag.color === COLOR_RED &&
+        !Game.rooms[flag.pos.roomName]?.controller?.my &&
+        !current.some(m => m.missionData.targetRoom === flag.pos.roomName)
+      ));
+      return attackFlags.map(flag => ({
+        ...this.missionData,
+        targetRoom: flag.pos.roomName
+      }))
     })
   };
 
