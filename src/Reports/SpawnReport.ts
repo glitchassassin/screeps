@@ -29,6 +29,7 @@ export default () => {
           .join('/')
       ]);
     }
+    console.log(table.map(r => JSON.stringify(r)).join('\n'))
     Dashboard({
       widgets: [
         {

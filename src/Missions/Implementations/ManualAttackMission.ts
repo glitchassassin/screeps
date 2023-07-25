@@ -24,13 +24,15 @@ export class ManualAttackMission extends MissionImplementation {
     blinkies: new MultiCreepSpawner('b', this.missionData.office, {
       role: MinionTypes.BLINKY,
       budget: this.budget,
-      builds: energy => buildBlinky(energy),
+      builds: energy => buildBlinky(Math.min(200, energy)), // swarm a lot of small blinkies
       count: current => {
         if (
           this.missionData.targetRoom &&
           totalCreepStats(findHostileCreeps(this.missionData.targetRoom)).score > totalCreepStats(current).score
         ) {
           return 1; // need more defenders
+        } else if (!current.length) {
+          return 1;
         }
         return 0; // our heuristic is higher
       }
@@ -56,6 +58,8 @@ export class ManualAttackMission extends MissionImplementation {
     data: ManualAttackMissionData
   ) {
     const { blinkies } = creeps;
+
+    if (blinkies.length) console.log('attackers', blinkies.length);
 
     // If work is done, clear target
     if (

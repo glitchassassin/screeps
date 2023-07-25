@@ -19,6 +19,7 @@ import { mineralId } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
 import { findAcquireTarget } from 'Strategy/Acquire/findAcquireTarget';
 import { FEATURES } from 'config';
+import { packPos } from 'screeps-cartographer';
 import { AcquireMission } from './AcquireMission';
 import { CleanupMission } from './CleanupMission';
 import { DefenseCoordinationMission } from './DefenseCoordinationMission';
@@ -29,7 +30,7 @@ import { FastfillerMission } from './FastfillerMission';
 import { HQLogisticsMission } from './HQLogisticsMission';
 import { HarvestMission } from './HarvestMission';
 import { LogisticsMission } from './LogisticsMission';
-import { ManualAttackMission } from './ManualAttackMission';
+import { ManualSwarmTowerMission } from './ManualSwarmTowerMission';
 import { MineMission } from './MineMission';
 import { PlunderMission } from './PlunderMission';
 import { PowerBankMission } from './PowerBankMission';
@@ -120,17 +121,17 @@ export class MainOfficeMission extends MissionImplementation {
       }
       return [];
     }),
-    manualAttack: new MultiMissionSpawner(ManualAttackMission, current => {
+    manualSwarmTower: new MultiMissionSpawner(ManualSwarmTowerMission, current => {
       const attackFlags = Object.values(Game.flags).filter(flag => (
         flag.color === COLOR_RED &&
         !Game.rooms[flag.pos.roomName]?.controller?.my &&
-        !current.some(m => m.missionData.targetRoom === flag.pos.roomName)
+        !current.some(m => m.targetPos().roomName === flag.pos.roomName)
       ));
       return attackFlags.map(flag => ({
         ...this.missionData,
-        targetRoom: flag.pos.roomName
+        targetPos: packPos(flag.pos)
       }))
-    })
+    }),
   };
 
   priority = 20;
