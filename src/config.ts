@@ -1,9 +1,30 @@
-export const FEATURES = {
-  MINING: true,
-  LABS: true,
-  WHITELIST: true,
-  POWER: true
-};
+const FEATURES_BY_SHARD: Record<string, {
+  MINING: boolean,
+  LABS: boolean,
+  WHITELIST: boolean,
+  POWER: boolean
+}> = {
+  default: {
+    MINING: true,
+    LABS: true,
+    WHITELIST: true,
+    POWER: true
+  },
+  screepsplus0: {
+    MINING: true,
+    LABS: true,
+    WHITELIST: true,
+    POWER: false
+  },
+  botarena: {
+    MINING: true,
+    LABS: true,
+    WHITELIST: false,
+    POWER: false
+  }
+}
+
+export const FEATURES = FEATURES_BY_SHARD[Game.shard.name] ?? FEATURES_BY_SHARD.default;
 
 /**
  * Rooms around an Office to control as remote territories
