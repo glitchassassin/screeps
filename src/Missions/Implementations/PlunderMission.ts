@@ -18,7 +18,6 @@ import { getRangeTo } from 'Selectors/Map/MapCoordinates';
 import { setArrived } from 'Selectors/prespawn';
 import { sum } from 'Selectors/reducers';
 import { roomPlans } from 'Selectors/roomPlans';
-import { dump } from 'utils/dump';
 
 export interface PlunderMissionData extends BaseMissionData {
   targetRoom: string;
@@ -85,7 +84,7 @@ export class PlunderMission extends MissionImplementation {
   run(creeps: ResolvedCreeps<PlunderMission>, missions: ResolvedMissions<PlunderMission>, data: PlunderMissionData) {
     const { haulers } = creeps;
     data.assignments ??= {};
-    const plunder = dump(Memory.rooms[data.targetRoom]?.plunder);
+    const plunder = Memory.rooms[data.targetRoom]?.plunder;
     if (!PlunderMission.shouldRun(data.targetRoom) && haulers.length === 0) {
       this.status = MissionStatus.DONE;
     }
