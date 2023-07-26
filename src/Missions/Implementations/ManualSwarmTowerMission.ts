@@ -19,6 +19,7 @@ export interface ManualSwarmTowerMissionData extends BaseMissionData {
   targetPos: string;
   targetCount?: number;
   assembled?: boolean;
+  stagingRoom?: string;
 }
 
 export class ManualSwarmTowerMission extends MissionImplementation {
@@ -99,7 +100,7 @@ export class ManualSwarmTowerMission extends MissionImplementation {
 
     if (swarm.length) console.log('attackers', swarm.length);
 
-    const stagingRoom = this.path()?.reduce((acc, pos) => {
+    data.stagingRoom ??= this.path()?.reduce((acc, pos) => {
       if (pos.roomName !== this.targetPos().roomName) return pos.roomName;
       return acc;
     }, this.missionData.office) ?? this.missionData.office;
@@ -107,14 +108,16 @@ export class ManualSwarmTowerMission extends MissionImplementation {
     this.logCpu('overhead');
 
     if (!data.assembled) {
-      if (data.targetCount && swarm.length >= data.targetCount && swarm.every(c => c.pos.roomName === stagingRoom)) {
+      if (data.targetCount && swarm.length >= data.targetCount && swarm.every(c => c.pos.roomName === data.stagingRoom)) {
         console.log('swarm assembled targeting', this.targetPos())
         data.assembled = true;
-      } else {
+      } else if (data.stagingRoom) {
         // move swarm to staging room
-        swarm.forEach(creep => moveTo(creep, { pos: new RoomPosition(25, 25, stagingRoom), range: 20 }));
+        swarm.forEach(creep => moveTo(creep, { pos: new RoomPosition(25, 25, data.stagingRoom!), range: 20 }));
         this.logCpu('creeps');
         return;
+      } else {
+        return; // wait for swarm
       }
     } else {
       if (swarm.length === 0) {

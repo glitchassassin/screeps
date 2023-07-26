@@ -11,6 +11,7 @@ import {
   ResolvedMissions
 } from 'Missions/BaseClasses/MissionImplementation';
 import { Budget } from 'Missions/Budgets';
+import { MissionStatus } from 'Missions/Mission';
 import { moveTo } from 'screeps-cartographer';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { findClosestHostileCreepByRange, findHostileCreeps, findHostileStructures } from 'Selectors/findHostileCreeps';
@@ -77,6 +78,10 @@ export class ManualAttackMission extends MissionImplementation {
     if (blinkies.length) console.log('blinkies', blinkies.length);
 
     const flag = this.flag();
+
+    if (!flag && blinkies.length === 0) {
+      this.status = MissionStatus.DONE;
+    }
 
     // If work is done, clear target
     const safemode = Memory.rooms[this.targetRoom()]?.safeModeEnds
