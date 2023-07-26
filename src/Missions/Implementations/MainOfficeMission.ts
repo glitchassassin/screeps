@@ -30,6 +30,7 @@ import { FastfillerMission } from './FastfillerMission';
 import { HQLogisticsMission } from './HQLogisticsMission';
 import { HarvestMission } from './HarvestMission';
 import { LogisticsMission } from './LogisticsMission';
+import { ManualAttackMission } from './ManualAttackMission';
 import { ManualSwarmTowerMission } from './ManualSwarmTowerMission';
 import { MineMission } from './MineMission';
 import { PlunderMission } from './PlunderMission';
@@ -124,12 +125,27 @@ export class MainOfficeMission extends MissionImplementation {
     manualSwarmTower: new MultiMissionSpawner(ManualSwarmTowerMission, current => {
       const attackFlags = Object.values(Game.flags).filter(flag => (
         flag.color === COLOR_RED &&
+        flag.secondaryColor === COLOR_YELLOW &&
         !Game.rooms[flag.pos.roomName]?.controller?.my &&
-        !current.some(m => m.targetPos().roomName === flag.pos.roomName)
+        !current.some(m => m.targetPos().roomName === flag.pos.roomName) &&
+        ((Memory.rooms[flag.pos.roomName]?.safeModeEnds ?? Game.time) - Game.time) < 500
       ));
       return attackFlags.map(flag => ({
         ...this.missionData,
         targetPos: packPos(flag.pos)
+      }))
+    }),
+    manualAttack: new MultiMissionSpawner(ManualAttackMission, current => {
+      const attackFlags = Object.values(Game.flags).filter(flag => (
+        flag.color === COLOR_RED &&
+        flag.secondaryColor === COLOR_RED &&
+        !Game.rooms[flag.pos.roomName]?.controller?.my &&
+        !current.some(m => m.targetRoom() === flag.pos.roomName) &&
+        ((Memory.rooms[flag.pos.roomName]?.safeModeEnds ?? Game.time) - Game.time) < 500
+      ));
+      return attackFlags.map(flag => ({
+        ...this.missionData,
+        flag: flag.name
       }))
     }),
   };

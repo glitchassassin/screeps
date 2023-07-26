@@ -12,17 +12,17 @@ export const buildAccountant = memoize(
     } else if (energy < 5600) {
       // Before we have two spawns, create smaller haulers
       if (!roads) {
-        return unboosted(buildFromSegment(energy, [CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13), suffix }));
+        return [unboosted(buildFromSegment(energy, [CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13), suffix }))];
       } else {
-        return unboosted(
+        return [unboosted(
           buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments: Math.min(maxSegments, 13), suffix })
-        );
+        )];
       }
     } else {
       if (!roads) {
-        return unboosted(buildFromSegment(energy, [CARRY, MOVE], { maxSegments, suffix }));
+        return [unboosted(buildFromSegment(energy, [CARRY, MOVE], { maxSegments, suffix }))];
       } else {
-        return unboosted(buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments, suffix }));
+        return [unboosted(buildFromSegment(energy, [CARRY, CARRY, MOVE], { maxSegments, suffix }))];
       }
     }
   }

@@ -33,6 +33,7 @@ declare global {
     officesInRange: string;
     threatLevel?: [ThreatLevel, number];
     safeModeCooldown?: number;
+    safeModeEnds?: number;
   }
   interface Memory {
     positions: Record<string, string>;
@@ -65,6 +66,7 @@ export const initializeRoomMemory = ({ room }: ScannedRoomEvent) => {
     eligibleForOffice,
     officesInRange: '',
     threatLevel: calculateThreatLevel(room),
-    safeModeCooldown: Game.rooms[room].controller?.safeModeCooldown ?? undefined
+    safeModeCooldown: Game.rooms[room].controller?.safeModeCooldown ? Game.time + Game.rooms[room].controller!.safeModeCooldown! : undefined,
+    safeModeEnds: Game.rooms[room].controller?.safeMode ? Game.time + Game.rooms[room].controller!.safeMode! : undefined
   };
 };

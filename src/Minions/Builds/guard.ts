@@ -5,8 +5,8 @@ export const buildGuard = (energy: number, heal = false): CreepBuild[] => {
     return [];
   } else if (heal && energy >= 420) {
     // Add a heal part
-    return unboosted(buildFromSegment(energy, [ATTACK, MOVE], { sorted: true, suffix: [HEAL, MOVE] }));
+    return [unboosted(buildFromSegment(energy, [ATTACK, MOVE], { sorted: true, suffix: [HEAL, MOVE] }))];
   } else {
-    return unboosted(buildFromSegment(energy, [ATTACK, MOVE], { sorted: true }));
+    return [unboosted(buildFromSegment(energy, [ATTACK, MOVE], { sorted: true }))];
   }
 };

@@ -7,7 +7,8 @@ export const boostQuotas = (office: string) => {
     ...BOOSTS_BY_INTENT.MOVE,
     ...BOOSTS_BY_INTENT.HEAL,
     ...BOOSTS_BY_INTENT.HARVEST,
-    ...BOOSTS_BY_INTENT.UPGRADE
+    ...BOOSTS_BY_INTENT.UPGRADE,
+    ...BOOSTS_BY_INTENT.RANGED_ATTACK
   ]
     .map(boost => ({
       boost,

@@ -1,6 +1,7 @@
 import { blinkyKill } from 'Behaviors/blinkyKill';
 import { recycle } from 'Behaviors/recycle';
-import { buildBlinky } from 'Minions/Builds/blinky';
+import { buildBlinkyWithBoosts } from 'Minions/Builds/blinky';
+import { isTier } from 'Minions/Builds/utils';
 import { MinionTypes } from 'Minions/minionTypes';
 import { MultiCreepSpawner } from 'Missions/BaseClasses/CreepSpawner/MultiCreepSpawner';
 import {
@@ -13,9 +14,10 @@ import { Budget } from 'Missions/Budgets';
 import { moveTo } from 'screeps-cartographer';
 import { totalCreepStats } from 'Selectors/Combat/combatStats';
 import { findClosestHostileCreepByRange, findHostileCreeps, findHostileStructures } from 'Selectors/findHostileCreeps';
+import { getClosestByRange } from 'Selectors/Map/MapCoordinates';
 
 export interface ManualAttackMissionData extends BaseMissionData {
-  targetRoom?: string;
+  flag: string;
 }
 
 export class ManualAttackMission extends MissionImplementation {
@@ -24,11 +26,11 @@ export class ManualAttackMission extends MissionImplementation {
     blinkies: new MultiCreepSpawner('b', this.missionData.office, {
       role: MinionTypes.BLINKY,
       budget: this.budget,
-      builds: energy => buildBlinky(Math.min(200, energy)), // swarm a lot of small blinkies
+      builds: energy => buildBlinkyWithBoosts(energy).filter(isTier(3)),
       count: current => {
         if (
-          this.missionData.targetRoom &&
-          totalCreepStats(findHostileCreeps(this.missionData.targetRoom)).score > totalCreepStats(current).score
+          this.targetRoom() &&
+          totalCreepStats(findHostileCreeps(this.targetRoom())).score > totalCreepStats(current).score
         ) {
           return 1; // need more defenders
         } else if (!current.length) {
@@ -52,6 +54,19 @@ export class ManualAttackMission extends MissionImplementation {
     return super.fromId(id) as ManualAttackMission;
   }
 
+  flag() {
+    return Game.flags[this.missionData.flag];
+  }
+
+  targetRoom() {
+    return this.flag()?.pos.roomName;
+  }
+
+  onStart(): void {
+    super.onStart();
+    console.log('[ManualAttackMission] started targeting', this.targetRoom())
+  }
+
   run(
     creeps: ResolvedCreeps<ManualAttackMission>,
     missions: ResolvedMissions<ManualAttackMission>,
@@ -59,22 +74,24 @@ export class ManualAttackMission extends MissionImplementation {
   ) {
     const { blinkies } = creeps;
 
-    if (blinkies.length) console.log('attackers', blinkies.length);
+    if (blinkies.length) console.log('blinkies', blinkies.length);
+
+    const flag = this.flag();
 
     // If work is done, clear target
+    const safemode = Memory.rooms[this.targetRoom()]?.safeModeEnds
     if (
-      data.targetRoom &&
+      flag &&
       !(
-        Memory.rooms[data.targetRoom].lastHostileSeen === Memory.rooms[data.targetRoom].scanned ||
-        findHostileStructures(data.targetRoom).length > 0
-      )
+        Memory.rooms[this.targetRoom()]?.lastHostileSeen === Memory.rooms[this.targetRoom()]?.scanned ||
+        findHostileStructures(this.targetRoom()).length > 0
+      ) ||
+      safemode && safemode - Game.time >= 500
     ) {
-      delete data.targetRoom
+      flag?.remove();
     }
 
     this.logCpu('overhead');
-
-    // console.log('defending remote', data.targetRoom);
 
     for (const creep of blinkies) {
       // Try to heal
@@ -82,18 +99,18 @@ export class ManualAttackMission extends MissionImplementation {
         creep.heal(creep);
       }
 
-      if (!data.targetRoom) {
+      if (!flag) {
         recycle(data, creep); // nothing to do
         continue;
       }
 
       // Go to room
-      if (creep.pos.roomName !== data.targetRoom) {
-        moveTo(creep, { pos: new RoomPosition(25, 25, data.targetRoom), range: 20 });
+      if (creep.pos.roomName !== flag.pos.roomName) {
+        moveTo(creep, { pos: new RoomPosition(25, 25, flag.pos.roomName), range: 20 });
       }
 
       // Clear room
-      const target = findClosestHostileCreepByRange(creep.pos) ?? findHostileStructures(data.targetRoom)[0];
+      const target = findClosestHostileCreepByRange(creep.pos) ?? getClosestByRange(creep.pos, findHostileStructures(flag.pos.roomName));
 
       blinkyKill(creep, target);
     }

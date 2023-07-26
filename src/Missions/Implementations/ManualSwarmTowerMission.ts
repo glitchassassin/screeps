@@ -22,7 +22,7 @@ export interface ManualSwarmTowerMissionData extends BaseMissionData {
 }
 
 export class ManualSwarmTowerMission extends MissionImplementation {
-  budget = Budget.SURPLUS;
+  budget = Budget.EFFICIENCY;
   public creeps = {
     swarm: new MultiCreepSpawner('s', this.missionData.office, {
       role: MinionTypes.DISMANTLER,
@@ -41,7 +41,7 @@ export class ManualSwarmTowerMission extends MissionImplementation {
     })
   };
 
-  priority = 12;
+  priority = 16;
   initialEstimatedCpuOverhead = 0.2;
 
   constructor(
@@ -82,6 +82,21 @@ export class ManualSwarmTowerMission extends MissionImplementation {
   ) {
     const { swarm } = creeps;
 
+    const flag = Object.values(Game.flags).find(f => f.color === COLOR_RED && f.pos.roomName === this.targetPos().roomName)
+
+    const safemode = Memory.rooms[this.targetPos().roomName]?.safeModeEnds
+    if (safemode && safemode - Game.time >= 500) {
+      flag?.remove();
+      this.status = MissionStatus.DONE;
+      return;
+    }
+
+    if (!flag) {
+      this.status = MissionStatus.DONE;
+      swarm.forEach(c => c.suicide());
+      return;
+    }
+
     if (swarm.length) console.log('attackers', swarm.length);
 
     const stagingRoom = this.path()?.reduce((acc, pos) => {
@@ -91,14 +106,23 @@ export class ManualSwarmTowerMission extends MissionImplementation {
 
     this.logCpu('overhead');
 
-    if (!data.assembled && data.targetCount && swarm.length >= data.targetCount && swarm.every(c => c.pos.roomName === stagingRoom)) {
-      console.log('swarm assembled targeting', this.targetPos())
-      data.assembled = true;
+    if (!data.assembled) {
+      if (data.targetCount && swarm.length >= data.targetCount && swarm.every(c => c.pos.roomName === stagingRoom)) {
+        console.log('swarm assembled targeting', this.targetPos())
+        data.assembled = true;
+      } else {
+        // move swarm to staging room
+        swarm.forEach(creep => moveTo(creep, { pos: new RoomPosition(25, 25, stagingRoom), range: 20 }));
+        this.logCpu('creeps');
+        return;
+      }
     } else {
-      // move swarm to staging room
-      swarm.forEach(creep => moveTo(creep, { pos: new RoomPosition(25, 25, stagingRoom), range: 20 }));
-      this.logCpu('creeps');
-      return;
+      if (swarm.length === 0) {
+        // all creeps dead
+        flag?.remove();
+        this.status = MissionStatus.DONE;
+        return;
+      }
     }
 
     // swarm assembled
@@ -108,7 +132,7 @@ export class ManualSwarmTowerMission extends MissionImplementation {
       target = this.targetPos().lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_TOWER);
       target ??= getClosestByRange(this.targetPos(), findHostileStructures(this.targetPos().roomName));
       if (!target) {
-        Object.values(Game.flags).filter(f => f.color === COLOR_RED && f.pos.roomName === this.targetPos().roomName).forEach(f => f.remove());
+        flag?.remove();
         this.status = MissionStatus.DONE; // no more hostile structures
       }
     }
@@ -121,8 +145,13 @@ export class ManualSwarmTowerMission extends MissionImplementation {
 
     swarm.forEach(creep => {
       moveTo(creep, { pos: this.targetPos(), range: 1 });
-      if (target) {
+      if (target && creep.pos.inRangeTo(target, 1)) {
         creep.dismantle(target);
+      } else {
+        const opportunityTarget = creep.pos.findInRange(FIND_HOSTILE_STRUCTURES, 1)[0];
+        if (opportunityTarget) {
+          creep.dismantle(opportunityTarget);
+        }
       }
     })
 

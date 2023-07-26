@@ -1,5 +1,9 @@
 import { buildCost, minionCost } from 'Selectors/minionCostPerTick';
 
+type BoostsForPart = Partial<{
+  [P in Exclude<BodyPartConstant, CLAIM>]: keyof typeof BOOSTS[P];
+}>;
+
 export interface CreepBuild {
   body: BodyPartConstant[];
   boosts: {
@@ -17,6 +21,12 @@ interface BuildFromSegmentOpts {
   maxSegments: number;
   sorted: boolean;
   suffix: BodyPartConstant[];
+}
+
+function boostTier(boost: MineralBoostConstant): number {
+  if (boost.startsWith('X')) return 3;
+  if (boost.includes('2')) return 2;
+  return 1;
 }
 
 export function buildFromSegment(
@@ -42,20 +52,44 @@ export function buildFromSegment(
     Math.floor((50 - actualOpts.suffix.length) / segment.length),
     actualOpts.maxSegments
   );
-  const body = new Array(segmentCount).fill(segment).flat();
+  const body: BodyPartConstant[] = new Array(segmentCount).fill(segment).flat();
   if (actualOpts.sorted) body.sort().reverse();
   body.push(...actualOpts.suffix);
   return body;
 }
 
-export const unboosted = (body: BodyPartConstant[]): CreepBuild[] => [
+export const unboosted = (body: BodyPartConstant[]): CreepBuild => (
   {
     body,
     boosts: [],
     tier: 0,
     cost: buildCost(body, [])
   }
-];
+);
+
+export const boosted = (body: BodyPartConstant[], boosts: BoostsForPart): CreepBuild => (
+  {
+    body,
+    boosts: body.reduce(
+      (acc, part) => {
+        if (part === CLAIM) return acc; // no boosts for claim
+        const boost = boosts[part];
+        if (boost) {
+          const existing = acc.find(b => b.type === boost);
+          if (existing) {
+            existing.count++;
+          } else {
+            acc.push({ type: boost, count: 1 });
+          }
+        }
+        return acc;
+      },
+      [] as { type: MineralBoostConstant; count: number }[]
+    ),
+    tier: Math.max(...Object.values(boosts).map(b => boostTier(b)), 0),
+    cost: buildCost(body, [])
+  }
+);
 
 export const atLeastTier =
   (tier: number) =>

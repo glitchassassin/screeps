@@ -4,6 +4,6 @@ export const buildMarketer = (energy: number): CreepBuild[] => {
   if (energy < 650) {
     return [];
   } else {
-    return unboosted(buildFromSegment(energy, [CLAIM, MOVE], { maxSegments: 5 }));
+    return [unboosted(buildFromSegment(energy, [CLAIM, MOVE], { maxSegments: 5 }))];
   }
 };

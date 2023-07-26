@@ -4,21 +4,21 @@ export const buildSalesman = (energy: number, link = false, remote = false): Cre
   if (energy < 200) {
     return [];
   } else if (energy < 550) {
-    return unboosted([WORK, WORK, MOVE]);
+    return [unboosted([WORK, WORK, MOVE])];
   } else if (energy < 600) {
     return link || remote
-      ? unboosted([WORK, WORK, WORK, CARRY, MOVE])
-      : unboosted([WORK, WORK, WORK, WORK, WORK, MOVE]);
+      ? [unboosted([WORK, WORK, WORK, CARRY, MOVE])]
+      : [unboosted([WORK, WORK, WORK, WORK, WORK, MOVE])];
   }
 
   if (remote) {
-    return unboosted(buildFromSegment(energy, [WORK, WORK, WORK, MOVE], { maxSegments: 2, suffix: [CARRY] }));
+    return [unboosted(buildFromSegment(energy, [WORK, WORK, WORK, MOVE], { maxSegments: 2, suffix: [CARRY] }))];
   } else { // costs 600 with link
-    return unboosted(
+    return [unboosted(
       buildFromSegment(energy, [WORK, WORK, WORK, WORK, WORK, MOVE], {
         maxSegments: 2,
         suffix: link ? [CARRY] : []
       })
-    );
+    )];
   }
 };
