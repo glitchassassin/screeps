@@ -39,6 +39,8 @@ import { ReserveMission } from './ReserveMission';
 import { ScienceMission } from './ScienceMission';
 import { UpgradeMission } from './UpgradeMission';
 
+import Combat from 'Strategy/CombatStub';
+
 export interface MainOfficeMissionData extends BaseMissionData {}
 
 export class MainOfficeMission extends MissionImplementation {
@@ -123,31 +125,36 @@ export class MainOfficeMission extends MissionImplementation {
       return [];
     }),
     manualSwarmTower: new MultiMissionSpawner(ManualSwarmTowerMission, current => {
-      const attackFlags = Object.values(Game.flags).filter(flag => (
-        flag.color === COLOR_RED &&
-        flag.secondaryColor === COLOR_YELLOW &&
-        !Game.rooms[flag.pos.roomName]?.controller?.my &&
-        !current.some(m => m.targetPos().roomName === flag.pos.roomName) &&
-        ((Memory.rooms[flag.pos.roomName]?.safeModeEnds ?? Game.time) - Game.time) < 500
-      ));
+      const attackFlags = Object.values(Game.flags).filter(
+        flag =>
+          flag.color === COLOR_RED &&
+          flag.secondaryColor === COLOR_YELLOW &&
+          !Game.rooms[flag.pos.roomName]?.controller?.my &&
+          !current.some(m => m.targetPos().roomName === flag.pos.roomName) &&
+          (Memory.rooms[flag.pos.roomName]?.safeModeEnds ?? Game.time) - Game.time < 500
+      );
       return attackFlags.map(flag => ({
         ...this.missionData,
         targetPos: packPos(flag.pos)
-      }))
+      }));
     }),
     manualAttack: new MultiMissionSpawner(ManualAttackMission, current => {
-      const attackFlags = Object.values(Game.flags).filter(flag => (
-        flag.color === COLOR_RED &&
-        flag.secondaryColor === COLOR_RED &&
-        !Game.rooms[flag.pos.roomName]?.controller?.my &&
-        !current.some(m => m.targetRoom() === flag.pos.roomName) &&
-        ((Memory.rooms[flag.pos.roomName]?.safeModeEnds ?? Game.time) - Game.time) < 500
-      ));
+      const attackFlags = Object.values(Game.flags).filter(
+        flag =>
+          flag.color === COLOR_RED &&
+          flag.secondaryColor === COLOR_RED &&
+          !Game.rooms[flag.pos.roomName]?.controller?.my &&
+          !current.some(m => m.targetRoom() === flag.pos.roomName) &&
+          (Memory.rooms[flag.pos.roomName]?.safeModeEnds ?? Game.time) - Game.time < 500
+      );
       return attackFlags.map(flag => ({
         ...this.missionData,
         flag: flag.name
-      }))
+      }));
     }),
+    quadAttack: new MultiMissionSpawner(Combat.missions.QuadAttackMission, current => {
+      return Combat.missions.QuadAttackMission.shouldRun(this.missionData, current);
+    })
   };
 
   priority = 20;

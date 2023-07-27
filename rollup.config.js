@@ -3,8 +3,10 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
+import fs from 'fs';
 import clear from 'rollup-plugin-clear';
 import screeps from 'rollup-plugin-screeps';
+import tsConfigPaths from 'rollup-plugin-tsconfig-paths';
 import typescript from 'rollup-plugin-typescript2';
 
 let cfg;
@@ -19,6 +21,14 @@ if (config) {
   throw new Error('Invalid upload destination');
 }
 
+function rewriteCombatImport() {
+  if (fs.existsSync('../screeps-combat/src/index.ts')) {
+    return "import Combat from 'screeps-combat';";
+  } else {
+    return "import Combat from 'Strategy/CombatStub';";
+  }
+}
+
 export default {
   input: 'src/main.ts',
   output: {
@@ -31,8 +41,12 @@ export default {
     clear({ targets: ['dist'] }),
     replace({
       preventAssignment: true,
-      __buildDate__: () => JSON.stringify(Date.now())
+      values: {
+        __buildDate__: () => JSON.stringify(Date.now()),
+        "import Combat from 'Strategy/CombatStub';": rewriteCombatImport
+      }
     }),
+    tsConfigPaths(),
     resolve(),
     commonjs({
       namedExports: {
