@@ -12,7 +12,7 @@ import { byId } from 'Selectors/byId';
 import { findHostileCreepsInRange } from 'Selectors/findHostileCreeps';
 import { closestRampartSection } from 'Selectors/perimeter';
 import { isCreep } from 'Selectors/typeguards';
-import { follow, moveTo } from 'screeps-cartographer';
+import { follow, isExit, moveTo } from 'screeps-cartographer';
 import { unpackPos } from 'utils/packrat';
 import { BaseMissionData, MissionImplementation, ResolvedCreeps, ResolvedMissions } from './MissionImplementation';
 
@@ -72,8 +72,14 @@ export class BaseDuoMission extends MissionImplementation {
 
     // movement
     if (getRangeTo(attacker.pos, healer.pos) !== 1) {
+      if (isExit(attacker.pos)) {
+        if (killTarget) {
+          moveTo(attacker, killTarget)
+        } else {
+          moveTo(attacker, { pos: new RoomPosition(25, 25, attacker.pos.roomName), range: 20 })
+        }
+      }
       // come together
-      moveTo(attacker, healer);
       moveTo(healer, attacker);
     } else {
       // duo is assembled, or has been broken

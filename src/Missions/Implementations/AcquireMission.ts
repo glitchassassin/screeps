@@ -3,6 +3,8 @@ import { ConditionalMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/C
 import { MultiMissionSpawner } from 'Missions/BaseClasses/MissionSpawner/MultiMissionSpawner';
 import { Budget } from 'Missions/Budgets';
 import { MissionStatus } from 'Missions/Mission';
+import { totalCreepStats } from 'Selectors/Combat/combatStats';
+import { findHostileCreeps } from 'Selectors/findHostileCreeps';
 import { plannedStructuresByRcl } from 'Selectors/plannedStructuresByRcl';
 import { sum } from 'Selectors/reducers';
 import {
@@ -11,7 +13,6 @@ import {
   officeShouldClaimAcquireTarget,
   officeShouldSupportAcquireTarget
 } from 'Strategy/Acquire/findAcquireTarget';
-import { roomThreatLevel } from 'Strategy/Territories/HarassmentZones';
 import { AcquireEngineerMission } from './AcquireEngineerMission';
 import { AcquireLawyerMission } from './AcquireLawyerMission';
 import { DefendAcquireMission } from './DefendAcquireMission';
@@ -37,16 +38,15 @@ export class AcquireMission extends MissionImplementation {
     ),
     defenders: new MultiMissionSpawner(DefendAcquireMission, current => {
       if (current.some(m => !m.assembled())) return []; // re-evaluate after finishing this duo
-      const hostileScore = roomThreatLevel(this.missionData.targetOffice);
-      const allyScore = current
-        .filter(m => {
-          // ignore attackers that are about to die
-          const ttl = m.creeps.attacker.resolved?.ticksToLive;
-          return !m.missionData.arrived || !ttl || ttl > m.missionData.arrived;
-        })
-        .map(m => m.score())
-        .reduce(sum, 0);
-      if (hostileScore > allyScore) {
+      if (
+        totalCreepStats(findHostileCreeps(this.missionData.targetOffice)).score > current.filter(m => {
+            // ignore attackers that are about to die
+            const ttl = m.creeps.attacker.resolved?.ticksToLive;
+            return !m.missionData.arrived || !ttl || ttl > m.missionData.arrived;
+          })
+          .map(m => m.score())
+          .reduce(sum, 0)
+      ) {
         return [this.missionData];
       }
       return [];
