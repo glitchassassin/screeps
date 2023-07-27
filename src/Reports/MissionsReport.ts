@@ -105,7 +105,7 @@ const buildMissionsTable = (room: string, missions: MissionImplementation[]) => 
 export default () => {
   for (const room in Memory.offices ?? []) {
     const active = buildMissionsTable(room, activeMissions(room));
-    console.log(active.map(r => JSON.stringify(r)).join('\n'));
+    // console.log(active.map(r => JSON.stringify(r)).join('\n'));
     Dashboard({
       widgets: [
         {

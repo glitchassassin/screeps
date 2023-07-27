@@ -39,6 +39,11 @@ export class AcquireLawyerMission extends MissionImplementation {
     return super.fromId(id) as AcquireLawyerMission;
   }
 
+  onStart(): void {
+    Memory.rooms[this.missionData.targetOffice].acquireAttempts ??= 0;
+    Memory.rooms[this.missionData.targetOffice].acquireAttempts!++;
+  }
+
   run(
     creeps: ResolvedCreeps<AcquireLawyerMission>,
     missions: ResolvedMissions<AcquireLawyerMission>,

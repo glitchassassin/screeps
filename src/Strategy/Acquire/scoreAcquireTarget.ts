@@ -1,4 +1,5 @@
 import { countTerrainTypes, isSourceKeeperRoom } from 'Selectors/Map/MapCoordinates';
+import { getRoomPathDistance } from 'Selectors/Map/getRoomPathDistance';
 import { ownedMinerals } from 'Selectors/ownedMinerals';
 import { sourceIds } from 'Selectors/roomCache';
 import { roomPlans } from 'Selectors/roomPlans';
@@ -12,13 +13,14 @@ export function scoreAcquireTarget(room: string) {
 
   // check minerals we own
   const mineral = Memory.rooms[room].mineralType;
+  let mineralScorePercent = 1;
   if (mineral) {
     let mineralScore =
       ACQUIRE.MINERAL_PRIORITIES.indexOf(mineral) +
       (ownedMinerals().has(mineral) ? ACQUIRE.MINERAL_PRIORITIES.length : 0);
-    let mineralScorePercent = 1 - mineralScore / (ACQUIRE.MINERAL_PRIORITIES.length * 2 - 1);
-    score += mineralScorePercent * ACQUIRE.SCORE_WEIGHT.MINERAL_TYPE;
+    mineralScorePercent = 1 - mineralScore / (ACQUIRE.MINERAL_PRIORITIES.length * 2 - 1);
   }
+  score += mineralScorePercent * ACQUIRE.SCORE_WEIGHT.MINERAL_TYPE;
 
   // Check number of ramparts
   const ramparts = roomPlans(room)?.perimeter?.ramparts.length ?? 100; // if undefined, bad score anyways
@@ -41,7 +43,15 @@ export function scoreAcquireTarget(room: string) {
   const remoteScorePercent = remotes / (4 * 2); // 4 remotes * 2 sources is theoretical best
   score += remoteScorePercent * ACQUIRE.SCORE_WEIGHT.REMOTE_COUNT;
 
-  // TODO: check proximity to hostile rooms/remotes
+  // Weight based on distance to closest office
+  const distance = Object.keys(Memory.offices)
+    .filter(r => Game.rooms[r].energyCapacityAvailable >= 850)
+    .map(office => getRoomPathDistance(office, room))
+    .filter((d): d is number => d !== undefined)
+    .reduce((a, b) => Math.min(a, b), 0);
+  const distanceScorePercent = 1 - Math.max(0, Math.min(1, Math.abs(4 - distance) / 4));
+  score += distanceScorePercent * ACQUIRE.SCORE_WEIGHT.DISTANCE;
 
+  // TODO: check proximity to hostile rooms/remotes
   return score;
 }

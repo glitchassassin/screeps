@@ -56,7 +56,7 @@ export const findAcquireTarget = () => {
         .map(r => getOfficeDistanceByRoomPath(r, room) ?? Infinity),
       Infinity
     );
-    if (distance * 50 > CREEP_CLAIM_LIFE_TIME) {
+    if (distance > 8) {
       continue;
     }
     const score = scoreAcquireTarget(room);
@@ -64,7 +64,7 @@ export const findAcquireTarget = () => {
     // If no target, pick the first eligible one
     // If the target has a better mineral, pick that one
     // If the target's mineral ranking is the same but it's closer, pick that one
-    if (!bestTarget || score < bestScore) {
+    if (!bestTarget || score > bestScore) {
       bestTarget = room;
       bestScore = score;
     }
