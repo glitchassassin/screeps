@@ -11,6 +11,7 @@ export function runMissions() {
       mission.execute();
     } catch (e) {
       console.log(`Error in mission ${mission.constructor.name} in room ${mission.missionData.office}: ${e}`);
+      console.log((e as Error).stack);
     }
     debugCPU(mission.constructor.name);
   }
