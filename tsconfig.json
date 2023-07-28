@@ -13,10 +13,7 @@
     "noImplicitReturns": true,
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
-    "downlevelIteration": true,
-    "paths": {
-      "screeps-combat": ["../../screeps-combat/src"]
-    }
+    "downlevelIteration": true
   },
   "exclude": ["node_modules"]
 }

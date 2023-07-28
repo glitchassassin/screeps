@@ -39,8 +39,6 @@ import { ReserveMission } from './ReserveMission';
 import { ScienceMission } from './ScienceMission';
 import { UpgradeMission } from './UpgradeMission';
 
-import Combat from 'Strategy/CombatStub';
-
 export interface MainOfficeMissionData extends BaseMissionData {}
 
 export class MainOfficeMission extends MissionImplementation {
@@ -151,9 +149,6 @@ export class MainOfficeMission extends MissionImplementation {
         ...this.missionData,
         flag: flag.name
       }));
-    }),
-    quadAttack: new MultiMissionSpawner(Combat.missions.QuadAttackMission, current => {
-      return Combat.missions.QuadAttackMission.shouldRun(this.missionData, current);
     })
   };
 
