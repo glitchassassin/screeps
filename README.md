@@ -4,10 +4,10 @@
 
 This code is based on the Screeps Typescript Starter.
 
+## Deprecation Notice
+
+This code is in a fairly stable state, but active development has been moved to a private repo as combat and other capabilities become more complex. This repository will no longer be updated, but is left for reference in case any of the patterns are useful.
+
 ## Basic Usage
 
 For basic usage of the [screeps-typescript-starter](https://github.com/screepers/screeps-typescript-starter) framework, see that repo.
-
-## Diplomacy
-
-If you'd like to be added to the Grey Company's whitelist to avoid confrontation, submit a PR modifying `src/config.ts` to add your username (case sensitive).
